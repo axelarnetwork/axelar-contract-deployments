@@ -3,6 +3,7 @@ use core::fmt::Debug;
 
 use axelar_rkyv_encoding::types::ArchivableFlags;
 use bitflags::Flags;
+use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::StorableArchive;
 use rkyv::de::deserializers::SharedDeserializeMap;
 use rkyv::ser::serializers::{
@@ -33,7 +34,9 @@ pub trait RolesFlags: Flags<Bits = Self::RawBits> + Debug + Clone + PartialEq + 
         + Eq
         + PartialEq
         + Clone
-        + Copy;
+        + Copy
+        + BorshSerialize
+        + BorshDeserialize;
 }
 
 impl<T> RolesFlags for T
@@ -50,7 +53,9 @@ where
         + Eq
         + PartialEq
         + Clone
-        + Copy,
+        + Copy
+        + BorshSerialize
+        + BorshDeserialize,
 
     <T::Bits as Archive>::Archived: Deserialize<Self::Bits, SharedDeserializeMap>
         + Deserialize<Self::Bits, Infallible>

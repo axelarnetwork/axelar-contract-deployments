@@ -6,6 +6,7 @@ use core::mem::size_of;
 use alloy_primitives::{Bytes, FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use axelar_rkyv_encoding::types::PublicKey;
+use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::StorableArchive;
 use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::program_error::ProgramError;
@@ -19,7 +20,18 @@ use solana_program::pubkey::Pubkey;
 /// token manager type.
 ///
 /// NOTE: The Gateway token manager type is not supported on Solana.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(
+    Archive,
+    Deserialize,
+    Serialize,
+    Debug,
+    Eq,
+    PartialEq,
+    Clone,
+    Copy,
+    BorshSerialize,
+    BorshDeserialize,
+)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, Clone, Copy, CheckBytes))]
 #[non_exhaustive]
@@ -27,7 +39,7 @@ pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
     /// interchain token manager. Tokens that are deployed via the frontend
     /// portal also use this type of manager.
-    NativeInterchainToken = 0,
+    NativeInterchainToken,
 
     /// The mint/burnFrom token manager type, allows tokens to be burnt on the
     /// source chain when they are transferred out of that chain and minted they

@@ -1,6 +1,6 @@
 //! Instructions for the token manager.
 
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
@@ -10,9 +10,7 @@ use super::{operator, InterchainTokenServiceInstruction};
 use crate::Roles;
 
 /// Instructions operating on [`TokenManager`] instances.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub enum Instruction {
     /// Adds a flow limiter to a [`TokenManager`].
     ///
@@ -90,14 +88,9 @@ pub fn set_flow_limit(
     let (its_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
 
-    let instruction =
-        InterchainTokenServiceInstruction::TokenManagerInstruction(Instruction::SetFlowLimit {
-            flow_limit,
-        });
-
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
+        Instruction::SetFlowLimit { flow_limit },
+    ))?;
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -136,12 +129,9 @@ pub fn add_flow_limiter(
         None,
     );
 
-    let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         role_management_instruction.try_into()?,
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    ))?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -171,12 +161,9 @@ pub fn remove_flow_limiter(
         Roles::FLOW_LIMITER,
         None,
     );
-    let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         role_management_instruction.try_into()?,
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    ))?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -203,12 +190,9 @@ pub fn transfer_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, token_manager_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         Instruction::OperatorInstruction(operator_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    ))?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -234,12 +218,9 @@ pub fn propose_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, token_manager_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         Instruction::OperatorInstruction(operator_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    ))?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -265,12 +246,9 @@ pub fn accept_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, token_manager_pda, from, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::TokenManagerInstruction(
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         Instruction::OperatorInstruction(operator_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    ))?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

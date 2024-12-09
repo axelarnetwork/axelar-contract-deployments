@@ -1,5 +1,6 @@
 //! # `InterchainTokenService` program
 use bitflags::bitflags;
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -65,6 +66,19 @@ impl PartialEq<u8> for Roles {
 impl PartialEq<Roles> for u8 {
     fn eq(&self, other: &Roles) -> bool {
         self.eq(&other.bits())
+    }
+}
+
+impl BorshSerialize for Roles {
+    fn serialize<W: std::io::prelude::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        self.bits().serialize(writer)
+    }
+}
+
+impl BorshDeserialize for Roles {
+    fn deserialize_reader<R: std::io::prelude::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let byte = u8::deserialize_reader(reader)?;
+        Ok(Self::from_bits_truncate(byte))
     }
 }
 

@@ -1,6 +1,6 @@
 //! Instructions for the Interchain Token
 
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -8,9 +8,7 @@ use solana_program::pubkey::Pubkey;
 use super::{minter, InterchainTokenServiceInstruction};
 
 /// Instructions operating on [`TokenManager`] instances.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub enum Instruction {
     /// A proxy instruction to mint tokens whose mint authority is a
     /// `TokenManager`. Only users with the `minter` role on the mint account
@@ -53,11 +51,11 @@ pub fn mint(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &minter);
-    let instruction =
-        InterchainTokenServiceInstruction::InterchainTokenInstruction(Instruction::Mint { amount });
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::InterchainTokenInstruction(Instruction::Mint {
+            amount,
+        }),
+    )?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -92,12 +90,11 @@ pub fn transfer_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::transfer_mintership(payer, token_manager_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
-        Instruction::MinterInstruction(minter_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
+            Instruction::MinterInstruction(minter_instruction),
+        ),
+    )?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -123,12 +120,11 @@ pub fn propose_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::propose_mintership(payer, token_manager_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
-        Instruction::MinterInstruction(minter_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
+            Instruction::MinterInstruction(minter_instruction),
+        ),
+    )?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -154,12 +150,11 @@ pub fn accept_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::accept_mintership(payer, token_manager_pda, from, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::InterchainTokenInstruction(
-        Instruction::MinterInstruction(minter_instruction),
-    );
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
+            Instruction::MinterInstruction(minter_instruction),
+        ),
+    )?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

@@ -5319,6 +5319,7 @@ dependencies = [
  "axelar-rkyv-encoding",
  "bincode",
  "bitflags 2.6.0",
+ "borsh 1.5.3",
  "program-utils",
  "rkyv",
  "solana-program",

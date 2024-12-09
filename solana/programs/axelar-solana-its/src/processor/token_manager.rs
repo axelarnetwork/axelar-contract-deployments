@@ -32,7 +32,7 @@ impl LocalAction for DeployTokenManager {
         optional_accounts_flags: OptionalAccountsFlags,
         _message: Option<axelar_solana_encoding::types::messages::Message>,
     ) -> ProgramResult {
-        process_deploy(payer, accounts, &self, optional_accounts_flags)
+        process_deploy(payer, accounts, &self, &optional_accounts_flags)
     }
 }
 
@@ -91,7 +91,7 @@ pub(crate) fn process_deploy<'a>(
     payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &DeployTokenManager,
-    optional_accounts_flags: OptionalAccountsFlags,
+    optional_accounts_flags: &OptionalAccountsFlags,
 ) -> ProgramResult {
     let token_manager_type: token_manager::Type = payload.token_manager_type.try_into()?;
     if token_manager::Type::NativeInterchainToken == token_manager_type {
@@ -114,7 +114,7 @@ pub(crate) fn process_deploy<'a>(
     );
 
     let parsed_accounts =
-        DeployTokenManagerAccounts::from_account_info_slice(accounts, &optional_accounts_flags)?;
+        DeployTokenManagerAccounts::from_account_info_slice(accounts, optional_accounts_flags)?;
     let its_root_pda_bump =
         InterchainTokenService::load_readonly(&crate::id(), parsed_accounts.its_root_pda)?.bump;
 

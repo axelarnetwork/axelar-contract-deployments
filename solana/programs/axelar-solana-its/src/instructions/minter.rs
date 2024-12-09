@@ -1,6 +1,6 @@
 //! Instructions to manage the minter role.
 
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
@@ -9,9 +9,7 @@ use solana_program::pubkey::Pubkey;
 use crate::Roles;
 
 /// Instructions to manage the operator role.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub enum Instruction {
     /// Transfers mintership to another account.
     ///

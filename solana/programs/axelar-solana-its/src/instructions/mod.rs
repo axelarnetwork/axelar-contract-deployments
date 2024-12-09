@@ -1,19 +1,15 @@
 //! Instructions supported by the multicall program.
 
 use std::borrow::Cow;
-use std::error::Error;
 
 use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
-use axelar_rkyv_encoding::types::{ArchivableFlags, PublicKey};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use bitflags::bitflags;
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::{
     DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer,
 };
-use rkyv::bytecheck::EnumCheckError;
-use rkyv::validation::validators::DefaultValidatorError;
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
 use role_management::instructions::RoleManagementInstruction;
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -61,7 +57,7 @@ pub mod its_account_indices {
 
 bitflags! {
     /// Bitmask for the optional accounts passed in some of the instructions.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub struct OptionalAccountsFlags: u8 {
         /// The minter account is being passed.
         const MINTER = 0b0000_0001;
@@ -89,10 +85,21 @@ impl PartialEq<OptionalAccountsFlags> for u8 {
     }
 }
 
+impl BorshSerialize for OptionalAccountsFlags {
+    fn serialize<W: std::io::prelude::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        self.bits().serialize(writer)
+    }
+}
+
+impl BorshDeserialize for OptionalAccountsFlags {
+    fn deserialize_reader<R: std::io::prelude::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let byte = u8::deserialize_reader(reader)?;
+        Ok(Self::from_bits_truncate(byte))
+    }
+}
+
 /// Instructions supported by the multicall program.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum InterchainTokenServiceInstruction {
     /// Initializes the interchain token service program.
     ///
@@ -159,7 +166,6 @@ pub enum InterchainTokenServiceInstruction {
         params: DeployTokenManagerInputs,
 
         /// The optional accounts mask for the instruction.
-        #[with(ArchivableFlags)]
         optional_accounts_mask: OptionalAccountsFlags,
     },
 
@@ -217,9 +223,8 @@ pub enum InterchainTokenServiceInstruction {
         /// The GMP payload
         abi_payload: Vec<u8>,
 
-        /// The optional accounts flags for the instruction.
-        #[with(ArchivableFlags)]
-        optional_accounts_flags: OptionalAccountsFlags,
+        /// The optional accounts mask for the instruction.
+        optional_accounts_mask: OptionalAccountsFlags,
     },
 
     /// Sets the flow limit for an interchain token.
@@ -242,47 +247,6 @@ pub enum InterchainTokenServiceInstruction {
     InterchainTokenInstruction(interchain_token::Instruction),
 }
 
-impl InterchainTokenServiceInstruction {
-    /// Serializes the instruction into a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If serialization fails.
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
-        let bytes = rkyv::to_bytes::<_, 0>(self).map_err(Box::new)?;
-
-        Ok(bytes.to_vec())
-    }
-
-    /// Deserializes the instruction from a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If deserialization fails.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Box<dyn Error + Send + Sync>> {
-        // SAFETY:
-        // - The byte slice represents an archived object
-        // - The root of the object is stored at the end of the slice
-        let bytes = unsafe { rkyv::from_bytes_unchecked::<Self>(bytes) }.map_err(Box::new)?;
-
-        Ok(bytes)
-    }
-}
-
-impl ArchivedInterchainTokenServiceInstruction {
-    /// Interprets the given slice as an archived instruction.
-    ///
-    /// # Errors
-    ///
-    /// If validation fails.
-    pub fn from_archived_bytes(
-        bytes: &[u8],
-    ) -> Result<&Self, rkyv::validation::CheckArchiveError<EnumCheckError<u8>, DefaultValidatorError>>
-    {
-        rkyv::check_archived_root::<InterchainTokenServiceInstruction>(bytes)
-    }
-}
-
 /// Parameters for `[InterchainTokenServiceInstruction::DeployInterchainToken]`.
 ///
 /// To construct this type, use its builder API.
@@ -302,13 +266,10 @@ impl ArchivedInterchainTokenServiceInstruction {
 ///    .gas_value(100)
 ///    .build();
 /// ```
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, PartialEq, Eq, Clone, TypedBuilder, BorshSerialize, BorshDeserialize)]
 pub struct DeployInterchainTokenInputs {
     /// The payer account for this transaction
-    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
-    pub(crate) payer: PublicKey,
+    pub(crate) payer: Pubkey,
 
     /// The salt used to derive the tokenId associated with the token
     pub(crate) salt: [u8; 32],
@@ -338,13 +299,10 @@ pub struct DeployInterchainTokenInputs {
 /// Parameters for `[InterchainTokenServiceInstruction::DeployTokenManager]`.
 ///
 /// To construct this type, use its builder API.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, PartialEq, Eq, Clone, TypedBuilder, BorshSerialize, BorshDeserialize)]
 pub struct DeployTokenManagerInputs {
     /// The payer account for this transaction
-    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
-    pub(crate) payer: PublicKey,
+    pub(crate) payer: Pubkey,
 
     /// The salt used to derive the tokenId associated with the token
     pub(crate) salt: [u8; 32],
@@ -367,30 +325,26 @@ pub struct DeployTokenManagerInputs {
     /// Required when deploying the [`TokenManager`] on Solana, this is the
     /// token program that owns the mint account, either `spl_token::id()` or
     /// `spl_token_2022::id()`.
-    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
-    pub(crate) token_program: Option<PublicKey>,
+    #[builder(default, setter(strip_option))]
+    pub(crate) token_program: Option<Pubkey>,
 }
 
 /// Parameters for `[InterchainTokenServiceInstruction::InterchainTransfer]`.
 ///
 /// To construct this type, use its builder API.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, TypedBuilder)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, PartialEq, Eq, Clone, TypedBuilder, BorshSerialize, BorshDeserialize)]
 pub struct InterchainTransferInputs {
     /// The payer account for this transaction.
-    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
-    pub(crate) payer: PublicKey,
+    pub(crate) payer: Pubkey,
 
     /// The source account.
-    #[builder(setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
-    pub(crate) source_account: PublicKey,
+    pub(crate) source_account: Pubkey,
 
     /// The source account owner. In case of a transfer using a Mint/BurnFrom
     /// `TokenManager`, this shouldn't be set as the authority will be the
     /// `TokenManager`.
-    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
-    pub(crate) authority: Option<PublicKey>,
+    #[builder(default, setter(strip_option))]
+    pub(crate) authority: Option<Pubkey>,
 
     /// The token id associated with the token
     pub(crate) token_id: [u8; 32],
@@ -401,8 +355,8 @@ pub struct InterchainTransferInputs {
     /// When not set, the account is derived from the given `token_id`. The
     /// derived account is invalid if the token is not an ITS native token (not
     /// originally created/deployed by ITS).
-    #[builder(default, setter(transform = |key: Pubkey| Some(PublicKey::new_ed25519(key.to_bytes()))))]
-    pub(crate) mint: Option<PublicKey>,
+    #[builder(default, setter(strip_option))]
+    pub(crate) mint: Option<Pubkey>,
 
     /// The chain where the tokens are being transferred to.
     #[builder(setter(strip_option))]
@@ -426,8 +380,8 @@ pub struct InterchainTransferInputs {
 
     /// The token program that owns the mint account, either `spl_token::id()`
     /// or `spl_token_2022::id()`. Assumes `spl_token_2022::id()` if not set.
-    #[builder(default = PublicKey::new_ed25519(spl_token_2022::id().to_bytes()), setter(transform = |key: Pubkey| PublicKey::new_ed25519(key.to_bytes())))]
-    pub(crate) token_program: PublicKey,
+    #[builder(default = spl_token_2022::id())]
+    pub(crate) token_program: Pubkey,
 }
 
 /// Inputs for the `[InterchainTokenServiceInstruction::CallContractWithInterchainToken]`
@@ -495,11 +449,7 @@ pub fn initialize(
     let (user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &operator);
 
-    let instruction = InterchainTokenServiceInstruction::Initialize;
-
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::Initialize)?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -528,11 +478,7 @@ pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, Prog
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
 
-    let instruction = InterchainTokenServiceInstruction::SetPauseStatus { paused };
-
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::SetPauseStatus { paused })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -584,9 +530,7 @@ pub fn deploy_interchain_token(
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
     };
 
-    let data = InterchainTokenServiceInstruction::DeployInterchainToken { params }
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::DeployInterchainToken { params })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -641,12 +585,10 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         OptionalAccountsFlags::empty()
     };
 
-    let data = InterchainTokenServiceInstruction::DeployTokenManager {
+    let data = to_vec(&InterchainTokenServiceInstruction::DeployTokenManager {
         params,
         optional_accounts_mask,
-    }
-    .to_bytes()
-    .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -730,9 +672,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         AccountMeta::new(flow_slot_pda, false),
     ];
 
-    let data = InterchainTokenServiceInstruction::InterchainTransfer { params }
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer { params })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -760,12 +700,7 @@ pub fn set_flow_limit(
     let (token_manager_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &its_root_pda);
 
-    let instruction = InterchainTokenServiceInstruction::SetFlowLimit { flow_limit };
-
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
+    let data = to_vec(&InterchainTokenServiceInstruction::SetFlowLimit { flow_limit })?;
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(its_root_pda, false),
@@ -813,13 +748,11 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 
     accounts.append(&mut its_accounts);
 
-    let data = InterchainTokenServiceInstruction::ItsGmpPayload {
+    let data = to_vec(&InterchainTokenServiceInstruction::ItsGmpPayload {
         abi_payload,
         message: inputs.message,
-        optional_accounts_flags: optional_accounts_mask,
-    }
-    .to_bytes()
-    .map_err(|_err| ProgramError::InvalidInstructionData)?;
+        optional_accounts_mask,
+    })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -841,10 +774,9 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
+        operator_instruction,
+    ))?;
 
     Ok(Instruction {
         program_id: crate::id(),
@@ -865,10 +797,9 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
+        operator_instruction,
+    ))?;
 
     Ok(Instruction {
         program_id: crate::id(),
@@ -889,10 +820,9 @@ pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, its_root_pda, from, Some(accounts))?;
-    let instruction = InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction);
-    let data = instruction
-        .to_bytes()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
+        operator_instruction,
+    ))?;
 
     Ok(Instruction {
         program_id: crate::id(),

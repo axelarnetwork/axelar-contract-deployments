@@ -1,8 +1,5 @@
 //! Instructions for role management.
-use std::error::Error;
-
-use axelar_rkyv_encoding::types::ArchivableFlags;
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
@@ -10,15 +7,12 @@ use solana_program::system_program;
 use crate::state::RolesFlags;
 
 /// Inputs for role management related instructions.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, PartialEq, Eq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct RoleManagementInstructionInputs<F>
 where
     F: RolesFlags,
 {
     /// The roles to add or transfer.
-    #[with(ArchivableFlags)]
     pub roles: F,
 
     /// The bump for the destination roles PDA.
@@ -29,9 +23,7 @@ where
 }
 
 /// Role management instructions.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, PartialEq, Eq, Clone, BorshSerialize, BorshDeserialize)]
 pub enum RoleManagementInstruction<F>
 where
     F: RolesFlags,
@@ -101,36 +93,6 @@ where
     ///    roles are being transferred from.
     /// 8. [writable] The PDA account containing the proposal.
     AcceptRoles(RoleManagementInstructionInputs<F>),
-}
-
-impl<F> RoleManagementInstruction<F>
-where
-    F: RolesFlags,
-{
-    /// Serializes the instruction into a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If serialization fails.
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
-        let bytes = rkyv::to_bytes::<_, 0>(self).map_err(Box::new)?;
-
-        Ok(bytes.to_vec())
-    }
-
-    /// Deserializes the instruction from a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If deserialization fails.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Box<dyn Error + Send + Sync>> {
-        // SAFETY:
-        // - The byte slice represents an archived object
-        // - The root of the object is stored at the end of the slice
-        let bytes = unsafe { rkyv::from_bytes_unchecked::<Self>(bytes) }.map_err(Box::new)?;
-
-        Ok(bytes)
-    }
 }
 
 /// Creates an instruction to add roles to a user.

@@ -4,6 +4,7 @@ use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
+use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use program_utils::{StorableArchive, ValidPDA};
 use role_management::processor::{
@@ -80,7 +81,7 @@ pub fn process_instruction<'a>(
     instruction_data: &[u8],
 ) -> ProgramResult {
     check_program_account(*program_id)?;
-    let instruction = match InterchainTokenServiceInstruction::from_bytes(instruction_data) {
+    let instruction = match InterchainTokenServiceInstruction::try_from_slice(instruction_data) {
         Ok(instruction) => instruction,
         Err(err) => {
             msg!("Failed to deserialize instruction: {:?}", err);
@@ -98,13 +99,13 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::ItsGmpPayload {
             abi_payload,
             message,
-            optional_accounts_flags,
+            optional_accounts_mask,
         } => {
             process_inbound_its_gmp_payload(
                 accounts,
                 message,
                 &abi_payload,
-                optional_accounts_flags,
+                optional_accounts_mask,
             )?;
         }
         InterchainTokenServiceInstruction::DeployInterchainToken { params } => {
