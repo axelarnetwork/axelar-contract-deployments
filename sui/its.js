@@ -3,8 +3,12 @@ const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder } = require('./utils');
 
+const SPECIAL_CHAINS_TAGS = {
+    ALL_EVM: 'all-evm', // All EVM chains that have ITS deployed
+};
+
 function parseTrustedChains(config, trustedChain) {
-    if (trustedChain === 'all-evm') {
+    if (trustedChain === SPECIAL_CHAINS_TAGS.ALL_EVM) {
         const evmChains = Object.keys(config.chains).filter(
             (chain) => config.chains[chain].chainType === 'evm' && config.chains[chain].contracts.InterchainTokenService,
         );
@@ -72,7 +76,7 @@ if (require.main === module) {
         .name('setup-trusted-address')
         .command('setup-trusted-address <trusted-chain> <trusted-address>')
         .description(
-            'Setup trusted address. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. `all-evm` to target all ITS-deployed EVM chains',
+            `Setup trusted address. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all ITS-deployed EVM chains`,
         )
         .action((trustedChain, trustedAddress, options) => {
             mainProcessor(setupTrustedAddress, options, [trustedChain, trustedAddress], processCommand);
