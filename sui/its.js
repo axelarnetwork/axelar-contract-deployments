@@ -84,7 +84,7 @@ async function mainProcessor(command, options, args, processor) {
 
 if (require.main === module) {
     const program = new Command();
-    program.name('ITS ').description('SUI ITS scripts');
+    program.name('ITS').description('SUI ITS scripts');
 
     // This command is used to setup the trusted address on the ITS contract.
     // The trusted address is used to verify the message from the source chain.
