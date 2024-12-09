@@ -1,7 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
 use interchain_token_transfer_gmp::DeployTokenManager;
-use program_utils::{StorableArchive, ValidPDA};
+use program_utils::{BorshPda, ValidPDA};
 use role_management::processor::{ensure_roles, RoleManagementAccounts};
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -115,8 +115,7 @@ pub(crate) fn process_deploy<'a>(
 
     let parsed_accounts =
         DeployTokenManagerAccounts::from_account_info_slice(accounts, optional_accounts_flags)?;
-    let its_root_pda_bump =
-        InterchainTokenService::load_readonly(&crate::id(), parsed_accounts.its_root_pda)?.bump;
+    let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
 
     assert_valid_its_root_pda(
         parsed_accounts.its_root_pda,
@@ -151,7 +150,7 @@ pub(crate) fn set_flow_limit(
         Roles::FLOW_LIMITER,
     )?;
 
-    let mut token_manager = TokenManager::load(&crate::id(), accounts.token_manager_pda)?;
+    let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
     token_manager.flow_limit = flow_limit;
     token_manager.store(accounts.token_manager_pda)?;
 
@@ -161,7 +160,7 @@ pub(crate) fn set_flow_limit(
 pub(crate) struct DeployTokenManagerInternal {
     manager_type: token_manager::Type,
     token_id: [u8; 32],
-    token_address: [u8; 32],
+    token_address: Pubkey,
     operator: Option<Pubkey>,
     minter: Option<Pubkey>,
 }
@@ -177,7 +176,7 @@ impl DeployTokenManagerInternal {
         Self {
             manager_type,
             token_id,
-            token_address: token_address.to_bytes(),
+            token_address,
             operator,
             minter,
         }
@@ -274,7 +273,7 @@ pub(crate) fn deploy<'a>(
         deploy_token_manager.manager_type,
         deploy_token_manager.token_id,
         deploy_token_manager.token_address,
-        accounts.token_manager_ata.key.to_bytes(),
+        *accounts.token_manager_ata.key,
         token_manager_pda_bump,
     );
     token_manager.init(
@@ -309,7 +308,7 @@ fn setup_roles<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if let Ok(mut existing_roles) = UserRoles::<Roles>::load(&crate::id(), user_roles_pda) {
+    if let Ok(mut existing_roles) = UserRoles::<Roles>::load(user_roles_pda) {
         existing_roles.add(roles);
         existing_roles.store(user_roles_pda)?;
     } else {
@@ -338,8 +337,7 @@ fn process_operator_instruction<'a>(
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager =
-        TokenManager::load_readonly(&crate::id(), role_management_accounts.resource)?;
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
         role_management_accounts.resource,
         its_root_pda.key,

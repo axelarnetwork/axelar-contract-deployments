@@ -1,12 +1,13 @@
 #![cfg(test)]
 use axelar_solana_its::instructions::DeployTokenManagerInputs;
 use axelar_solana_its::state::token_manager::{self, TokenManager};
+use borsh::BorshDeserialize;
 use solana_program_test::tokio;
 use solana_sdk::keccak;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
-use crate::{axelar_solana_setup, ItsProgramWrapper, StorableArchiveAccount, TokenUtils};
+use crate::{axelar_solana_setup, ItsProgramWrapper, TokenUtils};
 
 #[rstest::rstest]
 #[case(spl_token::id())]
@@ -50,12 +51,12 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::deserialize(&mut data.as_ref()).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());

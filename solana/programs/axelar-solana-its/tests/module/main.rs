@@ -40,8 +40,7 @@ use evm_contracts_test_suite::{
     evm_weighted_signers, get_domain_separator, ContractMiddleware, ItsContracts,
 };
 use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
-use program_utils::StorableArchive;
-use rkyv::{Deserialize, Infallible};
+use program_utils::BorshPda;
 use solana_sdk::account::Account;
 use solana_sdk::account_info::Account as AccountTrait;
 use solana_sdk::account_info::IntoAccountInfo;
@@ -483,22 +482,19 @@ impl TokenUtils for TestFixture {
     }
 }
 
-pub trait StorableArchiveAccount: AccountTrait {
-    fn unarchive<'a, T>(&'a mut self, key: &'a Pubkey) -> Result<T, ProgramError>
+pub trait BorshPdaAccount: AccountTrait {
+    fn deserialize<'a, T>(&'a mut self, key: &'a Pubkey) -> Result<T, ProgramError>
     where
-        T: StorableArchive<0>,
-        T::Archived: Deserialize<T, Infallible>;
+        T: BorshPda;
 }
 
-impl StorableArchiveAccount for Account {
-    fn unarchive<'a, T>(&'a mut self, key: &'a Pubkey) -> Result<T, ProgramError>
+impl BorshPdaAccount for Account {
+    fn deserialize<'a, T>(&'a mut self, key: &'a Pubkey) -> Result<T, ProgramError>
     where
-        T: StorableArchive<0>,
-        T::Archived: Deserialize<T, Infallible>,
+        T: BorshPda,
     {
-        let owner = self.owner;
         let acc_info = (key, self).into_account_info();
 
-        T::load(&owner, &acc_info)
+        T::load(&acc_info)
     }
 }

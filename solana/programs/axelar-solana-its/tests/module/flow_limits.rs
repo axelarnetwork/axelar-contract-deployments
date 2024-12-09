@@ -3,7 +3,6 @@
 #![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
-use crate::StorableArchiveAccount;
 use alloy_primitives::Bytes;
 use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::state::incoming_message::{command_id, MessageStatus};
@@ -38,6 +37,7 @@ use crate::{
 #[tokio::test]
 async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+    use borsh::BorshDeserialize;
 
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
@@ -117,12 +117,12 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         MessageStatus::Executed
     );
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());

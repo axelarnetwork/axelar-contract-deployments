@@ -3,6 +3,7 @@ use alloy_primitives::Bytes;
 use axelar_solana_gateway::{get_incoming_message_pda, state::incoming_message::command_id};
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
+use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
@@ -15,7 +16,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{
     prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
-    StorableArchiveAccount, TokenUtils,
+    TokenUtils,
 };
 #[rstest::rstest]
 #[case(spl_token::id(), Some(Pubkey::new_unique()))]
@@ -97,12 +98,12 @@ async fn test_its_gmp_payload_deploy_token_manager(
 
     solana_chain.fixture.send_tx(&[instruction]).await.unwrap();
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&mint_authority, &axelar_solana_its::id())
         .await
-        .unarchive(&mint_authority)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
@@ -193,12 +194,12 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
     let (token_manager_pda, _bump) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
@@ -279,12 +280,12 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
         .await;
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
@@ -482,12 +483,12 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
         .await;
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());

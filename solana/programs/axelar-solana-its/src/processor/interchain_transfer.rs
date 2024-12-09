@@ -4,7 +4,7 @@ use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use interchain_token_transfer_gmp::InterchainTransfer;
-use program_utils::StorableArchive;
+use program_utils::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -24,7 +24,7 @@ use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAI
 use crate::instructions::{InterchainTransferInputs, OptionalAccountsFlags};
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
-use crate::state::token_manager::{self, ArchivedTokenManager, TokenManager};
+use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
@@ -78,8 +78,7 @@ pub fn process_inbound_transfer<'a>(
     payload: &InterchainTransfer,
 ) -> ProgramResult {
     let parsed_accounts = GiveTokenAccounts::from_account_info_slice(accounts, &payer)?;
-    let token_manager =
-        TokenManager::load_readonly(&crate::id(), parsed_accounts.token_manager_pda)?;
+    let token_manager = TokenManager::load(parsed_accounts.token_manager_pda)?;
     assert_valid_token_manager_pda(
         parsed_accounts.token_manager_pda,
         parsed_accounts.its_root_pda.key,
@@ -129,11 +128,8 @@ pub fn process_inbound_transfer<'a>(
             payload.token_id.0,
             converted_amount,
         )?;
-        let its_root_bump = InterchainTokenService::load_readonly(
-            &crate::id(),
-            axelar_executable_accounts.its_root_pda,
-        )?
-        .bump;
+        let its_root_bump =
+            InterchainTokenService::load(axelar_executable_accounts.its_root_pda)?.bump;
 
         invoke_signed(
             &its_execute_instruction,
@@ -199,8 +195,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> ProgramResult {
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
-    let token_manager =
-        TokenManager::load_readonly(&crate::id(), take_token_accounts.token_manager_pda)?;
+    let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
     assert_valid_token_manager_pda(
         take_token_accounts.token_manager_pda,
         take_token_accounts.its_root_pda.key,
@@ -232,11 +227,11 @@ pub(crate) fn process_outbound_transfer<'a>(
 
 pub(crate) fn take_token(
     accounts: &TakeTokenAccounts<'_>,
-    token_manager: &ArchivedTokenManager,
+    token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
     token_manager_processor::validate_token_manager_type(
-        token_manager.ty.into(),
+        token_manager.ty,
         accounts.token_mint,
         accounts.token_manager_pda,
     )?;
@@ -246,11 +241,11 @@ pub(crate) fn take_token(
 
 fn give_token(
     accounts: &GiveTokenAccounts<'_>,
-    token_manager: &ArchivedTokenManager,
+    token_manager: &TokenManager,
     amount: u64,
 ) -> ProgramResult {
     token_manager_processor::validate_token_manager_type(
-        token_manager.ty.into(),
+        token_manager.ty,
         accounts.token_mint,
         accounts.token_manager_pda,
     )?;
@@ -280,7 +275,7 @@ fn track_token_flow(
     }
 
     let current_flow_epoch = flow_limit::current_flow_epoch()?;
-    if let Ok(mut flow_slot) = FlowSlot::load(&crate::id(), accounts.flow_slot_pda) {
+    if let Ok(mut flow_slot) = FlowSlot::load(accounts.flow_slot_pda) {
         assert_valid_flow_slot_pda(
             accounts.flow_slot_pda,
             accounts.token_manager_pda.key,
@@ -319,10 +314,10 @@ fn track_token_flow(
 
 fn handle_give_token_transfer(
     accounts: &GiveTokenAccounts<'_>,
-    token_manager: &ArchivedTokenManager,
+    token_manager: &TokenManager,
     amount: u64,
 ) -> ProgramResult {
-    use token_manager::ArchivedType::{
+    use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
 
@@ -373,10 +368,10 @@ fn handle_give_token_transfer(
 
 fn handle_take_token_transfer(
     accounts: &TakeTokenAccounts<'_>,
-    token_manager: &ArchivedTokenManager,
+    token_manager: &TokenManager,
     amount: u64,
 ) -> Result<u64, ProgramError> {
-    use token_manager::ArchivedType::{
+    use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
 
@@ -507,7 +502,7 @@ fn mint_to<'a>(
     token_mint: &AccountInfo<'a>,
     destination_ata: &AccountInfo<'a>,
     token_manager_pda: &AccountInfo<'a>,
-    token_manager: &ArchivedTokenManager,
+    token_manager: &TokenManager,
     amount: u64,
 ) -> ProgramResult {
     invoke_signed(

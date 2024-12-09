@@ -6,7 +6,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
-use program_utils::{StorableArchive, ValidPDA};
+use program_utils::{BorshPda, ValidPDA};
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
@@ -244,8 +244,7 @@ fn process_inbound_its_gmp_payload<'a>(
     let _system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;
 
-    let its_root_config =
-        InterchainTokenService::load_readonly(&crate::id(), its_root_pda_account)?;
+    let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
     assert_valid_its_root_pda(
         its_root_pda_account,
         gateway_root_pda_account.key,
@@ -323,7 +322,7 @@ fn process_outbound_its_gmp_payload<'a>(
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
-    let its_root_config = InterchainTokenService::load_readonly(&crate::id(), its_root_pda)?;
+    let its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, gateway_root_pda.key, its_root_config.bump)?;
     if its_root_config.paused {
         msg!("The Interchain Token Service is currently paused.");
@@ -368,8 +367,7 @@ fn process_operator_instruction<'a>(
     let gateway_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
 
-    let its_config =
-        InterchainTokenService::load_readonly(&crate::id(), role_management_accounts.resource)?;
+    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
     assert_valid_its_root_pda(
         role_management_accounts.resource,
         gateway_root_pda.key,
@@ -424,7 +422,7 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let its_root_pda = next_account_info(accounts_iter)?;
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
-    let mut its_root_config = InterchainTokenService::load(&crate::id(), its_root_pda)?;
+    let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
         its_root_pda,
         gateway_root_pda_account.key,

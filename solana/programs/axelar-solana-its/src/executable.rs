@@ -1,6 +1,6 @@
 //! Module that defines the struct used by contracts adhering to the `AxelarInterchainTokenExecutable` interface.
 
-use program_utils::StorableArchive;
+use program_utils::BorshPda;
 use rkyv::bytecheck::{self, CheckBytes};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -97,7 +97,7 @@ pub fn validate_interchain_token_execute_call<'a>(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let its_root_config = InterchainTokenService::load_readonly(&crate::id(), signing_pda_account)?;
+    let its_root_config = InterchainTokenService::load(signing_pda_account)?;
     assert_valid_its_root_pda(
         signing_pda_account,
         gateway_root_account.key,

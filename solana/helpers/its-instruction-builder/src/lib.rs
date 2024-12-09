@@ -4,7 +4,8 @@ use core::ops::Deref;
 
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
-use axelar_solana_its::state::token_manager::ArchivedTokenManager;
+use axelar_solana_its::state::token_manager::TokenManager;
+use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::clock::Clock;
@@ -78,7 +79,7 @@ where
                 .await
                 .map_err(|_err| ProgramError::InvalidAccountData)?;
 
-            let token_manager = ArchivedTokenManager::from_bytes(&token_manager_data);
+            let token_manager = TokenManager::try_from_slice(&token_manager_data)?;
             let token_mint = Pubkey::new_from_array(
                 token_manager
                     .token_address

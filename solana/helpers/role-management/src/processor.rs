@@ -1,5 +1,5 @@
 //! This module provides logic to handle user role management instructions.
-use program_utils::{close_pda, StorableArchive};
+use program_utils::{close_pda, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
@@ -119,7 +119,7 @@ pub fn accept<F: RolesFlags>(
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal = RoleProposal::<F>::load(program_id, transfer_accounts.proposal_account)?;
+    let proposal = RoleProposal::<F>::load(transfer_accounts.proposal_account)?;
     if !proposal.roles.contains(inputs.roles) {
         msg!("Trying to accept a role that hasn't been proposed");
         return Err(ProgramError::InvalidArgument);
@@ -154,13 +154,11 @@ fn transfer_roles<F: RolesFlags>(
         roles,
     )?;
 
-    let mut origin_user_roles = UserRoles::load(program_id, accounts.origin_roles_account)?;
+    let mut origin_user_roles = UserRoles::load(accounts.origin_roles_account)?;
     origin_user_roles.remove(roles);
     origin_user_roles.store(accounts.origin_roles_account)?;
 
-    if let Ok(mut destination_user_roles) =
-        UserRoles::load(program_id, accounts.destination_roles_account)
-    {
+    if let Ok(mut destination_user_roles) = UserRoles::load(accounts.destination_roles_account) {
         destination_user_roles.add(roles);
         destination_user_roles.store(accounts.destination_roles_account)?;
     } else {
@@ -234,8 +232,7 @@ pub fn add<F: RolesFlags>(
         required_payer_roles,
     )?;
 
-    if let Ok(mut destination_user_roles) =
-        UserRoles::load(program_id, add_accounts.destination_roles_account)
+    if let Ok(mut destination_user_roles) = UserRoles::load(add_accounts.destination_roles_account)
     {
         destination_user_roles.add(inputs.roles);
         destination_user_roles.store(add_accounts.destination_roles_account)?;
@@ -280,7 +277,7 @@ pub fn remove<F: RolesFlags>(
     )?;
 
     if let Ok(mut destination_user_roles) =
-        UserRoles::load(program_id, remove_accounts.destination_roles_account)
+        UserRoles::load(remove_accounts.destination_roles_account)
     {
         destination_user_roles.remove(inputs.roles);
         destination_user_roles.store(remove_accounts.destination_roles_account)?;
@@ -304,7 +301,7 @@ pub fn ensure_roles<F: RolesFlags>(
     roles_account: &AccountInfo<'_>,
     roles: F,
 ) -> ProgramResult {
-    let Ok(user_roles) = UserRoles::load(program_id, roles_account) else {
+    let Ok(user_roles) = UserRoles::load(roles_account) else {
         if roles.eq(&F::empty()) {
             return Ok(());
         }

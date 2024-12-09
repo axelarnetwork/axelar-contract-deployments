@@ -1,15 +1,16 @@
 //! State module contains data structures that keep state within the ITS
 //! program.
 
+use core::any::type_name;
 use core::mem::size_of;
 
 use alloy_primitives::{Bytes, FixedBytes, U256};
 use alloy_sol_types::SolValue;
-use axelar_rkyv_encoding::types::PublicKey;
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::StorableArchive;
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use program_utils::BorshPda;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
 /// There are different types of token managers available for developers to
@@ -20,20 +21,7 @@ use solana_program::pubkey::Pubkey;
 /// token manager type.
 ///
 /// NOTE: The Gateway token manager type is not supported on Solana.
-#[derive(
-    Archive,
-    Deserialize,
-    Serialize,
-    Debug,
-    Eq,
-    PartialEq,
-    Clone,
-    Copy,
-    BorshSerialize,
-    BorshDeserialize,
-)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, Clone, Copy, CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, BorshSerialize, BorshDeserialize)]
 #[non_exhaustive]
 pub enum Type {
     /// For tokens that are deployed directly from ITS itself they use a native
@@ -108,18 +96,6 @@ impl TryFrom<U256> for Type {
     }
 }
 
-impl From<ArchivedType> for Type {
-    fn from(value: ArchivedType) -> Self {
-        match value {
-            ArchivedType::NativeInterchainToken => Self::NativeInterchainToken,
-            ArchivedType::MintBurnFrom => Self::MintBurnFrom,
-            ArchivedType::LockUnlock => Self::LockUnlock,
-            ArchivedType::LockUnlockFee => Self::LockUnlockFee,
-            ArchivedType::MintBurn => Self::MintBurn,
-        }
-    }
-}
-
 impl From<Type> for U256 {
     fn from(value: Type) -> Self {
         match value {
@@ -133,9 +109,7 @@ impl From<Type> for U256 {
 }
 
 /// Struct containing state of a `TokenManager`
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct TokenManager {
     /// The type of `TokenManager`.
     pub ty: Type,
@@ -144,10 +118,10 @@ pub struct TokenManager {
     pub token_id: [u8; 32],
 
     /// The token address within the Solana chain.
-    pub token_address: [u8; 32],
+    pub token_address: Pubkey,
 
     /// The associated token account owned by the token manager.
-    pub associated_token_account: [u8; 32],
+    pub associated_token_account: Pubkey,
 
     /// The flow limit for the token manager
     pub flow_limit: u64,
@@ -157,20 +131,13 @@ pub struct TokenManager {
 }
 
 impl TokenManager {
-    /// The length of the `TokenManager` struct in bytes.
-    pub const LEN: usize = size_of::<Type>()
-        + size_of::<PublicKey>()
-        + size_of::<PublicKey>()
-        + size_of::<PublicKey>()
-        + size_of::<u8>();
-
     /// Creates a new `TokenManager` struct.
     #[must_use]
     pub const fn new(
         ty: Type,
         token_id: [u8; 32],
-        token_address: [u8; 32],
-        associated_token_account: [u8; 32],
+        token_address: Pubkey,
+        associated_token_account: Pubkey,
         bump: u8,
     ) -> Self {
         Self {
@@ -184,18 +151,34 @@ impl TokenManager {
     }
 }
 
-impl StorableArchive<0> for TokenManager {}
+impl Pack for TokenManager {
+    const LEN: usize = size_of::<Type>()
+        + size_of::<[u8; 32]>()
+        + size_of::<Pubkey>()
+        + size_of::<Pubkey>()
+        + size_of::<u64>()
+        + size_of::<u8>();
 
-impl ArchivedTokenManager {
-    /// Deserializes the `TokenManager` from the given bytes using `rkyv` for
-    /// zero-copy deserialization.
-    #[must_use]
-    pub fn from_bytes(data: &[u8]) -> &Self {
-        // SAFETY: The data is assumed to be a valid archived `TokenManager`. The
-        // `TokenManager` is always serialized as an archived struct.
-        unsafe { rkyv::archived_root::<TokenManager>(data) }
+    #[allow(clippy::unwrap_used)]
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
     }
 }
+
+impl Sealed for TokenManager {}
+impl BorshPda for TokenManager {}
 
 /// Decodes the operator and token address from the given data.
 ///

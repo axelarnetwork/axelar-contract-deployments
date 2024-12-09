@@ -5,6 +5,7 @@ use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegrationMetadata;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use axelar_solana_memo_program::state::Counter;
+use borsh::BorshDeserialize;
 use evm_contracts_test_suite::ethers::signers::Signer;
 use evm_contracts_test_suite::ethers::types::{Address, Bytes};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
@@ -20,7 +21,7 @@ use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{
     axelar_evm_setup, axelar_solana_setup, random_hub_message_with_destination_and_payload,
-    ItsProgramWrapper, StorableArchiveAccount,
+    ItsProgramWrapper,
 };
 
 async fn setup_canonical_interchain_token(
@@ -182,12 +183,12 @@ async fn test_send_from_evm_to_solana() {
     let (token_manager_pda, _bump) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
-    let token_manager: TokenManager = solana_chain
+    let data = solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
-        .unarchive(&token_manager_pda)
-        .unwrap();
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data).unwrap();
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
     assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());

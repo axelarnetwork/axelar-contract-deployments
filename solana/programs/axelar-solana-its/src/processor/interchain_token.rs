@@ -3,7 +3,7 @@
 use alloy_primitives::hex;
 use axelar_solana_encoding::types::messages::Message;
 use interchain_token_transfer_gmp::DeployInterchainToken;
-use program_utils::StorableArchive;
+use program_utils::BorshPda;
 use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -134,8 +134,7 @@ pub fn process_deploy<'a>(
     payload: DeployInterchainToken,
 ) -> ProgramResult {
     let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &())?;
-    let its_root_pda_bump =
-        InterchainTokenService::load_readonly(&crate::id(), parsed_accounts.its_root_pda)?.bump;
+    let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
     assert_valid_its_root_pda(
         parsed_accounts.its_root_pda,
         parsed_accounts.gateway_root_pda.key,
@@ -207,7 +206,7 @@ fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResu
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
-    let token_manager = TokenManager::load_readonly(&crate::id(), token_manager_pda)?;
+    let token_manager = TokenManager::load(token_manager_pda)?;
     assert_valid_token_manager_pda(
         token_manager_pda,
         its_root_pda.key,
@@ -415,8 +414,7 @@ fn process_minter_instruction<'a>(
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager =
-        TokenManager::load_readonly(&crate::id(), role_management_accounts.resource)?;
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
     assert_valid_token_manager_pda(
         role_management_accounts.resource,
         its_root_pda.key,

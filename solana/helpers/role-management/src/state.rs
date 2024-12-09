@@ -1,87 +1,49 @@
 //! State related to role management.
+use core::any::type_name;
 use core::fmt::Debug;
+use core::mem::size_of;
 
-use axelar_rkyv_encoding::types::ArchivableFlags;
 use bitflags::Flags;
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::StorableArchive;
-use rkyv::de::deserializers::SharedDeserializeMap;
-use rkyv::ser::serializers::{
-    AlignedSerializer, AllocScratch, CompositeSerializer, FallbackScratch, HeapScratch,
-    SharedSerializeMap,
+use program_utils::BorshPda;
+use solana_program::{
+    msg,
+    program_error::ProgramError,
+    program_pack::{Pack, Sealed},
 };
-use rkyv::validation::validators::DefaultValidator;
-use rkyv::{bytecheck, AlignedVec, Archive, CheckBytes, Deserialize, Infallible, Serialize};
 
 /// Flags representing the roles that can be assigned to a user. Users shouldn't
 /// need to implement this manually as we have a blanket implementation for
 /// `Flags`.
-pub trait RolesFlags: Flags<Bits = Self::RawBits> + Debug + Clone + PartialEq + Eq + Copy {
-    /// The archived version of the flags.
-    type ArchivedBits: Deserialize<Self::RawBits, SharedDeserializeMap>
-        + Deserialize<Self::RawBits, Infallible>
-        + for<'a> CheckBytes<DefaultValidator<'a>>;
-
+pub trait RolesFlags:
+    Flags<Bits = Self::RawBits>
+    + Debug
+    + Clone
+    + PartialEq
+    + Eq
+    + Copy
+    + BorshSerialize
+    + BorshDeserialize
+{
     /// The raw bits representing the flags.
-    type RawBits: Serialize<
-            CompositeSerializer<
-                AlignedSerializer<AlignedVec>,
-                FallbackScratch<HeapScratch<0>, AllocScratch>,
-                SharedSerializeMap,
-            >,
-        > + Archive<Archived = Self::ArchivedBits>
-        + Debug
-        + Eq
-        + PartialEq
-        + Clone
-        + Copy
-        + BorshSerialize
-        + BorshDeserialize;
+    type RawBits: Debug + Eq + PartialEq + Clone + Copy + BorshSerialize + BorshDeserialize;
 }
 
 impl<T> RolesFlags for T
 where
-    T: Flags + Debug + Clone + PartialEq + Eq + Copy,
-    T::Bits: Serialize<
-            CompositeSerializer<
-                AlignedSerializer<AlignedVec>,
-                FallbackScratch<HeapScratch<0>, AllocScratch>,
-                SharedSerializeMap,
-            >,
-        > + Archive
-        + Debug
-        + Eq
-        + PartialEq
-        + Clone
-        + Copy
-        + BorshSerialize
-        + BorshDeserialize,
-
-    <T::Bits as Archive>::Archived: Deserialize<Self::Bits, SharedDeserializeMap>
-        + Deserialize<Self::Bits, Infallible>
-        + Debug
-        + Eq
-        + PartialEq
-        + Clone
-        + Copy
-        + for<'a> CheckBytes<DefaultValidator<'a>>,
+    T: Flags + Debug + Clone + PartialEq + Eq + Copy + BorshSerialize + BorshDeserialize,
+    T::Bits: Debug + Eq + PartialEq + Clone + Copy + BorshSerialize + BorshDeserialize,
 {
-    type ArchivedBits = <T::Bits as Archive>::Archived;
     type RawBits = T::Bits;
 }
 
 /// Roles assigned to a user on a specific resource.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 #[non_exhaustive]
 pub struct UserRoles<F: RolesFlags> {
-    #[with(ArchivableFlags)]
     roles: F,
     bump: u8,
 }
-
-impl<F> StorableArchive<0> for UserRoles<F> where F: RolesFlags {}
 
 impl<F> UserRoles<F>
 where
@@ -117,56 +79,71 @@ where
     }
 }
 
-impl<F> ArchivedUserRoles<F>
+impl<F> Pack for UserRoles<F>
 where
     F: RolesFlags,
 {
-    /// Checks if the user has the provided role.
-    #[must_use]
-    pub fn contains(&self, role: F) -> bool {
-        let roles = F::from_bits_truncate(self.roles);
+    const LEN: usize = size_of::<F>() + size_of::<u8>();
 
-        roles.contains(role)
+    #[allow(clippy::unwrap_used)]
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
     }
 
-    /// The bump associated with the PDA where this data is stored.
-    #[must_use]
-    pub const fn bump(&self) -> u8 {
-        self.bump
-    }
-}
-
-impl<F> From<&ArchivedUserRoles<F>> for UserRoles<F>
-where
-    F: RolesFlags,
-{
-    fn from(value: &ArchivedUserRoles<F>) -> Self {
-        Self {
-            roles: F::from_bits_truncate(value.roles),
-            bump: value.bump,
-        }
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
     }
 }
+
+impl<F> Sealed for UserRoles<F> where F: RolesFlags {}
+impl<F> BorshPda for UserRoles<F> where F: RolesFlags {}
 
 /// Proposal to transfer roles to a user.
-#[repr(transparent)]
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, BorshSerialize, BorshDeserialize)]
 pub struct RoleProposal<F: RolesFlags> {
     /// The roles to be transferred.
-    #[with(ArchivableFlags)]
     pub roles: F,
 }
 
-impl<F> StorableArchive<0> for RoleProposal<F> where F: RolesFlags {}
+impl<F> Pack for RoleProposal<F>
+where
+    F: RolesFlags,
+{
+    const LEN: usize = size_of::<F>();
+
+    #[allow(clippy::unwrap_used)]
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
+    }
+}
+
+impl<F> Sealed for RoleProposal<F> where F: RolesFlags {}
+impl<F> BorshPda for RoleProposal<F> where F: RolesFlags {}
 
 #[cfg(test)]
 mod tests {
-    use core::pin::Pin;
-
     use bitflags::bitflags;
-    use rkyv::check_archived_value;
-    use rkyv::ser::serializers::WriteSerializer;
-    use rkyv::ser::Serializer;
+    use borsh::to_vec;
 
     use super::*;
 
@@ -197,6 +174,19 @@ mod tests {
         }
     }
 
+    impl BorshSerialize for Roles {
+        fn serialize<W: std::io::prelude::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+            self.bits().serialize(writer)
+        }
+    }
+
+    impl BorshDeserialize for Roles {
+        fn deserialize_reader<R: std::io::prelude::Read>(reader: &mut R) -> std::io::Result<Self> {
+            let byte = u8::deserialize_reader(reader)?;
+            Ok(Self::from_bits_truncate(byte))
+        }
+    }
+
     #[test]
     fn test_user_roles_round_trip() {
         let original = UserRoles {
@@ -204,16 +194,8 @@ mod tests {
             bump: 42,
         };
 
-        let mut serializer = WriteSerializer::new(AlignedVec::new());
-        let pos = serializer.serialize_value(&original).unwrap();
-        let bytes = serializer.into_inner();
-
-        check_archived_value::<UserRoles<Roles>>(&bytes, pos).unwrap();
-
-        // SAFETY: The archived data is valid
-        let archived = unsafe { rkyv::archived_root::<UserRoles<Roles>>(&bytes) };
-
-        let deserialized: UserRoles<Roles> = archived.deserialize(&mut Infallible).unwrap();
+        let serialized = to_vec(&original).unwrap();
+        let deserialized = UserRoles::<Roles>::try_from_slice(&serialized).unwrap();
 
         assert_eq!(original, deserialized);
         assert!(original.contains(Roles::MINTER));
@@ -236,51 +218,10 @@ mod tests {
         for roles in roles_list {
             let original = UserRoles { roles, bump: 0 };
 
-            let mut serializer = WriteSerializer::new(AlignedVec::new());
-            let pos = serializer.serialize_value(&original).unwrap();
-            let bytes = serializer.into_inner();
-
-            check_archived_value::<UserRoles<Roles>>(&bytes, pos).unwrap();
-
-            // SAFETY: The archived data is valid
-            let archived = unsafe { rkyv::archived_root::<UserRoles<Roles>>(&bytes) };
-
-            let deserialized: UserRoles<Roles> = archived.deserialize(&mut Infallible).unwrap();
+            let serialized = to_vec(&original).unwrap();
+            let deserialized = UserRoles::<Roles>::try_from_slice(&serialized).unwrap();
 
             assert_eq!(original, deserialized);
         }
-    }
-
-    #[test]
-    fn test_invalid_roles_bits() {
-        let invalid_bits = 0b1111_0001;
-        let truncated_roles = Roles::from_bits_truncate(invalid_bits);
-
-        let original = UserRoles {
-            roles: truncated_roles,
-            bump: 0,
-        };
-
-        let mut serializer = WriteSerializer::new(AlignedVec::new());
-        let pos = serializer.serialize_value(&original).unwrap();
-        let mut bytes = serializer.into_inner();
-
-        check_archived_value::<UserRoles<Roles>>(&bytes, pos).unwrap();
-
-        // SAFETY: The archived data is valid
-        let mut archived =
-            unsafe { rkyv::archived_root_mut::<UserRoles<Roles>>(Pin::new(bytes.as_mut_slice())) };
-
-        // Force the invalid bits into the archived data. Since when archived roles is
-        // just an u8, the invalid bits will be accepted, but when
-        // deserializing, the invalid bits should be truncated.
-        archived.roles = invalid_bits;
-
-        let deserialized: UserRoles<Roles> = (*archived).deserialize(&mut Infallible).unwrap();
-
-        // Since from_bits_truncate ignores invalid bits, the deserialized roles should
-        // contain only the valid bits, which are equivalent to MINTER in this
-        // case.
-        assert_eq!(deserialized.roles, Roles::MINTER);
     }
 }

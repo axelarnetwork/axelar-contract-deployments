@@ -1,29 +1,28 @@
 //! Module with data structure definition for handling flow limits on interchain
 //! tokens.
 
+use core::any::type_name;
+use core::mem::size_of;
 use core::time::Duration;
 
-use program_utils::StorableArchive;
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
+use program_utils::BorshPda;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
 use solana_program::sysvar::Sysvar;
 
 const EPOCH_TIME: Duration = Duration::from_secs(6 * 60 * 60);
 
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 /// Struct containing flow information for a specific epoch.
 pub(crate) struct FlowSlot {
     flow_in: u64,
     flow_out: u64,
     pub(crate) bump: u8,
 }
-
-impl StorableArchive<0> for FlowSlot {}
 
 /// Module for handling flow limits on interchain tokens.
 impl FlowSlot {
@@ -101,6 +100,30 @@ impl FlowSlot {
         Ok(())
     }
 }
+
+impl Pack for FlowSlot {
+    const LEN: usize = 2 * size_of::<u64>() + size_of::<u8>();
+
+    #[allow(clippy::unwrap_used)]
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst).unwrap();
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
+    }
+}
+
+impl Sealed for FlowSlot {}
+impl BorshPda for FlowSlot {}
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum FlowDirection {
