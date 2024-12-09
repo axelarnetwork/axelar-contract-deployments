@@ -41,8 +41,7 @@ function getWallet(chain, options) {
         }
     }
 
-    const url = chain.rpc || getFullnodeUrl(chain.networkType);
-    const client = new SuiClient({ url });
+    const client = getSuiClient(chain, options.rpc);
 
     if (options.privateKey === 'ledger') {
         keypair = new LedgerSigner();
@@ -76,15 +75,22 @@ function getWallet(chain, options) {
     return [keypair, client];
 }
 
-async function printWalletInfo(wallet, client, chain, options) {
+function getSuiClient(chain, rpc) {
+    const url = rpc || chain.rpc || getFullnodeUrl(chain.networkType);
+    return new SuiClient({ url });
+}
+
+async function printWalletInfo(wallet, client, chain, options = {}) {
     const owner =
         wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
             ? wallet.toSuiAddress()
             : wallet;
     printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner });
-    printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    if (!options.offline) {
+        const coins = await client.getBalance({ owner });
+        printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    }
 }
 
 async function generateKeypair(options) {
@@ -269,4 +275,5 @@ module.exports = {
     signTransactionBlockBytes,
     broadcastFromTxBuilder,
     broadcastExecuteApprovedMessage,
+    getSuiClient,
 };

@@ -150,7 +150,7 @@ jobs:
       ###### Command: Gas Service ######
 
       - name: Pay Gas
-        run: node sui/gas-service.js payGas --amount 100 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+        run: node sui/gas-service.js payGas --amount 100 ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 
       - name: Refund Gas
         run: node sui/gas-service.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
@@ -272,7 +272,7 @@ jobs:
           MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
 
           # Initialize multisig
-          node sui/multisig.js --action init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+          node sui/multisig.js init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
 
           # Faucet operations
           node sui/faucet.js --recipient $MULTISIG_ADDRESS
@@ -293,8 +293,8 @@ jobs:
         run: |
           pk_1=$(sui keytool export --key-identity multisig1 --json | jq .exportedPrivateKey | sed 's/"//g')
           pk_2=$(sui keytool export --key-identity multisig2 --json | jq .exportedPrivateKey | sed 's/"//g')
-          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
-          node sui/multisig.js --action sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
+          node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
+          node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
 
       - name: Submit Signed Tx File
         run: |
@@ -302,7 +302,7 @@ jobs:
           output_file="./output.json"
 
           # Execute the upgrade transaction
-          node sui/multisig.js --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --action combine --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
+          node sui/multisig.js combine --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
 
           # Store the new package id in a variable
           new_package_id=$(jq '.objectChanges[] | select(.type == "published") | .packageId' $output_file | sed 's/"//g')

@@ -439,7 +439,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'setFlowLimits': {
-            const { tokenIds, flowLimits } = options;
+            const tokenIds = options.tokenIds.split(',');
+            const flowLimitsStrings = options.flowLimits.split(',');
+            const flowLimits = [];
+
+            for (const flowLimit of flowLimitsStrings) {
+                flowLimits.push(Number(flowLimit));
+            }
+
             const tokenIdsBytes32 = [];
 
             for (const tokenId of tokenIds) {

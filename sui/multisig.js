@@ -3,7 +3,15 @@ const { fromB64 } = require('@mysten/bcs');
 const { saveConfig, getChainConfig } = require('../common/utils');
 const { loadConfig, printInfo, validateParameters, printWarn } = require('../common/utils');
 const { getSignedTx, storeSignedTx } = require('../evm/sign-utils');
-const { addBaseOptions, getWallet, getMultisig, signTransactionBlockBytes, broadcastSignature } = require('./utils');
+const {
+    addBaseOptions,
+    getWallet,
+    getMultisig,
+    signTransactionBlockBytes,
+    broadcastSignature,
+    getSuiClient,
+    printWalletInfo,
+} = require('./utils');
 
 async function initMultisigConfig(chain, options) {
     const { base64PublicKeys, threshold } = options;
@@ -58,7 +66,11 @@ async function initMultisigConfig(chain, options) {
     printInfo(JSON.stringify(chain.multisig, null, 2));
 }
 
-async function signTx(keypair, client, options) {
+async function signTx(chain, options) {
+    const [keypair, client] = getWallet(chain, options);
+
+    printWalletInfo(keypair, client, chain, options);
+
     const txFileData = getSignedTx(options.txBlockPath);
     const txData = txFileData?.unsignedTx;
 
@@ -75,7 +87,8 @@ async function signTx(keypair, client, options) {
     return {};
 }
 
-async function executeCombinedSignature(client, options) {
+async function executeCombinedSignature(chain, options) {
+    const client = getSuiClient(chain, options.rpc);
     const { combinedSignPath } = options;
 
     if (options.offline) {
@@ -105,7 +118,8 @@ async function executeCombinedSignature(client, options) {
     storeSignedTx(combinedSignPath, fileData);
 }
 
-async function combineSignature(client, chain, options) {
+async function combineSignature(chain, options) {
+    const client = getSuiClient(chain);
     const { signatures } = options;
 
     if (!signatures || signatures.length === 0) {
@@ -156,44 +170,14 @@ async function combineSignature(client, chain, options) {
     }
 }
 
-async function processCommand(chain, options) {
-    const [keypair, client] = getWallet(chain, options);
-    printInfo('Wallet Address', await keypair.toSuiAddress());
-
-    let fileData;
-
-    switch (options.action) {
-        case 'init': {
-            fileData = await initMultisigConfig(chain, options);
-            break;
-        }
-
-        case 'sign': {
-            fileData = await signTx(keypair, client, options);
-            break;
-        }
-
-        case 'combine': {
-            fileData = await combineSignature(client, chain, options);
-            break;
-        }
-
-        case 'execute': {
-            await executeCombinedSignature(client, options);
-            break;
-        }
-
-        default: {
-            throw new Error(`Invalid action provided [${options.action}]`);
-        }
-    }
+async function mainProcessor(options, processor) {
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config, options.chainName);
+    const fileData = await processor(chain, options);
+    saveConfig(config, options.env);
 
     if (options.offline) {
-        let { signatureFilePath } = options;
-
-        if (options.action === 'combine') {
-            signatureFilePath = options.txBlockPath;
-        }
+        const { signatureFilePath } = options;
 
         if (!signatureFilePath) {
             throw new Error('No filePath provided');
@@ -204,47 +188,65 @@ async function processCommand(chain, options) {
     }
 }
 
-async function mainProcessor(options, processor) {
-    const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
-    await processor(chain, options);
-    saveConfig(config, options.env);
-}
-
 if (require.main === module) {
-    const program = new Command();
+    const program = new Command('multisig').description('Script for multisig operators to sign, combine and execute data');
 
-    program.name('multisig').description('Script for multisig operators to sign, combine and execute data');
+    const initCmd = new Command('init').description('Add a sui Multisig to config');
+    const signCmd = new Command('sign').description('Sign via Multisig signer');
+    const combineCmd = new Command('combine').description('Combine signatures for a Multisig');
+    const executeCmd = new Command('execute').description('Execute signatures for a Multisig');
 
-    addBaseOptions(program);
-
-    program.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block'));
-    program.addOption(new Option('--action <action>', 'action').choices(['sign', 'combine', 'execute', 'init']).makeOptionMandatory(true));
-    program.addOption(new Option('--multisigKey <multisigKey>', 'multisig key').env('MULTISIG_KEY'));
-    program.addOption(new Option('--signatures [files...]', 'array of signed transaction files'));
-    program.addOption(new Option('--offline', 'run in offline mode'));
-    program.addOption(new Option('--combinedSignPath <file>', 'combined signature file path'));
-    program.addOption(new Option('--signatureFilePath <file>', 'signed signature will be stored'));
-    program.addOption(new Option('--executeResultPath <file>', 'execute result will be stored'));
-
-    // The following options are only used with the init action
-    program.addOption(
+    initCmd.addOption(
         new Option('--base64PublicKeys [base64PublicKeys...]', 'An array of public keys to use for init the multisig address'),
     );
-    program.addOption(
+    initCmd.addOption(
         new Option('--weights [weights...]', 'An array of weight for each base64 public key. The default value is 1 for each'),
     );
-    program.addOption(
+    initCmd.addOption(
         new Option(
             '--schemeTypes [schemeTypes...]',
             'An array of scheme types for each base64 public key. The default value is secp256k1 for each',
         ),
     );
-    program.addOption(new Option('--threshold <threshold>', 'threshold for multisig'));
-
-    program.action((options) => {
-        mainProcessor(options, processCommand);
+    initCmd.addOption(new Option('--threshold <threshold>', 'threshold for multisig'));
+    initCmd.action(async (options) => {
+        await mainProcessor(options, initMultisigConfig);
     });
+
+    signCmd.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block'));
+    signCmd.addOption(new Option('--offline', 'run in offline mode'));
+    signCmd.addOption(new Option('--signatureFilePath <file>', 'signed signature will be stored'));
+    signCmd.action(async (options) => {
+        await mainProcessor(options, signTx);
+    });
+
+    combineCmd.addOption(new Option('--txBlockPath <file>', 'path to unsigned tx block'));
+    combineCmd.addOption(new Option('--offline', 'run in offline mode'));
+    combineCmd.addOption(new Option('--signatures [files...]', 'array of signed transaction files'));
+    combineCmd.addOption(new Option('--executeResultPath <file>', 'execute result will be stored'));
+    combineCmd.addOption(new Option('--multisigKey <multisigKey>', 'multisig key').env('MULTISIG_KEY'));
+    combineCmd.addOption(new Option('--signatureFilePath <file>', 'signed signature will be stored'));
+    combineCmd.action(async (options) => {
+        await mainProcessor(options, combineSignature);
+    });
+
+    executeCmd.addOption(new Option('--combinedSignPath <file>', 'combined signature file path'));
+    executeCmd.addOption(new Option('-r, --rpc <rpc>', 'The custom rpc'));
+    executeCmd.action(async (options) => {
+        await mainProcessor(options, executeCombinedSignature);
+    });
+
+    const cmdOptions = { ignorePrivateKey: true };
+
+    addBaseOptions(initCmd, cmdOptions);
+    addBaseOptions(signCmd);
+    addBaseOptions(combineCmd, cmdOptions);
+    addBaseOptions(executeCmd, cmdOptions);
+
+    program.addCommand(initCmd);
+    program.addCommand(signCmd);
+    program.addCommand(combineCmd);
+    program.addCommand(executeCmd);
 
     program.parse();
 }
