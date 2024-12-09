@@ -19,7 +19,7 @@ function parseTrustedChains(config, trustedChain) {
 }
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
-    let [tokenIds, coinTypes, flowLimits ] = args;
+    let [tokenIds, coinTypes, flowLimits] = args;
 
     const { ITS: itsConfig } = contracts;
 
@@ -33,7 +33,8 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         return Number(flowLimit);
     });
 
-    if (tokenIds.length != flowLimits.length || tokenIds.length != coinTypes.length) throw new Error('<token-ids>, <coin-types> and <flow-limits> have to have the same length.');
+    if (tokenIds.length !== flowLimits.length || tokenIds.length !== coinTypes.length)
+        throw new Error('<token-ids>, <coin-types> and <flow-limits> have to have the same length.');
 
     for (const i in tokenIds) {
         const tokenId = await txBuilder.moveCall({
@@ -52,17 +53,9 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Set trusted address for ${trustedChain} to ${trustedAddress}`, client, options);
+        await saveGeneratedTx(tx, `Set flow limits for ${tokenIds} to ${flowLimits}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
-    }
-
-    // Update ITS config
-    for (const trustedChain of trustedChains) {
-        // Add trusted address to ITS config
-        if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
-
-        contracts.ITS.trustedAddresses[trustedChain] = trustedAddress;
     }
 }
 
