@@ -18,6 +18,54 @@ function parseTrustedChains(config, trustedChain) {
     return trustedChain.split(',');
 }
 
+async function setFlowLimits(keypair, client, config, contracts, args, options) {
+    let [tokenIds, coinTypes, flowLimits ] = args;
+
+    const { ITS: itsConfig } = contracts;
+
+    const { OperatorCap, ITS } = itsConfig.objects;
+
+    const txBuilder = new TxBuilder(client);
+
+    tokenIds = tokenIds.split(',');
+    coinTypes = coinTypes.split(',');
+    flowLimits = flowLimits.split(',').map((flowLimit) => {
+        return Number(flowLimit);
+    });
+
+    if (tokenIds.length != flowLimits.length || tokenIds.length != coinTypes.length) throw new Error('<token-ids>, <coin-types> and <flow-limits> have to have the same length.');
+
+    for (const i in tokenIds) {
+        const tokenId = await txBuilder.moveCall({
+            target: `${itsConfig.address}::token_id::from_address`,
+            arguments: [tokenIds[i]],
+        });
+
+        await txBuilder.moveCall({
+            target: `${itsConfig.address}::its::set_flow_limit_as_operator`,
+            arguments: [ITS, OperatorCap, tokenId, flowLimits[i]],
+            typeArguments: [coinTypes[i]],
+        });
+    }
+
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Set trusted address for ${trustedChain} to ${trustedAddress}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+    }
+
+    // Update ITS config
+    for (const trustedChain of trustedChains) {
+        // Add trusted address to ITS config
+        if (!contracts.ITS.trustedAddresses) contracts.ITS.trustedAddresses = {};
+
+        contracts.ITS.trustedAddresses[trustedChain] = trustedAddress;
+    }
+}
+
 async function setupTrustedAddress(keypair, client, config, contracts, args, options) {
     const [trustedChain, trustedAddress] = args;
 
@@ -125,8 +173,17 @@ if (require.main === module) {
             mainProcessor(removeTrustedAddress, options, [trustedChain], processCommand);
         });
 
+    const setFlowLimitsProgram = new Command()
+        .name('set-flow-limits')
+        .command('set-flow-limits <token-ids> <coin-types> <flow-limits>')
+        .description(`Set flow limits for multiple tokens. <token-ids>, <coin-types> and <flow-limits> can both be comma separated lists`)
+        .action((tokenIds, coinTypes, flowLimits, options) => {
+            mainProcessor(setFlowLimits, options, [tokenIds, coinTypes, flowLimits], processCommand);
+        });
+
     program.addCommand(setupTrustedAddressProgram);
     program.addCommand(removeTrustedAddressProgram);
+    program.addCommand(setFlowLimitsProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 
