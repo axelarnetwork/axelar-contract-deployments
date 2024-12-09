@@ -235,15 +235,22 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId, itsv0ObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, operatorCapId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::its::ITS`,
         `${published.packageId}::its_v0::ITS_v0`,
         `${published.packageId}::owner_cap::OwnerCap`,
+        `${published.packageId}::operator_cap::OperatorCap`,
     ]);
 
     const channelId = await getItsChannelId(client, itsv0ObjectId);
 
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsv0ObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
+    chain.contracts.ITS.objects = {
+        ITS: itsObjectId,
+        ITSv0: itsv0ObjectId,
+        ChannelId: channelId,
+        OwnerCap: ownerCapObjectId,
+        OperatorCap: operatorCapId,
+    };
 
     const tx = new Transaction();
     tx.moveCall({
