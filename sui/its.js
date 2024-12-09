@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder } = require('./utils');
+const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 
 const SPECIAL_CHAINS_TAGS = {
     ALL_EVM: 'all-evm', // All EVM chains that have ITS deployed
@@ -39,7 +39,14 @@ async function setupTrustedAddress(keypair, client, config, contracts, args, opt
         arguments: [ITS, OwnerCap, trustedAddressesObject],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Addresses');
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Set trusted address for ${trustedChain} to ${trustedAddress}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+    }
 
     // Update ITS config
     for (const trustedChain of trustedChains) {
@@ -83,7 +90,7 @@ if (require.main === module) {
 
     program.addCommand(setupTrustedAddressProgram);
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

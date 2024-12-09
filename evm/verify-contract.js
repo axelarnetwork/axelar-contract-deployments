@@ -56,7 +56,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
     verifyContractByName(
         env,
         chain.name,
-        'AxelarGateway',
+        'AxelarAmplifierGateway',
         implementation,
         [previousSignersRetention, domainSeparator, minimumRotationDelay],
         verifyOptions,
