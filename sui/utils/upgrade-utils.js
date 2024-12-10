@@ -53,7 +53,7 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
     const sender = options.sender || keypair.toSuiAddress();
     tx.setSender(sender);
-    
+
     if (offline) {
         await saveGeneratedTx(tx, `Transaction to upgrade ${packageDir}`, client, options);
     } else {

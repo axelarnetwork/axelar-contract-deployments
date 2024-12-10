@@ -274,6 +274,7 @@ const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
 const getStructs = async (client, packageId) => {
     const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
     const structs = {};
+
     for (const type of packageData.data.bcs.typeOriginTable) {
         structs[type.datatype_name] = `${type.package}::${type.module_name}::${type.datatype_name}`;
     }

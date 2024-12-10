@@ -190,9 +190,7 @@ async function migrate(keypair, client, config, chain, contractConfig, args, opt
 
     tx.moveCall({
         target: `${packageId}::gateway::migrate`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-        ],
+        arguments: [tx.object(contractConfig.objects.Gateway)],
     });
 
     return {
@@ -200,7 +198,6 @@ async function migrate(keypair, client, config, chain, contractConfig, args, opt
         message: 'Migrate',
     };
 }
-
 
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
