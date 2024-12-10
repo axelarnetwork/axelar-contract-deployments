@@ -74,7 +74,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const chainName = nativeToScVal('stellar', { type: 'string' });
 
             if (!chain?.contracts?.interchain_token?.wasmHash) {
-                throw new Error(`interchain_token wasm_hash does not exist. Please install interchain token first.`);
+                throw new Error(`interchain_token contract's wasm hash does not exist.`);
             }
             const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.interchain_token?.wasmHash, 'hex'), {
                 type: 'bytes',
