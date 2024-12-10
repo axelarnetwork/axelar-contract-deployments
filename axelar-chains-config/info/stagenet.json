@@ -2,7 +2,7 @@
   "chains": {
     "avalanche": {
       "name": "Avalanche",
-      "axelarId": "Avalanche",
+      "axelarId": "avalanche",
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
@@ -112,7 +112,7 @@
     },
     "fantom": {
       "name": "Fantom",
-      "axelarId": "Fantom",
+      "axelarId": "fantom",
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "FTM",
@@ -222,7 +222,7 @@
     },
     "moonbeam": {
       "name": "Moonbeam",
-      "axelarId": "Moonbeam",
+      "axelarId": "moonbeam",
       "chainId": 1287,
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
