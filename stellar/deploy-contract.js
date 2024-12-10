@@ -76,6 +76,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             if (!chain?.contracts?.interchain_token?.wasmHash) {
                 throw new Error(`interchain_token contract's wasm hash does not exist.`);
             }
+
             const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.interchain_token?.wasmHash, 'hex'), {
                 type: 'bytes',
             });
@@ -107,7 +108,7 @@ async function deploy(options, config, chain, contractName) {
             deployer: wallet.publicKey(),
             wasmHash: serializeValue(wasmHash),
         };
-        printInfo(contractName + ' Wasm Hash', serializeValue(wasmHash));
+        printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
         return;
     }
 
@@ -127,6 +128,7 @@ async function deploy(options, config, chain, contractName) {
     chain.contracts[contractName] = {
         address: contractAddress,
         deployer: wallet.publicKey(),
+        wasmHash: serializeValue(wasmHash),
         initializeArgs: serializedArgs,
     };
 }
