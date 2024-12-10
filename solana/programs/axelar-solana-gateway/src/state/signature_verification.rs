@@ -10,6 +10,8 @@ use bitvec::slice::BitSlice;
 use bitvec::view::BitView;
 use bytemuck::{Pod, Zeroable};
 
+use crate::error::GatewayError;
+
 use super::verifier_set_tracker::VerifierSetHash;
 use super::BytemuckedPda;
 
@@ -46,28 +48,6 @@ pub struct SignatureVerification {
 
 impl BytemuckedPda for SignatureVerification {}
 
-/// Errors that can happen during a signature verification session.
-#[derive(Debug, thiserror::Error)]
-pub enum SignatureVerificationError {
-    /// Used when a signature index is too high.
-    #[error("Slot #{0} is out of bounds")]
-    SlotIsOutOfBounds(usize),
-
-    /// Used when someone tries to verify a signature that has already been
-    /// verified before.
-    #[error("Slot #{0} has been previously verified")]
-    SlotAlreadyVerified(usize),
-
-    /// Used when the Merkle inclusion proof fails to verify against the given
-    /// root.
-    #[error("Signer is not a member of the active verifier set")]
-    InvalidMerkleProof,
-
-    /// Used when the internal digital signature verification fails.
-    #[error("Digital signature verification failed")]
-    InvalidDigitalSignature,
-}
-
 impl SignatureVerification {
     /// Returns `true` if a sufficient number of signatures have been verified.
     pub fn is_valid(&self) -> bool {
@@ -80,7 +60,7 @@ impl SignatureVerification {
         verifier_info: SigningVerifierSetInfo,
         verifier_set_merkle_root: &[u8; 32],
         payload_merkle_root: &[u8; 32],
-    ) -> Result<(), SignatureVerificationError> {
+    ) -> Result<(), GatewayError> {
         let merkle_proof =
             rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&verifier_info.merkle_proof)
                 .unwrap();
@@ -103,26 +83,23 @@ impl SignatureVerification {
         if self.signing_verifier_set_hash == [0; 32] {
             self.signing_verifier_set_hash = *verifier_set_merkle_root;
         } else if &self.signing_verifier_set_hash != verifier_set_merkle_root {
-            return Err(SignatureVerificationError::InvalidDigitalSignature);
+            return Err(GatewayError::InvalidDigitalSignature);
         }
 
         Ok(())
     }
 
     #[inline]
-    fn check_slot_is_done(
-        &self,
-        signature_node: &VerifierSetLeaf,
-    ) -> Result<(), SignatureVerificationError> {
+    fn check_slot_is_done(&self, signature_node: &VerifierSetLeaf) -> Result<(), GatewayError> {
         let signature_slots = self.signature_slots.view_bits::<Lsb0>();
         let position = signature_node.position as usize;
         let Some(slot) = signature_slots.get(position) else {
             // Index is out of bounds.
-            return Err(SignatureVerificationError::SlotIsOutOfBounds(position));
+            return Err(GatewayError::SlotIsOutOfBounds);
         };
         // Check if signature slot was already verified.
         if *slot {
-            return Err(SignatureVerificationError::SlotAlreadyVerified(position));
+            return Err(GatewayError::SlotAlreadyVerified);
         }
         Ok(())
     }
@@ -132,7 +109,7 @@ impl SignatureVerification {
         signature_node: VerifierSetLeaf,
         merkle_proof: &rs_merkle::MerkleProof<SolanaSyscallHasher>,
         verifier_set_merkle_root: &[u8; 32],
-    ) -> Result<(), SignatureVerificationError> {
+    ) -> Result<(), GatewayError> {
         let leaf_hash = signature_node.hash::<SolanaSyscallHasher>();
 
         if merkle_proof.verify(
@@ -143,7 +120,7 @@ impl SignatureVerification {
         ) {
             Ok(())
         } else {
-            Err(SignatureVerificationError::InvalidMerkleProof)
+            Err(GatewayError::InvalidMerkleProof)
         }
     }
 
@@ -152,7 +129,7 @@ impl SignatureVerification {
         public_key: &PublicKey,
         message: &[u8; 32],
         signature: &Signature,
-    ) -> Result<(), SignatureVerificationError> {
+    ) -> Result<(), GatewayError> {
         let is_valid = match (signature, public_key) {
             (Signature::EcdsaRecoverable(signature), PublicKey::Secp256k1(pubkey)) => {
                 verify_ecdsa_signature(pubkey, signature, message)
@@ -171,7 +148,7 @@ impl SignatureVerification {
             return Ok(());
         }
 
-        Err(SignatureVerificationError::InvalidDigitalSignature)
+        Err(GatewayError::InvalidDigitalSignature)
     }
 
     #[inline]
@@ -186,19 +163,16 @@ impl SignatureVerification {
         }
     }
     #[inline]
-    fn mark_slot_done(
-        &mut self,
-        signature_node: &VerifierSetLeaf,
-    ) -> Result<(), SignatureVerificationError> {
+    fn mark_slot_done(&mut self, signature_node: &VerifierSetLeaf) -> Result<(), GatewayError> {
         let signature_slots = self.signature_slots.view_bits_mut::<Lsb0>();
         let position = signature_node.position as usize;
         let Some(slot) = signature_slots.get_mut(position) else {
             // Index is out of bounds.
-            return Err(SignatureVerificationError::SlotIsOutOfBounds(position));
+            return Err(GatewayError::SlotIsOutOfBounds);
         };
         // Check if signature slot was already verified.
         if *slot {
-            return Err(SignatureVerificationError::SlotAlreadyVerified(position));
+            return Err(GatewayError::SlotAlreadyVerified);
         }
         slot.commit(true);
         Ok(())

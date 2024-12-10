@@ -12,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessageWrapper, MessageStatus};
 use crate::state::BytemuckedPda;
 use crate::{
@@ -46,19 +47,14 @@ impl Processor {
 
         // Check: message is approved
         if incoming_message.message.status != MessageStatus::Approved {
-            msg!("message not approved");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::MessageNotApproved.into());
         }
         // Check: message hashes match
         if incoming_message.message.message_hash != message_hash {
-            msg!("message has been tampered with");
-            return Err(ProgramError::InvalidInstructionData);
+            return Err(GatewayError::MessageHasBeenTamperedWith.into());
         }
-        let destination_address =
-            Pubkey::from_str(&message.destination_address).map_err(|_err| {
-                msg!("Destination address is not a valid Pubkey");
-                ProgramError::InvalidArgument
-            })?;
+        let destination_address = Pubkey::from_str(&message.destination_address)
+            .map_err(|_err| GatewayError::InvalidDestinationAddress)?;
 
         // check that caller ir valid signing PDA
         let expected_signing_pda = create_validate_message_signing_pda(
@@ -68,11 +64,11 @@ impl Processor {
         )?;
         if &expected_signing_pda != caller.key {
             msg!("Invalid signing PDA");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::InvalidSigningPDA.into());
         }
         // check that caller is signer
         if !caller.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
+            return Err(GatewayError::CallerNotSigner.into());
         }
 
         incoming_message.message.status = MessageStatus::Executed;

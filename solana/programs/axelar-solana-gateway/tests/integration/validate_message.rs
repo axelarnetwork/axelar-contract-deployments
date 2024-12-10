@@ -1,13 +1,13 @@
 use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::validate_message;
 use axelar_solana_gateway::state::incoming_message::{
     command_id, IncomingMessageWrapper, MessageStatus,
 };
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
-use axelar_solana_gateway_test_fixtures::gateway::make_messages;
+use axelar_solana_gateway_test_fixtures::gateway::{make_messages, GetGatewayError};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
-use itertools::Itertools;
 use solana_program_test::tokio;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
@@ -89,7 +89,8 @@ async fn fail_if_message_already_executed() {
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
-    assert!(err.find_log("message not approved").is_some());
+    let err = err.get_gateway_error().unwrap();
+    assert_eq!(err, GatewayError::MessageNotApproved);
 }
 
 #[tokio::test]
@@ -128,7 +129,8 @@ async fn fail_if_message_has_been_tampered_with() {
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
     // assert
-    assert!(err.find_log("message has been tampered with").is_some());
+    let err = err.get_gateway_error().unwrap();
+    assert_eq!(err, GatewayError::MessageHasBeenTamperedWith);
 }
 
 #[tokio::test]
@@ -174,52 +176,6 @@ async fn fail_if_invalid_signing_pda_seeds() {
     // they don't depending on the random parameters of test run
     let either_error = err_variant_one || err_variant_two;
     assert!(either_error);
-}
-
-#[tokio::test]
-async fn fail_if_another_valid_message_pda_provided() {
-    // Setup
-    let mut metadata = SolanaAxelarIntegration::builder()
-        .initial_signer_weights(vec![42, 42])
-        .build()
-        .setup()
-        .await;
-    let mut messages = make_messages(2);
-    let destination_address = Pubkey::new_unique();
-    messages
-        .iter_mut()
-        .for_each(|x| x.destination_address = destination_address.to_string());
-    let (message_leaf_one, _message_leaf_two) = metadata
-        .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|x| x.leaf)
-        .next_tuple()
-        .unwrap();
-    let command_id_leaf_one = command_id(
-        &message_leaf_one.message.cc_id.chain,
-        &message_leaf_one.message.cc_id.id,
-    );
-    let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id_leaf_one);
-
-    // action
-    let (signing_pda, _signing_pda_bump) =
-        get_validate_message_signing_pda(destination_address, command_id_leaf_one);
-    let ix = validate_message_for_tests(
-        &incoming_message_pda,
-        &signing_pda,
-        // tamper with the message
-        Message {
-            payload_hash: [123; 32],
-            ..message_leaf_one.message
-        },
-    )
-    .unwrap();
-    let err = metadata.send_tx(&[ix]).await.unwrap_err();
-
-    // assert
-    assert!(err.find_log("message has been tampered with").is_some());
 }
 
 async fn set_existing_incoming_message_state(

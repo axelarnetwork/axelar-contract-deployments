@@ -57,16 +57,7 @@ impl Processor {
         )?;
 
         // Check: Verifier set isn't expired
-        let is_epoch_valid = gateway_config
-            .is_epoch_valid(verifier_set_tracker.epoch)
-            .map_err(|err| {
-                solana_program::msg!("AuthWeightedError: {}", err);
-                ProgramError::InvalidInstructionData
-            })?;
-        if !is_epoch_valid {
-            solana_program::msg!("Expired VerifierSetTracker PDA");
-            return Err(ProgramError::InvalidAccountData);
-        }
+        gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
 
         // Verify the signature
         session

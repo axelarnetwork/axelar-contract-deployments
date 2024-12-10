@@ -3,11 +3,11 @@ use std::mem::size_of;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::{BytemuckedPda, GatewayConfig};
 use crate::{assert_valid_gateway_root_pda, seed_prefixes};
@@ -46,8 +46,13 @@ impl Processor {
         let (verification_session_pda, bump) =
             crate::get_signature_verification_pda(gateway_root_pda.key, &merkle_root);
         if verification_session_pda != *verification_session_account.key {
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::InvalidVerificationSessionPDA.into());
         }
+
+        // Check: the verification session account has not been initialised already
+        verification_session_account
+            .check_uninitialized_pda()
+            .map_err(|_| GatewayError::VerificationSessionPDAInitialised)?;
 
         // Use the same seeds as `[crate::get_signature_verification_pda]`, plus the
         // bump seed.

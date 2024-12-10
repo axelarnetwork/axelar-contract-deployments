@@ -7,13 +7,13 @@ use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
 use super::event_utils::{read_array, EventParseError};
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
 use crate::state::{BytemuckedPda, GatewayConfig};
@@ -79,8 +79,7 @@ impl Processor {
         )?;
 
         if !session.signature_verification.is_valid() {
-            msg!("signing session is not complete");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::SigningSessionNotValid.into());
         }
 
         // Check: Active verifier set tracker PDA is initialized.
@@ -96,23 +95,16 @@ impl Processor {
         if verifier_set_tracker.verifier_set_hash
             != session.signature_verification.signing_verifier_set_hash
         {
-            msg!("Provided verifier set tracker PDA does not match the verifier set that signed the signing sesseion");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::InvalidVerifierSetTrackerProvided.into());
         }
 
-        // Check: Verifier set isn't expired
-        let is_epoch_valid = gateway_config
-            .is_epoch_valid(verifier_set_tracker.epoch)
-            .map_err(|err| {
-                msg!("AuthWeightedError: {}", err);
-                ProgramError::InvalidInstructionData
-            })?;
-        if !is_epoch_valid {
-            msg!("Expired VerifierSetTracker PDA");
-            return Err(ProgramError::InvalidAccountData);
-        }
+        // Check: Current verifier set isn't expired
+        gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
+
         // Check: new new verifier set PDA must be uninitialised
-        new_empty_verifier_set.check_uninitialized_pda()?;
+        new_empty_verifier_set
+            .check_uninitialized_pda()
+            .map_err(|_err| GatewayError::VerifierSetTrackerAlreadyInitialised)?;
 
         // we always enforce the delay unless unless the operator has been provided and
         // its also the Gateway opreator
@@ -124,10 +116,9 @@ impl Processor {
             !(operator_matches && operator_is_sigener)
         });
         let is_latest = gateway_config.current_epoch == verifier_set_tracker.epoch;
-        // Check: proof is signed by latest signers
+        // Check: proof is signed by latest verifiers
         if enforce_rotation_delay && !is_latest {
-            msg!("Proof is not signed by the latest signer set");
-            return Err(ProgramError::InvalidArgument);
+            return Err(GatewayError::ProofNotSignedByLatestVerifierSet.into());
         }
 
         let current_time: u64 = solana_program::clock::Clock::get()?
@@ -136,8 +127,7 @@ impl Processor {
             .expect("received negative timestamp");
         if enforce_rotation_delay && !enough_time_till_next_rotation(current_time, gateway_config)?
         {
-            msg!("Command needs more time before being executed again");
-            return Err(ProgramError::InvalidArgument);
+            return Err(GatewayError::RotationCooldownNotDone.into());
         }
 
         gateway_config.last_rotation_timestamp = current_time;
@@ -148,10 +138,8 @@ impl Processor {
             .checked_add(U256::ONE)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
-        new_empty_verifier_set.check_uninitialized_pda()?;
-
         // Initialize the tracker account
+        let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
         program_utils::init_pda_raw(
             payer,
             new_empty_verifier_set,

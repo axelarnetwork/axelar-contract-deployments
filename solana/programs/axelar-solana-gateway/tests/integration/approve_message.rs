@@ -5,6 +5,7 @@ use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedP
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::LeafHash;
+use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::approve_messages;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{
@@ -12,7 +13,7 @@ use axelar_solana_gateway::state::incoming_message::{
 };
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
-    get_gateway_events, make_messages, make_verifier_set, ProgramInvocationState,
+    get_gateway_events, make_messages, make_verifier_set, GetGatewayError, ProgramInvocationState,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use itertools::Itertools;
@@ -98,9 +99,8 @@ async fn successfully_approves_messages() {
     assert_eq!(counter, message_count);
 }
 
-// can approve the same message from many batches
 #[tokio::test]
-async fn successfully_idempotent_approvals_across_batches() {
+async fn fail_individual_approval_if_done_many_times() {
     // Setup
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![42, 42])
@@ -145,8 +145,16 @@ async fn successfully_idempotent_approvals_across_batches() {
                 message_info.clone(),
                 verification_session_pda,
             )
-            .await
-            .unwrap();
+            .await;
+
+        let tx = match tx {
+            Ok(tx) => tx,
+            Err(err) => {
+                let gateway_error = err.get_gateway_error().unwrap();
+                assert_eq!(gateway_error, GatewayError::MessageAlreadyInitialised);
+                continue;
+            }
+        };
         message_counter += 1;
 
         let destination_address =
@@ -187,14 +195,14 @@ async fn successfully_idempotent_approvals_across_batches() {
     );
     assert_eq!(
         message_counter,
-        messages_batch_two.len(),
-        "expected 4 total messages to be processed in the second batch"
+        messages_batch_two.len() - messages_batch_one.len(),
+        "expected only unique messages from second batch to be processed"
     );
 }
 
-// can approve the same message from the same batch many times
+// the same message can only be approved once, subsequent calls will fail
 #[tokio::test]
-async fn successfully_idempotent_approvals_many_times_same_batch() {
+async fn fail_approvals_many_times_same_batch() {
     // Setup
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![42, 42])
@@ -204,7 +212,7 @@ async fn successfully_idempotent_approvals_many_times_same_batch() {
 
     let messages = make_messages(2);
 
-    // approve the batch
+    // verify the signatures
     let payload = Payload::Messages(Messages(messages.clone()));
     let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
     let verification_session_pda = metadata
@@ -212,22 +220,38 @@ async fn successfully_idempotent_approvals_many_times_same_batch() {
         .await
         .unwrap();
 
-    // approve the batch many times
-    for _ in 0..3 {
-        let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items.clone() else {
-            unreachable!()
-        };
+    // approve the messages initially
+    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items.clone() else {
+        unreachable!()
+    };
 
-        for message_info in messages {
-            metadata
-                .approve_message(
-                    execute_data.payload_merkle_root,
-                    message_info.clone(),
-                    verification_session_pda,
-                )
-                .await
-                .unwrap();
-        }
+    for message_info in messages {
+        metadata
+            .approve_message(
+                execute_data.payload_merkle_root,
+                message_info.clone(),
+                verification_session_pda,
+            )
+            .await
+            .unwrap();
+    }
+
+    // try to approve the messages again (will fail)
+    let MerkleisedPayload::NewMessages { messages } = execute_data.payload_items.clone() else {
+        unreachable!()
+    };
+
+    for message_info in messages {
+        let tx = metadata
+            .approve_message(
+                execute_data.payload_merkle_root,
+                message_info.clone(),
+                verification_session_pda,
+            )
+            .await
+            .unwrap_err();
+        let gateway_error = tx.get_gateway_error().unwrap();
+        assert_eq!(gateway_error, GatewayError::MessageAlreadyInitialised);
     }
 }
 

@@ -12,6 +12,8 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use axelar_solana_encoding::{borsh, hash_payload};
+use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::num_traits::FromPrimitive;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
@@ -26,8 +28,10 @@ use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::account::ReadableAccount as _;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
+use solana_sdk::instruction::InstructionError;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer as _;
+use solana_sdk::transaction::TransactionError;
 
 use crate::base::{workspace_root_dir, TestFixture};
 use crate::test_signer::{create_signer_with_weight, SigningVerifierSet};
@@ -526,6 +530,31 @@ pub fn get_gateway_events(
         tx.metadata.as_ref().unwrap().log_messages.as_slice(),
         gateway_event_stack::parse_gateway_logs,
     )
+}
+
+/// Utility for extracting the `GatewayError` from the tx metadata
+pub trait GetGatewayError {
+    /// get the gateway error
+    fn get_gateway_error(&self) -> Option<GatewayError>;
+}
+
+impl GetGatewayError for BanksTransactionResultWithMetadata {
+    fn get_gateway_error(&self) -> Option<GatewayError> {
+        self.result
+            .as_ref()
+            .map_err(|x| {
+                if let TransactionError::InstructionError(
+                    _idx,
+                    InstructionError::Custom(gateway_error),
+                ) = x
+                {
+                    return GatewayError::from_u32(*gateway_error);
+                }
+                None
+            })
+            .err()
+            .flatten()
+    }
 }
 
 /// Create a new verifier set

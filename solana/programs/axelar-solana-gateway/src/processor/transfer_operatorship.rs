@@ -3,12 +3,11 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
-use solana_program::msg;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, EventParseError};
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::{BytemuckedPda, GatewayConfig};
 use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
@@ -36,8 +35,7 @@ impl Processor {
         if *programdata_account.key
             != Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id()).0
         {
-            msg!("invalid programdata account provided");
-            return Err(ProgramError::InvalidArgument);
+            return Err(GatewayError::InvalidProgramDataDerivation.into());
         }
 
         // Check: the programda state is valid
@@ -45,23 +43,18 @@ impl Processor {
             &programdata_account.data.borrow()
                 [0..UpgradeableLoaderState::size_of_programdata_metadata()],
         )
-        .map_err(|err| {
-            msg!("upradeable loader state deserialisatoin error {:?}", err);
-            ProgramError::InvalidAccountData
-        })?;
+        .map_err(|_err| GatewayError::InvalidLoaderContent)?;
         let UpgradeableLoaderState::ProgramData {
-            slot: _,
             upgrade_authority_address,
+            ..
         } = loader_state
         else {
-            msg!("upgradeable loader state is not programdata state");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::InvalidLoaderState.into());
         };
 
         // Check: ensure that the operator_or_upgrade_authority is a signer
         if !operator_or_upgrade_authority.is_signer {
-            msg!("Operator or owner account must be a signer");
-            return Err(ProgramError::MissingRequiredSignature);
+            return Err(GatewayError::OperatorOrUpgradeAuthorityMustBeSigner.into());
         }
 
         // Check: the signer matches either the current operator or the upgrade
@@ -69,10 +62,7 @@ impl Processor {
         if !(gateway_config.operator == *operator_or_upgrade_authority.key
             || upgrade_authority_address.map_or(false, |x| x == *operator_or_upgrade_authority.key))
         {
-            msg!(
-                "Operator or owner account is not the factual operator or the owner of the Gateway"
-            );
-            return Err(ProgramError::InvalidArgument);
+            return Err(GatewayError::InvalidOperatorOrAuthorityAccount.into());
         }
 
         // Update the opreatorship field

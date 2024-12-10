@@ -8,10 +8,10 @@ use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
-use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, IncomingMessageWrapper};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::BytemuckedPda;
@@ -53,24 +53,19 @@ impl Processor {
         )?;
 
         // Check: the incoming message PDA already approved
-        if incoming_message_pda.check_uninitialized_pda().is_err() {
-            solana_program::msg!("Message already approved");
-            return Ok(());
-        }
+        incoming_message_pda
+            .check_uninitialized_pda()
+            .map_err(|_err| GatewayError::MessageAlreadyInitialised)?;
 
         // Check: signature verification session is complete
         if !session.signature_verification.is_valid() {
-            solana_program::msg!("signing session is not complete");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(GatewayError::SigningSessionNotValid.into());
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
         let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
         let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
-            .map_err(|_err| {
-                solana_program::msg!("Could not decode message proof");
-                ProgramError::InvalidInstructionData
-            })?;
+            .map_err(|_err| GatewayError::InvalidMerkleProof)?;
 
         // Check: leaf node is part of the payload merkle root
         if !proof.verify(
@@ -79,8 +74,7 @@ impl Processor {
             &[leaf_hash],
             message.leaf.set_size as usize,
         ) {
-            solana_program::msg!("Invalid Merkle Proof for the given message");
-            return Err(ProgramError::InvalidInstructionData);
+            return Err(GatewayError::LeafNodeNotPartOfMerkleRoot.into());
         }
 
         // crate a PDA where we write the message metadata contents
@@ -114,7 +108,7 @@ impl Processor {
         let destination_address =
             Pubkey::from_str(&message.destination_address).map_err(|_err| {
                 solana_program::msg!("Invalid destination address");
-                ProgramError::InvalidInstructionData
+                GatewayError::InvalidDestinationAddress
             })?;
 
         let (_, signing_pda_bump) =

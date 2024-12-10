@@ -3,12 +3,13 @@ use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
+use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::get_verifier_set_tracker_pda;
 use axelar_solana_gateway::processor::{GatewayEvent, VerifierSetRotated};
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, random_bytes, random_message,
-    ProgramInvocationState,
+    GetGatewayError, ProgramInvocationState,
 };
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use solana_program_test::tokio;
@@ -162,19 +163,17 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
     // Action - rotate the signer set for the second time.
     // this action does not wait for the minimum_delay_seconds, it should fail.
     let newer_verifier_set = make_verifier_set(&[444, 555], 333, metadata.domain_separator);
-    let (signing_session_pda, rotate_signrs_tx_result) = metadata
+    let (signing_session_pda, rotate_signers_tx_result) = metadata
         .sign_session_and_rotate_signers(&new_verifier_set, &newer_verifier_set.verifier_set())
         .await
         .unwrap(); // init signing session succeeded
 
     // Assert we are seeing the correct error message in tx logs.
-    assert!(rotate_signrs_tx_result
+    let err = rotate_signers_tx_result
         .unwrap_err()
-        .metadata
-        .unwrap()
-        .log_messages
-        .into_iter()
-        .any(|msg| { msg.contains("Command needs more time before being executed again",) }));
+        .get_gateway_error()
+        .unwrap();
+    assert_eq!(err, GatewayError::RotationCooldownNotDone);
 
     // Action, forward time
     metadata.forward_time(minimum_delay_seconds as i64).await;
@@ -348,12 +347,8 @@ async fn fail_if_provided_operator_is_not_the_real_operator_thats_stored_in_gate
 
     // Assert
     assert!(tx.result.is_err());
-    assert!(tx
-        .metadata
-        .unwrap()
-        .log_messages
-        .into_iter()
-        .any(|msg| { msg.contains("Proof is not signed by the latest signer set",) }));
+    let err = tx.get_gateway_error().unwrap();
+    assert_eq!(err, GatewayError::ProofNotSignedByLatestVerifierSet);
 }
 
 /// Ensure that the operator also need to explicitly sign the ix
@@ -416,12 +411,8 @@ async fn fail_if_operator_only_passed_but_not_actual_signer() {
 
     // Assert
     assert!(tx.result.is_err());
-    assert!(tx
-        .metadata
-        .unwrap()
-        .log_messages
-        .into_iter()
-        .any(|msg| { msg.contains("Proof is not signed by the latest signer set") }));
+    let err = tx.get_gateway_error().unwrap();
+    assert_eq!(err, GatewayError::ProofNotSignedByLatestVerifierSet);
 }
 
 /// disallow rotate signers if any other signer set besides the most recent
@@ -455,7 +446,7 @@ async fn fail_if_rotate_signers_signed_by_old_verifier_set() {
     // Action - rotate the signer set for the second time.
     // note: we use the original signers (now considered an old verifier set)
     let new_verifier_set = make_verifier_set(&[444, 555], 333, metadata.domain_separator);
-    let (_signing_session_pda, rotate_signrs_tx_result) = metadata
+    let (_signing_session_pda, rotate_signers_tx_result) = metadata
         .sign_session_and_rotate_signers(
             &metadata.signers.clone(),
             &new_verifier_set.verifier_set(),
@@ -464,13 +455,11 @@ async fn fail_if_rotate_signers_signed_by_old_verifier_set() {
         .unwrap(); // init signing session succeeded
 
     // Assert we are seeing the correct error message in tx logs.
-    assert!(rotate_signrs_tx_result
+    let err = rotate_signers_tx_result
         .unwrap_err()
-        .metadata
-        .unwrap()
-        .log_messages
-        .into_iter()
-        .any(|msg| { msg.contains("Proof is not signed by the latest signer set") }));
+        .get_gateway_error()
+        .unwrap();
+    assert_eq!(err, GatewayError::ProofNotSignedByLatestVerifierSet);
 }
 
 // new verifier set can approve messages

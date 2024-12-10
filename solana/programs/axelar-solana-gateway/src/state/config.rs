@@ -2,7 +2,6 @@
 
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
-use solana_program::msg;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
@@ -43,16 +42,15 @@ impl BytemuckedPda for GatewayConfig {}
 impl GatewayConfig {
     /// Returns `true` if the current epoch is still considered valid given the
     /// signer retention policies.
-    pub fn is_epoch_valid(&self, epoch: U256) -> Result<bool, GatewayError> {
+    pub fn assert_valid_epoch(&self, epoch: U256) -> Result<(), GatewayError> {
         let current_epoch = self.current_epoch;
         let elapsed = current_epoch
             .checked_sub(epoch)
             .ok_or(GatewayError::EpochCalculationOverflow)?;
 
         if elapsed >= self.previous_verifier_set_retention {
-            msg!("verifier set is too old");
             return Err(GatewayError::VerifierSetTooOld);
         }
-        Ok(true)
+        Ok(())
     }
 }
