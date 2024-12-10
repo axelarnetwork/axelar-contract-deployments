@@ -739,30 +739,14 @@
             "OwnerCap": "0x2dd1c932d894d5416d373474b58fe7f0d0bae2932220784657f3f7b2f95de4b3"
           },
           "trustedAddresses": {
-            "axelar": [
-              "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
-            ],
-            "eth-sepolia": [
-              "hub"
-            ],
-            "optimism-sepolia": [
-              "hub"
-            ],
-            "avalanche-fuji": [
-              "hub"
-            ],
-            "core-avalanche": [
-              "hub"
-            ],
-            "flow": [
-              "hub"
-            ],
-            "core-ethereum": [
-              "hub"
-            ],
-            "core-optimism": [
-              "hub"
-            ]
+            "axelar": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
+            "eth-sepolia": "hub",
+            "optimism-sepolia": "hub",
+            "avalanche-fuji": "hub",
+            "core-avalanche": "hub",
+            "flow": "hub",
+            "core-ethereum": "hub",
+            "core-optimism": "hub"
           }
         },
         "Example": {
