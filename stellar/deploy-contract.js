@@ -102,7 +102,7 @@ async function deploy(options, config, chain, contractName) {
     );
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
-    if (contractName == 'interchain_token') {
+    if (contractName === 'interchain_token') {
         chain.contracts[contractName] = {
             deployer: wallet.publicKey(),
             wasmHash: serializeValue(wasmHash),
