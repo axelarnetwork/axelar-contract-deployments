@@ -18,6 +18,7 @@ const {
     getRawPrivateKey,
     broadcast,
     suiClockAddress,
+    saveGeneratedTx,
 } = require('./utils');
 const secp256k1 = require('secp256k1');
 
@@ -140,7 +141,10 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    await broadcast(client, keypair, tx, 'Message sent');
+    return {
+        tx,
+        message: 'Message sent',
+    };
 }
 
 async function approve(keypair, client, config, chain, contractConfig, args, options) {
@@ -173,7 +177,26 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Approved Messages');
+    return {
+        tx,
+        message: 'Approved Messages',
+    };
+}
+
+async function migrate(keypair, client, config, chain, contractConfig, args, options) {
+    const packageId = contractConfig.address;
+
+    const tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::migrate`,
+        arguments: [tx.object(contractConfig.objects.Gateway)],
+    });
+
+    return {
+        tx,
+        message: 'Migrate',
+    };
 }
 
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
@@ -216,7 +239,10 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
         throw new Error(`Unknown payload type: ${payload}`);
     }
 
-    await broadcast(client, keypair, tx, 'Submitted Amplifier Proof');
+    return {
+        tx,
+        message: 'Submitted Amplifier Proof',
+    };
 }
 
 async function rotate(keypair, client, config, chain, contractConfig, args, options) {
@@ -243,7 +269,10 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Rotated Signers');
+    return {
+        tx,
+        message: 'Rotated Signers',
+    };
 }
 
 async function mainProcessor(processor, args, options) {
@@ -257,9 +286,17 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(keypair, client, config, chain, chain.contracts.AxelarGateway, args, options);
+    const { tx, message } = await processor(keypair, client, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
+
+    if (options.offline) {
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, message, client, options);
+    } else {
+        await broadcast(client, keypair, tx, message);
+    }
 }
 
 if (require.main === module) {
@@ -288,6 +325,13 @@ if (require.main === module) {
         });
 
     program
+        .command('migrate')
+        .description('Migrate the gateway after upgrade')
+        .action((options) => {
+            mainProcessor(migrate, null, options);
+        });
+
+    program
         .command('submitProof <multisigSessionId>')
         .description('Submit proof for the provided amplifier multisig session id')
         .action((multisigSessionId, options) => {
@@ -302,7 +346,7 @@ if (require.main === module) {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
         });
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

@@ -1,7 +1,8 @@
 const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
 const { printInfo, validateParameters } = require('../../common/utils');
-const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir } = require('./utils');
+const { copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
@@ -21,10 +22,10 @@ function getUpgradePolicyId(policy) {
 }
 
 async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
+    copyMovePackage(packageToUpgrade.packageDir, null, moveDir);
     const { packageDir, packageName } = packageToUpgrade;
     const { modules, dependencies, digest } = await builder.getContractBuild(packageDir, moveDir);
     const { offline } = options;
-    const sender = options.sender || keypair.toSuiAddress();
     const upgradeCap = contractConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
     const policy = getUpgradePolicyId(options.policy);
@@ -50,13 +51,13 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
         arguments: [cap, receipt],
     });
 
+    const sender = options.sender || keypair.toSuiAddress();
     tx.setSender(sender);
-    const txBytes = await tx.build({ client });
 
     if (offline) {
-        options.txBytes = txBytes;
-        options.offlineMessage = `Transaction to upgrade ${packageDir}`;
+        await saveGeneratedTx(tx, `Transaction to upgrade ${packageDir}`, client, options);
     } else {
+        const txBytes = await tx.build({ client });
         const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
             transactionBlock: txBytes,
@@ -75,6 +76,8 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
         printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} Upgraded Address`, packageId);
+
+        return { upgraded: result, packageId };
     }
 }
 

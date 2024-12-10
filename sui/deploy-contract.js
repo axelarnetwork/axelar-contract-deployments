@@ -1,9 +1,8 @@
 const { Command, Option } = require('commander');
 const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
-const { toB64 } = require('@mysten/sui/utils');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -23,6 +22,7 @@ const {
     getSquidChannelId,
     checkSuiVersionMatch,
     moveDir,
+    getStructs,
 } = require('./utils');
 
 /**
@@ -178,8 +178,8 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         isValidNumber: { minimumRotationDelay },
     });
 
-    const [creatorCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
-        `${packageId}::gateway::CreatorCap`,
+    const [ownerCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+        `${packageId}::owner_cap::OwnerCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -193,7 +193,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     tx.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
-            tx.object(creatorCap),
+            tx.object(ownerCap),
             tx.pure.address(operator),
             tx.pure.address(domainSeparator),
             tx.pure.u64(minimumRotationDelay),
@@ -296,6 +296,8 @@ async function deploy(keypair, client, supportedContract, config, chain, options
         address: published.packageId,
     };
 
+    chain.contracts[packageName].structs = await getStructs(client, published.packageId);
+
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
 
@@ -327,7 +329,13 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+    const result = await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+
+    if (!options.offline) {
+        // The new upgraded package takes a bit of time to register, so we wait.
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+    }
 }
 
 async function mainProcessor(args, options, processor) {
@@ -342,16 +350,6 @@ async function mainProcessor(args, options, processor) {
     await processor(keypair, client, ...args, config, sui, options);
 
     saveConfig(config, options.env);
-
-    if (options.offline) {
-        const { txFilePath } = options;
-        validateParameters({ isNonEmptyString: { txFilePath } });
-
-        const txB64Bytes = toB64(options.txBytes);
-
-        writeJSON({ message: options.offlineMessage, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
-        printInfo(`Unsigned transaction`, txFilePath);
-    }
 }
 
 /**
