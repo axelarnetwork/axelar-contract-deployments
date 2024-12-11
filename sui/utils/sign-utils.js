@@ -11,6 +11,7 @@ const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
+const { LedgerSigner } = require('../LedgerSigner');
 const {
     utils: { hexlify },
 } = ethers;
@@ -40,6 +41,13 @@ function getWallet(chain, options) {
         }
     }
 
+    const client = getSuiClient(chain, options.rpc);
+
+    if (options.privateKey === 'ledger') {
+        keypair = new LedgerSigner();
+        return [keypair, client];
+    }
+
     switch (options.privateKeyType) {
         case 'bech32': {
             const decodedKey = decodeSuiPrivateKey(options.privateKey);
@@ -63,8 +71,6 @@ function getWallet(chain, options) {
             throw new Error(`Unsupported key type: ${options.privateKeyType}`);
         }
     }
-
-    const client = getSuiClient(chain, options.rpc);
 
     return [keypair, client];
 }
@@ -158,15 +164,10 @@ async function broadcastSignature(client, txBytes, signature, actionName) {
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
-    let publicKey;
 
-    try {
-        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
-    } catch {
-        throw new Error(`Cannot verify tx signature`);
-    }
+    const publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
 
-    if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
+    if (publicKey.toSuiAddress() !== (await keypair.toSuiAddress())) {
         throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
     }
 
