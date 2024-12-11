@@ -1650,13 +1650,15 @@
           "initialVerifierSetId": "2e33ae5cb06c1aa706fd9e4d270ecbf8ff031bb1d6c641787c0174769f8da900",
           "governance": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "address": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
-          "implementation": "0xC5578b1c63CE803B9f7f185652CC1E14Af887b8f",
-          "implementationCodehash": "0x6c3eb39b13f61ff890fed14afa251e7a328b307a94c27450662b2a318dbb63e3",
-          "deploymentMethod": "create",
+          "implementation": "0x25cf958D3E1aa67ec03dA6c21e8980D5888F6801",
+          "implementationCodehash": "0x170f932b58370aaeaba2983a87b3d5d2b95b5b0a841ee59e1ed50f9194723744",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xfbfcd8a4d93cdf3dc1099795eefb83c109414406fc09015f4d0758ed6b99c43c",
           "minimumRotationDelay": 300,
-          "connectionType": "amplifier"
+          "connectionType": "amplifier",
+          "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "salt": "v6.0.4"
         },
         "Operators": {
           "owner": "0xBeF25f4733b9d451072416360609e5A4c115293E",
