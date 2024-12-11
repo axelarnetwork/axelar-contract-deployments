@@ -309,7 +309,7 @@ async function processCommand(config, chain, options) {
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandId, sourceChain, sourceAddress, payload);
+            const tx = await appContract.execute(commandId, sourceChain, sourceAddress, payload, gasOptions);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
 
