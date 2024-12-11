@@ -124,17 +124,31 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      ###### Compile Wasm Contracts   ######
-
-      - name: Compile WASM contracts
+      ###### Acquire WASM Contracts   ######
+      - name: Configure CF credentials
         run: |
-          stellar contract build --manifest-path=axelar-cgp-soroban/Cargo.toml
+          cd $HOME; mkdir ~/.aws; touch ~/.aws/credentials; touch ~/.aws/config
+          echo "[default]
+          aws_access_key_id = ${{ secrets.cf-bucket-access-key-id }}
+          aws_secret_access_key = ${{ secrets.cf-bucket-secret-access-key }}" > ~/.aws/credentials
+          echo "[default]
+          region=auto
+          output=json" > ~/.aws/config
 
-          cd axelar-cgp-soroban
-          ./optimize.sh
-          cd ..
+      - name: Fetch WASM contracts from CF
+        env:
+          S3_BUCKET_NAME: ${{ vars.CF_BUCKET_NAME }}
+          ENDPOINT_URL: ${{ secrets.cf-endpoint-url }}
+          CF_BUCKET_ROOT_KEY: ${{ vars.CF_BUCKET_ROOT_KEY }}
+        run: |
+          export CF_WASM_BUCKET_ROOT_KEY="${CF_BUCKET_ROOT_KEY}/${{ env.PACKAGE_NAME }}/${{ env.PACKAGE_VERSION }}/wasm"
+          for name in axelar_gateway axelar_operators axelar_gas_service; do
+            aws s3api get-object --bucket $S3_BUCKET_NAME --key "$CF_WASM_BUCKET_ROOT_KEY/$FILE_KEY" --body "$name.optimized.wasm" --acl public-read --endpoint-url $ENDPOINT_URL
+          done
 
-          WASM_DIR=axelar-cgp-soroban/target/wasm32-unknown-unknown/release
+          ls
+
+          WASM_DIR=./
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
       - name: Setup Stellar wallet
