@@ -237,7 +237,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::its::ITS`,
         `${published.packageId}::its_v0::ITS_v0`,
         `${published.packageId}::owner_cap::OwnerCap`,
@@ -251,7 +251,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         ITSv0: itsv0ObjectId,
         ChannelId: channelId,
         OwnerCap: ownerCapObjectId,
-        UpgradeCap: upgradeCap,
+        UpgradeCap: upgradeCapObjectId,
     };
 
     const tx = new Transaction();
@@ -266,12 +266,12 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 async function postDeploySquid(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [squidObjectId, ownerCap] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [squidObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::squid::Squid`,
         `${published.packageId}::owner_cap::OwnerCap`,
     ]);
     const channelId = await getSquidChannelId(client, squidObjectId);
-    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCap };
+    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
 
     const tx = new Transaction();
     tx.moveCall({
