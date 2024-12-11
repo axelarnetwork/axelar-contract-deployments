@@ -85,16 +85,11 @@ node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME
 node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gas_service.optimized.wasm
 ```
 
-### Interchain Token
-
-```bash
-node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
-```
-
 ### Interchain Token Service
 
-_Note: The Interchain Token Service constructor requires the wasm hash of the Interchain Token. Please ensure Interchain Token is deployed before deploying Interchain Token Service._
-
+Deploy Interchain Token wasm first.
+```bash
+node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
 ```bash
 node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm
 ```
