@@ -47,6 +47,22 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
+        case 'interchain_token_service': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const chainName = nativeToScVal('stellar', { type: 'string' });
+
+            if (!chain?.contracts?.interchain_token?.wasmHash) {
+                throw new Error(`interchain_token contract's wasm hash does not exist.`);
+            }
+
+            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.interchain_token?.wasmHash, 'hex'), {
+                type: 'bytes',
+            });
+
+            return { owner, gatewayAddress, gasServiceAddress, chainName, interchainTokenWasmHash };
+        }
+
         case 'axelar_operators':
             return { owner };
 
@@ -62,22 +78,6 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress };
-        }
-
-        case 'interchain_token_service': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
-            const chainName = nativeToScVal('stellar', { type: 'string' });
-
-            if (!chain?.contracts?.interchain_token?.wasmHash) {
-                throw new Error(`interchain_token contract's wasm hash does not exist.`);
-            }
-
-            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.interchain_token?.wasmHash, 'hex'), {
-                type: 'bytes',
-            });
-
-            return { owner, gatewayAddress, gasServiceAddress, chainName, interchainTokenWasmHash };
         }
 
         default:
