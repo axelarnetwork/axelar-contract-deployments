@@ -64,10 +64,6 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { gatewayAddress, gasServiceAddress };
         }
 
-        case 'interchain_token': {
-            return {};
-        }
-
         case 'interchain_token_service': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
