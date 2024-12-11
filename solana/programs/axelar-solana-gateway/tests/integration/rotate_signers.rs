@@ -1,5 +1,6 @@
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::NativeHasher;
+use axelar_solana_encoding::types::execute_data::MerkleisedPayload;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::verifier_set_hash;
@@ -33,6 +34,12 @@ async fn successfully_rotates_signers() {
         &metadata.domain_separator,
     )
     .unwrap();
+    let MerkleisedPayload::VerifierSetRotation {
+        new_verifier_set_merkle_root,
+    } = execute_data.payload_items
+    else {
+        unreachable!()
+    };
     let verification_session_account = metadata
         .init_payload_session_and_verify(&execute_data)
         .await
@@ -42,7 +49,7 @@ async fn successfully_rotates_signers() {
         metadata.gateway_root_pda,
         verification_session_account,
         metadata.signers.verifier_set_tracker().0,
-        new_verifier_set.verifier_set_tracker().0,
+        axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_merkle_root).0,
         metadata.payer.pubkey(),
         None,
         new_verifier_set_hash,
