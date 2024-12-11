@@ -73,7 +73,10 @@ async fn test_gateway_upgrade_through_proposal() {
     sol_integration.fixture.context.warp_to_slot(2).unwrap();
 
     // Now we can send ixs to the new program
-    let ix = dummy_axelar_solana_gateway::instructions::echo("Testing gateway upgrade".to_string());
+    let ix = dummy_axelar_solana_gateway::instructions::echo(
+        gateway::ID,
+        "Testing gateway upgrade".to_string(),
+    );
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_ok());
     assert_msg_present_in_logs(res, "Echo: Testing gateway upgrade");

@@ -14,7 +14,7 @@ pub mod instructions;
 pub mod processor;
 pub mod state;
 
-solana_program::declare_id!("itswMJtRUe2vd46rb5kDmYzfBHHej4PyX4twgnbT1TG");
+solana_program::declare_id!("its2RSrgfKfQDkuxFhov4nPRw4Wy9i6e757beHvUXZQ");
 
 pub(crate) trait FromAccountInfoSlice<'a> {
     type Context;

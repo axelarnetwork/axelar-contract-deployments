@@ -155,5 +155,8 @@ async fn test_program_checks_pda_is_correctly_derived() {
     approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Provided seeds do not result in a valid address");
+    assert_msg_present_in_logs(
+        res,
+        "Derived operator managed proposal PDA does not match provided one",
+    );
 }
