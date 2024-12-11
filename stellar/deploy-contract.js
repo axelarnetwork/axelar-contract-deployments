@@ -50,14 +50,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'interchain_token_service': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
-            const hubChain = config.chains.axelar || config.axelar;
-            const itsHub = hubChain.contracts.InterchainTokenService.address;
-
-            if (!itsHub) {
-                throw new Error(`ITS Hub address not found`);
-            }
-
-            const itsHubAddress = nativeToScVal(itsHub, { type: 'string' });
+            const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal('stellar', { type: 'string' });
 
             if (!chain?.contracts?.interchain_token?.wasmHash) {
