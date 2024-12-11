@@ -571,7 +571,7 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const pauseStatus = options.pauseStatus;
+            const pauseStatus = (options.pauseStatus === 'true');
 
             const tx = await interchainTokenService.setPauseStatus(pauseStatus, gasOptions);
 
