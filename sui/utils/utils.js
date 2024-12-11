@@ -85,6 +85,7 @@ const checkSuiVersionMatch = () => {
         printWarn('Version mismatch detected:');
         printWarn(`- Installed SUI version: ${installedVersion}`);
         printWarn(`- Version used for tests: ${definedVersion}`);
+        printWarn(`Please download the correct version (${definedVersion}) from https://github.com/MystenLabs/sui/releases`);
     }
 };
 
@@ -275,7 +276,7 @@ const getStructs = async (client, packageId) => {
     const structs = {};
 
     for (const type of packageData.data.bcs.typeOriginTable) {
-        structs[type.datatype_name] = `${type.package}::${type.moduleName}::${type.datatype_name}`;
+        structs[type.datatype_name] = `${type.package}::${type.module_name}::${type.datatype_name}`;
     }
 
     return structs;
