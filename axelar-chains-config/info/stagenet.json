@@ -1861,7 +1861,6 @@
       "AxelarnetGateway": {
         "storeCodeProposalId": "68",
         "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
-        "chainName": "axelar",
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
         "address": "axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6",
         "codeId": 20,
@@ -1870,8 +1869,7 @@
           "address": "axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6"
         },
         "lastUploadedCodeId": 20
-      },
-      "undefined": {}
+      }
     },
     "axelarId": "axelar",
     "chainId": "axelar-stagenet-724",
