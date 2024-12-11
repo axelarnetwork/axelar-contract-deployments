@@ -181,7 +181,7 @@ node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp
 
 ### Interchain Token Service
 
-_Note: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages. All ITS messages must be sent to and received from the ITS Hub._
+_Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
 
 #### Set Trusted Chain
 
