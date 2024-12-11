@@ -20,7 +20,7 @@ async function removeTrustedChain(wallet, _, chain, contractConfig, arg, options
 
     const operation = contract.call('remove_trusted_chain', callArg);
 
-    await broadcast(operation, wallet, chain, 'Trusted Address Removed', options);
+    await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
 }
 
 async function mainProcessor(processor, args, options) {
