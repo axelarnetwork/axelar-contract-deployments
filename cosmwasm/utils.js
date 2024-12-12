@@ -45,7 +45,6 @@ const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
-
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
