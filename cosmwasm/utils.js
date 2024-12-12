@@ -43,7 +43,7 @@ const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.from
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
-const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
+const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -61,7 +61,7 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToKebab(contractName)}.wasm`);
+const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
     config.axelar = config.axelar || {};
