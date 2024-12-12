@@ -40,6 +40,8 @@ pub mod event_prefixes {
     pub const MESSAGE_APPROVED: &Disc = b"message approved";
     /// Event prefix for an event when an outgoing GMP call gets emitted
     pub const CALL_CONTRACT: &Disc = b"call contract___";
+    /// Event prefix for an event when an outgoing GMP call gets emitted with offchain data
+    pub const CALL_CONTRACT_OFFCHAIN_DATA: &Disc = b"offchain data___";
     /// Event prefix for an event when signers rotate
     pub const SIGNERS_ROTATED: &Disc = b"signers rotated_";
     /// Event prefix for an event when operatorship was transferred

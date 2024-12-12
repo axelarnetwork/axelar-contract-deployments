@@ -62,6 +62,21 @@ pub enum GatewayInstruction {
         payload: Vec<u8>,
     },
 
+    /// Represents the `CallContract` Axelar event. The contract call data is expected to be
+    /// handled off-chain by uploading the data using the relayer API.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [SIGNER] Sender (origin) of the message)
+    /// 1. [] Gateway Root Config PDA account
+    CallContractOffchainData {
+        /// The name of the target blockchain.
+        destination_chain: String,
+        /// The address of the target contract in the destination blockchain.
+        destination_contract_address: String,
+        /// Hash of the contract call data, to be uploaded off-chain through the relayer API.
+        payload_hash: [u8; 32],
+    },
+
     /// Initializes the Gateway configuration PDA account.
     ///
     /// Accounts expected by this instruction:
@@ -212,6 +227,33 @@ pub fn call_contract(
         destination_chain,
         destination_contract_address,
         payload,
+    })?;
+
+    let accounts = vec![
+        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+    ];
+
+    Ok(Instruction {
+        program_id: gateway_program_id,
+        accounts,
+        data,
+    })
+}
+
+/// Creates a [`CallContractOffchainData`] instruction.
+pub fn call_contract_offchain_data(
+    gateway_program_id: Pubkey,
+    gateway_root_pda: Pubkey,
+    sender: Pubkey,
+    destination_chain: String,
+    destination_contract_address: String,
+    payload_hash: [u8; 32],
+) -> Result<Instruction, ProgramError> {
+    let data = to_vec(&GatewayInstruction::CallContractOffchainData {
+        destination_chain,
+        destination_contract_address,
+        payload_hash,
     })?;
 
     let accounts = vec![

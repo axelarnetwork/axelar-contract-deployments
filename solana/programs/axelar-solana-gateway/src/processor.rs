@@ -12,6 +12,7 @@ use crate::instructions::GatewayInstruction;
 
 mod approve_message;
 mod call_contract;
+mod call_contract_offchain_data;
 mod initialize_config;
 mod initialize_payload_verification_session;
 mod rotate_signers;
@@ -20,6 +21,7 @@ mod validate_message;
 mod verify_signature;
 
 pub use call_contract::CallContractEvent;
+pub use call_contract_offchain_data::CallContractOffchainDataEvent;
 pub use rotate_signers::VerifierSetRotated;
 pub use transfer_operatorship::OperatorshipTransferredEvent;
 pub use validate_message::MessageEvent;
@@ -68,6 +70,20 @@ impl Processor {
                     destination_chain,
                     destination_contract_address,
                     payload,
+                )
+            }
+            GatewayInstruction::CallContractOffchainData {
+                destination_chain,
+                destination_contract_address,
+                payload_hash,
+            } => {
+                msg!("Instruction: Call Contract Offchain Data");
+                Self::process_call_contract_offchain_data(
+                    program_id,
+                    accounts,
+                    destination_chain,
+                    destination_contract_address,
+                    payload_hash,
                 )
             }
             GatewayInstruction::InitializeConfig(init_config) => {
@@ -119,6 +135,12 @@ pub enum GatewayEvent {
     ///
     /// This event is emitted when a contract call is initiated to an external chain.
     CallContract(CallContractEvent),
+
+    /// Represents a `CallContractOffchainData` event.
+    ///
+    /// This event is emitted when a contract call is initiated to an external chain with call data
+    /// being passed offchain.
+    CallContractOffchainData(CallContractOffchainDataEvent),
 
     /// Represents a `VerifierSetRotated` event.
     VerifierSetRotated(VerifierSetRotated),

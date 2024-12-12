@@ -146,6 +146,10 @@ where
             let event = axelar_solana_gateway::processor::CallContractEvent::new(logs)?;
             GatewayEvent::CallContract(event)
         }
+        CALL_CONTRACT_OFFCHAIN_DATA => {
+            let event = axelar_solana_gateway::processor::CallContractOffchainDataEvent::new(logs)?;
+            GatewayEvent::CallContractOffchainData(event)
+        }
         MESSAGE_APPROVED => {
             let event = axelar_solana_gateway::processor::MessageEvent::new(logs)?;
             GatewayEvent::MessageApproved(event)

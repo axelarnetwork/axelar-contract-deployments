@@ -861,6 +861,7 @@ dependencies = [
  "pretty_assertions",
  "program-utils",
  "rstest",
+ "serde_json",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
