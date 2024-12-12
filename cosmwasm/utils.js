@@ -568,8 +568,8 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
         }
 
         case 'AxelarnetGateway': {
-            if (!chainConfig) {
-                throw new Error('AxelarnetGateway requires chainName option');
+            if (chainConfig) {
+                throw new Error('AxelarnetGateway does not support chainName option');
             }
 
             return makeAxelarnetGatewayInstantiateMsg(contractConfig, config);
