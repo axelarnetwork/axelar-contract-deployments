@@ -112,10 +112,7 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     // Assert
     // Message should be executed
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(
-        gateway_approved_message.message.status,
-        MessageStatus::Executed
-    );
+    assert_eq!(gateway_approved_message.status, MessageStatus::Executed);
 
     let data = solana_chain
         .fixture
@@ -213,10 +210,7 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     // Assert
     // Message should be executed
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(
-        gateway_approved_message.message.status,
-        MessageStatus::Executed
-    );
+    assert_eq!(gateway_approved_message.status, MessageStatus::Executed);
 
     let token_manager_ata_account = solana_chain
         .fixture

@@ -91,10 +91,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     // Assert
     // First message should be executed
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(
-        gateway_approved_message.message.status,
-        MessageStatus::Executed
-    );
+    assert_eq!(gateway_approved_message.status, MessageStatus::Executed);
 
     // The second message is still in Approved status
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
@@ -102,10 +99,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &other_message_in_the_batch.cc_id.id,
     ));
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(
-        gateway_approved_message.message.status,
-        MessageStatus::Approved
-    );
+    assert_eq!(gateway_approved_message.status, MessageStatus::Approved);
 
     // We can get the memo from the logs
     assert!(

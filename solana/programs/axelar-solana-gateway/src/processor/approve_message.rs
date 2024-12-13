@@ -1,4 +1,3 @@
-use std::mem::size_of;
 use std::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
@@ -12,7 +11,7 @@ use solana_program::pubkey::Pubkey;
 
 use super::Processor;
 use crate::error::GatewayError;
-use crate::state::incoming_message::{command_id, IncomingMessage, IncomingMessageWrapper};
+use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::BytemuckedPda;
 use crate::{
@@ -99,24 +98,28 @@ impl Processor {
             incoming_message_pda,
             program_id,
             system_program,
-            size_of::<IncomingMessageWrapper>() as u64,
+            IncomingMessage::LEN as u64,
             seeds,
         )?;
-        let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message_data = IncomingMessageWrapper::read_mut(&mut data)?;
 
         let destination_address =
             Pubkey::from_str(&message.destination_address).map_err(|_err| {
                 solana_program::msg!("Invalid destination address");
                 GatewayError::InvalidDestinationAddress
             })?;
-
         let (_, signing_pda_bump) =
             get_validate_message_signing_pda(destination_address, command_id);
 
-        incoming_message_data.bump = incoming_message_pda_bump;
-        incoming_message_data.signing_pda_bump = signing_pda_bump;
-        incoming_message_data.message = IncomingMessage::new(message_hash);
+        // Persist a new incoming message with "in progress" status in the PDA data.
+        let mut data = incoming_message_pda.try_borrow_mut_data()?;
+        let incoming_message_data = IncomingMessage::read_mut(&mut data)?;
+        *incoming_message_data = IncomingMessage::new(
+            incoming_message_pda_bump,
+            signing_pda_bump,
+            MessageStatus::Approved,
+            message_hash,
+            message.payload_hash,
+        );
 
         // Emit an event
         sol_log_data(&[

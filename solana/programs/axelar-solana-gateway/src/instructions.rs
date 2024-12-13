@@ -112,6 +112,75 @@ pub enum GatewayInstruction {
         verifier_info: SigningVerifierSetInfo,
     },
 
+    /// Initializes a Message Payload PDA account.
+    ///
+    /// This instruction will revert if the account already exists.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [WRITE, SIGNER] Funding account, which becomes the authority for the Message Payload account.
+    /// 1. [] Gateway Root PDA account
+    /// 2. [WRITE] Message Payload PDA account
+    /// 3. [] System Program account
+    InitializeMessagePayload {
+        /// The number of bytes to allocate for the new message payload account
+        buffer_size: u64,
+        /// Message's command id
+        command_id: [u8; 32],
+    },
+
+    /// Write message payload parts into the Message Payload PDA account.
+    ///
+    /// This instruction will revert on the following cases
+    /// 1. Message payload account is already committed.
+    /// 2. offset + bytes.len() is greater than the account size.
+    /// 3. SIGNER is not the authority for the Message Payload account.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [SIGNER] Funding account and authority for the Message Payload account.
+    /// 1. [] Gateway Root PDA account
+    /// 2. [WRITE] Message Payload PDA account
+    WriteMessagePayload {
+        /// Offset at which to write the given bytes.
+        offset: usize,
+        /// Serialized `execute_data` data.
+        bytes: Vec<u8>,
+        /// Message's command id
+        command_id: [u8; 32],
+    },
+
+    /// Finalizes the writing phase for a Message Payload PDA buffer
+    /// account and writes the calculated hash into its metadata
+    /// section.
+    ///
+    /// This instruction will revert on the following circumstances:
+    /// 1. The message payload account is already finalized.
+    /// 2. The message payload account already had the payload hash calculated
+    ///    and persisted.
+    /// 3. SIGNER is not the authority for the Message Payload account.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [SIGNER] Funding account and authority for the Message Payload account.
+    /// 1. [] Gateway Root PDA account
+    /// 2. [WRITE] Message Payload PDA account
+    CommitMessagePayload {
+        /// Message's command id
+        command_id: [u8; 32],
+    },
+
+    /// Closes the message payload account and reclaim its lamports.
+    ///
+    /// This instruction will revert on the following circumstances:
+    /// 1. SIGNER is not the authority for the Message Payload account.
+    ///
+    /// Accounts expected by this instruction:
+    /// 0. [SIGNER] Funding account and authority for the Message Payload account.
+    /// 1. [] Gateway Root PDA account
+    /// 2. [WRITE] Message Payload PDA account
+    CloseMessagePayload {
+        /// Message's command id
+        command_id: [u8; 32],
+    },
+
     /// Validates message.
     /// It is the responsibility of the destination program (contract) that
     /// receives a message from Axelar to validate that the message has been
@@ -378,5 +447,105 @@ pub fn validate_message(
         program_id: crate::id(),
         accounts,
         data,
+    })
+}
+
+/// Creates a [`GatewayInstruction::InitializeMessagePayload`] instruction.
+pub fn initialize_message_payload(
+    gateway_root_pda: Pubkey,
+    payer: Pubkey,
+    command_id: [u8; 32],
+    buffer_size: u64,
+) -> Result<Instruction, ProgramError> {
+    let (message_payload_pda, _) =
+        crate::find_message_payload_pda(gateway_root_pda, command_id, payer);
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(message_payload_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    ];
+
+    let instruction = GatewayInstruction::InitializeMessagePayload {
+        buffer_size,
+        command_id,
+    };
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::WriteMessagePayload`] instruction.
+pub fn write_message_payload(
+    gateway_root_pda: Pubkey,
+    authority: Pubkey,
+    command_id: [u8; 32],
+    bytes: &[u8],
+    offset: usize,
+) -> Result<Instruction, ProgramError> {
+    let (message_payload_pda, _) =
+        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let accounts = vec![
+        AccountMeta::new(authority, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(message_payload_pda, false),
+    ];
+    let instruction = GatewayInstruction::WriteMessagePayload {
+        offset,
+        bytes: bytes.to_vec(),
+        command_id,
+    };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::CommitMessagePayload`] instruction.
+pub fn commit_message_payload(
+    gateway_root_pda: Pubkey,
+    authority: Pubkey,
+    command_id: [u8; 32],
+) -> Result<Instruction, ProgramError> {
+    let (message_payload_pda, _) =
+        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+
+    let accounts = vec![
+        AccountMeta::new(authority, true),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(message_payload_pda, false),
+    ];
+
+    let instruction = GatewayInstruction::CommitMessagePayload { command_id };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstrucon::CloseMessagePayload`] instruction.
+pub fn close_message_payload(
+    gateway_root_pda: Pubkey,
+    authority: Pubkey,
+    command_id: [u8; 32],
+) -> Result<Instruction, ProgramError> {
+    let (message_payload_pda, _) =
+        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let accounts = vec![
+        AccountMeta::new(authority, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new(message_payload_pda, false),
+    ];
+    let instruction = GatewayInstruction::CloseMessagePayload { command_id };
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data: borsh::to_vec(&instruction)?,
     })
 }

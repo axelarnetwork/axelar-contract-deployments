@@ -15,7 +15,7 @@ use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use axelar_solana_gateway::processor::GatewayEvent;
-use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
 use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
@@ -404,10 +404,7 @@ impl SolanaAxelarIntegrationMetadata {
     }
 
     /// Get the verifier set tracker data
-    pub async fn incoming_message(
-        &mut self,
-        incoming_message_pda: Pubkey,
-    ) -> IncomingMessageWrapper {
+    pub async fn incoming_message(&mut self, incoming_message_pda: Pubkey) -> IncomingMessage {
         let gateway_root_pda_account = self
             .banks_client
             .get_account(incoming_message_pda)
@@ -421,9 +418,7 @@ impl SolanaAxelarIntegrationMetadata {
             axelar_solana_gateway::ID,
             "must be owned by the gateway"
         );
-        let res = *IncomingMessageWrapper::read(gateway_root_pda_account.data()).unwrap();
-
-        res
+        *IncomingMessage::read(gateway_root_pda_account.data()).unwrap()
     }
 }
 

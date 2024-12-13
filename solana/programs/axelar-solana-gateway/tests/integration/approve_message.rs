@@ -8,9 +8,7 @@ use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::approve_messages;
 use axelar_solana_gateway::processor::GatewayEvent;
-use axelar_solana_gateway::state::incoming_message::{
-    command_id, IncomingMessage, IncomingMessageWrapper,
-};
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, make_messages, make_verifier_set, GetGatewayError, ProgramInvocationState,
@@ -87,12 +85,14 @@ async fn successfully_approves_messages() {
 
         // Assert PDA state for message approval
         let account = metadata.incoming_message(incoming_message_pda).await;
-        let expected_message = IncomingMessageWrapper {
-            message: IncomingMessage::new(hash),
-            bump: incoming_message_pda_bump,
+        let expected_message = IncomingMessage::new(
+            incoming_message_pda_bump,
             signing_pda_bump,
-            _padding_bump: [0; 6],
-        };
+            MessageStatus::Approved,
+            hash,
+            message.payload_hash,
+        );
+
         assert_eq!(account, expected_message);
         counter += 1;
     }
@@ -179,12 +179,13 @@ async fn fail_individual_approval_if_done_many_times() {
             get_validate_message_signing_pda(destination_address, command_id);
 
         let account = metadata.incoming_message(incoming_message_pda).await;
-        let expected_message = IncomingMessageWrapper {
-            message: IncomingMessage::new(hash),
-            bump: incoming_message_pda_bump,
+        let expected_message = IncomingMessage::new(
+            incoming_message_pda_bump,
             signing_pda_bump,
-            _padding_bump: [0; 6],
-        };
+            MessageStatus::Approved,
+            hash,
+            message_info.leaf.message.payload_hash,
+        );
         assert_eq!(account, expected_message);
     }
 

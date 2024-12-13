@@ -27,6 +27,8 @@ pub mod seed_prefixes {
     pub const SIGNATURE_VERIFICATION_SEED: &[u8] = b"gtw-sig-verif";
     /// The seed prefix for deriving incoming message PDAs
     pub const INCOMING_MESSAGE_SEED: &[u8] = b"incoming message";
+    /// The seed prefix for deriving message payload PDAs
+    pub const MESSAGE_PAYLOAD_SEED: &[u8] = b"message-payload";
 }
 
 /// Event discriminators for different types of events
@@ -87,11 +89,21 @@ pub fn assert_valid_gateway_root_pda(
     }
 }
 
-/// Get the incomeng message PDA & bump
+/// Get the incoming message PDA & bump
 #[inline]
 pub fn get_incoming_message_pda(command_id: &[u8]) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[seed_prefixes::INCOMING_MESSAGE_SEED, command_id],
+        &crate::id(),
+    )
+}
+
+/// Creates the IncomingMessage PDA from a bump previously calculated
+/// by [`get_incoming_message_pda`].
+#[inline]
+pub fn create_incoming_message_pda(command_id: [u8; 32], bump: u8) -> Result<Pubkey, PubkeyError> {
+    Pubkey::create_program_address(
+        &[seed_prefixes::INCOMING_MESSAGE_SEED, &command_id, &[bump]],
         &crate::id(),
     )
 }
@@ -233,16 +245,81 @@ pub fn create_validate_message_signing_pda(
     Pubkey::create_program_address(&[command_id, &[signing_pda_bump]], destination_address)
 }
 
+/// Finds the MessagePayload PDA.
+///
+/// This function is expensive and should not be used on-chain. Prefer
+/// using [`create_message_payload_pda`] instead.
+#[inline]
+pub fn find_message_payload_pda(
+    gateway_root_pda: Pubkey,
+    command_id: [u8; 32],
+    authority: Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            seed_prefixes::MESSAGE_PAYLOAD_SEED,
+            gateway_root_pda.as_ref(),
+            &command_id,
+            authority.as_ref(),
+        ],
+        &crate::ID,
+    )
+}
+
+/// Creates the MessagePayload PDA from a bump previously calculated
+/// by [`find_message_payload_pda`].
+#[inline]
+pub fn create_message_payload_pda(
+    gateway_root_pda: Pubkey,
+    command_id: [u8; 32],
+    authority: Pubkey,
+    bump: u8,
+) -> Result<Pubkey, PubkeyError> {
+    Pubkey::create_program_address(
+        &[
+            seed_prefixes::MESSAGE_PAYLOAD_SEED,
+            gateway_root_pda.as_ref(),
+            &command_id,
+            authority.as_ref(),
+            &[bump],
+        ],
+        &crate::ID,
+    )
+}
+
 /// Test that the bump from `get_signature_verification_pda` generates the same
 /// public key when used with the same hash by
 /// `create_signature_verification_pda`.
 #[test]
 fn test_get_and_create_signature_verification_pda_bump_reuse() {
     let gateway_root_pda = Pubkey::new_unique();
-    let random_bytes = [43; 32];
-    let (found_pda, bump) = get_signature_verification_pda(&gateway_root_pda, &random_bytes);
+    let payload_merkle_root = rand::random();
+    let (found_pda, bump) = get_signature_verification_pda(&gateway_root_pda, &payload_merkle_root);
     let created_pda =
-        create_signature_verification_pda(&gateway_root_pda, &random_bytes, bump).unwrap();
+        create_signature_verification_pda(&gateway_root_pda, &payload_merkle_root, bump).unwrap();
+    assert_eq!(found_pda, created_pda);
+}
+
+/// Test that the bump from `find_message_payload_pda` generates the same public key when
+/// used with the same inputs by `create_message_payload_pda`.
+#[test]
+fn test_find_and_create_message_payload_pda_bump_reuse() {
+    let gateway_root_pda = Pubkey::new_unique();
+    let authority = Pubkey::new_unique();
+    let command_id = rand::random();
+    let (found_pda, bump) = find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let created_pda =
+        create_message_payload_pda(gateway_root_pda, command_id, authority, bump).unwrap();
+    assert_eq!(found_pda, created_pda);
+}
+
+/// Test that the bump from `get_incoming_message_pda` generates the same public key when
+/// used with the same inputs by `create_incoming_message_pda`.
+#[test]
+fn test_get_and_create_incoming_message_pda_bump_reuse() {
+    let command_id: [u8; 32] = rand::random();
+    let (found_pda, bump) = get_incoming_message_pda(&command_id);
+    let created_pda = create_incoming_message_pda(command_id, bump).unwrap();
     assert_eq!(found_pda, created_pda);
 }
 

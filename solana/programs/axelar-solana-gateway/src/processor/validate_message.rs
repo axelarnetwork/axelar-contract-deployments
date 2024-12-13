@@ -13,7 +13,7 @@ use solana_program::pubkey::Pubkey;
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
-use crate::state::incoming_message::{command_id, IncomingMessageWrapper, MessageStatus};
+use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::state::BytemuckedPda;
 use crate::{
     assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
@@ -32,13 +32,14 @@ impl Processor {
 
         // compute the message hash
         let message_hash = message.hash::<SolanaSyscallHasher>();
+
         // compute the command id
         let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
 
         // Check: Gateway Root PDA is initialized.
         incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message = IncomingMessageWrapper::read_mut(&mut data)?;
+        let incoming_message = IncomingMessage::read_mut(&mut data)?;
         assert_valid_incoming_message_pda(
             &command_id,
             incoming_message.bump,
@@ -46,11 +47,11 @@ impl Processor {
         )?;
 
         // Check: message is approved
-        if incoming_message.message.status != MessageStatus::Approved {
+        if incoming_message.status != MessageStatus::Approved {
             return Err(GatewayError::MessageNotApproved.into());
         }
         // Check: message hashes match
-        if incoming_message.message.message_hash != message_hash {
+        if incoming_message.message_hash != message_hash {
             return Err(GatewayError::MessageHasBeenTamperedWith.into());
         }
         let destination_address = Pubkey::from_str(&message.destination_address)
@@ -71,7 +72,7 @@ impl Processor {
             return Err(GatewayError::CallerNotSigner.into());
         }
 
-        incoming_message.message.status = MessageStatus::Executed;
+        incoming_message.status = MessageStatus::Executed;
 
         // Emit an event
         sol_log_data(&[

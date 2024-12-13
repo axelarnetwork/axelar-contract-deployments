@@ -5,7 +5,7 @@ use core::str::FromStr;
 
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::get_validate_message_signing_pda;
-use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessageWrapper};
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
 use axelar_solana_gateway::state::BytemuckedPda;
 use num_traits::{FromPrimitive, ToPrimitive};
 use rkyv::bytecheck::{self, CheckBytes};
@@ -56,7 +56,7 @@ pub fn validate_message(
         let accounts_iter = &mut relayer_prepended_accs.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
-        let incoming_message = IncomingMessageWrapper::read(&incoming_message_data)?;
+        let incoming_message = IncomingMessage::read(&incoming_message_data)?;
         incoming_message.signing_pda_bump
     };
 
@@ -106,7 +106,7 @@ pub fn validate_with_gmp_metadata(
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
-        let incoming_message = IncomingMessageWrapper::read(&incoming_message_data)?;
+        let incoming_message = IncomingMessage::read(&incoming_message_data)?;
         incoming_message.signing_pda_bump
     };
 

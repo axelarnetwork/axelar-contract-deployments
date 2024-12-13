@@ -38,6 +38,10 @@ pub enum GatewayError {
     #[error("Verifier set tracker PDA already initialized")]
     VerifierSetTrackerAlreadyInitialised,
 
+    /// Message Payload PDA was already initialized.
+    #[error("Message Payload PDA was already initialized")]
+    MessagePayloadAlreadyInitialized,
+
     /// Error indicating an underflow occurred during epoch calculation.
     #[error("Epoch calculation resulted in an underflow")]
     // --- NOTICE ---
@@ -168,7 +172,7 @@ mod tests {
             .collect_vec();
 
         // confidence check that we derived the errors correctly
-        assert_eq!(errors_to_proceed.len(), 5);
+        assert_eq!(errors_to_proceed.len(), 6);
         assert_eq!(errors_to_not_proceed.len(), 23);
 
         // Errors that should cause the relayer to proceed (error numbers < 500)

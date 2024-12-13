@@ -1,9 +1,7 @@
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::instructions::validate_message;
-use axelar_solana_gateway::state::incoming_message::{
-    command_id, IncomingMessageWrapper, MessageStatus,
-};
+use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{make_messages, GetGatewayError};
@@ -77,7 +75,7 @@ async fn fail_if_message_already_executed() {
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
     let mut incoming_message = metadata.incoming_message(incoming_message_pda).await;
-    incoming_message.message.status = MessageStatus::Executed; // source of error
+    incoming_message.status = MessageStatus::Executed; // source of error
     set_existing_incoming_message_state(&mut metadata, incoming_message_pda, incoming_message)
         .await;
 
@@ -181,7 +179,7 @@ async fn fail_if_invalid_signing_pda_seeds() {
 async fn set_existing_incoming_message_state(
     metadata: &mut axelar_solana_gateway_test_fixtures::SolanaAxelarIntegrationMetadata,
     incoming_message_pda: Pubkey,
-    incoming_message: IncomingMessageWrapper,
+    incoming_message: IncomingMessage,
 ) {
     let mut raw_account = metadata
         .banks_client

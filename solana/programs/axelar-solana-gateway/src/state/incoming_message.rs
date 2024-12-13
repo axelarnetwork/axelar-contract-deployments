@@ -4,61 +4,61 @@ use bytemuck::{Pod, Zeroable};
 
 use super::BytemuckedPda;
 
-/// Incoming message from Axelar -> Solana
+/// Data for the incoming message (from Axelar to Solana) PDA.
 #[repr(C)]
 #[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
-pub struct IncomingMessageWrapper {
-    /// The metadata for incoming message
-    pub message: IncomingMessage,
+pub struct IncomingMessage {
     /// The bump that was used to create the PDA
     pub bump: u8,
     /// The bump for the signing PDA
     pub signing_pda_bump: u8,
-    /// padding to align the bump
-    pub _padding_bump: [u8; 6],
-}
-
-/// Incoming message from Axelar -> Solana.
-#[repr(C)]
-#[derive(Zeroable, Pod, Clone, Copy, PartialEq, Eq, Debug)]
-pub struct IncomingMessage {
+    _pad: [u8; 2],
     /// Status of the message
     pub status: MessageStatus, // 4 byte
-    /// alignment padding
-    pub _padding: [u8; 4], // 4 bytes to align to 16 bytes
     /// Hash of the whole message
     pub message_hash: [u8; 32],
+    /// Hash of the message's payload
+    pub payload_hash: [u8; 32],
 }
 
 impl IncomingMessage {
-    /// New default [`IncomingMessage`]
-    pub fn new(message_hash: [u8; 32]) -> Self {
+    /// New default [`IncomingMessage`].
+    pub fn new(
+        bump: u8,
+        signing_pda_bump: u8,
+        status: MessageStatus,
+        message_hash: [u8; 32],
+        payload_hash: [u8; 32],
+    ) -> Self {
         Self {
-            status: MessageStatus::Approved,
-            _padding: [0; 4],
+            bump,
+            signing_pda_bump,
+            _pad: Default::default(),
+            status,
             message_hash,
+            payload_hash,
         }
     }
+
+    /// Size of this type, in bytes.
+    pub const LEN: usize = std::mem::size_of::<Self>();
 }
 
-impl BytemuckedPda for IncomingMessageWrapper {}
+impl BytemuckedPda for IncomingMessage {}
 
-/// ABytemuckedUtilsitself is marked as `Approved`, the command can be used
-/// for CPI [`GatewayInstructon::ValidateMessage`] instruction.
+/// If this is marked as `Approved`, the command can be used for CPI
+/// [`GatewayInstructon::ValidateMessage`] instruction.
+///
 /// This maps to [these lines in the Solidity Gateway](https://github.com/axelarnetwork/axelar-cgp-solidity/blob/78fde453094074ca93ef7eea1e1395fba65ba4f6/contracts/AxelarGateway.sol#L636-L648)
 #[repr(C)]
 #[derive(Zeroable, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum MessageStatus {
+    /// The state of the command after it has been approved
+    Approved = 0,
+
     /// [`GatewayInstructon::ValidateMessage`] has been called and the command
     /// has been executed by the destination program.
-    Executed = 0,
-
-    /// The state where the message has been approved and now its chunks are
-    /// being written to
-    InProgress = 1,
-
-    /// The state of the command after it has been approved
-    Approved = 2,
+    Executed = 1,
 }
 
 unsafe impl Pod for MessageStatus {}

@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
-    BanksClient, BanksTransactionResultWithMetadata, ProgramTest, ProgramTestBanksClientExt as _,
-    ProgramTestContext,
+    BanksClient, BanksClientError, BanksTransactionResultWithMetadata, ProgramTest,
+    ProgramTestBanksClientExt as _, ProgramTestContext,
 };
 use solana_sdk::account::{Account, AccountSharedData, WritableAccount as _};
 use solana_sdk::account_utils::StateMut as _;
@@ -244,19 +244,29 @@ impl TestFixture {
     /// Get the account data
     ///
     /// # Panics
-    /// if the account does not exist or the expected owner does not match
+    /// if the account does not exist or the expected owner does not match.
+    #[allow(clippy::panic)]
     pub async fn get_account(&mut self, account: &Pubkey, expected_owner: &Pubkey) -> Account {
-        let account = self
-            .banks_client
-            .get_account(*account)
-            .await
-            .expect("get_account")
-            .expect("account not none");
-        assert_eq!(
-            account.owner, *expected_owner,
-            "expected owners don't match"
-        );
-        account
+        match self.try_get_account(account, expected_owner).await {
+            Ok(Some(account)) => account,
+            Ok(None) => panic!("account not found"),
+            Err(error) => panic!("error while getting account: {error}"),
+        }
+    }
+
+    /// Tries to get an account.
+    ///
+    /// Non-panicking version of `Self::get_account`
+    pub async fn try_get_account(
+        &mut self,
+        account: &Pubkey,
+        expected_owner: &Pubkey,
+    ) -> Result<Option<Account>, BanksClientError> {
+        match self.banks_client.get_account(*account).await? {
+            None => Ok(None),
+            Some(account) if account.owner == *expected_owner => Ok(Some(account)),
+            Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
+        }
     }
 }
 
