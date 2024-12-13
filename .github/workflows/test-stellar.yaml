@@ -177,12 +177,12 @@ jobs:
       - name: Deploy axelar_gateway
         run: |
           CONTRACT=axelar_gateway
-          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --initialize
+          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
 
       - name: Deploy axelar_operators
         run: |
           CONTRACT=axelar_operators
-          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --initialize
+          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
 
       ###### Command: Gateway ######
       # FIXME:
