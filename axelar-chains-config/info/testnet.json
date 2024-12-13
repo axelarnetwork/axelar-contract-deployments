@@ -2483,8 +2483,8 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "102",
-        "storeCodeProposalCodeHash": "aa762ada72f295c0890c7beca089b13498b95d04f59262cea4bdf64b07d9edc7",
+        "storeCodeProposalId": "172",
+        "storeCodeProposalCodeHash": "fcbd66ffc824fc52383132d7a57617e9bc40dd1521ecad77341726434f801406",
         "codeId": 7,
         "lastUploadedCodeId": 7,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
@@ -2496,8 +2496,8 @@
       "Router": {
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "100",
-        "storeCodeProposalCodeHash": "c89ad7b98afcafea866ff9b9064ade1dc865a0b4a257cbd0a80fae433c916eab",
+        "storeCodeProposalId": "179",
+        "storeCodeProposalCodeHash": "7368e7507f29ae9236c9c41fc1fbe5456260fb91acf1e2ff07d677bdcbca7e9f",
         "codeId": 5,
         "lastUploadedCodeId": 5,
         "address": "axelar1d9atnamjjhtc46zmzyc202llqs0rhtxnphs6mkjurekath3mkgtq7hsk93",
@@ -2516,9 +2516,9 @@
       },
       "Rewards": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalCodeHash": "58bad05811e78e958da699aad49f39e6f3ad2502db3f494459208bb2d1f02bfa",
+        "storeCodeProposalCodeHash": "095c1caca4f9b7381519bd8395f3f558202fd4d4ad03f223dd8a2e991c568bd6",
         "rewardsDenom": "uaxl",
-        "storeCodeProposalId": "156",
+        "storeCodeProposalId": "180",
         "params": {
           "epoch_duration": "14400",
           "rewards_per_epoch": "10000000",
@@ -2533,8 +2533,8 @@
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "109",
-        "storeCodeProposalCodeHash": "1c058dec7e9c294f4e7401bd9611d2e811e0cf3a41917c4dd22766ea40b95fa2",
+        "storeCodeProposalId": "176",
+        "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
         "codeId": 13,
         "lastUploadedCodeId": 13,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
@@ -2546,8 +2546,8 @@
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "104",
-        "storeCodeProposalCodeHash": "a01cfc3c3a6e5fb22ea5818f2de8a453e0f37b9a54380d76eb4d4ea8d8b6de94",
+        "storeCodeProposalId": "173",
+        "storeCodeProposalCodeHash": "765929ba3060cdfa5573ec621cb91b3a77f7d9fbc8d1b953f545876bb5abb05e",
         "codeId": 9,
         "lastUploadedCodeId": 9,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
@@ -2617,8 +2617,8 @@
           "codeId": 12,
           "address": "axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj"
         },
-        "storeCodeProposalId": "107",
-        "storeCodeProposalCodeHash": "6c4d2f520d62bcd7edd4de772257e74b48a8dfba39f853a9c12ff51ca9ea1e83",
+        "storeCodeProposalId": "175",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 12
       },
       "Gateway": {
@@ -2638,8 +2638,8 @@
           "codeId": 11,
           "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq"
         },
-        "storeCodeProposalId": "106",
-        "storeCodeProposalCodeHash": "eae97caf40ae6b5eea1e145eec27a59e73aa6f9de389fa9ca0cfc9354a3b68ac",
+        "storeCodeProposalId": "181",
+        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
         "lastUploadedCodeId": 11
       },
       "VotingVerifier": {
@@ -2706,11 +2706,15 @@
         "storeCodeProposalId": "105",
         "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
         "lastUploadedCodeId": 10
+      },
+      "InterchainTokenService": {
+        "storeCodeProposalId": "182",
+        "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d"
       }
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "https://tm.axelar-testnet.lava.build:443",
+    "rpc": "http://localhost:26657",
     "lcd": "https://rest.axelar-testnet.lava.build",
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
