@@ -300,11 +300,9 @@ const isAllowed = async (client, keypair, chain, exec) => {
     const addError = (tx) => {
         tx.moveCall({
             target: `${STD_PACKAGE_ID}::ascii::char`,
-            arguments: [
-                tx.pure.u8(128),
-            ],
+            arguments: [tx.pure.u8(128)],
         });
-    }
+    };
 
     const tx = new Transaction();
     exec(tx);
@@ -323,9 +321,10 @@ const isAllowed = async (client, keypair, chain, exec) => {
         regexp = /Some\("(.*?)"\)/;
         const functionName = regexp.exec(errorMessage)[1];
 
-        if(packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
+        if (packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
             regexp = /Some\(".*?"\) \}, (.*?)\)/;
-            if(parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
                 return false;
             }
         }
