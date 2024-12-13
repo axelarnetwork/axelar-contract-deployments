@@ -2703,13 +2703,17 @@
           "codeId": 10,
           "address": "axelar1ce9rcvw8htpwukc048z9kqmyk5zz52d5a7zqn9xlq2pg0mxul9mqxlx2cq"
         },
-        "storeCodeProposalId": "105",
-        "storeCodeProposalCodeHash": "e256445185284a52fc0ca4163c5ffd02d7f605890fb5882d01d540966957465b",
+        "storeCodeProposalId": "183",
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
         "lastUploadedCodeId": 10
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "182",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d"
+      },
+      "AxelarnetGateway": {
+        "storeCodeProposalId": "174",
+        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b"
       }
     },
     "axelarId": "axelar",
