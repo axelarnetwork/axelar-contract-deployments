@@ -293,6 +293,27 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
+const isAllowed = async (builder, sender = '0x0') => {
+    try {
+        await builder.devInspect(sender);
+    } catch (e) {
+        const errorMessage = e.cause.effects.status.error;
+        let regexp = /address: (.*?),/;
+        const packageId = `0x${regexp.exec(errorMessage)[1]}`;
+
+        regexp = /Identifier\("(.*?)"\)/;
+        const module = regexp.exec(errorMessage)[1];
+
+        regexp = /Some\("(.*?)"\)/;
+        const functionName = regexp.exec(errorMessage)[1];
+
+        regexp = /Some\(".*?"\) \}, (.*?)\)/;
+        const errorCode = parseInt(regexp.exec(errorMessage)[1]);
+        console.log(packageId, module, functionName, errorCode);
+        console.log(errorMessage);
+    }
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -319,4 +340,5 @@ module.exports = {
     parseGatewayInfo,
     getStructs,
     saveGeneratedTx,
+    isAllowed,
 };
