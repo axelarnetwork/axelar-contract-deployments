@@ -2,7 +2,7 @@ const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, STD_PACKAGE_ID, CLOCK_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
@@ -19,8 +19,10 @@ const {
     broadcast,
     suiClockAddress,
     saveGeneratedTx,
+    isAllowed,
 } = require('./utils');
 const secp256k1 = require('secp256k1');
+const chalk = require('chalk');
 
 const COMMAND_TYPE_APPROVE_MESSAGES = 0;
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
@@ -333,8 +335,144 @@ async function disallowFunctions(keypair, client, config, chain, contractConfig,
 
     return {
         tx,
-        message: 'Allow Functions',
+        message: 'Disallow Functions',
     };
+}
+
+async function checkVersionControl(version, options) {
+    const config = loadConfig(options.env);
+
+    const chain = getChainConfig(config, options.chainName);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+
+    if (!chain.contracts?.AxelarGateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    const contractConfig = chain.contracts.AxelarGateway;
+    const packageId = contractConfig.address;
+
+    const functions = {};
+    functions.approve_messages = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::approve_messages`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.pure.vector('u8', []),
+            tx.pure.vector('u8', []),
+        ],
+    });
+    functions.rotate_signers = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::rotate_signers`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(CLOCK_PACKAGE_ID),
+            tx.pure.vector('u8', []),
+            tx.pure.vector('u8', []),
+        ],
+    });
+    functions.is_message_approved = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::is_message_approved`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.pure.string(''),
+            tx.pure.string(''),
+            tx.pure.string(''),
+            tx.pure.address('0x0'),
+            tx.moveCall({
+                target: `${packageId}::bytes32::from_address`,
+                arguments: [
+                    tx.pure.address('0x0'),
+                ],
+            })
+        ],
+    });
+    functions.is_message_executed = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::is_message_executed`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.pure.string(''),
+            tx.pure.string(''),
+        ],
+    });
+    functions.take_approved_message = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::take_approved_message`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.pure.string(''),
+            tx.pure.string(''),
+            tx.pure.string(''),
+            tx.pure.address('0x0'),
+            tx.pure.vector('u8', []),
+        ],
+    });
+    functions.send_message = (tx) => {
+        const channel = tx.moveCall({
+            target: `${packageId}::channel::new`,
+            arguments: [],
+        });
+
+        const message = tx.moveCall({
+            target: `${packageId}::gateway::prepare_message`,
+            arguments: [
+                channel,
+                tx.pure.string(''),
+                tx.pure.string(''),
+                tx.pure.vector('u8', []),
+            ],
+        });
+
+        tx.moveCall({
+            target: `${packageId}::gateway::send_message`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                message,
+            ],
+        });
+
+        tx.moveCall({
+            target: `${packageId}::channel::destroy`,
+            arguments: [
+                channel
+            ],
+        });
+    }
+    functions.allow_function = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::allow_function`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(contractConfig.objects.OwnerCap),
+            tx.pure.u64(0),
+            tx.pure.string(""),
+        ],
+    });
+    functions.disallow_function = (tx) => tx.moveCall({
+        target: `${packageId}::gateway::disallow_function`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(contractConfig.objects.OwnerCap),
+            tx.pure.u64(0),
+            tx.pure.string(""),
+        ],
+    });
+
+    if (options.allowedFunctions) {
+        const allowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.allowedFunctions.split(',');
+        for(const allowedFunction of allowedFunctions) {
+            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction]);
+            const color = allowed ? chalk.green : chalk.red;
+            console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`)
+        }
+    }
+
+    if (options.disallowedFunctions) {
+        const disallowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.disallowedFunctions.split(',');
+        for(const disallowedFunction of disallowedFunctions) {
+            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction]);
+            const color = allowed ? chalk.red : chalk.green;
+            console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`)
+        }
+    }
 }
 
 async function mainProcessor(processor, args, options) {
@@ -420,6 +558,15 @@ if (require.main === module) {
         .description('Allow certain funcitons on the gateway')
         .action((versions, functionNames, options) => {
             mainProcessor(disallowFunctions, [versions, functionNames], options);
+        });
+
+    program
+        .command('check-version-control <version>')
+        .description('Check if version control works on a certain version')
+        .addOption(new Option('--allowed-functions <allowed-functions>', 'Functions that should be allowed on this version'))
+        .addOption(new Option('--disallowed-functions <disallowed-functions>', 'Functions that should be disallowed on this version'))
+        .action((version, options) => {
+            checkVersionControl(version, options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });

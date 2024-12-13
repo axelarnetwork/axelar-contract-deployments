@@ -18,7 +18,10 @@ const {
     bcsStructs,
     getDefinedSuiVersion,
     getInstalledSuiVersion,
+    STD_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { broadcast } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -293,9 +296,22 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
-const isAllowed = async (builder, sender = '0x0') => {
+const isAllowed = async (client, keypair, chain, exec) => {
+    const addError = (tx) => {
+        tx.moveCall({
+            target: `${STD_PACKAGE_ID}::ascii::char`,
+            arguments: [
+                tx.pure.u8(128),
+            ],
+        });
+    }
+
+    const tx = new Transaction();
+    exec(tx);
+    addError(tx);
+
     try {
-        await builder.devInspect(sender);
+        await broadcast(client, keypair, tx);
     } catch (e) {
         const errorMessage = e.cause.effects.status.error;
         let regexp = /address: (.*?),/;
@@ -307,11 +323,15 @@ const isAllowed = async (builder, sender = '0x0') => {
         regexp = /Some\("(.*?)"\)/;
         const functionName = regexp.exec(errorMessage)[1];
 
-        regexp = /Some\(".*?"\) \}, (.*?)\)/;
-        const errorCode = parseInt(regexp.exec(errorMessage)[1]);
-        console.log(packageId, module, functionName, errorCode);
-        console.log(errorMessage);
+        if(packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+            if(parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+                return false;
+            }
+        }
     }
+
+    return true;
 };
 
 module.exports = {
