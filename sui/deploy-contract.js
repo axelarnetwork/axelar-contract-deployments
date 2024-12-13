@@ -307,6 +307,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
+        versions: [ published.packageId ],
     };
 
     chain.contracts[packageName].structs = await getStructs(client, published.packageId);

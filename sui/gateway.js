@@ -351,7 +351,7 @@ async function checkVersionControl(version, options) {
     }
 
     const contractConfig = chain.contracts.AxelarGateway;
-    const packageId = contractConfig.address;
+    const packageId = contractConfig.versions[version];
 
     const functions = {};
     functions.approve_messages = (tx) =>
