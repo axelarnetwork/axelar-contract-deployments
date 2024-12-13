@@ -11,7 +11,9 @@ workspace = true
 
 [dependencies]
 async-recursion.workspace = true
+axelar-executable.workspace = true
 axelar-solana-encoding.workspace = true
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 bincode.workspace = true
 borsh.workspace = true

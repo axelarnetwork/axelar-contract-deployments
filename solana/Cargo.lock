@@ -3658,7 +3658,9 @@ name = "its-instruction-builder"
 version = "0.1.0"
 dependencies = [
  "async-recursion",
+ "axelar-executable",
  "axelar-solana-encoding",
+ "axelar-solana-gateway",
  "axelar-solana-its",
  "bincode",
  "borsh 1.5.3",

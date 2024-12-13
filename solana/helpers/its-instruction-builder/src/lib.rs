@@ -2,6 +2,7 @@
 
 use core::ops::Deref;
 
+use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
@@ -22,15 +23,16 @@ use solana_sdk::sysvar::clock;
 pub async fn build_its_gmp_instruction<C>(
     payer: Pubkey,
     gateway_approved_message_pda: Pubkey,
-    gateway_root_pda: Pubkey,
     message: Message,
     abi_payload: Vec<u8>,
     rpc_client: C,
 ) -> Result<Instruction, ProgramError>
 where
-    C: Deref<Target = RpcClient>,
+    C: Deref<Target = RpcClient> + Send + Sync,
 {
     let payload = GMPPayload::decode(&abi_payload).map_err(|_err| ProgramError::InvalidArgument)?;
+    ensure_payer_is_not_forwarded(payer, &payload)?;
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&gateway_root_pda);
     let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(
         &its_root_pda,
@@ -63,14 +65,14 @@ where
     axelar_solana_its::instructions::its_gmp_payload(inputs)
 }
 
-#[async_recursion::async_recursion(?Send)]
+#[async_recursion::async_recursion]
 async fn try_infer_mint_and_program<C>(
     token_manager_pda: &Pubkey,
     payload: &GMPPayload,
     rpc_client: C,
 ) -> Result<(Option<Pubkey>, Pubkey), ProgramError>
 where
-    C: Deref<Target = RpcClient>,
+    C: Deref<Target = RpcClient> + Send + Sync,
 {
     match payload {
         GMPPayload::InterchainTransfer(_) => {
@@ -111,15 +113,33 @@ where
 
             Ok((Some(token_mint), token_program))
         }
-        GMPPayload::SendToHub(inner) => {
-            let inner_payload =
-                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
-            try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
-        }
+        GMPPayload::SendToHub(_) => return Err(ProgramError::InvalidArgument),
         GMPPayload::ReceiveFromHub(inner) => {
             let inner_payload =
                 GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
             try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
         }
     }
+}
+
+fn ensure_payer_is_not_forwarded(payer: Pubkey, payload: &GMPPayload) -> Result<(), ProgramError> {
+    match payload {
+        GMPPayload::InterchainTransfer(transfer) => {
+            let destination_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
+            for account in destination_payload.account_meta() {
+                if account.pubkey == payer {
+                    return Err(ProgramError::InvalidArgument);
+                }
+            }
+        }
+        GMPPayload::SendToHub(_) => return Err(ProgramError::InvalidArgument),
+        GMPPayload::ReceiveFromHub(inner) => {
+            let inner_payload =
+                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
+            ensure_payer_is_not_forwarded(payer, &inner_payload)?;
+        }
+        GMPPayload::DeployInterchainToken(_) | GMPPayload::DeployTokenManager(_) => {}
+    }
+
+    Ok(())
 }
