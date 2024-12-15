@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
-const { governanceAddress } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS_SCOPES, governanceAddress } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -83,6 +83,23 @@ const addAmplifierOptions = (program, options) => {
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
+    program.hook('preAction', (command) => {
+        const chainName = command.opts().chainName;
+        const contractName = command.opts().contractName;
+        const scope = CONTRACTS_SCOPES[contractName];
+
+        if (!scope) {
+            throw new Error(`Scope of contract ${contractName} is not defined`);
+        }
+
+        if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
+            throw new Error(`${contractName} requires chainName option`);
+        }
+
+        if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
+            throw new Error(`${contractName} does not support chainName option`);
+        }
+    });
 };
 
 const addStoreOptions = (program) => {

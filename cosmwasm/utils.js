@@ -36,6 +36,32 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 
+const CONTRACT_NAME_COORDINATOR = 'Coordinator';
+const CONTRACT_NAME_SERVICE_REGISTRY = 'ServiceRegistry';
+const CONTRACT_NAME_MULTISIG = 'Multisig';
+const CONTRACT_NAME_REWARDS = 'Rewards';
+const CONTRACT_NAME_ROUTER = 'Router';
+const CONTRACT_NAME_VOTING_VERIFIER = 'VotingVerifier';
+const CONTRACT_NAME_GATEWAY = 'Gateway';
+const CONTRACT_NAME_MULTISIG_PROVER = 'MultisigProver';
+const CONTRACT_NAME_AXELARNET_GATEWAY = 'AxelarnetGateway';
+const CONTRACT_NAME_INTERCHAIN_TOKEN_SERVICE = 'InterchainTokenService';
+
+const CONTRACT_SCOPE_GLOBAL = 'global';
+const CONTRACT_SCOPE_CHAIN = 'chain';
+const CONTRACTS_SCOPES = {
+    [CONTRACT_NAME_COORDINATOR]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_SERVICE_REGISTRY]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_MULTISIG]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_REWARDS]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_ROUTER]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_VOTING_VERIFIER]: CONTRACT_SCOPE_CHAIN,
+    [CONTRACT_NAME_GATEWAY]: CONTRACT_SCOPE_CHAIN,
+    [CONTRACT_NAME_MULTISIG_PROVER]: CONTRACT_SCOPE_CHAIN,
+    [CONTRACT_NAME_AXELARNET_GATEWAY]: CONTRACT_SCOPE_GLOBAL,
+    [CONTRACT_NAME_INTERCHAIN_TOKEN_SERVICE]: CONTRACT_SCOPE_GLOBAL,
+};
+
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
@@ -503,79 +529,43 @@ const makeInstantiateMsg = (contractName, chainName, config) => {
     const { [contractName]: contractConfig } = contracts;
 
     switch (contractName) {
-        case 'Coordinator': {
-            if (chainConfig) {
-                throw new Error('Coordinator does not support chainName option');
-            }
-
+        case CONTRACT_NAME_COORDINATOR: {
             return makeCoordinatorInstantiateMsg(contractConfig, contracts);
         }
 
-        case 'ServiceRegistry': {
-            if (chainConfig) {
-                throw new Error('ServiceRegistry does not support chainName option');
-            }
-
+        case CONTRACT_NAME_SERVICE_REGISTRY: {
             return makeServiceRegistryInstantiateMsg(contractConfig);
         }
 
-        case 'Multisig': {
-            if (chainConfig) {
-                throw new Error('Multisig does not support chainName option');
-            }
-
+        case CONTRACT_NAME_MULTISIG: {
             return makeMultisigInstantiateMsg(contractConfig, contracts);
         }
 
-        case 'Rewards': {
-            if (chainConfig) {
-                throw new Error('Rewards does not support chainName option');
-            }
-
+        case CONTRACT_NAME_REWARDS: {
             return makeRewardsInstantiateMsg(contractConfig);
         }
 
-        case 'Router': {
-            if (chainConfig) {
-                throw new Error('Router does not support chainName option');
-            }
-
+        case CONTRACT_NAME_ROUTER: {
             return makeRouterInstantiateMsg(contractConfig, contracts);
         }
 
-        case 'VotingVerifier': {
-            if (!chainConfig) {
-                throw new Error('VotingVerifier requires chainName option');
-            }
-
+        case CONTRACT_NAME_VOTING_VERIFIER: {
             return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
         }
 
-        case 'Gateway': {
-            if (!chainConfig) {
-                throw new Error('Gateway requires chainName option');
-            }
-
+        case CONTRACT_NAME_GATEWAY: {
             return makeGatewayInstantiateMsg(contracts, chainConfig);
         }
 
-        case 'MultisigProver': {
-            if (!chainConfig) {
-                throw new Error('MultisigProver requires chainName option');
-            }
-
+        case CONTRACT_NAME_MULTISIG_PROVER: {
             return makeMultisigProverInstantiateMsg(config, chainName);
         }
 
-        case 'AxelarnetGateway': {
-            if (chainConfig) {
-                throw new Error('AxelarnetGateway does not support chainName option');
-            }
-
+        case CONTRACT_NAME_AXELARNET_GATEWAY: {
             return makeAxelarnetGatewayInstantiateMsg(contractConfig, config);
         }
 
-        case 'InterchainTokenService': {
+        case CONTRACT_NAME_INTERCHAIN_TOKEN_SERVICE: {
             return makeInterchainTokenServiceInstantiateMsg(config, contractConfig);
         }
     }
@@ -847,6 +837,9 @@ const submitProposal = async (client, wallet, config, options, content) => {
 };
 
 module.exports = {
+    CONTRACT_SCOPE_CHAIN,
+    CONTRACT_SCOPE_GLOBAL,
+    CONTRACTS_SCOPES,
     governanceAddress,
     prepareWallet,
     prepareClient,
