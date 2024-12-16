@@ -11,7 +11,7 @@ const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
-const { LedgerSigner } = require('../LedgerSigner');
+const { LedgerSigner } = require('./LedgerSigner');
 const {
     utils: { hexlify },
 } = ethers;
