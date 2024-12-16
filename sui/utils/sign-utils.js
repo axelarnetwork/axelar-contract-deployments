@@ -81,10 +81,18 @@ function getSuiClient(chain, rpc) {
 }
 
 async function printWalletInfo(wallet, client, chain, options = {}) {
-    const owner =
-        wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
-            ? wallet.toSuiAddress()
-            : wallet;
+    let owner;
+
+    if (options.privateKey !== 'ledger') {
+        owner =
+            wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
+                ? wallet.toSuiAddress()
+                : wallet;
+    } else {
+        owner = await wallet.toSuiAddress();
+        printInfo('PublicKey', (await wallet.getPublicKey()).address.toString('base64'));
+    }
+
     printInfo('Wallet address', owner);
 
     if (!options.offline) {

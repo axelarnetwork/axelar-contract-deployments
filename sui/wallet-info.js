@@ -1,13 +1,12 @@
 'use strict';
 
-const { saveConfig, loadConfig, getChainConfig, printInfo } = require('../common/utils');
-const { getWallet, addBaseOptions } = require('./utils');
+const { saveConfig, loadConfig, getChainConfig } = require('../common/utils');
+const { getWallet, addBaseOptions, printWalletInfo } = require('./utils');
 const { Command } = require('commander');
 
 async function processCommand(config, chain, options) {
-    const [keypair] = getWallet(chain, options);
-    printInfo('PublicKey', (await keypair.getPublicKey()).address.toString('base64'));
-    printInfo('Address', await keypair.toSuiAddress());
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
 }
 
 async function mainProcessor(options, processor) {
