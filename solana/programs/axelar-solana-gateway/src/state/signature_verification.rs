@@ -9,11 +9,11 @@ use bitvec::order::Lsb0;
 use bitvec::slice::BitSlice;
 use bitvec::view::BitView;
 use bytemuck::{Pod, Zeroable};
+use program_utils::BytemuckedPda;
 
 use crate::error::GatewayError;
 
 use super::verifier_set_tracker::VerifierSetHash;
-use super::BytemuckedPda;
 
 /// Controls the signature verification session for a given payload.
 #[repr(C)]

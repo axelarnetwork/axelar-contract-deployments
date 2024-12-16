@@ -18,9 +18,10 @@ use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
 use axelar_solana_gateway::state::signature_verification_pda::SignatureVerificationSessionData;
 use axelar_solana_gateway::state::verifier_set_tracker::VerifierSetTracker;
-use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
+use axelar_solana_gateway::state::GatewayConfig;
 use axelar_solana_gateway::{
     get_gateway_root_config_pda, get_incoming_message_pda, get_verifier_set_tracker_pda,
+    BytemuckedPda,
 };
 pub use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use rand::Rng as _;

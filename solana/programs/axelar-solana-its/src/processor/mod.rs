@@ -3,10 +3,11 @@
 use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_gateway::state::{BytemuckedPda, GatewayConfig};
+use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
-use program_utils::{BorshPda, ValidPDA};
+use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
@@ -176,7 +177,8 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
 
     // Check: Gateway Root PDA Account is valid.
     let gateway_config_data = gateway_root_pda_account.try_borrow_data()?;
-    let gateway_config = GatewayConfig::read(&gateway_config_data)?;
+    let gateway_config =
+        GatewayConfig::read(&gateway_config_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
     axelar_solana_gateway::assert_valid_gateway_root_pda(
         gateway_config.bump,
         gateway_root_pda_account.key,

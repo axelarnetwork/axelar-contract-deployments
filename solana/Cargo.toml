@@ -128,6 +128,7 @@ async-recursion = "1"
 
 # solana programs
 axelar-solana-its = { path = "programs/axelar-solana-its" }
+axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-memo-program-old = { path = "programs/axelar-solana-memo-program-old" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }

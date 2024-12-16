@@ -18,6 +18,7 @@ libsecp256k1.workspace = true
 rand.workspace = true
 libsecp-rand.workspace = true
 gateway-event-stack.workspace = true
+axelar-solana-gas-service.workspace = true
 
 [lints]
 workspace = true

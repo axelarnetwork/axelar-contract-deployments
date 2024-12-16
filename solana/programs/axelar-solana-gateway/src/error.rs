@@ -38,6 +38,26 @@ pub enum GatewayError {
     #[error("Verifier set tracker PDA already initialized")]
     VerifierSetTrackerAlreadyInitialised,
 
+    /// Used when a signature index is too high.
+    #[error("Slot is out of bounds")]
+    SlotIsOutOfBounds,
+
+    /// Used when the internal digital signature verification fails.
+    #[error("Digital signature verification failed")]
+    InvalidDigitalSignature,
+
+    /// Leaf node is not part of the Merkle root.
+    #[error("Leaf node not part of Merkle root")]
+    LeafNodeNotPartOfMerkleRoot,
+
+    /// Used when the Merkle inclusion proof fails to verify against the given root.
+    #[error("Signer is not a member of the active verifier set")]
+    InvalidMerkleProof,
+
+    /// Invalid destination address.
+    #[error("Invalid destination address")]
+    InvalidDestinationAddress,
+
     /// Message Payload PDA was already initialized.
     #[error("Message Payload PDA was already initialized")]
     MessagePayloadAlreadyInitialized,
@@ -53,37 +73,13 @@ pub enum GatewayError {
     #[error("Verifier set too old")]
     VerifierSetTooOld,
 
-    /// Invalid weight threshold.
-    #[error("Invalid weight threshold")]
-    InvalidWeightThreshold,
-
     /// Data length mismatch when trying to read bytemucked data.
     #[error("Invalid bytemucked data length")]
     BytemuckDataLenInvalid,
 
-    /// Used when a signature index is too high.
-    #[error("Slot is out of bounds")]
-    SlotIsOutOfBounds,
-
-    /// Used when the Merkle inclusion proof fails to verify against the given root.
-    #[error("Signer is not a member of the active verifier set")]
-    InvalidMerkleProof,
-
-    /// Used when the internal digital signature verification fails.
-    #[error("Digital signature verification failed")]
-    InvalidDigitalSignature,
-
     /// The signing session is not valid.
     #[error("Signing session not valid")]
     SigningSessionNotValid,
-
-    /// Leaf node is not part of the Merkle root.
-    #[error("Leaf node not part of Merkle root")]
-    LeafNodeNotPartOfMerkleRoot,
-
-    /// Invalid destination address.
-    #[error("Invalid destination address")]
-    InvalidDestinationAddress,
 
     /// Invalid verification session PDA.
     #[error("Invalid verification session PDA")]
@@ -172,8 +168,8 @@ mod tests {
             .collect_vec();
 
         // confidence check that we derived the errors correctly
-        assert_eq!(errors_to_proceed.len(), 6);
-        assert_eq!(errors_to_not_proceed.len(), 23);
+        assert_eq!(errors_to_proceed.len(), 11);
+        assert_eq!(errors_to_not_proceed.len(), 17);
 
         // Errors that should cause the relayer to proceed (error numbers < 500)
         for error in errors_to_proceed {

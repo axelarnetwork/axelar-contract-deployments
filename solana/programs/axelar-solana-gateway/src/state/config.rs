@@ -2,11 +2,10 @@
 
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
+use program_utils::BytemuckedPda;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;
-
-use super::BytemuckedPda;
 
 /// Timestamp alias for when the last signer rotation happened
 pub type Timestamp = u64;

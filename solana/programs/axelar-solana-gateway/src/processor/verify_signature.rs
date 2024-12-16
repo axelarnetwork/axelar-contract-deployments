@@ -1,14 +1,15 @@
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
+use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_signature_verification_pda,
     assert_valid_verifier_set_tracker_pda,
@@ -33,13 +34,15 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
         let data = gateway_root_pda.try_borrow_data()?;
-        let gateway_config = GatewayConfig::read(&data)?;
+        let gateway_config =
+            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification session PDA is initialized.
         verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let session = SignatureVerificationSessionData::read_mut(&mut data)?;
+        let session = SignatureVerificationSessionData::read_mut(&mut data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_signature_verification_pda(
             gateway_root_pda.key,
             &payload_merkle_root,
@@ -50,7 +53,8 @@ impl Processor {
         // Check: Active verifier set tracker PDA is initialized.
         verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
         let data = verifier_set_tracker_account.try_borrow_data()?;
-        let verifier_set_tracker = VerifierSetTracker::read(&data)?;
+        let verifier_set_tracker =
+            VerifierSetTracker::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_verifier_set_tracker_pda(
             verifier_set_tracker,
             verifier_set_tracker_account.key,

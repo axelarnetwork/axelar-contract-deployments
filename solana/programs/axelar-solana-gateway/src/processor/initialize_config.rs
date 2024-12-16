@@ -2,7 +2,7 @@ use std::mem::size_of;
 
 use axelar_message_primitives::U256;
 use itertools::Itertools;
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -12,9 +12,10 @@ use solana_program::system_program;
 use solana_program::sysvar::Sysvar;
 
 use super::Processor;
+use crate::error::GatewayError;
 use crate::instructions::InitializeConfig;
 use crate::state::verifier_set_tracker::VerifierSetTracker;
-use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::state::GatewayConfig;
 use crate::{
     assert_valid_gateway_root_pda, assert_valid_verifier_set_tracker_pda,
     get_gateway_root_config_internal, get_verifier_set_tracker_pda, seed_prefixes,
@@ -71,7 +72,8 @@ impl Processor {
 
             // store account data
             let mut data = verifier_set_pda.try_borrow_mut_data()?;
-            let tracker = VerifierSetTracker::read_mut(&mut data)?;
+            let tracker = VerifierSetTracker::read_mut(&mut data)
+                .ok_or(GatewayError::BytemuckDataLenInvalid)?;
             *tracker = VerifierSetTracker {
                 bump: pda_bump,
                 _padding: [0; 7],
@@ -98,7 +100,8 @@ impl Processor {
             &[seed_prefixes::GATEWAY_SEED, &[bump]],
         )?;
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
-        let gateway_config = GatewayConfig::read_mut(&mut data)?;
+        let gateway_config =
+            GatewayConfig::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
         let clock = Clock::get()?;
         let current_timestamp = clock.unix_timestamp.try_into().expect("invalid timestamp");

@@ -9,6 +9,7 @@ edition.workspace = true
 
 [dependencies]
 axelar-solana-gateway.workspace = true
+axelar-solana-gas-service.workspace = true
 tracing.workspace = true
 solana-sdk.workspace = true
 base64.workspace = true

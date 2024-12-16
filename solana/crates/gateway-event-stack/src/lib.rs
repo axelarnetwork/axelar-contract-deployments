@@ -1,6 +1,7 @@
 //! Parse Solana events from transaction data
 
-use axelar_solana_gateway::processor::{EventParseError, GatewayEvent};
+use axelar_solana_gas_service::processor::GasServiceEvent;
+use axelar_solana_gateway::processor::GatewayEvent;
 use base64::{engine::general_purpose, Engine};
 
 /// Represents the state of a program invocation along with associated events.
@@ -66,7 +67,7 @@ pub fn build_program_event_stack<T, K, Err, F>(
 ) -> Vec<ProgramInvocationState<K>>
 where
     T: AsRef<str>,
-    F: Fn(&mut [ProgramInvocationState<K>], &T, usize) -> Result<(), Err>,
+    F: Fn(&T) -> Result<K, Err>,
 {
     let logs = logs.iter().enumerate();
     let mut program_stack: Vec<ProgramInvocationState<K>> = Vec::new();
@@ -82,8 +83,16 @@ where
             handle_failure_log(&mut program_stack);
         } else {
             // Process logs if inside a program invocation
+            let Some(&mut ProgramInvocationState::InProgress(ref mut events)) =
+                program_stack.last_mut()
+            else {
+                continue;
+            };
             #[allow(clippy::let_underscore_must_use, clippy::let_underscore_untyped)]
-            let _ = transformer(&mut program_stack, log, idx);
+            let Ok(event) = transformer(log) else {
+                continue;
+            };
+            events.push((idx, event));
         }
     }
     program_stack
@@ -100,31 +109,20 @@ pub fn decode_base64(input: &str) -> Option<Vec<u8>> {
 ///
 /// # Arguments
 ///
-/// * `program_stack` - A mutable slice of program invocation states to update.
 /// * `log` - The log entry to parse.
-/// * `idx` - The index of the log entry in the logs slice.
-///
-/// # Returns
-///
-/// `Ok(())` if parsing is successful, or an `EventParseError` if parsing fails.
 ///
 /// # Errors
 ///
 /// - if the discrimintant for the event is not present
-/// - if the event was detected via the discriminant but the data does not match
+/// - if the event was detected via the discriminant but the data does not match the discriminant type
 pub fn parse_gateway_logs<T>(
-    program_stack: &mut [ProgramInvocationState<GatewayEvent>],
     log: &T,
-    idx: usize,
-) -> Result<(), EventParseError>
+) -> Result<GatewayEvent, axelar_solana_gateway::processor::EventParseError>
 where
     T: AsRef<str>,
 {
     use axelar_solana_gateway::event_prefixes::*;
-    let Some(&mut ProgramInvocationState::InProgress(ref mut events)) = program_stack.last_mut()
-    else {
-        return Ok(());
-    };
+    use axelar_solana_gateway::processor::EventParseError;
 
     let mut logs = log
         .as_ref()
@@ -166,11 +164,61 @@ where
             let event = axelar_solana_gateway::processor::VerifierSetRotated::new(logs)?;
             GatewayEvent::VerifierSetRotated(event)
         }
-        _ => return Ok(()),
+        _ => return Err(EventParseError::Other("unsupported discrimintant")),
     };
 
-    events.push((idx, gateway_event));
-    Ok(())
+    Ok(gateway_event)
+}
+
+/// Parses gas service logs and extracts events.
+///
+/// # Arguments
+///
+/// * `log` - The log entry to parse.
+///
+/// # Errors
+///
+/// - if the discrimintant for the event is not present
+/// - if the event was detected via the discriminant but the data does not match the discriminant type
+pub fn parse_gas_service_log<T>(
+    log: &T,
+) -> Result<GasServiceEvent, axelar_solana_gas_service::event_utils::EventParseError>
+where
+    T: AsRef<str>,
+{
+    use axelar_solana_gas_service::event_prefixes::*;
+    use axelar_solana_gas_service::event_utils::EventParseError;
+    use axelar_solana_gas_service::processor::{
+        NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
+    };
+
+    let mut logs = log
+        .as_ref()
+        .trim()
+        .trim_start_matches("Program data:")
+        .split_whitespace()
+        .filter_map(decode_base64);
+    let disc = logs
+        .next()
+        .ok_or(EventParseError::MissingData("discriminant"))?;
+    let disc = disc.as_slice();
+    let gas_service_event = match disc {
+        NATIVE_GAS_PAID_FOR_CONTRACT_CALL => {
+            let event = NativeGasPaidForContractCallEvent::new(logs)?;
+            GasServiceEvent::NativeGasPaidForncontractCall(event)
+        }
+        NATIVE_GAS_ADDED => {
+            let event = NativeGasAddedEvent::new(logs)?;
+            GasServiceEvent::NativeGasAdded(event)
+        }
+        NATIVE_GAS_REFUNDED => {
+            let event = NativeGasRefundedEvent::new(logs)?;
+            GasServiceEvent::NativeGasRefunded(event)
+        }
+        _ => return Err(EventParseError::Other("unsupported discrimintant")),
+    };
+
+    Ok(gas_service_event)
 }
 
 /// Handles a failure log by marking the current program invocation as failed.

@@ -736,6 +736,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "axelar-solana-gas-service"
+version = "0.1.0"
+dependencies = [
+ "axelar-solana-gateway-test-fixtures",
+ "borsh 1.5.3",
+ "bytemuck",
+ "gateway-event-stack",
+ "program-utils",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "axelar-solana-gateway"
 version = "0.1.0"
 dependencies = [
@@ -773,6 +788,7 @@ version = "0.1.0"
 dependencies = [
  "axelar-executable",
  "axelar-solana-encoding",
+ "axelar-solana-gas-service",
  "axelar-solana-gateway",
  "bincode",
  "ed25519-dalek 2.1.1",
@@ -2921,6 +2937,7 @@ dependencies = [
 name = "gateway-event-stack"
 version = "0.1.0"
 dependencies = [
+ "axelar-solana-gas-service",
  "axelar-solana-gateway",
  "base64 0.21.7",
  "pretty_assertions",
@@ -4783,6 +4800,7 @@ name = "program-utils"
 version = "0.1.0"
 dependencies = [
  "borsh 1.5.3",
+ "bytemuck",
  "rkyv",
  "solana-program",
 ]

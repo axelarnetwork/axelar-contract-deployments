@@ -3,7 +3,7 @@ use std::str::FromStr;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_encoding::LeafHash;
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::log::sol_log_data;
 use solana_program::msg;
@@ -14,7 +14,6 @@ use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
-use crate::state::BytemuckedPda;
 use crate::{
     assert_valid_incoming_message_pda, create_validate_message_signing_pda, event_prefixes,
 };
@@ -39,7 +38,8 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         incoming_message_pda.check_initialized_pda_without_deserialization(program_id)?;
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message = IncomingMessage::read_mut(&mut data)?;
+        let incoming_message =
+            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_incoming_message_pda(
             &command_id,
             incoming_message.bump,

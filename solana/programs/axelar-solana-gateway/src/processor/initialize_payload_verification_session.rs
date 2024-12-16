@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
@@ -9,7 +9,7 @@ use solana_program::system_program;
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::state::GatewayConfig;
 use crate::{assert_valid_gateway_root_pda, seed_prefixes};
 
 impl Processor {
@@ -38,7 +38,8 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
         let data = gateway_root_pda.try_borrow_data()?;
-        let gateway_config = GatewayConfig::read(&data)?;
+        let gateway_config =
+            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification PDA can be derived from provided seeds.
@@ -73,7 +74,8 @@ impl Processor {
             signers_seeds,
         )?;
         let mut data = verification_session_account.try_borrow_mut_data()?;
-        let session = SignatureVerificationSessionData::read_mut(&mut data)?;
+        let session = SignatureVerificationSessionData::read_mut(&mut data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         session.bump = bump;
 
         Ok(())

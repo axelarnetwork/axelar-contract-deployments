@@ -1,4 +1,4 @@
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -6,7 +6,8 @@ use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
-use crate::state::{BytemuckedPda, GatewayConfig};
+use crate::error::GatewayError;
+use crate::state::GatewayConfig;
 use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
@@ -25,7 +26,8 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
         let data = gateway_root_pda.try_borrow_data()?;
-        let gateway_config = GatewayConfig::read(&data)?;
+        let gateway_config =
+            GatewayConfig::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: sender is signer

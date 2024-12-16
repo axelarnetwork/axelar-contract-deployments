@@ -6,6 +6,7 @@ use std::borrow::Borrow;
 use std::io::Write;
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use bytemuck::{AnyBitPattern, NoUninit};
 use rkyv::de::deserializers::SharedDeserializeMap;
 use rkyv::ser::serializers::AllocSerializer;
 use rkyv::validation::validators::DefaultValidator;
@@ -446,5 +447,50 @@ where
     fn load(source_account: &AccountInfo<'_>) -> Result<Self, ProgramError> {
         let account_data = source_account.try_borrow_data()?;
         Self::unpack_from_slice(&account_data)
+    }
+}
+
+/// A trait for types that can be safely converted to and from byte slices using `bytemuck`.
+pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
+    /// Reads an immutable reference to `Self` from a byte slice.
+    ///
+    /// This method attempts to interpret the provided byte slice as an instance of `Self`.
+    /// It checks that the length of the slice matches the size of `Self` to ensure safety.
+    fn read(data: &[u8]) -> Option<&Self> {
+        let result: &Self = bytemuck::try_from_bytes(data)
+            .map_err(|err| {
+                msg!("bytemuck error {:?}", err);
+                err
+            })
+            .ok()?;
+        Some(result)
+    }
+
+    /// Reads a mutable reference to `Self` from a mutable byte slice.
+    ///
+    /// Similar to [`read`], but allows for mutation of the underlying data.
+    /// This is useful when you need to modify the data in place.
+    fn read_mut(data: &mut [u8]) -> Option<&mut Self> {
+        let result: &mut Self = bytemuck::try_from_bytes_mut(data)
+            .map_err(|err| {
+                msg!("bytemuck error {:?}", err);
+                err
+            })
+            .ok()?;
+        Some(result)
+    }
+
+    /// Writes the instance of `Self` into a mutable byte slice.
+    ///
+    /// This method serializes `self` into its byte representation and copies it into the
+    /// provided mutable byte slice. It ensures that the destination slice is of the correct
+    /// length to hold the data.
+    fn write(&self, data: &mut [u8]) -> Option<()> {
+        let self_bytes = bytemuck::bytes_of(self);
+        if data.len() != self_bytes.len() {
+            return None;
+        }
+        data.copy_from_slice(self_bytes);
+        Some(())
     }
 }

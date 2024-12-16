@@ -9,6 +9,7 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 rkyv = { workspace = true, features = ["validation"] }
 borsh.workspace = true
+bytemuck.workspace = true
 solana-program.workspace = true
 
 [dev-dependencies]

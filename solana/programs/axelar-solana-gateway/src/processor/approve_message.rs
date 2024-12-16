@@ -3,7 +3,7 @@ use std::str::FromStr;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -13,7 +13,6 @@ use super::Processor;
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
-use crate::state::BytemuckedPda;
 use crate::{
     assert_valid_incoming_message_pda, assert_valid_signature_verification_pda, event_prefixes,
     get_incoming_message_pda, get_validate_message_signing_pda, seed_prefixes,
@@ -43,7 +42,8 @@ impl Processor {
         // Check: Verification session PDA is initialized.
         verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
         let data = verification_session_account.try_borrow_data()?;
-        let session = SignatureVerificationSessionData::read(&data)?;
+        let session = SignatureVerificationSessionData::read(&data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_signature_verification_pda(
             gateway_root_pda.key,
             &payload_merkle_root,
@@ -112,7 +112,8 @@ impl Processor {
 
         // Persist a new incoming message with "in progress" status in the PDA data.
         let mut data = incoming_message_pda.try_borrow_mut_data()?;
-        let incoming_message_data = IncomingMessage::read_mut(&mut data)?;
+        let incoming_message_data =
+            IncomingMessage::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
         *incoming_message_data = IncomingMessage::new(
             incoming_message_pda_bump,
             signing_pda_bump,

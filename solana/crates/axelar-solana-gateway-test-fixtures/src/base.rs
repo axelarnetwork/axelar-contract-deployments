@@ -16,6 +16,7 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer as _;
 use solana_sdk::signers::Signers;
+use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
 
 /// Base test fixture wrapper that's agnostic to the Axelar Solana Gateway, it
@@ -267,6 +268,13 @@ impl TestFixture {
             Some(account) if account.owner == *expected_owner => Ok(Some(account)),
             Some(_) => Err(BanksClientError::ClientError("unexpected account owner")),
         }
+    }
+
+    /// Funds the account using the `self.payer` as the bank
+    pub async fn fund_account(&mut self, to: &Pubkey, amount: u64) {
+        let from = self.payer.pubkey();
+        let ix = system_instruction::transfer(&from, to, amount);
+        self.send_tx(&[ix]).await.expect("failed to fund account");
     }
 }
 
