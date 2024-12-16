@@ -2375,8 +2375,8 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "storeCodeProposalId": "176",
         "storeCodeProposalCodeHash": "a57dccb229cfab931b904618af2ebc854699a25a963c231834837d88ee4a0217",
-        "codeId": 13,
-        "lastUploadedCodeId": 13,
+        "codeId": 19,
+        "lastUploadedCodeId": 19,
         "address": "axelar1rwy79m8u76q2pm3lrxednlgtqjd8439l7hmctdxvjsv2shsu9meq8ntlvx",
         "flow": {
           "executeProposalId": "147"
