@@ -495,7 +495,7 @@ async function testNewField(value, options) {
     });
 
     await broadcast(client, keypair, tx, 'Set new_field');
-
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     tx = new Transaction();
 
