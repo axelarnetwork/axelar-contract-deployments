@@ -470,6 +470,50 @@ async function checkVersionControl(version, options) {
     }
 }
 
+async function testNewField(value, options) {
+    const config = loadConfig(options.env);
+
+    const chain = getChainConfig(config, options.chainName);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+
+    if (!chain.contracts?.AxelarGateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    const contractConfig = chain.contracts.AxelarGateway;
+    const packageId = contractConfig.address;
+
+    let tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::set_new_field`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.pure.u64(value),
+        ]
+    });
+
+    await broadcast(client, keypair, tx, 'Set new_field');
+
+
+    tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::new_field`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+        ]
+    });
+
+    const response = await client.devInspectTransactionBlock({
+        transactionBlock: tx,
+        sender: keypair.toSuiAddress(),
+    });
+    const returnedValue = bcs.U64.parse(new Uint8Array(response.results[0].returnValues[0][0]));
+    console.log(`Set the value to ${value} and it was set to ${returnedValue}.`);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
@@ -563,6 +607,13 @@ if (require.main === module) {
         .addOption(new Option('--disallowed-functions <disallowed-functions>', 'Functions that should be disallowed on this version'))
         .action((version, options) => {
             checkVersionControl(version, options);
+        });
+
+    program
+        .command('test-new-field <value>')
+        .description('Test the new field added for upgrade-versioned')
+        .action((value, options) => {
+            testNewField(value, options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
