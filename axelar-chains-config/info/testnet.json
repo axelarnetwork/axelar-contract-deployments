@@ -2207,6 +2207,26 @@
           "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.0.1",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x3d36C02D7EE86F25565f319E71641CEFeD0eac81",
+          "interchainToken": "0xF4E61a459343fb9fEA5A479176Afd435404aD39e",
+          "interchainTokenDeployer": "0x2abe986344f7196E6c4CDF74FA0657f493fFec5a",
+          "tokenManager": "0xc8e58E2BA863bFb86869227f8264d99de7738933",
+          "tokenHandler": "0x151198A9770107F01219Dfc5fc18e168DD529055",
+          "gatewayCaller": "0x59C4812A32CEfde1044d5554539BbFff5c684f23",
+          "implementation": "0x0F55A4E925F41BB9B88A7D06ec11F14FD7ce6A6B",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0x588c70B10E9edA627A2496B09edc69b79E2d72af",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
       "explorer": {
