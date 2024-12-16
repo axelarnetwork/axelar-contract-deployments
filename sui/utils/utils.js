@@ -19,6 +19,7 @@ const {
     getDefinedSuiVersion,
     getInstalledSuiVersion,
     STD_PACKAGE_ID,
+    SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
 const { Transaction } = require('@mysten/sui/transactions');
 const { broadcast } = require('./sign-utils');
@@ -325,6 +326,17 @@ const isAllowed = async (client, keypair, chain, exec) => {
             regexp = /Some\(".*?"\) \}, (.*?)\)/;
 
             if (parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+                return false;
+            }
+        }
+        let suiPackageAddress = SUI_PACKAGE_ID;
+        while (suiPackageAddress.length < 66) {
+            suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
+        }
+        if( packageId ===  suiPackageAddress && module === 'dynamic_field' && (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object') ) {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 2) {
                 return false;
             }
         }
