@@ -111,9 +111,7 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
 }
 
 async function postDeployUtils(published, keypair, client, config, chain, options) {
-    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${suiPackageAddress}::package::UpgradeCap`,
-    ]);
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
     chain.contracts.Utils.objects = {
         UpgradeCap: upgradeCap,
     };

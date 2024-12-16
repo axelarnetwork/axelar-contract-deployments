@@ -333,7 +333,11 @@ const isAllowed = async (client, keypair, chain, exec) => {
         while (suiPackageAddress.length < 66) {
             suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
         }
-        if( packageId ===  suiPackageAddress && module === 'dynamic_field' && (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object') ) {
+        if (
+            packageId === suiPackageAddress &&
+            module === 'dynamic_field' &&
+            (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object')
+        ) {
             regexp = /Some\(".*?"\) \}, (.*?)\)/;
 
             if (parseInt(regexp.exec(errorMessage)[1]) === 2) {
