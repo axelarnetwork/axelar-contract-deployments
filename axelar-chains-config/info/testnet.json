@@ -2483,17 +2483,27 @@
         "storeCodeProposalId": "182",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
-        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj"
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "lastUploadedCodeId": 25,
+        "codeId": 25,
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b"
+        "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
+        "codeId": 17,
+        "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl",
+        "axelar": {
+          "codeId": 17,
+          "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl"
+        },
+        "lastUploadedCodeId": 17
       }
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "http://localhost:26657",
+    "rpc": "https://tm.axelar-testnet.lava.build",
     "lcd": "https://rest.axelar-testnet.lava.build",
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
