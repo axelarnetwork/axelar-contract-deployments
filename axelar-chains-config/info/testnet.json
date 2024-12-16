@@ -2239,6 +2239,9 @@
       },
       "timeout": 50000,
       "contracts": {
+        "InterchainTokenService": {
+          "skip": true
+        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
