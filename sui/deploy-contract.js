@@ -68,6 +68,7 @@ const PACKAGE_CONFIGS = {
         Operators: postDeployOperators,
         ITS: postDeployIts,
         Squid: postDeploySquid,
+        Utils: postDeployUtils,
     },
 };
 
@@ -106,6 +107,15 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
         RelayerDiscovery: relayerDiscoveryObjectId,
         RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
         OwnerCap: ownerCap,
+    };
+}
+
+async function postDeployUtils(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${suiPackageAddress}::package::UpgradeCap`,
+    ]);
+    chain.contracts.Utils.objects = {
+        UpgradeCap: upgradeCap,
     };
 }
 
