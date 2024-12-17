@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
-const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS_SCOPES, governanceAddress } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -86,10 +86,19 @@ const addContractOptions = (program) => {
     program.hook('preAction', (command) => {
         const chainName = command.opts().chainName;
         const contractName = command.opts().contractName;
-        const scope = CONTRACTS_SCOPES[contractName];
+
+        if (!CONTRACTS[contractName]) {
+            throw new Error(`contract ${contractName} is not supported`);
+        }
+
+        if (!CONTRACTS[contractName].makeInstantiateMsg) {
+            throw new Error(`makeInstantiateMsg function for contract ${contractName} is not defined`);
+        }
+
+        const scope = CONTRACTS[contractName].scope;
 
         if (!scope) {
-            throw new Error(`Scope of contract ${contractName} is not defined`);
+            throw new Error(`scope of contract ${contractName} is not defined`);
         }
 
         if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
