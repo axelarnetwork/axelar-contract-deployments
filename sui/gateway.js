@@ -187,12 +187,16 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
 
 async function migrate(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
-
+    const data = new Uint8Array(arrayify(options.migrateData || '0x'));
     const tx = new Transaction();
 
     tx.moveCall({
         target: `${packageId}::gateway::migrate`,
-        arguments: [tx.object(contractConfig.objects.Gateway)],
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(contractConfig.objects.OwnerCap),
+            tx.pure(bcs.vector(bcs.u8()).serialize(data).toBytes()),
+        ],
     });
 
     return {
@@ -518,6 +522,7 @@ if (require.main === module) {
     program
         .command('migrate')
         .description('Migrate the gateway after upgrade')
+        .addOption(new Option('--migrate-data <migrateData>', 'bcs encoded data to pass to the migrate function'))
         .action((options) => {
             mainProcessor(migrate, null, options);
         });
