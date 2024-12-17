@@ -8,7 +8,7 @@ use axelar_solana_gateway::state::incoming_message::command_id;
 use bitflags::bitflags;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::{
-    DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer,
+    DeployInterchainToken, DeployTokenManager, GMPPayload, InterchainTransfer, SendToHub,
 };
 use role_management::instructions::RoleManagementInstruction;
 use solana_program::bpf_loader_upgradeable;
@@ -26,34 +26,6 @@ pub mod interchain_token;
 pub mod minter;
 pub mod operator;
 pub mod token_manager;
-
-/// Convenience module with the indices of the accounts passed in the
-/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
-pub mod its_account_indices {
-    /// The index of the gateway root PDA account.
-    pub const GATEWAY_ROOT_PDA_INDEX: usize = 0;
-
-    /// The index of the system program account.
-    pub const SYSTEM_PROGRAM_INDEX: usize = 1;
-
-    /// The index of the ITS root PDA account.
-    pub const ITS_ROOT_PDA_INDEX: usize = 2;
-
-    /// The index of the token manager PDA account.
-    pub const TOKEN_MANAGER_PDA_INDEX: usize = 3;
-
-    /// The index of the token mint account.
-    pub const TOKEN_MINT_INDEX: usize = 4;
-
-    /// The index of the token manager ATA account.
-    pub const TOKEN_MANAGER_ATA_INDEX: usize = 5;
-
-    /// The index of the token program account.
-    pub const TOKEN_PROGRAM_INDEX: usize = 6;
-
-    /// The index of the associated token program account.
-    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 7;
-}
 
 bitflags! {
     /// Bitmask for the optional accounts passed in some of the instructions.
@@ -205,6 +177,27 @@ pub enum InterchainTokenServiceInstruction {
     /// 6. [writable] The Token Manager ATA
     /// 7. [] Token program id
     CallContractWithInterchainToken {
+        /// The instruction inputs.
+        params: CallContractWithInterchainTokenInputs,
+    },
+
+    /// Transfers tokens to a contract on the destination chain and call the give instruction on
+    /// it. This instruction is is the same as [`InterchainTransfer`], but will fail if call data
+    /// is empty.
+    ///
+    /// 0. [maybe signer] The address of the authority signing the transfer. In
+    ///    case it's the `TokenManager`, it shouldn't be set as signer as the
+    ///    signing happens on chain.
+    /// 1. [] Gateway root pda
+    /// 2. [] Gateway program id
+    /// 3. [] ITS root pda
+    /// 4. [writable] Interchain token PDA
+    /// 5. [writable] The account where the tokens are being transferred from
+    /// 5. [writable] The mint account
+    /// 6. [writable] The Token Manager PDA
+    /// 6. [writable] The Token Manager ATA
+    /// 7. [] Token program id
+    CallContractWithInterchainTokenOffchainData {
         /// The instruction inputs.
         params: CallContractWithInterchainTokenInputs,
     },
@@ -370,6 +363,11 @@ pub struct InterchainTransferInputs {
     /// Optional data for the call for additional effects (such as calling a
     /// destination contract).
     pub(crate) data: Vec<u8>,
+
+    /// Hash of the call contract data being sent off-chain. The hash should be calculated on the
+    /// final ITS message.
+    #[builder(default, setter(skip))]
+    pub(crate) payload_hash: Option<[u8; 32]>,
 
     /// The gas value to be paid for the deploy transaction
     #[builder(setter(transform = |x: u128| U256::from(x)))]
@@ -604,15 +602,91 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
 ///
 /// If serialization fails.
 pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instruction, ProgramError> {
+    let accounts = interchain_transfer_accounts(&params)?;
+
+    let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer { params })?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::CallContractWithInterchainToken`]
+/// instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn call_contract_with_interchain_token(
+    params: CallContractWithInterchainTokenInputs,
+) -> Result<Instruction, ProgramError> {
+    let accounts = interchain_transfer_accounts(&params)?;
+
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::CallContractWithInterchainToken { params })?;
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData`]
+/// instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn call_contract_with_interchain_token_offchain_data(
+    mut params: CallContractWithInterchainTokenInputs,
+) -> Result<(Instruction, Vec<u8>), ProgramError> {
+    let accounts = interchain_transfer_accounts(&params)?;
+
+    let Some(destination_chain) = params.destination_chain.as_ref() else {
+        return Err(ProgramError::InvalidArgument);
+    };
+
+    let inner_gmp_payload: GMPPayload = params.clone().try_into()?;
+    let hub_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID
+            .try_into()
+            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
+        destination_chain: destination_chain.clone(),
+        payload: inner_gmp_payload.encode().into(),
+    });
+    let offchain_data = hub_payload.encode();
+
+    params.payload_hash = Some(solana_program::keccak::hashv(&[&offchain_data]).0);
+
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData { params },
+    )?;
+
+    Ok((
+        Instruction {
+            program_id: crate::ID,
+            accounts,
+            data,
+        },
+        offchain_data,
+    ))
+}
+
+fn interchain_transfer_accounts(
+    inputs: &InterchainTransferInputs,
+) -> Result<Vec<AccountMeta>, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) =
-        crate::find_interchain_token_pda(&its_root_pda, &params.token_id);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &params.token_id);
-    let flow_epoch = flow_limit::flow_epoch_with_timestamp(params.timestamp)?;
+        crate::find_interchain_token_pda(&its_root_pda, &inputs.token_id);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &inputs.token_id);
+    let flow_epoch = flow_limit::flow_epoch_with_timestamp(inputs.timestamp)?;
     let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
 
-    let (authority, signer) = match params.authority {
+    let (authority, signer) = match inputs.authority {
         Some(key) => (
             Pubkey::new_from_array(
                 key.as_ref()
@@ -624,13 +698,13 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         None => (token_manager_pda, false),
     };
     let source_account = Pubkey::new_from_array(
-        params
+        inputs
             .source_account
             .as_ref()
             .try_into()
             .map_err(|_err| ProgramError::InvalidInstructionData)?,
     );
-    let mint = match params.mint {
+    let mint = match inputs.mint {
         Some(key) => Pubkey::new_from_array(
             key.as_ref()
                 .try_into()
@@ -639,7 +713,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         None => interchain_token_pda,
     };
     let token_program = Pubkey::new_from_array(
-        params
+        inputs
             .token_program
             .as_ref()
             .try_into()
@@ -647,7 +721,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
     );
 
     let payer = Pubkey::new_from_array(
-        params
+        inputs
             .payer
             .as_ref()
             .try_into()
@@ -657,7 +731,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
 
-    let accounts = vec![
+    Ok(vec![
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
@@ -670,15 +744,7 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
         AccountMeta::new(token_manager_ata, false),
         AccountMeta::new_readonly(token_program, false),
         AccountMeta::new(flow_slot_pda, false),
-    ];
-
-    let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer { params })?;
-
-    Ok(Instruction {
-        program_id: crate::ID,
-        accounts,
-        data,
-    })
+    ])
 }
 
 /// Creates an [`InterchainTokenServiceInstruction::SetFlowLimit`].

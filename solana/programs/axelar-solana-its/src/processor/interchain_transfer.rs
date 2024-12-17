@@ -205,6 +205,7 @@ pub(crate) fn process_outbound_transfer<'a>(
 
     let amount_minus_fees = take_token(&take_token_accounts, &token_manager, inputs.amount)?;
     inputs.amount = amount_minus_fees;
+    let maybe_payload_hash = inputs.payload_hash.take();
 
     let destination_chain = inputs
         .destination_chain
@@ -222,6 +223,7 @@ pub(crate) fn process_outbound_transfer<'a>(
         &payload,
         destination_chain,
         gas_value.into(),
+        maybe_payload_hash,
     )
 }
 

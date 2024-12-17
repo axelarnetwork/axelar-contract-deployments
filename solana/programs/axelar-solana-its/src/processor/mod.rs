@@ -146,7 +146,10 @@ pub fn process_instruction<'a>(
         ) => {
             interchain_token::process_instruction(accounts, interchain_token_instruction)?;
         }
-        InterchainTokenServiceInstruction::CallContractWithInterchainToken { params } => {
+        InterchainTokenServiceInstruction::CallContractWithInterchainToken { params }
+        | InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
+            params,
+        } => {
             if params.data.is_empty() {
                 return Err(ProgramError::InvalidInstructionData);
             }
@@ -297,7 +300,13 @@ where
 
     match destination_chain {
         Some(chain) => {
-            process_outbound_its_gmp_payload(other_accounts, &payload, chain, gas_value.into())?;
+            process_outbound_its_gmp_payload(
+                other_accounts,
+                &payload,
+                chain,
+                gas_value.into(),
+                None,
+            )?;
         }
         None => {
             payload.process_local_action(payer, other_accounts, optional_accounts_flags, None)?;
@@ -319,6 +328,7 @@ fn process_outbound_its_gmp_payload<'a>(
     payload: &GMPPayload,
     destination_chain: String,
     _gas_value: U256,
+    payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let gateway_root_pda = next_account_info(accounts_iter)?;
@@ -331,32 +341,51 @@ fn process_outbound_its_gmp_payload<'a>(
         return Err(ProgramError::Immutable);
     }
 
-    let hub_payload = GMPPayload::SendToHub(SendToHub {
-        selector: SendToHub::MESSAGE_TYPE_ID
-            .try_into()
-            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-        destination_chain,
-        payload: payload.encode().into(),
-    });
-
     // TODO: Call gas service to pay gas fee.
 
-    invoke_signed(
-        &axelar_solana_gateway::instructions::call_contract(
-            axelar_solana_gateway::id(),
-            *gateway_root_pda.key,
-            *its_root_pda.key,
-            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-            hub_payload.encode(),
-        )?,
-        &[its_root_pda.clone(), gateway_root_pda.clone()],
-        &[&[
-            seed_prefixes::ITS_SEED,
-            gateway_root_pda.key.as_ref(),
-            &[its_root_config.bump],
-        ]],
-    )?;
+    if let Some(payload_hash) = payload_hash {
+        invoke_signed(
+            &axelar_solana_gateway::instructions::call_contract_offchain_data(
+                axelar_solana_gateway::id(),
+                *gateway_root_pda.key,
+                *its_root_pda.key,
+                ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+                ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
+                payload_hash,
+            )?,
+            &[its_root_pda.clone(), gateway_root_pda.clone()],
+            &[&[
+                seed_prefixes::ITS_SEED,
+                gateway_root_pda.key.as_ref(),
+                &[its_root_config.bump],
+            ]],
+        )?;
+    } else {
+        let hub_payload = GMPPayload::SendToHub(SendToHub {
+            selector: SendToHub::MESSAGE_TYPE_ID
+                .try_into()
+                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
+            destination_chain,
+            payload: payload.encode().into(),
+        });
+
+        invoke_signed(
+            &axelar_solana_gateway::instructions::call_contract(
+                axelar_solana_gateway::id(),
+                *gateway_root_pda.key,
+                *its_root_pda.key,
+                ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+                ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
+                hub_payload.encode(),
+            )?,
+            &[its_root_pda.clone(), gateway_root_pda.clone()],
+            &[&[
+                seed_prefixes::ITS_SEED,
+                gateway_root_pda.key.as_ref(),
+                &[its_root_config.bump],
+            ]],
+        )?;
+    }
 
     Ok(())
 }
