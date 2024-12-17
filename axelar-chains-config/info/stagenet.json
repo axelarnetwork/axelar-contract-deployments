@@ -1677,6 +1677,21 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         }
       }
+    },
+    "sui": {
+      "name": "Sui",
+      "axelarId": "sui",
+      "networkType": "testnet",
+      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "tokenSymbol": "SUI",
+      "chainType": "sui",
+      "explorer": {
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/testnet"
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
