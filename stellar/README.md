@@ -87,6 +87,9 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 
 ### Interchain Token Service
 
+Deploy Interchain Token wasm first.
+```bash
+node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
 ```bash
 node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm
 ```
@@ -173,16 +176,18 @@ node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp
 
 ### Interchain Token Service
 
-#### Set Trusted Address
+_Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
+
+#### Set Trusted Chain
 
 ```bash
-node stellar/its.js set-trusted-address [chain-name] [trusted-address]
+node stellar/its.js set-trusted-chain [chain-name]
 ```
 
 #### Remove Trusted Address
 
 ```bash
-node stellar/its.js remove-trusted-address [chain-name]
+node stellar/its.js remove-trusted-chain [chain-name]
 ```
 
 ## TTL extension and state archival recovery

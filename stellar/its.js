@@ -5,23 +5,22 @@ const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require
 const { addBaseOptions, getWallet, broadcast } = require('./utils');
 const { prompt } = require('../common/utils');
 
-async function setTrustedAddress(wallet, _, chain, contractConfig, args, options) {
-    const contract = new Contract(contractConfig.address);
-    const [chainName, trustedAddress] = args;
-    const callArgs = [chainName, trustedAddress].map(nativeToScVal);
-
-    const operation = contract.call('set_trusted_address', ...callArgs);
-
-    await broadcast(operation, wallet, chain, 'Trusted Address Set', options);
-}
-
-async function removeTrustedAddress(wallet, _, chain, contractConfig, arg, options) {
+async function setTrustedChain(wallet, _, chain, contractConfig, arg, options) {
     const contract = new Contract(contractConfig.address);
     const callArg = nativeToScVal(arg, { type: 'string' });
 
-    const operation = contract.call('remove_trusted_address', callArg);
+    const operation = contract.call('set_trusted_chain', callArg);
 
-    await broadcast(operation, wallet, chain, 'Trusted Address Removed', options);
+    await broadcast(operation, wallet, chain, 'Trusted Chain Set', options);
+}
+
+async function removeTrustedChain(wallet, _, chain, contractConfig, arg, options) {
+    const contract = new Contract(contractConfig.address);
+    const callArg = nativeToScVal(arg, { type: 'string' });
+
+    const operation = contract.call('remove_trusted_chain', callArg);
+
+    await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -49,17 +48,17 @@ if (require.main === module) {
     program.name('its').description('Interchain Token Service contract operations.');
 
     program
-        .command('set-trusted-address <chainName> <trustedAddress>')
-        .description('set a trusted ITS address for a given chain')
-        .action((chainName, trustedAddress, options) => {
-            mainProcessor(setTrustedAddress, [chainName, trustedAddress], options);
+        .command('set-trusted-chain <chainName>')
+        .description('set a trusted ITS chain')
+        .action((chainName, options) => {
+            mainProcessor(setTrustedChain, chainName, options);
         });
 
     program
-        .command('remove-trusted-address <chainName>')
-        .description('remove a trusted ITS address for a given chain')
+        .command('remove-trusted-chain <chainName>')
+        .description('remove a trusted ITS chain')
         .action((chainName, options) => {
-            mainProcessor(removeTrustedAddress, chainName, options);
+            mainProcessor(removeTrustedChain, chainName, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

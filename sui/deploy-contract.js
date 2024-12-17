@@ -96,14 +96,16 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  */
 
 async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
-    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0, ownerCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::discovery::RelayerDiscovery`,
         `${published.packageId}::relayer_discovery_v0::RelayerDiscovery_v0`,
+        `${published.packageId}::owner_cap::OwnerCap`,
     ]);
 
     chain.contracts.RelayerDiscovery.objects = {
         RelayerDiscovery: relayerDiscoveryObjectId,
         RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
+        OwnerCap: ownerCap,
     };
 }
 
@@ -235,11 +237,12 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, operatorCapId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::its::ITS`,
         `${published.packageId}::its_v0::ITS_v0`,
         `${published.packageId}::owner_cap::OwnerCap`,
         `${published.packageId}::operator_cap::OperatorCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
     const channelId = await getItsChannelId(client, itsv0ObjectId);
@@ -250,6 +253,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         ChannelId: channelId,
         OwnerCap: ownerCapObjectId,
         OperatorCap: operatorCapId,
+        UpgradeCap: upgradeCapObjectId,
     };
 
     const tx = new Transaction();
@@ -264,9 +268,12 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 async function postDeploySquid(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
+    const [squidObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::squid::Squid`,
+        `${published.packageId}::owner_cap::OwnerCap`,
+    ]);
     const channelId = await getSquidChannelId(client, squidObjectId);
-    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId };
+    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
 
     const tx = new Transaction();
     tx.moveCall({
