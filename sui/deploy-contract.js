@@ -227,6 +227,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
             Gateway: gateway,
             UpgradeCap: upgradeCap,
             Gatewayv0: gatewayv0,
+            OwnerCap: ownerCap,
         },
         domainSeparator,
         operator,
