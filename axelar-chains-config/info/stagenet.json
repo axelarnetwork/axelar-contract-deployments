@@ -1822,7 +1822,8 @@
         },
         "hedera": {
           "executeProposalId": "48"
-        }
+        },
+        "sui": {}
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -1862,7 +1863,8 @@
         },
         "hedera": {
           "executeProposalId": "49"
-        }
+        },
+        "sui": {}
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -1879,7 +1881,8 @@
         },
         "hedera": {
           "executeProposalId": "47"
-        }
+        },
+        "sui": {}
       },
       "MultisigProver": {
         "flow": {
