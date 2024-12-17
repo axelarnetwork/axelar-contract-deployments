@@ -172,7 +172,7 @@ pub fn init_config(
         AccountMeta::new(*payer, true),
         AccountMeta::new_readonly(*authority, false),
         AccountMeta::new(*config_pda, false),
-        AccountMeta::new(system_program::ID, false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     Ok(Instruction {
@@ -212,7 +212,7 @@ pub fn pay_native_for_contract_call_instruction(
     let accounts = vec![
         AccountMeta::new(*payer, true),
         AccountMeta::new(*config_pda, false),
-        AccountMeta::new(system_program::ID, false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     Ok(Instruction {
@@ -245,7 +245,7 @@ pub fn add_native_gas_instruction(
     let accounts = vec![
         AccountMeta::new(*sender, true),
         AccountMeta::new(*config_pda, false),
-        AccountMeta::new(system_program::ID, false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     Ok(Instruction {
