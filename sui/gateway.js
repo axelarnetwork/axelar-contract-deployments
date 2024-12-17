@@ -488,10 +488,7 @@ async function testNewField(value, options) {
 
     tx.moveCall({
         target: `${packageId}::gateway::set_new_field`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-            tx.pure.u64(value),
-        ]
+        arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.u64(value)],
     });
 
     await broadcast(client, keypair, tx, 'Set new_field');
@@ -501,9 +498,7 @@ async function testNewField(value, options) {
 
     tx.moveCall({
         target: `${packageId}::gateway::new_field`,
-        arguments: [
-            tx.object(contractConfig.objects.Gateway),
-        ]
+        arguments: [tx.object(contractConfig.objects.Gateway)],
     });
 
     const response = await client.devInspectTransactionBlock({
