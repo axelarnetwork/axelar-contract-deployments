@@ -68,6 +68,7 @@ const PACKAGE_CONFIGS = {
         Operators: postDeployOperators,
         ITS: postDeployIts,
         Squid: postDeploySquid,
+        Utils: postDeployUtils,
     },
 };
 
@@ -106,6 +107,13 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
         RelayerDiscovery: relayerDiscoveryObjectId,
         RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
         OwnerCap: ownerCap,
+    };
+}
+
+async function postDeployUtils(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+    chain.contracts.Utils.objects = {
+        UpgradeCap: upgradeCap,
     };
 }
 
@@ -227,6 +235,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
             Gateway: gateway,
             UpgradeCap: upgradeCap,
             Gatewayv0: gatewayv0,
+            OwnerCap: ownerCap,
         },
         domainSeparator,
         operator,
@@ -306,6 +315,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
+        versions: [published.packageId],
     };
 
     chain.contracts[packageName].structs = await getStructs(client, published.packageId);
