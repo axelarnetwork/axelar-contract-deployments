@@ -329,10 +329,13 @@ const isAllowed = async (client, keypair, chain, exec) => {
                 return false;
             }
         }
+
         let suiPackageAddress = SUI_PACKAGE_ID;
+
         while (suiPackageAddress.length < 66) {
             suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
         }
+
         if (
             packageId === suiPackageAddress &&
             module === 'dynamic_field' &&
