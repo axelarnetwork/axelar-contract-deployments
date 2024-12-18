@@ -839,6 +839,7 @@ dependencies = [
  "axelar-message-primitives",
  "axelar-rkyv-encoding",
  "axelar-solana-encoding",
+ "axelar-solana-gas-service",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
  "axelar-solana-memo-program",

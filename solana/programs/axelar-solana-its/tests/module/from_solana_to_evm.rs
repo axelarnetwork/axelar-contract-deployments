@@ -44,6 +44,12 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
@@ -55,7 +61,9 @@ async fn test_send_deploy_interchain_token_from_solana_to_evm() {
         .salt(salt)
         .minter(evm_signer.wallet.address().as_bytes().to_owned())
         .destination_chain(destination_chain)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
 
     let ix = axelar_solana_its::instructions::deploy_interchain_token(deploy).unwrap();
@@ -123,6 +131,12 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let token_name = "TestToken";
     let token_symbol = "TT";
@@ -142,6 +156,8 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
         .salt(salt)
         .destination_chain(destination_chain)
         .token_manager_type(token_manager::Type::LockUnlock)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();
@@ -212,6 +228,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
@@ -222,7 +244,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .decimals(18)
         .salt(salt)
         .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
 
     let deploy_local_ix =
@@ -237,7 +261,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .destination_chain(destination_chain.clone())
         .salt(salt)
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
     let ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
@@ -346,7 +372,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(323)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(vec![])
         .build();
@@ -416,6 +444,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
@@ -439,6 +473,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
         .token_manager_type(token_manager::Type::MintBurn)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .token_program(token_program_id)
@@ -461,6 +497,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .salt(salt)
         .destination_chain(destination_chain.clone())
         .token_manager_type(token_manager::Type::MintBurn)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();
@@ -573,7 +611,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .token_program(token_program_id)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(vec![])
@@ -651,6 +691,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
@@ -677,6 +723,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
         .token_manager_type(token_manager::Type::MintBurnFrom)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .token_program(token_program_id)
@@ -699,6 +747,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .salt(salt)
         .destination_chain(destination_chain.clone())
         .token_manager_type(token_manager::Type::MintBurnFrom)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();
@@ -830,7 +880,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .token_program(token_program_id)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(vec![])
@@ -909,6 +961,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
@@ -936,6 +994,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
         .token_manager_type(token_manager::Type::LockUnlock)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .token_program(token_program_id)
@@ -958,6 +1018,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .salt(salt)
         .destination_chain(destination_chain.clone())
         .token_manager_type(token_manager::Type::MintBurn)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();
@@ -1070,7 +1132,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .timestamp(clock_sysvar.unix_timestamp)
         .token_program(token_program_id)
         .data(vec![])
@@ -1153,6 +1217,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let token_name = "TestToken";
@@ -1190,6 +1260,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         .payer(solana_chain.fixture.payer.pubkey())
         .salt(salt)
         .token_manager_type(token_manager::Type::LockUnlockFee)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .token_program(spl_token_2022::id())
@@ -1212,6 +1284,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         .salt(salt)
         .destination_chain(destination_chain.clone())
         .token_manager_type(token_manager::Type::MintBurn)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();
@@ -1324,7 +1398,9 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(transfer_amount)
         .timestamp(clock_sysvar.unix_timestamp)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .data(vec![])
         .build();
 
@@ -1437,6 +1513,12 @@ async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let memo = evm_signer
         .deploy_axelar_memo(
@@ -1455,7 +1537,9 @@ async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
         .decimals(18)
         .salt(salt)
         .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
 
     let deploy_local_ix =
@@ -1470,7 +1554,9 @@ async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
         .destination_chain(destination_chain.clone())
         .salt(salt)
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
     let ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
@@ -1581,7 +1667,9 @@ async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
         .destination_chain(destination_chain)
         .destination_address(memo.address().as_bytes().to_vec())
         .amount(323)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(call_data.to_vec())
         .build();
@@ -1653,6 +1741,12 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let memo = evm_signer
         .deploy_axelar_memo(
@@ -1671,7 +1765,9 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
         .decimals(18)
         .salt(salt)
         .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
 
     let deploy_local_ix =
@@ -1686,7 +1782,9 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
         .destination_chain(destination_chain.clone())
         .salt(salt)
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .build();
     let ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
@@ -1797,7 +1895,9 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
         .destination_chain(destination_chain)
         .destination_address(memo.address().as_bytes().to_vec())
         .amount(323)
-        .gas_value(0_u128)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
+        .gas_value(0)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(call_data.to_vec())
         .build();

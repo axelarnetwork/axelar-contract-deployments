@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use axelar_message_primitives::{DataPayload, DestinationProgramId, U256};
+use axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use bitflags::bitflags;
@@ -267,6 +267,12 @@ pub struct DeployInterchainTokenInputs {
     /// The salt used to derive the tokenId associated with the token
     pub(crate) salt: [u8; 32],
 
+    /// The program id of the gas service program.
+    pub(crate) gas_service: Pubkey,
+
+    /// The PDA of the account holding the gas service config.
+    pub(crate) gas_config_pda: Pubkey,
+
     /// The chain where the `InterchainToken` should be deployed.
     /// Deploys to (crate) Solana if `None`.
     #[builder(default, setter(strip_option))]
@@ -285,8 +291,7 @@ pub struct DeployInterchainTokenInputs {
     pub(crate) minter: Vec<u8>,
 
     /// The gas value to be paid for the deploy transaction
-    #[builder(setter(transform = |x: u128| U256::from(x)))]
-    pub(crate) gas_value: U256,
+    pub(crate) gas_value: u64,
 }
 
 /// Parameters for `[InterchainTokenServiceInstruction::DeployTokenManager]`.
@@ -300,6 +305,12 @@ pub struct DeployTokenManagerInputs {
     /// The salt used to derive the tokenId associated with the token
     pub(crate) salt: [u8; 32],
 
+    /// The program id of the gas service program.
+    pub(crate) gas_service: Pubkey,
+
+    /// The PDA of the account holding the gas service config.
+    pub(crate) gas_config_pda: Pubkey,
+
     /// The chain where the `TokenManager` should be deployed.
     /// Deploys to Solana if `None`.
     #[builder(default, setter(strip_option))]
@@ -312,8 +323,7 @@ pub struct DeployTokenManagerInputs {
     pub(crate) params: Vec<u8>,
 
     /// The gas value to be paid for the deploy transaction
-    #[builder(setter(transform = |x: u128| U256::from(x)))]
-    pub(crate) gas_value: U256,
+    pub(crate) gas_value: u64,
 
     /// Required when deploying the [`TokenManager`] on Solana, this is the
     /// token program that owns the mint account, either `spl_token::id()` or
@@ -332,6 +342,12 @@ pub struct InterchainTransferInputs {
 
     /// The source account.
     pub(crate) source_account: Pubkey,
+
+    /// The program id of the gas service program.
+    pub(crate) gas_service: Pubkey,
+
+    /// The PDA of the account holding the gas service config.
+    pub(crate) gas_config_pda: Pubkey,
 
     /// The source account owner. In case of a transfer using a Mint/BurnFrom
     /// `TokenManager`, this shouldn't be set as the authority will be the
@@ -370,8 +386,7 @@ pub struct InterchainTransferInputs {
     pub(crate) payload_hash: Option<[u8; 32]>,
 
     /// The gas value to be paid for the deploy transaction
-    #[builder(setter(transform = |x: u128| U256::from(x)))]
-    pub(crate) gas_value: U256,
+    pub(crate) gas_value: u64,
 
     /// Current chain's unix timestamp.
     pub(crate) timestamp: i64,
@@ -525,6 +540,9 @@ pub fn deploy_interchain_token(
             axelar_solana_gateway::id(),
             false,
         ));
+        accounts.push(AccountMeta::new(params.gas_config_pda, false));
+        accounts.push(AccountMeta::new_readonly(params.gas_service, false));
+        accounts.push(AccountMeta::new_readonly(system_program::id(), false));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
     };
 
@@ -578,6 +596,9 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
             axelar_solana_gateway::id(),
             false,
         ));
+        accounts.push(AccountMeta::new(params.gas_config_pda, false));
+        accounts.push(AccountMeta::new_readonly(params.gas_service, false));
+        accounts.push(AccountMeta::new_readonly(system_program::id(), false));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
 
         OptionalAccountsFlags::empty()
@@ -732,11 +753,13 @@ fn interchain_transfer_accounts(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
 
     Ok(vec![
-        AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new(inputs.gas_config_pda, false),
+        AccountMeta::new_readonly(inputs.gas_service, false),
+        AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
@@ -1112,7 +1135,7 @@ fn derive_common_its_accounts(
 
 pub(crate) trait OutboundInstructionInputs {
     fn destination_chain(&mut self) -> Option<String>;
-    fn gas_value(&self) -> U256;
+    fn gas_value(&self) -> u64;
 }
 
 impl OutboundInstructionInputs for DeployInterchainTokenInputs {
@@ -1120,7 +1143,7 @@ impl OutboundInstructionInputs for DeployInterchainTokenInputs {
         self.destination_chain.take()
     }
 
-    fn gas_value(&self) -> U256 {
+    fn gas_value(&self) -> u64 {
         self.gas_value
     }
 }
@@ -1130,7 +1153,7 @@ impl OutboundInstructionInputs for DeployTokenManagerInputs {
         self.destination_chain.take()
     }
 
-    fn gas_value(&self) -> U256 {
+    fn gas_value(&self) -> u64 {
         self.gas_value
     }
 }

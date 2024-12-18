@@ -205,6 +205,12 @@ async fn test_successful_add_and_remove_flow_limiter() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let salt = keccak::hash(b"our cool token").0;
@@ -217,6 +223,8 @@ async fn test_successful_add_and_remove_flow_limiter() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 
@@ -280,6 +288,12 @@ async fn test_successful_token_manager_operator_transfer() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let alice = Keypair::new();
@@ -300,6 +314,8 @@ async fn test_successful_token_manager_operator_transfer() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 
@@ -379,6 +395,12 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let alice = Keypair::new();
@@ -399,6 +421,8 @@ async fn test_successful_token_manager_operator_proposal_acceptance() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 
@@ -512,6 +536,12 @@ async fn test_successful_token_manager_minter_transfer() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let alice = Keypair::new();
@@ -532,6 +562,8 @@ async fn test_successful_token_manager_minter_transfer() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 
@@ -611,6 +643,12 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let alice = Keypair::new();
@@ -631,6 +669,8 @@ async fn test_successful_token_manager_minter_proposal_acceptance() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 
@@ -745,6 +785,12 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let bob = Keypair::new();
     let alice = Keypair::new();
@@ -783,6 +829,8 @@ async fn test_fail_token_manager_minter_proposal_acceptance() {
         .decimals(18)
         .salt(salt)
         .minter(bob.pubkey().as_ref().to_vec())
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .build();
 

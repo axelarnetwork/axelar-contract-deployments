@@ -216,13 +216,14 @@ pub(crate) fn process_outbound_transfer<'a>(
         .try_into()
         .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    let (_other, outbound_message_accounts) = accounts.split_at(3);
+    let (_other, outbound_message_accounts) = accounts.split_at(2);
 
     crate::processor::process_outbound_its_gmp_payload(
+        take_token_accounts.payer,
         outbound_message_accounts,
         &payload,
         destination_chain,
-        gas_value.into(),
+        gas_value,
         maybe_payload_hash,
     )
 }
@@ -619,11 +620,13 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 }
 
 pub(crate) struct TakeTokenAccounts<'a> {
-    pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) authority: &'a AccountInfo<'a>,
     pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) _gateway: &'a AccountInfo<'a>,
+    pub(crate) _gas_service_config_pda: &'a AccountInfo<'a>,
+    pub(crate) _gas_service: &'a AccountInfo<'a>,
+    pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) source_account: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
@@ -642,11 +645,13 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
         let accounts_iter = &mut accounts.iter();
 
         Ok(TakeTokenAccounts {
-            system_account: next_account_info(accounts_iter)?,
             payer: next_account_info(accounts_iter)?,
             authority: next_account_info(accounts_iter)?,
             _gateway_root_pda: next_account_info(accounts_iter)?,
             _gateway: next_account_info(accounts_iter)?,
+            _gas_service_config_pda: next_account_info(accounts_iter)?,
+            _gas_service: next_account_info(accounts_iter)?,
+            system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             source_account: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,

@@ -17,6 +17,12 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let mint = solana_chain
         .fixture
@@ -34,6 +40,8 @@ async fn test_deploy_token_manager(#[case] token_program_id: Pubkey) {
         .gas_value(0)
         .params(params)
         .token_program(token_program_id)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .build();
 
     solana_chain

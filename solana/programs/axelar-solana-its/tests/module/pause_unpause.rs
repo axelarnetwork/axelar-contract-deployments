@@ -111,6 +111,12 @@ async fn test_its_gmp_payload_fail_when_paused() {
 #[tokio::test]
 async fn test_outbound_deployment_fails_when_paused() {
     let mut solana_chain = program_test().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(
@@ -146,6 +152,8 @@ async fn test_outbound_deployment_fails_when_paused() {
         .salt(salt)
         .destination_chain(destination_chain)
         .token_manager_type(token_manager::Type::LockUnlock)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .gas_value(0)
         .params(params)
         .build();

@@ -1,6 +1,5 @@
 //! Program state processor
 
-use alloy_primitives::U256;
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
@@ -14,6 +13,7 @@ use role_management::processor::{
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -301,10 +301,11 @@ where
     match destination_chain {
         Some(chain) => {
             process_outbound_its_gmp_payload(
+                payer,
                 other_accounts,
                 &payload,
                 chain,
-                gas_value.into(),
+                gas_value,
                 None,
             )?;
         }
@@ -324,42 +325,42 @@ where
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
 fn process_outbound_its_gmp_payload<'a>(
+    payer: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &GMPPayload,
     destination_chain: String,
-    _gas_value: U256,
+    gas_value: u64,
     payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
+    let gateway_root_account = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(its_root_pda, gateway_root_pda.key, its_root_config.bump)?;
+    let gas_service_config_account = next_account_info(accounts_iter)?;
+    let gas_service = next_account_info(accounts_iter)?;
+    let system_program = next_account_info(accounts_iter)?;
+    let its_root_account = next_account_info(accounts_iter)?;
+    let its_root_config = InterchainTokenService::load(its_root_account)?;
+    assert_valid_its_root_pda(
+        its_root_account,
+        gateway_root_account.key,
+        its_root_config.bump,
+    )?;
     if its_root_config.paused {
         msg!("The Interchain Token Service is currently paused.");
         return Err(ProgramError::Immutable);
     }
 
-    // TODO: Call gas service to pay gas fee.
-
-    if let Some(payload_hash) = payload_hash {
-        invoke_signed(
-            &axelar_solana_gateway::instructions::call_contract_offchain_data(
-                axelar_solana_gateway::id(),
-                *gateway_root_pda.key,
-                *its_root_pda.key,
-                ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-                ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-                payload_hash,
-            )?,
-            &[its_root_pda.clone(), gateway_root_pda.clone()],
-            &[&[
-                seed_prefixes::ITS_SEED,
-                gateway_root_pda.key.as_ref(),
-                &[its_root_config.bump],
-            ]],
+    let (payload_hash, call_contract_ix) = if let Some(payload_hash) = payload_hash {
+        let ix = axelar_solana_gateway::instructions::call_contract_offchain_data(
+            axelar_solana_gateway::id(),
+            *gateway_root_account.key,
+            *its_root_account.key,
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
+            payload_hash,
         )?;
+
+        (payload_hash, ix)
     } else {
         let hub_payload = GMPPayload::SendToHub(SendToHub {
             selector: SendToHub::MESSAGE_TYPE_ID
@@ -367,25 +368,59 @@ fn process_outbound_its_gmp_payload<'a>(
                 .map_err(|_err| ProgramError::ArithmeticOverflow)?,
             destination_chain,
             payload: payload.encode().into(),
-        });
+        })
+        .encode();
+        let payload_hash = if gas_value > 0 {
+            solana_program::keccak::hashv(&[&hub_payload]).0
+        } else {
+            [0; 32]
+        };
 
-        invoke_signed(
-            &axelar_solana_gateway::instructions::call_contract(
-                axelar_solana_gateway::id(),
-                *gateway_root_pda.key,
-                *its_root_pda.key,
+        let ix = axelar_solana_gateway::instructions::call_contract(
+            axelar_solana_gateway::id(),
+            *gateway_root_account.key,
+            *its_root_account.key,
+            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
+            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
+            hub_payload,
+        )?;
+
+        (payload_hash, ix)
+    };
+
+    if gas_value > 0 {
+        let gas_payment_ix =
+            axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
+                gas_service.key,
+                payer.key,
+                gas_service_config_account.key,
                 ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
                 ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-                hub_payload.encode(),
-            )?,
-            &[its_root_pda.clone(), gateway_root_pda.clone()],
-            &[&[
-                seed_prefixes::ITS_SEED,
-                gateway_root_pda.key.as_ref(),
-                &[its_root_config.bump],
-            ]],
+                payload_hash,
+                *payer.key,
+                vec![],
+                gas_value,
+            )?;
+
+        invoke(
+            &gas_payment_ix,
+            &[
+                payer.clone(),
+                gas_service_config_account.clone(),
+                system_program.clone(),
+            ],
         )?;
     }
+
+    invoke_signed(
+        &call_contract_ix,
+        &[its_root_account.clone(), gateway_root_account.clone()],
+        &[&[
+            seed_prefixes::ITS_SEED,
+            gateway_root_account.key.as_ref(),
+            &[its_root_config.bump],
+        ]],
+    )?;
 
     Ok(())
 }

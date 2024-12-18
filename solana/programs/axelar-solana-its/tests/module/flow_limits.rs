@@ -263,6 +263,12 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     } = axelar_solana_setup(false).await;
     let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
         axelar_evm_setup().await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let destination_chain = "ethereum".to_string();
     let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
@@ -273,12 +279,18 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .decimals(18)
         .salt(salt)
         .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_value(0_u128)
+        .gas_value(0)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .build();
 
     let deploy_local_ix =
         axelar_solana_its::instructions::deploy_interchain_token(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
+    solana_chain
+        .fixture
+        .send_tx(&[deploy_local_ix])
+        .await
+        .unwrap();
 
     let deploy_remote = DeployInterchainTokenInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
@@ -288,7 +300,9 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .destination_chain(destination_chain.clone())
         .salt(salt)
         .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_value(0_u128)
+        .gas_value(0)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .build();
 
     let deploy_remote_ix =
@@ -298,6 +312,7 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .await
         .pop()
         .unwrap();
+    dbg!("Deployed remote");
 
     let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
         panic!("unexpected event")
@@ -400,6 +415,8 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .await
         .unwrap();
 
+    dbg!("Will transfer");
+
     let transfer = InterchainTransferInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
         .authority(solana_chain.fixture.payer.pubkey())
@@ -408,7 +425,9 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
         .destination_chain(destination_chain)
         .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
         .amount(800)
-        .gas_value(0_u128)
+        .gas_value(0)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .timestamp(clock_sysvar.unix_timestamp)
         .data(vec![])
         .build();

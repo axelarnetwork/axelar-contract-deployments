@@ -21,6 +21,7 @@ axelar-message-primitives.workspace = true
 axelar-rkyv-encoding.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
 bitflags.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true

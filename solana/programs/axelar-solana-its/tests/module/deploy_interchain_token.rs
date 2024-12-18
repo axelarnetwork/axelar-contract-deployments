@@ -14,6 +14,12 @@ async fn test_deploy_interchain_token() {
     let ItsProgramWrapper {
         mut solana_chain, ..
     } = axelar_solana_setup(false).await;
+    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
+    solana_chain
+        .fixture
+        .init_gas_config(&gas_utils)
+        .await
+        .unwrap();
 
     let salt = keccak::hash(b"our cool token").0;
     let token_name = "MyToken";
@@ -26,6 +32,8 @@ async fn test_deploy_interchain_token() {
         .salt(salt)
         .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
         .gas_value(0)
+        .gas_service(axelar_solana_gas_service::id())
+        .gas_config_pda(gas_utils.config_pda)
         .build();
 
     solana_chain
