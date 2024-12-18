@@ -130,7 +130,6 @@ async function broadcast(client, keypair, tx, actionName) {
             showContent: true,
         },
     });
-
     printInfo(actionName || 'Tx', receipt.digest);
 
     return receipt;

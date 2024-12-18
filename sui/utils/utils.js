@@ -18,7 +18,11 @@ const {
     bcsStructs,
     getDefinedSuiVersion,
     getInstalledSuiVersion,
+    STD_PACKAGE_ID,
+    SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { broadcast } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -293,6 +297,61 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
+const isAllowed = async (client, keypair, chain, exec) => {
+    const addError = (tx) => {
+        tx.moveCall({
+            target: `${STD_PACKAGE_ID}::ascii::char`,
+            arguments: [tx.pure.u8(128)],
+        });
+    };
+
+    const tx = new Transaction();
+    exec(tx);
+    addError(tx);
+
+    try {
+        await broadcast(client, keypair, tx);
+    } catch (e) {
+        const errorMessage = e.cause.effects.status.error;
+        let regexp = /address: (.*?),/;
+        const packageId = `0x${regexp.exec(errorMessage)[1]}`;
+
+        regexp = /Identifier\("(.*?)"\)/;
+        const module = regexp.exec(errorMessage)[1];
+
+        regexp = /Some\("(.*?)"\)/;
+        const functionName = regexp.exec(errorMessage)[1];
+
+        if (packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+                return false;
+            }
+        }
+
+        let suiPackageAddress = SUI_PACKAGE_ID;
+
+        while (suiPackageAddress.length < 66) {
+            suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
+        }
+
+        if (
+            packageId === suiPackageAddress &&
+            module === 'dynamic_field' &&
+            (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object')
+        ) {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 2) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -319,4 +378,5 @@ module.exports = {
     parseGatewayInfo,
     getStructs,
     saveGeneratedTx,
+    isAllowed,
 };
