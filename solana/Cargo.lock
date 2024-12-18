@@ -744,9 +744,12 @@ dependencies = [
  "bytemuck",
  "gateway-event-stack",
  "program-utils",
+ "rstest",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "spl-token",
+ "spl-token-2022 5.0.2",
  "thiserror",
 ]
 
@@ -799,6 +802,8 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "spl-associated-token-account 5.0.1",
+ "spl-token-2022 5.0.2",
  "tokio",
  "typed-builder",
 ]

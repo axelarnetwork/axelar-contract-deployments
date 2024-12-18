@@ -7,7 +7,7 @@ use solana_sdk::keccak;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
-use crate::{axelar_solana_setup, ItsProgramWrapper, TokenUtils};
+use crate::{axelar_solana_setup, ItsProgramWrapper};
 
 #[rstest::rstest]
 #[case(spl_token::id())]

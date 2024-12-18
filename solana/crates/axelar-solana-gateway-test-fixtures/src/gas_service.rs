@@ -6,8 +6,11 @@ use axelar_solana_gateway::BytemuckedPda;
 use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::{
-    account::ReadableAccount, keccak, pubkey::Pubkey, signature::Keypair, signer::Signer,
+    account::ReadableAccount, keccak, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
+    signer::Signer, system_instruction, transaction::Transaction,
 };
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_token_2022::{extension::ExtensionType, state::Mint};
 
 /// Utility structure for keeping gas service related state
 pub struct GasServiceUtils {
@@ -85,6 +88,179 @@ impl TestFixture {
         )
         .unwrap();
         self.send_tx(&[ix]).await
+    }
+
+    /// Initialize a new token mint
+    pub async fn init_new_mint(
+        &mut self,
+        mint_authority: Pubkey,
+        token_program_id: Pubkey,
+        decimals: u8,
+    ) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let mint_account = Keypair::new();
+        let rent = self.banks_client.get_rent().await.unwrap();
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &self.payer.pubkey(),
+                    &mint_account.pubkey(),
+                    rent.minimum_balance(Mint::LEN),
+                    Mint::LEN.try_into().unwrap(),
+                    &token_program_id,
+                ),
+                spl_token_2022::instruction::initialize_mint(
+                    &token_program_id,
+                    &mint_account.pubkey(),
+                    &mint_authority,
+                    None,
+                    decimals,
+                )
+                .unwrap(),
+            ],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_account],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        mint_account.pubkey()
+    }
+
+    /// Initialize a new token mint with a fee (uses `spl_token_2022`)
+    #[allow(clippy::too_many_arguments)]
+    pub async fn init_new_mint_with_fee(
+        &mut self,
+        mint_authority: &Pubkey,
+        token_program_id: &Pubkey,
+        fee_basis_points: u16,
+        maximum_fee: u64,
+        decimals: u8,
+        transfer_fee_config_authority: Option<&Pubkey>,
+        withdraw_withheld_authority: Option<&Pubkey>,
+    ) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let mint_account = Keypair::new();
+        let rent = self.banks_client.get_rent().await.unwrap();
+        let space =
+            ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::TransferFeeConfig])
+                .unwrap();
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &self.payer.pubkey(),
+                    &mint_account.pubkey(),
+                    rent.minimum_balance(space),
+                    space.try_into().unwrap(),
+                    token_program_id,
+                ),
+                spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config(
+                    token_program_id,
+                    &mint_account.pubkey(),
+                    transfer_fee_config_authority,
+                    withdraw_withheld_authority,
+                    fee_basis_points,
+                    maximum_fee
+                ).unwrap(),
+                spl_token_2022::instruction::initialize_mint(
+                    token_program_id,
+                    &mint_account.pubkey(),
+                    mint_authority,
+                    None,
+                    decimals
+                )
+                .unwrap(),
+            ],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, &mint_account],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+
+        mint_account.pubkey()
+    }
+
+    /// mint tokents to someones token account
+    pub async fn mint_tokens_to(
+        &mut self,
+        mint: &Pubkey,
+        to: &Pubkey,
+        mint_authority: &Keypair,
+        amount: u64,
+        token_program_id: &Pubkey,
+    ) {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let ix = spl_token_2022::instruction::mint_to(
+            token_program_id,
+            mint,
+            to,
+            &mint_authority.pubkey(),
+            &[&mint_authority.pubkey()],
+            amount,
+        )
+        .unwrap();
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer, mint_authority],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+    }
+
+    /// init a new ATA account
+    pub async fn init_associated_token_account(
+        &mut self,
+        token_mint_address: &Pubkey,
+        holder_wallet_address: &Pubkey,
+        token_program_id: &Pubkey,
+    ) -> Pubkey {
+        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
+        let associated_account_address = get_associated_token_address_with_program_id(
+            holder_wallet_address,
+            token_mint_address,
+            token_program_id,
+        );
+        let ix = spl_associated_token_account::instruction::create_associated_token_account(
+            &self.payer.pubkey(),
+            holder_wallet_address,
+            token_mint_address,
+            token_program_id,
+        );
+
+        let transaction = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&self.payer.pubkey()),
+            &[&self.payer],
+            recent_blockhash,
+        );
+        self.banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap();
+        associated_account_address
+    }
+
+    /// get the data from a token account
+    pub async fn get_token_account(
+        &mut self,
+        token_account: &Pubkey,
+    ) -> spl_token_2022::state::Account {
+        self.banks_client
+            .get_packed_account_data::<spl_token_2022::state::Account>(*token_account)
+            .await
+            .unwrap()
     }
 
     /// get the gas service config pda state

@@ -28,8 +28,7 @@ use spl_token_2022::state::Mint;
 use crate::{
     axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
     ensure_evm_gateway_approval, prepare_evm_approve_contract_call, retrieve_evm_log_with_filter,
-    route_its_hub, ItsProgramWrapper, TokenUtils, ITS_HUB_TRUSTED_CHAIN_NAME,
-    ITS_HUB_TRUSTED_CONTRACT_ADDRESS,
+    route_its_hub, ItsProgramWrapper, ITS_HUB_TRUSTED_CHAIN_NAME, ITS_HUB_TRUSTED_CONTRACT_ADDRESS,
 };
 
 #[tokio::test]
@@ -1108,11 +1107,11 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
     solana_chain
         .fixture
         .mint_tokens_to(
-            mint,
-            ata,
-            solana_chain.fixture.payer.insecure_clone(),
+            &mint,
+            &ata,
+            &solana_chain.fixture.payer.insecure_clone(),
             initial_amount,
-            token_program_id,
+            &token_program_id,
         )
         .await;
 
@@ -1241,8 +1240,8 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
     let mint = solana_chain
         .fixture
         .init_new_mint_with_fee(
-            solana_chain.fixture.payer.pubkey(),
-            spl_token_2022::id(),
+            &solana_chain.fixture.payer.pubkey(),
+            &spl_token_2022::id(),
             fee_basis_points,
             maximum_fee,
             18,
@@ -1374,11 +1373,11 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
     solana_chain
         .fixture
         .mint_tokens_to(
-            mint,
-            ata,
-            solana_chain.fixture.payer.insecure_clone(),
+            &mint,
+            &ata,
+            &solana_chain.fixture.payer.insecure_clone(),
             initial_amount,
-            spl_token_2022::id(),
+            &spl_token_2022::id(),
         )
         .await;
 

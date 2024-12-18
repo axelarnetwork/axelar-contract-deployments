@@ -12,7 +12,6 @@ use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use crate::{
     prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
-    TokenUtils,
 };
 
 #[tokio::test]

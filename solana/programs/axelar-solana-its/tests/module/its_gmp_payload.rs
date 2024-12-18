@@ -16,7 +16,6 @@ use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{
     prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
-    TokenUtils,
 };
 #[rstest::rstest]
 #[case(spl_token::id(), Some(Pubkey::new_unique()))]
@@ -302,11 +301,11 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
     solana_chain
         .fixture
         .mint_tokens_to(
-            mint,
-            token_manager_ata,
-            solana_chain.fixture.payer.insecure_clone(),
+            &mint,
+            &token_manager_ata,
+            &solana_chain.fixture.payer.insecure_clone(),
             locked_amount,
-            token_program_id,
+            &token_program_id,
         )
         .await;
 
@@ -431,8 +430,8 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     let mint = solana_chain
         .fixture
         .init_new_mint_with_fee(
-            solana_chain.fixture.payer.pubkey(),
-            spl_token_2022::id(),
+            &solana_chain.fixture.payer.pubkey(),
+            &spl_token_2022::id(),
             fee_basis_points,
             maximum_fee,
             0,
@@ -505,11 +504,11 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     solana_chain
         .fixture
         .mint_tokens_to(
-            mint,
-            token_manager_ata,
-            solana_chain.fixture.payer.insecure_clone(),
+            &mint,
+            &token_manager_ata,
+            &solana_chain.fixture.payer.insecure_clone(),
             locked_amount,
-            spl_token_2022::id(),
+            &spl_token_2022::id(),
         )
         .await;
 

@@ -29,7 +29,7 @@ pub enum GasServiceInstruction {
     /// Use SPL tokens to pay for gas-related operations.
     SplToken(PayWithSplToken),
 
-    /// Use native SOL to pay for gas-related operations.
+    /// Use SOL to pay for gas-related operations.
     Native(PayWithNativeToken),
 }
 
@@ -39,18 +39,18 @@ pub enum GasServiceInstruction {
 pub enum PayWithSplToken {
     /// Pay gas fees for a contract call using SPL tokens.
     ForContractCall {
-        /// The account paying the gas fee.
-        sender: Pubkey,
         /// The target blockchain (e.g., "ethereum") for the contract call.
         destination_chain: String,
         /// The recipient address on the destination chain.
         destination_address: String,
         /// A 32-byte hash representing the payload.
         payload_hash: [u8; 32],
-        /// The SPL token mint used for the gas fee.
-        gas_token: Pubkey,
+        /// Additional parameters for the contract call.
+        params: Vec<u8>,
         /// The amount of tokens to be paid as gas fees.
         gas_fee_amount: u64,
+        /// The decimals for the mint
+        decimals: u8,
         /// Where refunds should be sent
         refund_address: Pubkey,
     },
@@ -61,10 +61,10 @@ pub enum PayWithSplToken {
         tx_hash: [u8; 64],
         /// The index of the log entry in the transaction.
         log_index: u64,
-        /// The account paying the additional gas fee.
-        pubkey: Pubkey,
         /// The additional SPL tokens to add as gas.
         gas_fee_amount: u64,
+        /// The decimals for the mint
+        decimals: u8,
         /// Where refunds should be sent.
         refund_address: Pubkey,
     },
@@ -73,6 +73,8 @@ pub enum PayWithSplToken {
     CollectFees {
         /// The amount of SPL tokens to be collected as fees.
         amount: u64,
+        /// The decimals for the mint
+        decimals: u8,
     },
 
     /// Refund previously collected SPL token fees (authority only).
@@ -83,6 +85,8 @@ pub enum PayWithSplToken {
         log_index: u64,
         /// The amount of SPL tokens to be refunded
         fees: u64,
+        /// The decimals for the mint
+        decimals: u8,
     },
 }
 
@@ -306,6 +310,184 @@ pub fn refund_native_fees_instruction(
         AccountMeta::new_readonly(*authority, true),
         AccountMeta::new(*receiver, false),
         AccountMeta::new(*config_pda, false),
+    ];
+
+    Ok(Instruction {
+        program_id: *program_id,
+        accounts,
+        data: ix_data,
+    })
+}
+
+/// Builds an instruction to pay with SPL tokens for a contract call.
+///
+/// # Errors
+/// - ix data cannot be serialized
+#[allow(clippy::too_many_arguments)]
+pub fn pay_spl_for_contract_call_instruction(
+    program_id: &Pubkey,
+    sender: &Pubkey,
+    sender_ata: &Pubkey,
+    config_pda: &Pubkey,
+    config_pda_ata: &Pubkey,
+    mint: &Pubkey,
+    token_program_id: &Pubkey,
+    destination_chain: String,
+    destination_address: String,
+    payload_hash: [u8; 32],
+    refund_address: Pubkey,
+    params: Vec<u8>,
+    gas_fee_amount: u64,
+    signer_pubkeys: &[Pubkey],
+    decimals: u8,
+) -> Result<Instruction, ProgramError> {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(
+        PayWithSplToken::ForContractCall {
+            destination_chain,
+            destination_address,
+            payload_hash,
+            refund_address,
+            params,
+            decimals,
+            gas_fee_amount,
+        },
+    ))?;
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(*sender, true),
+        AccountMeta::new(*sender_ata, false),
+        AccountMeta::new_readonly(*config_pda, false),
+        AccountMeta::new(*config_pda_ata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new_readonly(*token_program_id, false),
+    ];
+
+    for signer_pubkey in signer_pubkeys {
+        accounts.push(AccountMeta::new_readonly(*signer_pubkey, true));
+    }
+
+    Ok(Instruction {
+        program_id: *program_id,
+        accounts,
+        data: ix_data,
+    })
+}
+
+/// Builds an instruction to add SPL gas.
+///
+/// # Errors
+/// - ix data cannot be serialized
+#[allow(clippy::too_many_arguments)]
+pub fn add_spl_gas_instruction(
+    program_id: &Pubkey,
+    sender: &Pubkey,
+    sender_ata: &Pubkey,
+    config_pda: &Pubkey,
+    config_pda_ata: &Pubkey,
+    mint: &Pubkey,
+    token_program_id: &Pubkey,
+    signer_pubkeys: &[Pubkey],
+    tx_hash: [u8; 64],
+    log_index: u64,
+    gas_fee_amount: u64,
+    refund_address: Pubkey,
+    decimals: u8,
+) -> Result<Instruction, ProgramError> {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(PayWithSplToken::AddGas {
+        tx_hash,
+        log_index,
+        decimals,
+        gas_fee_amount,
+        refund_address,
+    }))?;
+
+    let mut accounts = vec![
+        AccountMeta::new_readonly(*sender, true),
+        AccountMeta::new(*sender_ata, false),
+        AccountMeta::new_readonly(*config_pda, false),
+        AccountMeta::new(*config_pda_ata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new_readonly(*token_program_id, false),
+    ];
+    for signer_pubkey in signer_pubkeys {
+        accounts.push(AccountMeta::new_readonly(*signer_pubkey, true));
+    }
+
+    Ok(Instruction {
+        program_id: *program_id,
+        accounts,
+        data: ix_data,
+    })
+}
+
+/// Builds an instruction for the authority to collect SPL fees.
+///
+/// # Errors
+/// - ix data cannot be serialized
+#[allow(clippy::too_many_arguments)]
+pub fn collect_spl_fees_instruction(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    token_program_id: &Pubkey,
+    mint: &Pubkey,
+    config_pda: &Pubkey,
+    config_pda_ata: &Pubkey,
+    receiver: &Pubkey,
+    amount: u64,
+    decimals: u8,
+) -> Result<Instruction, ProgramError> {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(
+        PayWithSplToken::CollectFees { amount, decimals },
+    ))?;
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*receiver, false),
+        AccountMeta::new_readonly(*config_pda, false),
+        AccountMeta::new(*config_pda_ata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new_readonly(*token_program_id, false),
+    ];
+
+    Ok(Instruction {
+        program_id: *program_id,
+        accounts,
+        data: ix_data,
+    })
+}
+
+/// Builds an instruction for the authority to refund previously collected SPL fees.
+///
+/// # Errors
+/// - ix data cannot be serialized
+#[allow(clippy::too_many_arguments)]
+pub fn refund_spl_fees_instruction(
+    program_id: &Pubkey,
+    authority: &Pubkey,
+    token_program_id: &Pubkey,
+    mint: &Pubkey,
+    config_pda: &Pubkey,
+    config_pda_ata: &Pubkey,
+    receiver: &Pubkey,
+    tx_hash: [u8; 64],
+    log_index: u64,
+    fees: u64,
+    decimals: u8,
+) -> Result<Instruction, ProgramError> {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::SplToken(PayWithSplToken::Refund {
+        decimals,
+        tx_hash,
+        log_index,
+        fees,
+    }))?;
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*receiver, false),
+        AccountMeta::new_readonly(*config_pda, false),
+        AccountMeta::new(*config_pda_ata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new_readonly(*token_program_id, false),
     ];
 
     Ok(Instruction {

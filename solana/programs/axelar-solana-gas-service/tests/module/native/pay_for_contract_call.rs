@@ -72,8 +72,7 @@ async fn test_pay_native_for_contract_call() {
     let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
         panic!("unexpected event")
     };
-    let [(_, GasServiceEvent::NativeGasPaidForncontractCall(emitted_event))] =
-        vec_events.as_slice()
+    let [(_, GasServiceEvent::NativeGasPaidForContractCall(emitted_event))] = vec_events.as_slice()
     else {
         panic!("unexpected event")
     };

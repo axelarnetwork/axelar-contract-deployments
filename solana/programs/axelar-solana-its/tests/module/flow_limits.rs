@@ -24,7 +24,7 @@ use crate::{
     axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
     ensure_evm_gateway_approval, prepare_evm_approve_contract_call, prepare_receive_from_hub,
     program_test, random_hub_message_with_destination_and_payload, retrieve_evm_log_with_filter,
-    route_its_hub, ItsProgramWrapper, TokenUtils, ITS_HUB_TRUSTED_CHAIN_NAME,
+    route_its_hub, ItsProgramWrapper, ITS_HUB_TRUSTED_CHAIN_NAME,
 };
 
 // Test that the flow limit is enforced for incoming interchain transfers.
@@ -145,11 +145,11 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     solana_chain
         .fixture
         .mint_tokens_to(
-            mint,
-            token_manager_ata,
-            solana_chain.fixture.payer.insecure_clone(),
+            &mint,
+            &token_manager_ata,
+            &solana_chain.fixture.payer.insecure_clone(),
             locked_amount,
-            token_program_id,
+            &token_program_id,
         )
         .await;
 

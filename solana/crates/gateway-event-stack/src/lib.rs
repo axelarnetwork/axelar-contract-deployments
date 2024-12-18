@@ -190,6 +190,7 @@ where
     use axelar_solana_gas_service::event_utils::EventParseError;
     use axelar_solana_gas_service::processor::{
         NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
+        SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent,
     };
 
     let mut logs = log
@@ -205,7 +206,7 @@ where
     let gas_service_event = match disc {
         NATIVE_GAS_PAID_FOR_CONTRACT_CALL => {
             let event = NativeGasPaidForContractCallEvent::new(logs)?;
-            GasServiceEvent::NativeGasPaidForncontractCall(event)
+            GasServiceEvent::NativeGasPaidForContractCall(event)
         }
         NATIVE_GAS_ADDED => {
             let event = NativeGasAddedEvent::new(logs)?;
@@ -214,6 +215,18 @@ where
         NATIVE_GAS_REFUNDED => {
             let event = NativeGasRefundedEvent::new(logs)?;
             GasServiceEvent::NativeGasRefunded(event)
+        }
+        SPL_PAID_FOR_CONTRACT_CALL => {
+            let event = SplGasPaidForContractCallEvent::new(logs)?;
+            GasServiceEvent::SplGasPaidForContractCall(event)
+        }
+        SPL_GAS_ADDED => {
+            let event = SplGasAddedEvent::new(logs)?;
+            GasServiceEvent::SplGasAdded(event)
+        }
+        SPL_GAS_REFUNDED => {
+            let event = SplGasRefundedEvent::new(logs)?;
+            GasServiceEvent::SplGasRefunded(event)
         }
         _ => return Err(EventParseError::Other("unsupported discrimintant")),
     };

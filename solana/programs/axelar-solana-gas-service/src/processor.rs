@@ -5,21 +5,24 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubke
 
 use crate::{
     check_program_account,
-    instructions::{GasServiceInstruction, PayWithNativeToken},
+    instructions::{GasServiceInstruction, PayWithNativeToken, PayWithSplToken},
 };
 
 pub use self::native::{
     NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
 };
+pub use self::spl::{SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent};
 use self::{
     initialize::process_initialize_config,
     native::{
         add_native_gas, collect_fees_native, process_pay_native_for_contract_call, refund_native,
     },
+    spl::{add_spl_gas, collect_fees_spl, process_pay_spl_for_contract_call, refund_spl},
 };
 
 mod initialize;
 mod native;
+mod spl;
 
 /// Processes an instruction.
 ///
@@ -38,7 +41,51 @@ pub fn process_instruction(
         GasServiceInstruction::Initialize { salt } => {
             process_initialize_config(program_id, accounts, salt)
         }
-        GasServiceInstruction::SplToken(_) => todo!("we do need this one"),
+        GasServiceInstruction::SplToken(ix) => match ix {
+            PayWithSplToken::ForContractCall {
+                destination_chain,
+                destination_address,
+                payload_hash,
+                gas_fee_amount,
+                params,
+                decimals,
+                refund_address,
+            } => process_pay_spl_for_contract_call(
+                program_id,
+                accounts,
+                destination_chain,
+                destination_address,
+                payload_hash,
+                refund_address,
+                &params,
+                gas_fee_amount,
+                decimals,
+            ),
+            PayWithSplToken::AddGas {
+                tx_hash,
+                log_index,
+                gas_fee_amount,
+                decimals,
+                refund_address,
+            } => add_spl_gas(
+                program_id,
+                accounts,
+                tx_hash,
+                log_index,
+                gas_fee_amount,
+                refund_address,
+                decimals,
+            ),
+            PayWithSplToken::CollectFees { amount, decimals } => {
+                collect_fees_spl(program_id, accounts, amount, decimals)
+            }
+            PayWithSplToken::Refund {
+                tx_hash,
+                log_index,
+                fees,
+                decimals,
+            } => refund_spl(program_id, accounts, tx_hash, log_index, fees, decimals),
+        },
         GasServiceInstruction::Native(ix) => match ix {
             PayWithNativeToken::ForContractCall {
                 destination_chain,
@@ -86,9 +133,15 @@ pub fn process_instruction(
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum GasServiceEvent {
     /// Event when SOL was used to pay for a contract call
-    NativeGasPaidForncontractCall(NativeGasPaidForContractCallEvent),
-    /// Event when SOL was add to fund an already emitted contract call
+    NativeGasPaidForContractCall(NativeGasPaidForContractCallEvent),
+    /// Event when SOL was added to fund an already emitted contract call
     NativeGasAdded(NativeGasAddedEvent),
     /// Event when SOL was refunded
     NativeGasRefunded(NativeGasRefundedEvent),
+    /// Event when an SPL token was used to pay for a contract call
+    SplGasPaidForContractCall(SplGasPaidForContractCallEvent),
+    /// Event when an SPL token was added to fund an already emitted contract call
+    SplGasAdded(SplGasAddedEvent),
+    /// Event when an SPL token was refunded
+    SplGasRefunded(SplGasRefundedEvent),
 }
