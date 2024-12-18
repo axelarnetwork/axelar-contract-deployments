@@ -2291,14 +2291,15 @@
           ],
           "initialVerifierSetId": "3057ad91fc8e1de634e33ad33080d479b0614d0152b73b353e4dd676b3a66498",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "implementationCodehash": "0xa74b970bc244e333ce51fcf0e5cff6cf11a4f412be86d6088a8f230a32c5b1df",
-          "deploymentMethod": "create",
+          "implementation": "0xC9F7eC2963ea23fA292a801a2a6cea922eA69AF3",
+          "implementationCodehash": "0x7befef78f4e069df5bd4c60418fff9ad09349e943f0738b16a161651e96ed18c",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0xc66bfbc93dab13dda342d32a5b3f8025e07a8d0ee0b900cdc1d5e634e88ffb6a",
           "minimumRotationDelay": 3600,
           "connectionType": "amplifier",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "v6.0.4"
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
