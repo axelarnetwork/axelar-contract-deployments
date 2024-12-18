@@ -2440,12 +2440,12 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "domainSeparator": "0xc66bfbc93dab13dda342d32a5b3f8025e07a8d0ee0b900cdc1d5e634e88ffb6a",
-          "codeId": 12,
+          "codeId": 18,
           "address": "axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj"
         },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
-        "lastUploadedCodeId": 12
+        "lastUploadedCodeId": 18
       },
       "Gateway": {
         "flow": {
@@ -2453,7 +2453,7 @@
           "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
         },
         "hedera": {
-          "codeId": 11,
+          "codeId": 24,
           "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq"
         },
         "storeCodeProposalId": "181",
@@ -2488,12 +2488,12 @@
           "confirmationHeight": 100000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 10,
+          "codeId": 26,
           "address": "axelar1ce9rcvw8htpwukc048z9kqmyk5zz52d5a7zqn9xlq2pg0mxul9mqxlx2cq"
         },
         "storeCodeProposalId": "183",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "lastUploadedCodeId": 10
+        "lastUploadedCodeId": 26
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "182",
