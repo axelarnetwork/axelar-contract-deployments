@@ -7,6 +7,7 @@ const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
 const {
+    CONTRACTS,
     prepareWallet,
     prepareClient,
     fromHex,
@@ -16,7 +17,6 @@ const {
     updateCodeId,
     uploadContract,
     instantiateContract,
-    makeInstantiateMsg,
 } = require('./utils');
 
 const { Command, Option } = require('commander');
@@ -66,7 +66,7 @@ const instantiate = async (client, wallet, config, options) => {
 
     await updateCodeId(client, config, options);
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
     contractConfig.address = contractAddress;
