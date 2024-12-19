@@ -138,7 +138,7 @@ jobs:
       - name: Fetch WASM contracts from CF
         env:
           S3_BUCKET_NAME: ${{ vars.CF_BUCKET_NAME }}
-          ENDPOINT_URL: ${{ secrets.cf-endpoint-url }}
+          ENDPOINT_URL: ${{ secrets.CF-ENDPOINT-URL }}
           CF_BUCKET_ROOT_KEY: ${{ vars.CF_BUCKET_ROOT_KEY }}
         run: |
           PACKAGE_VERSION=$(cat stellar/version)
