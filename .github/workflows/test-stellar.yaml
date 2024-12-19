@@ -141,8 +141,9 @@ jobs:
           ENDPOINT_URL: ${{ secrets.cf-endpoint-url }}
           CF_BUCKET_ROOT_KEY: ${{ vars.CF_BUCKET_ROOT_KEY }}
         run: |
-          PACKAGE_VERSION=${cat stellar/version}
-          for name in axelar_gateway axelar_operators axelar_gas_service interchain_token interchain_token_service example; do
+          PACKAGE_VERSION=$(cat stellar/version)
+          CONTRACTS=("axelar_gateway" "axelar_operators" "axelar_gas_service" "interchain_token" "interchain_token_service" "example")
+          for name in CONTRACTS; do
             CF_WASM_BUCKET_ROOT_KEY="${CF_BUCKET_ROOT_KEY}/$name/$PACKAGE_VERSION/wasm"
             FILE_KEY=axelar-cgp-soroban-wasm-$name-$PACKAGE_VERSION
             aws s3api get-object --bucket $S3_BUCKET_NAME --key "$CF_WASM_BUCKET_ROOT_KEY/$FILE_KEY" --acl public-read --endpoint-url $ENDPOINT_URL
