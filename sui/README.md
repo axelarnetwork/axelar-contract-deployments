@@ -277,6 +277,8 @@ example for adding multisig info to chains config:
 }
 ```
 
+*Note: To sign via ledger replace private-key with 'ledger' keyword in env and update key scheme to ed25519, as it is the only signatureScheme supported by Ledger currently for Sui. 
+
 ## Contract Interactions
 
 ### Call Contract
