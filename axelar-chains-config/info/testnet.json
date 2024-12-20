@@ -2203,7 +2203,7 @@
           "previousSignersRetention": 15,
           "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
           "minimumRotationDelay": 3600,
-          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "connectionType": "amplifier",
           "salt": "v6.0.4"
         },
