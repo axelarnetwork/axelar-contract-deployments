@@ -2473,6 +2473,8 @@
     "rpc": "https://fullnode.testnet.sui.io:443",
     "tokenSymbol": "SUI",
     "chainType": "sui",
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
     "explorer": {
       "name": "Suiscan",
       "url": "https://suiscan.xyz"
