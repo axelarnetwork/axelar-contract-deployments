@@ -79,7 +79,7 @@ export const chainValueSchema = {
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
     },
-    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType'],
+    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType', 'finality', 'approxFinalityWaitTime'],
 };
 
 export const chainsSchema = {
