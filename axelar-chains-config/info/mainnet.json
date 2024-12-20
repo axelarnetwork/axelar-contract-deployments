@@ -2614,12 +2614,18 @@
         "storeCodeProposalId": "262",
         "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am"
+        "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+        "lastUploadedCodeId": 15,
+        "codeId": 15,
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "269",
         "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
-        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r"
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "lastUploadedCodeId": 22,
+        "codeId": 22,
+        "address": "axelar18vsne7lns36uvm8gv2cv5jl2lghts0xm7dvzpqzn70dl56gk9hvsgu9sqg"
       }
     }
   }
