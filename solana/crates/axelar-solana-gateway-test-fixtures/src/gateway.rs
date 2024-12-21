@@ -327,15 +327,23 @@ impl SolanaAxelarIntegrationMetadata {
         message: Message,
         raw_payload: &[u8],
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
+        let message_payload_pda = self.upload_message_payload(&message, raw_payload).await?;
+
         let (incoming_message_pda, _bump) =
             get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
         let ix = axelar_executable::construct_axelar_executable_ix(
-            message,
+            &message,
             raw_payload,
             incoming_message_pda,
+            message_payload_pda,
         )
         .unwrap();
-        self.send_tx(&[ix]).await
+        let execute_results = self.send_tx(&[ix]).await;
+
+        // Close message payload and reclaim lamports
+        self.close_message_payload(&message).await?;
+
+        execute_results
     }
 
     /// Get the signature verification session data (deserialised)
@@ -420,6 +428,108 @@ impl SolanaAxelarIntegrationMetadata {
             "must be owned by the gateway"
         );
         *IncomingMessage::read(gateway_root_pda_account.data()).unwrap()
+    }
+
+    /// Upload a message payload to the PDA account
+    pub async fn upload_message_payload(
+        &mut self,
+        message: &Message,
+        raw_payload: &[u8],
+    ) -> Result<Pubkey, BanksTransactionResultWithMetadata> {
+        let msg_command_id = message_to_command_id(message);
+
+        self.initialize_message_payload(msg_command_id, raw_payload)
+            .await?;
+        self.write_message_payload(msg_command_id, raw_payload)
+            .await?;
+        self.commit_message_payload(msg_command_id).await?;
+
+        let (message_payload_account, _bump) = axelar_solana_gateway::find_message_payload_pda(
+            self.gateway_root_pda,
+            msg_command_id,
+            self.payer.pubkey(),
+        );
+
+        Ok(message_payload_account)
+    }
+
+    async fn initialize_message_payload(
+        &mut self,
+        command_id: [u8; 32],
+        raw_payload: &[u8],
+    ) -> Result<(), BanksTransactionResultWithMetadata> {
+        let ix = axelar_solana_gateway::instructions::initialize_message_payload(
+            self.gateway_root_pda,
+            self.payer.pubkey(),
+            command_id,
+            raw_payload
+                .len()
+                .try_into()
+                .expect("Unexpected u64 overflow in buffer size"),
+        )
+        .unwrap();
+
+        let tx = self.send_tx(&[ix]).await?;
+        assert!(
+            tx.result.is_ok(),
+            "failed to initialize message payload account"
+        );
+        Ok(())
+    }
+
+    async fn write_message_payload(
+        &mut self,
+        command_id: [u8; 32],
+        raw_payload: &[u8],
+    ) -> Result<(), BanksTransactionResultWithMetadata> {
+        let ix = axelar_solana_gateway::instructions::write_message_payload(
+            self.gateway_root_pda,
+            self.payer.pubkey(),
+            command_id,
+            raw_payload,
+            0,
+        )
+        .unwrap();
+        let tx = self.send_tx(&[ix]).await?;
+        assert!(
+            tx.result.is_ok(),
+            "failed to write to message payload account"
+        );
+        Ok(())
+    }
+
+    async fn commit_message_payload(
+        &mut self,
+        command_id: [u8; 32],
+    ) -> Result<(), BanksTransactionResultWithMetadata> {
+        let ix = axelar_solana_gateway::instructions::commit_message_payload(
+            self.gateway_root_pda,
+            self.payer.pubkey(),
+            command_id,
+        )
+        .unwrap();
+        let tx = self.send_tx(&[ix]).await?;
+        assert!(
+            tx.result.is_ok(),
+            "failed to commit message payload account"
+        );
+        Ok(())
+    }
+
+    async fn close_message_payload(
+        &mut self,
+        message: &Message,
+    ) -> Result<(), BanksTransactionResultWithMetadata> {
+        let msg_command_id = message_to_command_id(message);
+        let ix = axelar_solana_gateway::instructions::close_message_payload(
+            self.gateway_root_pda,
+            self.payer.pubkey(),
+            msg_command_id,
+        )
+        .unwrap();
+        let tx = self.send_tx(&[ix]).await?;
+        assert!(tx.result.is_ok(), "failed to close message payload account");
+        Ok(())
     }
 }
 
@@ -643,4 +753,8 @@ pub fn random_string(len: usize) -> String {
         .take(len)
         .map(char::from)
         .collect()
+}
+/// Helper fn to produce a command id from a message.
+fn message_to_command_id(message: &Message) -> [u8; 32] {
+    command_id(&message.cc_id.chain, &message.cc_id.id)
 }

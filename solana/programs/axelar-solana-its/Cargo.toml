@@ -26,7 +26,6 @@ bitflags.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
 program-utils.workspace = true
-rkyv.workspace = true
 role-management.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }

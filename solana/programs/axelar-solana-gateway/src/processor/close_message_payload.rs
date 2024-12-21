@@ -1,4 +1,4 @@
-use crate::state::message_payload::MessagePayload;
+use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
 use program_utils::ValidPDA;
@@ -30,7 +30,7 @@ impl Processor {
 
         // Parse the message payload from the account data
         let mut account_data = message_payload_account.try_borrow_mut_data()?;
-        let message_payload = MessagePayload::from_borrowed_account_data(&mut account_data)?;
+        let message_payload: MutMessagePayload<'_> = (*account_data).try_into()?;
 
         // Check: Buffer PDA can be derived from provided seeds.
         let message_payload_pda = crate::create_message_payload_pda(

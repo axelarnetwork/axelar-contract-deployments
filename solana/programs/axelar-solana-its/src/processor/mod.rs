@@ -3,6 +3,7 @@
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
@@ -19,6 +20,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
+use self::interchain_transfer::process_inbound_transfer;
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instructions::{
     self, InterchainTokenServiceInstruction, OptionalAccountsFlags, OutboundInstructionInputs,
@@ -33,42 +35,6 @@ pub mod token_manager;
 const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
 const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
     "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4";
-
-pub(crate) trait LocalAction {
-    fn process_local_action<'a>(
-        self,
-        payer: &'a AccountInfo<'a>,
-        accounts: &'a [AccountInfo<'a>],
-        optional_accounts_flags: OptionalAccountsFlags,
-        message: Option<Message>,
-    ) -> ProgramResult;
-}
-
-impl LocalAction for GMPPayload {
-    fn process_local_action<'a>(
-        self,
-        payer: &'a AccountInfo<'a>,
-        accounts: &'a [AccountInfo<'a>],
-        optional_accounts_flags: OptionalAccountsFlags,
-        message: Option<Message>,
-    ) -> ProgramResult {
-        match self {
-            Self::InterchainTransfer(inner) => {
-                inner.process_local_action(payer, accounts, optional_accounts_flags, message)
-            }
-            Self::DeployInterchainToken(inner) => {
-                inner.process_local_action(payer, accounts, optional_accounts_flags, message)
-            }
-            Self::DeployTokenManager(inner) => {
-                inner.process_local_action(payer, accounts, optional_accounts_flags, message)
-            }
-            Self::SendToHub(_) | Self::ReceiveFromHub(_) => {
-                msg!("Unsupported local action");
-                Err(ProgramError::InvalidInstructionData)
-            }
-        }
-    }
-}
 
 /// Processes an instruction.
 ///
@@ -98,25 +64,19 @@ pub fn process_instruction<'a>(
             process_set_pause_status(accounts, paused)?;
         }
         InterchainTokenServiceInstruction::ItsGmpPayload {
-            abi_payload,
             message,
             optional_accounts_mask,
         } => {
-            process_inbound_its_gmp_payload(
-                accounts,
-                message,
-                &abi_payload,
-                optional_accounts_mask,
-            )?;
+            process_inbound_its_gmp_payload(accounts, message, &optional_accounts_mask)?;
         }
         InterchainTokenServiceInstruction::DeployInterchainToken { params } => {
-            process_its_native_deploy_call(accounts, params, OptionalAccountsFlags::empty())?;
+            process_its_native_deploy_call(accounts, params, &OptionalAccountsFlags::empty())?;
         }
         InterchainTokenServiceInstruction::DeployTokenManager {
             params,
             optional_accounts_mask,
         } => {
-            process_its_native_deploy_call(accounts, params, optional_accounts_mask)?;
+            process_its_native_deploy_call(accounts, params, &optional_accounts_mask)?;
         }
         InterchainTokenServiceInstruction::InterchainTransfer { params } => {
             interchain_transfer::process_outbound_transfer(params, accounts)?;
@@ -225,8 +185,7 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
 fn process_inbound_its_gmp_payload<'a>(
     accounts: &'a [AccountInfo<'a>],
     message: Message,
-    abi_payload: &[u8],
-    optional_accounts_flags: OptionalAccountsFlags,
+    optional_accounts_flags: &OptionalAccountsFlags,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
@@ -240,9 +199,10 @@ fn process_inbound_its_gmp_payload<'a>(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    validate_with_gmp_metadata(gateway_accounts, &message, abi_payload)?;
+    validate_with_gmp_metadata(gateway_accounts, &message)?;
 
     let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
+    let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
     let gateway_root_pda_account = next_account_info(accounts_iter)?;
@@ -261,8 +221,11 @@ fn process_inbound_its_gmp_payload<'a>(
         return Err(ProgramError::Immutable);
     }
 
-    let GMPPayload::ReceiveFromHub(inner) =
-        GMPPayload::decode(abi_payload).map_err(|_err| ProgramError::InvalidInstructionData)?
+    let payload_account_data = payload_account.try_borrow_data()?;
+    let message_payload: ImmutMessagePayload<'_> = (**payload_account_data).try_into()?;
+
+    let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
+        .map_err(|_err| ProgramError::InvalidInstructionData)?
     else {
         msg!("Unsupported GMP payload");
         return Err(ProgramError::InvalidInstructionData);
@@ -271,18 +234,33 @@ fn process_inbound_its_gmp_payload<'a>(
     let payload =
         GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    payload.process_local_action(
-        payer,
-        instruction_accounts,
-        optional_accounts_flags,
-        Some(message),
-    )
+    match payload {
+        GMPPayload::InterchainTransfer(transfer) => process_inbound_transfer(
+            message,
+            payer,
+            payload_account,
+            instruction_accounts,
+            &transfer,
+        ),
+        GMPPayload::DeployInterchainToken(deploy) => {
+            interchain_token::process_deploy(payer, instruction_accounts, deploy)
+        }
+        GMPPayload::DeployTokenManager(deploy) => token_manager::process_deploy(
+            payer,
+            instruction_accounts,
+            &deploy,
+            optional_accounts_flags,
+        ),
+        GMPPayload::SendToHub(_) | GMPPayload::ReceiveFromHub(_) => {
+            Err(ProgramError::InvalidInstructionData)
+        }
+    }
 }
 
 fn process_its_native_deploy_call<'a, T>(
     accounts: &'a [AccountInfo<'a>],
     mut payload: T,
-    optional_accounts_flags: OptionalAccountsFlags,
+    optional_accounts_flags: &OptionalAccountsFlags,
 ) -> ProgramResult
 where
     T: TryInto<GMPPayload> + OutboundInstructionInputs,
@@ -309,9 +287,22 @@ where
                 None,
             )?;
         }
-        None => {
-            payload.process_local_action(payer, other_accounts, optional_accounts_flags, None)?;
-        }
+        None => match payload {
+            GMPPayload::DeployInterchainToken(deploy) => {
+                interchain_token::process_deploy(payer, other_accounts, deploy)?;
+            }
+            GMPPayload::DeployTokenManager(deploy) => token_manager::process_deploy(
+                payer,
+                other_accounts,
+                &deploy,
+                optional_accounts_flags,
+            )?,
+            GMPPayload::SendToHub(_)
+            | GMPPayload::ReceiveFromHub(_)
+            | GMPPayload::InterchainTransfer(_) => {
+                return Err(ProgramError::InvalidInstructionData)
+            }
+        },
     };
 
     Ok(())

@@ -60,7 +60,7 @@ mod tests {
     fn solana_account_repr_round_trip_borsh() {
         let repr = account_fixture_2();
         let repr_encoded = borsh::to_vec(&repr).unwrap();
-        let repr2 = borsh::from_slice(&repr_encoded).unwrap();
+        let repr2: SolanaAccountRepr = borsh::from_slice(&repr_encoded).unwrap();
         assert_eq!(repr, repr2);
     }
     #[test]

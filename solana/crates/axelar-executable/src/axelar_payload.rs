@@ -1,20 +1,28 @@
 //! This module contains the `AxelarMessagePayload` struct, which represents a
 //! payload in the standard Axelar flow.
 
-use std::borrow::Cow;
-
+pub use self::encoding::EncodingScheme;
 use alloy_sol_types::sol;
+use core::ops::Deref;
+use solana_program::account_info::AccountInfo;
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
+use std::borrow::Cow;
 use thiserror::Error;
-
-pub use self::encoding::EncodingScheme;
 
 mod encoding;
 
 /// Newtype for a payload hash.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AxelarMessagePayloadHash<'a>(pub Cow<'a, [u8; 32]>);
+
+impl<'a> Deref for AxelarMessagePayloadHash<'a> {
+    type Target = [u8; 32];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /// In standard Axelar flow, the accounts are concatenated at the beginning of
 /// the payload message. This struct represents a Solana account in a way that
@@ -91,7 +99,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
         &self.payload_without_accounts
     }
 
-    /// Get the solana accounts.    
+    /// Get the solana accounts.
     #[must_use]
     pub fn account_meta(&self) -> Vec<AccountMeta> {
         self.solana_accounts
@@ -99,6 +107,11 @@ impl<'payload> AxelarMessagePayload<'payload> {
             .copied()
             .map(Into::into)
             .collect()
+    }
+
+    /// Get an iterator over the Solana accounts
+    pub fn solana_accounts(&self) -> impl Iterator<Item = &SolanaAccountRepr> {
+        self.solana_accounts.iter()
     }
 
     /// Get the underlying encoding scheme used by the [`AxelarMessagePayload`]
@@ -156,6 +169,14 @@ sol! {
         bool is_signer;
         /// flag to indicate if the account is writable
         bool is_writable;
+    }
+}
+
+impl PartialEq<AccountInfo<'_>> for SolanaAccountRepr {
+    fn eq(&self, other: &AccountInfo<'_>) -> bool {
+        self.pubkey.as_slice() == other.key.as_ref()
+            && self.is_signer == other.is_signer
+            && self.is_writable == other.is_writable
     }
 }
 

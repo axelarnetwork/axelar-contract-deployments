@@ -1,18 +1,15 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::should_panic_without_expect)]
 use alloy_sol_types::SolValue;
-use axelar_solana_gateway::{get_incoming_message_pda, state::incoming_message::command_id};
 use axelar_solana_gateway_test_fixtures::base::FindLog;
-use axelar_solana_its::instructions::{DeployTokenManagerInputs, ItsGmpInstructionInputs};
+use axelar_solana_its::instructions::DeployTokenManagerInputs;
 use axelar_solana_its::state::token_manager;
 use evm_contracts_test_suite::ethers::abi::Bytes;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
-use crate::{
-    prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
-};
+use crate::{program_test, relay_to_solana};
 
 #[tokio::test]
 async fn test_its_gmp_payload_fail_when_paused() {
@@ -64,43 +61,11 @@ async fn test_its_gmp_payload_fail_when_paused() {
             mint,
         )
         .into(),
-    });
+    })
+    .encode();
 
-    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_payload)
-        .token_program(token_program_id)
-        .build();
-
-    let tx_metadata = solana_chain
-        .fixture
-        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
-        .await
-        .unwrap_err();
+    let tx_metadata =
+        relay_to_solana(inner_payload, &mut solana_chain, None, token_program_id).await;
 
     assert!(tx_metadata
         .find_log("The Interchain Token Service is currently paused.")

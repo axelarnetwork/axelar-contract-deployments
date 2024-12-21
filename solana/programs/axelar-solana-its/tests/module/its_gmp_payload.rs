@@ -1,9 +1,9 @@
 #![cfg(test)]
 use alloy_primitives::Bytes;
-use axelar_solana_gateway::{get_incoming_message_pda, state::incoming_message::command_id};
-use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+use axelar_solana_its::state::token_manager;
 use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;
+use interchain_token_transfer_gmp::InterchainTransfer;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
@@ -14,9 +14,8 @@ use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
 
-use crate::{
-    prepare_receive_from_hub, program_test, random_hub_message_with_destination_and_payload,
-};
+use crate::{program_test, relay_to_solana};
+
 #[rstest::rstest]
 #[case(spl_token::id(), Some(Pubkey::new_unique()))]
 #[case(spl_token_2022::id(), Some(Pubkey::new_unique()))]
@@ -59,43 +58,10 @@ async fn test_its_gmp_payload_deploy_token_manager(
             mint,
         )
         .into(),
-    });
+    })
+    .encode();
 
-    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        payload_hash,
-    );
-
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_payload)
-        .token_program(token_program_id)
-        .build();
-
-    let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
-        .expect("failed to create instruction");
-
-    solana_chain.fixture.send_tx(&[instruction]).await.unwrap();
+    relay_to_solana(inner_payload, &mut solana_chain, None, token_program_id).await;
 
     let data = solana_chain
         .fixture
@@ -139,41 +105,8 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
         decimals: 8,
         minter: Bytes::new(),
     };
-    let inner_payload = GMPPayload::DeployInterchainToken(deploy_interchain_token.clone());
-    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_payload)
-        .token_program(spl_token_2022::id())
-        .build();
-
-    solana_chain
-        .fixture
-        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
-        .await;
+    let inner_payload = GMPPayload::DeployInterchainToken(deploy_interchain_token.clone()).encode();
+    relay_to_solana(inner_payload, &mut solana_chain, None, spl_token_2022::id()).await;
 
     let mint_account = solana_chain
         .fixture
@@ -210,10 +143,6 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
 #[tokio::test]
 #[allow(clippy::unwrap_used)]
 async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_program_id: Pubkey) {
-    use axelar_solana_its::instructions::ItsGmpInstructionInputs;
-    use axelar_solana_its::state::token_manager;
-    use interchain_token_transfer_gmp::InterchainTransfer;
-
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
@@ -242,42 +171,10 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         token_id: token_id.into(),
         token_manager_type: token_manager::Type::LockUnlock.into(),
         params: axelar_solana_its::state::token_manager::encode_params(None, None, mint).into(),
-    });
+    })
+    .encode();
 
-    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_payload)
-        .token_program(token_program_id)
-        .build();
-
-    solana_chain
-        .fixture
-        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
-        .await;
+    relay_to_solana(inner_payload, &mut solana_chain, None, token_program_id).await;
 
     let data = solana_chain
         .fixture
@@ -317,54 +214,16 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
         destination_address: solana_chain.fixture.payer.pubkey().to_bytes().into(),
         amount: alloy_primitives::Uint::<256, 4>::from(transferred_amount),
         data: Bytes::new(),
-    });
+    })
+    .encode();
 
-    let its_gmp_transfer_payload =
-        prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
-    let transfer_abi_payload = its_gmp_transfer_payload.encode();
-    let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        transfer_payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let clock_sysvar = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar::<Clock>()
-        .await
-        .unwrap();
-
-    let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_transfer_payload)
-        .token_program(token_program_id)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .mint(mint)
-        .build();
-
-    solana_chain
-        .fixture
-        .send_tx(&[
-            axelar_solana_its::instructions::its_gmp_payload(transfer_its_ix_inputs).unwrap(),
-        ])
-        .await;
+    relay_to_solana(
+        inner_transfer_payload,
+        &mut solana_chain,
+        Some(mint),
+        token_program_id,
+    )
+    .await;
 
     let token_manager_ata_account = solana_chain
         .fixture
@@ -403,10 +262,6 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
 #[tokio::test]
 #[allow(clippy::unwrap_used)]
 async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
-    use axelar_solana_its::instructions::ItsGmpInstructionInputs;
-    use axelar_solana_its::state::token_manager;
-    use interchain_token_transfer_gmp::InterchainTransfer;
-
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
 
@@ -445,42 +300,10 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         token_id: token_id.into(),
         token_manager_type: token_manager::Type::LockUnlockFee.into(),
         params: axelar_solana_its::state::token_manager::encode_params(None, None, mint).into(),
-    });
+    })
+    .encode();
 
-    let its_gmp_payload = prepare_receive_from_hub(&inner_payload, "ethereum".to_owned());
-    let abi_payload = its_gmp_payload.encode();
-    let payload_hash = solana_sdk::keccak::hash(&abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_payload)
-        .token_program(spl_token_2022::id())
-        .build();
-
-    solana_chain
-        .fixture
-        .send_tx(&[axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs).unwrap()])
-        .await;
+    relay_to_solana(inner_payload, &mut solana_chain, None, spl_token_2022::id()).await;
 
     let data = solana_chain
         .fixture
@@ -520,53 +343,16 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
         destination_address: solana_chain.fixture.payer.pubkey().to_bytes().into(),
         amount: alloy_primitives::Uint::<256, 4>::from(transferred_amount),
         data: Bytes::new(),
-    });
+    })
+    .encode();
 
-    let its_gmp_transfer_payload =
-        prepare_receive_from_hub(&inner_transfer_payload, "ethereum".to_owned());
-    let transfer_abi_payload = its_gmp_transfer_payload.encode();
-    let transfer_payload_hash = solana_sdk::keccak::hash(&transfer_abi_payload).to_bytes();
-    let message = random_hub_message_with_destination_and_payload(
-        axelar_solana_its::id().to_string(),
-        transfer_payload_hash,
-    );
-    let message_from_multisig_prover = solana_chain
-        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
-        .await
-        .unwrap();
-
-    // Action: set message status as executed by calling the destination program
-    let (incoming_message_pda, ..) =
-        get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-
-    let merkelised_message = message_from_multisig_prover
-        .iter()
-        .find(|x| x.leaf.message.cc_id == message.cc_id)
-        .unwrap()
-        .clone();
-
-    let clock_sysvar = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar::<Clock>()
-        .await
-        .unwrap();
-    let transfer_its_ix_inputs = ItsGmpInstructionInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .incoming_message_pda(incoming_message_pda)
-        .message(merkelised_message.leaf.message)
-        .payload(its_gmp_transfer_payload)
-        .token_program(spl_token_2022::id())
-        .timestamp(clock_sysvar.unix_timestamp)
-        .mint(mint)
-        .build();
-
-    solana_chain
-        .fixture
-        .send_tx(&[
-            axelar_solana_its::instructions::its_gmp_payload(transfer_its_ix_inputs).unwrap(),
-        ])
-        .await;
+    relay_to_solana(
+        inner_transfer_payload,
+        &mut solana_chain,
+        Some(mint),
+        spl_token_2022::id(),
+    )
+    .await;
 
     let token_manager_ata_account = solana_chain
         .fixture

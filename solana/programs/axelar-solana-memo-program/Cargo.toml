@@ -12,6 +12,7 @@ no-entrypoint = []
 
 [dependencies]
 axelar-executable = { workspace = true }
+axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 borsh.workspace = true
@@ -29,5 +30,4 @@ solana-program-test.workspace = true
 solana-sdk.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 pretty_assertions.workspace = true
-axelar-solana-encoding.workspace = true
 serde_json.workspace = true

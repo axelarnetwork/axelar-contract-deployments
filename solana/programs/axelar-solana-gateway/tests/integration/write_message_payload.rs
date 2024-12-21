@@ -1,7 +1,7 @@
 use crate::initialize_message_payload::{
     get_message_account, initialize_message_payload_pda, message_to_command_id,
 };
-use axelar_solana_gateway::state::message_payload::MessagePayload;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
 use solana_program_test::tokio;
@@ -36,12 +36,12 @@ async fn successfully_write_message_payload_pda() {
     assert!(tx.result.is_ok());
 
     // Assert that the message payload account state changed according to expected
-    let mut message_payload_account = get_message_account(&mut runner, &message)
+    let message_payload_account = get_message_account(&mut runner, &message)
         .await
         .expect("error getting account");
 
-    let message_payload =
-        MessagePayload::from_borrowed_account_data(&mut message_payload_account.data).unwrap();
+    let message_payload: ImmutMessagePayload<'_> =
+        message_payload_account.data.as_slice().try_into().unwrap();
 
     let (first_half, last_half) = message_payload.raw_payload.split_at(64);
     assert!(first_half.iter().all(|&x| x == 1));

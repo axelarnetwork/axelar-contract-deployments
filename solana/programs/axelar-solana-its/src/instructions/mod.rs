@@ -213,9 +213,6 @@ pub enum InterchainTokenServiceInstruction {
         /// The GMP metadata
         message: Message,
 
-        /// The GMP payload
-        abi_payload: Vec<u8>,
-
         /// The optional accounts mask for the instruction.
         optional_accounts_mask: OptionalAccountsFlags,
     },
@@ -426,6 +423,9 @@ pub struct ItsGmpInstructionInputs {
 
     /// The PDA used to track the message status by the gateway program.
     pub(crate) incoming_message_pda: Pubkey,
+
+    /// The PDA used to to store the message payload.
+    pub(crate) message_payload_pda: Pubkey,
 
     /// The Axelar GMP metadata.
     pub(crate) message: Message,
@@ -811,11 +811,13 @@ pub fn set_flow_limit(
 ///
 /// If serialization fails.
 pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, ProgramError> {
-    let mut accounts =
-        prefix_accounts(&inputs.payer, &inputs.incoming_message_pda, &inputs.message);
+    let mut accounts = prefix_accounts(
+        &inputs.payer,
+        &inputs.incoming_message_pda,
+        &inputs.message_payload_pda,
+        &inputs.message,
+    );
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-
-    let abi_payload = inputs.payload.encode();
 
     let unwrapped_payload = match inputs.payload {
         GMPPayload::InterchainTransfer(_)
@@ -838,7 +840,6 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
     accounts.append(&mut its_accounts);
 
     let data = to_vec(&InterchainTokenServiceInstruction::ItsGmpPayload {
-        abi_payload,
         message: inputs.message,
         optional_accounts_mask,
     })?;
@@ -922,7 +923,8 @@ pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, P
 
 fn prefix_accounts(
     payer: &Pubkey,
-    gateway_approved_message_pda: &Pubkey,
+    gateway_incoming_message_pda: &Pubkey,
+    gateway_message_payload_pda: &Pubkey,
     message: &Message,
 ) -> Vec<AccountMeta> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
@@ -931,7 +933,8 @@ fn prefix_accounts(
 
     vec![
         AccountMeta::new(*payer, true),
-        AccountMeta::new(*gateway_approved_message_pda, false),
+        AccountMeta::new(*gateway_incoming_message_pda, false),
+        AccountMeta::new_readonly(*gateway_message_payload_pda, false),
         AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
     ]

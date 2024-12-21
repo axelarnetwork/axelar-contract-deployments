@@ -1,5 +1,5 @@
 use crate::initialize_message_payload::{initialize_message_payload_pda, message_to_command_id};
-use axelar_solana_gateway::state::message_payload::MessagePayload;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway_test_fixtures::gateway::{random_bytes, random_message};
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
@@ -73,10 +73,13 @@ async fn assert_message_payload_has_the_expected_payload_hash(
     message_payload_pda: Pubkey,
     expected_payload_hash: [u8; 32],
 ) {
-    let mut account = runner
+    let account = runner
         .get_account(&message_payload_pda, &axelar_solana_gateway::ID)
         .await;
-    let parsed = MessagePayload::from_borrowed_account_data(&mut account.data)
+    let parsed: ImmutMessagePayload<'_> = account
+        .data
+        .as_slice()
+        .try_into()
         .expect("failed to parse MessagePayload PDA data");
     assert_eq!(*parsed.payload_hash, expected_payload_hash);
 }

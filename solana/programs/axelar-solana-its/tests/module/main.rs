@@ -2,6 +2,7 @@
     clippy::expect_used,
     clippy::indexing_slicing,
     clippy::missing_errors_doc,
+    clippy::panic,
     clippy::str_to_string,
     clippy::tests_outside_test_module,
     clippy::unwrap_used,
@@ -19,6 +20,7 @@ mod role_management;
 
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::processor::GatewayEvent;
+use axelar_solana_gateway::state::incoming_message::command_id;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, random_message, ProgramInvocationState,
@@ -26,6 +28,7 @@ use axelar_solana_gateway_test_fixtures::gateway::{
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
+use axelar_solana_its::instructions::ItsGmpInstructionInputs;
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ethers::abi::Detokenize;
 use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
@@ -41,9 +44,11 @@ use evm_contracts_test_suite::{
 };
 use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
 use program_utils::BorshPda;
+use solana_program_test::BanksTransactionResultWithMetadata;
 use solana_sdk::account::Account;
 use solana_sdk::account_info::Account as AccountTrait;
 use solana_sdk::account_info::IntoAccountInfo;
+use solana_sdk::clock::Clock;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
@@ -138,14 +143,6 @@ pub fn random_hub_message_with_destination_and_payload(
     message
 }
 
-fn prepare_receive_from_hub(payload: &GMPPayload, source_chain: String) -> GMPPayload {
-    GMPPayload::ReceiveFromHub(ReceiveFromHub {
-        selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
-        source_chain,
-        payload: payload.encode().into(),
-    })
-}
-
 #[allow(clippy::panic)]
 fn route_its_hub(payload: GMPPayload, source_chain: String) -> GMPPayload {
     let GMPPayload::SendToHub(inner) = payload else {
@@ -157,6 +154,73 @@ fn route_its_hub(payload: GMPPayload, source_chain: String) -> GMPPayload {
         payload: inner.payload,
         source_chain,
     })
+}
+
+#[allow(clippy::panic)]
+async fn relay_to_solana(
+    payload: Vec<u8>,
+    solana_chain: &mut SolanaAxelarIntegrationMetadata,
+    maybe_mint: Option<Pubkey>,
+    token_program: Pubkey,
+) -> BanksTransactionResultWithMetadata {
+    let solana_payload = GMPPayload::ReceiveFromHub(ReceiveFromHub {
+        selector: ReceiveFromHub::MESSAGE_TYPE_ID.try_into().unwrap(),
+        source_chain: "ethereum".to_owned(),
+        payload: payload.into(),
+    });
+    let encoded_payload = solana_payload.encode();
+    let payload_hash = solana_sdk::keccak::hash(&encoded_payload).to_bytes();
+    let message = random_hub_message_with_destination_and_payload(
+        axelar_solana_its::id().to_string(),
+        payload_hash,
+    );
+
+    let message_from_multisig_prover = solana_chain
+        .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+        .await
+        .unwrap();
+
+    let message_payload_pda = solana_chain
+        .upload_message_payload(&message, &encoded_payload)
+        .await
+        .unwrap();
+
+    // Action: set message status as executed by calling the destination program
+    let (incoming_message_pda, ..) = axelar_solana_gateway::get_incoming_message_pda(&command_id(
+        &message.cc_id.chain,
+        &message.cc_id.id,
+    ));
+
+    let merkelised_message = message_from_multisig_prover
+        .iter()
+        .find(|x| x.leaf.message.cc_id == message.cc_id)
+        .unwrap()
+        .clone();
+
+    let clock_sysvar: Clock = solana_chain
+        .fixture
+        .banks_client
+        .get_sysvar()
+        .await
+        .unwrap();
+
+    let its_ix_inputs = ItsGmpInstructionInputs::builder()
+        .payer(solana_chain.fixture.payer.pubkey())
+        .incoming_message_pda(incoming_message_pda)
+        .message_payload_pda(message_payload_pda)
+        .message(merkelised_message.leaf.message)
+        .payload(solana_payload)
+        .token_program(token_program)
+        .timestamp(clock_sysvar.unix_timestamp)
+        .mint_opt(maybe_mint)
+        .build();
+
+    let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
+        .expect("failed to create instruction");
+
+    match solana_chain.fixture.send_tx(&[instruction]).await {
+        Ok(tx) | Err(tx) => tx,
+    }
 }
 
 async fn axelar_evm_setup() -> (

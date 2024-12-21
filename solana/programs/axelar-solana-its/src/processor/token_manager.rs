@@ -15,7 +15,6 @@ use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWit
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
-use super::LocalAction;
 use crate::instructions::{self, OptionalAccountsFlags};
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
@@ -23,18 +22,6 @@ use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
 };
-
-impl LocalAction for DeployTokenManager {
-    fn process_local_action<'a>(
-        self,
-        payer: &'a AccountInfo<'a>,
-        accounts: &'a [AccountInfo<'a>],
-        optional_accounts_flags: OptionalAccountsFlags,
-        _message: Option<axelar_solana_encoding::types::messages::Message>,
-    ) -> ProgramResult {
-        process_deploy(payer, accounts, &self, &optional_accounts_flags)
-    }
-}
 
 pub(crate) fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],

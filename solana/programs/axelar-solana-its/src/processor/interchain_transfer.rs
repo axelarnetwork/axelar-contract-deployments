@@ -19,9 +19,8 @@ use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
-use super::LocalAction;
 use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
-use crate::instructions::{InterchainTransferInputs, OptionalAccountsFlags};
+use crate::instructions::InterchainTransferInputs;
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
@@ -29,19 +28,6 @@ use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
 };
-
-impl LocalAction for InterchainTransfer {
-    fn process_local_action<'a>(
-        self,
-        payer: &'a AccountInfo<'a>,
-        accounts: &'a [AccountInfo<'a>],
-        _optional_accounts_flags: OptionalAccountsFlags,
-        message: Option<Message>,
-    ) -> ProgramResult {
-        let message = message.ok_or(ProgramError::InvalidArgument)?;
-        process_inbound_transfer(message, payer, accounts, &self)
-    }
-}
 
 /// Processes an incoming [`InterchainTransfer`] GMP message.
 ///
@@ -74,10 +60,12 @@ impl LocalAction for InterchainTransfer {
 pub fn process_inbound_transfer<'a>(
     message: Message,
     payer: &'a AccountInfo<'a>,
+    message_payload_account: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
 ) -> ProgramResult {
-    let parsed_accounts = GiveTokenAccounts::from_account_info_slice(accounts, &payer)?;
+    let parsed_accounts =
+        GiveTokenAccounts::from_account_info_slice(accounts, &(payer, message_payload_account))?;
     let token_manager = TokenManager::load(parsed_accounts.token_manager_pda)?;
     assert_valid_token_manager_pda(
         parsed_accounts.token_manager_pda,
@@ -111,6 +99,7 @@ pub fn process_inbound_transfer<'a>(
             &[
                 axelar_executable_accounts.gateway_root_pda.clone(),
                 axelar_executable_accounts.its_root_pda.clone(),
+                axelar_executable_accounts.message_payload_pda.clone(),
                 axelar_executable_accounts.token_program.clone(),
                 axelar_executable_accounts.token_mint.clone(),
                 axelar_executable_accounts.program_ata.clone(),
@@ -124,7 +113,6 @@ pub fn process_inbound_transfer<'a>(
             &axelar_executable_accounts,
             *program_account.key,
             destination_payload.account_meta(),
-            destination_payload.payload_without_accounts().to_vec(),
             payload.token_id.0,
             converted_amount,
         )?;
@@ -150,7 +138,6 @@ fn build_axelar_interchain_token_execute(
     axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts<'_>,
     program_id: Pubkey,
     mut program_accounts: Vec<AccountMeta>,
-    data: Vec<u8>,
     token_id: [u8; 32],
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
@@ -162,6 +149,10 @@ fn build_axelar_interchain_token_execute(
     let mut accounts = vec![
         AccountMeta::new_readonly(*axelar_its_executable_accounts.gateway_root_pda.key, false),
         AccountMeta::new_readonly(*axelar_its_executable_accounts.its_root_pda.key, true),
+        AccountMeta::new_readonly(
+            *axelar_its_executable_accounts.message_payload_pda.key,
+            false,
+        ),
         AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
         AccountMeta::new(*axelar_its_executable_accounts.token_mint.key, false),
         AccountMeta::new(*axelar_its_executable_accounts.program_ata.key, false),
@@ -172,15 +163,14 @@ fn build_axelar_interchain_token_execute(
         command_id,
         source_chain,
         source_address,
-        data,
+        data: Vec::new(),
         token_id,
         token,
         amount,
     };
 
     let mut data = AXELAR_INTERCHAIN_TOKEN_EXECUTE.to_vec();
-    let bytes = rkyv::to_bytes::<_, 0>(&executable_payload)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let bytes = borsh::to_vec(&executable_payload)?;
     data.extend_from_slice(&bytes);
 
     Ok(Instruction {
@@ -668,6 +658,7 @@ struct GiveTokenAccounts<'a> {
     gateway_root_pda: &'a AccountInfo<'a>,
     system_account: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
+    message_payload_pda: &'a AccountInfo<'a>,
     token_manager_pda: &'a AccountInfo<'a>,
     token_mint: &'a AccountInfo<'a>,
     token_manager_ata: &'a AccountInfo<'a>,
@@ -681,16 +672,17 @@ struct GiveTokenAccounts<'a> {
 }
 
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
-    type Context = &'a AccountInfo<'a>;
+    type Context = (&'a AccountInfo<'a>, &'a AccountInfo<'a>);
 
     fn from_account_info_slice(
         accounts: &'a [AccountInfo<'a>],
-        payer: &Self::Context,
+        payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
         let accounts_iter = &mut accounts.iter();
 
         Ok(GiveTokenAccounts {
-            payer,
+            payer: payer_and_payload.0,
+            message_payload_pda: payer_and_payload.1,
             gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
@@ -711,6 +703,7 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
 struct AxelarInterchainTokenExecutableAccounts<'a> {
     gateway_root_pda: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
+    message_payload_pda: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
     token_mint: &'a AccountInfo<'a>,
     program_ata: &'a AccountInfo<'a>,
@@ -741,6 +734,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
         Ok(Self {
             gateway_root_pda: give_token_accounts.gateway_root_pda,
             its_root_pda: give_token_accounts.its_root_pda,
+            message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,
             token_mint: give_token_accounts.token_mint,
             program_ata: give_token_accounts.destination_ata,

@@ -22,7 +22,8 @@ use solana_sdk::sysvar::clock;
 /// If serialization fails.
 pub async fn build_its_gmp_instruction<C>(
     payer: Pubkey,
-    gateway_approved_message_pda: Pubkey,
+    gateway_incoming_message_pda: Pubkey,
+    gateway_message_payload_pda: Pubkey,
     message: Message,
     abi_payload: Vec<u8>,
     rpc_client: C,
@@ -54,7 +55,8 @@ where
 
     let inputs = ItsGmpInstructionInputs::builder()
         .payer(payer)
-        .incoming_message_pda(gateway_approved_message_pda)
+        .incoming_message_pda(gateway_incoming_message_pda)
+        .message_payload_pda(gateway_message_payload_pda)
         .message(message)
         .payload(payload)
         .token_program(token_program)

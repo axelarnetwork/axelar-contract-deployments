@@ -1,7 +1,6 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
 use alloy_primitives::hex;
-use axelar_solana_encoding::types::messages::Message;
 use interchain_token_transfer_gmp::DeployInterchainToken;
 use program_utils::BorshPda;
 use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
@@ -21,8 +20,7 @@ use spl_token_metadata_interface::instruction::{initialize as initialize_metadat
 use spl_token_metadata_interface::state::{Field, TokenMetadata};
 
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
-use super::LocalAction;
-use crate::instructions::{self, OptionalAccountsFlags};
+use crate::instructions;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
@@ -31,18 +29,6 @@ use crate::{
 };
 
 const TOKEN_ID_KEY: &str = "token_id";
-
-impl LocalAction for DeployInterchainToken {
-    fn process_local_action<'a>(
-        self,
-        payer: &'a AccountInfo<'a>,
-        accounts: &'a [AccountInfo<'a>],
-        _optional_accounts_flags: OptionalAccountsFlags,
-        _message: Option<Message>,
-    ) -> ProgramResult {
-        process_deploy(payer, accounts, self)
-    }
-}
 
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn process_instruction<'a>(

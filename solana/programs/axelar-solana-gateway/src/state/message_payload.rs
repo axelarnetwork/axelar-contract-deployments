@@ -1,27 +1,81 @@
-//! Module for the MessagePayload account type.
+//! Message payload account handling with flexible mutability.
+//!
+//! This module provides a data structure and utilities for working with message payload
+//! accounts that can be accessed either mutably or immutably. The payload data is kept
+//! as references to avoid copying large amounts of data to program's limited heap.
+//!
+//! # Memory and Resource Considerations
+//!
+//! Since the `raw_payload` field is a reference to a potentially large slice of bytes,
+//! this implementation specifically avoids making any copies to the (limited) heap
+//! of the end-user's program. The data needs to remain available for potentially
+//! the full lifetime of the end-user program.
+//!
+//! # Usage Patterns
+//!
+//! End-user code should typically use the immutable variant (`ImmutMessagePayload`)
+//! when working with message payloads, making sure no unnecessary mutable borrows are
+//! requested.
+//!
+//! The mutable variant (`MutMessagePayload`) should be reserved for specific cases
+//! where modification of the payload is actually required, such as during message
+//! construction or updates within the Gateway crate.
 
 use std::mem::size_of;
+use std::ops::Deref;
 
 use solana_program::entrypoint::ProgramResult;
 use solana_program::keccak::hashv;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
+/// Type alias for a message payload with mutable references
+pub(crate) type MutMessagePayload<'a> = MessagePayload<'a, Mut>;
+/// Type alias for a message payload with immutable references
+pub type ImmutMessagePayload<'a> = MessagePayload<'a, Immut>;
+
 /// Data layout of the message payloa PDA account.
-pub struct MessagePayload<'a> {
+///
+/// This structure can be instantiated with either mutable or immutable references
+/// to its fields
+pub struct MessagePayload<'a, R>
+where
+    R: RefType<'a>,
+{
     /// The bump that was used to create the PDA
-    pub bump: &'a mut u8,
+    pub bump: R::Ref<u8>,
     /// Hash of the whole message.
     ///
     /// Calculated when calling the "commit message payload" instruction.
     ///
     /// All zeroes represent the unhashed, uncommitted state.
-    pub payload_hash: &'a mut [u8; 32],
+    pub payload_hash: R::Ref<[u8; 32]>,
     /// The full message payload contents.
-    pub raw_payload: &'a mut [u8],
+    pub raw_payload: R::Ref<[u8]>,
 }
 
-impl<'a> MessagePayload<'a> {
+/// Trait to abstract over reference mutability
+///
+/// This trait allows types to be generic over whether they contain mutable or
+/// immutable references, requiring a single implementation to handle both cases.
+pub trait RefType<'a> {
+    /// The concrete reference type (either &'a T or &'a mut T)
+    type Ref<T: 'a + ?Sized>: Deref<Target = T>;
+}
+
+/// Type marker for immutable references.
+pub struct Immut;
+impl<'a> RefType<'a> for Immut {
+    type Ref<T: 'a + ?Sized> = &'a T;
+}
+
+/// Type marker for mutable references.
+pub struct Mut;
+impl<'a> RefType<'a> for Mut {
+    type Ref<T: 'a + ?Sized> = &'a mut T;
+}
+
+impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
     /// Prefix bytes
     ///
     /// 1 byte for the bump plus 32 bytes for the payload hash
@@ -33,14 +87,34 @@ impl<'a> MessagePayload<'a> {
         offset.saturating_add(Self::HEADER_SIZE)
     }
 
-    /// Tries to parse a `MessagePayload` from the contents of a borrowed account data slice.
-    pub fn from_borrowed_account_data(account_data: &'a mut [u8]) -> Result<Self, ProgramError> {
-        if account_data.len() <= Self::HEADER_SIZE {
+    /// Returns `true` if the `payload_hash` section have been modified before.
+    pub fn committed(&self) -> bool {
+        !self.payload_hash.iter().all(|&x| x == 0)
+    }
+
+    /// Asserts this message payload account haven't been committed yet
+    #[inline]
+    pub fn assert_uncommitted(&self) -> ProgramResult {
+        if self.committed() {
+            msg!("Error: Message payload account data was already committed");
+            Err(ProgramError::InvalidAccountData)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+/// Tries to parse a mutable `MessagePayload` from mutable account data.
+impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
+    type Error = ProgramError;
+
+    fn try_from(bytes: &'a mut [u8]) -> Result<Self, Self::Error> {
+        if bytes.len() <= Self::HEADER_SIZE {
             msg!("Error: Message payload account data is too small");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::AccountDataTooSmall);
         }
 
-        let (bump_slice, rest) = account_data.split_at_mut(1);
+        let (bump_slice, rest) = bytes.split_at_mut(1);
         let (payload_hash_slice, raw_payload) = rest.split_at_mut(32);
         debug_assert_eq!(payload_hash_slice.len(), 32);
         debug_assert!(!raw_payload.is_empty());
@@ -55,16 +129,14 @@ impl<'a> MessagePayload<'a> {
             raw_payload,
         })
     }
+}
 
+// Mutable-only methods
+impl<'a> MessagePayload<'a, Mut> {
     /// Hashes the contents of `raw_payload` and stores it under `payload_hash`.
     pub fn hash_raw_payload_bytes(&mut self) {
         let digest = hashv(&[(self.raw_payload)]);
         self.payload_hash.copy_from_slice(&(digest.to_bytes()))
-    }
-
-    /// Returns `true` if the `payload_hash` section have been modified before.
-    pub fn committed(&self) -> bool {
-        !self.payload_hash.iter().all(|&x| x == 0)
     }
 
     /// Write bytes in `raw_payload`.
@@ -88,16 +160,33 @@ impl<'a> MessagePayload<'a> {
 
         Ok(())
     }
+}
 
-    /// Asserts this message payload account haven't been committed yet
-    #[inline]
-    pub fn assert_uncommitted(&self) -> ProgramResult {
-        if self.committed() {
-            msg!("Error: Message payload account data was already committed");
-            Err(ProgramError::InvalidAccountData)
-        } else {
-            Ok(())
+// Immutable only methods
+/// Tries to parse an immutable `MessagePayload` from immutable account data.
+impl<'a> TryFrom<&'a [u8]> for MessagePayload<'a, Immut> {
+    type Error = ProgramError;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
+        if bytes.len() <= Self::HEADER_SIZE {
+            msg!("Error: Message payload account data is too small");
+            return Err(ProgramError::AccountDataTooSmall);
         }
+
+        let (bump_slice, rest) = bytes.split_at(1);
+        let (payload_hash_slice, raw_payload) = rest.split_at(32);
+        debug_assert_eq!(payload_hash_slice.len(), 32);
+        debug_assert!(!raw_payload.is_empty());
+
+        let bump = &bump_slice[0];
+        // Unwrap: we just checked that the slice bounds fits the expected array size
+        let payload_hash = payload_hash_slice.try_into().unwrap();
+
+        Ok(Self {
+            bump,
+            payload_hash,
+            raw_payload,
+        })
     }
 }
 
@@ -112,8 +201,7 @@ mod tests {
         let mut account_data = [0u8; 64];
         let mut rng = thread_rng();
         account_data.try_fill(&mut rng).unwrap();
-        let mut copy = account_data;
-        let message_payload = MessagePayload::from_borrowed_account_data(&mut copy).unwrap();
+        let message_payload: ImmutMessagePayload<'_> = account_data.as_slice().try_into().unwrap();
 
         assert_eq!(*message_payload.bump, account_data[0]);
         assert_eq!(*message_payload.payload_hash, account_data[1..33]);
@@ -125,8 +213,8 @@ mod tests {
         let mut account_data = [0u8; 64];
         let mut rng = thread_rng();
         account_data.try_fill(&mut rng).unwrap();
-        let mut message_payload =
-            MessagePayload::from_borrowed_account_data(&mut account_data).unwrap();
+        let mut message_payload: MutMessagePayload<'_> =
+            account_data.as_mut_slice().try_into().unwrap();
 
         message_payload.hash_raw_payload_bytes();
 

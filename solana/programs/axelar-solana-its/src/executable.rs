@@ -1,9 +1,11 @@
 //! Module that defines the struct used by contracts adhering to the `AxelarInterchainTokenExecutable` interface.
 
+use axelar_executable::AxelarMessagePayload;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
+use borsh::{BorshDeserialize, BorshSerialize};
+use interchain_token_transfer_gmp::GMPPayload;
 use program_utils::BorshPda;
-use rkyv::bytecheck::{self, CheckBytes};
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
@@ -15,16 +17,15 @@ use crate::state::InterchainTokenService;
 ///
 /// 0. [] The Gateway Root Config PDA
 /// 1. [signer] The Interchain Token Service Root PDA.
-/// 2. [] The token program (spl-token or spl-token-2022).
-/// 3. [writable] The token mint.
-/// 4. [writable] The Destination Program Associated Token Account.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 5;
+/// 2. [] The Message Payload PDA.
+/// 3. [] The token program (spl-token or spl-token-2022).
+/// 4. [writable] The token mint.
+/// 5. [writable] The Destination Program Associated Token Account.
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 6;
 
 /// This is the payload that the `executeWithInterchainToken` processor on the destinatoin program
 /// must expect
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Debug, PartialEq, Eq)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
 #[repr(C)]
 pub struct AxelarInterchainTokenExecutablePayload {
     /// The unique message id.
@@ -55,39 +56,60 @@ pub(crate) const AXELAR_INTERCHAIN_TOKEN_EXECUTE: &[u8; 16] = b"axelar-its-exec_
 /// Utility trait to extract the `AxelarInterchainTokenExecutablePayload`
 pub trait MaybeAxelarInterchainTokenExecutablePayload {
     /// Try to extract the `AxearlExecutablePayload` from the given payload
-    fn try_get_axelar_interchain_token_executable_payload(
+    ///
+    /// # Errors
+    ///
+    /// - If the data is not coming from `InterchainTokenService`
+    /// - If the data cannot be decoded as a `AxelarInterchainTokenExecutablePayload`
+    /// - If list of accounts is different than expected
+    /// - If the message account data cannot be borrowed
+    /// - If the message account data cannot be decoded as a `GMPPayload`
+    fn try_get_axelar_interchain_token_executable_payload<'a>(
         &self,
-    ) -> Option<Result<&ArchivedAxelarInterchainTokenExecutablePayload, ProgramError>>;
+        accounts: &'a [AccountInfo<'a>],
+    ) -> Option<Result<AxelarInterchainTokenExecutablePayload, ProgramError>>;
 }
 
 impl MaybeAxelarInterchainTokenExecutablePayload for &[u8] {
-    fn try_get_axelar_interchain_token_executable_payload(
+    fn try_get_axelar_interchain_token_executable_payload<'a>(
         &self,
-    ) -> Option<Result<&ArchivedAxelarInterchainTokenExecutablePayload, ProgramError>> {
-        let first_16_bytes = self.get(0..AXELAR_INTERCHAIN_TOKEN_EXECUTE.len())?;
-        if first_16_bytes != AXELAR_INTERCHAIN_TOKEN_EXECUTE {
-            solana_program::msg!("Invalid instruction data: {:?}", first_16_bytes);
+        accounts: &'a [AccountInfo<'a>],
+    ) -> Option<Result<AxelarInterchainTokenExecutablePayload, ProgramError>> {
+        if !self.starts_with(AXELAR_INTERCHAIN_TOKEN_EXECUTE) {
             return None;
         }
-        let all_other_bytes = self.get(AXELAR_INTERCHAIN_TOKEN_EXECUTE.len()..)?;
-        let result =
-            rkyv::check_archived_root::<AxelarInterchainTokenExecutablePayload>(all_other_bytes)
-                .map_err(|_err| ProgramError::InvalidInstructionData);
-        Some(result)
+
+        let payload_bytes = self.get(AXELAR_INTERCHAIN_TOKEN_EXECUTE.len()..)?;
+        let mut call_data_without_payload: AxelarInterchainTokenExecutablePayload =
+            match borsh::from_slice(payload_bytes)
+                .map_err(|borsh_error| ProgramError::BorshIoError(borsh_error.to_string()))
+            {
+                Ok(data) => data,
+                Err(err) => return Some(Err(err)),
+            };
+
+        let call_data_payload = match extract_interchain_token_execute_call_data(accounts) {
+            Ok(data) => data,
+            Err(err) => return Some(Err(err)),
+        };
+
+        call_data_without_payload.data = call_data_payload;
+
+        Some(Ok(call_data_without_payload))
     }
 }
 
-/// Used to validate that the caller is the Interchain Token Service
-///
-/// # Errors
-///
-/// If the caller is not the Interchain Token Service
-pub fn validate_interchain_token_execute_call<'a>(
+/// Validates accounts and extract extracts the call data for the [`AxelarInterchainTokenExecutablePayload`]
+fn extract_interchain_token_execute_call_data<'a>(
     accounts: &'a [AccountInfo<'a>],
-) -> ProgramResult {
-    let account_iter = &mut accounts.iter();
+) -> Result<Vec<u8>, ProgramError> {
+    let (protocol_accounts, program_accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
+    let account_iter = &mut protocol_accounts.iter();
     let gateway_root_account = next_account_info(account_iter)?;
     let signing_pda_account = next_account_info(account_iter)?;
+    let message_payload_account = next_account_info(account_iter)?;
+    let message_payload_account_data = message_payload_account.try_borrow_data()?;
+    let message_payload: ImmutMessagePayload<'_> = (**message_payload_account_data).try_into()?;
 
     if !signing_pda_account.is_signer {
         msg!(
@@ -104,5 +126,25 @@ pub fn validate_interchain_token_execute_call<'a>(
         its_root_config.bump,
     )?;
 
-    Ok(())
+    let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
+        .map_err(|_err| ProgramError::InvalidInstructionData)?
+    else {
+        msg!("Unsupported GMP payload");
+        return Err(ProgramError::InvalidInstructionData);
+    };
+
+    let GMPPayload::InterchainTransfer(transfer) =
+        GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?
+    else {
+        msg!("The type of the given ITS message doesn't support call data");
+        return Err(ProgramError::InvalidInstructionData);
+    };
+
+    let inner_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
+    if !inner_payload.solana_accounts().eq(program_accounts) {
+        msg!("The list of accounts is different than expected");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(inner_payload.payload_without_accounts().to_vec())
 }

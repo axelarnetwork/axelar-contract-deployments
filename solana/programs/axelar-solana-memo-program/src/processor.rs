@@ -1,14 +1,10 @@
 //! Program state processor
 
-use std::str::from_utf8;
-
-use axelar_executable::{
-    validate_message, ArchivedAxelarExecutablePayload, MaybeAxelarPayload,
-    PROGRAM_ACCOUNTS_START_INDEX,
-};
-use axelar_solana_its::executable::validate_interchain_token_execute_call;
+use axelar_executable::{validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_its::executable::{
-    ArchivedAxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
+    AxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
 };
 use borsh::BorshDeserialize;
 use program_utils::{check_program_account, ValidPDA};
@@ -22,6 +18,7 @@ use solana_program::{msg, system_program};
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
+use std::str::from_utf8;
 
 use crate::assert_counter_pda_seeds;
 use crate::instruction::AxelarMemoInstruction;
@@ -34,25 +31,23 @@ pub fn process_instruction<'a>(
     input: &[u8],
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
-    match input.try_get_axelar_executable_payload() {
-        Some(Ok(payload)) => {
-            msg!("Instruction: AxelarExecute");
-            process_message_from_axelar(program_id, accounts, payload)
-        }
-        Some(Err(err)) => Err(err),
-        None => match input.try_get_axelar_interchain_token_executable_payload() {
-            Some(Ok(payload)) => {
-                msg!("Instruction: AxelarInterchainTokenExecute");
-                process_message_from_axelar_with_token(program_id, accounts, payload)
-            }
-            Some(Err(err)) => Err(err),
-            None => {
-                msg!("Instruction: Native");
-                let instruction = AxelarMemoInstruction::try_from_slice(input)?;
-                process_native_ix(program_id, accounts, instruction)
-            }
-        },
+
+    if let Some(message) = axelar_executable::parse_axelar_message(input).transpose()? {
+        msg!("Instruction: AxelarExecute");
+        return process_message_from_axelar(program_id, accounts, &message);
     }
+
+    if let Some(payload) = input
+        .try_get_axelar_interchain_token_executable_payload(accounts)
+        .transpose()?
+    {
+        msg!("Instruction: AxelarInterchainTokenExecute");
+        return process_message_from_axelar_with_token(program_id, accounts, &payload);
+    }
+
+    msg!("Instruction: Native");
+    let instruction = AxelarMemoInstruction::try_from_slice(input)?;
+    process_native_ix(program_id, accounts, instruction)
 }
 
 /// Process a message submitted by the relayer which originates from the Axelar
@@ -60,15 +55,16 @@ pub fn process_instruction<'a>(
 pub fn process_message_from_axelar_with_token<'a>(
     program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    payload: &ArchivedAxelarInterchainTokenExecutablePayload,
+    payload: &AxelarInterchainTokenExecutablePayload,
 ) -> ProgramResult {
-    validate_interchain_token_execute_call(accounts)?;
     let accounts_iter = &mut accounts.iter();
     let _gateway_root_pda = next_account_info(accounts_iter)?;
     let _its_root_pda = next_account_info(accounts_iter)?;
+    let _message_payload_account = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
     let token_mint = next_account_info(accounts_iter)?;
     let ata_account = next_account_info(accounts_iter)?;
+    let instruction_accounts = accounts_iter.as_slice();
 
     msg!("Processing memo with tokens:");
     msg!("amount: {}", payload.amount);
@@ -82,14 +78,9 @@ pub fn process_message_from_axelar_with_token<'a>(
         msg!("name: {}", token_metadata.name);
     }
 
-    let memo = from_utf8(&payload.data).map_err(|err| {
-        msg!("Invalid UTF-8, from byte {}", err.valid_up_to());
-        ProgramError::InvalidInstructionData
-    })?;
+    let instruction: AxelarMemoInstruction = borsh::from_slice(&payload.data)?;
 
-    process_memo(program_id, accounts_iter.as_slice(), memo)?;
-
-    Ok(())
+    process_native_ix(program_id, instruction_accounts, instruction)
 }
 
 /// Process a message submitted by the relayer which originates from the Axelar
@@ -97,12 +88,20 @@ pub fn process_message_from_axelar_with_token<'a>(
 pub fn process_message_from_axelar(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    payload: &ArchivedAxelarExecutablePayload,
+    message: &Message,
 ) -> ProgramResult {
-    validate_message(accounts, payload)?;
-    let (_, accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
+    validate_message(accounts, message)?;
+    let (protocol_accounts, accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
 
-    let memo = from_utf8(&payload.payload_without_accounts).map_err(|err| {
+    // Access the payload from the MessagePayload account.
+    // It should be considered safe otherwise `validate_message` would have reverted.
+    let message_payload_account = &protocol_accounts[1];
+    let account_data = message_payload_account.try_borrow_data()?;
+    let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;
+    let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
+    let payload = axelar_payload.payload_without_accounts();
+
+    let memo = from_utf8(payload).map_err(|err| {
         msg!("Invalid UTF-8, from byte {}", err.valid_up_to());
         ProgramError::InvalidInstructionData
     })?;
@@ -171,9 +170,13 @@ pub fn process_native_ix(
             )?;
         }
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {
+            msg!("Instruction: Initialize");
             process_initialize_memo_program_counter(program_id, accounts, counter_pda_bump)?;
         }
-        AxelarMemoInstruction::ProcessMemo { memo } => process_memo(program_id, accounts, &memo)?,
+        AxelarMemoInstruction::ProcessMemo { memo } => {
+            msg!("Instruction: Process Memo");
+            process_memo(program_id, accounts, &memo)?
+        }
     }
 
     Ok(())

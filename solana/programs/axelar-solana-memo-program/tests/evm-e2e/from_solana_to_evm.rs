@@ -188,6 +188,10 @@ async fn call_solana_gateway(
         .await
         .unwrap();
 
+    if let Err(error) = tx.result {
+        panic!("failed to call solana gateway: {error}")
+    }
+
     let event = get_gateway_events(&tx).into_iter().next().unwrap();
 
     let ProgramInvocationState::Succeeded(vec_events) = event else {

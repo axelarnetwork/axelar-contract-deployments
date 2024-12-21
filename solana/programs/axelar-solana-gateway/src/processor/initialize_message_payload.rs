@@ -1,5 +1,5 @@
 use crate::error::GatewayError;
-use crate::state::message_payload::MessagePayload;
+use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
 use program_utils::ValidPDA;
@@ -50,7 +50,7 @@ impl Processor {
 
         // Prepare the `create_account` instruction.
         let Ok(adjusted_account_size) =
-            MessagePayload::adjust_offset(buffer_size as usize).try_into()
+            MutMessagePayload::adjust_offset(buffer_size as usize).try_into()
         else {
             solana_program::msg!("Failed to cast adjusted buffer size to u64");
             return Err(ProgramError::InvalidInstructionData);
@@ -85,8 +85,7 @@ impl Processor {
 
         // Set the bump seed into account data
         let mut message_payload_account_data = message_payload_account.try_borrow_mut_data()?;
-        let message_payload =
-            MessagePayload::from_borrowed_account_data(&mut message_payload_account_data)?;
+        let message_payload: MutMessagePayload<'_> = (*message_payload_account_data).try_into()?;
         *message_payload.bump = bump_seed;
 
         Ok(())

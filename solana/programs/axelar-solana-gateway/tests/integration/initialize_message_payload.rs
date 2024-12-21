@@ -6,7 +6,7 @@ use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::instructions::approve_messages;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
-use axelar_solana_gateway::state::message_payload::MessagePayload;
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::{
     find_message_payload_pda, get_incoming_message_pda, get_validate_message_signing_pda,
 };
@@ -129,13 +129,15 @@ pub async fn initialize_message_payload_pda(
     assert!(tx.result.is_ok());
 
     // Assert that the new MessagePayload PDA has the correct size and expected data
-    let mut message_payload_account = get_message_account(runner, message)
+    let message_payload_account = get_message_account(runner, message)
         .await
         .expect("error getting account");
 
-    let message_payload =
-        MessagePayload::from_borrowed_account_data(&mut message_payload_account.data)
-            .expect("valid message payload account contents");
+    let message_payload: ImmutMessagePayload<'_> = message_payload_account
+        .data
+        .as_slice()
+        .try_into()
+        .expect("valid message payload account contents");
 
     assert_eq!(message_payload.raw_payload.len(), buffer_size as usize,);
     assert!(message_payload.raw_payload.iter().all(|&x| x == 0));

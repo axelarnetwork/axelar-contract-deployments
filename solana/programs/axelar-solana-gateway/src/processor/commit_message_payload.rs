@@ -1,5 +1,5 @@
 use super::Processor;
-use crate::state::message_payload::MessagePayload;
+use crate::state::message_payload::MutMessagePayload;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -30,8 +30,8 @@ impl Processor {
 
         // Parse the message payload account from the account data.
         let mut message_payload_account_data = message_payload_account.try_borrow_mut_data()?;
-        let account_data: &mut [u8] = &mut message_payload_account_data;
-        let mut message_payload = MessagePayload::from_borrowed_account_data(account_data)?;
+        let mut message_payload: MutMessagePayload<'_> =
+            (*message_payload_account_data).try_into()?;
 
         // Check: Message Payload PDA can be derived from provided seeds.
         let message_payload_pda = crate::create_message_payload_pda(
