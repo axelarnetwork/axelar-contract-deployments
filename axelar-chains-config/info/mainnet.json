@@ -2415,13 +2415,15 @@
           ],
           "initialVerifierSetId": "cfcd6101b38099c6b05d621699c6ecb61673cc845581353d91b3026b649b0547",
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
-          "implementationCodehash": "0x7da68e9180281f2c4c230a5d51c1b8a24dd81df20b3595849d59097bd5f7f7a5",
-          "deploymentMethod": "create",
+          "implementation": "0xb87D957935E63dbA9aCd958ee702c17AeCD2a4dA",
+          "implementationCodehash": "0x44ff4ac1f2d4fb10228a86f2dfe8d39a5301764c2428920561ebdde60fa87a29",
+          "deploymentMethod": "create2",
           "previousSignersRetention": 15,
           "domainSeparator": "0x3c8c7d9e180f608dcf6fc9b1c3ef905ac295b1c4cb2fe8ca2c4fcde1b6e9a8c6",
           "minimumRotationDelay": 86400,
-          "connectionType": "amplifier"
+          "connectionType": "amplifier",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "v6.0.4"
         },
         "InterchainGovernance": {
           "address": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC"
