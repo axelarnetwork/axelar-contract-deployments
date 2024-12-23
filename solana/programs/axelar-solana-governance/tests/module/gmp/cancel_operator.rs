@@ -2,6 +2,8 @@ use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use rkyv::Deserialize;
 use solana_program_test::tokio;
+use solana_sdk::instruction::AccountMeta;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
 use crate::gmp::{gmp_sample_metadata, setup_programs};
@@ -97,10 +99,10 @@ fn operator_proposal_cancelled_event(builder: &IxBuilder<ProposalRelated>) -> Go
 }
 
 #[tokio::test]
-async fn test_program_checks_pda_is_correctly_derived() {
+async fn test_program_checks_proposal_pda_is_correctly_derived() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
-    let mut ix_builder = ix_builder_with_sample_proposal_data();
+    let ix_builder = ix_builder_with_sample_proposal_data();
 
     // We first schedule a time lock proposal
     let meta = gmp_sample_metadata();
@@ -128,12 +130,7 @@ async fn test_program_checks_pda_is_correctly_derived() {
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_ok());
 
-    // Third, we try to cancel the operator management of the proposal, but we break
-    // the payload, so the hashes don't match with previous PDA derivation. THIS
-    // SHOULD FAIL.
-    let mut call_data = ix_builder.prop_call_data.unwrap();
-    call_data.call_data = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // Lets hack the payload then ...
-    ix_builder.prop_call_data = Some(call_data);
+    // Third, we try to cancel the operator management of the proposal
     let meta = gmp_sample_metadata();
     let mut ix = ix_builder
         .clone()
@@ -141,6 +138,55 @@ async fn test_program_checks_pda_is_correctly_derived() {
         .with_metadata(meta.clone())
         .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
+    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA account
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_err());
+
+    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+}
+
+#[tokio::test]
+async fn test_program_checks_operator_pda_is_correctly_derived() {
+    let (mut sol_integration, config_pda, _) = setup_programs().await;
+
+    let ix_builder = ix_builder_with_sample_proposal_data();
+
+    // We first schedule a time lock proposal
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
+    // Second, we approve the operator management of the proposal
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
+    // Third, we try to cancel the operator management of the proposal
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    ix.accounts[4] = AccountMeta::new_readonly(Pubkey::new_unique(), false); // Wrong PDA account
     approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_err());

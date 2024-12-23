@@ -93,7 +93,6 @@ struct ProcessGMPContext {
     target: Pubkey,
     proposal_hash: [u8; 32],
     minimum_eta_delay: u64,
-    execute_proposal_call_data: ExecuteProposalCallData,
 }
 
 impl ProcessGMPContext {
@@ -141,7 +140,6 @@ impl ProcessGMPContext {
             proposal_hash,
             minimum_eta_delay: u64::from(governance_config.minimum_proposal_eta_delay),
             target,
-            execute_proposal_call_data,
         })
     }
 }

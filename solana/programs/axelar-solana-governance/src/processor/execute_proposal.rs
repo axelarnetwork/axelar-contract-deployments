@@ -47,11 +47,7 @@ pub(crate) fn process(
         &execute_proposal_data.native_value,
     );
 
-    ExecutableProposal::ensure_correct_proposal_pda(
-        proposal_account.key,
-        &hash,
-        execute_proposal_data.call_data.proposal_bump()?,
-    )?;
+    ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_account, &hash)?;
 
     let proposal_account_data = proposal_account.try_borrow_data()?;
     let proposal = ArchivedExecutableProposal::load_from(

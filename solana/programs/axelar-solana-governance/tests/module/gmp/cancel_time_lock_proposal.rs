@@ -90,3 +90,34 @@ async fn test_a_non_existent_scheduled_proposal_cannot_be_cancelled() {
     assert_eq!(emitted_events.len(), 0);
     assert_msg_present_in_logs(res, "Proposal PDA is not initialized");
 }
+
+#[tokio::test]
+async fn test_program_checks_proposal_pda_is_correctly_derived() {
+    let (mut sol_integration, config_pda, _) = setup_programs().await;
+
+    let ix_builder = ix_builder_with_sample_proposal_data();
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .cancel_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+
+    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA account
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_err());
+    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+}

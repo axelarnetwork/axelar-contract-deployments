@@ -29,16 +29,13 @@ pub(crate) fn process(
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let _root_pda = next_account_info(accounts_iter)?;
+    let proposal_pda = next_account_info(accounts_iter)?;
     let operator_proposal_pda = next_account_info(accounts_iter)?;
 
-    let bump = ctx
-        .execute_proposal_call_data
-        .proposal_operator_managed_bump()?;
-
-    operator::ensure_correct_managed_proposal_pda(
-        operator_proposal_pda.key,
+    let bump = operator::ensure_correct_managed_proposal_pda(
+        proposal_pda,
+        operator_proposal_pda,
         &ctx.proposal_hash,
-        bump,
     )?;
 
     program_utils::init_pda_raw(

@@ -9,6 +9,7 @@ use solana_program::program_error::ProgramError;
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
+use crate::state::operator;
 use crate::state::proposal::ExecutableProposal;
 
 /// Processes a Governance GMP `ScheduleTimeLockProposal` command.
@@ -26,10 +27,6 @@ pub(crate) fn process(
     let _root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
 
-    let bump = ctx.execute_proposal_call_data.proposal_bump()?;
-
-    ExecutableProposal::ensure_correct_proposal_pda(proposal_pda.key, &ctx.proposal_hash, bump)?;
-
     let proposal_time = checked_from_u256_le_bytes_to_u64(&ctx.cmd_payload.eta.to_le_bytes())?;
 
     let proposal_time =
@@ -43,7 +40,13 @@ pub(crate) fn process(
         })?;
 
     // Forge the new proposal
-    let proposal = ExecutableProposal::new(proposal_time);
+    let (pubkey, bump) = ExecutableProposal::pda(&ctx.proposal_hash);
+    if pubkey != *proposal_pda.key {
+        msg!("Derived proposal PDA does not match provided one");
+        return Err(ProgramError::InvalidArgument);
+    }
+    let managed_bump = operator::derive_managed_proposal_pda(&ctx.proposal_hash).1;
+    let proposal = ExecutableProposal::new(proposal_time, bump, managed_bump);
 
     // Store proposal
     proposal.store(

@@ -1,6 +1,7 @@
 use axelar_rkyv_encoding::types::CrossChainId;
+use axelar_solana_governance::state::proposal::ExecutableProposal;
 use solana_program_test::tokio;
-use solana_sdk::signature::Signer;
+use solana_sdk::{instruction::AccountMeta, signature::Signer};
 
 use crate::helpers::{
     approve_ix_at_gateway, assert_msg_present_in_logs, gmp_sample_metadata,
@@ -61,17 +62,18 @@ async fn test_gov_gmp_fails_on_wrong_source_chain() {
 async fn test_incoming_proposal_pda_derivation_is_checked_when_receiving_gmp() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
-    let mut ix_builder = ix_builder_with_sample_proposal_data();
+    let ix_builder = ix_builder_with_sample_proposal_data();
 
     // We set a wrong address in the payload, then we hash it and derive the PDA,
     // then we send the instruction with the wrong PDA.
-    ix_builder.prop_target = Some([0_u8; 32].to_vec().try_into().unwrap());
     let meta = gmp_sample_metadata();
     let mut ix = ix_builder
         .gmp_ix()
         .with_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
+
+    ix.accounts[3] = AccountMeta::new(ExecutableProposal::pda(&[0_u8; 32]).0, false); // Wrong PDA regarding builder data.
 
     approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;

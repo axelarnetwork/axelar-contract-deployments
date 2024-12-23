@@ -11,6 +11,7 @@ use std::error::Error;
 
 use crate::sol_types::SolanaAccountMetadata;
 use crate::{seed_prefixes, ID};
+use program_utils::ValidPDA;
 use program_utils::{
     check_rkyv_initialized_pda, checked_from_u256_le_bytes_to_u64, current_time, transfer_lamports,
 };
@@ -38,18 +39,26 @@ pub struct ExecutableProposal {
     /// Represent the le bytes containing unix timestamp from when the proposal
     /// can be executed.
     eta: u64,
+    /// The bump seed for the proposal PDA.
+    bump: u8,
+    /// The bump seed for the operator managed proposal PDA.
+    managed_bump: u8,
 }
 
 impl ExecutableProposal {
     /// Approximated minimum length of the proposal. This allows RKYV
     /// to optimize pre-allocated space.
-    const MIN_LEN: usize = core::mem::size_of::<u64>();
-
+    const MIN_LEN: usize =
+        core::mem::size_of::<u64>() + core::mem::size_of::<u8>() + core::mem::size_of::<u8>();
     /// Creates a new proposal. Currently only the timelock value (ETA) is
     /// stored.
     #[must_use]
-    pub const fn new(eta: u64) -> Self {
-        Self { eta }
+    pub const fn new(eta: u64, bump: u8, managed_bump: u8) -> Self {
+        Self {
+            eta,
+            bump,
+            managed_bump,
+        }
     }
 
     /// Calculates the hash for the proposal.
@@ -122,20 +131,54 @@ impl ExecutableProposal {
     ///
     /// Returns a `ProgramError` if the derived PDA does not match the provided
     /// one.
-    pub fn ensure_correct_proposal_pda(
-        pda: &Pubkey,
+    pub fn load_and_ensure_correct_proposal_pda(
+        pda: &AccountInfo<'_>,
         proposal_hash: &[u8; 32],
-        bump: u8,
-    ) -> Result<(), ProgramError> {
+    ) -> Result<u8, ProgramError> {
+        // Check the proposal PDA exists and is initialized.
+        if !pda.is_initialized_pda(&crate::id()) {
+            msg!("Proposal PDA is not initialized");
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        let acc_data = pda.data.borrow();
+        let proposal = ArchivedExecutableProposal::load_from(&crate::ID, pda, acc_data.as_ref())?;
+
+        Self::ensure_correct_proposal_pda(pda, proposal_hash, proposal.bump())
+    }
+
+    /// Ensures that the provided PDA matches the expected PDA derived from the
+    /// proposal hash and bump seed.
+    ///
+    /// # Arguments
+    ///
+    /// * `pda` - A reference to the provided PDA.
+    /// * `proposal_hash` - A reference to a 32-byte array representing the
+    ///   proposal hash.
+    /// * `proposal_bump` - The bump seed for the PDA.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating success or failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `ProgramError` if the derived PDA does not match the provided
+    /// one.
+    pub fn ensure_correct_proposal_pda(
+        pda: &AccountInfo<'_>,
+        proposal_hash: &[u8; 32],
+        proposal_bump: u8,
+    ) -> Result<u8, ProgramError> {
         let calculated_pda = Pubkey::create_program_address(
-            &[seed_prefixes::PROPOSAL_PDA, proposal_hash, &[bump]],
+            &[seed_prefixes::PROPOSAL_PDA, proposal_hash, &[proposal_bump]],
             &crate::ID,
         )?;
-        if calculated_pda != *pda {
+        if calculated_pda != *pda.key {
             msg!("Derived proposal PDA does not match provided one");
             return Err(ProgramError::InvalidArgument);
         }
-        Ok(())
+        Ok(proposal_bump)
     }
 
     /// Stores the proposal in the specified PDA.
@@ -385,6 +428,18 @@ impl ArchivedExecutableProposal {
     pub const fn eta(&self) -> u64 {
         self.eta
     }
+
+    /// Returns the proposal bump seed.
+    #[must_use]
+    pub const fn bump(&self) -> u8 {
+        self.bump
+    }
+
+    /// Returns the managed proposal bump seed.
+    #[must_use]
+    pub const fn managed_bump(&self) -> u8 {
+        self.managed_bump
+    }
 }
 
 #[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
@@ -487,25 +542,11 @@ pub struct ExecuteProposalCallData {
     /// receiver account should be set here.
     pub solana_native_value_receiver_account: Option<SolanaAccountMetadata>,
 
-    /// The bump seeds required to check the provided PDA's in the program side.
-    /// There are 2 fixed indexes:
-    ///
-    /// 0 - The bump seed for the proposal PDA.
-    /// 1 - The bump seed for the operator managed proposal PDA.
-    ///
-    /// Rest of the indexes are free to be used by the program. Check the
-    /// [`crate::instructions::builder::IxBuilder<ProposalRelated>`] stage to
-    /// see how this bumps are set.
-    pub bumps: Vec<u8>,
-
     /// The call data required to execute the target program.
     pub call_data: Vec<u8>,
 }
 
 impl ExecuteProposalCallData {
-    const PROPOSAL_PDA_BUMP_INDEX: usize = 0;
-    const PROPOSAL_OPERATOR_MANAGED_PDA_BUMP_INDEX: usize = 1;
-
     #[must_use]
     /// Creates a new `ExecuteProposalCallData` instance.
     ///
@@ -530,7 +571,6 @@ impl ExecuteProposalCallData {
         Self {
             solana_accounts,
             solana_native_value_receiver_account,
-            bumps: Vec::new(),
             call_data,
         }
     }
@@ -543,63 +583,5 @@ impl ExecuteProposalCallData {
     pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
         let bytes = rkyv::to_bytes::<_, 0>(self).map_err(Box::new)?;
         Ok(bytes.to_vec())
-    }
-
-    /// Set all the bumps required for the proposal execution.
-    pub fn set_bumps(&mut self, bumps: Vec<u8>) {
-        self.bumps = bumps;
-    }
-    /// Adds a bump to the bumps vector.
-    pub fn add_bump(&mut self, bump: u8) {
-        self.bumps.push(bump);
-    }
-
-    /// Returns the proposal PDA bump.
-    ///
-    /// # Errors
-    ///
-    /// Returns a `ProgramError` if the bump is not found.
-    pub fn proposal_bump(&self) -> Result<u8, ProgramError> {
-        let bump = self
-            .bumps
-            .get(Self::PROPOSAL_PDA_BUMP_INDEX)
-            .ok_or(ProgramError::InvalidArgument)
-            .map_err(|err| {
-                msg!("Cannot find proposal bump in call data: {}", err);
-                ProgramError::InvalidArgument
-            })?;
-        Ok(*bump)
-    }
-    /// Returns the proposal operator managed PDA bump.
-    ///
-    /// # Errors
-    ///
-    /// Returns a `ProgramError` if the bump is not found.
-    pub fn proposal_operator_managed_bump(&self) -> Result<u8, ProgramError> {
-        let bump = self
-            .bumps
-            .get(Self::PROPOSAL_OPERATOR_MANAGED_PDA_BUMP_INDEX)
-            .ok_or(ProgramError::InvalidArgument)
-            .map_err(|err| {
-                msg!(
-                    "Cannot find proposal operator managed bump in call data: {}",
-                    err
-                );
-                ProgramError::InvalidArgument
-            })?;
-        Ok(*bump)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_ensure_correct_proposal_pda() {
-        let hash = [0; 32];
-        let (pda, bump) = ExecutableProposal::pda(&hash);
-
-        assert!(ExecutableProposal::ensure_correct_proposal_pda(&pda, &hash, bump).is_ok());
     }
 }

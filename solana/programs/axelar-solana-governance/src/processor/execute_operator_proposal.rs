@@ -47,18 +47,10 @@ pub(crate) fn process(
         &execute_proposal_data.native_value,
     );
 
-    ExecutableProposal::ensure_correct_proposal_pda(
-        proposal_account.key,
-        &hash,
-        execute_proposal_data.call_data.proposal_bump()?,
-    )?;
-
     operator::ensure_correct_managed_proposal_pda(
-        operator_pda_marker_account.key,
+        proposal_account,
+        operator_pda_marker_account,
         &hash,
-        execute_proposal_data
-            .call_data
-            .proposal_operator_managed_bump()?,
     )?;
 
     // Binding, so we can drop the account_data borrow before the CPI call.

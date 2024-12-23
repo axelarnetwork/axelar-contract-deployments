@@ -2,9 +2,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L18).
 
-use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
 use super::ProcessGMPContext;
@@ -26,15 +24,7 @@ pub(crate) fn process(
     let root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
 
-    let bump = ctx.execute_proposal_call_data.proposal_bump()?;
-
-    ExecutableProposal::ensure_correct_proposal_pda(proposal_pda.key, &ctx.proposal_hash, bump)?;
-
-    // Check the proposal PDA exists and is initialized.
-    if !proposal_pda.is_initialized_pda(&crate::id()) {
-        msg!("Proposal PDA is not initialized");
-        return Err(ProgramError::InvalidArgument);
-    }
+    ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_pda, &ctx.proposal_hash)?;
 
     ArchivedExecutableProposal::remove(proposal_pda, root_pda)?;
 

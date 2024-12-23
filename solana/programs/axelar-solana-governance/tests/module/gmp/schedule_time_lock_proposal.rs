@@ -1,12 +1,13 @@
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
+use axelar_solana_governance::state::operator;
 use axelar_solana_governance::state::proposal::ExecutableProposal;
 use rkyv::Deserialize;
 use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 
 use crate::fixtures::MINIMUM_PROPOSAL_DELAY;
-use crate::gmp::gmp_sample_metadata;
+use crate::gmp::{assert_msg_present_in_logs, gmp_sample_metadata};
 use crate::helpers::{
     approve_ix_at_gateway, events, ix_builder_with_sample_proposal_data, setup_programs,
 };
@@ -37,7 +38,11 @@ async fn test_successfully_process_gmp_schedule_time_proposal() {
         )
         .await;
 
-    let expected_proposal = ExecutableProposal::new(ix_builder.prop_eta.unwrap());
+    let bump = ExecutableProposal::pda(&ix_builder.proposal_hash()).1;
+    let managed_bump = operator::derive_managed_proposal_pda(&ix_builder.proposal_hash()).1;
+
+    let expected_proposal =
+        ExecutableProposal::new(ix_builder.prop_eta.unwrap(), bump, managed_bump);
     assert_eq!(expected_proposal, got_proposal);
 
     // Assert event was emitted
@@ -99,4 +104,25 @@ async fn test_time_lock_default_is_enforced() {
     // MINIMUM_PROPOSAL_DELAY.
     let expected = (now + MINIMUM_PROPOSAL_DELAY) as u64;
     assert_eq!(expected, got_proposal.eta());
+}
+
+#[tokio::test]
+async fn test_program_checks_proposal_pda_is_correctly_derived() {
+    let (mut sol_integration, config_pda, _) = setup_programs().await;
+
+    let ix_builder = ix_builder_with_sample_proposal_data();
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+
+    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA account
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
+
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_err());
+    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
 }

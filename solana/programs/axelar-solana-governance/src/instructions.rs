@@ -324,7 +324,7 @@ pub mod builder {
             let gmp_prop_native_value_target_account =
                 native_value_target_account.map(core::convert::Into::into);
 
-            let mut call_data = ExecuteProposalCallData::new(
+            let call_data = ExecuteProposalCallData::new(
                 gmp_prop_target_accounts,
                 gmp_prop_native_value_target_account,
                 data,
@@ -335,13 +335,8 @@ pub mod builder {
                 &call_data,
                 &from_u64_to_u256_le_bytes(native_value),
             );
-            let (gov_proposal_pda, prop_bump) = ExecutableProposal::pda(&hash);
-            let (operator_proposal_managed_pda, managed_prop_bump) =
-                derive_managed_proposal_pda(&hash);
-
-            // Adding bumps to call data, so they can be checked in the processor.
-            call_data.add_bump(prop_bump);
-            call_data.add_bump(managed_prop_bump);
+            let (gov_proposal_pda, _) = ExecutableProposal::pda(&hash);
+            let (operator_proposal_managed_pda, _) = derive_managed_proposal_pda(&hash);
 
             IxBuilder {
                 accounts: self.accounts,
@@ -791,6 +786,7 @@ pub mod builder {
                 AccountMeta::new_readonly(system_program::ID, false),
                 AccountMeta::new(*payer, true),
                 AccountMeta::new_readonly(*config_pda, false),
+                AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
                 AccountMeta::new(self.prop_operator_pda.unwrap(), false),
             ];
 
@@ -824,6 +820,7 @@ pub mod builder {
                 AccountMeta::new_readonly(system_program::ID, false),
                 AccountMeta::new(*payer, true),
                 AccountMeta::new(*config_pda, false),
+                AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
                 AccountMeta::new(self.prop_operator_pda.unwrap(), false),
             ];
 

@@ -3,11 +3,11 @@
 
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
-use super::ensure_valid_governance_root_pda;
 use crate::seed_prefixes;
 use crate::state::GovernanceConfig;
 
@@ -31,10 +31,13 @@ pub(crate) fn process(
     if !system_program::check_id(system_account.key) {
         return Err(ProgramError::IncorrectProgramId);
     }
-    let bump = governance_config.bump;
 
-    // Check: Config account uses the canonical bump.
-    ensure_valid_governance_root_pda(bump, root_pda.key)?;
+    let (address, bump) = GovernanceConfig::pda();
+
+    if address != *root_pda.key {
+        msg!("Derived PDA does not match provided PDA");
+        return Err(ProgramError::InvalidArgument);
+    }
 
     // Check: PDA Account is not initialized
     root_pda.check_uninitialized_pda()?;

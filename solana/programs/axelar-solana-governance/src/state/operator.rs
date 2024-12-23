@@ -1,10 +1,13 @@
 //! This module provides the tools to manage operator proposals.
 
+use crate::seed_prefixes;
+use crate::state::proposal::ExecutableProposal;
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use crate::seed_prefixes;
+use super::proposal::ArchivedExecutableProposal;
 
 /// Derives the operator proposal approved PDA for the given proposal hash.
 #[must_use]
@@ -22,59 +25,32 @@ pub fn derive_managed_proposal_pda(proposal_hash: &[u8; 32]) -> (Pubkey, u8) {
 /// Returns a [`ProgramError`] if the provided PDA does not match the derived
 /// one.
 pub fn ensure_correct_managed_proposal_pda(
-    pda: &Pubkey,
+    proposal_pda: &AccountInfo<'_>,
+    proposal_managed_pda: &AccountInfo<'_>,
     proposal_hash: &[u8; 32],
-    bump: u8,
-) -> Result<(), ProgramError> {
+) -> Result<u8, ProgramError> {
+    let acc_data = proposal_pda.data.borrow();
+
+    let proposal =
+        ArchivedExecutableProposal::load_from(&crate::id(), proposal_pda, acc_data.as_ref())
+            .map_err(|err| {
+                msg!("Failed to load proposal for checking bumps: {:?}", err);
+                ProgramError::InvalidArgument
+            })?;
+
+    ExecutableProposal::ensure_correct_proposal_pda(proposal_pda, proposal_hash, proposal.bump())?;
+
     let calculated_pda = Pubkey::create_program_address(
         &[
             seed_prefixes::OPERATOR_MANAGED_PROPOSAL,
             proposal_hash,
-            &[bump],
+            &[proposal.managed_bump()],
         ],
         &crate::ID,
     )?;
-    if calculated_pda != *pda {
+    if calculated_pda != *proposal_managed_pda.key {
         msg!("Derived operator managed proposal PDA does not match provided one");
         return Err(ProgramError::InvalidArgument);
     }
-    Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use solana_sdk::instruction::AccountMeta;
-
-    use super::*;
-    use crate::instructions::builder::IxBuilder;
-
-    #[test]
-    fn test_ensure_correct_proposal_operator_pda() {
-        let hash = [
-            231, 53, 251, 125, 82, 133, 64, 207, 92, 6, 137, 25, 193, 97, 18, 24, 90, 204, 45, 161,
-            101, 30, 86, 79, 64, 48, 200, 139, 11, 34, 94, 232,
-        ];
-        let (pda, bump) = derive_managed_proposal_pda(&hash);
-        assert!(ensure_correct_managed_proposal_pda(&pda, &hash, bump).is_ok());
-    }
-
-    #[test]
-    fn test_builder_pda_checks_alignment() {
-        let ix_builder = IxBuilder::new().with_proposal_data(
-            Pubkey::new_unique(),
-            0,
-            1234,
-            None,
-            &[AccountMeta::new(Pubkey::new_unique(), true)],
-            vec![0],
-        );
-
-        let pda = ix_builder.proposal_operator_marker_pda();
-        let bump: u8 = ix_builder
-            .proposal_call_data()
-            .proposal_operator_managed_bump()
-            .unwrap();
-        let hash = ix_builder.proposal_hash();
-        assert!(ensure_correct_managed_proposal_pda(&pda, &hash, bump).is_ok());
-    }
+    Ok(proposal.managed_bump())
 }

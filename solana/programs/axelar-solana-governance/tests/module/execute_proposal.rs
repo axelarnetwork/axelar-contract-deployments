@@ -121,7 +121,7 @@ fn proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEv
 }
 
 #[tokio::test]
-async fn test_execution_of_proposal_cannot_be_done_facilitating_unaligned_pda_regarding_payload() {
+async fn test_program_checks_proposal_pda_is_correctly_derived() {
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();

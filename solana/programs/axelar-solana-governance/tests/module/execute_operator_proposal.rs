@@ -196,29 +196,98 @@ async fn test_only_operator_can_execute_ix() {
 }
 
 #[tokio::test]
-async fn test_pda_marker_pda_is_correct() {
+async fn test_program_checks_proposal_pda_is_correctly_derived() {
     // Get the operator key pair;
+    let (mut sol_integration, config_pda, _) = setup_programs().await;
+
+    let ix_builder = ix_builder_with_sample_proposal_data();
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
     let operator = operator_keypair();
+    let mut ix = ix_builder
+        .execute_operator_proposal(
+            &sol_integration.fixture.payer.pubkey(),
+            &config_pda,
+            &operator.pubkey(),
+        )
+        .build();
+    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA account
 
-    let mut fixture = TestFixture::new(program_test()).await;
+    let res = sol_integration
+        .fixture
+        .send_tx_with_custom_signers_with_metadata(
+            &[ix],
+            &[operator, sol_integration.fixture.payer.insecure_clone()],
+        )
+        .await;
+    assert!(res.result.is_err());
+    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+}
 
-    // Setup gov module (initialize contract)
-    let (config_pda, _) =
-        init_contract_with_operator(&mut fixture, operator_keypair().pubkey().to_bytes())
-            .await
-            .unwrap();
+#[tokio::test]
+async fn test_program_checks_operator_pda_is_correctly_derived() {
+    // Get the operator key pair;
+    let (mut sol_integration, config_pda, _) = setup_programs().await;
+
     let mut ix_builder = ix_builder_with_sample_proposal_data();
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
+
+    let meta = gmp_sample_metadata();
+    let mut ix = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_metadata(meta.clone())
+        .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
+    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    assert!(res.result.is_ok());
 
     ix_builder.prop_operator_pda = Some(Pubkey::new_unique());
 
+    let operator = operator_keypair();
     let ix = ix_builder
-        .execute_operator_proposal(&fixture.payer.pubkey(), &config_pda, &operator.pubkey())
+        .execute_operator_proposal(
+            &sol_integration.fixture.payer.pubkey(),
+            &config_pda,
+            &operator.pubkey(),
+        )
         .build();
 
-    let res = fixture
+    let res = sol_integration
+        .fixture
         .send_tx_with_custom_signers_with_metadata(
             &[ix],
-            &[operator, fixture.payer.insecure_clone()],
+            &[operator, sol_integration.fixture.payer.insecure_clone()],
         )
         .await;
     assert!(res.result.is_err());
