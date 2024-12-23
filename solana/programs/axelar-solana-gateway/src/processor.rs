@@ -151,6 +151,10 @@ impl Processor {
                 msg!("Instruction: Commit Message Payload");
                 Self::process_commit_message_payload(program_id, accounts, command_id)
             }
+            GatewayInstruction::TransferOperatorship => {
+                msg!("Instruction: Transfer Operatorship");
+                Self::process_transfer_operatorship(program_id, accounts)
+            }
         }
     }
 }

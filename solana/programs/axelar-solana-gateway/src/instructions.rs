@@ -6,6 +6,7 @@ use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVeri
 use axelar_solana_encoding::types::messages::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use itertools::Itertools;
+use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -198,6 +199,19 @@ pub enum GatewayInstruction {
         /// The Message that we want to approve
         message: Message,
     },
+
+    /// Transfers operatorship of the Gateway Root Config PDA account.
+    ///
+    /// Only the current operator OR Gateway program owner can transfer
+    /// operatorship to a new operator.
+    ///
+    /// Accounts expected by this instruction:
+    /// 1. [WRITE] Config PDA account
+    /// 2. [SIGNER] Current operator OR the upgrade authority of the Gateway
+    ///    programdata account
+    /// 3. [] Gateway programdata account (owned by `bpf_loader_upgradeable`)
+    /// 4. [] New operator
+    TransferOperatorship,
 }
 
 /// Configuration parameters for initializing the axelar-solana gateway
@@ -547,5 +561,30 @@ pub fn close_message_payload(
         program_id: crate::id(),
         accounts,
         data: borsh::to_vec(&instruction)?,
+    })
+}
+
+/// Creates a [`GatewayInstruction::TransferOperatorship`] instruction.
+pub fn transfer_operatorship(
+    gateway_root_pda: Pubkey,
+    current_operator_or_gateway_program_owner: Pubkey,
+    new_operator: Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let (programdata_pubkey, _) =
+        Pubkey::try_find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id())
+            .ok_or(ProgramError::IncorrectProgramId)?;
+    let accounts = vec![
+        AccountMeta::new(gateway_root_pda, false),
+        AccountMeta::new_readonly(current_operator_or_gateway_program_owner, true),
+        AccountMeta::new_readonly(programdata_pubkey, false),
+        AccountMeta::new_readonly(new_operator, false),
+    ];
+
+    let data = borsh::to_vec(&GatewayInstruction::TransferOperatorship)?;
+
+    Ok(Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
     })
 }

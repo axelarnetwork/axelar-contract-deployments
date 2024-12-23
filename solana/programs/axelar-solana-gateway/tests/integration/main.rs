@@ -5,6 +5,7 @@ mod initialize_config;
 pub mod initialize_message_payload;
 mod initialize_signature_verification;
 mod rotate_signers;
+mod transfer_operatorship;
 mod validate_message;
 mod verify_signature;
 mod write_message_payload;
