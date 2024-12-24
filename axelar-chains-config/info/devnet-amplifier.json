@@ -839,10 +839,6 @@
         "codeId": 844,
         "address": "axelar1wvms3cy5hxrgl7uxhkz7yth4qzqum6aaccwkmvafq8z0mgdfxr8qrnvw0k",
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
-        "axelar": {
-          "storeInstantiateProposalId": "59",
-          "codeId": 845
-        },
         "storeCodeProposalCodeHash": "c7286d0f59276b794641bdfbb4f96fafcee3553b67f3397d662a4683968f525b",
         "storeCodeProposalId": "60",
         "lastUploadedCodeId": 845
@@ -852,10 +848,7 @@
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "codeId": 843,
         "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
-        "axelar": {
-          "codeId": 843,
-          "instantiateProposalId": "61"
-        },
+        "instantiateProposalId": "61",
         "sui": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 8
