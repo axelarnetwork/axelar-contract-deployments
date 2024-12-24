@@ -298,7 +298,7 @@ const programHandler = () => {
             options.chains = chains;
             mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')

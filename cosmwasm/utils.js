@@ -67,6 +67,10 @@ const getLabel = ({ contractName, label }) => label || contractName;
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
+    if (!contractName) {
+        return;
+    }
+
     config.axelar = config.axelar || {};
     config.axelar.contracts = config.axelar.contracts || {};
     config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
