@@ -20,6 +20,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     printInfo,
+    printWarn,
     isString,
     isStringArray,
     isKeccak256Hash,
@@ -133,6 +134,7 @@ const uploadContract = async (client, wallet, config, options) => {
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
+    // uploading through stargate doesn't support defining instantiate permissions
     return await client.upload(account.address, wasm, uploadFee);
 };
 
@@ -544,6 +546,36 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const addDefaultInstantiateAddresses = async (client, config, options) => {
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (!contractConfig.address) {
+        return;
+    }
+
+    const contract = await client.getContract(contractConfig.address);
+
+    let { instantiateAddresses } = options;
+
+    if (!instantiateAddresses) {
+        instantiateAddresses = [];
+    }
+
+    if (contract.admin && !instantiateAddresses.includes(contract.admin)) {
+        instantiateAddresses.push(contract.admin);
+        printWarn(
+            `Contract ${contractConfig.address} admin address ${contract.admin} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+
+    if (contract.creator && !instantiateAddresses.includes(contract.creator)) {
+        instantiateAddresses.push(contract.creator);
+        printWarn(
+            `Contract ${contractConfig.address} creator address ${contract.creator} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+};
+
 const getChainTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
@@ -565,7 +597,7 @@ const getChainTruncationParams = (config, chainConfig) => {
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
-        addresses: addresses.split(',').map((address) => address.trim()),
+        addresses,
     };
 };
 
@@ -591,9 +623,10 @@ const getStoreCodeParams = (options) => {
         codeHash = createHash('sha256').update(wasm).digest();
     }
 
-    const instantiatePermission = instantiateAddresses
-        ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
-        : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, '');
+    const instantiatePermission =
+        instantiateAddresses && instantiateAddresses.length > 0
+            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
 
     return {
         ...getSubmitProposalParams(options),
@@ -841,6 +874,7 @@ module.exports = {
     uploadContract,
     instantiateContract,
     fetchCodeIdFromCodeHash,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
