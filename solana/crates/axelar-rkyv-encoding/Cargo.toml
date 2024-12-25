@@ -19,6 +19,7 @@ rs_merkle.workspace = true
 sha3.workspace = true
 solana-program = { workspace = true, optional = true }
 thiserror.workspace = true
+borsh.workspace = true
 
 [dev-dependencies]
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }

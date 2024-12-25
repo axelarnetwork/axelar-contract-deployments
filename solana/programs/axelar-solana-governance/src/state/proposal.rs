@@ -7,20 +7,19 @@
 //! fine, but we should at least encapsulate such logic in a function
 //! so the processor can use it from this module.
 
-use std::error::Error;
-
 use crate::sol_types::SolanaAccountMetadata;
 use crate::{seed_prefixes, ID};
+use borsh::{BorshDeserialize, BorshSerialize};
+use core::any::type_name;
+use core::mem::size_of;
 use program_utils::ValidPDA;
-use program_utils::{
-    check_rkyv_initialized_pda, checked_from_u256_le_bytes_to_u64, current_time, transfer_lamports,
-};
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use program_utils::{checked_from_u256_le_bytes_to_u64, current_time, transfer_lamports};
 use solana_program::account_info::AccountInfo;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::keccak::hashv;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::{Pack, Sealed};
 use solana_program::pubkey::Pubkey;
 
 type Uint256 = [u8; 32];
@@ -30,10 +29,7 @@ type Hash = [u8; 32];
 /// RKYV as de/se technology, this represents the write model, while the read
 /// model is implemented at [`ArchivedExecutableProposal`], which is generated
 /// by RKYV derive traits.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq))]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, BorshSerialize, BorshDeserialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ExecutableProposal {
     /// Represent the le bytes containing unix timestamp from when the proposal
@@ -46,10 +42,6 @@ pub struct ExecutableProposal {
 }
 
 impl ExecutableProposal {
-    /// Approximated minimum length of the proposal. This allows RKYV
-    /// to optimize pre-allocated space.
-    const MIN_LEN: usize =
-        core::mem::size_of::<u64>() + core::mem::size_of::<u8>() + core::mem::size_of::<u8>();
     /// Creates a new proposal. Currently only the timelock value (ETA) is
     /// stored.
     #[must_use]
@@ -82,11 +74,10 @@ impl ExecutableProposal {
         call_data: &ExecuteProposalCallData,
         native_value: &Uint256,
     ) -> Hash {
-        let sol_accounts_ser = rkyv::to_bytes::<_, 0>(&call_data.solana_accounts)
+        let sol_accounts_ser = borsh::to_vec(&call_data.solana_accounts)
             .expect("Solana accounts serialization failed");
-        let native_value_ser =
-            rkyv::to_bytes::<_, 0>(&call_data.solana_native_value_receiver_account)
-                .expect("Solana native value receiver account serialization failed");
+        let native_value_ser = borsh::to_vec(&call_data.solana_native_value_receiver_account)
+            .expect("Solana native value receiver account serialization failed");
         let call_data_ser = &call_data.call_data;
 
         hashv(&[
@@ -141,9 +132,7 @@ impl ExecutableProposal {
             return Err(ProgramError::InvalidArgument);
         }
 
-        let acc_data = pda.data.borrow();
-        let proposal = ArchivedExecutableProposal::load_from(&crate::ID, pda, acc_data.as_ref())?;
-
+        let proposal = Self::load_from(&crate::ID, pda)?;
         Self::ensure_correct_proposal_pda(pda, proposal_hash, proposal.bump())
     }
 
@@ -206,7 +195,7 @@ impl ExecutableProposal {
         hash: &[u8; 32],
         bump: u8,
     ) -> Result<(), ProgramError> {
-        program_utils::init_rkyv_pda::<{ Self::MIN_LEN }, _>(
+        program_utils::init_pda::<Self>(
             payer,
             proposal_pda,
             &ID,
@@ -225,16 +214,13 @@ impl ExecutableProposal {
     pub const fn eta(&self) -> u64 {
         self.eta
     }
-}
 
-impl ArchivedExecutableProposal {
-    /// Loads an `ArchivedExecutableProposal` from the given account data.
+    /// Loads an `ExecutableProposal` from the given account data.
     ///
     /// # Arguments
     ///
     /// * `program_id` - The program ID.
     /// * `account` - The account information.
-    /// * `acc_data` - The account data.
     ///
     /// # Returns
     ///
@@ -244,13 +230,8 @@ impl ArchivedExecutableProposal {
     /// # Errors
     ///
     /// A program error if the account data is not properly initialized.
-    pub fn load_from<'a>(
-        program_id: &Pubkey,
-        account: &'a AccountInfo<'_>,
-        acc_data: &'a [u8],
-    ) -> Result<&'a Self, ProgramError> {
-        //todo!("Check the pda was properly derived");
-        check_rkyv_initialized_pda::<ExecutableProposal>(program_id, account, acc_data)
+    pub fn load_from(program_id: &Pubkey, account: &AccountInfo<'_>) -> Result<Self, ProgramError> {
+        account.check_initialized_pda::<Self>(program_id)
     }
 
     /// Checks if the proposal is unlocked.
@@ -419,16 +400,6 @@ impl ArchivedExecutableProposal {
         program_utils::close_pda(lamport_destination, pda_to_close)
     }
 
-    /// Returns the ETA (estimated time of arrival) of the proposal.
-    ///
-    /// # Returns
-    ///
-    /// A `u64` representing the ETA (unix timestamp).
-    #[must_use]
-    pub const fn eta(&self) -> u64 {
-        self.eta
-    }
-
     /// Returns the proposal bump seed.
     #[must_use]
     pub const fn bump(&self) -> u8 {
@@ -442,10 +413,30 @@ impl ArchivedExecutableProposal {
     }
 }
 
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-#[repr(C)]
+impl Sealed for ExecutableProposal {}
+
+impl Pack for ExecutableProposal {
+    const LEN: usize = size_of::<u64>() + size_of::<u8>() + size_of::<u8>();
+
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst)
+            .expect("should pack ExecutableProposal into slice");
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 /// Represents the data required to execute a proposal.
 /// This struct is only used by the execute proposal instruction (See
 /// [`crate::instructions::send_execute_proposal`]).
@@ -524,10 +515,7 @@ impl ExecuteProposalData {
 /// The Axelar governance infrastructure will use this struct to craft the GMP
 /// message, meaning it should be aware of the Solana accounts needed by the
 /// target program.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct ExecuteProposalCallData {
     /// The Solana accounts metadata required for the target program in the
     /// moment of the proposal execution.
@@ -573,15 +561,5 @@ impl ExecuteProposalCallData {
             solana_native_value_receiver_account,
             call_data,
         }
-    }
-
-    /// Serializes Self into a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If serialization fails.
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
-        let bytes = rkyv::to_bytes::<_, 0>(self).map_err(Box::new)?;
-        Ok(bytes.to_vec())
     }
 }

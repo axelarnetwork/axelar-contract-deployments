@@ -42,11 +42,10 @@ impl Processor {
     ) -> ProgramResult {
         check_program_account(*program_id)?;
 
-        let governance_instruction =
-            GovernanceInstruction::from_bytes(instruction_data).map_err(|err| {
-                msg!("Could not decode program input data: {}", err);
-                ProgramError::InvalidArgument
-            })?;
+        let governance_instruction = borsh::from_slice(instruction_data).map_err(|err| {
+            msg!("Could not decode program input data: {}", err);
+            ProgramError::InvalidArgument
+        })?;
 
         match governance_instruction {
             GovernanceInstruction::InitializeConfig(governance_config) => {

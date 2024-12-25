@@ -7,8 +7,6 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-use super::proposal::ArchivedExecutableProposal;
-
 /// Derives the operator proposal approved PDA for the given proposal hash.
 #[must_use]
 pub fn derive_managed_proposal_pda(proposal_hash: &[u8; 32]) -> (Pubkey, u8) {
@@ -29,14 +27,10 @@ pub fn ensure_correct_managed_proposal_pda(
     proposal_managed_pda: &AccountInfo<'_>,
     proposal_hash: &[u8; 32],
 ) -> Result<u8, ProgramError> {
-    let acc_data = proposal_pda.data.borrow();
-
-    let proposal =
-        ArchivedExecutableProposal::load_from(&crate::id(), proposal_pda, acc_data.as_ref())
-            .map_err(|err| {
-                msg!("Failed to load proposal for checking bumps: {:?}", err);
-                ProgramError::InvalidArgument
-            })?;
+    let proposal = ExecutableProposal::load_from(&crate::id(), proposal_pda).map_err(|err| {
+        msg!("Failed to load proposal for checking bumps: {:?}", err);
+        ProgramError::InvalidArgument
+    })?;
 
     ExecutableProposal::ensure_correct_proposal_pda(proposal_pda, proposal_hash, proposal.bump())?;
 

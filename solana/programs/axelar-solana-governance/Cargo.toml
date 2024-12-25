@@ -18,7 +18,7 @@ solana-program.workspace = true
 axelar-executable-old.workspace = true
 program-utils.workspace = true
 governance-gmp.workspace = true
-rkyv.workspace = true
+borsh.workspace = true
 axelar-rkyv-encoding.workspace = true
 alloy-sol-types.workspace = true
 base64.workspace = true
@@ -31,8 +31,9 @@ solana-sdk.workspace = true
 test-fixtures.workspace = true
 ethers.workspace = true
 alloy-primitives.workspace = true
-borsh.workspace = true
-axelar-solana-memo-program-old = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-memo-program-old = { workspace = true, features = [
+    "no-entrypoint",
+] }
 dummy-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 uuid = { version = "1.11.0", features = ["v4"] }
 serde.workspace = true

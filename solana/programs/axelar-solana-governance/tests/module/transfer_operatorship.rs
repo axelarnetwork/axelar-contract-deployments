@@ -1,7 +1,6 @@
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::GovernanceConfig;
-use rkyv::Deserialize;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -55,7 +54,7 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
         .unwrap()
         .unwrap();
     let config = config
-        .check_rkyv_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
+        .check_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
         .unwrap();
     assert_eq!(new_operator.to_bytes(), config.operator);
 
@@ -63,12 +62,7 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
     let mut emitted_events = events(&res);
     assert_eq!(emitted_events.len(), 1);
     let expected_event = operatorship_transferred_event(&operator.pubkey(), &new_operator);
-    let got_event: GovernanceEvent = emitted_events
-        .pop()
-        .unwrap()
-        .parse()
-        .deserialize(&mut rkyv::Infallible)
-        .unwrap();
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
 }
 
@@ -165,7 +159,7 @@ async fn test_can_change_operator_via_gmp_proposal() {
         .unwrap()
         .unwrap();
     let config = config
-        .check_rkyv_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
+        .check_initialized_pda::<GovernanceConfig>(&axelar_solana_governance::id())
         .unwrap();
     assert_eq!(new_operator.to_bytes(), config.operator);
 }

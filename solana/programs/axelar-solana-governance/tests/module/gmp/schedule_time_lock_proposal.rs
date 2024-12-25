@@ -2,7 +2,7 @@ use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use axelar_solana_governance::state::operator;
 use axelar_solana_governance::state::proposal::ExecutableProposal;
-use rkyv::Deserialize;
+use borsh::to_vec;
 use solana_program_test::tokio;
 use solana_sdk::signature::Signer;
 
@@ -32,7 +32,7 @@ async fn test_successfully_process_gmp_schedule_time_proposal() {
     // Assert account with correct proposal data was created
     let got_proposal = sol_integration
         .fixture
-        .get_rkyv_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
+        .get_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
             &ix_builder.proposal_pda(),
             &axelar_solana_governance::ID,
         )
@@ -49,12 +49,7 @@ async fn test_successfully_process_gmp_schedule_time_proposal() {
     let mut emitted_events = events(&res);
     assert_eq!(emitted_events.len(), 1);
     let expected_event = proposal_scheduled_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events
-        .pop()
-        .unwrap()
-        .parse()
-        .deserialize(&mut rkyv::Infallible)
-        .unwrap();
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
 }
 
@@ -62,7 +57,7 @@ fn proposal_scheduled_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceE
     GovernanceEvent::ProposalScheduled {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
-        call_data: builder.proposal_call_data().to_bytes().unwrap(),
+        call_data: to_vec(&builder.proposal_call_data()).unwrap(),
         native_value: builder.proposal_u256_le_native_value(),
         eta: builder.proposal_u256_le_eta(),
     }
@@ -94,7 +89,7 @@ async fn test_time_lock_default_is_enforced() {
 
     let got_proposal = sol_integration
         .fixture
-        .get_rkyv_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
+        .get_account::<axelar_solana_governance::state::proposal::ExecutableProposal>(
             &ix_builder.proposal_pda(),
             &axelar_solana_governance::ID,
         )

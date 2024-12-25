@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use rkyv::bytecheck::{self, CheckBytes, StructCheckError};
 use rkyv::validation::validators::DefaultValidatorError;
 use rkyv::{Archive, Deserialize, Serialize};
@@ -9,7 +10,9 @@ use crate::visitor::{ArchivedVisitor, Visitor};
 
 const COMMAND_ID_SEPARATOR: &str = "_";
 
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+#[derive(
+    Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize,
+)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct CrossChainId {
@@ -164,7 +167,9 @@ impl ArchivedMessage {
 /// handling.
 ///
 /// See ITS and Governance contracts as examples of usage.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
+#[derive(
+    Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize,
+)]
 #[archive(compare(PartialEq))]
 #[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
 pub struct GmpMetadata {

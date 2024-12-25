@@ -7,7 +7,7 @@ use solana_program::program_error::ProgramError;
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
-use crate::state::proposal::{ArchivedExecutableProposal, ExecutableProposal};
+use crate::state::proposal::ExecutableProposal;
 
 /// Processes a Governance GMP `CancelTimeLockProposal` command.
 ///
@@ -26,7 +26,7 @@ pub(crate) fn process(
 
     ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_pda, &ctx.proposal_hash)?;
 
-    ArchivedExecutableProposal::remove(proposal_pda, root_pda)?;
+    ExecutableProposal::remove(proposal_pda, root_pda)?;
 
     // Send event
     let event = GovernanceEvent::ProposalCancelled {

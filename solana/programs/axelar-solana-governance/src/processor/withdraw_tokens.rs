@@ -3,7 +3,7 @@
 //! Only this program can call this instruction via a previous scheduled GMP
 //! proposal, coming from the Axelar governance infrastructure.
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/InterchainGovernance.sol#L118).
-use program_utils::check_rkyv_initialized_pda_non_archived;
+use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -20,7 +20,7 @@ use super::ensure_valid_governance_root_pda;
 ///
 /// This function will return a [`ProgramError`] if any of the subcmds fail.
 pub(crate) fn process(
-    program_id: &Pubkey,
+    _program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     amount: u64,
 ) -> Result<(), ProgramError> {
@@ -34,12 +34,7 @@ pub(crate) fn process(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let account_data = config_pda.try_borrow_mut_data()?;
-    let config_data = check_rkyv_initialized_pda_non_archived::<GovernanceConfig>(
-        program_id,
-        config_pda,
-        &account_data,
-    )?;
+    let config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 
     ensure_valid_governance_root_pda(config_data.bump, config_pda.key)?;
 

@@ -24,7 +24,7 @@ use governance_gmp::GovernanceCommand::{
     ScheduleTimeLockProposal,
 };
 use governance_gmp::GovernanceCommandPayload;
-use program_utils::check_rkyv_initialized_pda;
+use program_utils::ValidPDA;
 use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -32,7 +32,7 @@ use solana_program::pubkey::Pubkey;
 
 use super::{ensure_valid_governance_root_pda, hash};
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalCallData};
-use crate::state::{ArchivedGovernanceConfig, GovernanceConfig};
+use crate::state::GovernanceConfig;
 
 mod approve_operator_proposal;
 mod cancel_operator_approval;
@@ -97,20 +97,15 @@ struct ProcessGMPContext {
 
 impl ProcessGMPContext {
     fn new_from_processor_context(
-        program_id: &Pubkey,
+        _program_id: &Pubkey,
         root_pda: &AccountInfo<'_>,
         metadata: &GmpMetadata,
         payload: &[u8],
     ) -> Result<Self, ProgramError> {
-        let account_data = root_pda.try_borrow_data()?;
-        let governance_config = check_rkyv_initialized_pda::<GovernanceConfig>(
-            program_id,
-            root_pda,
-            account_data.as_ref(),
-        )?;
+        let governance_config = root_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 
         ensure_valid_governance_root_pda(governance_config.bump, root_pda.key)?;
-        ensure_authorized_gmp_command(governance_config, metadata)?;
+        ensure_authorized_gmp_command(&governance_config, metadata)?;
 
         let cmd_payload = GovernanceCommandPayload::abi_decode(payload, true).map_err(|err| {
             msg!("Cannot abi decode GovernanceCommandPayload: {}", err);
@@ -124,7 +119,7 @@ impl ProcessGMPContext {
         let target = Pubkey::from(target);
 
         let execute_proposal_call_data: ExecuteProposalCallData =
-            rkyv::from_bytes(&cmd_payload.call_data).map_err(|err| {
+            borsh::from_slice(&cmd_payload.call_data).map_err(|err| {
                 msg!("Cannot deserialize ExecuteProposalCallData: {}", err);
                 ProgramError::InvalidArgument
             })?;
@@ -145,7 +140,7 @@ impl ProcessGMPContext {
 }
 
 fn ensure_authorized_gmp_command(
-    config: &ArchivedGovernanceConfig,
+    config: &GovernanceConfig,
     meta: &GmpMetadata,
 ) -> Result<(), ProgramError> {
     // Ensure the incoming address matches stored configuration.

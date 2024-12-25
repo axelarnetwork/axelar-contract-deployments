@@ -1,17 +1,15 @@
-//! This module contains all the RKYV de/se powered types which
+//! This module contains all the types which
 //! mimics the Solana types and are used as transport in programs
 //! and instructions.
 
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 
 /// This is the analogous type of [`solana_program::instruction::AccountMeta`]
 /// It was created for easily serializing and deserializing the account metadata
 /// with rkvy.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct SolanaAccountMetadata {
     /// The [`solana_program::pubkey::Pubkey`], converted to bytes.
     pub pubkey: [u8; 32],

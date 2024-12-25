@@ -42,7 +42,7 @@ pub(crate) fn process(
     // Check: PDA Account is not initialized
     root_pda.check_uninitialized_pda()?;
 
-    program_utils::init_rkyv_pda::<{ GovernanceConfig::LEN }, _>(
+    program_utils::init_pda::<GovernanceConfig>(
         payer,
         root_pda,
         program_id,

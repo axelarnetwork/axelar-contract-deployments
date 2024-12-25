@@ -3,12 +3,11 @@
 //!
 //! It can be executed only by the current operator or the program root PDA. See original implementation [here](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L96).
 
-use std::io::Write;
-
-use program_utils::check_rkyv_initialized_pda_non_archived;
+use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 
 use super::ensure_valid_governance_root_pda;
@@ -26,7 +25,7 @@ use crate::state::GovernanceConfig;
 ///
 /// This function will return a [`ProgramError`] if any of the subcmds fail.
 pub(crate) fn process(
-    program_id: &Pubkey,
+    _program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     new_operator: [u8; 32],
 ) -> Result<(), ProgramError> {
@@ -36,12 +35,8 @@ pub(crate) fn process(
     let operator_account = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
 
-    let mut account_data = config_pda.try_borrow_mut_data()?;
-    let mut config_data = check_rkyv_initialized_pda_non_archived::<GovernanceConfig>(
-        program_id,
-        config_pda,
-        &account_data,
-    )?;
+    let mut config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
+
     ensure_valid_governance_root_pda(config_data.bump, config_pda.key)?;
 
     if !(operator_account.is_signer || config_pda.is_signer) {
@@ -56,11 +51,8 @@ pub(crate) fn process(
     let old_operator = config_data.operator;
     config_data.operator = new_operator;
 
-    let bytes = rkyv::to_bytes::<_, 0>(&config_data).map_err(|err| {
-        msg!("Cannot serialize rkyv account data: {}", err);
-        ProgramError::InvalidArgument
-    })?;
-    account_data.write_all(&bytes)?;
+    let mut data = config_pda.try_borrow_mut_data()?;
+    config_data.pack_into_slice(&mut data);
 
     let event = GovernanceEvent::OperatorshipTransferred {
         old_operator,

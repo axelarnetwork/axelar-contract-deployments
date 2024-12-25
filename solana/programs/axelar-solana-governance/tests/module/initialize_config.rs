@@ -31,7 +31,7 @@ async fn test_successfully_initialize_config() {
     // Assert
     assert!(res.result.is_ok());
     let root_pda_data = fixture
-        .get_rkyv_account::<axelar_solana_governance::state::GovernanceConfig>(
+        .get_account::<axelar_solana_governance::state::GovernanceConfig>(
             &config_pda,
             &axelar_solana_governance::ID,
         )

@@ -1,6 +1,6 @@
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
-use rkyv::Deserialize;
+use borsh::to_vec;
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
@@ -60,12 +60,7 @@ async fn test_successfully_process_gmp_approve_operator_proposal() {
     let mut emitted_events = events(&res);
     assert_eq!(emitted_events.len(), 1);
     let expected_event = operator_proposal_approved_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events
-        .pop()
-        .unwrap()
-        .parse()
-        .deserialize(&mut rkyv::Infallible)
-        .unwrap();
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
 }
 
@@ -73,7 +68,7 @@ fn operator_proposal_approved_event(builder: &IxBuilder<ProposalRelated>) -> Gov
     GovernanceEvent::OperatorProposalApproved {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
-        call_data: builder.proposal_call_data().to_bytes().unwrap(),
+        call_data: to_vec(&builder.proposal_call_data()).unwrap(),
         native_value: builder.proposal_u256_le_native_value(),
     }
 }
@@ -146,15 +141,14 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     // Second, we try to approve the proposal, but we break the calldata payload, so
     // the hashes don't match with previous PDA derivation. THIS SHOULD FAIL.
-    let builder = ix_builder.clone();
+    let mut builder = ix_builder.clone();
+    builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
     let meta = gmp_sample_metadata();
     let mut ix = builder
         .gmp_ix()
         .with_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-
-    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA.
 
     approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;

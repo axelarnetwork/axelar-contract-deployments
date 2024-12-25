@@ -1,11 +1,15 @@
 //! State related structs and operations for the governance contract.
 
-use core::mem::size_of;
-
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
-use solana_program::pubkey::Pubkey;
-
 use crate::seed_prefixes;
+use borsh::{BorshDeserialize, BorshSerialize};
+use core::any::type_name;
+use core::mem::size_of;
+use solana_program::pubkey::Pubkey;
+use solana_program::{
+    msg,
+    program_error::ProgramError,
+    program_pack::{Pack, Sealed},
+};
 
 pub mod operator;
 pub mod proposal;
@@ -15,10 +19,7 @@ type Hash = [u8; 32];
 type Address = [u8; 32];
 
 /// Governance configuration type.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct GovernanceConfig {
     /// The bump for this account.
     pub bump: u8,
@@ -40,14 +41,6 @@ pub struct GovernanceConfig {
 }
 
 impl GovernanceConfig {
-    /// Helps to pre-allocate the needed space when serializing.
-    /// IMPORTANT: It must be kept updated with struct fields.
-    pub const LEN: usize = size_of::<u8>()
-        + size_of::<Hash>()
-        + size_of::<Hash>()
-        + size_of::<u32>()
-        + size_of::<Address>();
-
     /// Creates a new governance program config.
     #[must_use]
     pub const fn new(
@@ -69,5 +62,32 @@ impl GovernanceConfig {
     #[must_use]
     pub fn pda() -> (Pubkey, u8) {
         Pubkey::find_program_address(&[seed_prefixes::GOVERNANCE_CONFIG], &crate::ID)
+    }
+}
+
+impl Sealed for GovernanceConfig {}
+
+impl Pack for GovernanceConfig {
+    const LEN: usize = size_of::<u8>()
+        + size_of::<Hash>()
+        + size_of::<Hash>()
+        + size_of::<u32>()
+        + size_of::<Address>();
+
+    fn pack_into_slice(&self, mut dst: &mut [u8]) {
+        self.serialize(&mut dst)
+            .expect("should pack GovernanceConfig into slice");
+    }
+
+    fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
+        let mut mut_src: &[u8] = src;
+        Self::deserialize(&mut mut_src).map_err(|err| {
+            msg!(
+                "Error: failed to deserialize account as {}: {}",
+                type_name::<Self>(),
+                err
+            );
+            ProgramError::InvalidAccountData
+        })
     }
 }

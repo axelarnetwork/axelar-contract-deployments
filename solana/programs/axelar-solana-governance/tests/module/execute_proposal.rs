@@ -1,6 +1,6 @@
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
-use rkyv::Deserialize;
+use borsh::to_vec;
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
@@ -100,12 +100,7 @@ async fn test_proposal_can_be_executed_and_reached_memo_program() {
     let mut emitted_events = events(&res);
     assert_eq!(emitted_events.len(), 1);
     let expected_event = proposal_executed_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events
-        .pop()
-        .unwrap()
-        .parse()
-        .deserialize(&mut rkyv::Infallible)
-        .unwrap();
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
     assert_msg_present_in_logs(res, "Instruction: SendToGateway");
 }
@@ -114,7 +109,7 @@ fn proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEv
     GovernanceEvent::ProposalExecuted {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
-        call_data: builder.proposal_call_data().to_bytes().unwrap(),
+        call_data: to_vec(&builder.proposal_call_data()).unwrap(),
         native_value: builder.proposal_u256_le_native_value(),
         eta: builder.proposal_u256_le_eta(),
     }
@@ -140,7 +135,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     // We send a wrong execution proposal instruction, with a wrong PDA.
 
-    ix_builder.prop_target = Some([0_u8; 32].to_vec().try_into().unwrap());
+    ix_builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
 
     let ix = ix_builder
         .clone()

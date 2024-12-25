@@ -1,17 +1,13 @@
 //! Main instructions for the governance contract.
 
-use std::error::Error;
-
 use axelar_rkyv_encoding::types::GmpMetadata;
-use rkyv::{bytecheck, Archive, CheckBytes, Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::state::proposal::ExecuteProposalData;
 use crate::state::GovernanceConfig;
 
 /// Instructions supported by the governance program.
-#[derive(Archive, Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub enum GovernanceInstruction {
     /// Initializes the governance configuration PDA account.
     ///
@@ -111,31 +107,6 @@ pub enum GovernanceInstruction {
     },
 }
 
-impl GovernanceInstruction {
-    /// Serializes the instruction into a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If serialization fails.
-    pub fn to_bytes(&self) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
-        let bytes = rkyv::to_bytes::<_, 0>(self).map_err(Box::new)?;
-        Ok(bytes.to_vec())
-    }
-
-    /// Deserializes the instruction from a byte array.
-    ///
-    /// # Errors
-    ///
-    /// If deserialization fails.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Box<dyn Error + Send + Sync>> {
-        // SAFETY:
-        // - The byte slice represents an archived object
-        // - The root of the object is stored at the end of the slice
-        let ix = unsafe { rkyv::from_bytes_unchecked::<Self>(bytes) }.map_err(Box::new)?;
-        Ok(ix)
-    }
-}
-
 #[allow(clippy::unwrap_used)] // All the unwraps are safe.
 #[allow(clippy::must_use_candidate)]
 #[allow(clippy::missing_panics_doc)] // It never will panic, as all the unwraps are safe.
@@ -176,6 +147,7 @@ pub mod builder {
 
     use alloy_sol_types::SolValue;
     use axelar_rkyv_encoding::types::GmpMetadata;
+    use borsh::to_vec;
     use governance_gmp::alloy_primitives::Uint;
     use governance_gmp::{GovernanceCommand, GovernanceCommandPayload};
     use program_utils::from_u64_to_u256_le_bytes;
@@ -471,10 +443,9 @@ pub mod builder {
                 AccountMeta::new_readonly(crate::ID, false),
             ];
 
-            let data = GovernanceInstruction::TransferOperatorship {
+            let data = to_vec(&GovernanceInstruction::TransferOperatorship {
                 new_operator: new_operator_pda.to_bytes(),
-            }
-            .to_bytes()
+            })
             .unwrap();
 
             Self::new().with_proposal_data(crate::ID, 0, eta, None, gmp_prop_target_accounts, data)
@@ -506,9 +477,7 @@ pub mod builder {
                 eta,
                 None,
                 target_accounts,
-                GovernanceInstruction::WithdrawTokens { amount }
-                    .to_bytes()
-                    .unwrap(),
+                to_vec(&GovernanceInstruction::WithdrawTokens { amount }).unwrap(),
             )
         }
     }
@@ -857,9 +826,7 @@ pub mod builder {
                 native_value,
             ));
 
-            let data = gov_instruction
-                .to_bytes()
-                .expect("Unable to encode GovernanceInstruction");
+            let data = to_vec(&gov_instruction).expect("Unable to encode GovernanceInstruction");
 
             Instruction {
                 program_id: crate::id(),
@@ -882,9 +849,7 @@ pub mod builder {
                 ExecuteProposalData::new(target_address.to_bytes(), call_data, native_value),
             );
 
-            let data = gov_instruction
-                .to_bytes()
-                .expect("Unable to encode GovernanceInstruction");
+            let data = to_vec(&gov_instruction).expect("Unable to encode GovernanceInstruction");
 
             Instruction {
                 program_id: crate::id(),
@@ -901,8 +866,7 @@ pub mod builder {
             let accounts = self.accounts.unwrap();
             let config = self.config.unwrap();
 
-            let data = GovernanceInstruction::InitializeConfig(config)
-                .to_bytes()
+            let data = to_vec(&GovernanceInstruction::InitializeConfig(config))
                 .expect("Unable to encode GovernanceInstruction");
 
             Instruction {
@@ -920,10 +884,9 @@ pub mod builder {
             let accounts = self.accounts.unwrap();
             let new_operator = self.new_operator.unwrap();
 
-            let data = GovernanceInstruction::TransferOperatorship {
+            let data = to_vec(&GovernanceInstruction::TransferOperatorship {
                 new_operator: new_operator.to_bytes(),
-            }
-            .to_bytes()
+            })
             .expect("Unable to encode GovernanceInstruction");
 
             Instruction {
@@ -949,7 +912,7 @@ pub mod builder {
             let governance_command = GovernanceCommandPayload {
                 command: gmp_command,
                 target: gmp_prop_target.to_bytes().into(),
-                call_data: gmp_prop_call_data.to_bytes().unwrap().into(),
+                call_data: to_vec(&gmp_prop_call_data).unwrap().into(),
                 native_value: Uint::from(gmp_prop_native_value),
                 eta: Uint::from(gmp_prop_eta),
             };
@@ -958,7 +921,7 @@ pub mod builder {
                 payload: governance_command.abi_encode(),
                 metadata: gmp_metadata,
             };
-            let data = gov_instruction.to_bytes().unwrap();
+            let data = to_vec(&gov_instruction).unwrap();
 
             Instruction {
                 program_id: crate::id(),

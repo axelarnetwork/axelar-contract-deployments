@@ -1,6 +1,6 @@
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
-use rkyv::Deserialize;
+use borsh::to_vec;
 use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
@@ -84,12 +84,7 @@ async fn test_full_flow_operator_proposal_execution() {
     let mut emitted_events = events(&res);
     assert_eq!(emitted_events.len(), 1);
     let expected_event = operator_proposal_executed_event(&ix_builder);
-    let got_event: GovernanceEvent = emitted_events
-        .pop()
-        .unwrap()
-        .parse()
-        .deserialize(&mut rkyv::Infallible)
-        .unwrap();
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
     assert_msg_present_in_logs(res, "Instruction: SendToGateway");
 
@@ -115,7 +110,7 @@ fn operator_proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> Gov
     GovernanceEvent::OperatorProposalExecuted {
         hash: builder.proposal_hash(),
         target_address: builder.proposal_target_address().to_bytes(),
-        call_data: builder.proposal_call_data().to_bytes().unwrap(),
+        call_data: to_vec(&builder.proposal_call_data()).unwrap(),
         native_value: builder.proposal_u256_le_native_value(),
     }
 }
@@ -200,7 +195,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
     // Get the operator key pair;
     let (mut sol_integration, config_pda, _) = setup_programs().await;
 
-    let ix_builder = ix_builder_with_sample_proposal_data();
+    let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
     let mut ix = ix_builder
         .clone()
@@ -223,15 +218,16 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
     let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
     assert!(res.result.is_ok());
 
+    ix_builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
+
     let operator = operator_keypair();
-    let mut ix = ix_builder
+    let ix = ix_builder
         .execute_operator_proposal(
             &sol_integration.fixture.payer.pubkey(),
             &config_pda,
             &operator.pubkey(),
         )
         .build();
-    ix.accounts[3] = ix.accounts[2].clone(); // Wrong PDA account
 
     let res = sol_integration
         .fixture

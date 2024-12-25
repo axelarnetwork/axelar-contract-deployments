@@ -2,7 +2,7 @@
 
 use base64::engine::general_purpose;
 use base64::Engine;
-use rkyv::bytecheck::{self, CheckBytes};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 
@@ -10,9 +10,7 @@ use solana_program::program_error::ProgramError;
 ///
 /// Following the [implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/interfaces/IInterchainGovernance.sol#L20-L40)
 #[non_exhaustive]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-#[archive(compare(PartialEq))]
-#[archive_attr(derive(Debug, PartialEq, Eq, CheckBytes))]
+#[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum GovernanceEvent {
     /// Logged when the governance program receives and successfully processes
     /// an incoming Axelar governance gmp message from the Axelar network.
@@ -163,8 +161,8 @@ impl GovernanceEvent {
     ///
     /// # Panics
     #[must_use]
-    pub fn encode(&self) -> rkyv::AlignedVec {
-        rkyv::to_bytes::<_, 0>(self).expect("Able to encode the event")
+    pub fn encode(&self) -> Vec<u8> {
+        to_vec(self).expect("Able to encode the event")
     }
 
     /// Try to parse a [`GovernanceEvent`] out of a Solana program log line.
@@ -196,16 +194,17 @@ impl EventContainer {
     #[must_use]
     pub fn new(buffer: Vec<u8>) -> Option<Self> {
         // check if this is a valid event
-        let _data = rkyv::check_archived_root::<GovernanceEvent>(&buffer).ok()?;
+        let _data = borsh::from_slice::<GovernanceEvent>(&buffer).ok()?;
         Some(Self { buffer })
     }
 
-    /// Return a view into the buffer, deserialised
-    #[must_use]
-    pub fn parse(&self) -> &ArchivedGovernanceEvent {
-        // SAFETY: we have already checked the buffer
-        let data = unsafe { rkyv::archived_root::<GovernanceEvent>(&self.buffer) };
-        data
+    /// Returns the parse of this [`EventContainer`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return a parsing error if any.
+    pub fn parse(&self) -> Result<GovernanceEvent, std::io::Error> {
+        borsh::from_slice::<GovernanceEvent>(&self.buffer)
     }
 }
 
