@@ -17,3 +17,6 @@ program-utils.workspace = true
 solana-program.workspace = true
 
 [dev-dependencies]
+bitflags.workspace = true
+rand.workspace = true
+solana-sdk.workspace = true

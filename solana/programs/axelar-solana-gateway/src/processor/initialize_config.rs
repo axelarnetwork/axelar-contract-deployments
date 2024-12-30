@@ -3,6 +3,7 @@ use std::mem::size_of;
 use axelar_message_primitives::U256;
 use itertools::Itertools;
 use program_utils::{BytemuckedPda, ValidPDA};
+use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -28,13 +29,18 @@ impl Processor {
         accounts: &[AccountInfo<'_>],
         init_config: InitializeConfig,
     ) -> ProgramResult {
-        let (core_accounts, init_verifier_sets) = accounts.split_at(3);
+        let (core_accounts, init_verifier_sets) = split_core_accounts(accounts)?;
 
         let init_verifier_sets = &mut init_verifier_sets.iter();
         let core_accounts = &mut core_accounts.iter();
         let payer = next_account_info(core_accounts)?;
+        let upgrade_authority = next_account_info(core_accounts)?;
+        let program_data = next_account_info(core_accounts)?;
         let gateway_root_pda = next_account_info(core_accounts)?;
         let system_account = next_account_info(core_accounts)?;
+
+        // Check: Upgrade authority
+        ensure_upgrade_authority(program_id, upgrade_authority, program_data)?;
 
         // Check: System Program Account
         if !system_program::check_id(system_account.key) {
@@ -118,4 +124,13 @@ impl Processor {
 
         Ok(())
     }
+}
+
+const CORE_ACCOUNTS: usize = 5;
+
+fn split_core_accounts<T>(accounts: &[T]) -> Result<(&[T], &[T]), ProgramError> {
+    if accounts.len() <= CORE_ACCOUNTS {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    }
+    Ok(accounts.split_at(CORE_ACCOUNTS))
 }

@@ -361,8 +361,7 @@ pub fn ensure_upgrade_authority(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (program_account_key, _) =
-        Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id());
+    let program_account_key = bpf_loader_upgradeable::get_program_data_address(program_id);
 
     if program_data.key.ne(&program_account_key) {
         return Err(ProgramError::InvalidAccountData);
@@ -565,3 +564,153 @@ impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleAddAccounts<'a> {
 }
 
 pub(crate) type RoleRemoveAccounds<'a> = RoleAddAccounts<'a>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use bitflags::bitflags;
+    use core::ops::Not;
+    use solana_program::{
+        bpf_loader_upgradeable::{self, UpgradeableLoaderState},
+        pubkey::Pubkey,
+    };
+    use solana_sdk::account::Account;
+
+    bitflags! {
+        /// Possible input variations for the function being tested.
+        ///
+        /// A set bit means that input bit has valid content.
+        pub struct TestCase: u8 {
+            const UPGRADE_AUTHORITY    = 0b0001;
+            const PROGRAM_DATA_PUBKEY  = 0b0010;
+            const PROGRAM_DATA_ACCOUNT = 0b0100;
+            const SIGNED              = 0b1000;
+            const ALL_VALID           = 0b1111;
+        }
+    }
+
+    /// Helper struct to hold test fixtures.
+    ///
+    /// Necessary because `AccountInfo` must hold mutable references to the underlying
+    /// data, and correctness depends on all fields being consonant.
+    struct TestContext {
+        program_id: Pubkey,
+        program_data_account_key: Pubkey,
+        program_data_account: Account,
+        authority_pubkey: Pubkey,
+        authority_account: Account,
+    }
+
+    impl TestContext {
+        /// Creates a test context filled with valid data.
+        fn new() -> Self {
+            let program_id = Pubkey::new_unique();
+            let authority_pubkey = Pubkey::new_unique();
+            let program_data_account_key =
+                bpf_loader_upgradeable::get_program_data_address(&program_id);
+            let program_data_account = Account::new_data(
+                0,
+                &UpgradeableLoaderState::ProgramData {
+                    slot: 0,
+                    upgrade_authority_address: Some(authority_pubkey),
+                },
+                &bpf_loader_upgradeable::id(),
+            )
+            .unwrap();
+            let authority_account = Account::new(0, 0, &authority_pubkey);
+
+            Self {
+                program_id,
+                program_data_account_key,
+                program_data_account,
+                authority_pubkey,
+                authority_account,
+            }
+        }
+
+        /// Generates a random account w/ random data
+        fn random_account() -> Account {
+            Account::new_data(0, &rand::random::<[u8; 32]>(), &Pubkey::new_unique()).unwrap()
+        }
+
+        /// Prepares inputs — valid and invalid — based on the given test case and calls
+        /// `ensure_upgrade_authority` with them.
+        ///
+        /// Requires a mutable borrow to self because `AccountInfo` holds mutable
+        /// references to the underlying data.
+        #[track_caller]
+        fn call(&mut self, test_case: &TestCase) -> ProgramResult {
+            let program_data_address = test_case
+                .contains(TestCase::PROGRAM_DATA_PUBKEY)
+                .then_some(self.program_data_account_key)
+                .unwrap_or_else(Pubkey::new_unique);
+
+            let authority_pubkey = test_case
+                .contains(TestCase::UPGRADE_AUTHORITY)
+                .then_some(self.authority_pubkey)
+                .unwrap_or_else(Pubkey::new_unique);
+
+            let authority_account_info: AccountInfo<'_> = (
+                &authority_pubkey,
+                test_case.contains(TestCase::SIGNED),
+                &mut self.authority_account,
+            )
+                .into();
+
+            let mut program_data_account = test_case
+                .contains(TestCase::PROGRAM_DATA_ACCOUNT)
+                .then(|| self.program_data_account.clone())
+                .unwrap_or_else(Self::random_account);
+
+            let program_data_account_info =
+                (&program_data_address, &mut program_data_account).into();
+
+            ensure_upgrade_authority(
+                &self.program_id,
+                &authority_account_info,
+                &program_data_account_info,
+            )
+        }
+    }
+
+    #[test]
+    fn test_ensure_upgrade_authority_function() {
+        let mut ctx = TestContext::new();
+
+        // Valid upgrade authority
+        assert!(ctx.call(&TestCase::ALL_VALID).is_ok());
+
+        // Unsigned authority
+        assert_eq!(
+            ctx.call(&TestCase::SIGNED.not()).unwrap_err(),
+            ProgramError::MissingRequiredSignature
+        );
+
+        // Invalid program data account address
+        assert_eq!(
+            ctx.call(&TestCase::PROGRAM_DATA_PUBKEY.not()).unwrap_err(),
+            ProgramError::InvalidAccountData
+        );
+
+        // Invalid program data account data
+        assert_eq!(
+            ctx.call(&TestCase::PROGRAM_DATA_ACCOUNT.not()).unwrap_err(),
+            ProgramError::InvalidAccountData
+        );
+
+        // Invalid authority pubkey
+        assert_eq!(
+            ctx.call(&TestCase::UPGRADE_AUTHORITY.not()).unwrap_err(),
+            ProgramError::InvalidAccountOwner
+        );
+
+        // Invalid unknowns
+        for bits in 0..15 {
+            assert!(
+                ctx.call(&TestCase::from_bits(bits).unwrap()).is_err(),
+                "Invalid result for bit pattern {bits}",
+            );
+        }
+    }
+}

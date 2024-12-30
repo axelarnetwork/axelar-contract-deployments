@@ -91,6 +91,7 @@ impl SolanaAxelarIntegrationMetadata {
         let initial_signer_sets = self.init_gateway_config_verifier_set_data();
         let ix = axelar_solana_gateway::instructions::initialize_config(
             self.fixture.payer.pubkey(),
+            self.upgrade_authority.pubkey(),
             self.domain_separator,
             initial_signer_sets,
             self.minimum_rotate_signers_delay_seconds,
@@ -99,7 +100,15 @@ impl SolanaAxelarIntegrationMetadata {
             gateway_config_pda,
         )
         .unwrap();
-        self.fixture.send_tx(&[ix]).await?;
+
+        // Due to Axelar protocol constraints, the Gateway's initialization requires the upgrade authority signature.
+        let signers = &[
+            self.fixture.payer.insecure_clone(),
+            self.upgrade_authority.insecure_clone(),
+        ];
+        self.fixture
+            .send_tx_with_custom_signers(&[ix], signers)
+            .await?;
 
         let account = self
             .fixture

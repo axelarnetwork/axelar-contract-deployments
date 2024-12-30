@@ -7,6 +7,7 @@ use axelar_solana_gateway_test_fixtures::{
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
 fn cmp_config(init: &SolanaAxelarIntegrationMetadata, created: &GatewayConfig) -> bool {
@@ -49,6 +50,7 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
     let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
         metadata.fixture.payer.pubkey(),
+        metadata.upgrade_authority.pubkey(),
         metadata.domain_separator,
         initial_sets,
         metadata.minimum_rotate_signers_delay_seconds,
@@ -58,7 +60,14 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
     )
     .unwrap();
 
-    metadata.send_tx(&[ix]).await.unwrap();
+    let signers = &[
+        metadata.fixture.payer.insecure_clone(),
+        metadata.upgrade_authority.insecure_clone(),
+    ];
+    metadata
+        .send_tx_with_custom_signers(&[ix], signers)
+        .await
+        .unwrap();
 
     // Assert -- config derived correctly
     let root_pda_data = metadata.gateway_confg(gateway_config_pda).await;
@@ -90,6 +99,7 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
     let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
         metadata.fixture.payer.pubkey(),
+        metadata.upgrade_authority.pubkey(),
         metadata.domain_separator,
         initial_sets,
         metadata.minimum_rotate_signers_delay_seconds,
@@ -99,7 +109,15 @@ async fn test_reverts_on_invalid_gateway_pda_pubkey() {
     )
     .unwrap();
 
-    let res = metadata.send_tx(&[ix]).await.expect_err("tx should fail");
+    let signers = &[
+        metadata.fixture.payer.insecure_clone(),
+        metadata.upgrade_authority.insecure_clone(),
+    ];
+
+    let res = metadata
+        .send_tx_with_custom_signers(&[ix], signers)
+        .await
+        .expect_err("tx should fail");
 
     // Assert
     assert!(
@@ -123,6 +141,7 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
     let initial_sets = metadata.init_gateway_config_verifier_set_data();
     let ix = axelar_solana_gateway::instructions::initialize_config(
         metadata.fixture.payer.pubkey(),
+        metadata.upgrade_authority.pubkey(),
         metadata.domain_separator,
         initial_sets,
         metadata.minimum_rotate_signers_delay_seconds,
@@ -131,7 +150,16 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
         gateway_config_pda,
     )
     .unwrap();
-    let res = metadata.send_tx(&[ix]).await.expect_err("tx should fail");
+
+    let signers = &[
+        metadata.fixture.payer.insecure_clone(),
+        metadata.upgrade_authority.insecure_clone(),
+    ];
+
+    let res = metadata
+        .send_tx_with_custom_signers(&[ix], signers)
+        .await
+        .expect_err("tx should fail");
 
     // Assert
     assert!(
@@ -141,5 +169,55 @@ async fn test_reverts_on_already_initialized_gateway_pda() {
             .into_iter()
             .any(|x| x.contains("invalid account data for instruction")),
         "Expected error message not found!"
+    );
+}
+
+#[tokio::test]
+async fn test_reverts_without_proper_upgrade_authority_signature() {
+    // Setup with a different payer account
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42])
+        .build()
+        .setup_without_init_config()
+        .await;
+
+    let (gateway_config_pda, _bump) = get_gateway_root_config_pda();
+    let initial_sets = metadata.init_gateway_config_verifier_set_data();
+
+    // Create a different account to be passed in place of the update authority account
+    let not_upgrade_authority = Keypair::new();
+
+    // Create instruction with different payer
+    let ix = axelar_solana_gateway::instructions::initialize_config(
+        metadata.fixture.payer.pubkey(),
+        not_upgrade_authority.pubkey(), // Using different account instead of upgrade authority.
+        metadata.domain_separator,
+        initial_sets,
+        metadata.minimum_rotate_signers_delay_seconds,
+        metadata.operator.pubkey(),
+        metadata.previous_signers_retention.into(),
+        gateway_config_pda,
+    )
+    .unwrap();
+
+    let signers = &[
+        not_upgrade_authority,
+        metadata.fixture.payer.insecure_clone(),
+    ];
+
+    // Execute transaction and expect failure
+    let res = metadata
+        .send_tx_with_custom_signers(&[ix], signers)
+        .await
+        .expect_err("tx should fail without proper upgrade authority signature");
+
+    // Assert that the error message indicates the correct failure reason
+    assert!(
+        res.metadata
+            .unwrap()
+            .log_messages
+            .into_iter()
+            .any(|x| x.contains("Given authority is not the program upgrade authority")),
+        "Expected error message about invalid upgrade authority was not found!"
     );
 }

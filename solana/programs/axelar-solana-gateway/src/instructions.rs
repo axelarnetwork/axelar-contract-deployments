@@ -82,9 +82,11 @@ pub enum GatewayInstruction {
     ///
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
-    /// 1. [WRITE] Gateway Root Config PDA account
-    /// 2. [] System Program account
-    /// 3..N [WRITE] uninitialized VerifierSetTracker PDA accounts
+    /// 1. [SIGNER] Gateway's Upgrade Authority account
+    /// 2. [] Gateway's ProgramData account
+    /// 3. [WRITE] Gateway Root Config PDA account
+    /// 4. [] System Program account
+    /// 5..N [WRITE] uninitialized VerifierSetTracker PDA accounts
     InitializeConfig(InitializeConfig),
 
     /// Initializes a verification session for a given Payload root.
@@ -352,8 +354,10 @@ pub fn call_contract_offchain_data(
 }
 
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
+#[allow(clippy::too_many_arguments)]
 pub fn initialize_config(
     payer: Pubkey,
+    upgrade_authority: Pubkey,
     domain_separator: [u8; 32],
     initial_signer_sets: Vec<(VerifierSetHash, Pubkey)>,
     minimum_rotation_delay: RotationDelaySecs,
@@ -361,8 +365,13 @@ pub fn initialize_config(
     previous_verifier_retention: VerifierSetEpoch,
     gateway_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
+    let gateway_program_data =
+        solana_program::bpf_loader_upgradeable::get_program_data_address(&crate::ID);
+
     let mut accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(upgrade_authority, true),
+        AccountMeta::new_readonly(gateway_program_data, false),
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
