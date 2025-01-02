@@ -8,7 +8,7 @@ const {
     Networks,
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
-    Address,
+    Address, xdr,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
@@ -277,6 +277,15 @@ function serializeValue(value) {
 
     return value;
 }
+
+export const createAuthorizedFunc = (contractAddress, functionName, args) =>
+    xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+        new xdr.InvokeContractArgs({
+            contractAddress: contractAddress.toScAddress(),
+            functionName,
+            args,
+        }),
+    );
 
 module.exports = {
     stellarCmd,

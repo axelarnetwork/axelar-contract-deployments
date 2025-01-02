@@ -3,7 +3,7 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase } = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -151,7 +151,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { uncheckedContractAddress },
+        isNonEmptyString: { uncheckedContractAddress, chain.contracts.upgrader.address },
     });
 
     const contractAddress = Address.fromString(uncheckedContractAddress);
@@ -163,11 +163,11 @@ async function upgrade(options, _, chain, contractName) {
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
         args: [
-            nativeToScVal(contractAddress),
-            nativeToScVal(options.newVersion),
-            nativeToScVal(newWasmHash),
-            nativeToScVal([options.migrationData]),
-        ],
+           contractAddress,
+           options.newVersion,
+           newWasmHash,
+           [options.migrationData],
+        ].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -199,14 +199,6 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
     );
 }
 
-const createAuthorizedFunc = (contractAddress, functionName, args) =>
-    xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
-        new xdr.InvokeContractArgs({
-            contractAddress: contractAddress.toScAddress(),
-            functionName,
-            args,
-        }),
-    );
 
 async function mainProcessor(options, processor, contractName) {
     const config = loadConfig(options.env);

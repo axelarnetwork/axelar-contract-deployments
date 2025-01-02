@@ -90,7 +90,6 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 Deploy Interchain Token wasm first.
 ```bash
 node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
-```bash
 node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm
 ```
 
@@ -99,6 +98,22 @@ node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CH
 ```bash
 node stellar/deploy-contract.js deploy example --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/example.optimized.wasm
 ```
+
+### Contract upgrades
+To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
+
+```bash
+node stellar/deploy-contract.js deploy upgrader --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/upgrader.optimized.wasm
+```
+
+After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+```
+
+where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function.
+
 
 ## Generate bindings
 
@@ -164,14 +179,6 @@ A signer rotation can be submitted to the gateway contract. Use `--current-nonce
 ```bash
 node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
-```
-
-#### Upgrade Gateway
-
-To upgrade the gateway, run the following command:
-
-```bash
-node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
 ```
 
 ### Interchain Token Service
