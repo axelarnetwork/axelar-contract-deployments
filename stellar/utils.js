@@ -8,7 +8,8 @@ const {
     Networks,
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
-    Address, xdr,
+    Address,
+    xdr,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
