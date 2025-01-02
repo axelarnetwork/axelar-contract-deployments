@@ -143,7 +143,8 @@ async function uploadWasm(filePath, wallet, chain) {
 
 async function upgrade(options, _, chain, contractName) {
     const { wasmPath, yes } = options;
-    const uncheckedContractAddress = chain.contracts[contractName].address;
+    let contractAddress = chain.contracts[contractName]?.address;
+    const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
@@ -151,10 +152,10 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { uncheckedContractAddress, chain.contracts.upgrader.address },
+        isNonEmptyString: { contractAddress, upgraderAddress },
     });
 
-    const contractAddress = Address.fromString(uncheckedContractAddress);
+    contractAddress = Address.fromString(contractAddress);
 
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
@@ -162,12 +163,7 @@ async function upgrade(options, _, chain, contractName) {
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
-        args: [
-           contractAddress,
-           options.newVersion,
-           newWasmHash,
-           [options.migrationData],
-        ].map(nativeToScVal),
+        args: [contractAddress, options.newVersion, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -198,7 +194,6 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
         ),
     );
 }
-
 
 async function mainProcessor(options, processor, contractName) {
     const config = loadConfig(options.env);

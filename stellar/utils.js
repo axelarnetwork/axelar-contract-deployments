@@ -278,7 +278,7 @@ function serializeValue(value) {
     return value;
 }
 
-export const createAuthorizedFunc = (contractAddress, functionName, args) =>
+const createAuthorizedFunc = (contractAddress, functionName, args) =>
     xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
         new xdr.InvokeContractArgs({
             contractAddress: contractAddress.toScAddress(),
@@ -301,4 +301,5 @@ module.exports = {
     getAmplifierVerifiers,
     serializeValue,
     getBalances,
+    createAuthorizedFunc,
 };
