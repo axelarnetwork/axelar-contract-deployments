@@ -29,6 +29,8 @@ use solana_program::keccak::hashv;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
+use crate::error::GatewayError;
+
 /// Type alias for a message payload with mutable references
 pub(crate) type MutMessagePayload<'a> = MessagePayload<'a, Mut>;
 /// Type alias for a message payload with immutable references
@@ -94,10 +96,10 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
 
     /// Asserts this message payload account haven't been committed yet
     #[inline]
-    pub fn assert_uncommitted(&self) -> ProgramResult {
+    pub fn assert_uncommitted(&self) -> Result<(), GatewayError> {
         if self.committed() {
             msg!("Error: Message payload account data was already committed");
-            Err(ProgramError::InvalidAccountData)
+            Err(GatewayError::MessagePayloadAlreadyCommitted)
         } else {
             Ok(())
         }

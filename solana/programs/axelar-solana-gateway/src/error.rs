@@ -62,6 +62,10 @@ pub enum GatewayError {
     #[error("Message Payload PDA was already initialized")]
     MessagePayloadAlreadyInitialized,
 
+    /// Message Payload has already been committed.
+    #[error("Message Payload has already been committed")]
+    MessagePayloadAlreadyCommitted,
+
     /// Error indicating an underflow occurred during epoch calculation.
     #[error("Epoch calculation resulted in an underflow")]
     // --- NOTICE ---
@@ -168,7 +172,7 @@ mod tests {
             .collect_vec();
 
         // confidence check that we derived the errors correctly
-        assert_eq!(errors_to_proceed.len(), 11);
+        assert_eq!(errors_to_proceed.len(), 12);
         assert_eq!(errors_to_not_proceed.len(), 17);
 
         // Errors that should cause the relayer to proceed (error numbers < 500)
