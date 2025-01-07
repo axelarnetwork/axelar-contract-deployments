@@ -260,7 +260,7 @@ node stellar/its-example.js deploy-token [name] [symbol] [decimal] [salt] [initi
 node stellar/its-example.js deploy-remote-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
 ```
 
-#### Deploy Remote Interchain Token
+#### Send Interchain Token
 
 ```bash
 node stellar/its-example.js send-token [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
