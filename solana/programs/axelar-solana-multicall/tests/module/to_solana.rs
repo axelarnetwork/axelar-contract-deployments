@@ -1,11 +1,11 @@
-use axelar_message_primitives::EncodingScheme;
-use axelar_solana_memo_program_old::instruction::AxelarMemoInstruction;
-use axelar_solana_memo_program_old::state::Counter;
+use axelar_executable::EncodingScheme;
+use axelar_solana_gateway_test_fixtures::gateway::random_message;
+use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
+use axelar_solana_memo_program::state::Counter;
 use axelar_solana_multicall::instructions::MultiCallPayloadBuilder;
-use gateway::commands::OwnedCommand;
+use borsh::BorshDeserialize as _;
 use solana_program::instruction::AccountMeta;
 use solana_program_test::tokio;
-use test_fixtures::axelar_message::custom_message;
 
 use crate::{axelar_solana_setup, TestContext};
 
@@ -26,7 +26,7 @@ async fn test_multicall_different_encodings() {
     for memo in &["Call A", "Call B", "Call C"] {
         multicall_builder = multicall_builder
             .add_instruction(
-                axelar_solana_memo_program_old::id(),
+                axelar_solana_memo_program::id(),
                 vec![counter_account.clone()],
                 borsh::to_vec(&AxelarMemoInstruction::ProcessMemo {
                     memo: (*memo).to_string(),
@@ -42,28 +42,28 @@ async fn test_multicall_different_encodings() {
             .encoding_scheme(encoding)
             .build()
             .expect("failed to build data payload");
-        let message = custom_message(axelar_solana_multicall::id(), &payload);
+        let mut message = random_message();
+        message.destination_address = axelar_solana_multicall::id().to_string();
+        message.payload_hash = *payload.hash().unwrap();
 
-        let (gateway_approved_command_pdas, _, _) = solana_chain
-            .fixture
-            .fully_approve_messages(
-                &solana_chain.gateway_root_pda,
-                vec![message.clone()],
-                &solana_chain.signers,
-                &solana_chain.domain_separator,
-            )
-            .await;
+        let message_from_multisig_prover = solana_chain
+            .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+            .await
+            .unwrap();
 
-        let approve_message_command = OwnedCommand::ApproveMessage(message);
+        let merkelised_message = message_from_multisig_prover
+            .iter()
+            .find(|x| x.leaf.message.cc_id == message.cc_id)
+            .unwrap()
+            .clone();
+
         let tx = solana_chain
-            .fixture
-            .call_execute_on_axelar_executable(
-                &approve_message_command,
-                &payload,
-                &gateway_approved_command_pdas[0],
-                &solana_chain.gateway_root_pda,
+            .execute_on_axelar_executable(
+                merkelised_message.leaf.message,
+                &payload.encode().unwrap(),
             )
-            .await;
+            .await
+            .unwrap();
 
         let log_msgs = tx.metadata.unwrap().log_messages;
         assert!(
@@ -83,13 +83,9 @@ async fn test_multicall_different_encodings() {
     }
 
     let counter = solana_chain
-        .fixture
-        .get_account::<Counter>(
-            &memo_program_counter_pda,
-            &axelar_solana_memo_program_old::ID,
-        )
+        .get_account(&memo_program_counter_pda, &axelar_solana_memo_program::ID)
         .await;
-
+    let counter = Counter::try_from_slice(&counter.data).unwrap();
     assert_eq!(counter.counter, 6);
 }
 
@@ -104,28 +100,26 @@ async fn test_empty_multicall_should_succeed() {
             .encoding_scheme(encoding)
             .build()
             .expect("failed to build data payload");
-        let message = custom_message(axelar_solana_multicall::id(), &payload);
-        let (gateway_approved_command_pdas, _, _) = solana_chain
-            .fixture
-            .fully_approve_messages(
-                &solana_chain.gateway_root_pda,
-                vec![message.clone()],
-                &solana_chain.signers,
-                &solana_chain.domain_separator,
-            )
-            .await;
+        let mut message = random_message();
+        message.destination_address = axelar_solana_multicall::id().to_string();
+        message.payload_hash = *payload.hash().unwrap();
+        let message_from_multisig_prover = solana_chain
+            .sign_session_and_approve_messages(&solana_chain.signers.clone(), &[message.clone()])
+            .await
+            .unwrap();
 
-        let approve_message_command = OwnedCommand::ApproveMessage(message);
+        let merkelised_message = message_from_multisig_prover
+            .iter()
+            .find(|x| x.leaf.message.cc_id == message.cc_id)
+            .unwrap()
+            .clone();
 
-        // Panics if tx fails
         let _tx = solana_chain
-            .fixture
-            .call_execute_on_axelar_executable(
-                &approve_message_command,
-                &payload,
-                &gateway_approved_command_pdas[0],
-                &solana_chain.gateway_root_pda,
+            .execute_on_axelar_executable(
+                merkelised_message.leaf.message,
+                &payload.encode().unwrap(),
             )
-            .await;
+            .await
+            .unwrap();
     }
 }

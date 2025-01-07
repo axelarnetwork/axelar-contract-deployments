@@ -1,9 +1,7 @@
 //! Program instructions processor.
 
-use axelar_executable_old::{
-    validate_message, AxelarCallableInstruction, PROGRAM_ACCOUNTS_START_INDEX,
-};
-use axelar_message_primitives::DataPayload;
+use axelar_executable::{validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::BorshDeserialize;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -34,32 +32,38 @@ impl Processor {
     ) -> ProgramResult {
         check_program_account(*program_id)?;
 
-        let instruction = AxelarCallableInstruction::try_from_slice(instruction_data)?;
+        if let Some(message) =
+            axelar_executable::parse_axelar_message(instruction_data).transpose()?
+        {
+            msg!("Instruction: AxelarExecute");
+            validate_message(accounts, &message)?;
 
-        match instruction {
-            AxelarCallableInstruction::AxelarExecute(payload) => {
-                validate_message(program_id, accounts, &payload)?;
+            let (protocol_accounts, target_programs_accounts) =
+                accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
+            let message_payload_account = protocol_accounts
+                .get(1)
+                .ok_or(ProgramError::NotEnoughAccountKeys)?;
+            let account_data = message_payload_account.try_borrow_data()?;
+            let message_payload: ImmutMessagePayload<'_> = (**account_data).try_into()?;
+            let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
+            let payload = axelar_payload.payload_without_accounts();
+            let multicall_payload =
+                MultiCallPayload::decode(payload, axelar_payload.encoding_scheme())?;
 
-                let (_multicall_program_accounts, target_programs_accounts) =
-                    accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
-                let multicall_payload = MultiCallPayload::decode(
-                    &payload.payload_without_accounts,
-                    payload.encoding_scheme,
-                )?;
-                process_multicall(target_programs_accounts, multicall_payload)?;
-            }
-            AxelarCallableInstruction::Native(instruction) => {
-                let instruction = MultiCallInstruction::try_from_slice(&instruction)?;
-                let MultiCallInstruction::MultiCall { payload } = instruction;
-                let decoded_payload = DataPayload::decode(&payload)?;
-                let multicall_payload = MultiCallPayload::decode(
-                    decoded_payload.payload_without_accounts(),
-                    decoded_payload.encoding_scheme(),
-                )?;
-
-                process_multicall(accounts, multicall_payload)?;
-            }
+            return process_multicall(target_programs_accounts, multicall_payload);
         }
+
+        msg!("Instruction: Native");
+        let instruction = MultiCallInstruction::try_from_slice(instruction_data)?;
+        let MultiCallInstruction::MultiCall { payload } = instruction;
+        let decoded_payload = AxelarMessagePayload::decode(&payload)?;
+        let multicall_payload = MultiCallPayload::decode(
+            decoded_payload.payload_without_accounts(),
+            decoded_payload.encoding_scheme(),
+        )?;
+
+        process_multicall(accounts, multicall_payload)?;
+
         Ok(())
     }
 }
@@ -93,9 +97,7 @@ fn process_multicall(
                     is_writable: account.is_writable,
                 })
                 .collect(),
-            data: borsh::to_vec(&AxelarCallableInstruction::Native(
-                program_payload.instruction_data,
-            ))?,
+            data: program_payload.instruction_data,
         };
 
         invoke(&instruction, current_accounts)?;

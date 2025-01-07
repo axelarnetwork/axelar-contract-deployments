@@ -915,14 +915,14 @@ name = "axelar-solana-multicall"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
- "axelar-executable-old",
- "axelar-message-primitives",
+ "axelar-executable",
  "axelar-rkyv-encoding",
- "axelar-solana-memo-program-old",
+ "axelar-solana-gateway",
+ "axelar-solana-gateway-test-fixtures",
+ "axelar-solana-memo-program",
  "borsh 1.5.3",
  "ethers-core",
  "evm-contracts-test-suite",
- "gmp-gateway",
  "itertools 0.12.1",
  "solana-program",
  "solana-program-test",

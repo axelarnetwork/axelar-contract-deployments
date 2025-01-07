@@ -2,7 +2,7 @@
 extern crate alloc;
 use alloc::borrow::Cow;
 
-use axelar_message_primitives::{DataPayload, EncodingScheme, PayloadError};
+use axelar_executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
@@ -14,7 +14,7 @@ pub enum MultiCallInstruction {
     /// `MultiCall` instruction
     MultiCall {
         /// [`Vec`] containing a serialized
-        /// [`DataPayload`](axelar_message_primitives::DataPayload) built using
+        /// [`AxelarMessagePayload`](axelar_executable::AxelarMessagePayload) built using
         /// [`MultiCallPayloadBuilder`](crate::MultiCallPayloadBuilder).
         payload: Vec<u8>,
     },
@@ -212,7 +212,7 @@ impl MultiCallPayloadBuilder {
     ///   encoded.
     /// - [`PayloadError::AbiError`] - Error encoding the payload using the ABI
     ///   encoder.
-    pub fn build(self) -> Result<DataPayload<'static>, PayloadError> {
+    pub fn build(self) -> Result<AxelarMessagePayload<'static>, PayloadError> {
         let encoding = self.encoding.ok_or(PayloadError::InvalidEncodingScheme)?;
         let mut top_level_accounts = Vec::new();
         let mut program_payloads = Vec::with_capacity(self.payloads.len());
@@ -249,7 +249,7 @@ impl MultiCallPayloadBuilder {
         }
         .encode(encoding)?;
 
-        Ok(DataPayload::new_with_cow(
+        Ok(AxelarMessagePayload::new_with_cow(
             Cow::Owned(encoded_payload),
             top_level_accounts.into_iter().map(Into::into).collect(),
             encoding,
@@ -260,7 +260,7 @@ impl MultiCallPayloadBuilder {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use axelar_message_primitives::EncodingScheme;
+    use axelar_executable::EncodingScheme;
 
     use crate::instructions::encoding::{MultiCallPayload, ProgramPayload};
 
