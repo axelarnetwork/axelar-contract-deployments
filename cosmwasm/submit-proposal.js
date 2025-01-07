@@ -17,6 +17,7 @@ const {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     updateCodeId,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -80,6 +81,7 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -96,6 +98,7 @@ const storeCode = async (client, wallet, config, options) => {
 const storeInstantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
