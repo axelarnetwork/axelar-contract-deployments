@@ -1944,7 +1944,7 @@
           "keyType": "ecdsa",
           "codeId": 21,
           "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
-          "address": "axelar1p26m8x48gq5urxkdsx3zt5jgxru4dz9p5z3r9ruds8z9kqfmes5q3q4upn"
+          "address": "axelar1ktjfpfrlgmh8s76ltjhhv0xcj0st0d0xrjh5rvm3gr5u66x9xvpsm0juw8"
         },
         "storeCodeProposalId": "69",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
@@ -1961,7 +1961,7 @@
         },
         "sui": {
           "codeId": 22,
-          "address": "axelar1u7ea9nd7ewfatmax4rlfa0kzl6dz22en3ke3zmp9snuqsm5s4xzq2zaypc"
+          "address": "axelar1yklflthhfxy5dtd2nzg83n0nxgh3e04w6fn2fd9v0eqselu32lxq0gyv6w"
         },
         "storeCodeProposalId": "70",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
@@ -2001,7 +2001,7 @@
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
-          "sourceGatewayAddress": "0xa7ecca5ee73b60b70d35d94d7e4b553249b10cceabcd6eab9a1286869914359e",
+          "sourceGatewayAddress": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853",
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
           "votingThreshold": [
@@ -2011,7 +2011,7 @@
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "codeId": 24,
-          "address": "axelar1xajgm2vztjysk4lnswmk58p7r8a8j9dusm3ee69wk7zp0em48e4stvd3uq"
+          "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt"
         },
         "storeCodeProposalId": "72",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
