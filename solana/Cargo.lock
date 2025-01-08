@@ -658,6 +658,7 @@ dependencies = [
  "evm-contracts-test-suite",
  "num-derive",
  "num-traits",
+ "rand 0.8.5",
  "rstest",
  "solana-program",
  "test-log",
@@ -871,6 +872,7 @@ dependencies = [
 name = "axelar-solana-memo-program"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
@@ -889,6 +891,7 @@ dependencies = [
  "solana-sdk",
  "spl-token-2022 5.0.2",
  "spl-token-metadata-interface 0.5.1",
+ "thiserror",
 ]
 
 [[package]]

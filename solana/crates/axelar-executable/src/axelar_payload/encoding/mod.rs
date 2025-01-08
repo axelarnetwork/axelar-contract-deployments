@@ -2,7 +2,6 @@ mod abi_encoding;
 mod borsh_encoding;
 
 use core::mem::size_of;
-use std::borrow::Cow;
 
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -36,9 +35,9 @@ impl<'payload> AxelarMessagePayload<'payload> {
             EncodingScheme::AbiEncoding => Self::decode_abi_encoding(data)?,
         };
 
-        Ok(Self::new_with_cow(
-            Cow::Owned(payload_without_accounts),
-            solana_accounts,
+        Ok(Self::new(
+            payload_without_accounts,
+            &solana_accounts,
             encoding_scheme,
         ))
     }

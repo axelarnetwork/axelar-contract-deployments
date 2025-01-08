@@ -197,7 +197,7 @@ fn process_memo(program_id: &Pubkey, accounts: &[AccountInfo<'_>], memo: &str) -
         );
     }
 
-    msg!("Memo (len {}): {:?}", memo.len(), memo);
+    log_memo(memo);
 
     let mut counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
     counter_pda_account.counter += 1;
@@ -205,6 +205,22 @@ fn process_memo(program_id: &Pubkey, accounts: &[AccountInfo<'_>], memo: &str) -
     counter_pda_account.pack_into_slice(&mut data);
 
     Ok(())
+}
+
+#[inline]
+fn log_memo(memo: &str) {
+    // If memo is longer than 10 characters, log just the first character.
+    let char_count = memo.chars().count();
+    if char_count > 10 {
+        msg!(
+            "Memo (len {}): {:?} x {} (too big to log)",
+            memo.len(),
+            memo.chars().next().unwrap(),
+            char_count
+        );
+    } else {
+        msg!("Memo (len {}): {:?}", memo.len(), memo);
+    }
 }
 
 /// This function is used to initialize the program.

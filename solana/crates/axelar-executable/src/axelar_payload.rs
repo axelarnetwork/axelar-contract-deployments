@@ -40,7 +40,7 @@ impl<'a> Deref for AxelarMessagePayloadHash<'a> {
 pub struct AxelarMessagePayload<'payload> {
     // Using Cow because on-chain we will use a the owned version (because of the decoding),
     // but off-chain we will use the borrowed version to prevent unnecessary cloning.
-    payload_without_accounts: Cow<'payload, [u8]>,
+    payload_without_accounts: &'payload [u8],
     solana_accounts: Vec<SolanaAccountRepr>,
     encoding_scheme: EncodingScheme,
 }
@@ -60,24 +60,9 @@ impl<'payload> AxelarMessagePayload<'payload> {
         for acc in solana_accounts {
             solana_accounts_parsed.push(acc.into());
         }
-        Self::new_with_cow(
-            Cow::Borrowed(payload_without_accounts),
-            solana_accounts_parsed,
-            encoding_scheme,
-        )
-    }
-
-    /// Create a new payload from a "payload without accounts" and a list of
-    /// account representations.
-    #[must_use]
-    pub fn new_with_cow(
-        payload_without_accounts: Cow<'payload, [u8]>,
-        solana_accounts: Vec<SolanaAccountRepr>,
-        encoding_scheme: EncodingScheme,
-    ) -> Self {
         Self {
             payload_without_accounts,
-            solana_accounts,
+            solana_accounts: solana_accounts_parsed,
             encoding_scheme,
         }
     }
@@ -95,8 +80,8 @@ impl<'payload> AxelarMessagePayload<'payload> {
 
     /// Get the payload without accounts.
     #[must_use]
-    pub fn payload_without_accounts(&self) -> &[u8] {
-        &self.payload_without_accounts
+    pub const fn payload_without_accounts(&self) -> &[u8] {
+        self.payload_without_accounts
     }
 
     /// Get the solana accounts.

@@ -1,4 +1,10 @@
-use alloy_sol_types::{sol, SolValue};
+use alloy_sol_types::{
+    abi::{
+        token::{DynSeqToken, PackedSeqToken, WordToken},
+        Decoder,
+    },
+    sol, SolValue,
+};
 
 use crate::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
 
@@ -23,7 +29,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
     pub(super) fn encode_abi_encoding(&self) -> Result<Vec<u8>, PayloadError> {
         let mut writer_vec = self.encoding_scheme_prefixed_array()?;
         let gateway_payload = SolanaGatewayPayload {
-            execute_payload: self.payload_without_accounts.as_ref().to_vec().into(),
+            execute_payload: self.payload_without_accounts.to_vec().into(),
             accounts: self.solana_accounts.clone(),
         };
 
@@ -36,17 +42,76 @@ impl<'payload> AxelarMessagePayload<'payload> {
         Ok(writer_vec)
     }
 
+    /// Decodes ABI-encoded data with zero-copy payload handling.
+    ///
+    /// # Implementation Note
+    /// Originally used full alloy decoding, but refactored for zero-copy of large payloads
+    /// while maintaining copies only for the small `SolanaAccountRepr` structs.
+    ///
+    /// # Debug Verification
+    /// Debug builds verify our manual decoding against alloy's full (but allocating) decode.
     pub(super) fn decode_abi_encoding(
         data: &'payload [u8],
-    ) -> Result<(Vec<u8>, Vec<SolanaAccountRepr>), PayloadError> {
-        let decoded = SolanaGatewayPayload::abi_decode_params(data, true)?;
-        let SolanaGatewayPayload {
-            execute_payload,
-            accounts,
-        } = decoded;
+    ) -> Result<(&'payload [u8], Vec<SolanaAccountRepr>), PayloadError> {
+        let (payload, accounts) = extract_payload_silce_and_solana_accounts(data)?;
 
-        Ok((execute_payload.to_vec(), accounts))
+        // Verify our implementation matches alloy's copying/owned decode
+        #[cfg(debug_assertions)]
+        {
+            let SolanaGatewayPayload {
+                execute_payload: allocated_payload,
+                accounts: allocated_accounts,
+            } = SolanaGatewayPayload::abi_decode_params(data, true)?;
+
+            debug_assert_eq!(payload, allocated_payload.to_vec(), "bad payload");
+            debug_assert_eq!(accounts, allocated_accounts, "bad accounts");
+        }
+
+        Ok((payload, accounts))
     }
+}
+
+/// Performs manual decoding of an ABI-encoded `SolanaGatewayPayload` into its constituent parts.
+///
+/// The main motivation for this function is to avoid heap allocation of the payload bytes.
+/// It achieves this by returning a slice into the original `data` buffer for the payload
+/// field, while only allocating memory for the smaller account metadata structures.
+///
+/// # ABI Structure
+/// Decodes `data` conforming to `SolanaGatewayPayload`, which consists of a bytes field
+/// followed by an array of account metadata records.
+///
+/// # Arguments
+/// * `data` - ABI-encoded payload bytes, excluding the `EncodingScheme` byte
+///
+/// # Returns
+/// * A tuple containing:
+///   - A slice of the original payload bytes (zero-copy)
+///   - A vector of decoded Solana account metadata (heap-allocated)
+#[inline]
+fn extract_payload_silce_and_solana_accounts(
+    data: &[u8],
+) -> Result<(&[u8], Vec<SolanaAccountRepr>), PayloadError> {
+    let mut decoder = Decoder::new(data, true);
+    let decoded_sequence = decoder
+        .decode_sequence::<<SolanaGatewayPayload as alloy_sol_types::SolType>::Token<'_>>()?;
+
+    // The payload bytes are packed inside the first token, and we can use it directly.
+    // Account info is listed inside the second token.
+    let (PackedSeqToken(payload_slice), DynSeqToken(account_words)) = decoded_sequence;
+
+    // Process each account's data, which has three components: pubkey, signer and write status
+    // They are all represented by a single word (u256, which has 32 bytes).
+    let mut accounts = Vec::with_capacity(account_words.len());
+    for (WordToken(pubkey_token), WordToken(signer), WordToken(writable)) in account_words {
+        accounts.push(SolanaAccountRepr {
+            pubkey: pubkey_token,
+            is_signer: signer.last() == Some(&1),
+            is_writable: writable.last() == Some(&1),
+        });
+    }
+
+    Ok((payload_slice, accounts))
 }
 
 #[cfg(test)]
@@ -83,7 +148,7 @@ mod tests {
     async fn abi_encode() {
         // Setup
         let (accounts, evm_account_repr) = utils::evm_accounts_fixture();
-        let payload_without_accounts = vec![42, 111];
+        let payload_without_accounts = vec![0xDE, 0xAD, 0xBE, 0xEF];
         let canonical_payload = AxelarMessagePayload::new(
             payload_without_accounts.as_slice(),
             &accounts,

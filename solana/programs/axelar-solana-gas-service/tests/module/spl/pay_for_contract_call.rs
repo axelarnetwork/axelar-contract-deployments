@@ -54,7 +54,6 @@ async fn test_pay_spl_for_contract_call(#[case] token_program_id: Pubkey) {
     let payload_hash = [42; 32];
     let params = b"hello 123321".to_vec();
 
-    dbg!(&config_pda_ata);
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::pay_spl_for_contract_call_instruction(
         &axelar_solana_gas_service::ID,

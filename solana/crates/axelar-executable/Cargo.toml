@@ -27,3 +27,4 @@ rstest.workspace = true
 test-log.workspace = true
 tokio.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
+rand.workspace = true

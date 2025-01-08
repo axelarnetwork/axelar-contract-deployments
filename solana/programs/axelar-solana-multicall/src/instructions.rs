@@ -1,6 +1,4 @@
 //! Instructions supported by the multicall program.
-extern crate alloc;
-use alloc::borrow::Cow;
 
 use axelar_executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -175,6 +173,7 @@ pub mod encoding {
 pub struct MultiCallPayloadBuilder {
     payloads: Vec<(Pubkey, Vec<AccountMeta>, Vec<u8>)>,
     encoding: Option<EncodingScheme>,
+    encoded_payload_buffer: Vec<u8>,
 }
 
 impl MultiCallPayloadBuilder {
@@ -202,22 +201,24 @@ impl MultiCallPayloadBuilder {
         Ok(self)
     }
 
-    /// Consumes the builder and returns the accounts and the payload.
+    /// Builds and returns the accounts and payload using the current builder state.
+    ///
+    /// This method clears the internal payloads vector but preserves the builder for potential reuse.
     ///
     /// # Errors
     ///
-    /// - [`PayloadError::InvalidEncodingScheme`] - The encoding scheme was not
-    ///   set.
-    /// - [`PayloadError::BorshSerializeError`] - The payload could not be borsh
-    ///   encoded.
-    /// - [`PayloadError::AbiError`] - Error encoding the payload using the ABI
-    ///   encoder.
-    pub fn build(self) -> Result<AxelarMessagePayload<'static>, PayloadError> {
+    /// - [`PayloadError::InvalidEncodingScheme`] - The encoding scheme was not set.
+    /// - [`PayloadError::BorshSerializeError`] - The payload could not be borsh encoded.
+    /// - [`PayloadError::AbiError`] - Error encoding the payload using the ABI encoder.
+    pub fn build(&mut self) -> Result<AxelarMessagePayload<'_>, PayloadError> {
         let encoding = self.encoding.ok_or(PayloadError::InvalidEncodingScheme)?;
         let mut top_level_accounts = Vec::new();
         let mut program_payloads = Vec::with_capacity(self.payloads.len());
 
-        for (program_id, mut accounts, data) in self.payloads {
+        // Since this method now borrows `&mut self` instead of consuming `self`, we use `mem::take` to
+        // get ownership of the payloads while keeping `self` in a valid state so the returned `AxelarMessagePayload`
+        // can reference `self.encoded_payload_buffer`.
+        for (program_id, mut accounts, instruction_data) in core::mem::take(&mut self.payloads) {
             let current_index = top_level_accounts.len();
 
             top_level_accounts.push(AccountMeta {
@@ -234,7 +235,7 @@ impl MultiCallPayloadBuilder {
                 .ok_or(PayloadError::Conversion)?;
 
             let program_payload = encoding::ProgramPayload {
-                instruction_data: data,
+                instruction_data,
                 program_account_index: current_index,
                 accounts_start_index: account_start_index,
                 accounts_end_index: account_end_index,
@@ -244,14 +245,14 @@ impl MultiCallPayloadBuilder {
             program_payloads.push(program_payload);
         }
 
-        let encoded_payload = encoding::MultiCallPayload {
+        self.encoded_payload_buffer = encoding::MultiCallPayload {
             payloads: program_payloads,
         }
         .encode(encoding)?;
 
-        Ok(AxelarMessagePayload::new_with_cow(
-            Cow::Owned(encoded_payload),
-            top_level_accounts.into_iter().map(Into::into).collect(),
+        Ok(AxelarMessagePayload::new(
+            &self.encoded_payload_buffer,
+            &top_level_accounts,
             encoding,
         ))
     }

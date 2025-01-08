@@ -49,12 +49,20 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
     let accounts_iter = &mut relayer_prepended_accs.iter();
 
+    let incoming_message_payload_hash;
     let signing_pda_bump = {
-        // scope to release the account after reading the data we want
+        // scope to drop the account borrow after reading the data we want
         let incoming_message_pda = next_account_info(accounts_iter)?;
+
+        // Check: Incoming Message account is owned by the Gateway
+        if incoming_message_pda.owner != &axelar_solana_gateway::ID {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+
         let incoming_message_data = incoming_message_pda.try_borrow_data()?;
         let incoming_message = IncomingMessage::read(&incoming_message_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        incoming_message_payload_hash = incoming_message.payload_hash;
         incoming_message.signing_pda_bump
     };
 
@@ -73,6 +81,11 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         return Err(ProgramError::InvalidAccountData);
     }
 
+    // Check: MessagePayload's payload hash matches IncomingMessage's
+    if *message_payload.payload_hash != incoming_message_payload_hash {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     // Decode the raw payload
     let axelar_payload = AxelarMessagePayload::decode(message_payload.raw_payload)?;
 
@@ -81,11 +94,6 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         .solana_accounts()
         .eq(origin_chain_provided_accs)
     {
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    // Check: recalculated hash equals the raw_payload hash we got from the MessagePayload account
-    if *axelar_payload.hash()? != *message_payload.payload_hash {
         return Err(ProgramError::InvalidAccountData);
     }
 

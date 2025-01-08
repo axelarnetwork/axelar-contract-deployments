@@ -37,11 +37,8 @@ async fn test_multicall_different_encodings() {
     }
 
     for encoding in [EncodingScheme::Borsh, EncodingScheme::AbiEncoding] {
-        let payload = multicall_builder
-            .clone()
-            .encoding_scheme(encoding)
-            .build()
-            .expect("failed to build data payload");
+        let mut builder = multicall_builder.clone().encoding_scheme(encoding);
+        let payload = builder.build().expect("failed to build data payload");
         let mut message = random_message();
         message.destination_address = axelar_solana_multicall::id().to_string();
         message.payload_hash = *payload.hash().unwrap();
@@ -96,10 +93,8 @@ async fn test_empty_multicall_should_succeed() {
     } = axelar_solana_setup().await;
 
     for encoding in [EncodingScheme::Borsh, EncodingScheme::AbiEncoding] {
-        let payload = MultiCallPayloadBuilder::default()
-            .encoding_scheme(encoding)
-            .build()
-            .expect("failed to build data payload");
+        let mut builder = MultiCallPayloadBuilder::default().encoding_scheme(encoding);
+        let payload = builder.build().expect("failed to build data payload");
         let mut message = random_message();
         message.destination_address = axelar_solana_multicall::id().to_string();
         message.payload_hash = *payload.hash().unwrap();

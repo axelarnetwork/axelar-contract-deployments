@@ -31,3 +31,5 @@ solana-sdk.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 pretty_assertions.workspace = true
 serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true

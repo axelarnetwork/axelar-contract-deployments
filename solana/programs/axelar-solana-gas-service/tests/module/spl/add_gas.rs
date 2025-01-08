@@ -51,7 +51,6 @@ async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
     let tx_hash = [42; 64];
     let log_index = 123;
 
-    dbg!(&config_pda_ata);
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
         &axelar_solana_gas_service::ID,

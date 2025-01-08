@@ -491,19 +491,25 @@ impl SolanaAxelarIntegrationMetadata {
         command_id: [u8; 32],
         raw_payload: &[u8],
     ) -> Result<(), BanksTransactionResultWithMetadata> {
-        let ix = axelar_solana_gateway::instructions::write_message_payload(
-            self.gateway_root_pda,
-            self.payer.pubkey(),
-            command_id,
-            raw_payload,
-            0,
-        )
-        .unwrap();
-        let tx = self.send_tx(&[ix]).await?;
-        assert!(
-            tx.result.is_ok(),
-            "failed to write to message payload account"
-        );
+        let chunk_size = 800; // mostly safe, relatively high value
+
+        for ChunkWithOffset { bytes, offset } in chunks_with_offset(raw_payload, chunk_size) {
+            let ix = axelar_solana_gateway::instructions::write_message_payload(
+                self.gateway_root_pda,
+                self.payer.pubkey(),
+                command_id,
+                bytes,
+                offset,
+            )
+            .unwrap();
+
+            // Must process chunks sequentially as `send_tx` requires &mut self.
+            self.send_tx(&[ix])
+                .await?
+                .result
+                .expect("tx for writing the message payload has reverted");
+        }
+
         Ok(())
     }
 
@@ -766,4 +772,74 @@ pub fn random_string(len: usize) -> String {
 /// Helper fn to produce a command id from a message.
 fn message_to_command_id(message: &Message) -> [u8; 32] {
     command_id(&message.cc_id.chain, &message.cc_id.id)
+}
+
+/// Represents a chunk of data with its offset in the original data slice.
+#[cfg_attr(test, derive(Debug, Clone, Eq, PartialEq))]
+struct ChunkWithOffset<'a> {
+    /// The actual chunk of data
+    bytes: &'a [u8],
+    /// Offset position in the original data
+    offset: usize,
+}
+
+/// Creates an iterator that yields fixed-size chunks with their offsets.
+fn chunks_with_offset(
+    data: &[u8],
+    chunk_size: usize,
+) -> impl Iterator<Item = ChunkWithOffset<'_>> + '_ {
+    data.chunks(chunk_size)
+        .enumerate()
+        .map(move |(index, chunk)| ChunkWithOffset {
+            bytes: chunk,
+            offset: index.saturating_mul(chunk_size),
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_chunks_with_offset() {
+        let data = b"12345678";
+        let chunks: Vec<_> = chunks_with_offset(data, 3).collect();
+
+        assert_eq!(
+            chunks,
+            vec![
+                ChunkWithOffset {
+                    bytes: b"123",
+                    offset: 0
+                },
+                ChunkWithOffset {
+                    bytes: b"456",
+                    offset: 3
+                },
+                ChunkWithOffset {
+                    bytes: b"78",
+                    offset: 6
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_empty_input() {
+        let data = b"";
+        assert!(chunks_with_offset(data, 3).next().is_none());
+    }
+
+    #[test]
+    fn test_chunk_size_larger_than_input() {
+        let data = b"123";
+        let chunks: Vec<_> = chunks_with_offset(data, 5).collect();
+        assert_eq!(
+            chunks,
+            vec![ChunkWithOffset {
+                bytes: b"123",
+                offset: 0
+            },]
+        );
+    }
 }
