@@ -988,6 +988,21 @@
           "blockExpiry": 10,
           "confirmationHeight": 1
         },
+        "stellar-test-2025-q1": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 854,
+          "address": "axelar1s3g877l0pk958vzeyrev9vncklrfht7dx2xv9c4u7zmr0y7jzfmq5cxjqm"
+        },
         "storeCodeProposalId": "78",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
       },
