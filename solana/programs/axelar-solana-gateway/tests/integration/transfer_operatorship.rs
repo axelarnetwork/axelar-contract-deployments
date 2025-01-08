@@ -111,7 +111,10 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
     let tx = fixture
         .send_tx_with_custom_signers(
             &[ix],
-            &[&upgrade_authority, &fixture.payer.insecure_clone()],
+            &[
+                &upgrade_authority.insecure_clone(),
+                &fixture.payer.insecure_clone(),
+            ],
         )
         .await
         .unwrap();

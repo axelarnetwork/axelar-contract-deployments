@@ -15,7 +15,6 @@ use crate::{program_test, relay_to_solana};
 async fn test_its_gmp_payload_fail_when_paused() {
     let mut solana_chain = program_test().await;
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_its::instructions::initialize(

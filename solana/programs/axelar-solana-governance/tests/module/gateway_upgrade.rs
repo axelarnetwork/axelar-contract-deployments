@@ -1,9 +1,9 @@
+use axelar_solana_gateway_test_fixtures::base::add_upgradeable_loader_account;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use solana_program_test::tokio;
 use solana_sdk::account::WritableAccount;
 use solana_sdk::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_sdk::signature::{Keypair, Signer};
-use test_fixtures::test_setup::add_upgradeable_loader_account;
 
 use crate::helpers::{
     approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, gmp_memo_metadata,
@@ -20,7 +20,6 @@ async fn test_gateway_upgrade_through_proposal() {
         .unwrap();
     let buffer_address = Keypair::new();
     let programdata_data_offset = UpgradeableLoaderState::size_of_buffer_metadata();
-
     add_upgradeable_loader_account(
         &mut sol_integration.fixture.context,
         &buffer_address.pubkey(),
@@ -37,7 +36,7 @@ async fn test_gateway_upgrade_through_proposal() {
 
     // Send the upgrade proposal with the new buffer account
     let ix_builder = IxBuilder::builder_for_program_upgrade(
-        &gateway::ID,
+        &axelar_solana_gateway::ID,
         &buffer_address.pubkey(),
         &config_pda,
         &sol_integration.fixture.payer.pubkey(),
@@ -45,15 +44,15 @@ async fn test_gateway_upgrade_through_proposal() {
     );
 
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Advance time
     sol_integration
@@ -66,18 +65,18 @@ async fn test_gateway_upgrade_through_proposal() {
         .clone()
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     // Advance slot to the next slot
     sol_integration.fixture.context.warp_to_slot(2).unwrap();
 
     // Now we can send ixs to the new program
     let ix = dummy_axelar_solana_gateway::instructions::echo(
-        gateway::ID,
+        axelar_solana_gateway::ID,
         "Testing gateway upgrade".to_string(),
     );
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
-    assert_msg_present_in_logs(res, "Echo: Testing gateway upgrade");
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
+    assert_msg_present_in_logs(res.unwrap(), "Echo: Testing gateway upgrade");
 }

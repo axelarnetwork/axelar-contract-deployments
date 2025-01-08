@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use axelar_solana_encoding::borsh::BorshDeserialize;
 use solana_program::hash::Hash;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::{
@@ -62,6 +63,19 @@ impl TestFixture {
         // update clock
         let mut new_clock = clock_sysvar;
         new_clock.unix_timestamp = new_clock.unix_timestamp.saturating_add(add_time);
+
+        // set clock
+        self.context.set_sysvar(&new_clock);
+    }
+
+    /// Set the time
+    pub async fn set_time(&mut self, time: i64) {
+        // get clock sysvar
+        let clock_sysvar: Clock = self.banks_client.get_sysvar().await.unwrap();
+
+        // update clock
+        let mut new_clock = clock_sysvar;
+        new_clock.unix_timestamp = time;
 
         // set clock
         self.context.set_sysvar(&new_clock);
@@ -255,6 +269,21 @@ impl TestFixture {
         }
     }
 
+    /// Get the account data borsh deserialized
+    ///
+    /// # Panics
+    /// if the account does not exist or the expected owner does not match.
+    #[allow(clippy::panic)]
+    pub async fn get_account_with_borsh<T: BorshDeserialize>(
+        &mut self,
+        account: &Pubkey,
+    ) -> Result<T, BanksClientError> {
+        self.context
+            .banks_client
+            .get_account_data_with_borsh::<T>(*account)
+            .await
+    }
+
     /// Tries to get an account.
     ///
     /// Non-panicking version of `Self::get_account`
@@ -296,7 +325,9 @@ impl FindLog for BanksTransactionResultWithMetadata {
     }
 }
 
-pub(crate) async fn add_upgradeable_loader_account(
+/// Add an upgradeable loader account to the context
+#[allow(clippy::impl_trait_in_params)] // Todo - remove this
+pub async fn add_upgradeable_loader_account(
     context: &mut ProgramTestContext,
     account_address: &Pubkey,
     account_state: &UpgradeableLoaderState,

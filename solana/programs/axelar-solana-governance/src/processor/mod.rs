@@ -7,8 +7,8 @@
 //! 2. Native program instructions: These are the instructions that are executed
 //!    by other Solana addresses.
 
-use axelar_rkyv_encoding::hasher::solana::SolanaKeccak256Hasher;
-use axelar_rkyv_encoding::hasher::{AxelarRkyv256Hasher, Hash256};
+use axelar_executable::validate_with_gmp_metadata;
+use gmp::{ProcessGMPContext, PROGRAM_ACCOUNTS_SPLIT_AT};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -20,7 +20,7 @@ use crate::{check_program_account, seed_prefixes};
 
 mod execute_operator_proposal;
 mod execute_proposal;
-mod gmp;
+pub mod gmp;
 mod init_config;
 mod transfer_operatorship;
 mod withdraw_tokens;
@@ -52,8 +52,22 @@ impl Processor {
                 init_config::process(program_id, accounts, governance_config)
             }
             // GMP instructions
-            GovernanceInstruction::GovernanceGmpPayload { payload, metadata } => {
-                gmp::process(program_id, accounts, &payload, &metadata)
+            GovernanceInstruction::ProcessGmp { message } => {
+                let accounts_iter = &mut accounts.iter();
+
+                let (gateway_accounts, gmp_accounts) =
+                    accounts_iter.as_slice().split_at(PROGRAM_ACCOUNTS_SPLIT_AT);
+
+                validate_with_gmp_metadata(gateway_accounts, &message)?;
+
+                let gmp_ctx = ProcessGMPContext::new_from_processor_context(
+                    program_id,
+                    gateway_accounts,
+                    gmp_accounts,
+                    &message,
+                )?;
+
+                gmp::process(program_id, gmp_ctx, gmp_accounts)
             }
             GovernanceInstruction::ExecuteProposal(execute_proposal) => {
                 execute_proposal::process(program_id, accounts, &execute_proposal)
@@ -70,12 +84,6 @@ impl Processor {
             }
         }
     }
-}
-
-fn hash(data: &[u8]) -> Hash256 {
-    let mut hasher = SolanaKeccak256Hasher::default();
-    hasher.hash(data);
-    hasher.result()
 }
 
 /// Ensure that the governance PDA has been derived correctly

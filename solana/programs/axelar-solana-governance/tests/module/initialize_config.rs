@@ -1,9 +1,9 @@
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::GovernanceConfig;
 use solana_program_test::tokio;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
-use test_fixtures::test_setup::TestFixture;
 
 use crate::fixtures::MINIMUM_PROPOSAL_DELAY;
 use crate::helpers::{assert_msg_present_in_logs, program_test};
@@ -26,16 +26,14 @@ async fn test_successfully_initialize_config() {
         .initialize_config(&fixture.payer.pubkey(), &config_pda, config.clone())
         .build();
 
-    let res = fixture.send_tx_with_metadata(&[ix]).await;
+    let res = fixture.send_tx(&[ix]).await;
 
     // Assert
-    assert!(res.result.is_ok());
+    assert!(res.is_ok());
     let root_pda_data = fixture
-        .get_account::<axelar_solana_governance::state::GovernanceConfig>(
-            &config_pda,
-            &axelar_solana_governance::ID,
-        )
-        .await;
+        .get_account_with_borsh::<axelar_solana_governance::state::GovernanceConfig>(&config_pda)
+        .await
+        .unwrap();
     assert_eq!(&config, &root_pda_data);
 }
 
@@ -61,9 +59,12 @@ async fn test_program_checks_config_pda_successfully_derived() {
         )
         .build(); // Wrong PDA
 
-    let res = fixture.send_tx_with_metadata(&[ix]).await;
+    let res = fixture.send_tx(&[ix]).await;
 
     // Assert
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Derived PDA does not match provided PDA");
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Derived PDA does not match provided PDA",
+    );
 }

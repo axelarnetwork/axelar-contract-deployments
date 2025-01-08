@@ -317,11 +317,12 @@ impl ExecutableProposal {
             transfer_lamports(config_pda, target_native_value_account_info, native_value)?;
         }
 
-        let accounts = call_data
+        let mut accounts = call_data
             .solana_accounts
             .iter()
             .map(AccountMeta::from)
             .collect::<Vec<AccountMeta>>();
+        accounts.push(AccountMeta::new_readonly(*config_pda.key, false)); // See https://github.com/solana-labs/solana/issues/9711#issuecomment-2342809295
 
         // Invoke the target program.
         solana_program::program::invoke_signed(

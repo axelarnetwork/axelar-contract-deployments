@@ -19,30 +19,30 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
 
     // We first schedule a time lock proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second, we approve the proposal, so the operator should be able to execute it
     // regardless of the ETA.
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Assert account with correct marker data data was created
     let approved_operator = sol_integration
@@ -56,16 +56,16 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
 
     // Third, we cancel the operator proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Assert the account and its data was deleted
     let acc = sol_integration
@@ -77,7 +77,7 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
     assert_eq!(acc, None);
 
     // Assert event was emitted
-    let mut emitted_events = events(&res);
+    let mut emitted_events = events(&res.unwrap());
     assert_eq!(emitted_events.len(), 1);
     let expected_event = operator_proposal_cancelled_event(&ix_builder);
     let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
@@ -101,45 +101,48 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     // We first schedule a time lock proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second, we approve the operator management of the proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Third, we try to cancel the operator management of the proposal
     let meta = gmp_sample_metadata();
     ix_builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
 
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_err());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_err());
 
-    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Derived proposal PDA does not match provided one",
+    );
 }
 
 #[tokio::test]
@@ -150,45 +153,45 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
 
     // We first schedule a time lock proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second, we approve the operator management of the proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Third, we try to cancel the operator management of the proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    ix.accounts[4] = AccountMeta::new_readonly(Pubkey::new_unique(), false); // Wrong PDA account
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_err());
+    gmp_call_data.ix.accounts[4] = AccountMeta::new_readonly(Pubkey::new_unique(), false); // Wrong PDA account
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_err());
 
     assert_msg_present_in_logs(
-        res,
+        res.err().unwrap(),
         "Derived operator managed proposal PDA does not match provided one",
     );
 }

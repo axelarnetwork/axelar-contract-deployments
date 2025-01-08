@@ -19,16 +19,16 @@ async fn test_can_withdraw_native_tokens_from_contract() {
         &config_pda,
         LAMPORTS_PER_SOL,
     );
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
     let ix = system_instruction::transfer(
         &sol_integration.fixture.payer.pubkey(),
         &fund_receiver.pubkey(),
         LAMPORTS_PER_SOL,
     );
     let amount_to_withdraw = 1;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     let ix_builder = IxBuilder::new().builder_for_withdraw_tokens(
         &config_pda,
@@ -39,15 +39,15 @@ async fn test_can_withdraw_native_tokens_from_contract() {
 
     // Send the GMP instruction
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
     let initial_governance_pda_funds = sol_integration
         .fixture
         .banks_client
@@ -86,9 +86,9 @@ async fn test_can_withdraw_native_tokens_from_contract() {
         .clone()
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
     println!("{res:?}");
-    assert!(res.result.is_ok());
+    assert!(res.is_ok());
 
     // Assert the contract has less funds
     let post_withdraw_governance_pda_funds = sol_integration

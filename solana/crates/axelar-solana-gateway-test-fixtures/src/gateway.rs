@@ -579,10 +579,41 @@ impl SolanaAxelarIntegration {
     #[allow(clippy::unwrap_used)]
     pub async fn setup_without_init_config(self) -> SolanaAxelarIntegrationMetadata {
         // Create a new ProgramTest instance
-        let mut fixture = TestFixture::new(ProgramTest::default()).await;
+        let fixture = TestFixture::new(ProgramTest::default()).await;
         // Generate a new keypair for the upgrade authority
         let upgrade_authority = Keypair::new();
 
+        self.setup_with_fixture_and_authority_without_gw_init(fixture, upgrade_authority)
+            .await
+    }
+
+    /// Setup a new Axelar Solana Gateway integration.
+    /// This method also initialises the Gateway config.
+    pub async fn setup(self) -> SolanaAxelarIntegrationMetadata {
+        let mut metadata = self.setup_without_init_config().await;
+        let _gateway_root_pda = metadata.initialize_gateway_config_account().await;
+        metadata
+    }
+
+    /// Setup a new Axelar Solana Gateway integration.
+    pub async fn setup_with_fixture_and_authority(
+        self,
+        fixture: TestFixture,
+        upgrade_authority: Keypair,
+    ) -> SolanaAxelarIntegrationMetadata {
+        let mut metadata = self
+            .setup_with_fixture_and_authority_without_gw_init(fixture, upgrade_authority)
+            .await;
+        let _gateway_root_pda = metadata.initialize_gateway_config_account().await;
+        metadata
+    }
+
+    /// Setup a new Axelar Solana Gateway integration.
+    pub async fn setup_with_fixture_and_authority_without_gw_init(
+        self,
+        mut fixture: TestFixture,
+        upgrade_authority: Keypair,
+    ) -> SolanaAxelarIntegrationMetadata {
         // deploy non-gateway programs
         for (program_name, program_id) in self.programs_to_deploy {
             let program_bytecode_path = workspace_root_dir()
@@ -629,14 +660,6 @@ impl SolanaAxelarIntegration {
             previous_signers_retention: self.previous_signers_retention,
             minimum_rotate_signers_delay_seconds: self.minimum_rotate_signers_delay_seconds,
         }
-    }
-
-    /// Setup a new Axelar Solana Gateway integration.
-    /// This method also initialises the Gateway config.
-    pub async fn setup(self) -> SolanaAxelarIntegrationMetadata {
-        let mut metadata = self.setup_without_init_config().await;
-        let _gateway_root_pda = metadata.initialize_gateway_config_account().await;
-        metadata
     }
 }
 

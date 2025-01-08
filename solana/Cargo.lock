@@ -817,14 +817,15 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "axelar-executable-old",
- "axelar-rkyv-encoding",
- "axelar-solana-memo-program-old",
+ "axelar-executable",
+ "axelar-solana-encoding",
+ "axelar-solana-gateway",
+ "axelar-solana-gateway-test-fixtures",
+ "axelar-solana-memo-program",
  "base64 0.21.7",
  "borsh 1.5.3",
  "dummy-axelar-solana-gateway",
  "ethers",
- "gmp-gateway",
  "governance-gmp",
  "program-utils",
  "serde",
@@ -832,7 +833,6 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "test-fixtures",
  "uuid 1.11.0",
 ]
 

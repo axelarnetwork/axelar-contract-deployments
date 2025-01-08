@@ -1,6 +1,6 @@
 //! Main instructions for the governance contract.
 
-use axelar_rkyv_encoding::types::GmpMetadata;
+use axelar_solana_encoding::types::messages::Message;
 use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::state::proposal::ExecuteProposalData;
@@ -19,9 +19,9 @@ pub enum GovernanceInstruction {
     /// A GMP instruction coming from the axelar network.
     /// The very first accounts are the gateways accounts:  
     ///
-    /// 0. [WRITE] Gateway Approved Message PDA account
-    /// 1. [] Signing PDA account
-    /// 2. [] Gateway Root Config PDA account
+    /// 0. [WRITE] Gateway incoming message PDA account
+    /// 1. [] Message payload account
+    /// 2. [] Approved message signing PDA account
     /// 3. [] Gateway program account
     ///
     /// Above accounts, are accompanied by GMP commands specific accounts:
@@ -53,12 +53,10 @@ pub enum GovernanceInstruction {
     /// 1. [WRITE, SIGNER] Payer account
     /// 2. [] Config PDA account
     /// 3. [WRITE] Prop operator account
-    GovernanceGmpPayload {
-        /// The GMP message metadata
-        metadata: GmpMetadata,
-        /// The GMP payload, abi encoded. See
-        /// [`governance_gmp::GovernanceCommandPayload`].
-        payload: Vec<u8>,
+    ProcessGmp {
+        /// The GMP message metadata. The payload is retrieved later from
+        ///  its dedicated account.
+        message: Message,
     },
 
     /// Execute a given proposal. Anyone from the Solana network can execute a
@@ -146,12 +144,14 @@ pub mod builder {
     use core::marker::PhantomData;
 
     use alloy_sol_types::SolValue;
-    use axelar_rkyv_encoding::types::GmpMetadata;
+    use axelar_solana_encoding::types::messages::Message;
+    use axelar_solana_gateway::state::incoming_message::command_id;
     use borsh::to_vec;
     use governance_gmp::alloy_primitives::Uint;
     use governance_gmp::{GovernanceCommand, GovernanceCommandPayload};
     use program_utils::from_u64_to_u256_le_bytes;
     use solana_program::instruction::{AccountMeta, Instruction};
+    use solana_program::keccak::hash;
     use solana_program::pubkey::Pubkey;
     use solana_program::{bpf_loader_upgradeable, system_program};
 
@@ -235,7 +235,7 @@ pub mod builder {
         /// The stage of the builder.
         pub stage: PhantomData<Stage>,
         /// The GMP metadata. Only used in the [`GmpMeta`] stage.
-        pub gmp_metadata: Option<GmpMetadata>,
+        pub gmp_msg_meta: Option<Message>,
         /// The GMP command. Only used in the [`GmpBuild`] stage.
         pub gmp_command: Option<GovernanceCommand>,
         /// The proposal target pubkey. Only used in the [`ProposalRelated`]
@@ -266,7 +266,7 @@ pub mod builder {
                 new_operator: None,
                 stage: PhantomData::<Init>,
                 gmp_command: None,
-                gmp_metadata: None,
+                gmp_msg_meta: None,
                 prop_target: None,
                 prop_native_value: None,
                 prop_eta: None,
@@ -316,7 +316,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<ProposalRelated>,
                 gmp_command: None,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: Some(target),
                 prop_native_value: Some(native_value),
                 prop_eta: Some(eta),
@@ -346,7 +346,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<ConfigBuild>,
                 gmp_command: None,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -379,7 +379,7 @@ pub mod builder {
                 new_operator: Some(*new_operator),
                 stage: PhantomData::<TransferOperatorshipBuild>,
                 gmp_command: self.gmp_command,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -493,7 +493,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpMeta>,
                 gmp_command: None,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -547,7 +547,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<ExecuteProposalBuild>,
                 gmp_command: None,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -608,7 +608,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<ExecuteOperatorProposalBuild>,
                 gmp_command: None,
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -653,14 +653,14 @@ pub mod builder {
         /// Introduces the gmp metadata for the subsequent GMP instruction.
         ///
         /// It provides access to the next builder stage [`GmpIx`].
-        pub fn with_metadata(self, gmp_metadata: GmpMetadata) -> IxBuilder<GmpIx> {
+        pub fn with_msg_metadata(self, message: Message) -> IxBuilder<GmpIx> {
             IxBuilder {
                 accounts: self.accounts,
                 config: self.config,
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpIx>,
                 gmp_command: self.gmp_command,
-                gmp_metadata: Some(gmp_metadata),
+                gmp_msg_meta: Some(message),
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -694,7 +694,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpBuild>,
                 gmp_command: Some(GovernanceCommand::ScheduleTimeLockProposal),
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -731,7 +731,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpBuild>,
                 gmp_command: Some(GovernanceCommand::CancelTimeLockProposal),
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -765,7 +765,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpBuild>,
                 gmp_command: Some(GovernanceCommand::ApproveOperatorProposal),
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -799,7 +799,7 @@ pub mod builder {
                 new_operator: self.new_operator,
                 stage: PhantomData::<GmpBuild>,
                 gmp_command: Some(GovernanceCommand::CancelOperatorApproval),
-                gmp_metadata: self.gmp_metadata,
+                gmp_msg_meta: self.gmp_msg_meta,
                 prop_target: self.prop_target,
                 prop_native_value: self.prop_native_value,
                 prop_eta: self.prop_eta,
@@ -900,9 +900,9 @@ pub mod builder {
     impl IxBuilder<GmpBuild> {
         /// Builds the instruction for the GMP command. This is a final builder
         /// stage.
-        pub fn build(self) -> Instruction {
+        pub fn build(self) -> GmpCallData {
             let accounts = self.accounts.unwrap();
-            let gmp_metadata = self.gmp_metadata.unwrap();
+            let mut gmp_msg_meta = self.gmp_msg_meta.unwrap();
             let gmp_command = self.gmp_command.unwrap();
             let gmp_prop_target = self.prop_target.unwrap();
             let gmp_prop_native_value = self.prop_native_value.unwrap();
@@ -917,16 +917,49 @@ pub mod builder {
                 eta: Uint::from(gmp_prop_eta),
             };
 
-            let gov_instruction = GovernanceInstruction::GovernanceGmpPayload {
-                payload: governance_command.abi_encode(),
-                metadata: gmp_metadata,
+            let payload = governance_command.abi_encode();
+            gmp_msg_meta.payload_hash = hash(&payload).to_bytes();
+
+            let gov_instruction = GovernanceInstruction::ProcessGmp {
+                message: gmp_msg_meta.clone(),
             };
             let data = to_vec(&gov_instruction).unwrap();
 
-            Instruction {
-                program_id: crate::id(),
-                accounts,
-                data,
+            GmpCallData::new(
+                Instruction {
+                    program_id: crate::id(),
+                    accounts,
+                    data,
+                },
+                gmp_msg_meta,
+                payload,
+            )
+        }
+    }
+
+    /// A struct representing the GMP call data.
+    pub struct GmpCallData {
+        /// The ix generated by the builder, ready to be sent.
+        pub ix: Instruction,
+        /// The message metadata contained in the serialised instruction.
+        pub msg_meta: Message,
+        /// The raw message payload.
+        pub msg_payload: Vec<u8>,
+    }
+
+    impl GmpCallData {
+        /// Creates a new `GmpCallData` instance.
+        ///
+        /// # Arguments
+        ///
+        /// * `ix` - The instruction.
+        /// * `msg_meta` - The message metadata.
+        /// * `msg_payload` - The message payload.
+        pub fn new(ix: Instruction, msg_meta: Message, msg_payload: Vec<u8>) -> Self {
+            Self {
+                ix,
+                msg_meta,
+                msg_payload,
             }
         }
     }
@@ -936,15 +969,19 @@ pub mod builder {
     /// message verification in GMP flows.
     pub fn prepend_gateway_accounts_to_ix(
         ix: &mut Instruction,
-        gateway_root_pda: Pubkey,
-        gateway_approved_message_pda: Pubkey,
-        signing_pda: Pubkey,
+        gw_incoming_message: Pubkey,
+        gw_message_payload: Pubkey,
+        message: &Message,
     ) {
+        let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+        let (gateway_approved_message_signing_pda, _) =
+            axelar_solana_gateway::get_validate_message_signing_pda(crate::id(), command_id);
+
         let mut new_accounts = vec![
-            AccountMeta::new(gateway_approved_message_pda, false),
-            AccountMeta::new_readonly(signing_pda, false),
-            AccountMeta::new_readonly(gateway_root_pda, false),
-            AccountMeta::new_readonly(gateway::id(), false),
+            AccountMeta::new(gw_incoming_message, false),
+            AccountMeta::new_readonly(gw_message_payload, false),
+            AccountMeta::new_readonly(gateway_approved_message_signing_pda, false),
+            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
         ];
         // Append the new accounts to the existing ones.
         new_accounts.extend_from_slice(&ix.accounts);
@@ -953,7 +990,8 @@ pub mod builder {
     #[cfg(test)]
     #[allow(clippy::shadow_unrelated)]
     mod test {
-        use axelar_rkyv_encoding::types::CrossChainId;
+
+        use axelar_solana_encoding::types::messages::CrossChainId;
 
         use super::*;
 
@@ -1023,7 +1061,7 @@ pub mod builder {
             let _ix = base_ix_builder
                 .clone()
                 .gmp_ix()
-                .with_metadata(gmp_sample_metadata())
+                .with_msg_metadata(gmp_sample_metadata())
                 .schedule_time_lock_proposal(&payer, &config_pda);
 
             // Send ix
@@ -1055,7 +1093,7 @@ pub mod builder {
             let _ix = base_ix_builder
                 .clone()
                 .gmp_ix()
-                .with_metadata(gmp_sample_metadata())
+                .with_msg_metadata(gmp_sample_metadata())
                 .schedule_time_lock_proposal(&payer, &config_pda);
             // Send ix
 
@@ -1125,13 +1163,16 @@ pub mod builder {
             );
         }
 
-        fn gmp_sample_metadata() -> GmpMetadata {
-            GmpMetadata {
-                cross_chain_id: CrossChainId::new("chain".to_owned(), "09af".to_owned()),
+        fn gmp_sample_metadata() -> Message {
+            Message {
+                cc_id: CrossChainId {
+                    chain: "chain".to_owned(),
+                    id: "09af".to_owned(),
+                },
                 source_address: "0x0".to_owned(),
                 destination_address: "0x0".to_owned(),
                 destination_chain: "solana".to_owned(),
-                domain_separator: [0_u8; 32],
+                payload_hash: [0_u8; 32],
             }
         }
     }

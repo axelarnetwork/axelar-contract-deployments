@@ -32,15 +32,15 @@ async fn test_time_lock_is_enforced() {
     // Get default fixtures
     ix_builder.prop_eta = Some(eta);
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Send execute proposal instruction
     let ix = ix_builder
@@ -48,36 +48,35 @@ async fn test_time_lock_is_enforced() {
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Proposal ETA needs to be respected");
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_err());
+    assert_msg_present_in_logs(res.err().unwrap(), "Proposal ETA needs to be respected");
 }
 
 #[tokio::test]
 async fn test_proposal_can_be_executed_and_reached_memo_program() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
 
-    // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
-
+    // Using the memo program as target proposal program.
     let memo_program_accounts = &[
-        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
+        AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second flow, execute the proposal.
 
@@ -93,16 +92,16 @@ async fn test_proposal_can_be_executed_and_reached_memo_program() {
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     // Assert event was emitted
-    let mut emitted_events = events(&res);
+    let mut emitted_events = events(&res.clone().unwrap());
     assert_eq!(emitted_events.len(), 1);
     let expected_event = proposal_executed_event(&ix_builder);
     let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
-    assert_msg_present_in_logs(res, "Instruction: SendToGateway");
+    assert_msg_present_in_logs(res.unwrap(), "Instruction: SendToGateway");
 }
 
 fn proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEvent {
@@ -123,15 +122,15 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     // We send a legit proposal
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // We send a wrong execution proposal instruction, with a wrong PDA.
 
@@ -141,10 +140,13 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
         .clone()
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
     // The runtime detects the wrong PDA and returns an error.
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Derived proposal PDA does not match provided one",
+    );
 }
 
 #[tokio::test]
@@ -157,35 +159,37 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
         &config_pda,
         LAMPORTS_PER_SOL, // Let's fund the governance PDA with 1 SOL.
     );
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     // Gmp send the memo program instruction.
-    // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
+
+    // Using the memo program as target proposal program.
+    let memo_program_funds_receiver_account = AccountMeta::new(counter_pda, false);
 
     let memo_program_accounts = &[
-        AccountMeta::new(sol_integration.fixture.payer.pubkey(), true),
+        memo_program_funds_receiver_account.clone(),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
-    let memo_program_funds_receiver_account = AccountMeta::new(counter_pda, false);
-    let ix_builder = ix_builder_with_memo_proposal_data(
+
+    let ix_builder: IxBuilder<ProposalRelated> = ix_builder_with_memo_proposal_data(
         memo_program_accounts,
         LAMPORTS_PER_SOL,
-        Some(memo_program_funds_receiver_account.clone()),
+        Some(memo_program_funds_receiver_account),
     );
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second flow, execute the proposal.
 
@@ -202,9 +206,9 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
-    assert_msg_present_in_logs(res, "Instruction: SendToGateway");
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
+    assert_msg_present_in_logs(res.unwrap(), "Instruction: SendToGateway");
 
     let target_contract_balance = sol_integration
         .fixture
@@ -218,29 +222,31 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
 #[tokio::test]
 async fn test_proposal_is_deleted_after_execution() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
 
     // Memo program solana accounts. gathered from
     // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
+    // Using the memo program as target proposal program.
     let memo_program_accounts = &[
-        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
+        AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second flow, execute the proposal.
 
@@ -257,8 +263,8 @@ async fn test_proposal_is_deleted_after_execution() {
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     // Proposal should be deleted
     let proposal_account = sol_integration
@@ -272,29 +278,28 @@ async fn test_proposal_is_deleted_after_execution() {
 
 #[tokio::test]
 async fn test_same_proposal_can_be_created_after_execution() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
 
-    // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
-
+    // Using the memo program as target proposal program.
     let memo_program_accounts = &[
-        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
+        AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Second flow, execute the proposal.
 
@@ -310,64 +315,66 @@ async fn test_same_proposal_can_be_created_after_execution() {
         .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
 
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_ok());
 
     // Try to create again the proposal, it should be possible.
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 }
 
 #[tokio::test()]
 async fn test_cannot_create_proposal_twice() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
 
-    // Memo program solana accounts. gathered from
-    // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
-
+    // Using the memo program as target proposal program.
     let memo_program_accounts = &[
-        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
+        AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
 
     // Get memo gmp fixtures
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Try to create again the proposal, it should fail.
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_err());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_err());
 
     // We split the error message in two, as the error message contains addresses
     // that are changing in each test run.
-    assert_msg_present_in_logs(res.clone(), "Create Account: account Address");
-    assert_msg_present_in_logs(res, "already in use");
+    assert_msg_present_in_logs(
+        res.clone().err().unwrap(),
+        "Create Account: account Address",
+    );
+    assert_msg_present_in_logs(res.err().unwrap(), "already in use");
 }

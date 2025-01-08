@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
@@ -5,7 +6,6 @@ use solana_program_test::tokio;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
-use test_fixtures::test_setup::TestFixture;
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
@@ -25,41 +25,44 @@ async fn test_full_flow_operator_proposal_execution() {
     // Get the operator key pair;
     let operator = operator_keypair();
 
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
 
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
-        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
+        AccountMeta::new_readonly(counter_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
-        AccountMeta::new_readonly(gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program_old::id(), false),
+        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
+        AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
     // Send the proposal via GMP acting as Axelar governance infrastructure
     let ix_builder = ix_builder_with_memo_proposal_data(memo_program_accounts, 0, None);
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Put the proposal under operator management, acting here as Axelar governance
     // infrastructure.
     let meta = gmp_memo_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     // Send the operator execute proposal instruction
     let ix = ix_builder
@@ -73,20 +76,21 @@ async fn test_full_flow_operator_proposal_execution() {
 
     let res = sol_integration
         .fixture
-        .send_tx_with_custom_signers_with_metadata(
+        .send_tx_with_custom_signers(
             &[ix],
             &[operator, sol_integration.fixture.payer.insecure_clone()],
         )
         .await;
-    assert!(res.result.is_ok());
+
+    assert!(res.is_ok());
 
     // Assert event was emitted
-    let mut emitted_events = events(&res);
+    let mut emitted_events = events(&res.clone().unwrap());
     assert_eq!(emitted_events.len(), 1);
     let expected_event = operator_proposal_executed_event(&ix_builder);
     let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
     assert_eq!(expected_event, got_event);
-    assert_msg_present_in_logs(res, "Instruction: SendToGateway");
+    assert_msg_present_in_logs(res.unwrap(), "Instruction: SendToGateway");
 
     // Ensure the proposal account is closed
     let proposal_account = sol_integration
@@ -127,15 +131,15 @@ async fn test_non_previously_approved_operator_proposal_execution_fails() {
     // Send the proposal via GMP acting as Axelar governance infrastructure
     // Get default fixtures
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     //  HERE, WE MISS THE STEP OF SETTING THE PROPOSAL UNDER OPERATOR MANAGEMENT, so
     // execution should fail.
@@ -152,13 +156,16 @@ async fn test_non_previously_approved_operator_proposal_execution_fails() {
 
     let res = sol_integration
         .fixture
-        .send_tx_with_custom_signers_with_metadata(
+        .send_tx_with_custom_signers(
             &[ix],
             &[operator, sol_integration.fixture.payer.insecure_clone()],
         )
         .await;
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "An account required by the instruction is missing");
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "An account required by the instruction is missing",
+    );
 }
 
 #[tokio::test]
@@ -181,13 +188,13 @@ async fn test_only_operator_can_execute_ix() {
         .build();
 
     let res = fixture
-        .send_tx_with_custom_signers_with_metadata(
-            &[ix],
-            &[operator, fixture.payer.insecure_clone()],
-        )
+        .send_tx_with_custom_signers(&[ix], &[operator, fixture.payer.insecure_clone()])
         .await;
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Operator account must sign the transaction");
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Operator account must sign the transaction",
+    );
 }
 
 #[tokio::test]
@@ -197,26 +204,26 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     ix_builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
 
@@ -231,13 +238,16 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     let res = sol_integration
         .fixture
-        .send_tx_with_custom_signers_with_metadata(
+        .send_tx_with_custom_signers(
             &[ix],
             &[operator, sol_integration.fixture.payer.insecure_clone()],
         )
         .await;
-    assert!(res.result.is_err());
-    assert_msg_present_in_logs(res, "Derived proposal PDA does not match provided one");
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Derived proposal PDA does not match provided one",
+    );
 }
 
 #[tokio::test]
@@ -247,26 +257,26 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     let meta = gmp_sample_metadata();
-    let mut ix = ix_builder
+    let mut gmp_call_data = ix_builder
         .clone()
         .gmp_ix()
-        .with_metadata(meta.clone())
+        .with_msg_metadata(meta.clone())
         .approve_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
         .build();
-    approve_ix_at_gateway(&mut sol_integration, &mut ix, meta.clone()).await;
-    let res = sol_integration.fixture.send_tx_with_metadata(&[ix]).await;
-    assert!(res.result.is_ok());
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
 
     ix_builder.prop_operator_pda = Some(Pubkey::new_unique());
 
@@ -281,14 +291,14 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
 
     let res = sol_integration
         .fixture
-        .send_tx_with_custom_signers_with_metadata(
+        .send_tx_with_custom_signers(
             &[ix],
             &[operator, sol_integration.fixture.payer.insecure_clone()],
         )
         .await;
-    assert!(res.result.is_err());
+    assert!(res.is_err());
     assert_msg_present_in_logs(
-        res,
+        res.err().unwrap(),
         "Derived operator managed proposal PDA does not match provided one",
     );
 }
