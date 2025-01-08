@@ -118,23 +118,12 @@ impl ProcessGMPContext {
         let payload_account_data = payload_account.try_borrow_data()?;
         let message_payload: ImmutMessagePayload<'_> = (**payload_account_data).try_into()?;
 
-        let cmd_payload = GovernanceCommandPayload::abi_decode(message_payload.raw_payload, true)
-            .map_err(|err| {
-            msg!("Cannot abi decode GovernanceCommandPayload: {}", err);
-            ProgramError::InvalidArgument
-        })?;
+        let cmd_payload = payload_conversions::decode_payload(message_payload.raw_payload)?;
 
-        let target: [u8; 32] = cmd_payload.target.to_vec().try_into().map_err(|_err| {
-            msg!("Cannot cast incoming target address for governance gmp command");
-            ProgramError::InvalidArgument
-        })?;
-        let target = Pubkey::from(target);
+        let target = payload_conversions::decode_payload_target(&cmd_payload.target)?;
 
-        let execute_proposal_call_data: ExecuteProposalCallData =
-            borsh::from_slice(&cmd_payload.call_data).map_err(|err| {
-                msg!("Cannot deserialize ExecuteProposalCallData: {}", err);
-                ProgramError::InvalidArgument
-            })?;
+        let execute_proposal_call_data =
+            payload_conversions::decode_payload_call_data(&cmd_payload.call_data)?;
 
         let proposal_hash = ExecutableProposal::calculate_hash(
             &target,
@@ -147,6 +136,53 @@ impl ProcessGMPContext {
             proposal_hash,
             minimum_eta_delay: u64::from(governance_config.minimum_proposal_eta_delay),
             target,
+        })
+    }
+}
+
+/// A module to convert the payload data of a governance GMP command.
+pub mod payload_conversions {
+
+    use governance_gmp::alloy_primitives::Bytes;
+
+    use super::*;
+
+    /// Decodes the payload of a governance GMP command.
+    ///
+    /// # Errors
+    ///
+    /// A `ProgramError` is returned if the payload cannot be deserialized.
+    pub fn decode_payload(raw_payload: &[u8]) -> Result<GovernanceCommandPayload, ProgramError> {
+        GovernanceCommandPayload::abi_decode(raw_payload, true).map_err(|err| {
+            msg!("Cannot abi decode GovernanceCommandPayload: {}", err);
+            ProgramError::InvalidArgument
+        })
+    }
+
+    /// Decodes the target address from the payload.
+    ///
+    /// # Errors
+    ///
+    /// A `ProgramError` is returned if the target address cannot be deserialized.
+    pub fn decode_payload_target(payload_target_addr: &Bytes) -> Result<Pubkey, ProgramError> {
+        let target: [u8; 32] = payload_target_addr.to_vec().try_into().map_err(|_err| {
+            msg!("Cannot cast incoming target address for governance gmp command");
+            ProgramError::InvalidArgument
+        })?;
+        Ok(Pubkey::from(target))
+    }
+
+    /// Decodes the call data from the payload.
+    ///
+    /// # Errors
+    ///
+    /// A `ProgramError` is returned if the call data cannot be deserialized.
+    pub fn decode_payload_call_data(
+        call_data: &Bytes,
+    ) -> Result<ExecuteProposalCallData, ProgramError> {
+        borsh::from_slice(call_data).map_err(|err| {
+            msg!("Cannot deserialize ExecuteProposalCallData: {}", err);
+            ProgramError::InvalidArgument
         })
     }
 }

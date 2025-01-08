@@ -149,13 +149,15 @@ pub mod builder {
     use borsh::to_vec;
     use governance_gmp::alloy_primitives::Uint;
     use governance_gmp::{GovernanceCommand, GovernanceCommandPayload};
-    use program_utils::from_u64_to_u256_le_bytes;
+    use program_utils::{checked_from_u256_le_bytes_to_u64, from_u64_to_u256_le_bytes};
     use solana_program::instruction::{AccountMeta, Instruction};
     use solana_program::keccak::hash;
+    use solana_program::program_error::ProgramError;
     use solana_program::pubkey::Pubkey;
-    use solana_program::{bpf_loader_upgradeable, system_program};
+    use solana_program::{bpf_loader_upgradeable, msg, system_program};
 
     use super::GovernanceInstruction;
+    use crate::processor::gmp;
     use crate::state::operator::derive_managed_proposal_pda;
     use crate::state::proposal::{
         ExecutableProposal, ExecuteProposalCallData, ExecuteProposalData,
@@ -962,6 +964,78 @@ pub mod builder {
                 msg_payload,
             }
         }
+    }
+
+    /// Calculates the GMP instruction for a given GMP message.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the payload is not valid.
+    pub fn calculate_gmp_ix(
+        payer: Pubkey,
+        gateway_incoming_message_pda: Pubkey,
+        gateway_message_payload_pda: Pubkey,
+        message: &Message,
+        payload: &[u8],
+    ) -> Result<Instruction, ProgramError> {
+        let payload = gmp::payload_conversions::decode_payload(payload)?;
+        let call_data = gmp::payload_conversions::decode_payload_call_data(&payload.call_data)?;
+        let target = gmp::payload_conversions::decode_payload_target(&payload.target)?;
+        let ix_builder = IxBuilder::new();
+
+        let account = call_data
+            .solana_native_value_receiver_account
+            .map(AccountMeta::from);
+
+        let solana_accounts = call_data
+            .solana_accounts
+            .iter()
+            .map(AccountMeta::from)
+            .collect::<Vec<_>>();
+
+        let ix_builder = ix_builder
+            .with_proposal_data(
+                target,
+                checked_from_u256_le_bytes_to_u64(&payload.native_value.to_le_bytes())?,
+                checked_from_u256_le_bytes_to_u64(&payload.eta.to_le_bytes())?,
+                account,
+                &solana_accounts,
+                call_data.call_data,
+            )
+            .gmp_ix()
+            .with_msg_metadata(message.clone());
+
+        let config_pda = GovernanceConfig::pda().0;
+
+        let ix_builder = match payload.command {
+            GovernanceCommand::ScheduleTimeLockProposal => {
+                ix_builder.schedule_time_lock_proposal(&payer, &config_pda)
+            }
+            GovernanceCommand::CancelTimeLockProposal => {
+                ix_builder.cancel_time_lock_proposal(&payer, &config_pda)
+            }
+            GovernanceCommand::ApproveOperatorProposal => {
+                ix_builder.approve_operator_proposal(&payer, &config_pda)
+            }
+            GovernanceCommand::CancelOperatorApproval => {
+                ix_builder.cancel_operator_proposal(&payer, &config_pda)
+            }
+            _ => {
+                msg!("Governance command is not implemented, wrong payload");
+                return Err(ProgramError::InvalidInstructionData);
+            }
+        };
+
+        let mut ix = ix_builder.build().ix;
+
+        prepend_gateway_accounts_to_ix(
+            &mut ix,
+            gateway_incoming_message_pda,
+            gateway_message_payload_pda,
+            message,
+        );
+
+        Ok(ix)
     }
 
     /// Prepends the gateway accounts to the instruction.
