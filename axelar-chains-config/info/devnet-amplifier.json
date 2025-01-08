@@ -623,6 +623,45 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
+    "stellar-test-2025-q1": {
+      "name": "Stellar",
+      "id": "stellar-test-2025-q1",
+      "axelarId": "stellar-test-2025-q1",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "explorer": {
+        "name": "Soroban Nownodes",
+        "url": "https://soroban.nownodes.io/testnet"
+      },
+      "tokenSymbol": "XLM",
+      "contracts": {
+        "axelar_gateway": {
+          "address": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "4143f187c235fe365c547047c06c4fd7fb7b7eff664b9d9b044112d91bfef13c",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "operator": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "domainSeparator": "293407cef6cb084c2c7ca31794d4cc95d8c3ea2aced086aebb518a2c37b28dc6",
+            "minimumRotationDelay": "0",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "e8898cba5a371e9d9c5622b5b62b25958096b9ab881f1e4bf91d6d29da58fd5e",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
     "stellar-test2": {
       "name": "Stellar",
       "axelarId": "stellar-test2",
