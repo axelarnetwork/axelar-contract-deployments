@@ -64,6 +64,11 @@ const instantiate = async (client, wallet, config, options) => {
     printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
+const uploadInstantiate = async (client, wallet, config, options) => {
+    await upload(client, wallet, config, options);
+    await instantiate(client, wallet, config, options);
+};
+
 const mainProcessor = async (processor, options) => {
     const { env } = options;
     const config = loadConfig(env);
@@ -107,6 +112,19 @@ const programHandler = () => {
         instantiate2Options: true,
         codeId: true,
         fetchCodeId: true,
+    });
+
+    const uploadInstantiateCmd = program
+        .command('upload-instantiate')
+        .description('Upload wasm binary and instantiate contract')
+        .action((options) => {
+            mainProcessor(uploadInstantiate, options);
+        });
+    addAmplifierOptions(uploadInstantiateCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
     });
 
     program.parse();
