@@ -114,7 +114,21 @@ Deploy each contract. Chain name should match the key of an object in the `chain
 
     `node deploy-contract.js [upload|instantiate|upload-instantiate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
 
+Available subcommands:
+
+-   `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
+
+-   `instantiate`: Instantiates a contract, it gets the codeId by order of priority from:
+
+    1. Value of `--codeId` option
+    2. From the network when using `--fetchCodeId` option by comparing previously uploaded bytecode's code hash with config `storeCodeProposalCodeHash`
+    3. Value of previously saved `lastUploadedCodeId` in config
+
+-   `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
+
+Example deployments:
 
 1.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "AxelarnetGateway" --instantiate2 -e devnet`
 2.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet`
