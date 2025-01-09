@@ -131,16 +131,16 @@ Upload:
 
 Instantiate:
 
-1.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet`
-3.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "ServiceRegistry" -e devnet`
-4.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "Rewards" -e devnet`
-5.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "Coordinator" -e devnet`
-6.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "Multisig" -e devnet`
-7.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "InterchainTokenService" -e devnet`
-8.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "avalanche"`
-9.  `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "avalanche"`
-10. `node deploy-contract.js instantiate -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "avalanche"`
+1.  `node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
+2.  `node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
+3.  `node deploy-contract.js instantiate -m [mnemonic] -c "ServiceRegistry" -e devnet`
+4.  `node deploy-contract.js instantiate -m [mnemonic] -c "Rewards" -e devnet`
+5.  `node deploy-contract.js instantiate -m [mnemonic] -c "Coordinator" -e devnet`
+6.  `node deploy-contract.js instantiate -m [mnemonic] -c "Multisig" -e devnet`
+7.  `node deploy-contract.js instantiate -m [mnemonic] -c "InterchainTokenService" -e devnet`
+8.  `node deploy-contract.js instantiate -m [mnemonic] -c "VotingVerifier" -e devnet -n "avalanche"`
+9.  `node deploy-contract.js instantiate -m [mnemonic] -c "Gateway" -e devnet -n "avalanche"`
+10. `node deploy-contract.js instantiate -m [mnemonic] -c "MultisigProver" -e devnet -n "avalanche"`
 
 ### Constant Address Deployment
 
