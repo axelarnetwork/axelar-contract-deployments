@@ -199,6 +199,36 @@ node stellar/its.js set-trusted-chain [chain-name]
 node stellar/its.js remove-trusted-chain [chain-name]
 ```
 
+#### Deploy Interchain Token
+
+```bash
+node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [initial-supply]
+```
+
+#### Deploy Remote Interchain Token
+
+```bash
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
+#### Register Canonical Token
+
+```bash
+node stellar/its.js register-canonical-token [token-address]
+```
+
+#### Interchain Transfer
+
+```bash
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
+```
+
+#### Execute
+
+```bash
+node stellar/its.js execute [source-chain] [message-id] [source-address] [payload]
+```
+
 ## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
@@ -244,30 +274,4 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-### ITS Examples
-
-#### Deploy Interchain Token
-
-```bash
-node stellar/its-example.js deploy-token [name] [symbol] [decimal] [salt] [initial-supply]
-```
-
-#### Deploy Remote Interchain Token
-
-```bash
-node stellar/its-example.js deploy-remote-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
-```
-
-#### Send Interchain Token
-
-```bash
-node stellar/its-example.js send-token [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
-```
-
-#### Execute
-
-```bash
-node stellar/its-example.js execute [source-chain] [message-id] [source-address] [payload]
 ```
