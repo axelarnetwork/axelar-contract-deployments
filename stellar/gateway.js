@@ -163,6 +163,21 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
     await broadcast(operation, wallet, chain, 'Amplifier Proof Submitted', options);
 }
 
+async function execute(wallet, _, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [sourceChain, messageId, sourceAddress, payload] = args;
+
+    const operation = contract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
+    );
+
+    await broadcast(operation, wallet, chain, 'Executed', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
@@ -221,6 +236,13 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .description('execute a message')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
