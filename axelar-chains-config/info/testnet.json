@@ -2663,7 +2663,7 @@
           "keyType": "ecdsa",
           "codeId": 18,
           "domainSeparator": "0xf221c54a1a478f48c840a24cf2b96f77c9bc369a40570744b8fedd91df001624",
-          "address": "axelar19ew05xx796gp7xkzx5z592cp0s7lg58gypaas3u2pwunmyjdyytqxq886u"
+          "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6"
         },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
@@ -2680,7 +2680,7 @@
         },
         "sui": {
           "codeId": 24,
-          "address": "axelar1ty4wum8dwjzzu5jcvd376vx60dym033t3z0z5tvwg0krynl53atqhztp74"
+          "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593"
         },
         "storeCodeProposalId": "181",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
@@ -2720,7 +2720,7 @@
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
-          "sourceGatewayAddress": "0x7fa977e8174494413834a2bafd5b46e07049c02d73e771bc00e58a31ef7895be",
+          "sourceGatewayAddress": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
           "votingThreshold": [
             "51",
             "100"
@@ -2730,7 +2730,7 @@
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
           "codeId": 26,
-          "address": "axelar17xulf6ycgjc0akj7d2qxt45509kdva3x7chk7pe66kqz6rkwmxms255ujh"
+          "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh"
         },
         "storeCodeProposalId": "183",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
