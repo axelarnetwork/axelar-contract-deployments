@@ -687,29 +687,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axelar-rkyv-encoding"
-version = "0.1.0"
-dependencies = [
- "arrayref",
- "bitflags 2.6.0",
- "bnum",
- "borsh 1.5.3",
- "bs58",
- "bytemuck",
- "ed25519-dalek 2.1.1",
- "hex",
- "itertools 0.12.1",
- "libsecp256k1",
- "rand 0.7.3",
- "rand 0.8.5",
- "rkyv",
- "rs_merkle",
- "sha3 0.10.8",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
 name = "axelar-solana-encoding"
 version = "0.1.0"
 dependencies = [
@@ -833,7 +810,6 @@ dependencies = [
  "alloy-sol-types",
  "axelar-executable",
  "axelar-message-primitives",
- "axelar-rkyv-encoding",
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
  "axelar-solana-gateway",
@@ -889,7 +865,6 @@ version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
  "axelar-executable",
- "axelar-rkyv-encoding",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
  "axelar-solana-memo-program",

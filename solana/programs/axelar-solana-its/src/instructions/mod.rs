@@ -1016,7 +1016,7 @@ fn derive_specific_its_accounts(
             }
         }
         ItsMessageRef::DeployInterchainToken { minter, .. } => {
-            if minter.len() == axelar_rkyv_encoding::types::ED25519_PUBKEY_LEN {
+            if minter.len() == axelar_solana_encoding::types::pubkey::ED25519_PUBKEY_LEN {
                 let minter_key = Pubkey::new_from_array(
                     (*minter)
                         .try_into()

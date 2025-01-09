@@ -140,7 +140,6 @@ gateway-event-stack = { path = "crates/gateway-event-stack" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-executable = { path = "crates/axelar-executable" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
-axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }

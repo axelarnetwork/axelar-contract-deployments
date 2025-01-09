@@ -21,7 +21,6 @@ axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 solana-program.workspace = true
 
 [dev-dependencies]
-axelar-rkyv-encoding.workspace = true
 axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-gateway-test-fixtures.workspace = true
 ethers-core.workspace = true
