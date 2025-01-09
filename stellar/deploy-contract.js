@@ -233,7 +233,7 @@ function main() {
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
         .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-        .addOption(new Option('--migration-data <migrationData>', 'migration data'))
+        .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
         .action((contractName, options) => {
             mainProcessor(options, upgrade, contractName);
         });
