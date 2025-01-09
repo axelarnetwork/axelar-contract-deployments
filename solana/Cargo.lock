@@ -2895,23 +2895,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gas-service"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axelar-message-primitives",
- "base64 0.21.7",
- "borsh 1.5.3",
- "hex",
- "num-derive",
- "num-traits",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
 name = "gateway-event-stack"
 version = "0.1.0"
 dependencies = [

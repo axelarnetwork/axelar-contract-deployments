@@ -131,7 +131,6 @@ axelar-solana-its = { path = "programs/axelar-solana-its" }
 axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
-gas-service = { path = "programs/gas-service" }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway" }
 axelar-solana-governance = { path = "programs/axelar-solana-governance" }
