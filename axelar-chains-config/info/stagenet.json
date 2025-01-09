@@ -1904,8 +1904,7 @@
         },
         "hedera": {
           "executeProposalId": "48"
-        },
-        "sui": {}
+        }
       },
       "NexusGateway": {
         "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
@@ -1930,8 +1929,7 @@
         "storeCodeProposalCodeHash": "095c1caca4f9b7381519bd8395f3f558202fd4d4ad03f223dd8a2e991c568bd6",
         "codeId": 23,
         "lastUploadedCodeId": 4,
-        "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at",
-        "sui": {}
+        "address": "axelar1nyhmtdrzx77ynqgu8cug0u7eqz2kzfk9mctvaa4stqpekg4s9vnsgu54at"
       },
       "Coordinator": {
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -1946,8 +1944,7 @@
         },
         "hedera": {
           "executeProposalId": "49"
-        },
-        "sui": {}
+        }
       },
       "Multisig": {
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
@@ -1964,8 +1961,7 @@
         },
         "hedera": {
           "executeProposalId": "47"
-        },
-        "sui": {}
+        }
       },
       "MultisigProver": {
         "flow": {
