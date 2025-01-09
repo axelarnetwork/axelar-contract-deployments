@@ -241,12 +241,15 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
     );
     const signers = Object.values(verifierSet.signers);
 
+    // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
         .map((signer) => ({
             signer: Address.account(Buffer.from(arrayify(`0x${signer.pub_key.ed25519}`))).toString(),
             weight: Number(signer.weight),
+            pubKey: signer.pub_key.ed25519,
         }))
-        .sort((a, b) => a.signer.localeCompare(b.signer));
+        .sort((a, b) => a.pubKey.localeCompare(b.pubKey))
+        .map(({ signer, weight }) => ({ signer, weight }));
 
     return {
         signers: weightedSigners,
