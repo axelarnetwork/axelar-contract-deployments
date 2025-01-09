@@ -275,29 +275,3 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
-
-### ITS Examples
-
-#### Deploy Interchain Token
-
-```bash
-node stellar/its-example.js deploy-token [name] [symbol] [decimal] [salt] [initial-supply]
-```
-
-#### Deploy Remote Interchain Token
-
-```bash
-node stellar/its-example.js deploy-remote-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
-```
-
-#### Send Interchain Token
-
-```bash
-node stellar/its-example.js send-token [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
-```
-
-#### Execute
-
-```bash
-node stellar/its-example.js execute [source-chain] [message-id] [source-address] [payload]
-```
