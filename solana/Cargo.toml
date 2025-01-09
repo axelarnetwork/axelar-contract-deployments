@@ -132,7 +132,6 @@ axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service" }
 axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
 axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
 gas-service = { path = "programs/gas-service" }
-gateway = { path = "programs/gateway", package = "gmp-gateway" }
 axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
 dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway" }
 axelar-solana-governance = { path = "programs/axelar-solana-governance" }
@@ -141,7 +140,6 @@ axelar-solana-governance = { path = "programs/axelar-solana-governance" }
 gateway-event-stack = { path = "crates/gateway-event-stack" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-executable = { path = "crates/axelar-executable" }
-axelar-executable-old = { path = "helpers/axelar-executable-old" }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-rkyv-encoding = { path = "crates/axelar-rkyv-encoding", features = ["solana"] }
 axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }
@@ -152,7 +150,6 @@ its-instruction-builder = { path = "helpers/its-instruction-builder" }
 governance-gmp = { path = "helpers/governance-gmp" }
 program-utils = { path = "helpers/program-utils" }
 role-management = { path = "helpers/role-management" }
-test-fixtures = { path = "helpers/test-fixtures" }
 
 [workspace.metadata.cargo-machete]
 ignored = ["num-traits"]

@@ -667,17 +667,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axelar-executable-old"
-version = "0.1.0"
-dependencies = [
- "axelar-message-primitives",
- "axelar-rkyv-encoding",
- "borsh 1.5.3",
- "gmp-gateway",
- "solana-program",
-]
-
-[[package]]
 name = "axelar-message-primitives"
 version = "0.1.0"
 dependencies = [
@@ -911,7 +900,6 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "test-fixtures",
 ]
 
 [[package]]
@@ -3006,37 +2994,6 @@ dependencies = [
  "futures-core",
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "gmp-gateway"
-version = "0.1.0"
-dependencies = [
- "arrayref",
- "axelar-message-primitives",
- "axelar-rkyv-encoding",
- "base64 0.21.7",
- "bincode",
- "bitflags 2.6.0",
- "bitvec",
- "borsh 1.5.3",
- "hex",
- "itertools 0.12.1",
- "lazy_static",
- "libsecp256k1",
- "num-derive",
- "num-traits",
- "program-utils",
- "rkyv",
- "sha3 0.10.8",
- "solana-client",
- "solana-logger",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "test-fixtures",
- "thiserror",
- "typed-builder",
 ]
 
 [[package]]
@@ -7977,28 +7934,6 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
-
-[[package]]
-name = "test-fixtures"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axelar-executable-old",
- "axelar-message-primitives",
- "axelar-rkyv-encoding",
- "bincode",
- "borsh 1.5.3",
- "gas-service",
- "gmp-gateway",
- "interchain-token-transfer-gmp",
- "itertools 0.12.1",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-token-2022 5.0.2",
- "tokio",
- "typed-builder",
-]
 
 [[package]]
 name = "test-log"
