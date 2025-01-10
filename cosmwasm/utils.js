@@ -137,14 +137,12 @@ const uploadContract = async (client, wallet, config, options) => {
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
-    return await client.upload(account.address, wasm, uploadFee);
+    return client.upload(account.address, wasm, uploadFee);
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-
     const [account] = await wallet.getAccounts();
-
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -169,6 +167,19 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
           });
 
     return contractAddress;
+};
+
+const migrateContract = async (client, wallet, config, options) => {
+    const { msg } = options;
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
 
 const validateAddress = (address) => {
@@ -875,6 +886,7 @@ module.exports = {
     getCodeId,
     uploadContract,
     instantiateContract,
+    migrateContract,
     fetchCodeIdFromCodeHash,
     addDefaultInstantiateAddresses,
     getChainTruncationParams,
