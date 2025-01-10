@@ -1,5 +1,6 @@
 {
   "name": "@axelar-network/axelar-contract-deployments",
+  "type": "commonjs",
   "version": "1.4.0",
   "description": "Axelar contract deployment scripts",
   "main": "index.js",

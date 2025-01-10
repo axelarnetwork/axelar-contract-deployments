@@ -119,3 +119,6 @@ sui/move
 # VSCode
 .vscode
 .DS_Store
+
+# Jetbrains
+.idea
