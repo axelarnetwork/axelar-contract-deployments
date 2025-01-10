@@ -78,6 +78,9 @@ async function buildTransaction(operation, server, wallet, networkType, options 
 const prepareTransaction = async (operation, server, wallet, networkType, options = {}) => {
     const builtTransaction = await buildTransaction(operation, server, wallet, networkType, options);
 
+    // ahram test
+    printInfo('builtTransaction tx', builtTransaction);
+
     // We use the RPC server to "prepare" the transaction. This simulating the
     // transaction, discovering the storage footprint, and updating the
     // transaction to include that footprint. If you know the footprint ahead of

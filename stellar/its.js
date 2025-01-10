@@ -1,12 +1,22 @@
+'use strict';
+
+const { Address, Contract, nativeToScVal, Operation, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
-const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexZeroPad, isHexString, keccak256 },
 } = ethers;
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
-const { addBaseOptions, getWallet, broadcast, tokenToScVal, tokenMetadataToScVal } = require('./utils');
+const {
+    addBaseOptions,
+    getWallet,
+    broadcast,
+    tokenToScVal,
+    tokenMetadataToScVal,
+    getNetworkPassphrase,
+    createAuthorizedFunc,
+} = require('./utils');
 const { prompt } = require('../common/utils');
 
 async function setTrustedChain(wallet, _, chain, arg, options) {
@@ -72,21 +82,83 @@ async function registerCanonicalToken(wallet, _, chain, args, options) {
     await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
 }
 
+async function createAuth(itsAddress, gasServiceAddress, gatewayAddress, spenderScVal, gasTokenScVal, chain, wallet) {
+    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 100);
+
+    const itsAddressScVal = nativeToScVal(Address.fromString(itsAddress), { type: 'address' });
+    const axlearScVal = nativeToScVal('axelar', { type: 'string' });
+    const axelarAddressScVal = nativeToScVal('axelar13ehuhysn5mqjeaheeuew2gjs785f6k7jm8vfsqg3jhtpkwppcmzqtedxty', { type: 'string' });
+    const payloadHex =
+        '0x0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000096176616c616e636865000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000001c00a0cb91e6505241fd8c744cc5444fe3e0f5e18c551f5a3f09e9cfde4727a8100000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000007000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000066e6174697665000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066e617469766500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+    const emptyBytesScVal = nativeToScVal('()');
+
+    return Promise.all(
+        [
+            createAuthorizedFunc(gasServiceAddress, 'pay_gas', [
+                itsAddressScVal,
+                axlearScVal,
+                axelarAddressScVal,
+                nativeToScVal(Buffer.from(arrayify(payloadHex)), { type: 'bytes' }),
+                spenderScVal,
+                gasTokenScVal,
+                emptyBytesScVal,
+            ]),
+            createAuthorizedFunc(gatewayAddress, 'call_contract', [itsAddressScVal, axlearScVal, axelarAddressScVal, emptyBytesScVal]),
+        ].map((auth) =>
+            authorizeInvocation(
+                wallet,
+                validUntil,
+                new xdr.SorobanAuthorizedInvocation({
+                    function: auth,
+                    subInvocations: [],
+                }),
+                wallet.publicKey(),
+                getNetworkPassphrase(chain.networkType),
+            ),
+        ),
+    );
+}
+
 async function deployRemoteCanonicalToken(wallet, _, chain, args, options) {
-    const contract = new Contract(chain.contracts.interchain_token_service?.address);
-    const spender = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+    let itsAddress = chain.contracts.interchain_token_service?.address;
+    let gasServiceAddress = chain.contracts.axelar_gas_service?.address;
+    let gatewayAddress = chain.contracts.axelar_gateway?.address;
+
+    const spenderScVal = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
     const [tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount] = args;
 
-    const operation = contract.call(
-        'deploy_remote_canonical_token',
-        nativeToScVal(tokenAddress, { type: 'address' }),
-        nativeToScVal(destinationChain, { type: 'string' }),
-        spender,
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
-    );
+    gasServiceAddress = Address.fromString(gasServiceAddress);
+    gatewayAddress = Address.fromString(gatewayAddress);
+
+    let tokenAddressScVal = nativeToScVal(tokenAddress, { type: 'address' });
+    let destinationChainsScVal = nativeToScVal(destinationChain, { type: 'string' });
+    let gasTokenScVal = tokenToScVal(gasTokenAddress, gasFeeAmount);
+
+    const operation = Operation.invokeContractFunction({
+        contract: itsAddress,
+        function: 'deploy_remote_canonical_token',
+        args: [tokenAddressScVal, destinationChainsScVal, spenderScVal, gasTokenScVal],
+        auth: await createAuth(itsAddress, gasServiceAddress, gatewayAddress, spenderScVal, gasTokenScVal, chain, wallet),
+    });
 
     await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
 }
+
+// async function deployRemoteCanonicalTokenOrg(wallet, _, chain, args, options) {
+//     const contract = new Contract(chain.contracts.interchain_token_service?.address);
+//     const spender = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+//     const [tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount] = args;
+
+//     const operation = contract.call(
+//         'deploy_remote_canonical_token',
+//         nativeToScVal(tokenAddress, { type: 'address' }),
+//         nativeToScVal(destinationChain, { type: 'string' }),
+//         spender,
+//         tokenToScVal(gasTokenAddress, gasFeeAmount),
+//     );
+
+//     await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+// }
 
 async function interchainTransfer(wallet, _, chain, args, options) {
     const contract = new Contract(chain.contracts.interchain_token_service?.address);
