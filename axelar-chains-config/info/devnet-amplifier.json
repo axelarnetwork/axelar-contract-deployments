@@ -625,7 +625,6 @@
     },
     "stellar-test-2025-q1": {
       "name": "Stellar",
-      "id": "stellar-test-2025-q1",
       "axelarId": "stellar-test-2025-q1",
       "rpc": "https://soroban-testnet.stellar.org",
       "horizonRpc": "https://horizon-testnet.stellar.org",
