@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexZeroPad },
+    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
 } = ethers;
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
