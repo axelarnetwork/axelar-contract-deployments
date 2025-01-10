@@ -161,6 +161,22 @@ async function deployRemoteCanonicalToken(wallet, _, chain, args, options) {
     await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
 }
 
+// async function deployRemoteCanonicalTokenOrg(wallet, _, chain, args, options) {
+//     const contract = new Contract(chain.contracts.interchain_token_service?.address);
+//     const spender = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+//     const [tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount] = args;
+
+//     const operation = contract.call(
+//         'deploy_remote_canonical_token',
+//         nativeToScVal(tokenAddress, { type: 'address' }),
+//         nativeToScVal(destinationChain, { type: 'string' }),
+//         spender,
+//         tokenToScVal(gasTokenAddress, gasFeeAmount),
+//     );
+
+//     await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+// }
+
 async function interchainTransfer(wallet, _, chain, args, options) {
     const contract = new Contract(chain.contracts.interchain_token_service?.address);
     const caller = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
