@@ -17,8 +17,7 @@ async fn test_receive_funds() {
     let receiver = Keypair::new();
     let receiver_balance_before = 0;
     let config_pda_balance_before = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()
@@ -50,15 +49,13 @@ async fn test_receive_funds() {
 
     // assert that SOL gets transferred
     let receiver_balance_after = test_fixture
-        .banks_client
-        .get_account(receiver.pubkey())
+        .try_get_account_no_checks(&receiver.pubkey())
         .await
         .unwrap()
         .unwrap()
         .lamports;
     let config_pda_balance_after = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()

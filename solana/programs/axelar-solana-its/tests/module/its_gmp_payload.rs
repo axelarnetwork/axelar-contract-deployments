@@ -7,6 +7,7 @@ use interchain_token_transfer_gmp::InterchainTransfer;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
+use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
@@ -109,9 +110,7 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
     relay_to_solana(inner_payload, &mut solana_chain, None, spl_token_2022::id()).await;
 
     let mint_account = solana_chain
-        .fixture
-        .banks_client
-        .get_account(mint)
+        .try_get_account_no_checks(&mint)
         .await
         .expect("banks client error")
         .expect("mint account empty");
@@ -225,12 +224,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
     )
     .await;
 
-    let token_manager_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(token_manager_ata)
+    let token_manager_ata_raw_account = solana_chain
+        .try_get_account_no_checks(&token_manager_ata)
         .await
+        .unwrap()
         .unwrap();
+    let token_manager_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&token_manager_ata_raw_account.data)
+            .unwrap();
 
     let destination_ata =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -239,12 +240,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
             &token_program_id,
         );
 
-    let destination_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(destination_ata)
+    let destination_ata_raw_account = solana_chain
+        .try_get_account_no_checks(&destination_ata)
         .await
+        .unwrap()
         .unwrap();
+    let destination_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&destination_ata_raw_account.data)
+            .unwrap();
 
     assert_eq!(
         token_manager_ata_account.amount,
@@ -354,12 +357,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     )
     .await;
 
-    let token_manager_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(token_manager_ata)
+    let token_manager_ata_raw_account = solana_chain
+        .try_get_account_no_checks(&token_manager_ata)
         .await
+        .unwrap()
         .unwrap();
+    let token_manager_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&token_manager_ata_raw_account.data)
+            .unwrap();
 
     let destination_ata =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -368,12 +373,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
             &spl_token_2022::id(),
         );
 
-    let destination_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(destination_ata)
+    let destination_ata_raw_account = solana_chain
+        .try_get_account_no_checks(&destination_ata)
         .await
+        .unwrap()
         .unwrap();
+    let destination_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&destination_ata_raw_account.data)
+            .unwrap();
 
     assert_eq!(
         token_manager_ata_account.amount,
@@ -382,22 +389,14 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
     );
 
     let mint_data = solana_chain
-        .fixture
-        .banks_client
-        .get_account(mint)
+        .try_get_account_no_checks(&mint)
         .await
         .unwrap()
         .unwrap();
 
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
-    let epoch = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar::<Clock>()
-        .await
-        .unwrap()
-        .epoch;
+    let epoch = solana_chain.get_sysvar::<Clock>().await.epoch;
     let fee = fee_config
         .calculate_epoch_fee(epoch, transferred_amount)
         .unwrap();

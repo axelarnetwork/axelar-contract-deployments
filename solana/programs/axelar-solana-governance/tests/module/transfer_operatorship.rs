@@ -108,7 +108,7 @@ async fn test_error_is_emitted_when_no_required_signers() {
 
 #[tokio::test]
 async fn test_can_change_operator_via_gmp_proposal() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let new_operator = Pubkey::new_unique();
 

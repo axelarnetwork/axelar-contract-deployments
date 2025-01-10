@@ -7,7 +7,7 @@ use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};
 use solana_sdk::{
     account::ReadableAccount, keccak, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
-    signer::Signer, system_instruction, transaction::Transaction,
+    signer::Signer, system_instruction,
 };
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::{extension::ExtensionType, state::Mint};
@@ -42,7 +42,11 @@ impl TestFixture {
             &axelar_solana_gas_service::id(),
         )
         .await;
+        self.setup_default_gas_config(upgrade_authority)
+    }
 
+    /// Initialise a new gas config and return a utility tracker struct for it
+    pub fn setup_default_gas_config(&mut self, upgrade_authority: Keypair) -> GasServiceUtils {
         let config_authority = Keypair::new();
         let salt = keccak::hash(b"my gas service").0;
         let (config_pda, ..) = axelar_solana_gas_service::get_config_pda(
@@ -97,36 +101,32 @@ impl TestFixture {
         token_program_id: Pubkey,
         decimals: u8,
     ) -> Pubkey {
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let mint_account = Keypair::new();
-        let rent = self.banks_client.get_rent().await.unwrap();
+        let rent = self.get_rent(Mint::LEN).await;
 
-        let transaction = Transaction::new_signed_with_payer(
-            &[
-                system_instruction::create_account(
-                    &self.payer.pubkey(),
-                    &mint_account.pubkey(),
-                    rent.minimum_balance(Mint::LEN),
-                    Mint::LEN.try_into().unwrap(),
-                    &token_program_id,
-                ),
-                spl_token_2022::instruction::initialize_mint(
-                    &token_program_id,
-                    &mint_account.pubkey(),
-                    &mint_authority,
-                    None,
-                    decimals,
-                )
-                .unwrap(),
-            ],
-            Some(&self.payer.pubkey()),
-            &[&self.payer, &mint_account],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        let instructions = &[
+            system_instruction::create_account(
+                &self.payer.pubkey(),
+                &mint_account.pubkey(),
+                rent,
+                Mint::LEN.try_into().unwrap(),
+                &token_program_id,
+            ),
+            spl_token_2022::instruction::initialize_mint(
+                &token_program_id,
+                &mint_account.pubkey(),
+                &mint_authority,
+                None,
+                decimals,
+            )
+            .unwrap(),
+        ];
+        self.send_tx_with_custom_signers(
+            instructions,
+            &[&self.payer.insecure_clone(), &mint_account],
+        )
+        .await
+        .unwrap();
 
         mint_account.pubkey()
     }
@@ -143,47 +143,44 @@ impl TestFixture {
         transfer_fee_config_authority: Option<&Pubkey>,
         withdraw_withheld_authority: Option<&Pubkey>,
     ) -> Pubkey {
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let mint_account = Keypair::new();
-        let rent = self.banks_client.get_rent().await.unwrap();
         let space =
             ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::TransferFeeConfig])
                 .unwrap();
+        let rent = self.get_rent(space).await;
 
-        let transaction = Transaction::new_signed_with_payer(
-            &[
-                system_instruction::create_account(
-                    &self.payer.pubkey(),
-                    &mint_account.pubkey(),
-                    rent.minimum_balance(space),
-                    space.try_into().unwrap(),
-                    token_program_id,
-                ),
-                spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config(
-                    token_program_id,
-                    &mint_account.pubkey(),
-                    transfer_fee_config_authority,
-                    withdraw_withheld_authority,
-                    fee_basis_points,
-                    maximum_fee
-                ).unwrap(),
-                spl_token_2022::instruction::initialize_mint(
-                    token_program_id,
-                    &mint_account.pubkey(),
-                    mint_authority,
-                    None,
-                    decimals
-                )
-                .unwrap(),
-            ],
-            Some(&self.payer.pubkey()),
-            &[&self.payer, &mint_account],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        let instructions = [
+            system_instruction::create_account(
+                &self.payer.pubkey(),
+                &mint_account.pubkey(),
+                rent,
+                space.try_into().unwrap(),
+                token_program_id,
+            ),
+            spl_token_2022::extension::transfer_fee::instruction::initialize_transfer_fee_config(
+                token_program_id,
+                &mint_account.pubkey(),
+                transfer_fee_config_authority,
+                withdraw_withheld_authority,
+                fee_basis_points,
+                maximum_fee,
+            )
+            .unwrap(),
+            spl_token_2022::instruction::initialize_mint(
+                token_program_id,
+                &mint_account.pubkey(),
+                mint_authority,
+                None,
+                decimals,
+            )
+            .unwrap(),
+        ];
+        self.send_tx_with_custom_signers(
+            &instructions,
+            &[&self.payer.insecure_clone(), &mint_account],
+        )
+        .await
+        .unwrap();
 
         mint_account.pubkey()
     }
@@ -197,7 +194,6 @@ impl TestFixture {
         amount: u64,
         token_program_id: &Pubkey,
     ) {
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let ix = spl_token_2022::instruction::mint_to(
             token_program_id,
             mint,
@@ -207,14 +203,8 @@ impl TestFixture {
             amount,
         )
         .unwrap();
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer, mint_authority],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
+
+        self.send_tx_with_custom_signers(&[ix], &[&self.payer.insecure_clone(), mint_authority])
             .await
             .unwrap();
     }
@@ -226,7 +216,6 @@ impl TestFixture {
         holder_wallet_address: &Pubkey,
         token_program_id: &Pubkey,
     ) -> Pubkey {
-        let recent_blockhash = self.banks_client.get_latest_blockhash().await.unwrap();
         let associated_account_address = get_associated_token_address_with_program_id(
             holder_wallet_address,
             token_mint_address,
@@ -238,17 +227,7 @@ impl TestFixture {
             token_mint_address,
             token_program_id,
         );
-
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&self.payer.pubkey()),
-            &[&self.payer],
-            recent_blockhash,
-        );
-        self.banks_client
-            .process_transaction(transaction)
-            .await
-            .unwrap();
+        self.send_tx(&[ix]).await.unwrap();
         associated_account_address
     }
 
@@ -257,10 +236,13 @@ impl TestFixture {
         &mut self,
         token_account: &Pubkey,
     ) -> spl_token_2022::state::Account {
-        self.banks_client
-            .get_packed_account_data::<spl_token_2022::state::Account>(*token_account)
+        let res = self
+            .try_get_account_no_checks(token_account)
             .await
             .unwrap()
+            .unwrap();
+
+        spl_token_2022::state::Account::unpack_from_slice(&res.data).unwrap()
     }
 
     /// get the gas service config pda state

@@ -10,7 +10,7 @@ use crate::helpers::{
 
 #[tokio::test]
 async fn test_can_withdraw_native_tokens_from_contract() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
     let fund_receiver = Keypair::new();
 
     // Fund both accounts for avoiding rent exemption issues.
@@ -48,12 +48,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
     assert!(res.is_ok());
-    let initial_governance_pda_funds = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(config_pda)
-        .await
-        .unwrap();
+    let initial_governance_pda_funds = sol_integration.get_balance(&config_pda).await;
     println!("initial_governance_pda_funds: {initial_governance_pda_funds}");
 
     // Move time forward to the proposal ETA
@@ -63,20 +58,10 @@ async fn test_can_withdraw_native_tokens_from_contract() {
         .await;
 
     // Get current receiver total funds
-    let initial_receiver_funds = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(fund_receiver.pubkey())
-        .await
-        .unwrap();
+    let initial_receiver_funds = sol_integration.get_balance(&fund_receiver.pubkey()).await;
 
     // Get current contract total funds
-    let initial_governance_pda_funds = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(config_pda)
-        .await
-        .unwrap();
+    let initial_governance_pda_funds = sol_integration.get_balance(&config_pda).await;
 
     println!("initial_receiver_funds: {initial_receiver_funds}");
     println!("initial_governance_pda_funds: {initial_governance_pda_funds}");
@@ -91,12 +76,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     assert!(res.is_ok());
 
     // Assert the contract has less funds
-    let post_withdraw_governance_pda_funds = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(config_pda)
-        .await
-        .unwrap();
+    let post_withdraw_governance_pda_funds = sol_integration.get_balance(&config_pda).await;
 
     assert_eq!(
         post_withdraw_governance_pda_funds,
@@ -104,12 +84,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     );
 
     // Assert the receiver has the initial funds + the gov module funds
-    let new_receiver_funds = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(fund_receiver.pubkey())
-        .await
-        .unwrap();
+    let new_receiver_funds = sol_integration.get_balance(&fund_receiver.pubkey()).await;
     assert_eq!(
         new_receiver_funds,
         amount_to_withdraw + initial_receiver_funds

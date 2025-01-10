@@ -19,8 +19,7 @@ async fn test_refund_native() {
     let refunded_user = Keypair::new();
     let refunder_balance_before = 0;
     let config_pda_balance_before = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()
@@ -75,15 +74,13 @@ async fn test_refund_native() {
 
     // assert that SOL gets transferred
     let refunder_balance_after = test_fixture
-        .banks_client
-        .get_account(refunded_user.pubkey())
+        .try_get_account_no_checks(&refunded_user.pubkey())
         .await
         .unwrap()
         .unwrap()
         .lamports;
     let config_pda_balance_after = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()

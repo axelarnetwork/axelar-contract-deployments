@@ -12,7 +12,7 @@ use crate::helpers::{
 #[tokio::test]
 async fn test_gateway_upgrade_through_proposal() {
     // Init environment
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     // Upload bytecode of the new gateway version
     let new_gateway_version = tokio::fs::read("../../target/deploy/dummy_axelar_solana_gateway.so")
@@ -21,7 +21,7 @@ async fn test_gateway_upgrade_through_proposal() {
     let buffer_address = Keypair::new();
     let programdata_data_offset = UpgradeableLoaderState::size_of_buffer_metadata();
     add_upgradeable_loader_account(
-        &mut sol_integration.fixture.context,
+        &mut sol_integration.fixture,
         &buffer_address.pubkey(),
         &UpgradeableLoaderState::Buffer {
             authority_address: Some(config_pda),
@@ -69,7 +69,7 @@ async fn test_gateway_upgrade_through_proposal() {
     assert!(res.is_ok());
 
     // Advance slot to the next slot
-    sol_integration.fixture.context.warp_to_slot(2).unwrap();
+    sol_integration.warp_to_slot(2);
 
     // Now we can send ixs to the new program
     let ix = dummy_axelar_solana_gateway::instructions::echo(

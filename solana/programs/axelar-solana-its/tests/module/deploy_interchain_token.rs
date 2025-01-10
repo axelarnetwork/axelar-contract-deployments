@@ -51,9 +51,7 @@ async fn test_deploy_interchain_token() {
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
     let mint_account = solana_chain
-        .fixture
-        .banks_client
-        .get_account(mint)
+        .try_get_account_no_checks(&mint)
         .await
         .expect("banks client error")
         .expect("mint account empty");

@@ -8,6 +8,7 @@ use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gate
 use evm_contracts_test_suite::ItsContracts;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_program_test::tokio;
+use solana_sdk::program_pack::Pack as _;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 use spl_token_metadata_interface::state::TokenMetadata;
@@ -98,9 +99,7 @@ async fn test_send_from_evm_to_solana() {
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
     let mint_account = solana_chain
-        .fixture
-        .banks_client
-        .get_account(mint)
+        .try_get_account_no_checks(&mint)
         .await
         .expect("banks client error")
         .expect("mint account empty");
@@ -211,12 +210,9 @@ async fn test_send_from_evm_to_solana() {
         &spl_token_2022::id(),
     );
 
-    let ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(ata)
-        .await
-        .unwrap();
+    let ata_raw_account = solana_chain.try_get_account_no_checks(&ata).await.unwrap();
+    let ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&ata_raw_account.unwrap().data).unwrap();
 
     assert_eq!(ata_account.mint, mint);
     assert_eq!(ata_account.owner, axelar_solana_memo_program::id());
@@ -227,12 +223,12 @@ async fn test_send_from_evm_to_solana() {
         log_msgs.iter().any(|log| log.as_str().contains("🐪🐪🐪🐪")),
         "expected memo not found in logs"
     );
-    let counter = solana_chain
-        .fixture
-        .banks_client
-        .get_account_data_with_borsh::<Counter>(counter_pda.unwrap())
+    let counter_raw_account = solana_chain
+        .try_get_account_no_checks(&counter_pda.unwrap())
         .await
+        .unwrap()
         .unwrap();
+    let counter = Counter::try_from_slice(&counter_raw_account.data).unwrap();
 
     assert_eq!(counter.counter, 1);
 }

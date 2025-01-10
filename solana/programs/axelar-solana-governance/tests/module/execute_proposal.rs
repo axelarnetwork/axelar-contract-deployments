@@ -14,7 +14,7 @@ use crate::helpers::{
 
 #[tokio::test]
 async fn test_time_lock_is_enforced() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -55,7 +55,7 @@ async fn test_time_lock_is_enforced() {
 
 #[tokio::test]
 async fn test_proposal_can_be_executed_and_reached_memo_program() {
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
@@ -116,7 +116,7 @@ fn proposal_executed_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceEv
 
 #[tokio::test]
 async fn test_program_checks_proposal_pda_is_correctly_derived() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -151,7 +151,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
 #[tokio::test]
 async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_funds() {
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Fund the governance PDA
     let ix = solana_sdk::system_instruction::transfer(
@@ -210,19 +210,14 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
     assert!(res.is_ok());
     assert_msg_present_in_logs(res.unwrap(), "Instruction: SendToGateway");
 
-    let target_contract_balance = sol_integration
-        .fixture
-        .banks_client
-        .get_balance(counter_pda)
-        .await
-        .unwrap();
+    let target_contract_balance = sol_integration.get_balance(&counter_pda).await;
 
     assert_eq!(LAMPORTS_PER_SOL + 953_520, target_contract_balance);
 }
 
 #[tokio::test]
 async fn test_proposal_is_deleted_after_execution() {
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Memo program solana accounts. gathered from
     // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
@@ -268,9 +263,7 @@ async fn test_proposal_is_deleted_after_execution() {
 
     // Proposal should be deleted
     let proposal_account = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_pda())
         .await
         .unwrap();
     assert!(proposal_account.is_none());
@@ -278,7 +271,7 @@ async fn test_proposal_is_deleted_after_execution() {
 
 #[tokio::test]
 async fn test_same_proposal_can_be_created_after_execution() {
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
@@ -333,7 +326,7 @@ async fn test_same_proposal_can_be_created_after_execution() {
 
 #[tokio::test()]
 async fn test_cannot_create_proposal_twice() {
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[

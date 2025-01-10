@@ -13,7 +13,7 @@ use crate::helpers::{
 
 #[tokio::test]
 async fn test_successfully_process_gmp_cancel_operator_proposal() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -46,9 +46,7 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
 
     // Assert account with correct marker data data was created
     let approved_operator = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_operator_marker_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_operator_marker_pda())
         .await
         .unwrap();
 
@@ -69,9 +67,7 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
 
     // Assert the account and its data was deleted
     let acc = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_operator_marker_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_operator_marker_pda())
         .await
         .unwrap();
     assert_eq!(acc, None);
@@ -95,7 +91,7 @@ fn operator_proposal_cancelled_event(builder: &IxBuilder<ProposalRelated>) -> Go
 
 #[tokio::test]
 async fn test_program_checks_proposal_pda_is_correctly_derived() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -147,7 +143,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
 #[tokio::test]
 async fn test_program_checks_operator_pda_is_correctly_derived() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
 

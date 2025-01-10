@@ -74,7 +74,7 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
     assert!(cmp_config(&metadata, &root_pda_data));
 
     // Assert -- block timestamp updated
-    let clock = metadata.banks_client.get_sysvar::<Clock>().await.unwrap();
+    let clock = metadata.get_sysvar::<Clock>().await;
     let block_timestamp = clock.unix_timestamp as u64;
     assert_eq!(
         root_pda_data.last_rotation_timestamp, block_timestamp,

@@ -15,7 +15,7 @@ mod schedule_time_lock_proposal;
 
 #[tokio::test]
 async fn test_gov_gmp_fails_on_wrong_source_address() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut gmp_metadata = gmp_sample_metadata();
     let wrong_address = "0x32Be343B94f860124dC4fEe278FDCBD38C102D88"; // <--- Wrong address
@@ -37,7 +37,7 @@ async fn test_gov_gmp_fails_on_wrong_source_address() {
 
 #[tokio::test]
 async fn test_gov_gmp_fails_on_wrong_source_chain() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut gmp_metadata = gmp_sample_metadata();
     gmp_metadata.cc_id = CrossChainId {
@@ -63,7 +63,7 @@ async fn test_gov_gmp_fails_on_wrong_source_chain() {
 
 #[tokio::test]
 async fn test_incoming_proposal_pda_derivation_is_checked_when_receiving_gmp() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
 

@@ -22,5 +22,9 @@ axelar-solana-gas-service.workspace = true
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
+solana-test-validator = { workspace = true }
+solana-rpc-client-api = { workspace = true }
+
+
 [lints]
 workspace = true

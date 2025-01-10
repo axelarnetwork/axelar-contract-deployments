@@ -17,6 +17,7 @@ use interchain_token_transfer_gmp::GMPPayload;
 use rstest::rstest;
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
+use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer as SolanaSigner};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
@@ -356,12 +357,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_native() {
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let transfer = InterchainTransferInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
@@ -594,12 +590,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     .unwrap();
     solana_chain.fixture.send_tx(&[mint_tokens_ix]).await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let transfer = InterchainTransferInputs::builder()
         .mint(mint)
@@ -666,12 +657,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
     )
     .await;
 
-    let ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(ata)
+    let raw_account = solana_chain
+        .try_get_account_no_checks(&ata)
         .await
+        .unwrap()
         .unwrap();
+    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
 
     assert_eq!(ata.amount, initial_amount - transfer_amount);
     assert_eq!(log.amount, U256::from(transfer_amount));
@@ -864,12 +855,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
         )
         .await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let transfer = InterchainTransferInputs::builder()
         .mint(mint)
@@ -934,12 +920,12 @@ async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
     )
     .await;
 
-    let bob_ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(bob_ata)
+    let bob_raw_account = solana_chain
+        .try_get_account_no_checks(&bob_ata)
         .await
+        .unwrap()
         .unwrap();
+    let bob_ata = spl_token_2022::state::Account::unpack_from_slice(&bob_raw_account.data).unwrap();
 
     assert_eq!(bob_ata.amount, initial_amount - transfer_amount);
     assert_eq!(bob_ata.delegated_amount, delegated_amount - transfer_amount);
@@ -1115,12 +1101,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
         )
         .await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar: Clock = solana_chain.get_sysvar().await;
 
     let transfer = InterchainTransferInputs::builder()
         .authority(solana_chain.fixture.payer.pubkey())
@@ -1186,21 +1167,22 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
     )
     .await;
 
-    let ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(ata)
+    let raw_account = solana_chain
+        .try_get_account_no_checks(&ata)
         .await
+        .unwrap()
         .unwrap();
+    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
 
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program_id);
-    let token_manager_ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(token_manager_ata)
+    let token_manager_raw_account = solana_chain
+        .try_get_account_no_checks(&token_manager_ata)
         .await
+        .unwrap()
         .unwrap();
+    let token_manager_ata =
+        spl_token_2022::state::Account::unpack_from_slice(&token_manager_raw_account.data).unwrap();
 
     assert_eq!(ata.amount, initial_amount - transfer_amount);
     assert_eq!(log.amount, U256::from(transfer_amount));
@@ -1381,12 +1363,7 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
         )
         .await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
     let transfer = InterchainTransferInputs::builder()
         .authority(solana_chain.fixture.payer.pubkey())
         .payer(solana_chain.fixture.payer.pubkey())
@@ -1450,44 +1427,37 @@ async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
     )
     .await;
 
-    let ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(ata)
+    let raw_account = solana_chain
+        .try_get_account_no_checks(&ata)
         .await
+        .unwrap()
         .unwrap();
+    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
 
     let token_manager_ata = get_associated_token_address_with_program_id(
         &token_manager_pda,
         &mint,
         &spl_token_2022::id(),
     );
-    let token_manager_ata = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(token_manager_ata)
+    let token_manager_raw_account = solana_chain
+        .try_get_account_no_checks(&token_manager_ata)
         .await
+        .unwrap()
         .unwrap();
+    let token_manager_ata =
+        spl_token_2022::state::Account::unpack_from_slice(&token_manager_raw_account.data).unwrap();
 
     assert_eq!(ata.amount, initial_amount - transfer_amount);
 
     let mint_data = solana_chain
-        .fixture
-        .banks_client
-        .get_account(mint)
+        .try_get_account_no_checks(&mint)
         .await
         .unwrap()
         .unwrap();
 
     let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
     let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
-    let epoch = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar::<Clock>()
-        .await
-        .unwrap()
-        .epoch;
+    let epoch = solana_chain.get_sysvar::<Clock>().await.epoch;
     let fee = fee_config
         .calculate_epoch_fee(epoch, transfer_amount)
         .unwrap();
@@ -1649,12 +1619,7 @@ async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let memo_message = "Memo with token".to_string();
     let call_data = Bytes::from(memo_message.clone());
@@ -1877,12 +1842,7 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let memo_message = "Memo with token".to_string();
     let call_data = Bytes::from(memo_message.clone());

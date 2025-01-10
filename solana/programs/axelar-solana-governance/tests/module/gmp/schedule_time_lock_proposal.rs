@@ -14,7 +14,7 @@ use crate::helpers::{
 
 #[tokio::test]
 async fn test_successfully_process_gmp_schedule_time_proposal() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
@@ -65,7 +65,7 @@ fn proposal_scheduled_event(builder: &IxBuilder<ProposalRelated>) -> GovernanceE
 
 #[tokio::test]
 async fn test_time_lock_default_is_enforced() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -103,7 +103,7 @@ async fn test_time_lock_default_is_enforced() {
 
 #[tokio::test]
 async fn test_program_checks_proposal_pda_is_correctly_derived() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();

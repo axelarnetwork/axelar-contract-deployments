@@ -38,8 +38,7 @@ async fn test_initialize_payload_verification_session() {
     );
 
     let verification_session_account = metadata
-        .banks_client
-        .get_account(verification_pda)
+        .try_get_account_no_checks(&verification_pda)
         .await
         .ok()
         .flatten()

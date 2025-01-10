@@ -182,17 +182,14 @@ async fn set_existing_incoming_message_state(
     incoming_message: IncomingMessage,
 ) {
     let mut raw_account = metadata
-        .banks_client
-        .get_account(incoming_message_pda)
+        .try_get_account_no_checks(&incoming_message_pda)
         .await
         .unwrap()
         .unwrap();
+
     let incoming_message = bytemuck::bytes_of(&incoming_message);
     raw_account.data = incoming_message.to_vec();
-    metadata
-        .fixture
-        .context
-        .set_account(&incoming_message_pda, &raw_account.into());
+    metadata.set_account_state(&incoming_message_pda, raw_account);
 }
 
 fn validate_message_for_tests(

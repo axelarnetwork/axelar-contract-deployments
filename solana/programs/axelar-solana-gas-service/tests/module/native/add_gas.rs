@@ -18,15 +18,13 @@ async fn test_add_native_gas() {
         .fund_account(&payer.pubkey(), 1_000_000_000)
         .await;
     let payer_balance_before = test_fixture
-        .banks_client
-        .get_account(payer.pubkey())
+        .try_get_account_no_checks(&payer.pubkey())
         .await
         .unwrap()
         .unwrap()
         .lamports;
     let config_pda_balance_before = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()
@@ -82,15 +80,13 @@ async fn test_add_native_gas() {
 
     // assert that SOL gets transferred
     let payer_balance_after = test_fixture
-        .banks_client
-        .get_account(payer.pubkey())
+        .try_get_account_no_checks(&payer.pubkey())
         .await
         .unwrap()
         .unwrap()
         .lamports;
     let config_pda_balance_after = test_fixture
-        .banks_client
-        .get_account(gas_utils.config_pda)
+        .try_get_account_no_checks(&gas_utils.config_pda)
         .await
         .unwrap()
         .unwrap()

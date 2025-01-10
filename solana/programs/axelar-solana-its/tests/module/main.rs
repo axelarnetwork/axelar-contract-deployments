@@ -53,7 +53,6 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use solana_sdk::transaction::Transaction;
 
 const SOLANA_CHAIN_NAME: &str = "solana-localnet";
 const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
@@ -197,12 +196,7 @@ async fn relay_to_solana(
         .unwrap()
         .clone();
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let its_ix_inputs = ItsGmpInstructionInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
@@ -364,21 +358,7 @@ async fn call_solana_gateway(
     solana_fixture: &mut TestFixture,
     ix: Instruction,
 ) -> Vec<ProgramInvocationState<GatewayEvent>> {
-    let transaction = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&solana_fixture.payer.pubkey()),
-        &[&solana_fixture.payer],
-        solana_fixture
-            .banks_client
-            .get_latest_blockhash()
-            .await
-            .unwrap(),
-    );
-    let tx = solana_fixture
-        .banks_client
-        .process_transaction_with_metadata(transaction)
-        .await
-        .unwrap();
+    let tx = solana_fixture.send_tx(&[ix]).await.unwrap();
 
     assert!(tx.result.is_ok(), "transaction failed");
     get_gateway_events(&tx)

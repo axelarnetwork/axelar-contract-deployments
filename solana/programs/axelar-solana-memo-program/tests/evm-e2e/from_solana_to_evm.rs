@@ -11,8 +11,6 @@ use ethers_core::utils::hex::ToHex;
 use ethers_core::utils::keccak256;
 use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_memo::ReceivedMemoFilter;
 use solana_program_test::tokio;
-use solana_sdk::signature::Signer;
-use solana_sdk::transaction::Transaction;
 
 use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 
@@ -164,8 +162,8 @@ async fn call_solana_gateway(
     let destination_address = destination_address.encode_hex();
 
     let (counter, ..) = get_counter_pda(gateway_root_pda);
-    let transaction = Transaction::new_signed_with_payer(
-        &[call_gateway_with_memo(
+    let tx = solana_fixture
+        .send_tx(&[call_gateway_with_memo(
             gateway_root_pda,
             &counter,
             memo.to_string(),
@@ -173,18 +171,7 @@ async fn call_solana_gateway(
             destination_address,
             &axelar_solana_gateway::ID,
         )
-        .unwrap()],
-        Some(&solana_fixture.payer.pubkey()),
-        &[&solana_fixture.payer],
-        solana_fixture
-            .banks_client
-            .get_latest_blockhash()
-            .await
-            .unwrap(),
-    );
-    let tx = solana_fixture
-        .banks_client
-        .process_transaction_with_metadata(transaction)
+        .unwrap()])
         .await
         .unwrap();
 

@@ -45,4 +45,4 @@ runs:
     - name: Install needed tooling (needed for solana deps)
       shell: bash
       run: |
-        sudo apt-get install protobuf-compiler
+        sudo apt-get install -y protobuf-compiler bzip2 clang

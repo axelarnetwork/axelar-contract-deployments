@@ -21,6 +21,7 @@ enum Commands {
         #[clap(short, long, default_value_t = false)]
         only_sbf: bool,
     },
+    Build,
     Check,
     Fmt,
     UnusedDeps,
@@ -56,7 +57,16 @@ fn main() -> eyre::Result<()> {
                 cmd!(sh, "cargo test -p {normal_crate}").run()?;
             }
         }
+        Commands::Build => {
+            println!("cargo build");
+            let (solana_programs, _auxiliary_crates) = workspace_crates_by_category(&sh)?;
 
+            // build all solana programs (because they have internal inter-dependencies)
+            for (_program, path) in solana_programs.iter() {
+                let manifest_path = path.join("Cargo.toml");
+                cmd!(sh, "cargo build-sbf --manifest-path {manifest_path}").run()?;
+            }
+        }
         Commands::Check => {
             println!("cargo check");
             cmd!(

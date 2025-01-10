@@ -25,7 +25,7 @@ async fn test_full_flow_operator_proposal_execution() {
     // Get the operator key pair;
     let operator = operator_keypair();
 
-    let (mut sol_integration, config_pda, counter_pda) = setup_programs().await;
+    let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
@@ -94,17 +94,13 @@ async fn test_full_flow_operator_proposal_execution() {
 
     // Ensure the proposal account is closed
     let proposal_account = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_pda())
         .await
         .unwrap();
     assert!(proposal_account.is_none());
     // Ensure the proposal marker account is closed
     let proposal_marker_account = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_operator_marker_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_operator_marker_pda())
         .await
         .unwrap();
     assert!(proposal_marker_account.is_none());
@@ -124,7 +120,7 @@ async fn test_non_previously_approved_operator_proposal_execution_fails() {
     // Get the operator key pair;
     let operator = operator_keypair();
 
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
 
@@ -200,7 +196,7 @@ async fn test_only_operator_can_execute_ix() {
 #[tokio::test]
 async fn test_program_checks_proposal_pda_is_correctly_derived() {
     // Get the operator key pair;
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
@@ -253,7 +249,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 #[tokio::test]
 async fn test_program_checks_operator_pda_is_correctly_derived() {
     // Get the operator key pair;
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();

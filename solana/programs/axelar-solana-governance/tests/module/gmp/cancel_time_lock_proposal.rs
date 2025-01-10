@@ -12,7 +12,7 @@ use crate::helpers::{
 
 #[tokio::test]
 async fn test_an_scheduled_proposal_can_be_cancelled() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
@@ -39,9 +39,7 @@ async fn test_an_scheduled_proposal_can_be_cancelled() {
 
     // Get the proposal pda and assert it has no data (as it was cancelled)
     let prop_account = sol_integration
-        .fixture
-        .banks_client
-        .get_account(ix_builder.proposal_pda())
+        .try_get_account_no_checks(&ix_builder.proposal_pda())
         .await
         .unwrap();
     assert_eq!(prop_account, None);
@@ -66,7 +64,7 @@ fn cancel_timelock_proposal_event(builder: &IxBuilder<ProposalRelated>) -> Gover
 
 #[tokio::test]
 async fn test_a_non_existent_scheduled_proposal_cannot_be_cancelled() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();
@@ -88,7 +86,7 @@ async fn test_a_non_existent_scheduled_proposal_cannot_be_cancelled() {
 
 #[tokio::test]
 async fn test_program_checks_proposal_pda_is_correctly_derived() {
-    let (mut sol_integration, config_pda, _) = setup_programs().await;
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
 
     let mut ix_builder = ix_builder_with_sample_proposal_data();
     let meta = gmp_sample_metadata();

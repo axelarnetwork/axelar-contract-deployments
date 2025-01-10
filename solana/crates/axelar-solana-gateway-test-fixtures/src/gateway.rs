@@ -110,19 +110,10 @@ impl SolanaAxelarIntegrationMetadata {
             .send_tx_with_custom_signers(&[ix], signers)
             .await?;
 
-        let account = self
-            .fixture
-            .banks_client
-            .get_account(gateway_config_pda)
-            .await
-            .unwrap()
-            .expect("metadata");
-
-        assert_eq!(
-            account.owner,
-            axelar_solana_gateway::id(),
-            "gateway config account must be owned by the gateway program "
-        );
+        // we use this query to check the expected owner
+        let _account = self
+            .get_account(&gateway_config_pda, &axelar_solana_gateway::id())
+            .await;
 
         Ok(gateway_config_pda)
     }
@@ -361,41 +352,17 @@ impl SolanaAxelarIntegrationMetadata {
         verification_pda: Pubkey,
     ) -> SignatureVerificationSessionData {
         let verification_session_account = self
-            .banks_client
-            .get_account(verification_pda)
-            .await
-            .ok()
-            .flatten()
-            .expect("verification session PDA account should exist");
-
-        assert_eq!(
-            verification_session_account.owner,
-            axelar_solana_gateway::ID,
-            "verification session must be owned by the gateway"
-        );
-        let res =
-            *SignatureVerificationSessionData::read(verification_session_account.data()).unwrap();
-        res
+            .get_account(&verification_pda, &axelar_solana_gateway::id())
+            .await;
+        *SignatureVerificationSessionData::read(verification_session_account.data()).unwrap()
     }
 
     /// Get the gateway root config data
     pub async fn gateway_confg(&mut self, gateway_root_pda: Pubkey) -> GatewayConfig {
         let gateway_root_pda_account = self
-            .banks_client
-            .get_account(gateway_root_pda)
-            .await
-            .ok()
-            .flatten()
-            .expect("Gateway account should exist");
-
-        assert_eq!(
-            gateway_root_pda_account.owner,
-            axelar_solana_gateway::ID,
-            "must be owned by the gateway"
-        );
-        let res = *GatewayConfig::read(gateway_root_pda_account.data()).unwrap();
-
-        res
+            .get_account(&gateway_root_pda, &axelar_solana_gateway::id())
+            .await;
+        *GatewayConfig::read(gateway_root_pda_account.data()).unwrap()
     }
 
     /// Get the verifier set tracker data
@@ -404,39 +371,17 @@ impl SolanaAxelarIntegrationMetadata {
         verifiers_set_tracker_pda: Pubkey,
     ) -> VerifierSetTracker {
         let verifiers_set_tracker_pda_account = self
-            .banks_client
-            .get_account(verifiers_set_tracker_pda)
-            .await
-            .ok()
-            .flatten()
-            .expect("Gateway account should exist");
-
-        assert_eq!(
-            verifiers_set_tracker_pda_account.owner,
-            axelar_solana_gateway::ID,
-            "must be owned by the gateway"
-        );
-        let res = *VerifierSetTracker::read(verifiers_set_tracker_pda_account.data()).unwrap();
-
-        res
+            .get_account(&verifiers_set_tracker_pda, &axelar_solana_gateway::id())
+            .await;
+        *VerifierSetTracker::read(verifiers_set_tracker_pda_account.data()).unwrap()
     }
 
     /// Get the verifier set tracker data
     pub async fn incoming_message(&mut self, incoming_message_pda: Pubkey) -> IncomingMessage {
-        let gateway_root_pda_account = self
-            .banks_client
-            .get_account(incoming_message_pda)
-            .await
-            .ok()
-            .flatten()
-            .expect("Gateway account should exist");
-
-        assert_eq!(
-            gateway_root_pda_account.owner,
-            axelar_solana_gateway::ID,
-            "must be owned by the gateway"
-        );
-        *IncomingMessage::read(gateway_root_pda_account.data()).unwrap()
+        let incoming_message_pda_acc = self
+            .get_account(&incoming_message_pda, &axelar_solana_gateway::id())
+            .await;
+        *IncomingMessage::read(incoming_message_pda_acc.data()).unwrap()
     }
 
     /// Upload a message payload to the PDA account

@@ -13,6 +13,7 @@ use interchain_token_transfer_gmp::InterchainTransfer;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
+use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
@@ -137,12 +138,13 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
     )
     .await;
 
-    let token_manager_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(token_manager_ata)
+    let token_manager_raw_account = solana_chain
+        .try_get_account_no_checks(&token_manager_ata)
         .await
+        .unwrap()
         .unwrap();
+    let token_manager_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&token_manager_raw_account.data).unwrap();
 
     let destination_ata =
         spl_associated_token_account::get_associated_token_address_with_program_id(
@@ -151,12 +153,13 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
             &token_program_id,
         );
 
-    let destination_ata_account = solana_chain
-        .fixture
-        .banks_client
-        .get_packed_account_data::<spl_token_2022::state::Account>(destination_ata)
+    let destination_raw_account = solana_chain
+        .try_get_account_no_checks(&destination_ata)
         .await
+        .unwrap()
         .unwrap();
+    let destination_ata_account =
+        spl_token_2022::state::Account::unpack_from_slice(&destination_raw_account.data).unwrap();
 
     assert_eq!(
         token_manager_ata_account.amount,
@@ -332,12 +335,7 @@ async fn test_outgoing_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
 
-    let clock_sysvar: Clock = solana_chain
-        .fixture
-        .banks_client
-        .get_sysvar()
-        .await
-        .unwrap();
+    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
 
     let transfer = InterchainTransferInputs::builder()
         .payer(solana_chain.fixture.payer.pubkey())
