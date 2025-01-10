@@ -546,6 +546,18 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const fetchCodeIdFromContract = async (client, contractConfig) => {
+    const { address } = contractConfig;
+
+    if (!address) {
+        throw new Error('Contract address not found in the config');
+    }
+
+    const { codeId } = await client.getContract(address);
+
+    return codeId;
+};
+
 const addDefaultInstantiateAddresses = async (client, config, options) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -874,6 +886,7 @@ module.exports = {
     uploadContract,
     instantiateContract,
     fetchCodeIdFromCodeHash,
+    fetchCodeIdFromContract,
     addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
