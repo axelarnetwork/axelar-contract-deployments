@@ -659,6 +659,32 @@
               }
             ]
           }
+        },
+        "axelar_operators": {
+          "address": "CABRZHKAJVJFX5IZWL7KPA6ZEX6I347W7GBXAUX6WVOGUUBRWCDGOUSI",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "57704308b10b9970a8c185dba6905ce10b19fec9c03acb2653c0b53f6d10c840",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM"
+          }
+        },
+        "axelar_gas_service": {
+          "address": "CD3KZOLEACWMQSDEQFUJI6ZWC7A7CC7AE7ZFVE4X2DBPYAC6L663GCNN",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "e2da823068ac57db886c25493a8da268057b0f00f4ef9e5747d9e3ea8c2d1687",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "gasCollector": "CABRZHKAJVJFX5IZWL7KPA6ZEX6I347W7GBXAUX6WVOGUUBRWCDGOUSI"
+          }
+        },
+        "example": {
+          "address": "CCVDQJSFK5GIOHZ4NNSL455NDCG26RTX25O65PF6ZIGEMYHBW5O5UHV5",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "e65c48be115ac9649793cf90a1f9cda07c05e588429b9173bcb4b9aaea96fd10",
+          "initializeArgs": {
+            "gatewayAddress": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
+            "gasServiceAddress": "CD3KZOLEACWMQSDEQFUJI6ZWC7A7CC7AE7ZFVE4X2DBPYAC6L663GCNN"
+          }
         }
       }
     },
