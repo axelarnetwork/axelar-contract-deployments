@@ -108,17 +108,6 @@ const readMovePackageName = (moveDir) => {
     }
 };
 
-const readMovePackageVersion = (moveDir) => {
-    try {
-        const { package: movePackage } = toml.parse(readMoveToml(moveDir));
-
-        return movePackage.version;
-    } catch (err) {
-        printError('Error reading TOML file');
-        throw err;
-    }
-};
-
 const getObjectIdsByObjectTypes = (txn, objectTypes) =>
     objectTypes.map((objectType) => {
         const objectId = txn.objectChanges.find((change) => change.objectType?.includes(objectType))?.objectId;
@@ -375,7 +364,6 @@ module.exports = {
     deployPackage,
     findPublishedObject,
     readMovePackageName,
-    readMovePackageVersion,
     getObjectIdsByObjectTypes,
     getSingletonChannelId,
     getItsChannelId,
