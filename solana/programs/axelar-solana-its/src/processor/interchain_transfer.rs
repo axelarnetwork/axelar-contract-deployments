@@ -103,6 +103,12 @@ pub fn process_inbound_transfer<'a>(
                 axelar_executable_accounts.token_program.clone(),
                 axelar_executable_accounts.token_mint.clone(),
                 axelar_executable_accounts.program_ata.clone(),
+                axelar_executable_accounts
+                    .mpl_token_metadata_program
+                    .clone(),
+                axelar_executable_accounts
+                    .mpl_token_metadata_account
+                    .clone(),
             ],
             axelar_executable_accounts.destination_program_accounts,
         ]
@@ -156,6 +162,18 @@ fn build_axelar_interchain_token_execute(
         AccountMeta::new_readonly(*axelar_its_executable_accounts.token_program.key, false),
         AccountMeta::new(*axelar_its_executable_accounts.token_mint.key, false),
         AccountMeta::new(*axelar_its_executable_accounts.program_ata.key, false),
+        AccountMeta::new_readonly(
+            *axelar_its_executable_accounts
+                .mpl_token_metadata_program
+                .key,
+            false,
+        ),
+        AccountMeta::new(
+            *axelar_its_executable_accounts
+                .mpl_token_metadata_account
+                .key,
+            false,
+        ),
     ];
     accounts.append(&mut program_accounts);
 
@@ -669,6 +687,8 @@ struct GiveTokenAccounts<'a> {
     destination_wallet: &'a AccountInfo<'a>,
     destination_ata: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
+    mpl_token_metadata_program: Option<&'a AccountInfo<'a>>,
+    mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
 }
 
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
@@ -696,6 +716,8 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             destination_wallet: next_account_info(accounts_iter)?,
             destination_ata: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
+            mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
+            mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
         })
     }
 }
@@ -707,6 +729,8 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
     token_program: &'a AccountInfo<'a>,
     token_mint: &'a AccountInfo<'a>,
     program_ata: &'a AccountInfo<'a>,
+    mpl_token_metadata_program: &'a AccountInfo<'a>,
+    mpl_token_metadata_account: &'a AccountInfo<'a>,
     destination_program_accounts: &'a [AccountInfo<'a>],
 }
 
@@ -738,6 +762,12 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             token_program: give_token_accounts.token_program,
             token_mint: give_token_accounts.token_mint,
             program_ata: give_token_accounts.destination_ata,
+            mpl_token_metadata_program: give_token_accounts
+                .mpl_token_metadata_program
+                .ok_or(ProgramError::NotEnoughAccountKeys)?,
+            mpl_token_metadata_account: give_token_accounts
+                .mpl_token_metadata_account
+                .ok_or(ProgramError::NotEnoughAccountKeys)?,
             destination_program_accounts,
         })
     }

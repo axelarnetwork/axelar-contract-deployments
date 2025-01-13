@@ -1,23 +1,19 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
-use alloy_primitives::hex;
 use interchain_token_transfer_gmp::DeployInterchainToken;
+use mpl_token_metadata::instructions::CreateV1CpiBuilder;
+use mpl_token_metadata::types::TokenStandard;
 use program_utils::BorshPda;
 use role_management::processor::{ensure_signer_roles, RoleManagementAccounts};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
+use solana_program::program_pack::Pack as _;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction};
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer;
-use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensionsOwned};
 use spl_token_2022::instruction::initialize_mint;
-use spl_token_2022::state::Mint;
-use spl_token_metadata_interface::instruction::{initialize as initialize_metadata, update_field};
-use spl_token_metadata_interface::state::{Field, TokenMetadata};
 
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
 use crate::instructions;
@@ -27,8 +23,6 @@ use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
 };
-
-const TOKEN_ID_KEY: &str = "token_id";
 
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn process_instruction<'a>(
@@ -56,6 +50,9 @@ pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) ata_program: &'a AccountInfo<'a>,
     pub(crate) its_roles_pda: &'a AccountInfo<'a>,
     pub(crate) rent_sysvar: &'a AccountInfo<'a>,
+    pub(crate) sysvar_instructions: &'a AccountInfo<'a>,
+    pub(crate) mpl_token_metadata_program: &'a AccountInfo<'a>,
+    pub(crate) mpl_token_metadata_account: &'a AccountInfo<'a>,
     pub(crate) minter: Option<&'a AccountInfo<'a>>,
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
 }
@@ -81,6 +78,9 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
             ata_program: next_account_info(accounts_iter)?,
             its_roles_pda: next_account_info(accounts_iter)?,
             rent_sysvar: next_account_info(accounts_iter)?,
+            sysvar_instructions: next_account_info(accounts_iter)?,
+            mpl_token_metadata_program: next_account_info(accounts_iter)?,
+            mpl_token_metadata_account: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
             minter_roles_pda: next_account_info(accounts_iter).ok(),
         })
@@ -248,17 +248,15 @@ fn setup_mint<'a>(
     interchain_token_pda_bump: u8,
 ) -> ProgramResult {
     let rent = Rent::get()?;
-    let account_size =
-        ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])?;
 
     invoke_signed(
         &system_instruction::create_account(
             payer.key,
             accounts.token_mint.key,
-            rent.minimum_balance(account_size).max(1),
-            account_size
+            rent.minimum_balance(spl_token_2022::state::Mint::LEN),
+            spl_token_2022::state::Mint::LEN
                 .try_into()
-                .map_err(|_err| ProgramError::InvalidAccountData)?,
+                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
             accounts.token_program.key,
         ),
         &[
@@ -274,20 +272,6 @@ fn setup_mint<'a>(
             token_id,
             &[interchain_token_pda_bump],
         ]],
-    )?;
-
-    invoke(
-        &initialize_metadata_pointer(
-            &spl_token_2022::id(),
-            accounts.token_mint.key,
-            Some(*accounts.token_manager_pda.key),
-            Some(*accounts.token_mint.key),
-        )?,
-        &[
-            payer.clone(),
-            accounts.token_mint.clone(),
-            accounts.token_manager_pda.clone(),
-        ],
     )?;
 
     invoke(
@@ -318,77 +302,26 @@ fn setup_metadata<'a>(
     uri: String,
     token_manager_pda_bump: u8,
 ) -> ProgramResult {
-    let rent = Rent::get()?;
-    let token_metadata = TokenMetadata {
-        update_authority: OptionalNonZeroPubkey(*accounts.token_manager_pda.key),
-        name,
-        symbol,
-        uri,
-        mint: *accounts.token_mint.key,
-        additional_metadata: vec![(TOKEN_ID_KEY.to_owned(), hex::encode(token_id))],
-    };
-
-    let mint_state =
-        StateWithExtensionsOwned::<Mint>::unpack(accounts.token_mint.try_borrow_data()?.to_vec())?;
-    let account_lamports = accounts.token_mint.lamports();
-    let new_account_len = mint_state
-        .try_get_new_account_len_for_variable_len_extension::<TokenMetadata>(&token_metadata)?;
-    let new_rent_exemption_minimum = rent.minimum_balance(new_account_len);
-    let additional_lamports = new_rent_exemption_minimum.saturating_sub(account_lamports);
-
-    invoke(
-        &system_instruction::transfer(payer.key, accounts.token_mint.key, additional_lamports),
-        &[
-            payer.clone(),
-            accounts.token_mint.clone(),
-            accounts.system_account.clone(),
-        ],
-    )?;
-
-    invoke_signed(
-        &initialize_metadata(
-            &spl_token_2022::id(),
-            accounts.token_mint.key,
-            accounts.token_manager_pda.key,
-            accounts.token_mint.key,
-            accounts.token_manager_pda.key,
-            token_metadata.name,
-            token_metadata.symbol,
-            token_metadata.uri,
-        ),
-        &[
-            accounts.token_mint.clone(),
-            accounts.token_manager_pda.clone(),
-            accounts.token_program.clone(),
-        ],
-        &[&[
+    CreateV1CpiBuilder::new(accounts.mpl_token_metadata_program)
+        .metadata(accounts.mpl_token_metadata_account)
+        .token_standard(TokenStandard::Fungible)
+        .mint(accounts.token_mint, false)
+        .authority(accounts.token_manager_pda)
+        .update_authority(accounts.token_manager_pda, true)
+        .payer(payer)
+        .is_mutable(false)
+        .name(name)
+        .symbol(symbol)
+        .uri(uri)
+        .seller_fee_basis_points(0)
+        .system_program(accounts.system_account)
+        .sysvar_instructions(accounts.sysvar_instructions)
+        .invoke_signed(&[&[
             seed_prefixes::TOKEN_MANAGER_SEED,
             accounts.its_root_pda.key.as_ref(),
             token_id,
             &[token_manager_pda_bump],
-        ]],
-    )?;
-
-    invoke_signed(
-        &update_field(
-            &spl_token_2022::id(),
-            accounts.token_mint.key,
-            accounts.token_manager_pda.key,
-            Field::Key(TOKEN_ID_KEY.to_owned()),
-            hex::encode(token_id),
-        ),
-        &[
-            accounts.token_mint.clone(),
-            accounts.token_manager_pda.clone(),
-            accounts.token_program.clone(),
-        ],
-        &[&[
-            seed_prefixes::TOKEN_MANAGER_SEED,
-            accounts.its_root_pda.key.as_ref(),
-            token_id,
-            &[token_manager_pda_bump],
-        ]],
-    )?;
+        ]])?;
 
     Ok(())
 }

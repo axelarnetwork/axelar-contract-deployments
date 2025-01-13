@@ -7,6 +7,7 @@ use axelar_solana_its::executable::{
     AxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
 };
 use borsh::BorshDeserialize;
+use mpl_token_metadata::accounts::Metadata;
 use program_utils::{check_program_account, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -15,9 +16,6 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
-use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::state::Mint;
-use spl_token_metadata_interface::state::TokenMetadata;
 use std::str::from_utf8;
 
 use crate::assert_counter_pda_seeds;
@@ -62,21 +60,17 @@ pub fn process_message_from_axelar_with_token<'a>(
     let _its_root_pda = next_account_info(accounts_iter)?;
     let _message_payload_account = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
-    let token_mint = next_account_info(accounts_iter)?;
-    let ata_account = next_account_info(accounts_iter)?;
+    let _token_mint = next_account_info(accounts_iter)?;
+    let _ata_account = next_account_info(accounts_iter)?;
+    let _mpl_token_metadata_program = next_account_info(accounts_iter)?;
+    let mpl_token_metadata_account = next_account_info(accounts_iter)?;
     let instruction_accounts = accounts_iter.as_slice();
+    let token_metadata = Metadata::from_bytes(&mpl_token_metadata_account.try_borrow_data()?)?;
 
     msg!("Processing memo with tokens:");
     msg!("amount: {}", payload.amount);
-
-    if *ata_account.owner == spl_token_2022::id() {
-        let account_data = token_mint.try_borrow_data()?;
-        let mint_state = StateWithExtensions::<Mint>::unpack(&account_data)?;
-        let token_metadata = mint_state.get_variable_len_extension::<TokenMetadata>()?;
-
-        msg!("symbol: {}", token_metadata.symbol);
-        msg!("name: {}", token_metadata.name);
-    }
+    msg!("symbol: {}", token_metadata.symbol);
+    msg!("name: {}", token_metadata.name);
 
     let instruction: AxelarMemoInstruction = borsh::from_slice(&payload.data)?;
 

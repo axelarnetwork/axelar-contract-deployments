@@ -21,7 +21,9 @@ use crate::state::InterchainTokenService;
 /// 3. [] The token program (spl-token or spl-token-2022).
 /// 4. [writable] The token mint.
 /// 5. [writable] The Destination Program Associated Token Account.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 6;
+/// 6. [] The Metaplex Metadata Program account.
+/// 7. [writable] The Metaplex Metadata account associated with the mint.
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 8;
 
 /// This is the payload that the `executeWithInterchainToken` processor on the destinatoin program
 /// must expect

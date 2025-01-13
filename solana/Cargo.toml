@@ -90,6 +90,7 @@ itertools = "0.12"
 k256 = { version = "0.13", features = ["ecdsa"] }
 libsecp256k1 = { version = "0.6", default-features = false }
 libsecp-rand = { package = "rand", version = "0.7" }
+mpl-token-metadata = "5.1.0"
 num-derive = "0.4"
 num-traits = "0.2"
 rand = "0.8"

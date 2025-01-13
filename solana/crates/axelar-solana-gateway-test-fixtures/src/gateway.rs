@@ -561,10 +561,14 @@ impl SolanaAxelarIntegration {
     ) -> SolanaAxelarIntegrationMetadata {
         // deploy non-gateway programs
         for (program_name, program_id) in self.programs_to_deploy {
-            let program_bytecode_path = workspace_root_dir()
-                .join("target")
-                .join("deploy")
-                .join(program_name);
+            let program_bytecode_path = if program_name.exists() {
+                program_name
+            } else {
+                workspace_root_dir()
+                    .join("target")
+                    .join("deploy")
+                    .join(program_name)
+            };
             let program_bytecode = tokio::fs::read(&program_bytecode_path).await.unwrap();
             fixture
                 .register_upgradeable_program(

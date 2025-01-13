@@ -652,8 +652,9 @@ pub async fn add_upgradeable_loader_account(
     context.set_account(account_address, &account);
 }
 
+/// Get the workspace root directory
 #[must_use]
-pub(crate) fn workspace_root_dir() -> PathBuf {
+pub fn workspace_root_dir() -> PathBuf {
     let dir = std::env::var("CARGO_MANIFEST_DIR")
         .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
     PathBuf::from(dir)

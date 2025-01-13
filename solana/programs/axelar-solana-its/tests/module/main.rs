@@ -21,7 +21,7 @@ mod role_management;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use axelar_solana_gateway_test_fixtures::base::{workspace_root_dir, TestFixture};
 use axelar_solana_gateway_test_fixtures::gateway::{
     get_gateway_events, random_message, ProgramInvocationState,
 };
@@ -65,20 +65,40 @@ pub struct ItsProgramWrapper {
     pub counter_pda: Option<Pubkey>,
 }
 
-pub async fn program_test() -> SolanaAxelarIntegrationMetadata {
+async fn program_test() -> SolanaAxelarIntegrationMetadata {
+    let programs = vec![
+        ("axelar_solana_its.so".into(), axelar_solana_its::id()),
+        (
+            workspace_root_dir()
+                .join("programs")
+                .join("axelar-solana-its")
+                .join("tests")
+                .join("mpl_token_metadata.so"),
+            mpl_token_metadata::ID,
+        ),
+    ];
+
     SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![555, 222])
-        .programs_to_deploy(vec![(
-            "axelar_solana_its.so".into(),
-            axelar_solana_its::id(),
-        )])
+        .programs_to_deploy(programs)
         .build()
         .setup()
         .await
 }
 
 async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
-    let mut programs = vec![("axelar_solana_its.so".into(), axelar_solana_its::id())];
+    let mut programs = vec![
+        ("axelar_solana_its.so".into(), axelar_solana_its::id()),
+        (
+            workspace_root_dir()
+                .join("programs")
+                .join("axelar-solana-its")
+                .join("tests")
+                .join("mpl_token_metadata.so"),
+            mpl_token_metadata::ID,
+        ),
+    ];
+
     if with_memo {
         programs.push((
             "axelar_solana_memo_program.so".into(),

@@ -1004,6 +1004,9 @@ fn derive_specific_its_accounts(
             let epoch = crate::state::flow_limit::flow_epoch_with_timestamp(timestamp)?;
             let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, epoch);
 
+            let (metadata_account_key, _) =
+                mpl_token_metadata::accounts::Metadata::find_pda(&mint_account);
+
             specific_accounts.push(AccountMeta::new(destination_wallet, false));
             specific_accounts.push(AccountMeta::new(destination_ata, false));
             specific_accounts.push(AccountMeta::new(flow_slot_pda, false));
@@ -1012,10 +1015,19 @@ fn derive_specific_its_accounts(
                 let execute_data = DataPayload::decode(data)
                     .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
+                specific_accounts.push(AccountMeta::new_readonly(mpl_token_metadata::ID, false));
+                specific_accounts.push(AccountMeta::new(metadata_account_key, false));
                 specific_accounts.extend(execute_data.account_meta().iter().cloned());
             }
         }
         ItsMessageRef::DeployInterchainToken { minter, .. } => {
+            let (metadata_account_key, _) =
+                mpl_token_metadata::accounts::Metadata::find_pda(&mint_account);
+
+            specific_accounts.push(AccountMeta::new_readonly(sysvar::instructions::id(), false));
+            specific_accounts.push(AccountMeta::new_readonly(mpl_token_metadata::ID, false));
+            specific_accounts.push(AccountMeta::new(metadata_account_key, false));
+
             if minter.len() == axelar_solana_encoding::types::pubkey::ED25519_PUBKEY_LEN {
                 let minter_key = Pubkey::new_from_array(
                     (*minter)

@@ -2,9 +2,6 @@ use axelar_solana_its::instructions::DeployInterchainTokenInputs;
 use solana_program_test::tokio;
 use solana_sdk::keccak;
 use solana_sdk::signer::Signer;
-use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::state::Mint;
-use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{axelar_solana_setup, ItsProgramWrapper};
 
@@ -49,18 +46,17 @@ async fn test_deploy_interchain_token() {
     );
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-
-    let mint_account = solana_chain
-        .try_get_account_no_checks(&mint)
+    let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+    let metadata_account = solana_chain
+        .try_get_account_no_checks(&metadata_account_key)
         .await
-        .expect("banks client error")
-        .expect("mint account empty");
-
-    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
-    let token_metadata = mint_state
-        .get_variable_len_extension::<TokenMetadata>()
+        .unwrap()
         .unwrap();
+    let metadata =
+        mpl_token_metadata::accounts::Metadata::from_bytes(&metadata_account.data).unwrap();
 
-    assert_eq!(token_name, token_metadata.name);
-    assert_eq!(token_symbol, token_metadata.symbol);
+    // The trailing garbage seems to be expected as fixed size buffers are used internally by
+    // mpl-token-metadata: https://github.com/metaplex-foundation/mpl-token-metadata/issues/9
+    assert_eq!(token_name, metadata.name.trim_end_matches('\0'));
+    assert_eq!(token_symbol, metadata.symbol.trim_end_matches('\0'));
 }

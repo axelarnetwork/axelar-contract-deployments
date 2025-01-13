@@ -13,7 +13,6 @@ use solana_sdk::signer::Signer;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
-use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{program_test, relay_to_solana};
 
@@ -109,18 +108,19 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
     let inner_payload = GMPPayload::DeployInterchainToken(deploy_interchain_token.clone()).encode();
     relay_to_solana(inner_payload, &mut solana_chain, None, spl_token_2022::id()).await;
 
-    let mint_account = solana_chain
-        .try_get_account_no_checks(&mint)
+    let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+    let metadata_account = solana_chain
+        .try_get_account_no_checks(&metadata_account_key)
         .await
-        .expect("banks client error")
-        .expect("mint account empty");
-
-    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
-    let token_metadata = mint_state
-        .get_variable_len_extension::<TokenMetadata>()
+        .unwrap()
         .unwrap();
+    let token_metadata =
+        mpl_token_metadata::accounts::Metadata::from_bytes(&metadata_account.data).unwrap();
 
-    assert_eq!(deploy_interchain_token.name, token_metadata.name);
+    assert_eq!(
+        deploy_interchain_token.name,
+        token_metadata.name.trim_end_matches('\0')
+    );
 
     let (token_manager_pda, _bump) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);

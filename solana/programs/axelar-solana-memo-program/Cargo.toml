@@ -16,10 +16,9 @@ axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 borsh.workspace = true
+mpl-token-metadata.workspace = true
 program-utils = { workspace = true }
 solana-program.workspace = true
-spl-token-2022.workspace = true
-spl-token-metadata-interface.workspace = true
 
 [dev-dependencies]
 ethers-core.workspace = true

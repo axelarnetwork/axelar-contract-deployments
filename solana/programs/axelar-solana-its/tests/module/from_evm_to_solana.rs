@@ -9,9 +9,6 @@ use evm_contracts_test_suite::ItsContracts;
 use interchain_token_transfer_gmp::GMPPayload;
 use solana_program_test::tokio;
 use solana_sdk::program_pack::Pack as _;
-use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::state::Mint;
-use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::{axelar_evm_setup, axelar_solana_setup, relay_to_solana, ItsProgramWrapper};
 
@@ -98,19 +95,17 @@ async fn test_send_from_evm_to_solana() {
         axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
-    let mint_account = solana_chain
-        .try_get_account_no_checks(&mint)
+    let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+    let metadata_account = solana_chain
+        .try_get_account_no_checks(&metadata_account_key)
         .await
-        .expect("banks client error")
-        .expect("mint account empty");
-
-    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
-    let token_metadata = mint_state
-        .get_variable_len_extension::<TokenMetadata>()
+        .unwrap()
         .unwrap();
+    let token_metadata =
+        mpl_token_metadata::accounts::Metadata::from_bytes(&metadata_account.data).unwrap();
 
-    assert_eq!(token_name, token_metadata.name);
-    assert_eq!(token_symbol, token_metadata.symbol);
+    assert_eq!(token_name, token_metadata.name.trim_end_matches('\0'));
+    assert_eq!(token_symbol, token_metadata.symbol.trim_end_matches('\0'));
 
     let (token_manager_pda, _bump) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
