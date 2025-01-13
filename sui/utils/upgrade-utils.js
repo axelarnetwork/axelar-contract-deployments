@@ -2,7 +2,7 @@ const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
 const { printInfo, validateParameters } = require('../../common/utils');
 const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
-const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
+const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx, readMovePackageVersion } = require('./utils');
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
@@ -71,7 +71,8 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
         const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
         contractConfig.address = packageId;
-        contractConfig.versions.push(packageId);
+        const packageVersion = readMovePackageVersion(packageToUpgrade.packageDir);
+        contractConfig.versions[packageVersion] = packageId;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, [`${suiPackageAddress}::package::UpgradeCap`]);
         contractConfig.objects.UpgradeCap = upgradeCap;
 
