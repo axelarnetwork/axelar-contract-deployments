@@ -106,22 +106,24 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const updateCodeId = async (client, config, options) => {
-    const { fetchCodeId, codeId } = options;
+const getCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId, contractName } = options;
 
-    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (codeId) {
-        contractConfig.codeId = codeId;
-    } else if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-    } else if (contractBaseConfig.lastUploadedCodeId) {
-        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
-    } else {
-        throw new Error('Code Id is not defined');
+        return codeId;
     }
 
-    printInfo('Using code id', contractConfig.codeId);
+    if (fetchCodeId) {
+        return fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    }
+
+    if (contractBaseConfig.lastUploadedCodeId) {
+        return contractBaseConfig.lastUploadedCodeId;
+    }
+
+    throw new Error('Code Id is not defined');
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -882,7 +884,7 @@ module.exports = {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     uploadContract,
     instantiateContract,
     fetchCodeIdFromCodeHash,
