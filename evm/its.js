@@ -31,6 +31,7 @@ const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const IOwnable = getContractJSON('IOwnable');
+const ITokenManager = getContractJSON('ITokenManager');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
@@ -222,8 +223,9 @@ async function processCommand(config, chain, options) {
             validateParameters({ isValidTokenId: { tokenId } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManager =  new Contract(await interchainTokenService.validTokenManagerAddress(tokenIdBytes32), ITokenManager.abi, wallet);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenIdBytes32);
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for TokenManager with tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -233,8 +235,9 @@ async function processCommand(config, chain, options) {
             validateParameters({ isValidTokenId: { tokenId } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManager =  new Contract(await interchainTokenService.validTokenManagerAddress(tokenIdBytes32), ITokenManager.abi, wallet);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenIdBytes32);
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -244,8 +247,9 @@ async function processCommand(config, chain, options) {
             validateParameters({ isValidTokenId: { tokenId } });
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+            const tokenManager =  new Contract(await interchainTokenService.validTokenManagerAddress(tokenIdBytes32), ITokenManager.abi, wallet);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenIdBytes32);
+            const flowInAmount = await tokenManager.flowInAmount();
             printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
 
             break;
