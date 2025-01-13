@@ -17,6 +17,7 @@ const {
     suiPackageAddress,
     suiClockAddress,
     readMovePackageName,
+    readMovePackageVersion,
     getSingletonChannelId,
     getItsChannelId,
     getSquidChannelId,
@@ -312,10 +313,14 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     printInfo(`Deployed ${packageName} Package`, published.packageId);
     printInfo(`Deployed ${packageName} Tx`, published.publishTxn.digest);
 
+    const version = readMovePackageVersion(packageDir);
+
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
-        versions: [published.packageId],
+        versions: {
+            [version]: published.packageId,
+        },
     };
 
     chain.contracts[packageName].structs = await getStructs(client, published.packageId);
