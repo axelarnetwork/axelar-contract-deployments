@@ -2357,6 +2357,7 @@
     "chainType": "sui",
     "finality": "1",
     "approxFinalityWaitTime": 1,
+    "decimals": 9,
     "explorer": {
       "name": "Suiscan",
       "url": "https://suiscan.xyz"

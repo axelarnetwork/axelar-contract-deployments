@@ -1685,6 +1685,7 @@
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
       "chainType": "sui",
+      "decimals": 9,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
