@@ -16,14 +16,24 @@ use crate::{
 };
 
 impl Processor {
-    /// Handles the
-    /// [`crate::instructions::GatewayInstruction::InitializePayloadVerificationSession`]
-    /// instruction.
+    /// Verifies signatures for a given a payload using the current verifier set.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Basic account validation (balance and ownership) fails.
+    /// * Signature verification fails.
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * PDA validation fails
+    /// * Verifier set is expired.
+    /// * Verification session state is invalid.
+    /// * Data serialization fails.
     pub fn process_verify_signature(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
         payload_merkle_root: [u8; 32],
-        verifier_info: SigningVerifierSetInfo,
+        verifier_info: &SigningVerifierSetInfo,
     ) -> ProgramResult {
         // Accounts
         let accounts_iter = &mut accounts.iter();

@@ -10,7 +10,10 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
 #[tokio::test]
+#[allow(clippy::as_conversions)]
 async fn successfully_commit_message_payload_pda() {
+    const PAYLOAD_SIZE: usize = 1024;
+
     // Setup: Test runner
     let mut runner = SolanaAxelarIntegration::builder()
         .initial_signer_weights(vec![42, 42])
@@ -20,7 +23,6 @@ async fn successfully_commit_message_payload_pda() {
     let gateway_root_pda = runner.gateway_root_pda;
 
     // Setup: Patch the input message to use a valid payload hash.
-    const PAYLOAD_SIZE: usize = 1024;
     let message_payload_bytes_to_write = random_bytes::<PAYLOAD_SIZE>();
     let message = {
         let mut message = random_message();

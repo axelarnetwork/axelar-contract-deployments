@@ -156,7 +156,7 @@ async fn test_fails_to_verify_bad_signature() {
         .await
         .unwrap();
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
-    let leaf_info = execute_data.signing_verifier_set_leaves.get_mut(0).unwrap();
+    let leaf_info = &mut execute_data.signing_verifier_set_leaves[0];
     match &mut leaf_info.signature {
         Signature::EcdsaRecoverable(data) => {
             *data = random_bytes();
@@ -206,7 +206,7 @@ async fn test_fails_to_verify_signature_for_different_merkle_root() {
         .initialize_payload_verification_session(&execute_data)
         .await
         .unwrap();
-    let leaf_info = execute_data.signing_verifier_set_leaves.get_mut(0).unwrap();
+    let leaf_info = &mut execute_data.signing_verifier_set_leaves[0];
     let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
 
     let random_valid_merkle_root = {
@@ -241,6 +241,7 @@ async fn test_fails_to_verify_signature_for_different_merkle_root() {
 }
 
 #[tokio::test]
+#[allow(clippy::as_conversions)]
 async fn test_large_weight_will_validate_whole_batch() {
     // Setup
     let large_weight = 100;

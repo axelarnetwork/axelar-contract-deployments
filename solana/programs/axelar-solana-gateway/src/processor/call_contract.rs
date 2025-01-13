@@ -2,6 +2,7 @@ use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, read_string, EventParseError};
@@ -11,13 +12,36 @@ use crate::state::GatewayConfig;
 use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
-    /// This function is used to initialize the program.
+    /// This function initializes a cross-chain message by emitting an event containing the call details.
+    ///
+    /// The message can then be picked up by off-chain components for
+    /// cross-chain delivery.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Required accounts are not provided
+    /// * Gateway root PDA is not properly initialized
+    /// * Gateway root PDA's bump seed is invalid
+    /// * Sender is not a signer
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * Gateway configuration data is invalid (`BytemuckDataLenInvalid`)
+    ///
+    /// # Events
+    ///
+    /// Emits a `CALL_CONTRACT` event with the following data:
+    /// * Sender's public key
+    /// * Keccak256 hash of the payload
+    /// * Destination chain identifier
+    /// * Destination contract address
+    /// * Raw payload data
     pub fn process_call_contract(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        destination_chain: String,
-        destination_contract_address: String,
-        payload: Vec<u8>,
+        destination_chain: &str,
+        destination_contract_address: &str,
+        payload: &[u8],
     ) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();
         let sender = next_account_info(accounts_iter)?;
@@ -31,10 +55,13 @@ impl Processor {
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // compute the payload hash
-        let payload_hash = solana_program::keccak::hash(&payload).to_bytes();
+        let payload_hash = solana_program::keccak::hash(payload).to_bytes();
 
         // Check: sender is signer
-        assert!(sender.is_signer, "Sender must be a signer");
+        if !sender.is_signer {
+            solana_program::msg!("Error: Sender must be a signer");
+            return Err(ProgramError::MissingRequiredSignature);
+        }
 
         // Emit an event
         sol_log_data(&[
@@ -43,7 +70,7 @@ impl Processor {
             &payload_hash,
             destination_chain.as_bytes(),
             destination_contract_address.as_bytes(),
-            payload.as_slice(),
+            payload,
         ]);
         Ok(())
     }
@@ -69,7 +96,31 @@ pub struct CallContractEvent {
 }
 
 impl CallContractEvent {
-    /// Constructs a new `CallContractEvent` by parsing the provided data iterator.
+    /// Constructs a new `CallContractEvent` by parsing event data from an iterator.
+    ///
+    /// # Data Format Details
+    ///
+    /// This method parses a sequence of byte vectors representing a cross-chain contract call event,
+    /// expecting data in the following order:
+    ///
+    /// - `sender_key`: 32-byte Solana public key
+    /// - `payload_hash`: 32-byte hash of the payload
+    /// - `destination_chain`: UTF-8 string identifying target blockchain
+    /// - `destination_contract_address`: UTF-8 string of target contract
+    /// - `payload`: Raw bytes to be transmitted cross-chain
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EventParseError::MissingData`] if:
+    /// * Any required field is missing from the iterator
+    /// * Field name is included in the error message
+    ///
+    /// Returns [`EventParseError::InvalidUtf8`] if:
+    /// * Strings are not valid UTF-8
+    ///
+    /// Returns [`EventParseError::InvalidLength`] if:
+    /// * Public key or payload hash are not exactly 32 bytes
+    ///
     pub fn new<I>(mut data: I) -> Result<Self, EventParseError>
     where
         I: Iterator<Item = Vec<u8>>,

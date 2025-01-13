@@ -2,6 +2,7 @@ use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::event_utils::{read_array, read_string, EventParseError};
@@ -11,12 +12,34 @@ use crate::state::GatewayConfig;
 use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
-    /// This function is used to initialize the program.
+    /// Processes a cross-chain contract call using off-chain data and emits the appropriate event.
+    ///
+    /// This function is similar to [`Processor::process_call_contract`] but accepts a pre-computed
+    /// payload hash instead of the raw payload bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Required accounts are not provided
+    /// * Gateway root PDA is not properly initialized
+    /// * Gateway root PDA's bump seed is invalid
+    /// * Sender is not a signer
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * Gateway configuration data is invalid (`BytemuckDataLenInvalid`)
+    ///
+    /// # Events
+    ///
+    /// Emits a `CALL_CONTRACT_OFFCHAIN_DATA` event with the following data:
+    /// * Sender's public key
+    /// * Pre-computed payload hash
+    /// * Destination chain identifier
+    /// * Destination contract address
     pub fn process_call_contract_offchain_data(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        destination_chain: String,
-        destination_contract_address: String,
+        destination_chain: &str,
+        destination_contract_address: &str,
         payload_hash: [u8; 32],
     ) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();
@@ -31,7 +54,10 @@ impl Processor {
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: sender is signer
-        assert!(sender.is_signer, "Sender must be a signer");
+        if !sender.is_signer {
+            solana_program::msg!("Error: Sender must be a signer");
+            return Err(ProgramError::MissingRequiredSignature);
+        }
 
         // Emit an event
         sol_log_data(&[
@@ -62,7 +88,26 @@ pub struct CallContractOffchainDataEvent {
 }
 
 impl CallContractOffchainDataEvent {
-    /// Constructs a new `CallContractEvent` by parsing the provided data iterator.
+    /// Constructs a new `CallContractOffchainDataEvent` by parsing event data from an iterator.
+    ///
+    /// # Data Format Details
+    ///
+    /// - `sender_key`: 32-byte Solana public key of the transaction signer
+    /// - `payload_hash`: 32-byte hash referencing off-chain payload data
+    /// - `destination_chain`: UTF-8 string identifying target blockchain
+    /// - `destination_contract_address`: UTF-8 string of target contract
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EventParseError::MissingData`] if:
+    /// * Any required field is missing from the iterator
+    /// * Field name is included in the error message
+    ///
+    /// Returns [`EventParseError::InvalidUtf8`] if:
+    /// * Strings are not valid UTF-8
+    ///
+    /// Returns [`EventParseError::InvalidLength`] if:
+    /// * Public key or payload hash are not exactly 32 bytes
     pub fn new<I>(mut data: I) -> Result<Self, EventParseError>
     where
         I: Iterator<Item = Vec<u8>>,

@@ -140,6 +140,7 @@ pub enum GatewayError {
 
 impl GatewayError {
     /// This is a utility function for the relayer when it's exepcting the error for an unsuccessful transaction.
+    #[must_use]
     pub fn should_relayer_proceed(&self) -> bool {
         let Some(error_num) = self.to_u32() else {
             return false;
@@ -148,9 +149,11 @@ impl GatewayError {
     }
 }
 
+#[allow(clippy::as_conversions)]
 impl From<GatewayError> for ProgramError {
-    fn from(e: GatewayError) -> Self {
-        ProgramError::Custom(e as u32)
+    fn from(error: GatewayError) -> Self {
+        // GatewayError's memory representation is an u32, so this is safe
+        Self::Custom(error as u32)
     }
 }
 

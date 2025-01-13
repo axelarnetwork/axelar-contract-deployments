@@ -12,7 +12,7 @@ use program_utils::BytemuckedPda;
 use solana_program_test::tokio::fs;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::account::ReadableAccount;
-use solana_sdk::bpf_loader_upgradeable::{self};
+use solana_sdk::bpf_loader_upgradeable;
 use solana_sdk::instruction::{AccountMeta, Instruction, InstructionError};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -71,13 +71,10 @@ async fn successfully_transfer_operatorship_when_signer_is_operator() {
 
     let altered_config = GatewayConfig::read(altered_config_acc.data()).unwrap();
 
-    assert_eq!(
-        *altered_config,
-        GatewayConfig {
-            operator: altered_config.operator,
-            ..*original_config
-        }
-    );
+    let mut expected_config = *original_config;
+    expected_config.operator = altered_config.operator;
+
+    assert_eq!(*altered_config, expected_config);
 }
 
 // succeed if signer is gateway program owner
@@ -139,13 +136,10 @@ async fn successfully_transfer_operatorship_when_signer_is_upgrade_authority() {
         .await;
 
     let altered_config = GatewayConfig::read(altered_config_acc.data()).unwrap();
-    assert_eq!(
-        *altered_config,
-        GatewayConfig {
-            operator: altered_config.operator,
-            ..*original_config
-        }
-    );
+
+    let mut expected_config = *original_config;
+    expected_config.operator = altered_config.operator;
+    assert_eq!(*altered_config, expected_config);
 }
 
 // fail if gateway not initialized

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use core::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
@@ -20,10 +20,24 @@ use crate::{
 
 impl Processor {
     /// Validate a message approval, and mark it as used
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Account balance and expected ownership validation fails.
+    /// * Required accounts are missing.
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * `Message` not in approved state.
+    /// * `Message` hash does not match with `IncomingMessage`'s.
+    /// * Invalid destination address format.
+    /// * Caller PDA validation fails.
+    /// * Signing authority missing.
+    /// * Data serialization fails.
     pub fn process_validate_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        message: Message,
+        message: &Message,
     ) -> Result<(), ProgramError> {
         let accounts_iter = &mut accounts.iter();
         let incoming_message_pda = next_account_info(accounts_iter)?;
@@ -47,7 +61,7 @@ impl Processor {
         )?;
 
         // Check: message is approved
-        if incoming_message.status != MessageStatus::Approved {
+        if !incoming_message.status.is_approved() {
             return Err(GatewayError::MessageNotApproved.into());
         }
         // Check: message hashes match
@@ -72,7 +86,7 @@ impl Processor {
             return Err(GatewayError::CallerNotSigner.into());
         }
 
-        incoming_message.status = MessageStatus::Executed;
+        incoming_message.status = MessageStatus::executed();
 
         // Emit an event
         sol_log_data(&[
@@ -125,7 +139,7 @@ impl MessageEvent {
     /// # Errors
     ///
     /// Returns a `EventParseError` if any required data is missing or invalid.
-    pub fn new(mut data: impl Iterator<Item = Vec<u8>>) -> Result<Self, EventParseError> {
+    pub fn new<I: Iterator<Item = Vec<u8>>>(mut data: I) -> Result<Self, EventParseError> {
         // Read known-size elements
         let command_id_data = data
             .next()

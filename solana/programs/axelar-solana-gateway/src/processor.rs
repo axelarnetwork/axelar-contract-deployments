@@ -30,11 +30,27 @@ pub use rotate_signers::VerifierSetRotated;
 pub use transfer_operatorship::OperatorshipTransferredEvent;
 pub use validate_message::MessageEvent;
 
+#[allow(clippy::multiple_inherent_impl)]
 /// Program state handler.
 pub struct Processor;
 
 impl Processor {
-    /// Processes an instruction.
+    /// Main entry point for processing Gateway program instructions.
+    ///
+    /// Deserializes the instruction data and delegates to the appropriate instruction-specific
+    /// processor method.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Instruction deserialization fails.
+    /// * Program ID validation fails.
+    /// * Downstream processing fails.
+    // Reason for `clippy::too_many_lines`:
+    // This is intentionally a long function since it serves as the main program entry point,
+    // so the lint's warning is expected here - the function handles all core routing logic
+    // through a single `match` statement.
+    #[allow(clippy::too_many_lines)]
     pub fn process_instruction(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -70,9 +86,9 @@ impl Processor {
                 Self::process_call_contract(
                     program_id,
                     accounts,
-                    destination_chain,
-                    destination_contract_address,
-                    payload,
+                    &destination_chain,
+                    &destination_contract_address,
+                    &payload,
                 )
             }
             GatewayInstruction::CallContractOffchainData {
@@ -84,14 +100,14 @@ impl Processor {
                 Self::process_call_contract_offchain_data(
                     program_id,
                     accounts,
-                    destination_chain,
-                    destination_contract_address,
+                    &destination_chain,
+                    &destination_contract_address,
                     payload_hash,
                 )
             }
             GatewayInstruction::InitializeConfig(init_config) => {
                 msg!("Instruction: Initialize Config");
-                Self::process_initialize_config(program_id, accounts, init_config)
+                Self::process_initialize_config(program_id, accounts, &init_config)
             }
 
             GatewayInstruction::InitializePayloadVerificationSession {
@@ -114,12 +130,12 @@ impl Processor {
                     program_id,
                     accounts,
                     payload_merkle_root,
-                    verifier_info,
+                    &verifier_info,
                 )
             }
             GatewayInstruction::ValidateMessage { message } => {
                 msg!("Instruction: Validate Message");
-                Self::process_validate_message(program_id, accounts, message)
+                Self::process_validate_message(program_id, accounts, &message)
             }
             GatewayInstruction::InitializeMessagePayload {
                 buffer_size,
@@ -247,7 +263,7 @@ pub(crate) mod event_utils {
         }
         let array = data
             .try_into()
-            .map_err(|_| EventParseError::InvalidLength {
+            .map_err(|_err| EventParseError::InvalidLength {
                 field,
                 expected: N,
                 actual: data.len(),
@@ -259,6 +275,6 @@ pub(crate) mod event_utils {
         field: &'static str,
         data: Vec<u8>,
     ) -> Result<String, EventParseError> {
-        String::from_utf8(data).map_err(|e| EventParseError::InvalidUtf8 { field, source: e })
+        String::from_utf8(data).map_err(|source| EventParseError::InvalidUtf8 { field, source })
     }
 }

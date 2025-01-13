@@ -64,7 +64,7 @@ async fn successfully_rotates_signers() {
         .await
         .unwrap();
 
-    let new_epoch: U256 = 2u128.into();
+    let new_epoch: U256 = 2_u128.into();
 
     // - expected events
     let emitted_events = get_gateway_events(&tx_result).pop().unwrap();
@@ -89,12 +89,11 @@ async fn successfully_rotates_signers() {
         .await;
     assert_eq!(
         verifier_set_tracker_data,
-        VerifierSetTracker {
-            bump: new_verifier_set.verifier_set_tracker().1,
-            _padding: [0; 7],
-            epoch: new_epoch,
-            verifier_set_hash: new_verifier_set_hash
-        }
+        VerifierSetTracker::new(
+            new_verifier_set.verifier_set_tracker().1,
+            new_epoch,
+            new_verifier_set_hash
+        )
     );
 }
 
@@ -153,7 +152,13 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
         .setup()
         .await;
     // after we set up the gateway, the minimum delay needs to be forwarded
-    metadata.forward_time(minimum_delay_seconds as i64).await;
+    metadata
+        .forward_time(
+            minimum_delay_seconds
+                .try_into()
+                .expect("got a negative timestamp"),
+        )
+        .await;
 
     // Action - rotate the signer set for the first time.
     let new_verifier_set = make_verifier_set(&[500, 200], 1, metadata.domain_separator);
@@ -183,7 +188,13 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
     assert_eq!(err, GatewayError::RotationCooldownNotDone);
 
     // Action, forward time
-    metadata.forward_time(minimum_delay_seconds as i64).await;
+    metadata
+        .forward_time(
+            minimum_delay_seconds
+                .try_into()
+                .expect("got a negative timestamp"),
+        )
+        .await;
 
     // Action, rotate signers again after waiting the minimum delay.
     let tx = metadata
@@ -196,7 +207,7 @@ async fn cannot_invoke_rotate_signers_without_respecting_minimum_delay() {
         .unwrap();
     // Assert the rotate_signers transaction succeeded after waiting the time
     // required delay.
-    assert!(tx.result.is_ok())
+    assert!(tx.result.is_ok());
 }
 
 /// Ensure that we can use an old signer set to sign messages as long as the
@@ -282,12 +293,7 @@ async fn succeed_if_verifier_set_signed_by_old_verifier_set_and_submitted_by_the
     let vs_tracker = metadata.verifier_set_tracker(new_vs_tracker_pda).await;
     assert_eq!(
         vs_tracker,
-        VerifierSetTracker {
-            bump: new_vs_tracker_bump,
-            _padding: [0; 7],
-            epoch: new_epoch,
-            verifier_set_hash: new_verifier_set_hash,
-        }
+        VerifierSetTracker::new(new_vs_tracker_bump, new_epoch, new_verifier_set_hash,)
     );
 }
 
@@ -439,7 +445,7 @@ async fn fail_if_rotate_signers_signed_by_old_verifier_set() {
         for i in 0..5 {
             // Action - rotate the signer set for the first time.
             let new_verifier_set =
-                make_verifier_set(&[i, 200], i as u64, metadata.domain_separator);
+                make_verifier_set(&[i, 200], i.try_into().unwrap(), metadata.domain_separator);
             metadata
                 .sign_session_and_rotate_signers(&preveious, &new_verifier_set.verifier_set())
                 .await
@@ -505,7 +511,7 @@ async fn new_verifier_set_can_approve_messages_while_respecting_signer_retention
     }
 
     assert_eq!(
-        new_signer_sets.len() as u64,
+        u64::try_from(new_signer_sets.len()).unwrap(),
         previous_signer_retention,
         "new signer sets"
     );

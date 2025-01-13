@@ -21,8 +21,8 @@
 //! where modification of the payload is actually required, such as during message
 //! construction or updates within the Gateway crate.
 
-use std::mem::size_of;
-use std::ops::Deref;
+use core::mem::size_of;
+use core::ops::Deref;
 
 use solana_program::entrypoint::ProgramResult;
 use solana_program::keccak::hashv;
@@ -85,7 +85,8 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
 
     /// Adds the header prefix space  the given offset.
     #[inline]
-    pub fn adjust_offset(offset: usize) -> usize {
+    #[must_use]
+    pub const fn adjust_offset(offset: usize) -> usize {
         offset.saturating_add(Self::HEADER_SIZE)
     }
 
@@ -94,8 +95,14 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
         !self.payload_hash.iter().all(|&x| x == 0)
     }
 
-    /// Asserts this message payload account haven't been committed yet
+    /// Asserts this message payload account haven't been committed yet.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GatewayError::MessagePayloadAlreadyCommitted`] if the message payload has already
+    /// been committed.
     #[inline]
+    #[track_caller]
     pub fn assert_uncommitted(&self) -> Result<(), GatewayError> {
         if self.committed() {
             msg!("Error: Message payload account data was already committed");
@@ -110,6 +117,8 @@ impl<'a, R: RefType<'a>> MessagePayload<'a, R> {
 impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
     type Error = ProgramError;
 
+    #[allow(clippy::unwrap_used)]
+    #[allow(clippy::unwrap_in_result)]
     fn try_from(bytes: &'a mut [u8]) -> Result<Self, Self::Error> {
         if bytes.len() <= Self::HEADER_SIZE {
             msg!("Error: Message payload account data is too small");
@@ -118,10 +127,10 @@ impl<'a> TryFrom<&'a mut [u8]> for MessagePayload<'a, Mut> {
 
         let (bump_slice, rest) = bytes.split_at_mut(1);
         let (payload_hash_slice, raw_payload) = rest.split_at_mut(32);
-        debug_assert_eq!(payload_hash_slice.len(), 32);
-        debug_assert!(!raw_payload.is_empty());
+        debug_assert!(!raw_payload.is_empty(), "raw payload slice can't be empty");
 
-        let bump = &mut bump_slice[0];
+        // Unwrap: we just checked that the bump slice is large enough
+        let bump = bump_slice.first_mut().unwrap();
         // Unwrap: we just checked that the slice bounds fits the expected array size
         let payload_hash = payload_hash_slice.try_into().unwrap();
 
@@ -138,10 +147,16 @@ impl<'a> MessagePayload<'a, Mut> {
     /// Hashes the contents of `raw_payload` and stores it under `payload_hash`.
     pub fn hash_raw_payload_bytes(&mut self) {
         let digest = hashv(&[(self.raw_payload)]);
-        self.payload_hash.copy_from_slice(&(digest.to_bytes()))
+        self.payload_hash.copy_from_slice(&(digest.to_bytes()));
     }
 
-    /// Write bytes in `raw_payload`.
+    /// Writes bytes to the raw payload buffer at the specified offset
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::AccountDataTooSmall`] if:
+    /// * The write operation would exceed the buffer's bounds (`offset + bytes_in.len() > raw_payload.len()`)
+    /// * The buffer slice range is invalid (should never occur due to bounds check)
     pub fn write(&mut self, bytes_in: &[u8], offset: usize) -> ProgramResult {
         // Check: write bounds
         let write_offset = offset.saturating_add(bytes_in.len());
@@ -169,6 +184,8 @@ impl<'a> MessagePayload<'a, Mut> {
 impl<'a> TryFrom<&'a [u8]> for MessagePayload<'a, Immut> {
     type Error = ProgramError;
 
+    #[allow(clippy::unwrap_used)]
+    #[allow(clippy::unwrap_in_result)]
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
         if bytes.len() <= Self::HEADER_SIZE {
             msg!("Error: Message payload account data is too small");
@@ -177,10 +194,10 @@ impl<'a> TryFrom<&'a [u8]> for MessagePayload<'a, Immut> {
 
         let (bump_slice, rest) = bytes.split_at(1);
         let (payload_hash_slice, raw_payload) = rest.split_at(32);
-        debug_assert_eq!(payload_hash_slice.len(), 32);
-        debug_assert!(!raw_payload.is_empty());
+        debug_assert!(!raw_payload.is_empty(), "raw payload slice can't be empty");
 
-        let bump = &bump_slice[0];
+        // Unwrap: we just checked that the bump slice is large enough
+        let bump = bump_slice.first().unwrap();
         // Unwrap: we just checked that the slice bounds fits the expected array size
         let payload_hash = payload_hash_slice.try_into().unwrap();
 
@@ -200,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let mut account_data = [0u8; 64];
+        let mut account_data = [0_u8; 64];
         let mut rng = thread_rng();
         account_data.try_fill(&mut rng).unwrap();
         let message_payload: ImmutMessagePayload<'_> = account_data.as_slice().try_into().unwrap();
@@ -212,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_hash() {
-        let mut account_data = [0u8; 64];
+        let mut account_data = [0_u8; 64];
         let mut rng = thread_rng();
         account_data.try_fill(&mut rng).unwrap();
         let mut message_payload: MutMessagePayload<'_> =
@@ -222,6 +239,6 @@ mod tests {
 
         let expected_hash = Keccak256::digest(&message_payload.raw_payload).to_vec();
         assert_eq!(*expected_hash, *message_payload.payload_hash);
-        assert_ne!(expected_hash, vec![0u8; 32]); // confidence check
+        assert_ne!(expected_hash, vec![0_u8; 32]); // confidence check
     }
 }

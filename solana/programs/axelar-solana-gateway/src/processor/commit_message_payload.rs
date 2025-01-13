@@ -3,11 +3,22 @@ use crate::state::message_payload::MutMessagePayload;
 use program_utils::ValidPDA;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 impl Processor {
-    /// Commits a message payload PDA by hashing its contents and persisting the resulting
-    /// hash into account state.
+    /// Commits a message payload PDA by computing a hash of its contents and storing it in the
+    /// account state.
+    ///
+    /// Once committed, the payload becomes immutable and can be safely referenced.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Required accounts are missing or in wrong order
+    /// * Payer is not a signer
+    /// * Gateway root PDA or message payload account is not initialized
+    /// * Message payload PDA derivation fails or address mismatch
     pub fn process_commit_message_payload(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -19,9 +30,11 @@ impl Processor {
         let gateway_root_pda = next_account_info(accounts_iter)?;
         let message_payload_account = next_account_info(accounts_iter)?;
 
-        // Check: Payer is the signer
-        assert!(payer.is_signer);
-
+        // Check: payer is signer
+        if !payer.is_signer {
+            solana_program::msg!("Error: payer must be a signer");
+            return Err(ProgramError::MissingRequiredSignature);
+        }
         // Check: Gateway root PDA
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
 
@@ -40,7 +53,11 @@ impl Processor {
             *payer.key,
             *message_payload.bump,
         )?;
-        assert_eq!(message_payload_account.key, &message_payload_pda);
+
+        if &message_payload_pda != message_payload_account.key {
+            solana_program::msg!("Error: failed to derive message payload account address");
+            return Err(ProgramError::InvalidSeeds);
+        }
 
         // Check: Message payload PDA must not be committed.
         message_payload.assert_uncommitted()?;

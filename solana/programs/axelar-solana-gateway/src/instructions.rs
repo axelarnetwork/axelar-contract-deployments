@@ -1,6 +1,6 @@
 //! Instruction types
 
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
 use axelar_solana_encoding::types::messages::Message;
@@ -18,14 +18,14 @@ use crate::state::verifier_set_tracker::VerifierSetHash;
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub enum GatewayInstruction {
-    /// Processes incoming batch of ApproveMessage commands from Axelar
+    /// Processes incoming batch of `ApproveMessage` commands from Axelar
     ///
     /// Accounts expected by this instruction:
     /// 0. [] Gateway Root Config PDA account
-    /// 1. [WRITE] Gateway ExecuteData PDA account
+    /// 1. [WRITE] Gateway `ExecuteData` PDA account
     /// 2. [] Verifier Setr Tracker PDA account (the one that signed the
-    ///    ExecuteData)
-    /// 3..N [WRITE] Gateway ApprovedCommand PDA accounts. All commands needs to
+    ///    `ExecuteData`)
+    /// 3..N [WRITE] Gateway `ApprovedCommand` PDA accounts. All commands needs to
     ///         be `ApproveMessages`.
     ApproveMessage {
         /// The message that's to be approved
@@ -83,10 +83,10 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account
     /// 1. [SIGNER] Gateway's Upgrade Authority account
-    /// 2. [] Gateway's ProgramData account
+    /// 2. [] Gateway's `ProgramData` account
     /// 3. [WRITE] Gateway Root Config PDA account
     /// 4. [] System Program account
-    /// 5..N [WRITE] uninitialized VerifierSetTracker PDA accounts
+    /// 5..N [WRITE] uninitialized `VerifierSetTracker` PDA accounts
     InitializeConfig(InitializeConfig),
 
     /// Initializes a verification session for a given Payload root.
@@ -135,7 +135,7 @@ pub enum GatewayInstruction {
     ///
     /// This instruction will revert on the following cases
     /// 1. Message payload account is already committed.
-    /// 2. offset + bytes.len() is greater than the account size.
+    /// 2. offset + `bytes.len()` is greater than the account size.
     /// 3. SIGNER is not the authority for the Message Payload account.
     ///
     /// Accounts expected by this instruction:
@@ -235,6 +235,10 @@ pub struct InitializeConfig {
 }
 
 /// Creates a [`GatewayInstruction::ApproveMessages`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 #[allow(clippy::too_many_arguments)]
 pub fn approve_messages(
     message: MerkleisedMessage,
@@ -265,6 +269,10 @@ pub fn approve_messages(
 }
 
 /// Creates a [`GatewayInstruction::RotateSigners`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 #[allow(clippy::too_many_arguments)]
 pub fn rotate_signers(
     gateway_root_pda: Pubkey,
@@ -300,6 +308,10 @@ pub fn rotate_signers(
 }
 
 /// Creates a [`CallContract`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn call_contract(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
@@ -327,6 +339,10 @@ pub fn call_contract(
 }
 
 /// Creates a [`CallContractOffchainData`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn call_contract_offchain_data(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
@@ -354,6 +370,10 @@ pub fn call_contract_offchain_data(
 }
 
 /// Creates a [`GatewayInstruction::InitializeConfig`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 #[allow(clippy::too_many_arguments)]
 pub fn initialize_config(
     payer: Pubkey,
@@ -375,13 +395,13 @@ pub fn initialize_config(
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
-    initial_signer_sets.iter().for_each(|(_hash, pda)| {
+    for (_hash, pda) in &initial_signer_sets {
         accounts.push(AccountMeta {
             pubkey: *pda,
             is_signer: false,
             is_writable: true,
-        })
-    });
+        });
+    }
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
         domain_separator,
@@ -399,6 +419,10 @@ pub fn initialize_config(
 
 /// Creates a [`GatewayInstruction::InitializePayloadVerificationSession`]
 /// instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails..
 pub fn initialize_payload_verification_session(
     payer: Pubkey,
     gateway_config_pda: Pubkey,
@@ -426,6 +450,11 @@ pub fn initialize_payload_verification_session(
 }
 
 /// Creates a [`GatewayInstruction::VerifySignature`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError`] if serialization of the [`GatewayInstruction::VerifySignature`]
+/// instruction fails.
 pub fn verify_signature(
     gateway_config_pda: Pubkey,
     verifier_set_tracker_pda: Pubkey,
@@ -454,6 +483,10 @@ pub fn verify_signature(
 }
 
 /// Creates a [`GatewayInstructon::ValidateMessage`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn validate_message(
     incoming_message_pda: &Pubkey,
     signing_pda: &Pubkey,
@@ -474,6 +507,10 @@ pub fn validate_message(
 }
 
 /// Creates a [`GatewayInstruction::InitializeMessagePayload`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn initialize_message_payload(
     gateway_root_pda: Pubkey,
     payer: Pubkey,
@@ -503,6 +540,10 @@ pub fn initialize_message_payload(
 }
 
 /// Creates a [`GatewayInstruction::WriteMessagePayload`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.t
 pub fn write_message_payload(
     gateway_root_pda: Pubkey,
     authority: Pubkey,
@@ -530,6 +571,10 @@ pub fn write_message_payload(
 }
 
 /// Creates a [`GatewayInstruction::CommitMessagePayload`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn commit_message_payload(
     gateway_root_pda: Pubkey,
     authority: Pubkey,
@@ -553,6 +598,10 @@ pub fn commit_message_payload(
 }
 
 /// Creates a [`GatewayInstrucon::CloseMessagePayload`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn close_message_payload(
     gateway_root_pda: Pubkey,
     authority: Pubkey,
@@ -574,6 +623,10 @@ pub fn close_message_payload(
 }
 
 /// Creates a [`GatewayInstruction::TransferOperatorship`] instruction.
+///
+/// # Errors
+///
+/// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn transfer_operatorship(
     gateway_root_pda: Pubkey,
     current_operator_or_gateway_program_owner: Pubkey,

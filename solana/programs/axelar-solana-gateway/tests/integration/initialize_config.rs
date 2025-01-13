@@ -22,6 +22,8 @@ fn cmp_config(init: &SolanaAxelarIntegrationMetadata, created: &GatewayConfig) -
         && created.last_rotation_timestamp > 0
 }
 
+#[allow(clippy::arithmetic_side_effects)]
+#[allow(clippy::as_conversions)]
 async fn assert_verifier_sets(metadata: &mut SolanaAxelarIntegrationMetadata) {
     let vs_data = metadata.init_gateway_config_verifier_set_data();
     for (idx, (verifier_set_hash, pda)) in vs_data.into_iter().enumerate() {
@@ -75,7 +77,10 @@ async fn test_successfylly_initialize_config_with_single_initial_signer() {
 
     // Assert -- block timestamp updated
     let clock = metadata.get_sysvar::<Clock>().await;
-    let block_timestamp = clock.unix_timestamp as u64;
+    let block_timestamp: u64 = clock
+        .unix_timestamp
+        .try_into()
+        .expect("got a negative timestamp");
     assert_eq!(
         root_pda_data.last_rotation_timestamp, block_timestamp,
         "timestamp invalid"

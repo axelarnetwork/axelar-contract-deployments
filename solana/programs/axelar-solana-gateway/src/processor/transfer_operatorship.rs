@@ -12,8 +12,24 @@ use crate::state::GatewayConfig;
 use crate::{assert_valid_gateway_root_pda, event_prefixes};
 
 impl Processor {
-    /// Transfer operatorship of the Gateway to a new address.
-    /// reference implementation: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L129-L133
+    /// Transfers gateway operatorship to a new address, authorized by
+    /// either current operator or upgrade authority.
+    ///
+    /// Reference implementation:
+    /// `https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/c290c7337fd447ecbb7426e52ac381175e33f602/contracts/gateway/AxelarAmplifierGateway.sol#L129-L133`
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Account balance and expected ownership validation fails.
+    /// * Required accounts are missing
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * Gateway root PDA is invalid
+    /// * `ProgramData` account derivation fails
+    /// * Loader state is invalid
+    /// * Signer is neither operator nor upgrade authority
+    /// * Data serialization fails
     pub fn process_transfer_operatorship(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -40,11 +56,16 @@ impl Processor {
         }
 
         // Check: the programda state is valid
-        let loader_state = bincode::deserialize::<UpgradeableLoaderState>(
-            &programdata_account.data.borrow()
-                [0..UpgradeableLoaderState::size_of_programdata_metadata()],
-        )
-        .map_err(|_err| GatewayError::InvalidLoaderContent)?;
+        let loader_state = programdata_account
+            .data
+            .borrow()
+            .get(0..UpgradeableLoaderState::size_of_programdata_metadata())
+            .ok_or(GatewayError::InvalidLoaderContent)
+            .and_then(|bytes: &[u8]| {
+                bincode::deserialize::<UpgradeableLoaderState>(bytes)
+                    .map_err(|_err| GatewayError::InvalidLoaderContent)
+            })?;
+
         let UpgradeableLoaderState::ProgramData {
             upgrade_authority_address,
             ..
@@ -88,6 +109,12 @@ pub struct OperatorshipTransferredEvent {
 
 impl OperatorshipTransferredEvent {
     /// Constructs a new `OperatorshipTransferredEvent` with the provided data slice.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EventParseError`] if:
+    /// * No data is provided for new operator
+    /// * Public key data is not exactly 32 bytes
     pub fn new<I>(mut data: I) -> Result<Self, EventParseError>
     where
         I: Iterator<Item = Vec<u8>>,

@@ -1,12 +1,12 @@
-use std::str::FromStr;
-
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
+use core::str::FromStr;
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
+use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use super::Processor;
@@ -20,7 +20,34 @@ use crate::{
 
 impl Processor {
     /// Approves an array of messages, signed by the Axelar signers.
-    /// reference implementation: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/2eaf5199ee8ccc5eb1d8353c0dd7592feff0eb5c/contracts/gateway/AxelarAmplifierGateway.sol#L78-L84
+    /// reference implementation: `https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/2eaf5199ee8ccc5eb1d8353c0dd7592feff0eb5c/contracts/gateway/AxelarAmplifierGateway.sol#L78-L84`
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// * Account Validation:
+    ///   * Account iteration fails when extracting accounts
+    ///   * Gateway Root PDA is not initialized
+    ///   * Verification session PDA is not initialized
+    ///   * Incoming message PDA is already initialized
+    ///
+    /// * Data Access and Serialization:
+    ///   * Failed to borrow verification session or incoming message account data
+    ///   * Verification session or incoming message data has invalid byte length
+    ///
+    /// * Verification Failures:
+    ///   * Signature verification PDA validation fails
+    ///   * Signature verification session is not valid
+    ///   * Merkle proof is invalid
+    ///   * Leaf node is not part of the provided merkle root
+    ///
+    /// * Message Processing:
+    ///   * Failed to initialize PDA for incoming message
+    ///   * Destination address is invalid and cannot be converted to a `Pubkey`
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// * Converting `IncomingMessage::LEN` to u64 overflows.
     pub fn process_approve_message(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -69,9 +96,9 @@ impl Processor {
         // Check: leaf node is part of the payload merkle root
         if !proof.verify(
             payload_merkle_root,
-            &[message.leaf.position as usize],
+            &[message.leaf.position.into()],
             &[leaf_hash],
-            message.leaf.set_size as usize,
+            message.leaf.set_size.into(),
         ) {
             return Err(GatewayError::LeafNodeNotPartOfMerkleRoot.into());
         }
@@ -98,7 +125,10 @@ impl Processor {
             incoming_message_pda,
             program_id,
             system_program,
-            IncomingMessage::LEN as u64,
+            IncomingMessage::LEN.try_into().map_err(|_err| {
+                solana_program::msg!("unexpected u64 overflow in struct size");
+                ProgramError::ArithmeticOverflow
+            })?,
             seeds,
         )?;
 
@@ -117,7 +147,7 @@ impl Processor {
         *incoming_message_data = IncomingMessage::new(
             incoming_message_pda_bump,
             signing_pda_bump,
-            MessageStatus::Approved,
+            MessageStatus::approved(),
             message_hash,
             message.payload_hash,
         );

@@ -1,5 +1,5 @@
-use std::convert::TryInto;
-use std::mem::size_of;
+use core::convert::TryInto;
+use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
@@ -33,7 +33,26 @@ impl Processor {
     ///
     /// Rotation to duplicate signers is rejected.
     ///
-    /// reference implementation: https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/9dae93af0b799e536005951ddc36284132813579/contracts/gateway/AxelarAmplifierGateway.sol#L94
+    /// Reference implementation: `https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/9dae93af0b799e536005951ddc36284132813579/contracts/gateway/AxelarAmplifierGateway.sol#L94`
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Account validation or initialization fails.
+    /// * Arithmetic overflow occurs in epoch calculations.
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * Verification session is invalid.
+    /// * Verifier set is expired or invalid.
+    /// * Rotation delay hasn't elapsed.
+    /// * Proof not signed by latest verifier set.
+    /// * New verifier set tracker already exists.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// * Converting `unix_timestamp` to `u64` results in a negative value (via `expect`)
+    /// * Converting `size_of::<VerifierSetTracker>` to `u64` overflows (via `expect`)
     pub fn process_rotate_verifier_set(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -51,15 +70,15 @@ impl Processor {
 
         // Check: Gateway Root PDA is initialized.
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let mut data = gateway_root_pda.try_borrow_mut_data()?;
-        let gateway_config =
-            GatewayConfig::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        let mut gateway_config_data = gateway_root_pda.try_borrow_mut_data()?;
+        let gateway_config = GatewayConfig::read_mut(&mut gateway_config_data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_gateway_root_pda(gateway_config.bump, gateway_root_pda.key)?;
 
         // Check: Verification session PDA is initialized.
         verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
-        let mut data = verification_session_account.try_borrow_mut_data()?;
-        let session = SignatureVerificationSessionData::read_mut(&mut data)
+        let mut session_data = verification_session_account.try_borrow_mut_data()?;
+        let session = SignatureVerificationSessionData::read_mut(&mut session_data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
         // New verifier set merkle root can be transformed into the payload hash
@@ -86,9 +105,9 @@ impl Processor {
 
         // Check: Active verifier set tracker PDA is initialized.
         verifier_set_tracker_account.check_initialized_pda_without_deserialization(program_id)?;
-        let data = verifier_set_tracker_account.try_borrow_data()?;
-        let verifier_set_tracker =
-            VerifierSetTracker::read(&data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        let verifier_set_data = verifier_set_tracker_account.try_borrow_data()?;
+        let verifier_set_tracker = VerifierSetTracker::read(&verifier_set_data)
+            .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_verifier_set_tracker_pda(
             verifier_set_tracker,
             verifier_set_tracker_account.key,
@@ -127,75 +146,101 @@ impl Processor {
         let current_time: u64 = solana_program::clock::Clock::get()?
             .unix_timestamp
             .try_into()
-            .expect("received negative timestamp");
-        if enforce_rotation_delay && !enough_time_till_next_rotation(current_time, gateway_config)?
-        {
+            .map_err(|_err| {
+                solana_program::msg!("received negative timestamp");
+                ProgramError::ArithmeticOverflow
+            })?;
+
+        if enforce_rotation_delay && !enough_time_till_next_rotation(current_time, gateway_config) {
             return Err(GatewayError::RotationCooldownNotDone.into());
         }
 
         gateway_config.last_rotation_timestamp = current_time;
 
-        // Rotate the signers
-        gateway_config.current_epoch = gateway_config
-            .current_epoch
-            .checked_add(U256::ONE)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        // Initialize the tracker account
-        let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
-        program_utils::init_pda_raw(
+        rotate_signers(
+            gateway_config,
+            new_verifier_set_merkle_root,
             payer,
             new_empty_verifier_set,
             program_id,
             system_account,
-            size_of::<VerifierSetTracker>() as u64,
-            &[
-                seed_prefixes::VERIFIER_SET_TRACKER_SEED,
-                new_verifier_set_merkle_root.as_slice(),
-                &[new_verifier_set_bump],
-            ],
-        )?;
-
-        // store account data
-        let mut data = new_empty_verifier_set.try_borrow_mut_data()?;
-        let new_verifier_set_tracker =
-            VerifierSetTracker::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-        *new_verifier_set_tracker = VerifierSetTracker {
-            bump: new_verifier_set_bump,
-            _padding: [0; 7],
-            epoch: gateway_config.current_epoch,
-            verifier_set_hash: new_verifier_set_merkle_root,
-        };
-
-        // check that everything has been derived correctly
-        assert_valid_verifier_set_tracker_pda(
-            new_verifier_set_tracker,
-            new_empty_verifier_set.key,
-        )?;
-
-        // Emit an event
-        sol_log_data(&[
-            event_prefixes::SIGNERS_ROTATED,
-            // u256 as LE [u8; 32]
-            &new_verifier_set_tracker.epoch.to_le_bytes(),
-            // [u8; 32]
-            &new_verifier_set_tracker.verifier_set_hash,
-        ]);
-
-        Ok(())
+        )
     }
 }
 
-fn enough_time_till_next_rotation(
-    current_time: u64,
-    config: &GatewayConfig,
-) -> Result<bool, ProgramError> {
+/// Performs the actual rotation of verifier sets by creating a new verifier set tracker
+/// and updating the gateway configuration.
+///
+/// # Errors
+///
+/// Returns [`ProgramError`] if:
+/// * Epoch increment overflows
+/// * PDA initialization fails
+/// * Account data manipulation fails
+///
+/// Returns [`GatewayError`] if:
+/// * Verifier set tracker data serialization fails
+/// * PDA validation fails
+fn rotate_signers<'a>(
+    gateway_config: &mut GatewayConfig,
+    new_verifier_set_merkle_root: [u8; 32],
+    payer: &AccountInfo<'a>,
+    new_empty_verifier_set: &AccountInfo<'a>,
+    program_id: &Pubkey,
+    system_account: &AccountInfo<'a>,
+) -> Result<(), ProgramError> {
+    // Increment the current epoch
+    gateway_config.current_epoch = gateway_config
+        .current_epoch
+        .checked_add(U256::ONE)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+
+    // Initialize thethe new verifier set tracker PDA account
+    let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
+    program_utils::init_pda_raw(
+        payer,
+        new_empty_verifier_set,
+        program_id,
+        system_account,
+        size_of::<VerifierSetTracker>()
+            .try_into()
+            .expect("unexpected u64 overflow in struct size"),
+        &[
+            seed_prefixes::VERIFIER_SET_TRACKER_SEED,
+            new_verifier_set_merkle_root.as_slice(),
+            &[new_verifier_set_bump],
+        ],
+    )?;
+
+    // Store the new verifier set data
+    let mut new_verifier_set_data = new_empty_verifier_set.try_borrow_mut_data()?;
+    let new_verifier_set_tracker = VerifierSetTracker::read_mut(&mut new_verifier_set_data)
+        .ok_or(GatewayError::BytemuckDataLenInvalid)?;
+    *new_verifier_set_tracker = VerifierSetTracker::new(
+        new_verifier_set_bump,
+        gateway_config.current_epoch,
+        new_verifier_set_merkle_root,
+    );
+
+    // Check that everything has been derived correctly
+    assert_valid_verifier_set_tracker_pda(new_verifier_set_tracker, new_empty_verifier_set.key)?;
+
+    // Emit the rotation event
+    sol_log_data(&[
+        event_prefixes::SIGNERS_ROTATED,
+        &new_verifier_set_tracker.epoch.to_le_bytes(), // u256 as LE [u8; 32]
+        &new_verifier_set_tracker.verifier_set_hash,   // [u8; 32]
+    ]);
+    Ok(())
+}
+
+fn enough_time_till_next_rotation(current_time: u64, config: &GatewayConfig) -> bool {
     let secs_since_last_rotation = current_time
         .checked_sub(config.last_rotation_timestamp)
         .expect(
             "Current time minus rotate signers last successful operation time should not underflow",
         );
-    Ok(secs_since_last_rotation >= config.minimum_rotation_delay)
+    secs_since_last_rotation >= config.minimum_rotation_delay
 }
 
 /// Represents a `SignersRotatedEvent`.
@@ -209,7 +254,17 @@ pub struct VerifierSetRotated {
 
 impl VerifierSetRotated {
     /// Constructs a new `SignersRotatedEvent` with the provided data slice.
-    pub fn new(mut data: impl Iterator<Item = Vec<u8>>) -> Result<Self, EventParseError> {
+    ///
+    /// Expects exactly two 32-byte arrays:
+    /// - Epoch number as U256 (little-endian).
+    /// - Verifier set hash.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EventParseError`] if:
+    /// * Required data fields are missing
+    /// * Data arrays are not exactly 32 bytes
+    pub fn new<I: Iterator<Item = Vec<u8>>>(mut data: I) -> Result<Self, EventParseError> {
         let epoch = read_array::<32>(
             "epoch",
             &data.next().ok_or(EventParseError::MissingData("epoch"))?,

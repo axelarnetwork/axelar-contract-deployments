@@ -22,7 +22,7 @@ solana_program::declare_id!("gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe");
 pub mod seed_prefixes {
     /// The seed prefix for deriving Gateway Config PDA
     pub const GATEWAY_SEED: &[u8] = b"gateway";
-    /// The seed prefix for deriving VerifierSetTracker PDAs
+    /// The seed prefix for deriving `VerifierSetTracker` PDAs
     pub const VERIFIER_SET_TRACKER_SEED: &[u8] = b"ver-set-tracker";
     /// The seed prefix for deriving signature verification PDAs
     pub const SIGNATURE_VERIFICATION_SEED: &[u8] = b"gtw-sig-verif";
@@ -52,6 +52,11 @@ pub mod event_prefixes {
 }
 
 /// Checks that the supplied program ID is the correct one
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the provided program ID does not match this
+/// program's ID.
 #[inline]
 pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
     if program_id != crate::ID {
@@ -68,11 +73,20 @@ pub(crate) fn get_gateway_root_config_internal(program_id: &Pubkey) -> (Pubkey, 
 
 /// Get the root PDA and bump seed for the given program ID.
 #[inline]
+#[must_use]
 pub fn get_gateway_root_config_pda() -> (Pubkey, u8) {
     get_gateway_root_config_internal(&crate::ID)
 }
 
 /// Assert that the gateway PDA has been derived correctly
+///
+/// # Panics
+///
+/// Panics if the bump seed produces an invalid program derived address.
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA does not match the expected pubkey.
 #[inline]
 #[track_caller]
 pub fn assert_valid_gateway_root_pda(
@@ -84,33 +98,47 @@ pub fn assert_valid_gateway_root_pda(
             .expect("invalid bump for the root pda");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid Gateway Root PDA ");
-        Err(ProgramError::IncorrectProgramId)
-    } else {
-        Ok(())
+        return Err(ProgramError::IncorrectProgramId);
     }
+    Ok(())
 }
 
 /// Get the incoming message PDA & bump
 #[inline]
+#[must_use]
 pub fn get_incoming_message_pda(command_id: &[u8]) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[seed_prefixes::INCOMING_MESSAGE_SEED, command_id],
-        &crate::id(),
+        &crate::ID,
     )
 }
 
-/// Creates the IncomingMessage PDA from a bump previously calculated
+/// Creates the `IncomingMessage` PDA from a bump previously calculated
 /// by [`get_incoming_message_pda`].
+///
+/// # Errors
+///
+/// Returns a [`PubkeyError`] if the derived address lies on the ed25519 curve and is therefore not
+/// a valid program derived address.
 #[inline]
 pub fn create_incoming_message_pda(command_id: [u8; 32], bump: u8) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(
         &[seed_prefixes::INCOMING_MESSAGE_SEED, &command_id, &[bump]],
-        &crate::id(),
+        &crate::ID,
     )
 }
 
-/// Assert that the incomeing message PDA has been derived correctly
+/// Assert that the incoming message PDA has been derived correctly
+///
+/// # Panics
+///
+/// Panics if the bump seed produces an invalid program derived address.
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA does not match the expected pubkey.
 #[inline]
+#[track_caller]
 pub fn assert_valid_incoming_message_pda(
     command_id: &[u8],
     bump: u8,
@@ -123,26 +151,36 @@ pub fn assert_valid_incoming_message_pda(
     .expect("invalid bump for the incoming message PDA");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid incoming message PDA ");
-        Err(ProgramError::IncorrectProgramId)
-    } else {
-        Ok(())
+        return Err(ProgramError::IncorrectProgramId);
     }
+    Ok(())
 }
 
 /// Get the PDA and bump seed for a given verifier set hash.
-/// This is used to calculate the PDA for VerifierSetTracker.
+/// This is used to calculate the PDA for `VerifierSetTracker`.
 #[inline]
+#[must_use]
 pub fn get_verifier_set_tracker_pda(
     hash: crate::state::verifier_set_tracker::VerifierSetHash,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[seed_prefixes::VERIFIER_SET_TRACKER_SEED, hash.as_slice()],
-        &crate::id(),
+        &crate::ID,
     )
 }
 
 /// Assert that the verifier set tracker PDA has been derived correctly
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA pubkey does not match the
+/// expected pubkey.
+///
+/// # Panics
+///
+/// Panics if PDA creation fails due to an invalid bump seed.
 #[inline]
+#[track_caller]
 pub fn assert_valid_verifier_set_tracker_pda(
     tracker: &crate::state::verifier_set_tracker::VerifierSetTracker,
     expected_pubkey: &Pubkey,
@@ -158,14 +196,14 @@ pub fn assert_valid_verifier_set_tracker_pda(
     .expect("invalid bump for the root pda");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid Verifier Set Root PDA ");
-        Err(ProgramError::IncorrectProgramId)
-    } else {
-        Ok(())
+        return Err(ProgramError::IncorrectProgramId);
     }
+    Ok(())
 }
 
 /// Get the PDA and bump seed for a given payload hash.
 #[inline]
+#[must_use]
 pub fn get_signature_verification_pda(
     gateway_root_pda: &Pubkey,
     payload_merkle_root: &[u8; 32],
@@ -181,8 +219,18 @@ pub fn get_signature_verification_pda(
     (pubkey, bump)
 }
 
-/// Assert that the signature verification PDA has been derived correctly
+/// Assert that the signature verification PDA has been derived correctly.
+///
+/// # Errors
+///
+/// Returns [`ProgramError::IncorrectProgramId`] if the derived PDA
+/// pubkey does not match the expected pubkey.
+///
+/// # Panics
+///
+/// Panics if PDA creation fails due to an invalid bump seed.
 #[inline]
+#[track_caller]
 pub fn assert_valid_signature_verification_pda(
     gateway_root_pda: &Pubkey,
     payload_merkle_root: &[u8; 32],
@@ -201,13 +249,17 @@ pub fn assert_valid_signature_verification_pda(
     .expect("invalid bump for the pda");
     if &derived_pubkey != expected_pubkey {
         solana_program::msg!("Error: Invalid Verifier Set Root PDA ");
-        Err(ProgramError::IncorrectProgramId)
-    } else {
-        Ok(())
+        return Err(ProgramError::IncorrectProgramId);
     }
+    Ok(())
 }
 
 /// Create the PDA for a given payload hash and bump.
+///
+/// # Errors
+///
+/// Returns a [`PubkeyError`] if the derived address lies on the ed25519 curve and is therefore not
+/// a valid program derived address.
 #[inline]
 pub fn create_signature_verification_pda(
     gateway_root_pda: &Pubkey,
@@ -228,6 +280,7 @@ pub fn create_signature_verification_pda(
 /// Create a new Signing PDA that is used for validating that a message has
 /// reached the destination program.
 #[inline]
+#[must_use]
 pub fn get_validate_message_signing_pda(
     destination_address: Pubkey,
     command_id: [u8; 32],
@@ -237,6 +290,11 @@ pub fn get_validate_message_signing_pda(
 
 /// Create a new Signing PDA that is used for validating that a message has
 /// reached the destination program.
+///
+/// # Errors
+///
+/// Returns a [`PubkeyError`] if the derived address lies on the ed25519 curve and is therefore not
+/// a valid program derived address when using the destination address as the program ID.
 #[inline]
 pub fn create_validate_message_signing_pda(
     destination_address: &Pubkey,
@@ -246,11 +304,12 @@ pub fn create_validate_message_signing_pda(
     Pubkey::create_program_address(&[command_id, &[signing_pda_bump]], destination_address)
 }
 
-/// Finds the MessagePayload PDA.
+/// Finds the `MessagePayload` PDA.
 ///
 /// This function is expensive and should not be used on-chain. Prefer
 /// using [`create_message_payload_pda`] instead.
 #[inline]
+#[must_use]
 pub fn find_message_payload_pda(
     gateway_root_pda: Pubkey,
     command_id: [u8; 32],
@@ -267,8 +326,13 @@ pub fn find_message_payload_pda(
     )
 }
 
-/// Creates the MessagePayload PDA from a bump previously calculated
+/// Creates the `MessagePayload` PDA from a bump previously calculated
 /// by [`find_message_payload_pda`].
+///
+/// # Errors
+///
+/// Returns a [`PubkeyError`] if the derived address lies on the ed25519 curve and is therefore not
+/// a valid program derived address.
 #[inline]
 pub fn create_message_payload_pda(
     gateway_root_pda: Pubkey,
@@ -288,50 +352,57 @@ pub fn create_message_payload_pda(
     )
 }
 
-/// Test that the bump from `get_signature_verification_pda` generates the same
-/// public key when used with the same hash by
-/// `create_signature_verification_pda`.
-#[test]
-fn test_get_and_create_signature_verification_pda_bump_reuse() {
-    let gateway_root_pda = Pubkey::new_unique();
-    let payload_merkle_root = rand::random();
-    let (found_pda, bump) = get_signature_verification_pda(&gateway_root_pda, &payload_merkle_root);
-    let created_pda =
-        create_signature_verification_pda(&gateway_root_pda, &payload_merkle_root, bump).unwrap();
-    assert_eq!(found_pda, created_pda);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-/// Test that the bump from `find_message_payload_pda` generates the same public key when
-/// used with the same inputs by `create_message_payload_pda`.
-#[test]
-fn test_find_and_create_message_payload_pda_bump_reuse() {
-    let gateway_root_pda = Pubkey::new_unique();
-    let authority = Pubkey::new_unique();
-    let command_id = rand::random();
-    let (found_pda, bump) = find_message_payload_pda(gateway_root_pda, command_id, authority);
-    let created_pda =
-        create_message_payload_pda(gateway_root_pda, command_id, authority, bump).unwrap();
-    assert_eq!(found_pda, created_pda);
-}
+    /// Test that the bump from `get_signature_verification_pda` generates the same
+    /// public key when used with the same hash by
+    /// `create_signature_verification_pda`.
+    #[test]
+    fn test_get_and_create_signature_verification_pda_bump_reuse() {
+        let gateway_root_pda = Pubkey::new_unique();
+        let payload_merkle_root = rand::random();
+        let (found_pda, bump) =
+            get_signature_verification_pda(&gateway_root_pda, &payload_merkle_root);
+        let created_pda =
+            create_signature_verification_pda(&gateway_root_pda, &payload_merkle_root, bump)
+                .unwrap();
+        assert_eq!(found_pda, created_pda);
+    }
 
-/// Test that the bump from `get_incoming_message_pda` generates the same public key when
-/// used with the same inputs by `create_incoming_message_pda`.
-#[test]
-fn test_get_and_create_incoming_message_pda_bump_reuse() {
-    let command_id: [u8; 32] = rand::random();
-    let (found_pda, bump) = get_incoming_message_pda(&command_id);
-    let created_pda = create_incoming_message_pda(command_id, bump).unwrap();
-    assert_eq!(found_pda, created_pda);
-}
+    /// Test that the bump from `find_message_payload_pda` generates the same public key when
+    /// used with the same inputs by `create_message_payload_pda`.
+    #[test]
+    fn test_find_and_create_message_payload_pda_bump_reuse() {
+        let gateway_root_pda = Pubkey::new_unique();
+        let authority = Pubkey::new_unique();
+        let command_id = rand::random();
+        let (found_pda, bump) = find_message_payload_pda(gateway_root_pda, command_id, authority);
+        let created_pda =
+            create_message_payload_pda(gateway_root_pda, command_id, authority, bump).unwrap();
+        assert_eq!(found_pda, created_pda);
+    }
 
-#[test]
-fn test_valid_gateway_root_pda_generation() {
-    let (internal, bump_i) = get_gateway_root_config_internal(&crate::ID);
-    assert_valid_gateway_root_pda(bump_i, &internal).unwrap();
+    /// Test that the bump from `get_incoming_message_pda` generates the same public key when
+    /// used with the same inputs by `create_incoming_message_pda`.
+    #[test]
+    fn test_get_and_create_incoming_message_pda_bump_reuse() {
+        let command_id: [u8; 32] = rand::random();
+        let (found_pda, bump) = get_incoming_message_pda(&command_id);
+        let created_pda = create_incoming_message_pda(command_id, bump).unwrap();
+        assert_eq!(found_pda, created_pda);
+    }
 
-    let (external, bump_e) = get_gateway_root_config_pda();
-    assert_valid_gateway_root_pda(bump_e, &external).unwrap();
+    #[test]
+    fn test_valid_gateway_root_pda_generation() {
+        let (internal, bump_i) = get_gateway_root_config_internal(&crate::ID);
+        assert_valid_gateway_root_pda(bump_i, &internal).unwrap();
 
-    assert_eq!(internal, external);
-    assert_eq!(bump_i, bump_e);
+        let (external, bump_e) = get_gateway_root_config_pda();
+        assert_valid_gateway_root_pda(bump_e, &external).unwrap();
+
+        assert_eq!(internal, external);
+        assert_eq!(bump_i, bump_e);
+    }
 }

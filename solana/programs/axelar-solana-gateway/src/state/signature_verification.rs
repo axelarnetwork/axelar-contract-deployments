@@ -50,20 +50,31 @@ impl BytemuckedPda for SignatureVerification {}
 
 impl SignatureVerification {
     /// Returns `true` if a sufficient number of signatures have been verified.
-    pub fn is_valid(&self) -> bool {
+    #[must_use]
+    pub const fn is_valid(&self) -> bool {
         self.accumulated_threshold == u128::MAX
     }
 
     /// Fully process a submitted signature.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GatewayError`] if any of the following conditions occur:
+    /// * [`GatewayError::InvalidMerkleProof`] if the Merkle proof bytes are invalid or malformed
+    /// * [`GatewayError::SlotAlreadyProcessed`] if the verifier's slot has already been processed
+    /// * [`GatewayError::InvalidMerkleProof`] if the Merkle proof verification fails
+    /// * [`GatewayError::InvalidSignature`] if the digital signature is invalid
+    /// * Additional errors may occur during slot marking or verifier set initialization
     pub fn process_signature(
         &mut self,
-        verifier_info: SigningVerifierSetInfo,
+        verifier_info: &SigningVerifierSetInfo,
         verifier_set_merkle_root: &[u8; 32],
         payload_merkle_root: &[u8; 32],
     ) -> Result<(), GatewayError> {
         let merkle_proof =
             rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&verifier_info.merkle_proof)
-                .unwrap();
+                .map_err(|_err| GatewayError::InvalidMerkleProof)?;
+
         // Check: Slot is already verified
         self.check_slot_is_done(&verifier_info.leaf)?;
 
@@ -80,9 +91,24 @@ impl SignatureVerification {
         // Update state
         self.accumulate_threshold(&verifier_info.leaf);
         self.mark_slot_done(&verifier_info.leaf)?;
+        self.verify_or_initialize_verifier_set(verifier_set_merkle_root)?;
+
+        Ok(())
+    }
+
+    /// Verifies or initializes the verifier set hash.
+    /// Returns an error if the hash is already set and doesn't match.
+    #[inline]
+    fn verify_or_initialize_verifier_set(
+        &mut self,
+        expected_hash: &[u8; 32],
+    ) -> Result<(), GatewayError> {
         if self.signing_verifier_set_hash == [0; 32] {
-            self.signing_verifier_set_hash = *verifier_set_merkle_root;
-        } else if &self.signing_verifier_set_hash != verifier_set_merkle_root {
+            self.signing_verifier_set_hash = *expected_hash;
+            return Ok(());
+        }
+
+        if self.signing_verifier_set_hash != *expected_hash {
             return Err(GatewayError::InvalidDigitalSignature);
         }
 
@@ -92,7 +118,7 @@ impl SignatureVerification {
     #[inline]
     fn check_slot_is_done(&self, signature_node: &VerifierSetLeaf) -> Result<(), GatewayError> {
         let signature_slots = self.signature_slots.view_bits::<Lsb0>();
-        let position = signature_node.position as usize;
+        let position: usize = signature_node.position.into();
         let Some(slot) = signature_slots.get(position) else {
             // Index is out of bounds.
             return Err(GatewayError::SlotIsOutOfBounds);
@@ -114,9 +140,9 @@ impl SignatureVerification {
 
         if merkle_proof.verify(
             *verifier_set_merkle_root,
-            &[signature_node.position as usize],
+            &[signature_node.position.into()],
             &[leaf_hash],
-            signature_node.set_size as usize,
+            signature_node.set_size.into(),
         ) {
             Ok(())
         } else {
@@ -125,6 +151,7 @@ impl SignatureVerification {
     }
 
     #[inline]
+    #[allow(clippy::unimplemented)]
     fn verify_digital_signature(
         public_key: &PublicKey,
         message: &[u8; 32],
@@ -159,13 +186,13 @@ impl SignatureVerification {
 
         // Check threshold
         if self.accumulated_threshold >= signature_node.quorum {
-            self.accumulated_threshold = u128::MAX
+            self.accumulated_threshold = u128::MAX;
         }
     }
     #[inline]
     fn mark_slot_done(&mut self, signature_node: &VerifierSetLeaf) -> Result<(), GatewayError> {
         let signature_slots = self.signature_slots.view_bits_mut::<Lsb0>();
-        let position = signature_node.position as usize;
+        let position: usize = signature_node.position.into();
         let Some(slot) = signature_slots.get_mut(position) else {
             // Index is out of bounds.
             return Err(GatewayError::SlotIsOutOfBounds);
@@ -180,6 +207,7 @@ impl SignatureVerification {
 
     /// Returns the slot for a given position.
     #[inline]
+    #[must_use]
     pub fn slot(&self, position: usize) -> Option<bool> {
         self.signature_slots
             .view_bits::<Lsb0>()
@@ -195,6 +223,7 @@ impl SignatureVerification {
     }
 
     /// Bit slice into the signature array
+    #[must_use]
     pub fn slots(&self) -> &BitSlice<u8> {
         self.signature_slots.view_bits::<Lsb0>()
     }
@@ -205,6 +234,13 @@ impl SignatureVerification {
 ///
 /// Returns `true` if the signature is valid and corresponds to the public key
 /// and message; otherwise, returns `false`.
+///
+/// # Panics
+///
+/// This function will panic if the provided `pubkey` is not a valid compressed secp256k1 public key
+/// (via `unwrap`).
+#[must_use]
+#[allow(clippy::unwrap_used)]
 pub fn verify_ecdsa_signature(
     pubkey: &axelar_solana_encoding::types::pubkey::Secp256k1Pubkey,
     signature: &axelar_solana_encoding::types::pubkey::EcdsaRecoverableSignature,
@@ -220,7 +256,7 @@ pub fn verify_ecdsa_signature(
     // Transform from Ethereum recovery_id (27, 28) to a range accepted by
     // secp256k1_recover (0, 1, 2, 3)
     let recovery_id = if *recovery_id >= 27 {
-        recovery_id - 27
+        recovery_id.saturating_sub(27)
     } else {
         *recovery_id
     };
@@ -233,7 +269,7 @@ pub fn verify_ecdsa_signature(
         return false;
     };
 
-    // unwrap: provided pukey is guaranteed to be secp256k1 key
+    // Unwrap: provided pukey is guaranteed to be secp256k1 key
     let pubkey = libsecp256k1::PublicKey::parse_compressed(pubkey)
         .unwrap()
         .serialize();
@@ -252,6 +288,7 @@ pub fn verify_ecdsa_signature(
 /// Returns `true` if the signature is valid and corresponds to the public key
 /// and message; otherwise, returns `false`.
 #[deprecated(note = "Trying to verify Ed25519 signatures on-chain will exhaust the compute budget")]
+#[must_use]
 pub fn verify_eddsa_signature(
     pubkey: &axelar_solana_encoding::types::pubkey::Ed25519Pubkey,
     signature: &axelar_solana_encoding::types::pubkey::Ed25519Signature,
@@ -270,4 +307,50 @@ pub fn verify_eddsa_signature(
     // `InternalError::Verify` in case of verification failure, so we can safely
     // ignore the error value.
     verifying_key.verify(message, &signature).is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_initialize_when_hash_is_zero() {
+        let mut verification = SignatureVerification::default();
+        let new_hash = [42_u8; 32];
+
+        let result = verification.verify_or_initialize_verifier_set(&new_hash);
+
+        assert!(result.is_ok());
+        assert_eq!(verification.signing_verifier_set_hash, new_hash);
+    }
+
+    #[test]
+    fn test_verify_success_when_hashes_match() {
+        let expected_hash = [42_u8; 32];
+        let mut verification = SignatureVerification {
+            signing_verifier_set_hash: expected_hash,
+            ..Default::default()
+        };
+
+        let result = verification.verify_or_initialize_verifier_set(&expected_hash);
+
+        assert!(result.is_ok());
+        assert_eq!(verification.signing_verifier_set_hash, expected_hash);
+    }
+
+    #[test]
+    fn test_verify_fails_when_hashes_mismatch() {
+        let initial_hash = [42_u8; 32];
+        let different_hash = [24_u8; 32];
+        let mut verification = SignatureVerification {
+            signing_verifier_set_hash: initial_hash,
+            ..Default::default()
+        };
+
+        let result = verification.verify_or_initialize_verifier_set(&different_hash);
+
+        assert_eq!(result, Err(GatewayError::InvalidDigitalSignature));
+        // Hash should remain unchanged after failure
+        assert_eq!(verification.signing_verifier_set_hash, initial_hash);
+    }
 }

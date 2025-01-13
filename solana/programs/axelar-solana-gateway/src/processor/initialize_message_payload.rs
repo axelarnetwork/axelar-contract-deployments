@@ -12,7 +12,27 @@ use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 
 impl Processor {
-    /// Initialize a message payload PDA.
+    /// Initializes a Program Derived Address (PDA) account to store message raw payload data.
+    ///
+    /// The account size is adjusted to accommodate both the payload contents and required metadata.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Required accounts are missing.
+    /// * Payer is not a signer or not writable.
+    /// * Gateway root PDA is not initialized.
+    /// * System program account is invalid.
+    /// * Buffer size calculation overflows.
+    /// * Account creation (sub instruction) fails.
+    ///
+    /// Returns [`GatewayError::MessagePayloadAlreadyInitialized`] if the message payload account is
+    /// already initialized.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// * Converting the adjusted buffer size to usize overflows (via `expect`, unlikely to ever happen)
     pub fn process_initialize_message_payload(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
@@ -27,35 +47,57 @@ impl Processor {
         let system_program = next_account_info(accounts_iter)?;
 
         // Check: Payer is the signer
-        assert!(payer.is_signer);
-        assert!(payer.is_writable);
+        if !payer.is_signer {
+            solana_program::msg!("Error: payer account is not a signer");
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+        if !payer.is_writable {
+            solana_program::msg!("Error: payer account is not writable");
+            return Err(ProgramError::InvalidAccountData);
+        }
 
         // Check: Gateway root PDA
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
 
         // Check: System Program
-        assert!(solana_program::system_program::check_id(system_program.key));
+        if !solana_program::system_program::check_id(system_program.key) {
+            solana_program::msg!("Error: invalid system program account");
+            return Err(ProgramError::InvalidAccountData);
+        }
 
-        // Check: Message payload account is writable, uninitialized and owned by the system program
-        assert!(message_payload_account.is_writable);
+        // Check: Message payload account is writable
+        if !message_payload_account.is_writable {
+            solana_program::msg!("Error: message payload account is not writable");
+            return Err(ProgramError::InvalidAccountData);
+        }
 
         message_payload_account
             .check_uninitialized_pda()
-            .map_err(|_| GatewayError::MessagePayloadAlreadyInitialized)?;
+            .map_err(|_err| GatewayError::MessagePayloadAlreadyInitialized)?;
 
         // Check: Buffer PDA can be derived from provided seeds.
         let (message_payload_pda, bump_seed) =
             crate::find_message_payload_pda(*gateway_root_pda.key, command_id, *payer.key);
-        assert_eq!(message_payload_account.key, &message_payload_pda,);
+        if message_payload_account.key != &message_payload_pda {
+            solana_program::msg!("Error: failed to derive message payload account address");
+            return Err(ProgramError::InvalidArgument);
+        }
 
         // Prepare the `create_account` instruction.
-        let Ok(adjusted_account_size) =
-            MutMessagePayload::adjust_offset(buffer_size as usize).try_into()
+        let Ok(adjusted_account_size): Result<u64, _> = buffer_size
+            .try_into()
+            .map(MutMessagePayload::adjust_offset)
+            .and_then(TryInto::try_into)
         else {
             solana_program::msg!("Failed to cast adjusted buffer size to u64");
             return Err(ProgramError::InvalidInstructionData);
         };
-        let lamports_required = Rent::get()?.minimum_balance(adjusted_account_size as usize);
+
+        let lamports_required =
+            Rent::get()?.minimum_balance(adjusted_account_size.try_into().map_err(|_err| {
+                solana_program::msg!("Unexpected usize overflow in account size");
+                ProgramError::ArithmeticOverflow
+            })?);
         let create_pda_account_ix = solana_program::system_instruction::create_account(
             payer.key,
             message_payload_account.key,

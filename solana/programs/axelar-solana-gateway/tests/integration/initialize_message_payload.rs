@@ -16,14 +16,15 @@ use axelar_solana_gateway_test_fixtures::gateway::{
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
+use core::str::FromStr;
 use pretty_assertions::assert_eq;
 use solana_program_test::tokio;
 use solana_sdk::account::Account;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use std::str::FromStr;
 
 /// Helper fn to produce a command id from a message.
+#[must_use]
 pub fn message_to_command_id(message: &Message) -> [u8; 32] {
     command_id(&message.cc_id.chain, &message.cc_id.id)
 }
@@ -100,7 +101,7 @@ pub async fn approve_message(runner: &mut SolanaAxelarIntegrationMetadata, messa
     let expected_message = IncomingMessage::new(
         incoming_message_pda_bump,
         signing_pda_bump,
-        MessageStatus::Approved,
+        MessageStatus::approved(),
         message.hash::<SolanaSyscallHasher>(),
         message.payload_hash,
     );
@@ -139,7 +140,10 @@ pub async fn initialize_message_payload_pda(
         .try_into()
         .expect("valid message payload account contents");
 
-    assert_eq!(message_payload.raw_payload.len(), buffer_size as usize,);
+    assert_eq!(
+        message_payload.raw_payload.len(),
+        usize::try_from(buffer_size).unwrap()
+    );
     assert!(message_payload.raw_payload.iter().all(|&x| x == 0));
     assert!(message_payload.payload_hash.iter().all(|&x| x == 0));
 

@@ -73,6 +73,9 @@ async fn get_message_payload_account_balance(
 }
 
 /// Checks if a given `value` is within `tolerance_percent` % of the `target`.
+#[allow(clippy::integer_division)]
+#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::arithmetic_side_effects)]
 fn assert_close_enough(value: u64, target: u64, tolerance_percent: u64) {
     assert!(tolerance_percent <= 100);
     assert!(value <= target);
@@ -80,10 +83,7 @@ fn assert_close_enough(value: u64, target: u64, tolerance_percent: u64) {
 
     assert!(
         (target - value) <= tolerance,
-        "Value {} is not within {}% of the target {}.",
-        value,
-        tolerance,
-        target,
+        "Value {value} is not within {tolerance}% of the target {target}.",
     );
 }
 

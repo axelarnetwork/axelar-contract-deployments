@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use core::str::FromStr;
 
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, MerkleisedPayload};
@@ -88,7 +88,7 @@ async fn successfully_approves_messages() {
         let expected_message = IncomingMessage::new(
             incoming_message_pda_bump,
             signing_pda_bump,
-            MessageStatus::Approved,
+            MessageStatus::approved(),
             hash,
             message.payload_hash,
         );
@@ -182,7 +182,7 @@ async fn fail_individual_approval_if_done_many_times() {
         let expected_message = IncomingMessage::new(
             incoming_message_pda_bump,
             signing_pda_bump,
-            MessageStatus::Approved,
+            MessageStatus::approved(),
             hash,
             message_info.leaf.message.payload_hash,
         );
@@ -308,9 +308,7 @@ async fn fails_to_approve_message_not_in_payload() {
         (payload_merkle_root, fake_leaves(), fake_proofs()),
         (payload_merkle_root, fake_leaves(), valid_proofs()),
         (payload_merkle_root, valid_leaves(), fake_proofs()),
-    ]
-    .into_iter()
-    {
+    ] {
         for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
             let new_message_info = MerkleisedMessage { leaf, proof };
             metadata
@@ -368,9 +366,7 @@ async fn fails_to_approve_message_using_verifier_set_as_the_root() {
     for (merkle_root, leaves, proofs) in [
         (fake_payload_merkle_root, fake_leaves(), fake_proofs()),
         (new_verifier_set_merkle_root, fake_leaves(), fake_proofs()),
-    ]
-    .into_iter()
-    {
+    ] {
         for (leaf, proof) in leaves.into_iter().zip(proofs.into_iter()) {
             let new_message_info = MerkleisedMessage { leaf, proof };
             metadata

@@ -3,12 +3,9 @@ name = "axelar-solana-gateway"
 version = "0.1.0"
 edition = "2021"
 
-[lints.rust]
-missing_docs = "warn"
-rust_2018_idioms = "deny"
-unreachable_pub = "warn"
-unused_imports = "warn"
-unused_must_use = "deny"
+[lints]
+workspace = true
+
 
 [lib]
 crate-type = ["cdylib", "lib"]

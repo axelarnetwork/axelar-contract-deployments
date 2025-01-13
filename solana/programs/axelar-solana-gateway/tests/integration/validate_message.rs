@@ -22,7 +22,7 @@ async fn fail_if_message_pda_does_not_exist() {
     let mut messages = make_messages(1);
     let destination_address = Pubkey::new_unique();
     if let Some(x) = messages.get_mut(0) {
-        x.destination_address = destination_address.to_string()
+        x.destination_address = destination_address.to_string();
     }
     let message_leaf = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)
@@ -59,7 +59,7 @@ async fn fail_if_message_already_executed() {
     let mut messages = make_messages(1);
     let destination_address = Pubkey::new_unique();
     if let Some(x) = messages.get_mut(0) {
-        x.destination_address = destination_address.to_string()
+        x.destination_address = destination_address.to_string();
     }
     let message_leaf = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)
@@ -75,7 +75,7 @@ async fn fail_if_message_already_executed() {
     );
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id);
     let mut incoming_message = metadata.incoming_message(incoming_message_pda).await;
-    incoming_message.status = MessageStatus::Executed; // source of error
+    incoming_message.status = MessageStatus::executed(); // source of error
     set_existing_incoming_message_state(&mut metadata, incoming_message_pda, incoming_message)
         .await;
 
@@ -102,7 +102,7 @@ async fn fail_if_message_has_been_tampered_with() {
     let mut messages = make_messages(1);
     let destination_address = Pubkey::new_unique();
     if let Some(x) = messages.get_mut(0) {
-        x.destination_address = destination_address.to_string()
+        x.destination_address = destination_address.to_string();
     }
     let mut message_leaf = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)
@@ -142,7 +142,7 @@ async fn fail_if_invalid_signing_pda_seeds() {
     let mut messages = make_messages(1);
     let destination_address = Pubkey::new_unique();
     if let Some(x) = messages.get_mut(0) {
-        x.destination_address = destination_address.to_string()
+        x.destination_address = destination_address.to_string();
     }
     let message_leaf = metadata
         .sign_session_and_approve_messages(&metadata.signers.clone(), &messages)

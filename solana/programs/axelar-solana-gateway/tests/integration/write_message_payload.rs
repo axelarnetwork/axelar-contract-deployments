@@ -17,12 +17,12 @@ async fn successfully_write_message_payload_pda() {
         .setup()
         .await;
     let message = random_message();
-    let payload_size = 128u64;
+    let payload_size = 128_u64;
     initialize_message_payload_pda(&mut runner, &message, payload_size).await;
 
     // Build an instruction to write ones to the first half of the buffer
     let command_id = message_to_command_id(&message);
-    let all_ones = [1u8; 64];
+    let all_ones = [1_u8; 64];
 
     let ix = axelar_solana_gateway::instructions::write_message_payload(
         runner.gateway_root_pda,

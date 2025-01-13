@@ -1,4 +1,4 @@
-use std::mem::size_of;
+use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use itertools::Itertools;
@@ -23,11 +23,36 @@ use crate::{
 };
 
 impl Processor {
-    /// This function is used to initialize the program.
+    /// Initializes the gateway program by setting up configuration and verifier set accounts.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError`] if:
+    /// * Required accounts are missing or in wrong order
+    /// * Upgrade authority validation fails
+    /// * System program account is invalid
+    /// * PDA derivations fails
+    /// * Account initialization fails
+    ///
+    /// Returns [`GatewayError`] if:
+    /// * Data serialization/deserialization fails
+    /// * Invalid PDA bumps are provided
+    ///
+    /// # Security Considerations
+    ///
+    /// * Only the program upgrade authority can call this instruction.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// * Converting verifier set length to u64 fails (via `expect`)
+    /// * Converting `size_of::<VerifierSetTracker>` to u64 overflows (via `expect`)
+    /// * Converting `size_of::<GatewayConfig>` to u64 overflows (via `expect`)
+    /// * Converting `unix_timestamp` to u64 results in an invalid timestamp (via `expect`)
     pub fn process_initialize_config(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        init_config: InitializeConfig,
+        init_config: &InitializeConfig,
     ) -> ProgramResult {
         let (core_accounts, init_verifier_sets) = split_core_accounts(accounts)?;
 
@@ -50,14 +75,19 @@ impl Processor {
             .initial_signer_sets
             .iter()
             .zip_eq(init_verifier_sets);
-        let current_epochs: u64 = verifier_sets.len().try_into().unwrap();
+        // Expect: Safe as verifier set length cannot realistically exceed `u64::MAX`.
+        let current_epochs: u64 = verifier_sets.len().try_into().map_err(|_err| {
+            solana_program::msg!("unexpected u64 overflow");
+            ProgramError::ArithmeticOverflow
+        })?;
+
         let current_epochs = U256::from_u64(current_epochs);
 
         for (idx, (verifier_set_hash, verifier_set_pda)) in verifier_sets.enumerate() {
             let idx: u64 = idx
                 .try_into()
-                .map_err(|_| ProgramError::InvalidInstructionData)?;
-            let epoch = U256::from_u64(idx + 1);
+                .map_err(|_err| ProgramError::InvalidInstructionData)?;
+            let epoch = U256::from_u64(idx.saturating_add(1));
 
             let (_, pda_bump) = get_verifier_set_tracker_pda(*verifier_set_hash);
             verifier_set_pda.check_uninitialized_pda()?;
@@ -68,7 +98,10 @@ impl Processor {
                 verifier_set_pda,
                 program_id,
                 system_account,
-                size_of::<VerifierSetTracker>() as u64,
+                size_of::<VerifierSetTracker>().try_into().map_err(|_err| {
+                    solana_program::msg!("unexpected u64 overflow in struct size");
+                    ProgramError::ArithmeticOverflow
+                })?,
                 &[
                     seed_prefixes::VERIFIER_SET_TRACKER_SEED,
                     verifier_set_hash.as_slice(),
@@ -80,12 +113,7 @@ impl Processor {
             let mut data = verifier_set_pda.try_borrow_mut_data()?;
             let tracker = VerifierSetTracker::read_mut(&mut data)
                 .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-            *tracker = VerifierSetTracker {
-                bump: pda_bump,
-                _padding: [0; 7],
-                epoch,
-                verifier_set_hash: *verifier_set_hash,
-            };
+            *tracker = VerifierSetTracker::new(pda_bump, epoch, *verifier_set_hash);
 
             // check that everything has been derived correctly
             assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
@@ -102,7 +130,10 @@ impl Processor {
             gateway_root_pda,
             program_id,
             system_account,
-            size_of::<GatewayConfig>() as u64,
+            size_of::<GatewayConfig>().try_into().map_err(|_err| {
+                solana_program::msg!("unexpected u64 overflow in struct size");
+                ProgramError::ArithmeticOverflow
+            })?,
             &[seed_prefixes::GATEWAY_SEED, &[bump]],
         )?;
         let mut data = gateway_root_pda.try_borrow_mut_data()?;
@@ -110,17 +141,19 @@ impl Processor {
             GatewayConfig::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
         let clock = Clock::get()?;
-        let current_timestamp = clock.unix_timestamp.try_into().expect("invalid timestamp");
-        *gateway_config = GatewayConfig {
+        let current_timestamp = clock.unix_timestamp.try_into().map_err(|_err| {
+            solana_program::msg!("invalid timestamp");
+            ProgramError::ArithmeticOverflow
+        })?;
+        *gateway_config = GatewayConfig::new(
+            current_epochs,
+            init_config.previous_verifier_retention,
+            init_config.minimum_rotation_delay,
+            current_timestamp,
+            init_config.operator,
+            init_config.domain_separator,
             bump,
-            operator: init_config.operator,
-            domain_separator: init_config.domain_separator,
-            current_epoch: current_epochs,
-            previous_verifier_set_retention: init_config.previous_verifier_retention,
-            minimum_rotation_delay: init_config.minimum_rotation_delay,
-            last_rotation_timestamp: current_timestamp,
-            _padding: [0; 7],
-        };
+        );
 
         Ok(())
     }
@@ -128,7 +161,7 @@ impl Processor {
 
 const CORE_ACCOUNTS: usize = 5;
 
-fn split_core_accounts<T>(accounts: &[T]) -> Result<(&[T], &[T]), ProgramError> {
+const fn split_core_accounts<T>(accounts: &[T]) -> Result<(&[T], &[T]), ProgramError> {
     if accounts.len() <= CORE_ACCOUNTS {
         return Err(ProgramError::NotEnoughAccountKeys);
     }

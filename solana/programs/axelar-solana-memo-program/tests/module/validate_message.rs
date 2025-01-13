@@ -1,7 +1,7 @@
 use axelar_executable::EncodingScheme;
 use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::processor::MessageEvent;
-use axelar_solana_gateway::state::incoming_message::{command_id, MessageStatus};
+use axelar_solana_gateway::state::incoming_message::command_id;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_memo_program::instruction::from_axelar_to_solana::build_memo;
@@ -91,7 +91,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
     // Assert
     // First message should be executed
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(gateway_approved_message.status, MessageStatus::Executed);
+    assert!(gateway_approved_message.status.is_executed());
 
     // The second message is still in Approved status
     let (incoming_message_pda, ..) = get_incoming_message_pda(&command_id(
@@ -99,7 +99,7 @@ async fn test_successful_validate_message(#[case] encoding_scheme: EncodingSchem
         &other_message_in_the_batch.cc_id.id,
     ));
     let gateway_approved_message = solana_chain.incoming_message(incoming_message_pda).await;
-    assert_eq!(gateway_approved_message.status, MessageStatus::Approved);
+    assert!(gateway_approved_message.status.is_approved());
 
     // We can get the memo from the logs
     assert!(
