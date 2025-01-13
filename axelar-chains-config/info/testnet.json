@@ -2335,10 +2335,13 @@
     }
   },
   "stellar": {
+    "name": "Stellar",
     "axelarId": "stellar",
     "rpc": "https://soroban-testnet.stellar.org",
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
+    "chainType": "stellar",
+    "contracts": {},
     "explorer": {
       "name": "Stellar Expert",
       "url": "https://stellar.expert/explorer/testnet"
@@ -2352,6 +2355,9 @@
     "rpc": "https://fullnode.testnet.sui.io:443",
     "tokenSymbol": "SUI",
     "chainType": "sui",
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
+    "decimals": 9,
     "explorer": {
       "name": "Suiscan",
       "url": "https://suiscan.xyz"
