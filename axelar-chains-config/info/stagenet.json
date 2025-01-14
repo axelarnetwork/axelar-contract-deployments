@@ -1891,7 +1891,6 @@
       "decimals": 7,
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "contracts": {},
       "explorer": {
         "name": "Stellar Expert",
         "url": "https://stellar.expert/explorer/testnet"
