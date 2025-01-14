@@ -2349,9 +2349,9 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
-          "versions": [
-            "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4"
-          ],
+          "versions": {
+            "1": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4"
+          },
           "structs": {
             "WeightedSigner": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::weighted_signer::WeightedSigner",
             "Bytes32": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::bytes32::Bytes32",
@@ -2388,9 +2388,9 @@
         },
         "Utils": {
           "address": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421",
-          "versions": [
-            "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421"
-          ],
+          "versions": {
+            "1": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421"
+          },
           "structs": {},
           "objects": {
             "UpgradeCap": "0x16c316ea6204ac12648e1dc02f246ea9f2f9d84df5a6accca4d3d0d2a9a6727f"
@@ -2398,18 +2398,18 @@
         },
         "VersionControl": {
           "address": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c",
-          "versions": [
-            "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c"
-          ],
+          "versions": {
+            "1": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c"
+          },
           "structs": {
             "VersionControl": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c::version_control::VersionControl"
           }
         },
         "RelayerDiscovery": {
           "address": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2",
-          "versions": [
-            "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2"
-          ],
+          "versions": {
+            "1": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2"
+          },
           "structs": {
             "Function": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::Function",
             "MoveCall": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::MoveCall",
@@ -2428,9 +2428,9 @@
         },
         "GasService": {
           "address": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75",
-          "versions": [
-            "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75"
-          ],
+          "versions": {
+            "1": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75"
+          },
           "structs": {
             "GasPaid": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasPaid",
             "GasAdded": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasAdded",
@@ -2448,9 +2448,9 @@
         },
         "Abi": {
           "address": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b",
-          "versions": [
-            "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b"
-          ],
+          "versions": {
+            "1": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b"
+          },
           "structs": {
             "AbiReader": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b::abi::AbiReader",
             "AbiWriter": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b::abi::AbiWriter"
@@ -2458,9 +2458,9 @@
         },
         "Operators": {
           "address": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7",
-          "versions": [
-            "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7"
-          ],
+          "versions": {
+            "1": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7"
+          },
           "structs": {
             "OwnerCap": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OwnerCap",
             "OperatorCap": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OperatorCap",
@@ -2478,9 +2478,9 @@
         },
         "ITS": {
           "address": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97",
-          "versions": [
-            "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97"
-          ],
+          "versions": {
+            "1": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97"
+          },
           "structs": {
             "FlowLimit": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::flow_limit::FlowLimit",
             "CoinManagement": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::coin_management::CoinManagement",
@@ -2514,9 +2514,9 @@
         },
         "Example": {
           "address": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e",
-          "versions": [
-            "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e"
-          ],
+          "versions": {
+            "1": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e"
+          },
           "structs": {
             "Singleton": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::its::Singleton",
             "Executed": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::gmp::Executed",
