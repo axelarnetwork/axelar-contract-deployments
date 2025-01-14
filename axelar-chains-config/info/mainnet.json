@@ -2504,6 +2504,9 @@
     "chainType": "stellar",
     "decimals": 7,
     "finality": "1",
+    "contracts": {
+      "AxelarGateway": {}
+    },
     "approxFinalityWaitTime": 1,
     "explorer": {
       "name": "Soroban Nownodes",
