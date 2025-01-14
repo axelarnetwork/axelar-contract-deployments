@@ -2501,6 +2501,10 @@
     "rpc": "https://rpc.ankr.com/stellar_soroban",
     "horizonRpc": "https://horizon.stellar.org",
     "networkType": "mainnet",
+    "chainType": "stellar",
+    "decimals": 7,
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
     "explorer": {
       "name": "Soroban Nownodes",
       "url": "https://soroban.nownodes.io"

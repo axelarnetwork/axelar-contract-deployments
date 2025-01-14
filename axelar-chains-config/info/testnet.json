@@ -2341,6 +2341,9 @@
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
     "chainType": "stellar",
+    "decimals": 7,
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
     "contracts": {},
     "explorer": {
       "name": "Stellar Expert",
