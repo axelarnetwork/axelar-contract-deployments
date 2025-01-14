@@ -16,6 +16,7 @@ const {
     getCodeId,
     uploadContract,
     instantiateContract,
+    migrateContract,
 } = require('./utils');
 
 const { Command } = require('commander');
@@ -67,6 +68,23 @@ const instantiate = async (client, wallet, config, options) => {
 const uploadInstantiate = async (client, wallet, config, options) => {
     await upload(client, wallet, config, options);
     await instantiate(client, wallet, config, options);
+};
+
+const migrate = async (client, wallet, config, options) => {
+    const { yes } = options;
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const codeId = await getCodeId(client, config, options);
+    printInfo('Using code id', codeId);
+
+    if (prompt(`Proceed with contract migration on axelar?`, yes)) {
+        return;
+    }
+
+    contractConfig.codeId = codeId;
+
+    const { transactionHash } = await migrateContract(client, wallet, config, options);
+    printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
 const mainProcessor = async (processor, options) => {
@@ -125,6 +143,19 @@ const programHandler = () => {
         storeOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
+    });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Migrate contract')
+        .action((options) => {
+            mainProcessor(migrate, options);
+        });
+    addAmplifierOptions(migrateCmd, {
+        contractOptions: true,
+        migrateOptions: true,
+        codeId: true,
+        fetchCodeId: true,
     });
 
     program.parse();
