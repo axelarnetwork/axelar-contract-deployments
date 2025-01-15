@@ -61,7 +61,15 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
-            return { owner, gatewayAddress, gasServiceAddress, itsHubAddress, chainName, interchainTokenWasmHash };
+            return {
+                owner,
+                operator,
+                gatewayAddress,
+                gasServiceAddress,
+                itsHubAddress,
+                chainName,
+                interchainTokenWasmHash
+            };
         }
 
         case 'axelar_operators':
