@@ -68,7 +68,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 gasServiceAddress,
                 itsHubAddress,
                 chainName,
-                interchainTokenWasmHash
+                interchainTokenWasmHash,
             };
         }
 
