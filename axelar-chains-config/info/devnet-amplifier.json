@@ -694,6 +694,9 @@
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
       "chainType": "sui",
+      "finality": "1",
+      "decimals": 9,
+      "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"

@@ -1,7 +1,6 @@
 'use strict';
 
 require('dotenv').config();
-const { isNil } = require('lodash');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
@@ -14,39 +13,24 @@ const {
     getSalt,
     initContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     uploadContract,
     instantiateContract,
+    migrateContract,
 } = require('./utils');
 
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const upload = async (client, wallet, config, options) => {
-    const { reuseCodeId, contractName, fetchCodeId, instantiate2, salt, chainName } = options;
-
+    const { contractName, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
-
-    if (options.codeId) {
-        printInfo('Option codeId defined. Skipping upload.');
-        return;
-    }
-
-    if (fetchCodeId) {
-        printInfo('Option fetchCodeId defined. Skipping upload.');
-        return;
-    }
-
-    if (reuseCodeId && !isNil(contractBaseConfig.lastUploadedCodeId)) {
-        printInfo('Skipping upload. Reusing previously uploaded bytecode with codeId', contractBaseConfig.lastUploadedCodeId);
-        return;
-    }
 
     printInfo('Uploading contract binary');
 
     const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
-    printInfo('Uploaded contract binary');
+    printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
 
     if (instantiate2) {
@@ -60,11 +44,18 @@ const upload = async (client, wallet, config, options) => {
 };
 
 const instantiate = async (client, wallet, config, options) => {
-    const { contractName, chainName } = options;
+    const { contractName, chainName, yes } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(client, config, options);
+    const codeId = await getCodeId(client, config, options);
+    printInfo('Using code id', codeId);
+
+    if (prompt(`Proceed with instantiation on axelar?`, yes)) {
+        return;
+    }
+
+    contractConfig.codeId = codeId;
 
     const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
@@ -74,8 +65,30 @@ const instantiate = async (client, wallet, config, options) => {
     printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
-const main = async (options) => {
-    const { env, uploadOnly, yes } = options;
+const uploadInstantiate = async (client, wallet, config, options) => {
+    await upload(client, wallet, config, options);
+    await instantiate(client, wallet, config, options);
+};
+
+const migrate = async (client, wallet, config, options) => {
+    const { yes } = options;
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const codeId = await getCodeId(client, config, options);
+    printInfo('Using code id', codeId);
+
+    if (prompt(`Proceed with contract migration on axelar?`, yes)) {
+        return;
+    }
+
+    contractConfig.codeId = codeId;
+
+    const { transactionHash } = await migrateContract(client, wallet, config, options);
+    printInfo('Migration completed. Transaction hash', transactionHash);
+};
+
+const mainProcessor = async (processor, options) => {
+    const { env } = options;
     const config = loadConfig(env);
 
     initContractConfig(config, options);
@@ -83,11 +96,7 @@ const main = async (options) => {
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await upload(client, wallet, config, options);
-
-    if (!(uploadOnly || prompt(`Proceed with deployment on axelar?`, yes))) {
-        await instantiate(client, wallet, config, options);
-    }
+    await processor(client, wallet, config, options);
 
     saveConfig(config, env);
 };
@@ -95,27 +104,58 @@ const main = async (options) => {
 const programHandler = () => {
     const program = new Command();
 
-    program.name('upload-contract').description('Upload CosmWasm contracts');
+    program.name('deploy-contract').description('Deploy CosmWasm contracts');
 
-    addAmplifierOptions(program, {
+    const uploadCmd = program
+        .command('upload')
+        .description('Upload wasm binary')
+        .action((options) => {
+            mainProcessor(upload, options);
+        });
+    addAmplifierOptions(uploadCmd, {
         contractOptions: true,
         storeOptions: true,
+        instantiate2Options: true,
+    });
+
+    const instantiateCmd = program
+        .command('instantiate')
+        .description('Instantiate contract')
+        .action((options) => {
+            mainProcessor(instantiate, options);
+        });
+    addAmplifierOptions(instantiateCmd, {
+        contractOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
         codeId: true,
         fetchCodeId: true,
     });
 
-    program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
-    program.addOption(
-        new Option(
-            '-u, --uploadOnly',
-            'upload the contract without instantiating. prints expected contract address if --instantiate2 is passed',
-        ),
-    );
+    const uploadInstantiateCmd = program
+        .command('upload-instantiate')
+        .description('Upload wasm binary and instantiate contract')
+        .action((options) => {
+            mainProcessor(uploadInstantiate, options);
+        });
+    addAmplifierOptions(uploadInstantiateCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+    });
 
-    program.action((options) => {
-        main(options);
+    const migrateCmd = program
+        .command('migrate')
+        .description('Migrate contract')
+        .action((options) => {
+            mainProcessor(migrate, options);
+        });
+    addAmplifierOptions(migrateCmd, {
+        contractOptions: true,
+        migrateOptions: true,
+        codeId: true,
+        fetchCodeId: true,
     });
 
     program.parse();
