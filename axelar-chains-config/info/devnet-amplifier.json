@@ -629,6 +629,7 @@
       "rpc": "https://soroban-testnet.stellar.org",
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
+      "chainType": "stellar",
       "explorer": {
         "name": "Soroban Nownodes",
         "url": "https://soroban.nownodes.io/testnet"
