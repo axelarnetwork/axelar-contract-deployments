@@ -1073,13 +1073,8 @@ pub mod builder {
         fn simplest_use_case() {
             let payer = Pubkey::new_unique();
             let config_pda = Pubkey::new_unique();
-            let config = GovernanceConfig::new(
-                1,
-                [0_u8; 32],
-                [0_u8; 32],
-                1,
-                Pubkey::new_unique().to_bytes(),
-            );
+            let config =
+                GovernanceConfig::new([0_u8; 32], [0_u8; 32], 1, Pubkey::new_unique().to_bytes());
 
             let _ix = IxBuilder::new()
                 .initialize_config(&payer, &config_pda, config)

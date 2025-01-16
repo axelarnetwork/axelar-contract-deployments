@@ -20,7 +20,7 @@ use crate::state::GovernanceConfig;
 pub(crate) fn process(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    governance_config: GovernanceConfig,
+    mut governance_config: GovernanceConfig,
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
@@ -38,6 +38,8 @@ pub(crate) fn process(
         msg!("Derived PDA does not match provided PDA");
         return Err(ProgramError::InvalidArgument);
     }
+
+    governance_config.bump = bump;
 
     // Check: PDA Account is not initialized
     root_pda.check_uninitialized_pda()?;

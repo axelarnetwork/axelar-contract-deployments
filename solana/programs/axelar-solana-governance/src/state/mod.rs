@@ -44,14 +44,13 @@ impl GovernanceConfig {
     /// Creates a new governance program config.
     #[must_use]
     pub const fn new(
-        bump: u8,
         chain_hash: Hash,
         address_hash: Hash,
         minimum_proposal_eta_delay: u32,
         operator: Address,
     ) -> Self {
         Self {
-            bump,
+            bump: 0, // This will be set by the program
             chain_hash,
             address_hash,
             minimum_proposal_eta_delay,

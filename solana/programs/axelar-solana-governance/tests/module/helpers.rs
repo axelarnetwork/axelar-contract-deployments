@@ -96,7 +96,6 @@ pub(crate) async fn init_contract_with_operator(
     let (config_pda, bump) = GovernanceConfig::pda();
 
     let config = axelar_solana_governance::state::GovernanceConfig::new(
-        bump,
         SOURCE_CHAIN_NAME_KECCAK_HASH,
         SOURCE_CHAIN_ADDRESS_KECCAK_HASH,
         MINIMUM_PROPOSAL_DELAY,
