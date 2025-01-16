@@ -1685,6 +1685,7 @@
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
       "chainType": "sui",
+      "decimals": 9,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
@@ -1876,7 +1877,9 @@
             "ItsChannelId": "0x948d542f4f0d778b857b5249b55cb829d7d5c678e7c1e6a64069c18015beb196"
           }
         }
-      }
+      },
+      "finality": "1",
+      "approxFinalityWaitTime": 1
     }
   },
   "axelar": {
