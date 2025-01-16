@@ -2504,6 +2504,7 @@
     "chainType": "stellar",
     "decimals": 7,
     "finality": "1",
+    "tokenSymbol": "XLM",
     "contracts": {
       "AxelarGateway": {}
     },
@@ -2511,8 +2512,7 @@
     "explorer": {
       "name": "Soroban Nownodes",
       "url": "https://soroban.nownodes.io"
-    },
-    "tokenSymbol": "XLM"
+    }
   },
   "axelar": {
     "axelarId": "axelar",

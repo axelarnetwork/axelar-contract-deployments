@@ -633,11 +633,11 @@
       "decimals": 7,
       "finality": "1",
       "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
       "explorer": {
         "name": "Soroban Nownodes",
         "url": "https://soroban.nownodes.io/testnet"
       },
-      "tokenSymbol": "XLM",
       "contracts": {
         "axelar_gateway": {
           "address": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
