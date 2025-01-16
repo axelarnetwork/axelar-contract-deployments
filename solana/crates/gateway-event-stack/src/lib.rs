@@ -127,8 +127,8 @@ where
     let mut logs = log
         .as_ref()
         .trim()
-        .trim_start_matches("Program data:")
-        .split_whitespace()
+        .trim_start_matches("Program data: ")
+        .split(' ')
         .filter_map(decode_base64);
     let disc = logs
         .next()
@@ -196,8 +196,8 @@ where
     let mut logs = log
         .as_ref()
         .trim()
-        .trim_start_matches("Program data:")
-        .split_whitespace()
+        .trim_start_matches("Program data: ")
+        .split(' ')
         .filter_map(decode_base64);
     let disc = logs
         .next()
@@ -228,7 +228,9 @@ where
             let event = SplGasRefundedEvent::new(logs)?;
             GasServiceEvent::SplGasRefunded(event)
         }
-        _ => return Err(EventParseError::Other("unsupported discrimintant")),
+        _ => {
+            return Err(EventParseError::Other("unsupported discrimintant"));
+        }
     };
 
     Ok(gas_service_event)
@@ -271,6 +273,7 @@ fn handle_success_log<K>(program_stack: &mut Vec<ProgramInvocationState<K>>) {
 mod tests {
     use core::str::FromStr;
 
+    use axelar_solana_gas_service::processor::NativeGasPaidForContractCallEvent;
     use axelar_solana_gateway::processor::CallContractEvent;
     use pretty_assertions::assert_eq;
     use solana_sdk::pubkey::Pubkey;
@@ -409,6 +412,51 @@ mod tests {
 
         // Expected result: one failed invocation
         let expected = vec![ProgramInvocationState::Failed(vec![(1, event)])];
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_gas_service_fixture() {
+        let logs = [
+            "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G invoke [1]",
+            "Program 11111111111111111111111111111111 invoke [2]",
+            "Program 11111111111111111111111111111111 success",
+            "Program data: bmF0aXZlIGdhcyBwYWlkIGZvciBjb250cmFjdCBjYWxs uHuSGR4VBBCRNPjze8Y91JXLTJnrh8qv2IxFZAjnrfI= ZXZt MHhkZWFkYmVlZg== /Qd2xw7aQmd/4PP+LMP3Kwouwb8mAfoKYiWkSoTQv5E= AAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=  iBMAAAAAAAA=",
+            "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G consumed 7199 of 400000 compute units",
+            "Program gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G success",
+            "Program mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG invoke [1]",
+            "Program log: Instruction: Native",
+            "Program log: Instruction: SendToGateway",
+            "Program gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe invoke [2]",
+            "Program log: Instruction: Call Contract",
+            "Program data: Y2FsbCBjb250cmFjdF9fXw== 7JQPdUfAeRg1X1Nr6GECnQ3fp0Mj2A6smBFZZwEbwhI= /Qd2xw7aQmd/4PP+LMP3Kwouwb8mAfoKYiWkSoTQv5E= ZXZt MHhkZWFkYmVlZg== bXNnIG1lbW8gYW5kIGdhcw==",
+            "Program gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe consumed 4799 of 386578 compute units",
+            "Program gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe success",
+            "Program mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG consumed 11145 of 392801 compute units",
+            "Program mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG success",
+        ];
+        let match_context = MatchContext::new("gasHQkvaC4jTD2MQpAuEN3RdNwde2Ym5E5QNDoh6m6G");
+        let result = build_program_event_stack(&match_context, &logs, parse_gas_service_log);
+
+        let event = NativeGasPaidForContractCallEvent {
+            config_pda: "DR9Ja5ojPLPDWmWFRmpc2SEUvK94dKX4uM6AofgwAAJm"
+                .parse()
+                .unwrap(),
+            destination_chain: "evm".to_owned(),
+            destination_address: "0xdeadbeef".to_owned(),
+            payload_hash: [
+                253, 7, 118, 199, 14, 218, 66, 103, 127, 224, 243, 254, 44, 195, 247, 43, 10, 46,
+                193, 191, 38, 1, 250, 10, 98, 37, 164, 74, 132, 208, 191, 145,
+            ],
+            refund_address: "11111112D1oxKts8YPdTJRG5FzxTNpMtWmq8hkVx3".parse().unwrap(),
+            params: vec![],
+            gas_fee_amount: 5000,
+        };
+        let expected = vec![ProgramInvocationState::Succeeded(vec![(
+            3,
+            GasServiceEvent::NativeGasPaidForContractCall(event),
+        )])];
 
         assert_eq!(result, expected);
     }
