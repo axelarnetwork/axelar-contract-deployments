@@ -124,6 +124,7 @@ pub fn process_instruction<'a>(
 fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
+    let program_data_account = next_account_info(account_info_iter)?;
     let gateway_root_pda_account = next_account_info(account_info_iter)?;
     let its_root_pda_account = next_account_info(account_info_iter)?;
     let system_account = next_account_info(account_info_iter)?;
@@ -134,6 +135,9 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
     if !system_program::check_id(system_account.key) {
         return Err(ProgramError::IncorrectProgramId);
     }
+
+    // Check: Upgrade Authority
+    ensure_upgrade_authority(program_id, payer, program_data_account)?;
 
     // Check: PDA Account is not initialized
     its_root_pda_account.check_uninitialized_pda()?;

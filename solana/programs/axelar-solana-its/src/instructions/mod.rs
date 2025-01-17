@@ -459,6 +459,8 @@ pub fn initialize(
     operator: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (program_data_address, _) =
+        Pubkey::find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id());
     let (user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &operator);
 
@@ -466,6 +468,7 @@ pub fn initialize(
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),

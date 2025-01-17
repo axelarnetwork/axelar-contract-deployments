@@ -23,12 +23,25 @@ async fn test_successful_operator_transfer() {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
@@ -78,12 +91,25 @@ async fn test_fail_transfer_when_not_holder() {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            Keypair::new().pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    Keypair::new().pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let bob = Keypair::new();
@@ -110,12 +136,25 @@ async fn test_successful_proposal_acceptance() {
     let mut solana_chain = program_test().await;
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
@@ -889,12 +928,25 @@ async fn test_fail_mint_without_minter_role(#[case] token_program_id: Pubkey) {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id =
@@ -959,12 +1011,25 @@ async fn test_successful_mint_with_minter_role(#[case] token_program_id: Pubkey)
     let mut solana_chain = program_test().await;
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
     let token_id =
         axelar_solana_its::interchain_token_id(&solana_chain.fixture.payer.pubkey(), b"salt");
@@ -1018,4 +1083,40 @@ async fn test_successful_mint_with_minter_role(#[case] token_program_id: Pubkey)
     .unwrap();
 
     solana_chain.fixture.send_tx(&[mint_ix]).await;
+}
+
+#[tokio::test]
+#[allow(clippy::unwrap_used)]
+async fn test_fail_init_when_not_upgrade_authority() {
+    let mut solana_chain = program_test().await;
+    let not_upgrade_authority = Keypair::new();
+
+    // Create instruction with different payer
+    let ix = axelar_solana_its::instructions::initialize(
+        not_upgrade_authority.pubkey(), // Using different account instead of upgrade authority.
+        solana_chain.gateway_root_pda,
+        solana_chain.payer.pubkey(),
+    )
+    .unwrap();
+
+    let signers = &[
+        not_upgrade_authority,
+        solana_chain.fixture.payer.insecure_clone(),
+    ];
+
+    // Execute transaction and expect failure
+    let res = solana_chain
+        .send_tx_with_custom_signers(&[ix], signers)
+        .await
+        .expect_err("tx should fail without proper upgrade authority signature");
+
+    // Assert that the error message indicates the correct failure reason
+    assert!(
+        res.metadata
+            .unwrap()
+            .log_messages
+            .into_iter()
+            .any(|x| x.contains("Given authority is not the program upgrade authority")),
+        "Expected error message about invalid upgrade authority was not found!"
+    );
 }

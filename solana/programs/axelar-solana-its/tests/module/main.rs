@@ -53,6 +53,7 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction;
 
 const SOLANA_CHAIN_NAME: &str = "solana-localnet";
 const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
@@ -135,12 +136,25 @@ async fn axelar_solana_setup(with_memo: bool) -> ItsProgramWrapper {
 
     let _metadata = solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     ItsProgramWrapper {

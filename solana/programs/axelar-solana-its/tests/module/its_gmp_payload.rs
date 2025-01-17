@@ -10,6 +10,7 @@ use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction;
 use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
 use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
@@ -31,12 +32,25 @@ async fn test_its_gmp_payload_deploy_token_manager(
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
@@ -85,12 +99,25 @@ async fn test_its_gmp_payload_deploy_interchain_token() {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
@@ -147,12 +174,25 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock(#[case] token_prog
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
@@ -270,12 +310,25 @@ async fn test_its_gmp_payload_interchain_transfer_lock_unlock_fee() {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())
