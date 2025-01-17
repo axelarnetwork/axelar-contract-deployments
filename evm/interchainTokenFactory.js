@@ -20,7 +20,6 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
-    console.log(contracts);
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
@@ -143,7 +142,7 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
-            printInfo('token address', await interchainTokenService.interchainTokenAddress(tokenId));
+            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 

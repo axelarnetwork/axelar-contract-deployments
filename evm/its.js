@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, concat },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -30,6 +30,7 @@ const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
+const ITokenManager = getContractJSON('ITokenManager');
 const IOwnable = getContractJSON('IOwnable');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -223,7 +224,11 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for TokenManager with tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -234,7 +239,11 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -245,7 +254,11 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowInAmount = await tokenManager.flowInAmount();
             printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
 
             break;
@@ -362,17 +375,31 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const tx = await interchainTokenService.callContractWithInterchainToken(
+            const metadata = concat(['0x00000000', data]);
+
+            const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
                 destinationChain,
                 destinationAddress,
                 amount,
-                data,
+                metadata,
                 gasValue,
                 { value: gasValue, ...gasOptions },
             );
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
+
+            break;
+        }
+
+        case 'registerTokenMetadata': {
+            const { tokenAddress, gasValue } = options;
+
+            validateParameters({ isValidAddress: { tokenAddress }, isNumber: { gasValue } });
+
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
+
+            await handleTx(tx, chain, interchainTokenService, options.action);
 
             break;
         }
@@ -660,6 +687,7 @@ if (require.main === module) {
                 'execute',
                 'checks',
                 'migrateInterchainToken',
+                'registerTokenMetadata',
             ])
             .makeOptionMandatory(true),
     );
