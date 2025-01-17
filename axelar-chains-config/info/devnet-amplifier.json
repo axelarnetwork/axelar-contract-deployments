@@ -623,9 +623,9 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
-    "stellar-test2": {
+    "stellar-test-2025-q1": {
       "name": "Stellar",
-      "axelarId": "stellar-test2",
+      "axelarId": "stellar-test-2025-q1",
       "rpc": "https://soroban-testnet.stellar.org",
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
@@ -640,12 +640,13 @@
       },
       "contracts": {
         "axelar_gateway": {
-          "address": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
-          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+          "address": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "4143f187c235fe365c547047c06c4fd7fb7b7eff664b9d9b044112d91bfef13c",
           "initializeArgs": {
-            "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
-            "operator": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
-            "domainSeparator": "e33a8ab3341e36bdcc552924ea42c85ef40dc2cfa41259eb166fb254bc3f036a",
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "operator": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "domainSeparator": "293407cef6cb084c2c7ca31794d4cc95d8c3ea2aced086aebb518a2c37b28dc6",
             "minimumRotationDelay": "0",
             "previousSignersRetention": "15",
             "initialSigners": [
@@ -653,7 +654,7 @@
                 "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
                 "signers": [
                   {
-                    "signer": "168983122cd64add01997a5ad115fbcb52fea5ed659a9702b83efbcb3a5e598e",
+                    "signer": "e8898cba5a371e9d9c5622b5b62b25958096b9ab881f1e4bf91d6d29da58fd5e",
                     "weight": "1"
                   }
                 ],
@@ -662,26 +663,30 @@
             ]
           }
         },
-        "axelar_gas_service": {
-          "address": "CDBPOARU5MFSC7ZWXTVPVKDZRHKOPS5RCY2VP2OKOBLCMQM3NKVP6HO7",
-          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+        "axelar_operators": {
+          "address": "CABRZHKAJVJFX5IZWL7KPA6ZEX6I347W7GBXAUX6WVOGUUBRWCDGOUSI",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "57704308b10b9970a8c185dba6905ce10b19fec9c03acb2653c0b53f6d10c840",
           "initializeArgs": {
-            "gasCollector": "CB2LIDEDPDKUXVFHOQ2PHPEJOJBD7YDN43OB3O6D43IYQX4YCPTK4ODI"
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM"
           }
         },
-        "axelar_operators": {
-          "address": "CB2LIDEDPDKUXVFHOQ2PHPEJOJBD7YDN43OB3O6D43IYQX4YCPTK4ODI",
-          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+        "axelar_gas_service": {
+          "address": "CD3KZOLEACWMQSDEQFUJI6ZWC7A7CC7AE7ZFVE4X2DBPYAC6L663GCNN",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "e2da823068ac57db886c25493a8da268057b0f00f4ef9e5747d9e3ea8c2d1687",
           "initializeArgs": {
-            "owner": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG"
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "gasCollector": "CABRZHKAJVJFX5IZWL7KPA6ZEX6I347W7GBXAUX6WVOGUUBRWCDGOUSI"
           }
         },
         "example": {
-          "address": "CDURON7OSAAOWLKIQRNIPFZYLTMEWCRQOZIURAIS5JK3D2GU5IUPNSF6",
-          "deployer": "GALITAYSFTLEVXIBTF5FVUIV7PFVF7VF5VSZVFYCXA7PXSZ2LZMY54VG",
+          "address": "CCVDQJSFK5GIOHZ4NNSL455NDCG26RTX25O65PF6ZIGEMYHBW5O5UHV5",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "e65c48be115ac9649793cf90a1f9cda07c05e588429b9173bcb4b9aaea96fd10",
           "initializeArgs": {
-            "gatewayAddress": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
-            "gasServiceAddress": "CDBPOARU5MFSC7ZWXTVPVKDZRHKOPS5RCY2VP2OKOBLCMQM3NKVP6HO7"
+            "gatewayAddress": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
+            "gasServiceAddress": "CD3KZOLEACWMQSDEQFUJI6ZWC7A7CC7AE7ZFVE4X2DBPYAC6L663GCNN"
           }
         }
       }
@@ -940,20 +945,20 @@
           "codeId": 854,
           "address": "axelar1ac43p98m4pfv7zxrce3e99gwy5nf2crnwg3mu5rmxs09zvy2py9sxrgm8m"
         },
-        "stellar-test2": {
+        "stellar-test-2025-q1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "CBGNPCKNCKKKCI5AUOS2K6H4JDLGPFHHXNDNOEZBIA3VO2NBEZQXFAG5",
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stellar",
-          "address": "axelar1y00kk2j8pjx700hedhn3u7dyduy5q9kr37hgge6zxrl46ny0jr7qj046ey",
-          "codeId": 854,
+          "sourceGatewayAddress": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
           "votingThreshold": [
             "6",
             "10"
           ],
           "blockExpiry": 10,
-          "confirmationHeight": 1
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 854,
+          "address": "axelar1s3g877l0pk958vzeyrev9vncklrfht7dx2xv9c4u7zmr0y7jzfmq5cxjqm"
         },
         "storeCodeProposalId": "78",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
@@ -976,16 +981,16 @@
           "address": "axelar10w5sqgun0q3m0vkz29vh55ujug57m0t54cue04aesrg45rqcgf6sjv4wwh",
           "codeId": 848
         },
-        "stellar-test2": {
-          "address": "axelar1yekgav0alr7ptakd9uhlengvcfwals6agjceszxzmj77af825y3qs5asgx",
-          "codeId": 848
-        },
         "sui": {
           "codeId": 848,
           "address": "axelar152hkx77822ukgynf333snz5y9p3y9c8jgljlqguze4f4km4sfkfsmfl3na"
         },
         "storeCodeProposalId": "64",
-        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
+        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
+        "stellar-test-2025-q1": {
+          "codeId": 848,
+          "address": "axelar1g03zp32gqx6qg3z59csfj4rm56lkpyqkdw9lg4qdgg6uxyupryrqcycxt9"
+        }
       },
       "MultisigProver": {
         "avalanche-fuji": {
@@ -1068,7 +1073,7 @@
           "domainSeparator": "0x8a4b7c0ae3e02feb8a34711648ee44a4c9fc56ac90b41b74619a75e75de13c37",
           "address": "axelar1lnu9xwpmfzh47876tawjqm5nelevra4v6gmhqchd2tezjwqu2d6stlz4r8"
         },
-        "stellar-test2": {
+        "stellar-test-2025-q1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
@@ -1079,9 +1084,9 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "stellar_xdr",
           "keyType": "ed25519",
-          "address": "axelar1s8unjkst9sjc8csa8xu7sspv4maz8frl34ac2ypny0mylllyuz9qej9lfk",
           "codeId": 855,
-          "domainSeparator": "0xe33a8ab3341e36bdcc552924ea42c85ef40dc2cfa41259eb166fb254bc3f036a"
+          "domainSeparator": "0x293407cef6cb084c2c7ca31794d4cc95d8c3ea2aced086aebb518a2c37b28dc6",
+          "address": "axelar1uuja08qdy790ewq9mz0r6t7c4yp9fqccu9f9zssr4tu4k0l52yeqjhckm3"
         },
         "storeCodeProposalId": "82",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"

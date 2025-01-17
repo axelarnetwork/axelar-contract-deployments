@@ -112,7 +112,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 
-    `node deploy-contract.js [upload|instantiate|upload-instantiate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+    `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
@@ -125,6 +125,8 @@ Available subcommands:
     3. Value of previously saved `lastUploadedCodeId` in config
 
 -   `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+
+-   `migrate`: Migrates a contract using a new codeId, which is retrieved the same way as `instantiate` subcommand. The migrate message must be provided using the `--msg` option.
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
@@ -146,9 +148,8 @@ Example deployments:
 ### Constant Address Deployment
 
 To deploy with a constant address using instantiate2, pass the `--instantiate2` flag.
-To upload the contract and compute the expected address without instantiating, pass `--instantiate2` and `-u`. This will write the contract address and the code id to the config file.
+To upload the contract and compute the expected address without instantiating, pass `--instantiate2` while using the `upload` subcommand. This will write the contract address and the code id to the config file.
 A salt can be passed with `-s`. If no salt is passed but a salt is needed for constant address deployment, the contract name will be used as a salt.
-Pass `-r` to skip the upload step, and reuse the previous code id (specified in the config).
 
 ### Deploying through governance proposals
 
