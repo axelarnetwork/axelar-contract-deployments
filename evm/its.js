@@ -251,67 +251,6 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'deployTokenManager': {
-            const { destinationChain, type, operator, tokenAddress, gasValue } = options;
-
-            const deploymentSalt = getDeploymentSalt(options);
-            const tokenManagerType = tokenManagerImplementations[type];
-
-            validateParameters({
-                isString: { destinationChain },
-                isValidAddress: { tokenAddress },
-                isValidCalldata: { operator },
-                isValidNumber: { gasValue, tokenManagerType },
-            });
-
-            isValidDestinationChain(config, destinationChain);
-
-            const params = defaultAbiCoder.encode(['bytes', 'address'], [operator, tokenAddress]);
-
-            const tx = await interchainTokenService.deployTokenManager(
-                deploymentSalt,
-                destinationChain,
-                tokenManagerType,
-                params,
-                gasValue,
-                gasOptions,
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
-
-            break;
-        }
-
-        case 'deployInterchainToken': {
-            const { destinationChain, name, symbol, decimals, minter, gasValue } = options;
-
-            const deploymentSalt = getDeploymentSalt(options);
-
-            validateParameters({
-                isNonEmptyString: { name, symbol },
-                isString: { destinationChain },
-                isAddress: { minter },
-                isValidNumber: { decimals, gasValue },
-            });
-
-            isValidDestinationChain(config, destinationChain);
-
-            const tx = await interchainTokenService.deployInterchainToken(
-                deploymentSalt,
-                destinationChain,
-                name,
-                symbol,
-                decimals,
-                minter,
-                gasValue,
-                { value: gasValue, ...gasOptions },
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
-
-            break;
-        }
-
         case 'contractCallValue': {
             const { sourceChain, sourceAddress, payload } = options;
 
@@ -667,6 +606,18 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'migrateInterchainToken': {
+            const { tokenId } = options;
+
+            validateParameters({ isKeccak256Hash: { tokenId } });
+
+            const tx = await interchainTokenService.migrateInterchainToken(tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action);
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -697,8 +648,6 @@ if (require.main === module) {
                 'flowLimit',
                 'flowOutAmount',
                 'flowInAmount',
-                'deployTokenManager',
-                'deployInterchainToken',
                 'contractCallValue',
                 'expressExecute',
                 'interchainTransfer',
@@ -710,6 +659,7 @@ if (require.main === module) {
                 'setPauseStatus',
                 'execute',
                 'checks',
+                'migrateInterchainToken'
             ])
             .makeOptionMandatory(true),
     );

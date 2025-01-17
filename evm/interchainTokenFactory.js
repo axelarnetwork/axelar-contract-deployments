@@ -8,7 +8,7 @@ const {
     BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
+const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo, isValidChain } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
@@ -20,7 +20,7 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
-
+    console.log(contracts);
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
@@ -143,6 +143,7 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
+            printInfo('token address', await interchainTokenService.interchainTokenAddress(tokenId));
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -225,6 +226,64 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'registerCustomToken': {
+            const { tokenAddress, tokenManagerType, operator, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isValidAddress: { tokenAddress },
+                isAddress: { operator },
+                isValidNumber: { tokenManagerType, gasValue },
+            });
+
+            const tx = await interchainTokenFactory.registerCustomToken(
+                deploymentSalt,
+                tokenAddress,
+                tokenManagerType,
+                operator,
+                gasValue,
+                { value: gasValue, ...gasOptions },
+            );
+            const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'linkToken': {
+            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            isValidDestinationChain(config, destinationChain);
+
+            validateParameters({
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { tokenManagerType, gasValue },
+                isValidBytesArray: { linkParams, destinationTokenAddress },
+            });
+
+            const tx = await interchainTokenFactory.linkToken(
+                deploymentSalt,
+                destinationChain,
+                destinationTokenAddress,
+                tokenManagerType,
+                linkParams,
+                gasValue,
+                { value: gasValue, ...gasOptions },
+            );
+
+            const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'LinkTokenStarted');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -255,6 +314,8 @@ if (require.main === module) {
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
+                'registerCustomToken',
+                'linkToken',
             ])
             .makeOptionMandatory(true),
     );
@@ -267,11 +328,15 @@ if (require.main === module) {
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
     program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
+    program.addOption(new Option('--operator <operator>', 'token manager operator').default(AddressZero));
+    program.addOption(new Option('--tokenManagerType <tokenManagerType>', 'token manager type'));
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
+    program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));
+    program.addOption(new Option('--linkParams <linkParams>', 'parameters to use for linking'));
 
     program.action((options) => {
         main(options);
