@@ -2494,6 +2494,23 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
+    },
+    "sui": {
+      "name": "Sui",
+      "axelarId": "sui",
+      "networkType": "mainnet",
+      "rpc": "https://sui-rpc.publicnode.com:443",
+      "tokenSymbol": "SUI",
+      "chainType": "sui",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/mainnet"
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
     }
   },
   "stellar": {
