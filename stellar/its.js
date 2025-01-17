@@ -7,7 +7,7 @@ const {
     utils: { arrayify, hexZeroPad, isHexString, keccak256 },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     getWallet,
