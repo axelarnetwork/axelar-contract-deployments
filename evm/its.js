@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, defaultAbiCoder },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     BigNumber,
     constants: { AddressZero },
     Contract,
@@ -659,7 +659,7 @@ if (require.main === module) {
                 'setPauseStatus',
                 'execute',
                 'checks',
-                'migrateInterchainToken'
+                'migrateInterchainToken',
             ])
             .makeOptionMandatory(true),
     );
