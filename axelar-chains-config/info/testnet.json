@@ -2341,12 +2341,17 @@
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
     "chainType": "stellar",
-    "contracts": {},
+    "decimals": 7,
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
+    "tokenSymbol": "XLM",
+    "contracts": {
+      "AxelarGateway": {}
+    },
     "explorer": {
       "name": "Stellar Expert",
       "url": "https://stellar.expert/explorer/testnet"
-    },
-    "tokenSymbol": "XLM"
+    }
   },
   "sui": {
     "name": "Sui",
