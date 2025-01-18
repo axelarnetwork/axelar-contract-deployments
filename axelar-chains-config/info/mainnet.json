@@ -2494,24 +2494,25 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1
-    }
-  },
-  "stellar": {
-    "id": "stellar",
-    "rpc": "https://rpc.ankr.com/stellar_soroban",
-    "horizonRpc": "https://horizon.stellar.org",
-    "networkType": "mainnet",
-    "chainType": "stellar",
-    "decimals": 7,
-    "finality": "1",
-    "tokenSymbol": "XLM",
-    "contracts": {
-      "AxelarGateway": {}
     },
-    "approxFinalityWaitTime": 1,
-    "explorer": {
-      "name": "Soroban Nownodes",
-      "url": "https://soroban.nownodes.io"
+    "stellar": {
+      "id": "stellar",
+      "rpc": "https://rpc.ankr.com/stellar_soroban",
+      "horizonRpc": "https://horizon.stellar.org",
+      "networkType": "mainnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
+      "contracts": {
+        "AxelarGateway": {}
+      },
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Soroban Nownodes",
+        "url": "https://soroban.nownodes.io"
+      }
     }
   },
   "axelar": {
