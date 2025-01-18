@@ -630,11 +630,14 @@
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
       "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
       "explorer": {
         "name": "Soroban Nownodes",
         "url": "https://soroban.nownodes.io/testnet"
       },
-      "tokenSymbol": "XLM",
       "contracts": {
         "axelar_gateway": {
           "address": "CBECMRORSIPG4XG4CNZILCH233OXYMLCY4GL3GIO4SURSHTKHDAPEOVM",
