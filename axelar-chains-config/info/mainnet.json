@@ -2496,7 +2496,7 @@
       "approxFinalityWaitTime": 1
     },
     "stellar": {
-      "id": "stellar",
+      "axelarId": "stellar",
       "rpc": "https://rpc.ankr.com/stellar_soroban",
       "horizonRpc": "https://horizon.stellar.org",
       "networkType": "mainnet",
