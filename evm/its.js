@@ -259,7 +259,7 @@ async function processCommand(config, chain, options) {
             const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
             const flowInAmount = await tokenManager.flowInAmount();
-            printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
+            printInfo(`Flow in amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
 
             break;
         }
