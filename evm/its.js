@@ -381,6 +381,7 @@ async function processCommand(config, chain, options) {
             }
 
             const tokenIdsBytes32 = [];
+            const tokenManagers = [];
 
             for (const tokenId of tokenIds) {
                 if (!isValidTokenId(tokenId)) {
@@ -389,13 +390,20 @@ async function processCommand(config, chain, options) {
 
                 const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
                 tokenIdsBytes32.push(tokenIdBytes32);
+
+                const tokenManager = new Contract(
+                    await interchainTokenService.deployedTokenManager(tokenIdBytes32),
+                    getContractJSON('ITokenManager').abi,
+                    wallet,
+                );
+                tokenManagers.push(tokenManager);
             }
 
             validateParameters({ isNumberArray: { flowLimits } });
 
             const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits, gasOptions);
 
-            await handleTx(tx, chain, interchainTokenService, options.action, 'FlowLimitSet');
+            await handleTx(tx, chain, tokenManagers[0], options.action, 'FlowLimitSet');
 
             break;
         }
