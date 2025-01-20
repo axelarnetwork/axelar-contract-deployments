@@ -308,6 +308,7 @@ if (require.main === module) {
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
                 'deployInterchainToken',
+                'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
                 'registerCustomToken',
