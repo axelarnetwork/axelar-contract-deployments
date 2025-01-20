@@ -255,7 +255,9 @@ async function processCommand(config, chain, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
