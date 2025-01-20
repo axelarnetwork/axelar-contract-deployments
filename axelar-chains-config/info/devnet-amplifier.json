@@ -634,6 +634,7 @@
       "finality": "1",
       "approxFinalityWaitTime": 1,
       "tokenSymbol": "XLM",
+      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       "explorer": {
         "name": "Soroban Nownodes",
         "url": "https://soroban.nownodes.io/testnet"
