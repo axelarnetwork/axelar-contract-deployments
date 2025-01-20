@@ -2446,16 +2446,6 @@
             "GasServicev0": "0x384984fd4de9c1d2521a4f055f173195e783ca88547e7b2f346dc829ab9658ce"
           }
         },
-        "Abi": {
-          "address": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b",
-          "versions": {
-            "0": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b"
-          },
-          "structs": {
-            "AbiReader": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b::abi::AbiReader",
-            "AbiWriter": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b::abi::AbiWriter"
-          }
-        },
         "Operators": {
           "address": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7",
           "versions": {
