@@ -131,7 +131,7 @@ jobs:
         run: node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain remote --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
       - name: InterchainTokenFactory register custom token
-        run: node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --tokenManagerType 4 --operator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+        run: node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --tokenManagerType 4 --operator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
       # Note that tokenId is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService interchain transfer to destination chain
