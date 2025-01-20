@@ -2350,7 +2350,7 @@
         "AxelarGateway": {
           "address": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
           "versions": {
-            "1": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4"
+            "0": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4"
           },
           "structs": {
             "WeightedSigner": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::weighted_signer::WeightedSigner",
@@ -2389,7 +2389,7 @@
         "Utils": {
           "address": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421",
           "versions": {
-            "1": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421"
+            "0": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421"
           },
           "structs": {},
           "objects": {
@@ -2399,7 +2399,7 @@
         "VersionControl": {
           "address": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c",
           "versions": {
-            "1": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c"
+            "0": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c"
           },
           "structs": {
             "VersionControl": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c::version_control::VersionControl"
@@ -2408,7 +2408,7 @@
         "RelayerDiscovery": {
           "address": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2",
           "versions": {
-            "1": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2"
+            "0": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2"
           },
           "structs": {
             "Function": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::Function",
@@ -2429,7 +2429,7 @@
         "GasService": {
           "address": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75",
           "versions": {
-            "1": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75"
+            "0": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75"
           },
           "structs": {
             "GasPaid": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasPaid",
@@ -2449,7 +2449,7 @@
         "Abi": {
           "address": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b",
           "versions": {
-            "1": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b"
+            "0": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b"
           },
           "structs": {
             "AbiReader": "0x9517ad8677de8373986ffad88c276bdb656ff4d6a4503b6f896181b6b0479c7b::abi::AbiReader",
@@ -2459,7 +2459,7 @@
         "Operators": {
           "address": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7",
           "versions": {
-            "1": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7"
+            "0": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7"
           },
           "structs": {
             "OwnerCap": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OwnerCap",
@@ -2474,63 +2474,6 @@
           "objects": {
             "Operators": "0xa2e20bc8985680ac4b13f2d866d4a96fb749097b8c92e133fbdfd3b7755b2c18",
             "OwnerCap": "0xa3b2b74c6aff5f05ddf9175d3138285209219b84b359b917ea273b05d2b6bb56"
-          }
-        },
-        "ITS": {
-          "address": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97",
-          "versions": {
-            "1": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97"
-          },
-          "structs": {
-            "FlowLimit": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::flow_limit::FlowLimit",
-            "CoinManagement": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::coin_management::CoinManagement",
-            "CoinInfo": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::coin_info::CoinInfo",
-            "TokenId": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::token_id::TokenId",
-            "UnregisteredTokenId": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::token_id::UnregisteredTokenId",
-            "CoinRegistered": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::CoinRegistered",
-            "InterchainTransfer": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::InterchainTransfer",
-            "InterchainTokenDeploymentStarted": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::InterchainTokenDeploymentStarted",
-            "InterchainTransferReceived": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::InterchainTransferReceived",
-            "UnregisteredCoinReceived": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::UnregisteredCoinReceived",
-            "TrustedAddressSet": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::TrustedAddressSet",
-            "TrustedAddressRemoved": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::TrustedAddressRemoved",
-            "FlowLimitSet": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::events::FlowLimitSet",
-            "InterchainAddressTracker": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::address_tracker::InterchainAddressTracker",
-            "CoinData": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::coin_data::CoinData",
-            "UnregisteredCoinData": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::unregistered_coin_data::UnregisteredCoinData",
-            "TrustedAddresses": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::trusted_addresses::TrustedAddresses",
-            "InterchainTransferTicket": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::interchain_transfer_ticket::InterchainTransferTicket",
-            "ITS_v0": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::its_v0::ITS_v0",
-            "OwnerCap": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::owner_cap::OwnerCap",
-            "ITS": "0x9f7cdce03c6d8e088c9cb1f943cc6e14b156cf6d7baa890dbce8b819b979dc97::its::ITS"
-          },
-          "objects": {
-            "ITS": "0xe8496b71b5fb434d48f760d65f6067d34543271e66b5e645cf9708eae251ab89",
-            "ITSv0": "0xc5a8895d71cc85357e05f5d3fdc12e8ded8909165af8d105294b94b2a160f59b",
-            "ChannelId": "0x0b0c7c404fec394102190f87eefdc815a6f08c30a20e68fdfe4aabf74394174c",
-            "OwnerCap": "0x9c696c617c3ca0f4e081a63e730b9e04459b4fe5dffc39f9a323afe42e0f36c3",
-            "UpgradeCap": "0xe1d23a8d8f7ba97719b95e5c3545673282de5e458ac23b3014f75541f37c362f"
-          }
-        },
-        "Example": {
-          "address": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e",
-          "versions": {
-            "1": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e"
-          },
-          "structs": {
-            "Singleton": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::its::Singleton",
-            "Executed": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::gmp::Executed",
-            "ExecutedWithToken": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::its::ExecutedWithToken",
-            "TOKEN": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token::TOKEN",
-            "TOKEN_A": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_a::TOKEN_A",
-            "TOKEN_B": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_b::TOKEN_B",
-            "TOKEN_C": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_c::TOKEN_C"
-          },
-          "objects": {
-            "GmpSingleton": "0x27b892b858af52d46deff388f48073b98d5cf323bdd8786f709754d5a952a151",
-            "GmpChannelId": "0xaa5f9eedb3f09add9101b6416edc284ce126a0522052cdcd0063585452420934",
-            "ItsSingleton": "0xdc363a93a05acecf132194142d1fb9ec4ba2d44833be12777020018679862361",
-            "ItsChannelId": "0xc52269cf2b65b9eb05fce22f1bf1c6a0b2e7091ac990e36689e3bd7fe2fd6b9b"
           }
         }
       }
