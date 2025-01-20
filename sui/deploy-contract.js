@@ -316,7 +316,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     chain.contracts[packageName] = {
         address: published.packageId,
         versions: {
-            1: published.packageId,
+            0: published.packageId,
         },
     };
 
