@@ -359,39 +359,6 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'callContractWithInterchainToken': {
-            const { destinationChain, destinationAddress, amount, data, gasValue } = options;
-
-            validateParameters({
-                isValidTokenId: { tokenId },
-                isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue },
-                isValidCalldata: { data },
-            });
-
-            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
-            }
-
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            const metadata = concat(['0x00000000', data]);
-
-            const tx = await interchainTokenService.interchainTransfer(
-                tokenIdBytes32,
-                destinationChain,
-                destinationAddress,
-                amount,
-                metadata,
-                gasValue,
-                { value: gasValue, ...gasOptions },
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
-
-            break;
-        }
-
         case 'registerTokenMetadata': {
             const { tokenAddress, gasValue } = options;
 
@@ -678,7 +645,6 @@ if (require.main === module) {
                 'contractCallValue',
                 'expressExecute',
                 'interchainTransfer',
-                'callContractWithInterchainToken',
                 'setFlowLimits',
                 'trustedAddress',
                 'setTrustedAddress',
