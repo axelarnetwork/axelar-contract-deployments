@@ -150,13 +150,12 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { minter, destinationChain, gasValue } = options;
+            const { destinationChain, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isNonEmptyString: { destinationChain },
-                isAddress: { minter },
                 isValidNumber: { gasValue },
             });
 
@@ -166,7 +165,6 @@ async function processCommand(config, chain, options) {
 
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,address,string,uint256)'](
                 deploymentSalt,
-                minter,
                 destinationChain,
                 gasValue,
                 {
@@ -310,7 +308,6 @@ if (require.main === module) {
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
                 'deployInterchainToken',
-                'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
                 'registerCustomToken',
