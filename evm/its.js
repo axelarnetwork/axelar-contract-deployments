@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256, concat },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     BigNumber,
     constants: { AddressZero },
     Contract,
