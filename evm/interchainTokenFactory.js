@@ -162,7 +162,7 @@ async function processCommand(config, chain, options) {
             if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
-            console.log(interchainTokenFactory);
+            
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
                 destinationChain,

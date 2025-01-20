@@ -115,7 +115,7 @@ function isValidDestinationChain(config, destinationChain) {
     if (destinationChain === '') {
         return;
     }
-
+    console.log(config, destinationChain);
     isValidChain(config, destinationChain);
 }
 
