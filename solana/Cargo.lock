@@ -851,6 +851,7 @@ dependencies = [
  "ethers",
  "governance-gmp",
  "program-utils",
+ "role-management",
  "serde",
  "solana-logger",
  "solana-program",

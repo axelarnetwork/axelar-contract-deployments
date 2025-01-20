@@ -2,16 +2,16 @@ use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
-use solana_program_test::tokio;
+use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, events, gmp_memo_metadata,
-    gmp_sample_metadata, init_contract_with_operator, ix_builder_with_memo_proposal_data,
-    ix_builder_with_sample_proposal_data, program_test, setup_programs,
+    approve_ix_at_gateway, assert_msg_present_in_logs, deploy_governance_program, events,
+    gmp_memo_metadata, gmp_sample_metadata, init_contract_with_operator,
+    ix_builder_with_memo_proposal_data, ix_builder_with_sample_proposal_data, setup_programs,
 };
 
 /// This is a full flow test that tests the execution of a proposal that reaches
@@ -169,7 +169,9 @@ async fn test_only_operator_can_execute_ix() {
     // Get the operator key pair;
     let operator = Keypair::new(); // Incorrect operator keypair
 
-    let mut fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+
+    deploy_governance_program(&mut fixture).await;
 
     // Setup gov module (initialize contract)
     let (config_pda, _) =

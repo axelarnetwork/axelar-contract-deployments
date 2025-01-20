@@ -2,15 +2,16 @@ use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::GovernanceConfig;
-use solana_program_test::tokio;
+use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, events,
-    gmp_sample_metadata, init_contract_with_operator, program_test, setup_programs,
+    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta,
+    deploy_governance_program, events, gmp_sample_metadata, init_contract_with_operator,
+    setup_programs,
 };
 
 #[tokio::test]
@@ -18,7 +19,8 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
     // Get the operator key pair;
     let operator = operator_keypair();
 
-    let mut fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+    deploy_governance_program(&mut fixture).await;
 
     // Setup gov module (initialize contract)
     let (config_pda, _) =
@@ -76,7 +78,8 @@ async fn test_error_is_emitted_when_no_required_signers() {
     // Not current operator
     let operator = Keypair::new();
 
-    let mut fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+    deploy_governance_program(&mut fixture).await;
 
     // Setup gov module (initialize contract)
     let (config_pda, _) =

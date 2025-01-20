@@ -23,6 +23,7 @@ axelar-solana-encoding.workspace = true
 alloy-sol-types.workspace = true
 base64.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
+role-management.workspace = true
 
 [dev-dependencies]
 solana-logger.workspace = true

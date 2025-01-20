@@ -336,8 +336,10 @@ pub mod builder {
             config_pda: &Pubkey,
             config: GovernanceConfig,
         ) -> IxBuilder<ConfigBuild> {
+            let program_data_pda = bpf_loader_upgradeable::get_program_data_address(&crate::ID);
             let accounts = vec![
                 AccountMeta::new(*payer, true),
+                AccountMeta::new_readonly(program_data_pda, false),
                 AccountMeta::new(*config_pda, false),
                 AccountMeta::new_readonly(system_program::ID, false),
             ];

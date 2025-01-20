@@ -2,6 +2,7 @@
 //! data.
 
 use program_utils::ValidPDA;
+use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -24,8 +25,11 @@ pub(crate) fn process(
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
+    let program_data = next_account_info(accounts_iter)?;
     let root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
+
+    ensure_upgrade_authority(program_id, payer, program_data)?;
 
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
