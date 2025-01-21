@@ -224,14 +224,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'registerCustomToken': {
-            const { tokenAddress, tokenManagerType, operator, gasValue } = options;
+            const { tokenAddress, tokenManagerType, operator } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isValidAddress: { tokenAddress },
                 isAddress: { operator },
-                isValidNumber: { tokenManagerType, gasValue },
+                isValidNumber: { tokenManagerType },
             });
 
             const tx = await interchainTokenFactory.registerCustomToken(
