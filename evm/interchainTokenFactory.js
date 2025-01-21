@@ -239,8 +239,7 @@ async function processCommand(config, chain, options) {
                 tokenAddress,
                 tokenManagerType,
                 operator,
-                gasValue,
-                { value: gasValue, ...gasOptions },
+                gasOptions,
             );
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
