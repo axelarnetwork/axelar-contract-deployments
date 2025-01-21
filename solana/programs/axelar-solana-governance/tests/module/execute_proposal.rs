@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
@@ -143,10 +144,15 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     // The runtime detects the wrong PDA and returns an error.
     assert!(res.is_err());
-    assert_msg_present_in_logs(
-        res.err().unwrap(),
-        "Derived proposal PDA does not match provided one",
-    );
+
+    let meta = res.err().unwrap();
+
+    assert!(meta
+        .find_at_least_one_log(&[
+            "Derived proposal PDA does not match provided one",
+            "Provided seeds do not result in a valid address",
+        ])
+        .is_some());
 }
 
 #[tokio::test]

@@ -611,6 +611,8 @@ impl TestFixture {
 pub trait FindLog {
     /// Find the desired log
     fn find_log(&self, expected: &str) -> Option<&str>;
+    /// Find at least one of the expected logs
+    fn find_at_least_one_log(&self, expected: &[&str]) -> Option<&str>;
 }
 
 impl FindLog for BanksTransactionResultWithMetadata {
@@ -622,7 +624,12 @@ impl FindLog for BanksTransactionResultWithMetadata {
                 .map(std::string::String::as_str)
         })
     }
+
+    fn find_at_least_one_log(&self, expected: &[&str]) -> Option<&str> {
+        expected.iter().find_map(|x| self.find_log(x))
+    }
 }
+
 /// Add an upgradeable loader account to the context
 #[allow(clippy::impl_trait_in_params)] // Todo - remove this
 pub async fn add_upgradeable_loader_account(
