@@ -2506,9 +2506,7 @@
       "finality": "1",
       "tokenSymbol": "XLM",
       "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
-      "contracts": {
-        "AxelarGateway": {}
-      },
+      "contracts": {},
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "Soroban Nownodes",

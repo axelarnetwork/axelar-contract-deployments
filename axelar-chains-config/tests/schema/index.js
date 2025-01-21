@@ -18,7 +18,7 @@ export const contractValueSchema = {
     properties: {
         address: { type: 'string' },
     },
-    required: ['address'],
+    minProperties: 1,
 };
 
 export const contractSchema = {
@@ -26,7 +26,7 @@ export const contractSchema = {
     type: 'object',
     patternProperties: {
         // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
+        '(^[a-z]|[A-Z])[a-z]*': {
             $ref: contractValueSchema.id,
         },
     },
@@ -35,7 +35,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway'],
+    required: [],
 };
 
 export const explorerSchema = {
