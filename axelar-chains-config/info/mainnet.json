@@ -2509,7 +2509,17 @@
         "url": "https://suiscan.xyz/mainnet"
       },
       "contracts": {
-        "AxelarGateway": {}
+        "AxelarGateway": {},
+        "Utils": {
+          "address": "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c",
+          "versions": [
+            "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c"
+          ],
+          "structs": {},
+          "objects": {
+            "UpgradeCap": "0x587e72522b003aca0876e31776130dd6f6152dd66eabda03102b02d89cec3d32"
+          }
+        }
       }
     }
   },
