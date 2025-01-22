@@ -2509,7 +2509,45 @@
         "url": "https://suiscan.xyz/mainnet"
       },
       "contracts": {
-        "AxelarGateway": {},
+        "AxelarGateway": {
+          "address": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373",
+          "versions": [
+            "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373"
+          ],
+          "structs": {
+            "WeightedSigner": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::weighted_signer::WeightedSigner",
+            "Bytes32": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::bytes32::Bytes32",
+            "WeightedSigners": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::weighted_signers::WeightedSigners",
+            "Signature": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::proof::Signature",
+            "Proof": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::proof::Proof",
+            "Message": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::message::Message",
+            "SignersRotated": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::SignersRotated",
+            "ChannelCreated": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::ChannelCreated",
+            "ChannelDestroyed": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::ChannelDestroyed",
+            "ContractCall": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::ContractCall",
+            "MessageApproved": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::MessageApproved",
+            "MessageExecuted": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::events::MessageExecuted",
+            "AxelarSigners": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::auth::AxelarSigners",
+            "MessageToSign": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::auth::MessageToSign",
+            "Channel": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::channel::Channel",
+            "ApprovedMessage": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::channel::ApprovedMessage",
+            "OwnerCap": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::owner_cap::OwnerCap",
+            "MessageTicket": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::message_ticket::MessageTicket",
+            "MessageStatus": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::message_status::MessageStatus",
+            "Gateway_v0": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::gateway_v0::Gateway_v0",
+            "CommandType": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::gateway_v0::CommandType",
+            "Gateway": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::gateway::Gateway"
+          },
+          "objects": {
+            "Gateway": "0xde761b85a85477bba0ca6b4a09bcde7da33db2f64c392f806f24f433971514f5",
+            "UpgradeCap": "0xf3a39b0db65293097bea42aeff35b1f5172b8f19e29d1bb9ab23c8cd75a7b688",
+            "Gatewayv0": "0x5c3610a1e260c393fb50a37a3ca1e3e2cd933eb3fff476f68aae85d0f790cd60",
+            "OwnerCap": "0xa1e1fe8c64de931cee41d6e4d3a511f176ffb58428c4e472a4cd5028e94146f2"
+          },
+          "domainSeparator": "0xb92c62ca5a6860211b2cf0340641e8d6dffa3207c78c3055d7f708f2bfba3171",
+          "operator": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "minimumRotationDelay": 86400000
+        },
         "Utils": {
           "address": "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c",
           "versions": [
