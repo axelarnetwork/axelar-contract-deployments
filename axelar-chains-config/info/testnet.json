@@ -2341,6 +2341,7 @@
       "tokenSymbol": "SUI",
       "chainType": "sui",
       "finality": "1",
+      "decimals": 9,
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "Suiscan",
