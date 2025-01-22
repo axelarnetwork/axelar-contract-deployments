@@ -1021,21 +1021,22 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.2.4",
+          "salt": "ITS v2.0.1 Redploy",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "tokenManagerDeployer": "0x121b0e54Cd7ad2BBCb4c4C9275697978EBaF3653",
+          "tokenManagerDeployer": "0x8077302f66643C759df2aDaA1a11305b83089f8E",
           "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
-          "interchainTokenDeployer": "0x58667c5f134420Bf6904C7dD01fDDcB4Fea3a760",
-          "tokenManager": "0x81a0545091864617E7037171FdfcBbdCFE3aeb23",
-          "tokenHandler": "0x07715674F74c560200c7C95430673180812fCE73",
-          "implementation": "0x6d59D9360BDAe406614b7E61c53F43a03198A4ef",
+          "interchainTokenDeployer": "0x5356A3933cE2b7838c1DFF68BeC5966A094a3B21",
+          "tokenManager": "0x2E5521F838380BDeEee83F0e96B3101467B2A098",
+          "tokenHandler": "0x94102E9a345A332DFf6c7705bbEf558613682E66",
+          "implementation": "0x71482b89Fa79C220766fad0bBDC42BD55832EAB3",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "proxySalt": "ITS v1.0.0"
+          "proxySalt": "ITS v1.0.0",
+          "gatewayCaller": "0x2522Ab388699Aa39528C03a7b54aC44F04D187e7"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "implementation": "0xA852412D2d91fE05d790934B6E64C3C351fAB54f",
+          "implementation": "0x8b0ECe06F57B5e2dAfe1ab60305DF02C10f2c9F4",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       },
