@@ -2566,6 +2566,67 @@
           "structs": {
             "VersionControl": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087::version_control::VersionControl"
           }
+        },
+        "RelayerDiscovery": {
+          "address": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c",
+          "versions": [
+            "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c"
+          ],
+          "structs": {
+            "Function": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::transaction::Function",
+            "MoveCall": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::transaction::MoveCall",
+            "Transaction": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::transaction::Transaction",
+            "TransactionRegistered": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::events::TransactionRegistered",
+            "TransactionRemoved": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::events::TransactionRemoved",
+            "RelayerDiscovery_v0": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::relayer_discovery_v0::RelayerDiscovery_v0",
+            "OwnerCap": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::owner_cap::OwnerCap",
+            "RelayerDiscovery": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::discovery::RelayerDiscovery"
+          },
+          "objects": {
+            "RelayerDiscovery": "0x310144e74e9a73d750ff17e62ed597681f519d799fea491d61740f6dd1e8c656",
+            "RelayerDiscoveryv0": "0xbe8a0b65e338e83bad9f2511f82d8ff8f181c16ec288824699b4c9b952efe260",
+            "OwnerCap": "0x7d371a39e25394a89d0d7362e0fff3975d049011efff0af1cbd1ff99cfc47ff9"
+          }
+        },
+        "GasService": {
+          "address": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3",
+          "versions": [
+            "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3"
+          ],
+          "structs": {
+            "GasPaid": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasPaid",
+            "GasAdded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasAdded",
+            "Refunded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::Refunded",
+            "GasCollected": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasCollected",
+            "GasService_v0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service_v0::GasService_v0",
+            "GasService": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasService",
+            "GasCollectorCap": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasCollectorCap"
+          },
+          "objects": {
+            "GasCollectorCap": "0x51b52346a545c4514816a783050251b042c390b449dd1f771bc648e928922b96",
+            "GasService": "0x8abc5f5c1e811e6bc6736eb8d0fd60dc916139507af3d9015beeb131bb66a219",
+            "GasServicev0": "0x06b3e80aa5df5b9bbbb589c2c0d32ddd8c6a3cdd8c971f5a98dfc323312ccd41"
+          }
+        },
+        "Operators": {
+          "address": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f",
+          "versions": [
+            "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f"
+          ],
+          "structs": {
+            "OwnerCap": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OwnerCap",
+            "OperatorCap": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OperatorCap",
+            "Operators": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::Operators",
+            "Borrow": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::Borrow",
+            "OperatorAdded": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OperatorAdded",
+            "OperatorRemoved": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OperatorRemoved",
+            "CapabilityStored": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::CapabilityStored",
+            "CapabilityRemoved": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::CapabilityRemoved"
+          },
+          "objects": {
+            "Operators": "0xa8edeba4d7fe6dc098523016870f03e0411b296750926d11e55cf2c4180ef028",
+            "OwnerCap": "0x6a3565b574e1d7a7b18959719190785a9a3f2c54bf2291ec82d3c59620ef7338"
+          }
         }
       }
     }
