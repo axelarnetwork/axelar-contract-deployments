@@ -2519,6 +2519,15 @@
           "objects": {
             "UpgradeCap": "0x587e72522b003aca0876e31776130dd6f6152dd66eabda03102b02d89cec3d32"
           }
+        },
+        "VersionControl": {
+          "address": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087",
+          "versions": [
+            "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087"
+          ],
+          "structs": {
+            "VersionControl": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087::version_control::VersionControl"
+          }
         }
       }
     }
