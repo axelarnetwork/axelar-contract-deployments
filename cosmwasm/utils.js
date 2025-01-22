@@ -20,6 +20,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     printInfo,
+    printWarn,
     isString,
     isStringArray,
     isKeccak256Hash,
@@ -66,6 +67,10 @@ const getLabel = ({ contractName, label }) => label || contractName;
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
+    if (!contractName) {
+        return;
+    }
+
     config.axelar = config.axelar || {};
     config.axelar.contracts = config.axelar.contracts || {};
     config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
@@ -101,22 +106,24 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const updateCodeId = async (client, config, options) => {
-    const { fetchCodeId, codeId } = options;
+const getCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId, contractName } = options;
 
-    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (codeId) {
-        contractConfig.codeId = codeId;
-    } else if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-    } else if (contractBaseConfig.lastUploadedCodeId) {
-        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
-    } else {
-        throw new Error('Code Id is not defined');
+        return codeId;
     }
 
-    printInfo('Using code id', contractConfig.codeId);
+    if (fetchCodeId) {
+        return fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    }
+
+    if (contractBaseConfig.lastUploadedCodeId) {
+        return contractBaseConfig.lastUploadedCodeId;
+    }
+
+    throw new Error('Code Id is not defined');
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -129,14 +136,13 @@ const uploadContract = async (client, wallet, config, options) => {
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-    return await client.upload(account.address, wasm, uploadFee);
+    // uploading through stargate doesn't support defining instantiate permissions
+    return client.upload(account.address, wasm, uploadFee);
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-
     const [account] = await wallet.getAccounts();
-
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -161,6 +167,19 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
           });
 
     return contractAddress;
+};
+
+const migrateContract = async (client, wallet, config, options) => {
+    const { msg } = options;
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
 
 const validateAddress = (address) => {
@@ -540,6 +559,48 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const fetchCodeIdFromContract = async (client, contractConfig) => {
+    const { address } = contractConfig;
+
+    if (!address) {
+        throw new Error('Contract address not found in the config');
+    }
+
+    const { codeId } = await client.getContract(address);
+
+    return codeId;
+};
+
+const addDefaultInstantiateAddresses = async (client, config, options) => {
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (!contractConfig.address) {
+        return;
+    }
+
+    const contract = await client.getContract(contractConfig.address);
+
+    let { instantiateAddresses } = options;
+
+    if (!instantiateAddresses) {
+        instantiateAddresses = [];
+    }
+
+    if (contract.admin && !instantiateAddresses.includes(contract.admin)) {
+        instantiateAddresses.push(contract.admin);
+        printWarn(
+            `Contract ${contractConfig.address} admin address ${contract.admin} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+
+    if (contract.creator && !instantiateAddresses.includes(contract.creator)) {
+        instantiateAddresses.push(contract.creator);
+        printWarn(
+            `Contract ${contractConfig.address} creator address ${contract.creator} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+};
+
 const getChainTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
@@ -561,7 +622,7 @@ const getChainTruncationParams = (config, chainConfig) => {
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
-        addresses: addresses.split(',').map((address) => address.trim()),
+        addresses,
     };
 };
 
@@ -587,9 +648,10 @@ const getStoreCodeParams = (options) => {
         codeHash = createHash('sha256').update(wasm).digest();
     }
 
-    const instantiatePermission = instantiateAddresses
-        ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
-        : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, '');
+    const instantiatePermission =
+        instantiateAddresses && instantiateAddresses.length > 0
+            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
 
     return {
         ...getSubmitProposalParams(options),
@@ -833,10 +895,13 @@ module.exports = {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     uploadContract,
     instantiateContract,
+    migrateContract,
     fetchCodeIdFromCodeHash,
+    fetchCodeIdFromContract,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,

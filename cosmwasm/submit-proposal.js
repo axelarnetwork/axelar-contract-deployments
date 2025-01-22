@@ -16,7 +16,8 @@ const {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -80,6 +81,7 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -96,6 +98,7 @@ const storeCode = async (client, wallet, config, options) => {
 const storeInstantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
@@ -118,7 +121,7 @@ const instantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(client, config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     let contractAddress;
 
@@ -203,7 +206,8 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    await updateCodeId(client, config, options);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     const proposal = encodeMigrateContractProposal(config, options);
 
@@ -295,7 +299,7 @@ const programHandler = () => {
             options.chains = chains;
             mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')

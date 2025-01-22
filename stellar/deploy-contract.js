@@ -1,9 +1,9 @@
 'use strict';
 
-const { Address, nativeToScVal, scValToNative, Operation, StrKey } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions } = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -52,6 +52,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal('stellar', { type: 'string' });
+            const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
 
             if (!chain?.contracts?.interchain_token?.wasmHash) {
                 throw new Error(`interchain_token contract's wasm hash does not exist.`);
@@ -61,7 +62,16 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
-            return { owner, gatewayAddress, gasServiceAddress, itsHubAddress, chainName, interchainTokenWasmHash };
+            return {
+                owner,
+                operator,
+                gatewayAddress,
+                gasServiceAddress,
+                itsHubAddress,
+                chainName,
+                nativeTokenAddress,
+                interchainTokenWasmHash,
+            };
         }
 
         case 'axelar_operators':
@@ -74,11 +84,16 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { owner, gasCollector };
         }
 
+        case 'upgrader': {
+            return {};
+        }
+
         case 'example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const itsAddress = nativeToScVal(chain?.contracts?.InterchainTokenService?.address, { type: 'address' });
 
-            return { gatewayAddress, gasServiceAddress };
+            return { gatewayAddress, gasServiceAddress, itsAddress };
         }
 
         default:
@@ -139,7 +154,8 @@ async function uploadWasm(filePath, wallet, chain) {
 
 async function upgrade(options, _, chain, contractName) {
     const { wasmPath, yes } = options;
-    const contractAddress = chain.contracts[contractName].address;
+    let contractAddress = chain.contracts[contractName]?.address;
+    const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
@@ -147,20 +163,47 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { contractAddress },
+        isNonEmptyString: { contractAddress, upgraderAddress },
     });
+
+    contractAddress = Address.fromString(contractAddress);
 
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
-        contract: contractAddress,
+        contract: chain.contracts.upgrader.address,
         function: 'upgrade',
-        args: [nativeToScVal(newWasmHash)],
+        args: [contractAddress, options.newVersion, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
+
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     printInfo('Contract upgraded successfully!', contractAddress);
+}
+
+async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
+    // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
+    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
+
+    return Promise.all(
+        [
+            createAuthorizedFunc(contractAddress, 'upgrade', [nativeToScVal(newWasmHash)]),
+            createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]),
+        ].map((auth) =>
+            authorizeInvocation(
+                wallet,
+                validUntil,
+                new xdr.SorobanAuthorizedInvocation({
+                    function: auth,
+                    subInvocations: [],
+                }),
+                wallet.publicKey(),
+                getNetworkPassphrase(chain.networkType),
+            ),
+        ),
+    );
 }
 
 async function mainProcessor(options, processor, contractName) {
@@ -200,6 +243,8 @@ function main() {
         .description('Upgrade a Stellar contract')
         .argument('<contract-name>', 'contract name to deploy')
         .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+        .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
+        .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
         .action((contractName, options) => {
             mainProcessor(options, upgrade, contractName);
         });

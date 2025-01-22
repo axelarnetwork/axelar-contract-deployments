@@ -2333,31 +2333,163 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         }
       }
+    },
+    "sui": {
+      "name": "Sui",
+      "axelarId": "sui",
+      "networkType": "testnet",
+      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "tokenSymbol": "SUI",
+      "chainType": "sui",
+      "finality": "1",
+      "decimals": 9,
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/testnet"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
+          "versions": {
+            "0": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4"
+          },
+          "structs": {
+            "WeightedSigner": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::weighted_signer::WeightedSigner",
+            "Bytes32": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::bytes32::Bytes32",
+            "WeightedSigners": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::weighted_signers::WeightedSigners",
+            "Signature": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::proof::Signature",
+            "Proof": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::proof::Proof",
+            "Message": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::message::Message",
+            "SignersRotated": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::SignersRotated",
+            "ChannelCreated": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::ChannelCreated",
+            "ChannelDestroyed": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::ChannelDestroyed",
+            "ContractCall": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::ContractCall",
+            "MessageApproved": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::MessageApproved",
+            "MessageExecuted": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::events::MessageExecuted",
+            "AxelarSigners": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::auth::AxelarSigners",
+            "MessageToSign": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::auth::MessageToSign",
+            "Channel": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::channel::Channel",
+            "ApprovedMessage": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::channel::ApprovedMessage",
+            "OwnerCap": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::owner_cap::OwnerCap",
+            "MessageTicket": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::message_ticket::MessageTicket",
+            "MessageStatus": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::message_status::MessageStatus",
+            "Gateway_v0": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::gateway_v0::Gateway_v0",
+            "CommandType": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::gateway_v0::CommandType",
+            "Gateway": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4::gateway::Gateway"
+          },
+          "objects": {
+            "Gateway": "0x6fc18d39a9d7bf46c438bdb66ac9e90e902abffca15b846b32570538982fb3db",
+            "UpgradeCap": "0xb550df1b7319a04d4833571c7082b20262c77a6cd2be78b66aa1a668b4ebb6a3",
+            "Gatewayv0": "0x1bf6a576436c14ea4dd90b35856ab276296a1c774a584aa7678e8905ebf9a6b5",
+            "OwnerCap": "0x8d417b896f1f05c74f8f52446fb1a61b603d43a93c69cfae052f9501ba0340a0"
+          },
+          "domainSeparator": "0xf221c54a1a478f48c840a24cf2b96f77c9bc369a40570744b8fedd91df001624",
+          "operator": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "minimumRotationDelay": 0
+        },
+        "Utils": {
+          "address": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421",
+          "versions": {
+            "0": "0x9d817589ae367cc3f3bc9ca40394be79e5853bfca98014f27acfd4da9db78421"
+          },
+          "structs": {},
+          "objects": {
+            "UpgradeCap": "0x16c316ea6204ac12648e1dc02f246ea9f2f9d84df5a6accca4d3d0d2a9a6727f"
+          }
+        },
+        "VersionControl": {
+          "address": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c",
+          "versions": {
+            "0": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c"
+          },
+          "structs": {
+            "VersionControl": "0x6e8ebd241a5b89499e0cd104540f8025af111dcd42644bb732dbc170e395ce0c::version_control::VersionControl"
+          }
+        },
+        "RelayerDiscovery": {
+          "address": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2",
+          "versions": {
+            "0": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2"
+          },
+          "structs": {
+            "Function": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::Function",
+            "MoveCall": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::MoveCall",
+            "Transaction": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::transaction::Transaction",
+            "TransactionRegistered": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::events::TransactionRegistered",
+            "TransactionRemoved": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::events::TransactionRemoved",
+            "RelayerDiscovery_v0": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::relayer_discovery_v0::RelayerDiscovery_v0",
+            "OwnerCap": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::owner_cap::OwnerCap",
+            "RelayerDiscovery": "0x2f871726329f555bc3fa6eec129f259a8bce3cb3989b39dd75a627a1a0961bc2::discovery::RelayerDiscovery"
+          },
+          "objects": {
+            "RelayerDiscovery": "0xac080ff19b7d44c9362b83628253a4b55747779096034a72ca62ce89a188305e",
+            "RelayerDiscoveryv0": "0xea25ef8da775be554c37f5b16dc15fdb0bd98cfb10225a8727cb4ac456334d95",
+            "OwnerCap": "0xeaf88fa70a30c44396b3d0620d706de25f1b4940651309577b117ac5b75ea62b"
+          }
+        },
+        "GasService": {
+          "address": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75",
+          "versions": {
+            "0": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75"
+          },
+          "structs": {
+            "GasPaid": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasPaid",
+            "GasAdded": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasAdded",
+            "Refunded": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::Refunded",
+            "GasCollected": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::events::GasCollected",
+            "GasService_v0": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::gas_service_v0::GasService_v0",
+            "GasService": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::gas_service::GasService",
+            "GasCollectorCap": "0x3e7044fe789a4f466964e520e4793b467fcdca2d62bef43213d51d0756fc5a75::gas_service::GasCollectorCap"
+          },
+          "objects": {
+            "GasCollectorCap": "0x7f77c42534a90af5db0ee95a864c9d99c4091a209f527232ad44e2b614ec8c99",
+            "GasService": "0x4232c20cc845f024ff4e99f7395d6b0e5a3b884cc655b327935239dc553f840e",
+            "GasServicev0": "0x384984fd4de9c1d2521a4f055f173195e783ca88547e7b2f346dc829ab9658ce"
+          }
+        },
+        "Operators": {
+          "address": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7",
+          "versions": {
+            "0": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7"
+          },
+          "structs": {
+            "OwnerCap": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OwnerCap",
+            "OperatorCap": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OperatorCap",
+            "Operators": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::Operators",
+            "Borrow": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::Borrow",
+            "OperatorAdded": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OperatorAdded",
+            "OperatorRemoved": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::OperatorRemoved",
+            "CapabilityStored": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::CapabilityStored",
+            "CapabilityRemoved": "0xbf6b0b743c01709fc636f41d74dd1db15b140bb6bb7ff4897dcf381cbec58db7::operators::CapabilityRemoved"
+          },
+          "objects": {
+            "Operators": "0xa2e20bc8985680ac4b13f2d866d4a96fb749097b8c92e133fbdfd3b7755b2c18",
+            "OwnerCap": "0xa3b2b74c6aff5f05ddf9175d3138285209219b84b359b917ea273b05d2b6bb56"
+          }
+        }
+      }
     }
   },
   "stellar": {
+    "name": "Stellar",
     "axelarId": "stellar",
     "rpc": "https://soroban-testnet.stellar.org",
     "horizonRpc": "https://horizon-testnet.stellar.org",
     "networkType": "testnet",
+    "chainType": "stellar",
+    "decimals": 7,
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
+    "tokenSymbol": "XLM",
+    "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    "contracts": {
+      "AxelarGateway": {}
+    },
     "explorer": {
       "name": "Stellar Expert",
       "url": "https://stellar.expert/explorer/testnet"
-    },
-    "tokenSymbol": "XLM"
-  },
-  "sui": {
-    "name": "Sui",
-    "axelarId": "sui",
-    "networkType": "testnet",
-    "rpc": "https://fullnode.testnet.sui.io:443",
-    "tokenSymbol": "SUI",
-    "chainType": "sui",
-    "explorer": {
-      "name": "Suiscan",
-      "url": "https://suiscan.xyz"
-    },
-    "contracts": {}
+    }
   },
   "axelar": {
     "contracts": {
@@ -2459,6 +2591,21 @@
           "codeId": 18,
           "address": "axelar1kleasry5ed73a8u4q6tdeu80hquy4nplfnrntx3n6agm2tcx40fssjk7gj"
         },
+        "sui": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 18,
+          "domainSeparator": "0xf221c54a1a478f48c840a24cf2b96f77c9bc369a40570744b8fedd91df001624",
+          "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6"
+        },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 18
@@ -2471,6 +2618,10 @@
         "hedera": {
           "codeId": 24,
           "address": "axelar1xgr3j2wuc9ut7yjz4nr677scmzd4z6lh3srnpmdh0nyqzcfka3rqe2nsmq"
+        },
+        "sui": {
+          "codeId": 24,
+          "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593"
         },
         "storeCodeProposalId": "181",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
@@ -2506,6 +2657,21 @@
           "addressFormat": "eip55",
           "codeId": 26,
           "address": "axelar1ce9rcvw8htpwukc048z9kqmyk5zz52d5a7zqn9xlq2pg0mxul9mqxlx2cq"
+        },
+        "sui": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 100000,
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "codeId": 26,
+          "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh"
         },
         "storeCodeProposalId": "183",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
