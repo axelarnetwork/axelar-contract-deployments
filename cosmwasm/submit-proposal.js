@@ -16,7 +16,7 @@ const {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
@@ -121,7 +121,7 @@ const instantiate = async (client, wallet, config, options) => {
     const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(client, config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     let contractAddress;
 
@@ -206,7 +206,8 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    await updateCodeId(client, config, options);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     const proposal = encodeMigrateContractProposal(config, options);
 

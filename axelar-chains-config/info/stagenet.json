@@ -1685,6 +1685,7 @@
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
       "chainType": "sui",
+      "decimals": 9,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
@@ -1876,6 +1877,28 @@
             "ItsChannelId": "0x948d542f4f0d778b857b5249b55cb829d7d5c678e7c1e6a64069c18015beb196"
           }
         }
+      },
+      "finality": "1",
+      "approxFinalityWaitTime": 1
+    },
+    "stellar": {
+      "name": "Stellar",
+      "axelarId": "stellar",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "contracts": {
+        "AxelarGateway": {}
+      },
+      "explorer": {
+        "name": "Stellar Expert",
+        "url": "https://stellar.expert/explorer/testnet"
       }
     }
   },

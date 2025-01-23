@@ -52,6 +52,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal('stellar', { type: 'string' });
+            const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
 
             if (!chain?.contracts?.interchain_token?.wasmHash) {
                 throw new Error(`interchain_token contract's wasm hash does not exist.`);
@@ -61,7 +62,16 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
-            return { owner, gatewayAddress, gasServiceAddress, itsHubAddress, chainName, interchainTokenWasmHash };
+            return {
+                owner,
+                operator,
+                gatewayAddress,
+                gasServiceAddress,
+                itsHubAddress,
+                chainName,
+                nativeTokenAddress,
+                interchainTokenWasmHash,
+            };
         }
 
         case 'axelar_operators':
@@ -81,8 +91,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const itsAddress = nativeToScVal(chain?.contracts?.InterchainTokenService?.address, { type: 'address' });
 
-            return { gatewayAddress, gasServiceAddress };
+            return { gatewayAddress, gasServiceAddress, itsAddress };
         }
 
         default:

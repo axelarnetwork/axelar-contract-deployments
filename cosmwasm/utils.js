@@ -106,22 +106,24 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const updateCodeId = async (client, config, options) => {
-    const { fetchCodeId, codeId } = options;
+const getCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId, contractName } = options;
 
-    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (codeId) {
-        contractConfig.codeId = codeId;
-    } else if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-    } else if (contractBaseConfig.lastUploadedCodeId) {
-        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
-    } else {
-        throw new Error('Code Id is not defined');
+        return codeId;
     }
 
-    printInfo('Using code id', contractConfig.codeId);
+    if (fetchCodeId) {
+        return fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    }
+
+    if (contractBaseConfig.lastUploadedCodeId) {
+        return contractBaseConfig.lastUploadedCodeId;
+    }
+
+    throw new Error('Code Id is not defined');
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -135,14 +137,12 @@ const uploadContract = async (client, wallet, config, options) => {
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
     // uploading through stargate doesn't support defining instantiate permissions
-    return await client.upload(account.address, wasm, uploadFee);
+    return client.upload(account.address, wasm, uploadFee);
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-
     const [account] = await wallet.getAccounts();
-
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -167,6 +167,19 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
           });
 
     return contractAddress;
+};
+
+const migrateContract = async (client, wallet, config, options) => {
+    const { msg } = options;
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
 
 const validateAddress = (address) => {
@@ -546,6 +559,18 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const fetchCodeIdFromContract = async (client, contractConfig) => {
+    const { address } = contractConfig;
+
+    if (!address) {
+        throw new Error('Contract address not found in the config');
+    }
+
+    const { codeId } = await client.getContract(address);
+
+    return codeId;
+};
+
 const addDefaultInstantiateAddresses = async (client, config, options) => {
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
@@ -870,10 +895,12 @@ module.exports = {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     uploadContract,
     instantiateContract,
+    migrateContract,
     fetchCodeIdFromCodeHash,
+    fetchCodeIdFromContract,
     addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
