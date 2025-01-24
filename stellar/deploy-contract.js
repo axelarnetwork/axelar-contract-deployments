@@ -79,9 +79,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
-            const opertor = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
+            const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
-            return { owner, opertor };
+            return { owner, operator };
         }
 
         case 'upgrader': {
