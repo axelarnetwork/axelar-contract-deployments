@@ -2512,9 +2512,10 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373",
-          "versions": [
-            "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373"
+          },
           "structs": {
             "WeightedSigner": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::weighted_signer::WeightedSigner",
             "Bytes32": "0xeb055ffc3237c24e305a2bb760fe6551f6ff7c5fdb68735169c0f528fccab373::bytes32::Bytes32",
@@ -2551,9 +2552,10 @@
         },
         "Utils": {
           "address": "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c",
-          "versions": [
-            "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c"
+          },
           "structs": {},
           "objects": {
             "UpgradeCap": "0x587e72522b003aca0876e31776130dd6f6152dd66eabda03102b02d89cec3d32"
@@ -2561,18 +2563,20 @@
         },
         "VersionControl": {
           "address": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087",
-          "versions": [
-            "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087"
+          },
           "structs": {
             "VersionControl": "0x647a3b34b3a16f5f00443bdafd13d281983b2280703ab4f416cf706e6d739087::version_control::VersionControl"
           }
         },
         "RelayerDiscovery": {
           "address": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c",
-          "versions": [
-            "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c"
+          },
           "structs": {
             "Function": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::transaction::Function",
             "MoveCall": "0x2b839b25c7133e5e0f8f585cb2e89bf430a6585a88c4a0343ae3b246372d431c::transaction::MoveCall",
@@ -2591,9 +2595,10 @@
         },
         "GasService": {
           "address": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3",
-          "versions": [
-            "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3"
+          },
           "structs": {
             "GasPaid": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasPaid",
             "GasAdded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasAdded",
@@ -2611,9 +2616,10 @@
         },
         "Operators": {
           "address": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f",
-          "versions": [
-            "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f"
+          },
           "structs": {
             "OwnerCap": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OwnerCap",
             "OperatorCap": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f::operators::OperatorCap",
@@ -2631,9 +2637,10 @@
         },
         "Abi": {
           "address": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1",
-          "versions": [
-            "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1"
+          },
           "structs": {
             "AbiReader": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiReader",
             "AbiWriter": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiWriter"
@@ -2641,9 +2648,10 @@
         },
         "Example": {
           "address": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a",
-          "versions": [
-            "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a"
-          ],
+          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "versions": {
+            "0": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a"
+          },
           "structs": {
             "Singleton": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::its::Singleton",
             "Executed": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::gmp::Executed",
@@ -2760,18 +2768,6 @@
           "domainSeparator": "0x3c8c7d9e180f608dcf6fc9b1c3ef905ac295b1c4cb2fe8ca2c4fcde1b6e9a8c6",
           "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
         },
-        "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
-          "signingThreshold": [
-            "2",
-            "3"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa"
-        },
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
@@ -2796,7 +2792,6 @@
         "flow": {
           "address": "axelar1w8frw33jn0yx59845wdgk0yru6fxvgr6hlh4xfdtdf08y5jamcnsyu0z6u"
         },
-        "hedera": {},
         "sui": {
           "codeId": 17,
           "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593"
@@ -2820,19 +2815,6 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "address": "axelar1kkqdsqvwq9a7p9fj0w89wpx2m2t0vrxl782aslhq0kdw2xxd2aesv3un04"
-        },
-        "hedera": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "",
-          "votingThreshold": [
-            "2",
-            "3"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 10000,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55"
         },
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",

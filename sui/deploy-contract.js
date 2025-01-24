@@ -316,6 +316,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     chain.contracts[packageName] = {
         address: published.packageId,
         versions: [published.packageId],
+        deployer: keypair.toSuiAddress(),
     };
 
     chain.contracts[packageName].structs = await getStructs(client, published.packageId);

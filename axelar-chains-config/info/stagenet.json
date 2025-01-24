@@ -1693,9 +1693,10 @@
       "contracts": {
         "AxelarGateway": {
           "address": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853",
-          "versions": [
-            "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853"
+          },
           "structs": {
             "WeightedSigner": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853::weighted_signer::WeightedSigner",
             "Bytes32": "0x0a011637cbd43d101896d12d85cc8701bcb4ec884f556a9a15b1e26c72627853::bytes32::Bytes32",
@@ -1732,9 +1733,10 @@
         },
         "Utils": {
           "address": "0xaa789bbc9d03a48d29e950ecbc9bc78918e1696e4a76adf7230416f0f49e4838",
-          "versions": [
-            "0xaa789bbc9d03a48d29e950ecbc9bc78918e1696e4a76adf7230416f0f49e4838"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0xaa789bbc9d03a48d29e950ecbc9bc78918e1696e4a76adf7230416f0f49e4838"
+          },
           "structs": {},
           "objects": {
             "UpgradeCap": "0x386fa0c2c72b84265011d67cbf567b244818c619ec7f47c078e1cb3982b9c8b7"
@@ -1742,18 +1744,20 @@
         },
         "VersionControl": {
           "address": "0x6ee95b0d28a3cdee73818cff21b4be3afd64da603e9c112cac26d301a2ac9c7a",
-          "versions": [
-            "0x6ee95b0d28a3cdee73818cff21b4be3afd64da603e9c112cac26d301a2ac9c7a"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x6ee95b0d28a3cdee73818cff21b4be3afd64da603e9c112cac26d301a2ac9c7a"
+          },
           "structs": {
             "VersionControl": "0x6ee95b0d28a3cdee73818cff21b4be3afd64da603e9c112cac26d301a2ac9c7a::version_control::VersionControl"
           }
         },
         "RelayerDiscovery": {
           "address": "0x7a9c114a2774ea134973df867ec03300fcf7c69439b5adcaef71ee970d06fd13",
-          "versions": [
-            "0x7a9c114a2774ea134973df867ec03300fcf7c69439b5adcaef71ee970d06fd13"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x7a9c114a2774ea134973df867ec03300fcf7c69439b5adcaef71ee970d06fd13"
+          },
           "structs": {
             "Function": "0x7a9c114a2774ea134973df867ec03300fcf7c69439b5adcaef71ee970d06fd13::transaction::Function",
             "MoveCall": "0x7a9c114a2774ea134973df867ec03300fcf7c69439b5adcaef71ee970d06fd13::transaction::MoveCall",
@@ -1772,9 +1776,10 @@
         },
         "GasService": {
           "address": "0x2325fa92ccd9096c1348cdae192b83c34c05809755a393b039447b22da117e9f",
-          "versions": [
-            "0x2325fa92ccd9096c1348cdae192b83c34c05809755a393b039447b22da117e9f"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x2325fa92ccd9096c1348cdae192b83c34c05809755a393b039447b22da117e9f"
+          },
           "structs": {
             "GasPaid": "0x2325fa92ccd9096c1348cdae192b83c34c05809755a393b039447b22da117e9f::events::GasPaid",
             "GasAdded": "0x2325fa92ccd9096c1348cdae192b83c34c05809755a393b039447b22da117e9f::events::GasAdded",
@@ -1792,9 +1797,10 @@
         },
         "Operators": {
           "address": "0xc072ff6b307e2951e4175688f2e4540e36af7b0f2d5aac0a627f05945ea67a2f",
-          "versions": [
-            "0xc072ff6b307e2951e4175688f2e4540e36af7b0f2d5aac0a627f05945ea67a2f"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0xc072ff6b307e2951e4175688f2e4540e36af7b0f2d5aac0a627f05945ea67a2f"
+          },
           "structs": {
             "OwnerCap": "0xc072ff6b307e2951e4175688f2e4540e36af7b0f2d5aac0a627f05945ea67a2f::operators::OwnerCap",
             "OperatorCap": "0xc072ff6b307e2951e4175688f2e4540e36af7b0f2d5aac0a627f05945ea67a2f::operators::OperatorCap",
@@ -1812,9 +1818,10 @@
         },
         "Abi": {
           "address": "0xd1012d24cc97fa922c18a32cf833f3f67563c8e35b7a31842cd9b57b07d278cd",
-          "versions": [
-            "0xd1012d24cc97fa922c18a32cf833f3f67563c8e35b7a31842cd9b57b07d278cd"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0xd1012d24cc97fa922c18a32cf833f3f67563c8e35b7a31842cd9b57b07d278cd"
+          },
           "structs": {
             "AbiReader": "0xd1012d24cc97fa922c18a32cf833f3f67563c8e35b7a31842cd9b57b07d278cd::abi::AbiReader",
             "AbiWriter": "0xd1012d24cc97fa922c18a32cf833f3f67563c8e35b7a31842cd9b57b07d278cd::abi::AbiWriter"
@@ -1822,9 +1829,10 @@
         },
         "ITS": {
           "address": "0x20b10f47de796ff8367099064a1e5f2e16ec7ac2c2e58b3b5430b9a432f7a6d4",
-          "versions": [
-            "0x20b10f47de796ff8367099064a1e5f2e16ec7ac2c2e58b3b5430b9a432f7a6d4"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x20b10f47de796ff8367099064a1e5f2e16ec7ac2c2e58b3b5430b9a432f7a6d4"
+          },
           "structs": {
             "FlowLimit": "0x20b10f47de796ff8367099064a1e5f2e16ec7ac2c2e58b3b5430b9a432f7a6d4::flow_limit::FlowLimit",
             "CoinManagement": "0x20b10f47de796ff8367099064a1e5f2e16ec7ac2c2e58b3b5430b9a432f7a6d4::coin_management::CoinManagement",
@@ -1858,9 +1866,10 @@
         },
         "Example": {
           "address": "0x1f604a6c7ea5bfc1d50a8a4b5f18e21aacbfe8d33b14b49043db2147e00e4e51",
-          "versions": [
-            "0x1f604a6c7ea5bfc1d50a8a4b5f18e21aacbfe8d33b14b49043db2147e00e4e51"
-          ],
+          "deployer": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
+          "versions": {
+            "0": "0x1f604a6c7ea5bfc1d50a8a4b5f18e21aacbfe8d33b14b49043db2147e00e4e51"
+          },
           "structs": {
             "Singleton": "0x1f604a6c7ea5bfc1d50a8a4b5f18e21aacbfe8d33b14b49043db2147e00e4e51::its::Singleton",
             "Executed": "0x1f604a6c7ea5bfc1d50a8a4b5f18e21aacbfe8d33b14b49043db2147e00e4e51::gmp::Executed",
