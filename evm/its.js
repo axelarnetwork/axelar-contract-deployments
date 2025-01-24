@@ -27,6 +27,7 @@ const {
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
@@ -620,6 +621,19 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'transferMintership': {
+            const { tokenAddress, minter } = options;
+
+            validateParameters({ isValidAddress: { tokenAddress, minter } });
+
+            const token = new Contract(tokenAddress, IMinter.abi, wallet);
+            const tx = await token.transferMintership(minter);
+
+            await handleTx(tx, chain, token, options.action, 'RolesRemoved', 'RolesAdded');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -662,6 +676,7 @@ if (require.main === module) {
                 'checks',
                 'migrateInterchainToken',
                 'registerTokenMetadata',
+                'transferMintership',
             ])
             .makeOptionMandatory(true),
     );
