@@ -86,6 +86,113 @@ async function removeTrustedAddress(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
 }
 
+async function allowFunctions(keypair, client, config, contractConfig, args, options) {
+    const contracts = contractConfig.ITS;
+    console.log(contracts);
+    const packageId = contracts.address;
+    
+    const [versionsArg, functionNamesArg] = args;
+
+    const versions = versionsArg.split(',');
+    const functionNames = functionNamesArg.split(',');
+
+    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
+
+    const builder = new TxBuilder(client);
+    for (const i in versions) {
+        await builder.moveCall({
+            target: `${packageId}::interchain_token_service::allow_function`,
+            arguments: [
+                contracts.objects.InterchainTokenService,
+                contracts.objects.OwnerCap,
+                versions[i],
+                functionNames[i],
+            ],
+        });
+    }
+
+    return {
+        tx,
+        message: 'Allow Functions',
+    };
+}
+
+async function disallowFunctions(keypair, client, config, contractConfig, args, options) {
+    const packageId = contractConfig.address;
+
+    const [versionsArg, functionNamesArg] = args;
+
+    const versions = versionsArg.split(',');
+    const functionNames = functionNamesArg.split(',');
+
+    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
+
+    const tx = new Transaction();
+
+    for (const i in versions) {
+        tx.moveCall({
+            target: `${packageId}::gateway::disallow_function`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.object(contractConfig.objects.OwnerCap),
+                tx.pure.u64(versions[i]),
+                tx.pure.string(functionNames[i]),
+            ],
+        });
+    }
+
+    return {
+        tx,
+        message: 'Disallow Functions',
+    };
+}
+
+async function pause(keypair, client, config, contracts, args, options) {
+    const response = await client.getObject({
+        id: contracts.objects.Gatewayv0,
+        options: {
+            showContent: true,
+            showBcs: true
+        },
+    });
+    let allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
+    allowedFunctionsArray = allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
+    
+    const versionsArg = [];
+    const allowedFunctionsArg = [];
+
+    for (const version in allowedFunctionsArray) {
+        const allowedFunctions = allowedFunctionsArray[version];
+
+        // Do not dissalow `allow_function` because that locks the gateway forever.
+        if (version == allowedFunctionsArray.length - 1) {
+            const index = allowedFunctions.indexOf('allow_function');
+            if (index > -1) { // only splice array when item is found
+                allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
+            }
+        }
+
+        printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
+
+        versionsArg.push((new Array(allowedFunctions.length)).fill(version).join());
+        allowedFunctionsArg.push(allowedFunctions.join());
+    }
+
+    // Write the 
+    writeJSON({
+        versions: versionsArg,
+        disallowedFunctions: allowedFunctionsArg,
+    }, `${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
+    
+    return disallowFunctions(keypair, client, config, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
+}
+
+async function unpause(keypair, client, config, contracts, args, options) {
+    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
+
+    return allowFunctions(keypair, client, config, contracts, [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()], options);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -125,8 +232,17 @@ if (require.main === module) {
             mainProcessor(removeTrustedAddress, options, [trustedChain], processCommand);
         });
 
+    const allowFunctionsProgram = new Command()
+        .name('allow-functions')
+        .description('Allow functions')
+        .command('allow-functions <versions> <functions>')
+        .action((versions, functions, options) => {
+            mainProcessor(allowFunctions, options, [versions, functions], processCommand);
+        });
+
     program.addCommand(setupTrustedAddressProgram);
     program.addCommand(removeTrustedAddressProgram);
+    program.addCommand(allowFunctionsProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 
