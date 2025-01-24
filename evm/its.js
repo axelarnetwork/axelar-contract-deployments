@@ -630,7 +630,7 @@ async function processCommand(config, chain, options) {
             const token = new Contract(tokenAddress, IMinter.abi, wallet);
             const tx = await token.transferMintership(minter);
 
-            await handleTx(tx, chain, token, options.action, 'MintershipTransferred');
+            await handleTx(tx, chain, token, options.action, 'RolesRemoved', 'RolesAdded');
 
             break;
         }
