@@ -69,9 +69,11 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
             },
         });
 
-        const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
+        const publishedObject = result.objectChanges.find((change) => change.type === 'published');
+        const packageId = publishedObject.packageId;
         contractConfig.address = packageId;
-        contractConfig.versions.push(packageId);
+        const versionNumber = parseInt(publishedObject.version) - 1;
+        contractConfig.versions[versionNumber] = publishedObject.packageId;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, [`${suiPackageAddress}::package::UpgradeCap`]);
         contractConfig.objects.UpgradeCap = upgradeCap;
 
