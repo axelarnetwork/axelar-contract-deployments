@@ -137,6 +137,9 @@ jobs:
       - name: InterchainTokenFactory register custom token
         run: node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --tokenManagerType 4 --operator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
+      - name: Transfer mintership of token to token manager
+        run: node evm/its.js --action transferMintership --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+
       - name: InterchainTokenFactory link token
         run: node evm/interchainTokenFactory.js --action linkToken --destinationChain remote --destinationTokenAddress "0x1234" --tokenManagerType 4 --linkParams "0x5678" --salt "salt" -y
 
