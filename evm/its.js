@@ -24,7 +24,6 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
-    isValidAddress,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
