@@ -142,10 +142,10 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
-            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
+            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
             break;
         }
 
