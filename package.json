@@ -27,7 +27,7 @@
     "@axelar-network/axelar-cgp-solidity": "6.4.0",
     "@axelar-network/axelar-cgp-sui": "../axelar-cgp-sui",
     "@axelar-network/axelar-gmp-sdk-solidity": "6.0.4",
-    "@axelar-network/interchain-token-service": "0.0.0-snapshot.d61ef1b",
+    "@axelar-network/interchain-token-service": "2.1.0",
     "@cosmjs/cosmwasm-stargate": "^0.32.1",
     "@ledgerhq/hw-app-eth": "6.32.2",
     "@mysten/ledgerjs-hw-app-sui": "^0.4.1",

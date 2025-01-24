@@ -93,14 +93,13 @@ const checkSuiVersionMatch = () => {
     }
 };
 
+const readMoveToml = (moveDir) => {
+    return fs.readFileSync(`${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+};
+
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(
-            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
-            'utf8',
-        );
-
-        const { package: movePackage } = toml.parse(moveToml);
+        const { package: movePackage } = toml.parse(readMoveToml(moveDir));
 
         return movePackage.name;
     } catch (err) {
