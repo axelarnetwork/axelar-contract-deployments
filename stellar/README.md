@@ -217,16 +217,16 @@ node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] [g
 node stellar/its.js register-canonical-token [token-address]
 ```
 
+#### Deploy Remote Canonical Token
+
+```bash
+node stellar/its.js deploy-remote-canonical-token [token-address] [token-id] [token-name] [token-symbol] [decimals] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
 #### Interchain Transfer
 
 ```bash
 node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
-```
-
-#### Execute
-
-```bash
-node stellar/its.js execute [source-chain] [message-id] [source-address] [payload]
 ```
 
 ## TTL extension and state archival recovery
