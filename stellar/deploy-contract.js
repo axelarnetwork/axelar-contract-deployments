@@ -79,9 +79,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
-            const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
+            const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
-            return { owner, gasCollector };
+            return { owner, operator };
         }
 
         case 'upgrader': {
@@ -91,7 +91,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
-            const itsAddress = nativeToScVal(chain?.contracts?.InterchainTokenService?.address, { type: 'address' });
+            const itsAddress = nativeToScVal(chain?.contracts?.interchain_token_service?.address, { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
