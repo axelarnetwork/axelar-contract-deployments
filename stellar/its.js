@@ -30,8 +30,8 @@ async function setTrustedChain(wallet, _, chain, contractConfig, arg, options) {
     await broadcast(operation, wallet, chain, 'Trusted Chain Set', options);
 }
 
-async function removeTrustedChain(wallet, _, chain, contractConfig, arg, options) {
-    const contract = new Contract(contractConfig.address);
+async function removeTrustedChain(wallet, _, chain, arg, options) {
+    const contract = new Contract(chain.contracts.interchain_token_service?.address);
     const callArg = nativeToScVal(arg, { type: 'string' });
 
     const operation = contract.call('remove_trusted_chain', callArg);
@@ -203,7 +203,7 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Interchain Token Service package not found.');
     }
 
-    await processor(wallet, config, chain, chain.contracts.interchain_token_service, args, options);
+    await processor(wallet, config, chain, args, options);
 
     saveConfig(config, options.env);
 }
