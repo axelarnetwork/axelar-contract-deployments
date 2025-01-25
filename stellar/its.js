@@ -30,8 +30,8 @@ async function setTrustedChain(wallet, _, chain, contractConfig, arg, options) {
     await broadcast(operation, wallet, chain, 'Trusted Chain Set', options);
 }
 
-async function removeTrustedChain(wallet, _, chain, arg, options) {
-    const contract = new Contract(chain.contracts.interchain_token_service?.address);
+async function removeTrustedChain(wallet, _, chain, contractConfig, arg, options) {
+    const contract = new Contract(contractConfig.address);
     const callArg = nativeToScVal(arg, { type: 'string' });
 
     const operation = contract.call('remove_trusted_chain', callArg);
