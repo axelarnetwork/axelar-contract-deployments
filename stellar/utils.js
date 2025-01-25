@@ -10,6 +10,7 @@ const {
     xdr: { DiagnosticEvent, SorobanTransactionData },
     Address,
     xdr,
+    nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
@@ -291,6 +292,38 @@ const createAuthorizedFunc = (contractAddress, functionName, args) =>
         }),
     );
 
+function tokenToScVal(tokenAddress, tokenAmount) {
+    return nativeToScVal(
+        {
+            address: Address.fromString(tokenAddress),
+            amount: tokenAmount,
+        },
+        {
+            type: {
+                address: ['symbol', 'address'],
+                amount: ['symbol', 'i128'],
+            },
+        },
+    );
+}
+
+function tokenMetadataToScVal(decimal, name, symbol) {
+    return nativeToScVal(
+        {
+            decimal,
+            name,
+            symbol,
+        },
+        {
+            type: {
+                decimal: ['symbol', 'u32'],
+                name: ['symbol', 'string'],
+                symbol: ['symbol', 'string'],
+            },
+        },
+    );
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -306,4 +339,6 @@ module.exports = {
     serializeValue,
     getBalances,
     createAuthorizedFunc,
+    tokenToScVal,
+    tokenMetadataToScVal,
 };
