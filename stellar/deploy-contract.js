@@ -62,6 +62,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
+            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.token_manager?.wasmHash, 'hex'), {
+                type: 'bytes',
+            });
+
             return {
                 owner,
                 operator,
@@ -71,6 +75,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 chainName,
                 nativeTokenAddress,
                 interchainTokenWasmHash,
+                tokenManagerWasmHash,
             };
         }
 
@@ -82,6 +87,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { owner, operator };
+        }
+
+        case 'token_manager': {
+            return { owner };
         }
 
         case 'upgrader': {
