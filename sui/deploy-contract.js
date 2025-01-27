@@ -48,7 +48,7 @@ const PACKAGE_DIRS = [
     'operators',
     'abi',
     'governance',
-    'its',
+    'interchain_token_service',
     'squid',
     'interchain_token',
 ];
@@ -59,6 +59,7 @@ const PACKAGE_DIRS = [
 const PACKAGE_CONFIGS = {
     cmdOptions: {
         AxelarGateway: () => GATEWAY_CMD_OPTIONS,
+        InterchainTokenService: () => ITS_CMD_OPTIONS,
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
@@ -66,7 +67,7 @@ const PACKAGE_CONFIGS = {
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
-        ITS: postDeployIts,
+        InterchainTokenService: postDeployIts,
         Squid: postDeploySquid,
         Utils: postDeployUtils,
     },
@@ -136,8 +137,8 @@ async function postDeployExample(published, keypair, client, config, chain, opti
     // GMP Example Params
     const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
 
-    // ITS Example Params
-    const itsObjectId = chain.contracts.ITS?.objects?.ITS;
+    // InterchainTokenService Example Params
+    const itsObjectId = chain.contracts.InterchainTokenService?.objects?.InterchainTokenService;
     const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
@@ -246,27 +247,41 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId, itsv0ObjectId, ownerCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::its::ITS`,
-        `${published.packageId}::its_v0::ITS_v0`,
+    const { chainName, itsHubAddress } = options;
+
+    const [ownerCapObjectId, creatorCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::owner_cap::OwnerCap`,
+        `${published.packageId}::creator_cap::CreatorCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
-    const channelId = await getItsChannelId(client, itsv0ObjectId);
+    let tx = new Transaction();
+    tx.moveCall({
+        target: `${published.packageId}::interchain_token_service::setup`,
+        arguments: [tx.object(creatorCapObjectId), tx.pure.string(chainName), tx.pure.string(itsHubAddress)],
+    });
 
-    chain.contracts.ITS.objects = {
-        ITS: itsObjectId,
-        ITSv0: itsv0ObjectId,
+    const setupReceipt = await broadcast(client, keypair, tx, 'Setup');
+
+    const [InterchainTokenServiceObjectId, InterchainTokenServiceV0ObjectId] = getObjectIdsByObjectTypes(setupReceipt, [
+        `${published.packageId}::interchain_token_service::InterchainTokenService`,
+        `${published.packageId}::interchain_token_service_v0::InterchainTokenService_v0`,
+    ]);
+    await new Promise((resolve)=> setTimeout(resolve, 2000));
+    const channelId = await getItsChannelId(client, InterchainTokenServiceV0ObjectId);
+
+    chain.contracts.InterchainTokenService.objects = {
+        InterchainTokenService: InterchainTokenServiceObjectId,
+        InterchainTokenServicev0: InterchainTokenServiceV0ObjectId,
         ChannelId: channelId,
         OwnerCap: ownerCapObjectId,
         UpgradeCap: upgradeCapObjectId,
     };
 
-    const tx = new Transaction();
+    tx = new Transaction();
     tx.moveCall({
         target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
+        arguments: [tx.object(InterchainTokenServiceObjectId), tx.object(relayerDiscovery)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
@@ -285,7 +300,7 @@ async function postDeploySquid(published, keypair, client, config, chain, option
     const tx = new Transaction();
     tx.moveCall({
         target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
+        arguments: [tx.object(squidObjectId), tx.object(chain.contracts.InterchainTokenService.objects.InterchainTokenService), tx.object(relayerDiscovery)],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
@@ -402,6 +417,10 @@ const GATEWAY_CMD_OPTIONS = [
     ).default('offline'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
+];
+
+const ITS_CMD_OPTIONS = [
+    new Option('--itsHubAddress <itsHubAddress>', 'The address of the ITS HUB').env('ITS_HUB_ADDRESS'),
 ];
 
 const addDeployOptions = (program) => {

@@ -60,7 +60,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
             showBcs: true,
         },
     });
-
     return fromB64(response.data.bcs.bcsBytes);
 };
 
@@ -128,7 +127,7 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = bcsStructs.its.ITS.parse(bcsBytes);
+    const data = bcsStructs.its.InterchainTokenService.parse(bcsBytes);
     const channelId = data.value.channel.id;
     return '0x' + channelId;
 };
