@@ -62,6 +62,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
+            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.token_manager?.wasmHash, 'hex'), {
+                type: 'bytes',
+            });
+
             return {
                 owner,
                 operator,
@@ -71,6 +75,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 chainName,
                 nativeTokenAddress,
                 interchainTokenWasmHash,
+                tokenManagerWasmHash,
             };
         }
 
@@ -111,7 +116,7 @@ async function deploy(options, config, chain, contractName) {
 
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
-    if (contractName === 'interchain_token') {
+    if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
             deployer: wallet.publicKey(),
             wasmHash: serializeValue(wasmHash),
