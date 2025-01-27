@@ -89,10 +89,6 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { owner, operator };
         }
 
-        case 'token_manager': {
-            return { owner };
-        }
-
         case 'upgrader': {
             return {};
         }
@@ -120,7 +116,7 @@ async function deploy(options, config, chain, contractName) {
 
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
-    if (contractName === 'interchain_token') {
+    if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
             deployer: wallet.publicKey(),
             wasmHash: serializeValue(wasmHash),
