@@ -267,7 +267,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         `${published.packageId}::interchain_token_service::InterchainTokenService`,
         `${published.packageId}::interchain_token_service_v0::InterchainTokenService_v0`,
     ]);
-    await new Promise((resolve)=> setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     const channelId = await getItsChannelId(client, InterchainTokenServiceV0ObjectId);
 
     chain.contracts.InterchainTokenService.objects = {
@@ -300,7 +300,11 @@ async function postDeploySquid(published, keypair, client, config, chain, option
     const tx = new Transaction();
     tx.moveCall({
         target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [tx.object(squidObjectId), tx.object(chain.contracts.InterchainTokenService.objects.InterchainTokenService), tx.object(relayerDiscovery)],
+        arguments: [
+            tx.object(squidObjectId),
+            tx.object(chain.contracts.InterchainTokenService.objects.InterchainTokenService),
+            tx.object(relayerDiscovery),
+        ],
     });
 
     await broadcast(client, keypair, tx, 'Registered Transaction');
@@ -419,9 +423,7 @@ const GATEWAY_CMD_OPTIONS = [
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
 ];
 
-const ITS_CMD_OPTIONS = [
-    new Option('--itsHubAddress <itsHubAddress>', 'The address of the ITS HUB').env('ITS_HUB_ADDRESS'),
-];
+const ITS_CMD_OPTIONS = [new Option('--itsHubAddress <itsHubAddress>', 'The address of the ITS HUB').env('ITS_HUB_ADDRESS')];
 
 const addDeployOptions = (program) => {
     // Get the package name from the program name
