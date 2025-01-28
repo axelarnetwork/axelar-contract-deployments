@@ -1,8 +1,0 @@
-{
-  "versions": [
-    "0,0,0,0,0,0,0"
-  ],
-  "disallowedFunctions": [
-    "approve_messages,rotate_signers,is_message_approved,is_message_executed,take_approved_message,send_message,disallow_function"
-  ]
-}
