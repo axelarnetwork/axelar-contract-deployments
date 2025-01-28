@@ -49,8 +49,8 @@ node stellar/faucet.js --recipient <address>
 
 Setup
 
-1. Checkout the axelar-cgp-soroban repo.
-2. Compile the Soroban wasm contracts
+1. Checkout the axelar-cgp-stellar repo.
+2. Compile the Stellar wasm contracts
 
 ```bash
 cargo build
@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_gateway --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_axelar_gateway.optimized.wasm
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,28 +76,29 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_axelar_operators.optimized.wasm
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gas_service.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_axelar_gas_service.optimized.wasm
 ```
 
 ### Interchain Token Service
 
-Deploy Interchain Token wasm first.
+Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
-node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm
+node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_interchain_token.optimized.wasm
+node stellar/deploy-contract.js deploy token_manager --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_token_manager.optimized.wasm
+node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_interchain_token_service.optimized.wasm
 ```
 
 ### Example
 
 ```bash
-node stellar/deploy-contract.js deploy example --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/example.optimized.wasm
+node stellar/deploy-contract.js deploy example --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm
 ```
 
 ### Contract upgrades
@@ -105,13 +106,13 @@ node stellar/deploy-contract.js deploy example --chain-name <CHAIN_NAME> --wasm-
 To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
 
 ```bash
-node stellar/deploy-contract.js deploy upgrader --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/upgrader.optimized.wasm
+node stellar/deploy-contract.js deploy upgrader --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_upgrader.optimized.wasm
 ```
 
 After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
 where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
