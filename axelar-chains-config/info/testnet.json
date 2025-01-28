@@ -2467,6 +2467,27 @@
             "Operators": "0xa2e20bc8985680ac4b13f2d866d4a96fb749097b8c92e133fbdfd3b7755b2c18",
             "OwnerCap": "0xa3b2b74c6aff5f05ddf9175d3138285209219b84b359b917ea273b05d2b6bb56"
           }
+        },
+        "Example": {
+          "address": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e",
+          "versions": {
+            "0": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e"
+          },
+          "structs": {
+            "Singleton": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::its::Singleton",
+            "Executed": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::gmp::Executed",
+            "ExecutedWithToken": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::its::ExecutedWithToken",
+            "TOKEN": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token::TOKEN",
+            "TOKEN_A": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_a::TOKEN_A",
+            "TOKEN_B": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_b::TOKEN_B",
+            "TOKEN_C": "0xdbb111a3f19abf5ada9f5ce0b7ee9cb7697f3aafe5d7dbc5c7cb7995ab23160e::token_c::TOKEN_C"
+          },
+          "objects": {
+            "GmpSingleton": "0x27b892b858af52d46deff388f48073b98d5cf323bdd8786f709754d5a952a151",
+            "GmpChannelId": "0xaa5f9eedb3f09add9101b6416edc284ce126a0522052cdcd0063585452420934",
+            "ItsSingleton": "0xdc363a93a05acecf132194142d1fb9ec4ba2d44833be12777020018679862361",
+            "ItsChannelId": "0xc52269cf2b65b9eb05fce22f1bf1c6a0b2e7091ac990e36689e3bd7fe2fd6b9b"
+          }
         }
       }
     }
