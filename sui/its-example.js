@@ -198,9 +198,14 @@ async function deployToken(keypair, client, contracts, args, options) {
             arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
             typeArguments: [tokenType],
         });
-        const result = await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as an origin in InterchainTokenService successfully`, {
-            showEvents: true,
-        });
+        const result = await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as an origin in InterchainTokenService successfully`,
+            {
+                showEvents: true,
+            },
+        );
         tokenId = result.events[0].parsedJson.token_id.id;
     } else {
         await postDeployTxBuilder.moveCall({
@@ -208,9 +213,14 @@ async function deployToken(keypair, client, contracts, args, options) {
             arguments: [InterchainTokenService.objects.InterchainTokenService, TreasuryCap, Metadata],
             typeArguments: [tokenType],
         });
-        await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in InterchainTokenService successfully`, {
-            showEvents: true,
-        });
+        await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as a non-origin in InterchainTokenService successfully`,
+            {
+                showEvents: true,
+            },
+        );
     }
 
     // Save the deployed token info in the contracts object.
