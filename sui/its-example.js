@@ -247,9 +247,13 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
     const tokenDistributor = options.distributor;
 
     // InterchainTokenService transfer payload from Ethereum to Sui
-    const payload = defaultAbiCoder.encode(
+    let payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
+    );
+    payload = defaultAbiCoder.encode(
+        ['uint256', 'string', 'bytes'],
+        [ITSMessageType.ReceiveFromItsHub, 'axelar', payload],
     );
 
     printInfo(
@@ -275,9 +279,13 @@ async function printReceiveTransferInfo(contracts, args, options) {
     const itsBytes = options.itsBytes;
     const channelId = options.channelId || Example.objects.ItsChannelId;
 
-    const payload = defaultAbiCoder.encode(
+    let payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
+    );
+    payload = defaultAbiCoder.encode(
+        ['uint256', 'string', 'bytes'],
+        [ITSMessageType.ReceiveFromItsHub, 'axelar', payload],
     );
 
     printInfo(
