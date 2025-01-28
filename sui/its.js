@@ -71,7 +71,11 @@ async function removeTrustedAddress(keypair, client, contracts, args, options) {
 
     await txBuilder.moveCall({
         target: `${contracts.InterchainTokenService.address}::interchain_token_service::remove_trusted_chains`,
-        arguments: [contracts.InterchainTokenService.objects.InterchainTokenService, contracts.InterchainTokenService.objects.OwnerCap, chainNames],
+        arguments: [
+            contracts.InterchainTokenService.objects.InterchainTokenService,
+            contracts.InterchainTokenService.objects.OwnerCap,
+            chainNames,
+        ],
     });
 
     for (const chainName of chainNames) {
