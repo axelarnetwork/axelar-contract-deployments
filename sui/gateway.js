@@ -513,12 +513,12 @@ async function pause(keypair, client, config, chain, contracts, args, options) {
         id: contracts.objects.Gatewayv0,
         options: {
             showContent: true,
-            showBcs: true
+            showBcs: true,
         },
     });
     let allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
     allowedFunctionsArray = allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
-    
+
     const versionsArg = [];
     const allowedFunctionsArg = [];
 
@@ -528,30 +528,43 @@ async function pause(keypair, client, config, chain, contracts, args, options) {
         // Do not dissalow `allow_function` because that locks the gateway forever.
         if (version == allowedFunctionsArray.length - 1) {
             const index = allowedFunctions.indexOf('allow_function');
-            if (index > -1) { // only splice array when item is found
+
+            if (index > -1) {
+                // only splice array when item is found
                 allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
             }
         }
 
         printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
 
-        versionsArg.push((new Array(allowedFunctions.length)).fill(version).join());
+        versionsArg.push(new Array(allowedFunctions.length).fill(version).join());
         allowedFunctionsArg.push(allowedFunctions.join());
     }
 
-    // Write the 
-    writeJSON({
-        versions: versionsArg,
-        disallowedFunctions: allowedFunctionsArg,
-    }, `${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
-    
+    // Write the
+    writeJSON(
+        {
+            versions: versionsArg,
+            disallowedFunctions: allowedFunctionsArg,
+        },
+        `${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`,
+    );
+
     return disallowFunctions(keypair, client, config, chain, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
 }
 
 async function unpause(keypair, client, config, chain, contracts, args, options) {
     const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
 
-    return allowFunctions(keypair, client, config, chain, contracts, [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()], options);
+    return allowFunctions(
+        keypair,
+        client,
+        config,
+        chain,
+        contracts,
+        [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()],
+        options,
+    );
 }
 
 async function mainProcessor(processor, args, options) {
