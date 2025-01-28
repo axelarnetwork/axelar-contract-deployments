@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { InterchainTokenServiceMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
@@ -230,7 +230,7 @@ async function deployToken(keypair, client, contracts, args, options) {
 async function printReceiveDeploymentInfo(contracts, args, options) {
     const [name, symbol, decimals] = args;
 
-    const messageType = InterchainTokenServiceMessageType.InterchainTokenDeployment;
+    const messageType = ITSMessageType.InterchainTokenDeployment;
     const tokenId = options.tokenId;
     const byteName = toUtf8Bytes(name);
     const byteSymbol = toUtf8Bytes(symbol);
@@ -268,7 +268,7 @@ async function printReceiveTransferInfo(contracts, args, options) {
 
     const payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
-        [InterchainTokenServiceMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
+        [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
 
     printInfo(
