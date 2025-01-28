@@ -199,6 +199,36 @@ node stellar/its.js set-trusted-chain [chain-name]
 node stellar/its.js remove-trusted-chain [chain-name]
 ```
 
+#### Deploy Interchain Token
+
+```bash
+node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [initial-supply]
+```
+
+#### Deploy Remote Interchain Token
+
+```bash
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
+#### Register Canonical Token
+
+```bash
+node stellar/its.js register-canonical-token [token-address]
+```
+
+#### Deploy Remote Canonical Token
+
+```bash
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
+#### Interchain Transfer
+
+```bash
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
+```
+
 ## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
