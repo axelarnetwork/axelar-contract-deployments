@@ -220,7 +220,7 @@ node stellar/its.js register-canonical-token [token-address]
 #### Deploy Remote Canonical Token
 
 ```bash
-node stellar/its.js deploy-remote-canonical-token [token-address] [token-id] [token-name] [token-symbol] [decimals] [destination-chain] [gas-token-address] [gas-fee-amount]
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] [gas-token-address] [gas-fee-amount]
 ```
 
 #### Interchain Transfer
