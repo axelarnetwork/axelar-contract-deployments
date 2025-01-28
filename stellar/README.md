@@ -87,10 +87,11 @@ node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NA
 
 ### Interchain Token Service
 
-Deploy Interchain Token wasm first.
+Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
 node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_interchain_token.optimized.wasm
+node stellar/deploy-contract.js deploy token_manager --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_token_manager.optimized.wasm
 node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_interchain_token_service.optimized.wasm
 ```
 
