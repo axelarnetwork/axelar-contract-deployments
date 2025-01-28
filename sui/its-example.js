@@ -24,14 +24,14 @@ const {
 async function sendToken(keypair, client, contracts, args, options) {
     const [symbol, destinationChain, destinationAddress, feeAmount, amount] = args;
 
-    const { Example, GasService, AxelarGateway, ITS } = contracts;
+    const { Example, GasService, AxelarGateway, InterchainTokenService } = contracts;
     const ItsToken = contracts[symbol.toUpperCase()];
 
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
 
-    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
+    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -41,7 +41,7 @@ async function sendToken(keypair, client, contracts, args, options) {
 
     const objectIds = {
         singleton: Example.objects.ItsSingleton,
-        its: ITS.objects.ITS,
+        its: InterchainTokenService.objects.InterchainTokenService,
         gateway: AxelarGateway.objects.Gateway,
         gasService: GasService.objects.GasService,
     };
@@ -49,11 +49,10 @@ async function sendToken(keypair, client, contracts, args, options) {
     const txBuilder = new TxBuilder(client);
 
     const tx = txBuilder.tx;
-
     const gas = tx.splitCoins(tx.gas, [unitFeeAmount]);
 
     const TokenId = await txBuilder.moveCall({
-        target: `${ITS.address}::token_id::from_u256`,
+        target: `${InterchainTokenService.address}::token_id::from_u256`,
         arguments: [ItsToken.objects.TokenId],
     });
 
@@ -87,12 +86,12 @@ async function sendToken(keypair, client, contracts, args, options) {
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
-    const { AxelarGateway, GasService, ITS, Example } = contracts;
+    const { AxelarGateway, GasService, InterchainTokenService, Example } = contracts;
     const [symbol, destinationChain, feeAmount] = args;
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
 
-    checkTrustedAddresses(ITS.trustedAddresses, destinationChain);
+    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
 
     const txBuilder = new TxBuilder(client);
 
@@ -100,14 +99,14 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const gas = tx.splitCoins(tx.gas, [feeUnitAmount]);
 
     const TokenId = await txBuilder.moveCall({
-        target: `${ITS.address}::token_id::from_u256`,
+        target: `${InterchainTokenService.address}::token_id::from_u256`,
         arguments: [Token.objects.TokenId],
     });
 
     await txBuilder.moveCall({
         target: `${Example.address}::its::deploy_remote_interchain_token`,
         arguments: [
-            ITS.objects.ITS,
+            InterchainTokenService.objects.InterchainTokenService,
             AxelarGateway.objects.Gateway,
             GasService.objects.GasService,
             destinationChain,
@@ -123,10 +122,11 @@ async function sendDeployment(keypair, client, contracts, args, options) {
 }
 
 async function handleReceivedMessage(keypair, client, contracts, args, options, actionName) {
-    const { ITS } = contracts;
+    const { InterchainTokenService } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
-    checkTrustedAddresses(ITS.trustedAddresses, sourceChain);
+    const [, originChain] = defaultAbiCoder.decode(['uint256', 'string', 'bytes'], payload);
+    checkTrustedAddresses(InterchainTokenService.trustedAddresses, originChain);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
@@ -141,10 +141,10 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         source_chain: sourceChain,
         message_id: messageId,
         source_address: sourceAddress,
-        destination_id: ITS.objects.ChannelId,
+        destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-
+    console.log(messageInfo);
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
 }
 
@@ -186,8 +186,8 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     const [TreasuryCap, Metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
-    // Register Token in ITS
-    const { Example, ITS } = contracts;
+    // Register Token in InterchainTokenService
+    const { Example, InterchainTokenService } = contracts;
     let tokenId;
 
     const postDeployTxBuilder = new TxBuilder(client);
@@ -195,22 +195,32 @@ async function deployToken(keypair, client, contracts, args, options) {
     if (options.origin) {
         await postDeployTxBuilder.moveCall({
             target: `${Example.address}::its::register_coin`,
-            arguments: [ITS.objects.ITS, Metadata],
+            arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
             typeArguments: [tokenType],
         });
-        const result = await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as an origin in ITS successfully`, {
-            showEvents: true,
-        });
+        const result = await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as an origin in InterchainTokenService successfully`,
+            {
+                showEvents: true,
+            },
+        );
         tokenId = result.events[0].parsedJson.token_id.id;
     } else {
         await postDeployTxBuilder.moveCall({
-            target: `${ITS.address}::its::give_unregistered_coin`,
-            arguments: [ITS.objects.ITS, TreasuryCap, Metadata],
+            target: `${InterchainTokenService.address}::interchain_token_service::give_unregistered_coin`,
+            arguments: [InterchainTokenService.objects.InterchainTokenService, TreasuryCap, Metadata],
             typeArguments: [tokenType],
         });
-        await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in ITS successfully`, {
-            showEvents: true,
-        });
+        await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as a non-origin in InterchainTokenService successfully`,
+            {
+                showEvents: true,
+            },
+        );
     }
 
     // Save the deployed token info in the contracts object.
@@ -228,7 +238,7 @@ async function deployToken(keypair, client, contracts, args, options) {
 }
 
 async function printReceiveDeploymentInfo(contracts, args, options) {
-    const [name, symbol, decimals] = args;
+    const [sourceChain, name, symbol, decimals] = args;
 
     const messageType = ITSMessageType.InterchainTokenDeployment;
     const tokenId = options.tokenId;
@@ -237,11 +247,12 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
     const tokenDecimals = parseInt(decimals);
     const tokenDistributor = options.distributor;
 
-    // ITS transfer payload from Ethereum to Sui
-    const payload = defaultAbiCoder.encode(
+    // InterchainTokenService transfer payload from Ethereum to Sui
+    let payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
     );
+    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
 
     printInfo(
         JSON.stringify(
@@ -258,7 +269,7 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
 
 async function printReceiveTransferInfo(contracts, args, options) {
     const { Example } = contracts;
-    const [symbol, sourceAddress, amount] = args;
+    const [sourceChain, symbol, sourceAddress, amount] = args;
 
     const Token = contracts[symbol];
     const unitAmount = getUnitAmount(amount, Token.decimals);
@@ -266,10 +277,11 @@ async function printReceiveTransferInfo(contracts, args, options) {
     const itsBytes = options.itsBytes;
     const channelId = options.channelId || Example.objects.ItsChannelId;
 
-    const payload = defaultAbiCoder.encode(
+    let payload = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
+    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
 
     printInfo(
         JSON.stringify(
@@ -321,7 +333,7 @@ async function mainProcessor(command, options, args, processor) {
 
 if (require.main === module) {
     const program = new Command();
-    program.name('ITS Example').description('SUI ITS Example scripts');
+    program.name('InterchainTokenService Example').description('SUI InterchainTokenService Example scripts');
 
     const sendTokenTransferProgram = new Command()
         .name('send-token')
@@ -381,24 +393,24 @@ if (require.main === module) {
     const printDeploymentInfoProgram = new Command()
         .name('print-deployment-info')
         .description('Print deployment info. This script will be useful for testing receive deployment flow.')
-        .command('print-receive-deployment <name> <symbol> <decimals>')
+        .command('print-receive-deployment <sourceChain> <name> <symbol> <decimals>')
         .addOption(new Option('--distributor <distributor>', 'Distributor address').default(ethers.constants.HashZero))
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
-        .action((name, symbol, decimals, options) => {
+        .action((sourceChain, name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveDeploymentInfo(chain.contracts, [name, symbol, decimals], options);
+            printReceiveDeploymentInfo(chain.contracts, [sourceChain, name, symbol, decimals], options);
         });
 
     const printReceiveTransferInfoProgram = new Command()
         .name('print-transfer-info')
         .description('Print receive token info. This script will be useful for testing receive token flow.')
-        .command('print-receive-transfer <symbol> <source-address> <amount>')
-        .addOption(new Option('--itsBytes <itsBytes>', 'ITS Bytes').default(ethers.constants.HashZero))
-        .action((symbol, sourceAddress, amount, options) => {
+        .command('print-receive-transfer <sourceChain> <symbol> <source-address> <amount>')
+        .addOption(new Option('--itsBytes <itsBytes>', 'InterchainTokenService Bytes').default(ethers.constants.HashZero))
+        .action((sourceChain, symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveTransferInfo(chain.contracts, [symbol, sourceAddress, amount], options);
+            printReceiveTransferInfo(chain.contracts, [sourceChain, symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);
