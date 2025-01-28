@@ -62,6 +62,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 type: 'bytes',
             });
 
+            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.token_manager?.wasmHash, 'hex'), {
+                type: 'bytes',
+            });
+
             return {
                 owner,
                 operator,
@@ -71,6 +75,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
                 chainName,
                 nativeTokenAddress,
                 interchainTokenWasmHash,
+                tokenManagerWasmHash,
             };
         }
 
@@ -79,9 +84,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain?.contracts?.axelar_operators?.address;
-            const gasCollector = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
+            const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
-            return { owner, gasCollector };
+            return { owner, operator };
         }
 
         case 'upgrader': {
@@ -91,8 +96,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const itsAddress = nativeToScVal(chain?.contracts?.interchain_token_service?.address, { type: 'address' });
 
-            return { gatewayAddress, gasServiceAddress };
+            return { gatewayAddress, gasServiceAddress, itsAddress };
         }
 
         default:
@@ -110,7 +116,7 @@ async function deploy(options, config, chain, contractName) {
 
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
-    if (contractName === 'interchain_token') {
+    if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
             deployer: wallet.publicKey(),
             wasmHash: serializeValue(wasmHash),

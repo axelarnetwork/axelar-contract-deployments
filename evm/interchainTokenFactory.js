@@ -142,10 +142,10 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
-            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
+            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
             break;
         }
 
@@ -224,14 +224,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'registerCustomToken': {
-            const { tokenAddress, tokenManagerType, operator, gasValue } = options;
+            const { tokenAddress, tokenManagerType, operator } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
                 isValidAddress: { tokenAddress },
                 isAddress: { operator },
-                isValidNumber: { tokenManagerType, gasValue },
+                isValidNumber: { tokenManagerType },
             });
 
             const tx = await interchainTokenFactory.registerCustomToken(
@@ -239,8 +239,7 @@ async function processCommand(config, chain, options) {
                 tokenAddress,
                 tokenManagerType,
                 operator,
-                gasValue,
-                { value: gasValue, ...gasOptions },
+                gasOptions,
             );
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
