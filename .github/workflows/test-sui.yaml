@@ -196,7 +196,7 @@ jobs:
           echo "emptyTokenName=Empty" >> $GITHUB_ENV
           echo "emptyTokenDecimals=6" >> $GITHUB_ENV
           config=$(cat axelar-chains-config/info/local.json)
-          echo "channelId=$(echo $config | jq -r '.chains.sui.contracts.ITS.objects.ChannelId')" >> $GITHUB_ENV
+          echo "channelId=$(echo $config | jq -r '.chains.sui.contracts.InterchainTokenService.objects.ChannelId')" >> $GITHUB_ENV
           echo "destinationContractAddress=$(echo $config | jq -r '.chains.sui.contracts.Example.objects.ItsChannelId')" >> $GITHUB_ENV
 
       - name: Deploy Test Tokens
