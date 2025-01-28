@@ -125,7 +125,8 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
     const { InterchainTokenService } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, sourceChain);
+    const [, originChain] = defaultAbiCoder.decode(['uint256', 'string', 'bytes'], payload);
+    checkTrustedAddresses(InterchainTokenService.trustedAddresses, originChain);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
@@ -143,7 +144,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-
+    console.log(messageInfo);
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
 }
 
@@ -237,7 +238,7 @@ async function deployToken(keypair, client, contracts, args, options) {
 }
 
 async function printReceiveDeploymentInfo(contracts, args, options) {
-    const [name, symbol, decimals] = args;
+    const [sourceChain, name, symbol, decimals] = args;
 
     const messageType = ITSMessageType.InterchainTokenDeployment;
     const tokenId = options.tokenId;
@@ -251,10 +252,7 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
     );
-    payload = defaultAbiCoder.encode(
-        ['uint256', 'string', 'bytes'],
-        [ITSMessageType.ReceiveFromItsHub, 'axelar', payload],
-    );
+    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
 
     printInfo(
         JSON.stringify(
@@ -271,7 +269,7 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
 
 async function printReceiveTransferInfo(contracts, args, options) {
     const { Example } = contracts;
-    const [symbol, sourceAddress, amount] = args;
+    const [sourceChain, symbol, sourceAddress, amount] = args;
 
     const Token = contracts[symbol];
     const unitAmount = getUnitAmount(amount, Token.decimals);
@@ -283,10 +281,7 @@ async function printReceiveTransferInfo(contracts, args, options) {
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
-    payload = defaultAbiCoder.encode(
-        ['uint256', 'string', 'bytes'],
-        [ITSMessageType.ReceiveFromItsHub, 'axelar', payload],
-    );
+    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
 
     printInfo(
         JSON.stringify(
@@ -398,24 +393,24 @@ if (require.main === module) {
     const printDeploymentInfoProgram = new Command()
         .name('print-deployment-info')
         .description('Print deployment info. This script will be useful for testing receive deployment flow.')
-        .command('print-receive-deployment <name> <symbol> <decimals>')
+        .command('print-receive-deployment <sourceChain> <name> <symbol> <decimals>')
         .addOption(new Option('--distributor <distributor>', 'Distributor address').default(ethers.constants.HashZero))
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
-        .action((name, symbol, decimals, options) => {
+        .action((sourceChain, name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveDeploymentInfo(chain.contracts, [name, symbol, decimals], options);
+            printReceiveDeploymentInfo(chain.contracts, [sourceChain, name, symbol, decimals], options);
         });
 
     const printReceiveTransferInfoProgram = new Command()
         .name('print-transfer-info')
         .description('Print receive token info. This script will be useful for testing receive token flow.')
-        .command('print-receive-transfer <symbol> <source-address> <amount>')
+        .command('print-receive-transfer <sourceChain> <symbol> <source-address> <amount>')
         .addOption(new Option('--itsBytes <itsBytes>', 'InterchainTokenService Bytes').default(ethers.constants.HashZero))
-        .action((symbol, sourceAddress, amount, options) => {
+        .action((sourceChain, symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
             const chain = getChainConfig(config, options.chainName);
-            printReceiveTransferInfo(chain.contracts, [symbol, sourceAddress, amount], options);
+            printReceiveTransferInfo(chain.contracts, [sourceChain, symbol, sourceAddress, amount], options);
         });
 
     program.addCommand(sendTokenTransferProgram);
