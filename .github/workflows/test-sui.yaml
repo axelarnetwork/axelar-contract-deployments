@@ -205,8 +205,8 @@ jobs:
           node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
 
           # Prepare additional parameters for the example:
-          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
-          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
+          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.sourceChain }} ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
+          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.sourceChain }} ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
 
           echo "transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)" >> $GITHUB_ENV
           echo "transferPayload=$(echo $transferInfo | jq -r .payload)" >> $GITHUB_ENV
@@ -223,8 +223,8 @@ jobs:
 
       - name: Receive Token from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId hub_address $channelId $transferPayloadHash
-          node sui/its-example receive-token $sourceChain $transferMessageId hub_address $symbol $transferPayload
+          node sui/gateway.js approve --proof wallet axelar $transferMessageId hub_address $channelId $transferPayloadHash
+          node sui/its-example receive-token axelar $transferMessageId hub_address $symbol $transferPayload
 
       - name: Send Token Deployment to another chain
         run: |
