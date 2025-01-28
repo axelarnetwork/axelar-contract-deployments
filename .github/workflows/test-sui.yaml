@@ -223,8 +223,8 @@ jobs:
 
       - name: Receive Token from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sourceAddress $channelId $transferPayloadHash
-          node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
+          node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId hub_address $channelId $transferPayloadHash
+          node sui/its-example receive-token $sourceChain $transferMessageId hub_address $symbol $transferPayload
 
       - name: Send Token Deployment to another chain
         run: |
@@ -232,8 +232,8 @@ jobs:
 
       - name: Receive Token Deployment from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $sourceAddress $channelId $deployPayloadHash
-          node sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
+          node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId hub_address $channelId $deployPayloadHash
+          node sui/its-example receive-deployment $sourceChain $deployMessageId hub_address $emptyTokenSymbol $deployPayload
 
       ###### Command: Operators ######
 
