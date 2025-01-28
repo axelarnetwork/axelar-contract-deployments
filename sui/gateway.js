@@ -2,7 +2,7 @@ const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs, CLOCK_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, CLOCK_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
@@ -527,7 +527,7 @@ async function pause(keypair, client, config, chain, contracts, args, options) {
         const allowedFunctions = allowedFunctionsArray[version];
 
         // Do not dissalow `allow_function` because that locks the gateway forever.
-        if (version == allowedFunctionsArray.length - 1) {
+        if (Number(version) === allowedFunctionsArray.length - 1) {
             const index = allowedFunctions.indexOf('allow_function');
 
             if (index > -1) {
@@ -548,14 +548,14 @@ async function pause(keypair, client, config, chain, contracts, args, options) {
             versions: versionsArg,
             disallowedFunctions: allowedFunctionsArg,
         },
-        `${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`,
+        `${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`,
     );
 
     return disallowFunctions(keypair, client, config, chain, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
 }
 
 async function unpause(keypair, client, config, chain, contracts, args, options) {
-    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
+    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`);
 
     return allowFunctions(
         keypair,

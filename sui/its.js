@@ -1,7 +1,9 @@
 const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, printInfo, writeJSON } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
+const { Transaction } = require('@mysten/sui/transactions');
+const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
 
 const SPECIAL_CHAINS_TAGS = {
     ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
@@ -86,8 +88,7 @@ async function removeTrustedAddress(keypair, client, contracts, args, options) {
 }
 
 async function allowFunctions(keypair, client, config, contractConfig, args, options) {
-    const contracts = contractConfig.ITS;
-    console.log(contracts);
+    const contracts = contractConfig.InterchainTokenService;
     const packageId = contracts.address;
 
     const [versionsArg, functionNamesArg] = args;
@@ -106,14 +107,12 @@ async function allowFunctions(keypair, client, config, contractConfig, args, opt
         });
     }
 
-    return {
-        tx,
-        message: 'Allow Functions',
-    };
+    await broadcastFromTxBuilder(builder, keypair, 'Allow Functions');
 }
 
 async function disallowFunctions(keypair, client, config, contractConfig, args, options) {
-    const packageId = contractConfig.address;
+    const contracts = contractConfig.InterchainTokenService;
+    const packageId = contracts.address;
 
     const [versionsArg, functionNamesArg] = args;
 
@@ -122,29 +121,27 @@ async function disallowFunctions(keypair, client, config, contractConfig, args, 
 
     if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
 
-    const tx = new Transaction();
+    const builder = new TxBuilder(client);
 
     for (const i in versions) {
-        tx.moveCall({
-            target: `${packageId}::gateway::disallow_function`,
+        await builder.moveCall({
+            target: `${packageId}::interchain_token_service::disallow_function`,
             arguments: [
-                tx.object(contractConfig.objects.Gateway),
-                tx.object(contractConfig.objects.OwnerCap),
-                tx.pure.u64(versions[i]),
-                tx.pure.string(functionNames[i]),
+                contracts.objects.InterchainTokenService,
+                contracts.objects.OwnerCap,
+                versions[i],
+                functionNames[i],
             ],
         });
     }
 
-    return {
-        tx,
-        message: 'Disallow Functions',
-    };
+
+    await broadcastFromTxBuilder(builder, keypair, 'Disallow Functions');
 }
 
 async function pause(keypair, client, config, contracts, args, options) {
     const response = await client.getObject({
-        id: contracts.objects.Gatewayv0,
+        id: contracts.InterchainTokenService.objects.InterchainTokenServicev0,
         options: {
             showContent: true,
             showBcs: true,
@@ -160,9 +157,8 @@ async function pause(keypair, client, config, contracts, args, options) {
         const allowedFunctions = allowedFunctionsArray[version];
 
         // Do not dissalow `allow_function` because that locks the gateway forever.
-        if (version == allowedFunctionsArray.length - 1) {
+        if (Number(version) === allowedFunctionsArray.length - 1) {
             const index = allowedFunctions.indexOf('allow_function');
-
             if (index > -1) {
                 // only splice array when item is found
                 allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
@@ -181,16 +177,16 @@ async function pause(keypair, client, config, contracts, args, options) {
             versions: versionsArg,
             disallowedFunctions: allowedFunctionsArg,
         },
-        `${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`,
+        `${__dirname}/../axelar-chains-config/info/sui-its-allowed-functions-${options.env}.json`,
     );
 
-    return disallowFunctions(keypair, client, config, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
+    return await disallowFunctions(keypair, client, config, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
 }
 
 async function unpause(keypair, client, config, contracts, args, options) {
-    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-allowed-functions-${options.env}.json`);
+    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-its-allowed-functions-${options.env}.json`);
 
-    return allowFunctions(
+    return await allowFunctions(
         keypair,
         client,
         config,
@@ -247,9 +243,29 @@ if (require.main === module) {
             mainProcessor(allowFunctions, options, [versions, functions], processCommand);
         });
 
+    const pauseProgram = new Command()
+        .name('pause')
+        .description('Pause ITS')
+        .command('pause')
+        .action((options) => {
+            mainProcessor(pause, options, [], processCommand);
+        });
+
+    const unpauseProgram = new Command()
+        .name('unpause')
+        .description('Unpause ITS')
+        .command('unpause')
+        .action((options) => {
+            mainProcessor(unpause, options, [], processCommand);
+        });
+
+
+
     program.addCommand(setupTrustedAddressProgram);
     program.addCommand(removeTrustedAddressProgram);
     program.addCommand(allowFunctionsProgram);
+    program.addCommand(pauseProgram);
+    program.addCommand(unpauseProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 
