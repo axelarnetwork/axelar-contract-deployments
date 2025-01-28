@@ -49,7 +49,6 @@ async function sendToken(keypair, client, contracts, args, options) {
     const txBuilder = new TxBuilder(client);
 
     const tx = txBuilder.tx;
-
     const gas = tx.splitCoins(tx.gas, [unitFeeAmount]);
 
     const TokenId = await txBuilder.moveCall({

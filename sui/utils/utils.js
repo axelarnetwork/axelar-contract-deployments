@@ -266,7 +266,7 @@ const parseGatewayInfo = (chain) => {
 };
 
 const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
-    if (!trustedAddresses[destinationChain]) {
+    if (!trustedAddresses.includes(destinationChain)) {
         throw new Error(
             `${destinationChain} is not trusted. Run 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>' to setup trusted address`,
         );
