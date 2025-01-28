@@ -232,8 +232,8 @@ jobs:
 
       - name: Receive Token Deployment from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId hub_address $channelId $deployPayloadHash
-          node sui/its-example receive-deployment $sourceChain $deployMessageId hub_address $emptyTokenSymbol $deployPayload
+          node sui/gateway.js approve --proof wallet axelar $deployMessageId hub_address $channelId $deployPayloadHash
+          node sui/its-example receive-deployment axelar $deployMessageId hub_address $emptyTokenSymbol $deployPayload
 
       ###### Command: Operators ######
 
