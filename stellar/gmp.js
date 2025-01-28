@@ -1,14 +1,10 @@
 'use strict';
 
-const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, addBaseOptions, tokenToScVal, addressToScVal, hexToScVal } = require('./utils');
 const { addOptionsToCommands, getChainConfig } = require('../common');
-const { ethers } = require('hardhat');
-const {
-    utils: { arrayify },
-} = ethers;
 require('./cli-utils');
 
 async function send(wallet, _, chain, contractConfig, args, options) {

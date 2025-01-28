@@ -1,6 +1,6 @@
 'use strict';
 
-const { Address, Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
