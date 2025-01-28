@@ -64,7 +64,7 @@ async function sendToken(keypair, client, contracts, args, options) {
     });
 
     await txBuilder.moveCall({
-        target: `${Example.address}::its::send_interchain_transfer_call`,
+        target: `${Example.address}::interchain_token_service::send_interchain_transfer_call`,
         arguments: [
             objectIds.singleton,
             objectIds.its,
@@ -105,7 +105,7 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     });
 
     await txBuilder.moveCall({
-        target: `${Example.address}::its::deploy_remote_interchain_token`,
+        target: `${Example.address}::interchain_token_service::deploy_remote_interchain_token`,
         arguments: [
             InterchainTokenService.objects.InterchainTokenService,
             AxelarGateway.objects.Gateway,
@@ -194,7 +194,7 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     if (options.origin) {
         await postDeployTxBuilder.moveCall({
-            target: `${Example.address}::its::register_coin`,
+            target: `${Example.address}::interchain_token_service::register_coin`,
             arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
             typeArguments: [tokenType],
         });
@@ -204,7 +204,7 @@ async function deployToken(keypair, client, contracts, args, options) {
         tokenId = result.events[0].parsedJson.token_id.id;
     } else {
         await postDeployTxBuilder.moveCall({
-            target: `${InterchainTokenService.address}::its::give_unregistered_coin`,
+            target: `${InterchainTokenService.address}::interchain_token_service::give_unregistered_coin`,
             arguments: [InterchainTokenService.objects.InterchainTokenService, TreasuryCap, Metadata],
             typeArguments: [tokenType],
         });
