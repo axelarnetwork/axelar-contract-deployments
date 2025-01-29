@@ -49,14 +49,14 @@ if (require.main === module) {
 
     program
         .command('set-trusted-chain <chainName>')
-        .description('set a trusted ITS chain')
+        .description('set a trusted InterchainTokenService chain')
         .action((chainName, options) => {
             mainProcessor(setTrustedChain, chainName, options);
         });
 
     program
         .command('remove-trusted-chain <chainName>')
-        .description('remove a trusted ITS chain')
+        .description('remove a trusted InterchainTokenService chain')
         .action((chainName, options) => {
             mainProcessor(removeTrustedChain, chainName, options);
         });

@@ -245,7 +245,7 @@ if (require.main === module) {
 
     const pauseProgram = new Command()
         .name('pause')
-        .description('Pause ITS')
+        .description('Pause InterchainTokenService')
         .command('pause')
         .action((options) => {
             mainProcessor(pause, options, [], processCommand);
@@ -253,7 +253,7 @@ if (require.main === module) {
 
     const unpauseProgram = new Command()
         .name('unpause')
-        .description('Unpause ITS')
+        .description('Unpause InterchainTokenService')
         .command('unpause')
         .action((options) => {
             mainProcessor(unpause, options, [], processCommand);
