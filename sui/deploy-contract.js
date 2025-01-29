@@ -59,7 +59,6 @@ const PACKAGE_DIRS = [
 const PACKAGE_CONFIGS = {
     cmdOptions: {
         AxelarGateway: () => GATEWAY_CMD_OPTIONS,
-        InterchainTokenService: () => ITS_CMD_OPTIONS,
     },
     postDeployFunctions: {
         AxelarGateway: postDeployAxelarGateway,
@@ -247,7 +246,9 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const { chainName, itsHubAddress } = options;
+    const { chainName } = options;
+
+    const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
 
     const [ownerCapObjectId, creatorCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::owner_cap::OwnerCap`,
@@ -422,10 +423,6 @@ const GATEWAY_CMD_OPTIONS = [
     ).default('offline'),
     new Option('--nonce <nonce>', 'nonce for the signer (defaults to HashZero)'),
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
-];
-
-const ITS_CMD_OPTIONS = [
-    new Option('--itsHubAddress <itsHubAddress>', 'The address of the InterchainTokenService HUB').env('ITS_HUB_ADDRESS'),
 ];
 
 const addDeployOptions = (program) => {
