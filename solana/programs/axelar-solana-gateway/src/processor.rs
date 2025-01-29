@@ -81,6 +81,7 @@ impl Processor {
                 destination_chain,
                 destination_contract_address,
                 payload,
+                signing_pda_bump,
             } => {
                 msg!("Instruction: Call Contract");
                 Self::process_call_contract(
@@ -89,12 +90,14 @@ impl Processor {
                     &destination_chain,
                     &destination_contract_address,
                     &payload,
+                    signing_pda_bump,
                 )
             }
             GatewayInstruction::CallContractOffchainData {
                 destination_chain,
                 destination_contract_address,
                 payload_hash,
+                signing_pda_bump,
             } => {
                 msg!("Instruction: Call Contract Offchain Data");
                 Self::process_call_contract_offchain_data(
@@ -103,6 +106,7 @@ impl Processor {
                     &destination_chain,
                     &destination_contract_address,
                     payload_hash,
+                    signing_pda_bump,
                 )
             }
             GatewayInstruction::InitializeConfig(init_config) => {

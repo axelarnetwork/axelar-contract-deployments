@@ -28,12 +28,15 @@ async fn test_full_flow_operator_proposal_execution() {
 
     let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(counter_pda, false),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 

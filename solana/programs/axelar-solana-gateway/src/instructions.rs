@@ -52,8 +52,9 @@ pub enum GatewayInstruction {
     /// Represents the `CallContract` Axelar event.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [SIGNER] Sender (origin) of the message)
-    /// 1. [] Gateway Root Config PDA account
+    /// 0. [] Sender (origin) of the message, program id
+    /// 1. [SIGNER] PDA created by the `sender`, works as authorization token for a given program id
+    /// 2. [] Gateway Root Config PDA account
     CallContract {
         /// The name of the target blockchain.
         destination_chain: String,
@@ -61,14 +62,17 @@ pub enum GatewayInstruction {
         destination_contract_address: String,
         /// Contract call data.
         payload: Vec<u8>,
+        /// The pda bump for the signing PDA
+        signing_pda_bump: u8,
     },
 
     /// Represents the `CallContract` Axelar event. The contract call data is expected to be
     /// handled off-chain by uploading the data using the relayer API.
     ///
     /// Accounts expected by this instruction:
-    /// 0. [SIGNER] Sender (origin) of the message)
-    /// 1. [] Gateway Root Config PDA account
+    /// 0. [] Sender (origin) of the message, program id
+    /// 1. [SIGNER] PDA created by the `sender`, works as authorization token for a given program id
+    /// 2. [] Gateway Root Config PDA account
     CallContractOffchainData {
         /// The name of the target blockchain.
         destination_chain: String,
@@ -76,6 +80,8 @@ pub enum GatewayInstruction {
         destination_contract_address: String,
         /// Hash of the contract call data, to be uploaded off-chain through the relayer API.
         payload_hash: [u8; 32],
+        /// The pda bump for the signing PDA
+        signing_pda_bump: u8,
     },
 
     /// Initializes the Gateway configuration PDA account.
@@ -312,10 +318,13 @@ pub fn rotate_signers(
 /// # Errors
 ///
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
+#[allow(clippy::too_many_arguments)]
 pub fn call_contract(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
-    sender: Pubkey,
+    sender_program_id: Pubkey,
+    sender_call_contract_pda: Pubkey,
+    sender_call_contract_bump: u8,
     destination_chain: String,
     destination_contract_address: String,
     payload: Vec<u8>,
@@ -324,10 +333,12 @@ pub fn call_contract(
         destination_chain,
         destination_contract_address,
         payload,
+        signing_pda_bump: sender_call_contract_bump,
     })?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new_readonly(sender_program_id, false),
+        AccountMeta::new_readonly(sender_call_contract_pda, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
@@ -343,10 +354,13 @@ pub fn call_contract(
 /// # Errors
 ///
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
+#[allow(clippy::too_many_arguments)]
 pub fn call_contract_offchain_data(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
-    sender: Pubkey,
+    sender_program_id: Pubkey,
+    sender_call_contract_pda: Pubkey,
+    sender_call_contract_bump: u8,
     destination_chain: String,
     destination_contract_address: String,
     payload_hash: [u8; 32],
@@ -355,10 +369,12 @@ pub fn call_contract_offchain_data(
         destination_chain,
         destination_contract_address,
         payload_hash,
+        signing_pda_bump: sender_call_contract_bump,
     })?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender, true),
+        AccountMeta::new_readonly(sender_program_id, false),
+        AccountMeta::new_readonly(sender_call_contract_pda, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 

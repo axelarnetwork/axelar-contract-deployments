@@ -26,7 +26,7 @@ use crate::instructions::{
     self, InterchainTokenServiceInstruction, OptionalAccountsFlags, OutboundInstructionInputs,
 };
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, seed_prefixes, Roles};
+use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
 pub mod interchain_token;
 pub mod interchain_transfer;
@@ -274,20 +274,23 @@ where
         .ok_or(ProgramError::InvalidInstructionData)?;
 
     let gas_value = payload.gas_value();
-    let destination_chain = payload.destination_chain();
+    let bump_and_chain = payload
+        .signing_pda_bump()
+        .and_then(|bump| payload.destination_chain().map(|chain| (bump, chain)));
 
     let payload: GMPPayload = payload
         .try_into()
         .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    match destination_chain {
-        Some(chain) => {
+    match bump_and_chain {
+        Some((signing_pda_bump, chain)) => {
             process_outbound_its_gmp_payload(
                 payer,
                 other_accounts,
                 &payload,
                 chain,
                 gas_value,
+                signing_pda_bump,
                 None,
             )?;
         }
@@ -325,6 +328,7 @@ fn process_outbound_its_gmp_payload<'a>(
     payload: &GMPPayload,
     destination_chain: String,
     gas_value: u64,
+    signing_pda_bump: u8,
     payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
@@ -334,6 +338,9 @@ fn process_outbound_its_gmp_payload<'a>(
     let gas_service = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
     let its_root_account = next_account_info(accounts_iter)?;
+    let call_contract_signing_acc = next_account_info(accounts_iter)?;
+    let program_account = next_account_info(accounts_iter)?;
+
     let its_root_config = InterchainTokenService::load(its_root_account)?;
     assert_valid_its_root_pda(
         its_root_account,
@@ -345,11 +352,21 @@ fn process_outbound_its_gmp_payload<'a>(
         return Err(ProgramError::Immutable);
     }
 
+    let signing_pda =
+        axelar_solana_gateway::create_call_contract_signing_pda(crate::ID, signing_pda_bump)?;
+
+    if &signing_pda != call_contract_signing_acc.key {
+        msg!("invalid call contract signing account / signing pda bump");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let (payload_hash, call_contract_ix) = if let Some(payload_hash) = payload_hash {
         let ix = axelar_solana_gateway::instructions::call_contract_offchain_data(
             axelar_solana_gateway::id(),
             *gateway_root_account.key,
-            *its_root_account.key,
+            crate::ID,
+            signing_pda,
+            signing_pda_bump,
             ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             payload_hash,
@@ -374,7 +391,9 @@ fn process_outbound_its_gmp_payload<'a>(
         let ix = axelar_solana_gateway::instructions::call_contract(
             axelar_solana_gateway::id(),
             *gateway_root_account.key,
-            *its_root_account.key,
+            crate::ID,
+            signing_pda,
+            signing_pda_bump,
             ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             hub_payload,
@@ -409,11 +428,14 @@ fn process_outbound_its_gmp_payload<'a>(
 
     invoke_signed(
         &call_contract_ix,
-        &[its_root_account.clone(), gateway_root_account.clone()],
+        &[
+            program_account.clone(),
+            call_contract_signing_acc.clone(),
+            gateway_root_account.clone(),
+        ],
         &[&[
-            seed_prefixes::ITS_SEED,
-            gateway_root_account.key.as_ref(),
-            &[its_root_config.bump],
+            axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
+            &[signing_pda_bump],
         ]],
     )?;
 
