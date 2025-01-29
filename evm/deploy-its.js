@@ -559,7 +559,9 @@ if (require.main === module) {
             .env('PROXY_SALT'),
     );
     program.addOption(
-        new Option('-o, --operatorAddress <operatorAddress>', 'address of the InterchainTokenService operator/rate limiter').env('OPERATOR_ADDRESS'),
+        new Option('-o, --operatorAddress <operatorAddress>', 'address of the InterchainTokenService operator/rate limiter').env(
+            'OPERATOR_ADDRESS',
+        ),
     );
 
     program.action(async (options) => {
