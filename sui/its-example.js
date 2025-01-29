@@ -12,7 +12,6 @@ const {
     broadcastFromTxBuilder,
     moveDir,
     broadcastExecuteApprovedMessage,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
 } = require('./utils');
@@ -30,8 +29,6 @@ async function sendToken(keypair, client, contracts, args, options) {
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
-
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -91,8 +88,6 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
 
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
-
     const txBuilder = new TxBuilder(client);
 
     const tx = txBuilder.tx;
@@ -124,9 +119,6 @@ async function sendDeployment(keypair, client, contracts, args, options) {
 async function handleReceivedMessage(keypair, client, contracts, args, options, actionName) {
     const { InterchainTokenService } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
-
-    const [, originChain] = defaultAbiCoder.decode(['uint256', 'string', 'bytes'], payload);
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, originChain);
 
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
