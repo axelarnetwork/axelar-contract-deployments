@@ -25,6 +25,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'interchain_token',
     'token_manager',
     'interchain_token_service',
+    'upgrader',
 ]);
 
 function getWasmUrl(contractName, version) {
