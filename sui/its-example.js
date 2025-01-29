@@ -136,7 +136,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-    
+
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
 }
 

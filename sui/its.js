@@ -106,15 +106,9 @@ async function disallowFunctions(keypair, client, config, contractConfig, args, 
     for (const i in versions) {
         await builder.moveCall({
             target: `${packageId}::interchain_token_service::disallow_function`,
-            arguments: [
-                contracts.objects.InterchainTokenService,
-                contracts.objects.OwnerCap,
-                versions[i],
-                functionNames[i],
-            ],
+            arguments: [contracts.objects.InterchainTokenService, contracts.objects.OwnerCap, versions[i], functionNames[i]],
         });
     }
-
 
     await broadcastFromTxBuilder(builder, keypair, 'Disallow Functions');
 }
@@ -139,6 +133,7 @@ async function pause(keypair, client, config, contracts, args, options) {
         // Do not dissalow `allow_function` because that locks the gateway forever.
         if (Number(version) === allowedFunctionsArray.length - 1) {
             const index = allowedFunctions.indexOf('allow_function');
+
             if (index > -1) {
                 // only splice array when item is found
                 allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
@@ -238,8 +233,6 @@ if (require.main === module) {
         .action((options) => {
             mainProcessor(unpause, options, [], processCommand);
         });
-
-
 
     program.addCommand(setupTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
