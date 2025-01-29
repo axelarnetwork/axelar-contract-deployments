@@ -400,7 +400,7 @@ if (require.main === module) {
         new Option('--nativeValue <nativeValue>', 'execute multisig proposal nativeValue').makeOptionMandatory(false).default(0),
     );
 
-    // option for setFlowLimit in InterchainTokenService
+    // option for setFlowLimit in ITS
     program.addOption(new Option('--tokenIds <tokenIds>', 'token ids'));
 
     program.action((options) => {
