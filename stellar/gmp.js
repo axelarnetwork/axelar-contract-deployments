@@ -1,34 +1,15 @@
 'use strict';
 
-const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, addBaseOptions } = require('./utils');
+const { getWallet, broadcast, addBaseOptions, tokenToScVal, addressToScVal, hexToScVal } = require('./utils');
 const { addOptionsToCommands, getChainConfig } = require('../common');
-const { ethers } = require('hardhat');
-const {
-    utils: { arrayify },
-} = ethers;
 require('./cli-utils');
-
-function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
-}
 
 async function send(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
-    const caller = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+    const caller = addressToScVal(wallet.publicKey());
 
     const [destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount] = args;
 
@@ -37,7 +18,7 @@ async function send(wallet, _, chain, contractConfig, args, options) {
         caller,
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
-        nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
+        hexToScVal(payload),
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
@@ -54,7 +35,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(sourceChain, { type: 'string' }),
         nativeToScVal(messageId, { type: 'string' }),
         nativeToScVal(sourceAddress, { type: 'string' }),
-        nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
+        hexToScVal(payload),
     );
 
     await broadcast(operation, wallet, chain, 'Execute Called', options);
