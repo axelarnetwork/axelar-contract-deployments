@@ -2017,7 +2017,8 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "skip": true
+          "skip": true,
+          "address": ""
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",

@@ -342,10 +342,12 @@
       "chainType": "evm",
       "contracts": {
         "AxelarGasService": {
-          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392"
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "address": ""
         },
         "AxelarDepositService": {
-          "wrappedSymbol": "WBNB"
+          "wrappedSymbol": "WBNB",
+          "address": ""
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -399,7 +401,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "AxelarDepositService": {
-          "wrappedSymbol": "WKAVA"
+          "wrappedSymbol": "WKAVA",
+          "address": ""
         },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e"
@@ -708,7 +711,8 @@
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92"
         },
         "InterchainTokenService": {
-          "skip": true
+          "skip": true,
+          "address": ""
         },
         "Multisig": {
           "threshold": 2,
@@ -716,10 +720,12 @@
             "0xaC481D34c48e5d3191344b853Bc00D04889BA8db",
             "0x722C5A6A417122668e8925968f7FC13DBDFaD23C",
             "0xBeF25f4733b9d451072416360609e5A4c115293E"
-          ]
+          ],
+          "address": ""
         },
         "AxelarGasService": {
-          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392"
+          "collector": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
+          "address": ""
         }
       },
       "explorer": {
@@ -1622,7 +1628,8 @@
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
         },
         "InterchainTokenService": {
-          "skip": true
+          "skip": true,
+          "address": ""
         },
         "Create3Deployer": {
           "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",

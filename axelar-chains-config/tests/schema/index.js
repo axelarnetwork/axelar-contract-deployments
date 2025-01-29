@@ -18,7 +18,7 @@ export const contractValueSchema = {
     properties: {
         address: { type: 'string' },
     },
-    minProperties: 1,
+    required: ['address'],
 };
 
 export const contractSchema = {
