@@ -424,7 +424,7 @@ const GATEWAY_CMD_OPTIONS = [
     new Option('--previousSigners <previousSigners>', 'number of previous signers to retain').default('15'),
 ];
 
-const ITS_CMD_OPTIONS = [new Option('--itsHubAddress <itsHubAddress>', 'The address of the ITS HUB').env('ITS_HUB_ADDRESS')];
+const ITS_CMD_OPTIONS = [new Option('--itsHubAddress <itsHubAddress>', 'The address of the InterchainTokenService HUB').env('ITS_HUB_ADDRESS')];
 
 const addDeployOptions = (program) => {
     // Get the package name from the program name
