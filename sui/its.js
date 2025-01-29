@@ -18,7 +18,7 @@ function parseTrustedChains(config, trustedChain) {
     return trustedChain.split(',');
 }
 
-async function setupTrustedAddress(keypair, client, config, contracts, args, options) {
+async function setupTrustedChain(keypair, client, config, contracts, args, options) {
     const [trustedChain] = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
@@ -42,32 +42,16 @@ async function setupTrustedAddress(keypair, client, config, contracts, args, opt
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
     }
-
-    // Update InterchainTokenService config
-    for (const trustedChain of trustedChains) {
-        // Add trusted address to InterchainTokenService config
-        if (!contracts.InterchainTokenService.trustedAddresses) contracts.InterchainTokenService.trustedAddresses = [];
-
-        contracts.InterchainTokenService.trustedAddresses.push(trustedChain);
-    }
 }
 
-async function removeTrustedAddress(keypair, client, contracts, args, options) {
+async function removeTrustedChain(keypair, client, contracts, args, options) {
     const [trustedChain] = args;
-
-    const trustedAddressesObject = contracts.InterchainTokenService.trustedAddresses;
-
-    if (!trustedAddressesObject) throw new Error('No trusted addresses found');
 
     const chainNames = trustedChain.split(',');
 
     if (chainNames.length === 0) throw new Error('No chain names provided');
 
     const txBuilder = new TxBuilder(client);
-
-    for (const chainName of chainNames) {
-        if (!trustedAddressesObject[chainName]) throw new Error(`No trusted addresses found for chain ${trustedChain}`);
-    }
 
     await txBuilder.moveCall({
         target: `${contracts.InterchainTokenService.address}::interchain_token_service::remove_trusted_chains`,
@@ -77,10 +61,6 @@ async function removeTrustedAddress(keypair, client, contracts, args, options) {
             chainNames,
         ],
     });
-
-    for (const chainName of chainNames) {
-        delete contracts.InterchainTokenService.trustedAddresses[chainName];
-    }
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
 }
@@ -106,26 +86,26 @@ if (require.main === module) {
 
     // This command is used to setup the trusted address on the InterchainTokenService contract.
     // The trusted address is used to verify the message from the source chain.
-    const setupTrustedAddressProgram = new Command()
-        .name('setup-trusted-address')
-        .command('setup-trusted-address <trusted-chain>')
+    const setupTrustedChainsProgram = new Command()
+        .name('add-trusted-chains')
+        .command('add-trusted-chains <trusted-chain>')
         .description(
             `Add trusted chain. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed EVM chains`,
         )
         .action((trustedChain, options) => {
-            mainProcessor(setupTrustedAddress, options, [trustedChain], processCommand);
+            mainProcessor(setupTrustedChain, options, [trustedChain], processCommand);
         });
 
-    const removeTrustedAddressProgram = new Command()
+    const removeTrustedChainsProgram = new Command()
         .name('remove-trusted-address')
         .description('Remove trusted address')
         .command('remove-trusted-address <trusted-chain>')
         .action((trustedChain, options) => {
-            mainProcessor(removeTrustedAddress, options, [trustedChain], processCommand);
+            mainProcessor(removeTrustedChain, options, [trustedChain], processCommand);
         });
 
-    program.addCommand(setupTrustedAddressProgram);
-    program.addCommand(removeTrustedAddressProgram);
+    program.addCommand(setupTrustedChainsProgram);
+    program.addCommand(removeTrustedChainsProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 
