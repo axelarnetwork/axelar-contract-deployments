@@ -2,8 +2,8 @@
 
 |  | **Owner** |
 |-----------|------------|
-| **Created By** | @ gh_username <email> |
-| **Deployment** | @ gh_username <email> |
+| **Created By** | @ gh_username (<email>) |
+| **Deployment** | @ gh_username (<email>) |
 
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|
