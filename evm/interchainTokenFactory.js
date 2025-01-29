@@ -160,7 +160,7 @@ async function processCommand(config, chain, options) {
             });
 
             if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by InterchainTokenService`);
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
@@ -255,7 +255,7 @@ async function processCommand(config, chain, options) {
             const deploymentSalt = getDeploymentSalt(options);
 
             if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by InterchainTokenService`);
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
             validateParameters({

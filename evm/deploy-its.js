@@ -30,7 +30,7 @@ const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 
 /**
- * Function that handles the InterchainTokenService deployment.
+ * Function that handles the ITS deployment.
  * @param {*} wallet
  * @param {*} chain
  * @param {*} deployOptions
@@ -53,7 +53,7 @@ async function deployAll(config, wallet, chain, options) {
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
-    const salt = options.salt ? `InterchainTokenService ${options.salt}` : 'InterchainTokenService';
+    const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
     let proxySalt, factorySalt;
 
     // If reusing the proxy, then proxy salt is the existing value
@@ -61,14 +61,14 @@ async function deployAll(config, wallet, chain, options) {
         proxySalt = contractConfig.proxySalt;
         factorySalt = itsFactoryContractConfig.salt;
     } else if (options.proxySalt) {
-        proxySalt = `InterchainTokenService ${options.proxySalt}`;
-        factorySalt = `InterchainTokenService Factory ${options.proxySalt}`;
+        proxySalt = `ITS ${options.proxySalt}`;
+        factorySalt = `ITS Factory ${options.proxySalt}`;
     } else if (options.salt) {
-        proxySalt = `InterchainTokenService ${options.salt}`;
-        factorySalt = `InterchainTokenService Factory ${options.salt}`;
+        proxySalt = `ITS ${options.salt}`;
+        factorySalt = `ITS Factory ${options.salt}`;
     } else {
-        proxySalt = 'InterchainTokenService';
-        factorySalt = 'InterchainTokenService Factory';
+        proxySalt = 'ITS';
+        factorySalt = 'ITS Factory';
     }
 
     const implementationSalt = `${salt} Implementation`;
@@ -99,7 +99,7 @@ async function deployAll(config, wallet, chain, options) {
           });
 
     if (!isValidAddress(interchainTokenService)) {
-        throw new Error(`Invalid InterchainTokenService address: ${interchainTokenService}`);
+        throw new Error(`Invalid ITS address: ${interchainTokenService}`);
     }
 
     if (options.reuseProxy) {
@@ -130,8 +130,8 @@ async function deployAll(config, wallet, chain, options) {
 
     const isCurrentChainConsensus = isConsensusChain(chain);
 
-    // Register all EVM chains that InterchainTokenService is or will be deployed on.
-    // Add a "skip": true under InterchainTokenService key in the config if the chain will not have InterchainTokenService.
+    // Register all EVM chains that ITS is or will be deployed on.
+    // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter(
         (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.skip !== true,
     );
@@ -143,7 +143,7 @@ async function deployAll(config, wallet, chain, options) {
             : 'hub',
     );
 
-    // If InterchainTokenService Hub is deployed, register it as a trusted chain as well
+    // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     if (itsHubAddress) {
@@ -296,7 +296,7 @@ async function deployAll(config, wallet, chain, options) {
                     contractConfig.gatewayCaller,
                 ];
 
-                printInfo('InterchainTokenService Implementation args', args);
+                printInfo('ITS Implementation args', args);
 
                 return await deployContract(
                     proxyDeployMethod,
@@ -323,7 +323,7 @@ async function deployAll(config, wallet, chain, options) {
                 contractConfig.predeployCodehash = predeployCodehash;
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
-                printInfo('InterchainTokenService Proxy args', args);
+                printInfo('ITS Proxy args', args);
 
                 return await deployContract(
                     proxyDeployMethod,
@@ -358,7 +358,7 @@ async function deployAll(config, wallet, chain, options) {
             contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
-                printInfo('InterchainTokenService Factory Proxy args', args);
+                printInfo('ITS Factory Proxy args', args);
 
                 return await deployContract(
                     proxyDeployMethod,
@@ -463,13 +463,13 @@ async function upgrade(_, chain, options) {
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
-    printInfo(`InterchainTokenService Proxy`, contract.address);
+    printInfo(`ITS Proxy`, contract.address);
 
     const currImplementation = await contract.implementation();
-    printInfo(`Current InterchainTokenService implementation`, currImplementation);
-    printInfo(`New InterchainTokenService implementation`, contractConfig.implementation);
+    printInfo(`Current ITS implementation`, currImplementation);
+    printInfo(`New ITS implementation`, contractConfig.implementation);
 
-    if (predictOnly || prompt(`Proceed with InterchainTokenService upgrade on ${chain.name}?`, options.yes)) {
+    if (predictOnly || prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
         return;
     }
 
@@ -488,16 +488,16 @@ async function upgrade(_, chain, options) {
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
     const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
 
-    printInfo(`InterchainTokenService Factory Proxy`, itsFactory.address);
+    printInfo(`ITS Factory Proxy`, itsFactory.address);
 
     const factoryImplementation = await itsFactory.implementation();
-    printInfo(`Current InterchainTokenService Factory implementation`, factoryImplementation);
-    printInfo(`New InterchainTokenService Factory implementation`, itsFactoryContractConfig.implementation);
+    printInfo(`Current ITS Factory implementation`, factoryImplementation);
+    printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
     if (
         options.predictOnly ||
         prompt(
-            `Proceed with InterchainTokenService Factory upgrade to implementation ${itsFactoryContractConfig.implementation} on ${chain.name}?`,
+            `Proceed with ITS Factory upgrade to implementation ${itsFactoryContractConfig.implementation} on ${chain.name}?`,
             options.yes,
         )
     ) {
@@ -549,19 +549,17 @@ if (require.main === module) {
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
-    program.addOption(new Option('-s, --salt <salt>', 'deployment salt to use for InterchainTokenService deployment').env('SALT'));
+    program.addOption(new Option('-s, --salt <salt>', 'deployment salt to use for ITS deployment').env('SALT'));
     program.addOption(
         new Option(
             '--proxySalt <proxySalt>',
-            'deployment salt to use for InterchainTokenService proxies, this allows deploying latest releases to new chains while deriving the same proxy address',
+            'deployment salt to use for ITS proxies, this allows deploying latest releases to new chains while deriving the same proxy address',
         )
             .default('v1.0.0')
             .env('PROXY_SALT'),
     );
     program.addOption(
-        new Option('-o, --operatorAddress <operatorAddress>', 'address of the InterchainTokenService operator/rate limiter').env(
-            'OPERATOR_ADDRESS',
-        ),
+        new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
 
     program.action(async (options) => {

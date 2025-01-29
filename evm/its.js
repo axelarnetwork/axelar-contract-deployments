@@ -72,7 +72,7 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
     const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
 
-    // If InterchainTokenService Hub is deployed, register it as a trusted chain as well
+    // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     if (itsHubAddress) {
@@ -312,7 +312,7 @@ async function processCommand(config, chain, options) {
             });
 
             if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by InterchainTokenService`);
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
@@ -341,7 +341,7 @@ async function processCommand(config, chain, options) {
                 implementationType !== tokenManagerImplementations.MINT_BURN &&
                 implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
             ) {
-                printInfo('Approving InterchainTokenService for a transfer for token with token manager type', implementationType);
+                printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
             }
 
@@ -561,7 +561,7 @@ async function processCommand(config, chain, options) {
             printInfo('Trusted chains', trustedChains);
             printInfo('Trusted addresses', trustedAddresses);
 
-            // check if all trusted addresses match InterchainTokenService address
+            // check if all trusted addresses match ITS address
             for (const trustedAddress of trustedAddresses) {
                 if (trustedAddress !== interchainTokenServiceAddress) {
                     printError(
@@ -647,13 +647,13 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('InterchainTokenService').description('Script to perform InterchainTokenService commands');
+    program.name('ITS').description('Script to perform ITS commands');
 
     addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainTokenService'));
     program.addOption(
-        new Option('--action <action>', 'InterchainTokenService action')
+        new Option('--action <action>', 'ITS action')
             .choices([
                 'contractId',
                 'tokenManagerAddress',
