@@ -104,6 +104,11 @@ jobs:
                           "AxelarGateway": {}
                       }
                   }
+              },
+              "axelar": {
+                  "contracts": {
+                      "InterchainTokenService": "${{ env.ITS_HUB_ADDRESS }}"
+                  }
               }
           }' > ./axelar-chains-config/info/local.json
 
@@ -144,7 +149,7 @@ jobs:
         run: node sui/deploy-contract deploy Abi
 
       - name: Deploy InterchainTokenService
-        run: node sui/deploy-contract deploy InterchainTokenService --itsHubAddress ${{ env.ITS_HUB_ADDRESS }}
+        run: node sui/deploy-contract deploy InterchainTokenService
 
       - name: Deploy Example
         run: node sui/deploy-contract deploy Example
@@ -217,7 +222,7 @@ jobs:
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its.js setup-trusted-address $sourceChain $sourceAddress
+          node sui/its.js add-trusted-chains $sourceChain $sourceAddress
 
       - name: Send Token to another chain
         run: |

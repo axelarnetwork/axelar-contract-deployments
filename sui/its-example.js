@@ -12,7 +12,6 @@ const {
     broadcastFromTxBuilder,
     moveDir,
     broadcastExecuteApprovedMessage,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
 } = require('./utils');
@@ -30,8 +29,6 @@ async function sendToken(keypair, client, contracts, args, options) {
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
-
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -91,8 +88,6 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
 
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, destinationChain);
-
     const txBuilder = new TxBuilder(client);
 
     const tx = txBuilder.tx;
@@ -125,9 +120,6 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
     const { InterchainTokenService } = contracts;
     const [sourceChain, messageId, sourceAddress, tokenSymbol, payload] = args;
 
-    const [, originChain] = defaultAbiCoder.decode(['uint256', 'string', 'bytes'], payload);
-    checkTrustedAddresses(InterchainTokenService.trustedAddresses, originChain);
-
     // Prepare Object Ids
     const symbol = tokenSymbol.toUpperCase();
 
@@ -144,7 +136,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-    console.log(messageInfo);
+    
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
 }
 
@@ -248,18 +240,18 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
     const tokenDistributor = options.distributor;
 
     // InterchainTokenService transfer payload from Ethereum to Sui
-    let payload = defaultAbiCoder.encode(
+    const itsMessage = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
     );
-    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
+    const hubMessage = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, itsMessage]);
 
     printInfo(
         JSON.stringify(
             {
-                payload,
+                payload: hubMessage,
                 tokenId,
-                payloadHash: keccak256(payload),
+                payloadHash: keccak256(hubMessage),
             },
             null,
             2,
@@ -277,18 +269,18 @@ async function printReceiveTransferInfo(contracts, args, options) {
     const itsBytes = options.itsBytes;
     const channelId = options.channelId || Example.objects.ItsChannelId;
 
-    let payload = defaultAbiCoder.encode(
+    const itsMessage = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
-    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
+    const hubMessage = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, itsMessage]);
 
     printInfo(
         JSON.stringify(
             {
-                payload,
+                payload: hubMessage,
                 tokenId,
-                payloadHash: keccak256(payload),
+                payloadHash: keccak256(hubMessage),
             },
             null,
             2,
