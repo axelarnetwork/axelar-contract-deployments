@@ -2,7 +2,6 @@ const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, printInfo, writeJSON } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
-const { Transaction } = require('@mysten/sui/transactions');
 const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
 
 const SPECIAL_CHAINS_TAGS = {
