@@ -8,11 +8,75 @@ const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
-const { readFileSync } = require('fs');
+const { writeFileSync, readFileSync } = require('fs');
+const fetch = require('node-fetch');
+const path = require('path');
 const {
     utils: { arrayify, id },
 } = ethers;
 require('./cli-utils');
+
+const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-cgp-stellar';
+
+const SUPPORTED_CONTRACTS = new Set([
+    'axelar_gateway',
+    'axelar_operators',
+    'axelar_gas_service',
+    'interchain_token',
+    'token_manager',
+    'interchain_token_service',
+]);
+
+function getWasmUrl(contractName, version) {
+    if (!SUPPORTED_CONTRACTS.has(contractName)) {
+        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
+    }
+
+    const pathName = contractName.replace(/_/g, '-');
+
+    return `${AXELAR_RELEASE_BASE_URL}/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+}
+
+async function downloadWasmFile(contractName, version) {
+    const url = getWasmUrl(contractName, version);
+    const tempDir = path.join(process.cwd(), 'artifacts');
+
+    // Create temp directory if it doesn't exist
+    const fs = require('fs');
+
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
+
+    try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Failed to download WASM file: ${response.statusText}`);
+        }
+
+        const buffer = await response.buffer();
+        writeFileSync(outputPath, buffer);
+        printInfo('Successfully downloaded WASM file to', outputPath);
+        return outputPath;
+    } catch (error) {
+        throw new Error(`Error downloading WASM file: ${error.message}`);
+    }
+}
+
+async function getWasmPath(options, contractName) {
+    if (options.wasmPath) {
+        return options.wasmPath;
+    }
+
+    if (options.version) {
+        return await downloadWasmFile(contractName, options.version);
+    }
+
+    throw new Error('Either --wasm-path or --version must be provided');
+}
 
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
@@ -107,13 +171,14 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 }
 
 async function deploy(options, config, chain, contractName) {
-    const { wasmPath, yes } = options;
+    const { yes } = options;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
 
+    const wasmPath = await getWasmPath(options, contractName);
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
@@ -231,7 +296,8 @@ function main() {
     const deployCmd = new Command('deploy')
         .description('Deploy a Stellar contract')
         .argument('<contract-name>', 'contract name to deploy')
-        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file').makeOptionMandatory(true))
+        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+        .addOption(new Option('--version <version>', 'version of the contract to deploy (e.g., v1.0.0)'))
         .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
         .addOption(new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'))
         .addOption(
