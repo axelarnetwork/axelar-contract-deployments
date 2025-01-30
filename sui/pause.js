@@ -35,7 +35,24 @@ function getVaraiblesForPackage(chain, packageName) {
             },
             contract: contractConfig,
         };
+    } else if (packageName === 'InterchainTokenService') {
+        const contractConfig = chain.contracts.InterchainTokenService;
+        return {
+            packageId: contractConfig.address,
+            singletonId: contractConfig.objects.InterchainTokenService,
+            versionedId: contractConfig.objects.InterchainTokenServicev0,
+            ownerCapId: contractConfig.objects.OwnerCap,
+            moduleName: 'interchain_token_service',
+            defaultFunctions: {
+                versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                functionNames: ['register_coin', 'deploy_remote_interchain_token', 'send_interchain_transfer', 'receive_interchain_transfer', 'receive_interchain_transfer_with_data', 'receive_deploy_interchain_token', 'mint_as_distributor', 'mint_to_as_distributor', 'burn_as_distributor' ],
+            },
+            contract: contractConfig,
+        };
+    } else {
+        throw new Error(`Unknown package ${packageName}.`);
     }
+
 }
 
 async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames) {
