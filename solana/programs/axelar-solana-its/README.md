@@ -77,7 +77,7 @@ The ITS implements functionality to allow token transfers to carry instruction d
 
 The diagram below shows how the message flows from the EVM ITS contract to a Solana program while also showing how the message is structured (click to open on Excalidraw an be able to zoom-in).
 
-[![EVM->Solana](https://github.com/user-attachments/assets/4f046eb8-39ec-4c04-885e-865f90f7513b)](https://excalidraw.com/#json=0lVeKwoyvgoGjZqq37iVP,dHVboAUXzZ-tsfo2KUizpQ)
+[![EVM->Solana](https://github.com/user-attachments/assets/bf0bf75e-3acc-404e-8425-0d7779a2893b)](https://excalidraw.com/#json=0lVeKwoyvgoGjZqq37iVP,dHVboAUXzZ-tsfo2KUizpQ)
 
 When calling a contract on the Solana chain using this flow, the Solana instruction should be serialized using Borsh (as expected by the solana program). Due to the Solana account model, the accounts required by the instruction should also be provided. The [AbiSolanaGateway](../../../evm-contracts/src/SolanaGatewayPayload.sol#L20) solidity library can be used directly or as a guide for creating the executable payload to send from EVM to Solana. This payload should then be used to populate the `data` field of the `InterchainTransfer` message.
 

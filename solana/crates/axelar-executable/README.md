@@ -7,8 +7,7 @@ If we look at the event data that the EVM Gateway produces when making a [`gatew
 
 Relayer for the edge chain **must** know how to call a contract on the given edge chain so that the contract can properly process the Axelar GMP message. The same concept applies to Solana, that every contract that wants to be compatible with the Axelar protocol **must** implement the `axelar-executable` interface. Implementing the `axelar-executable` interface allows the Relayer to send transactions to it.
 
-
-![high level interactoin](https://github.com/user-attachments/assets/d073fe0d-9497-4b19-b5f6-af895ea8587f)
+![high level interactoin](https://github.com/user-attachments/assets/c676c8c6-8867-4560-a0cc-fa476b2b21a7)
 
 1. Relayer will compose a transaction that can interact with the destination program on Solana
 2. `axelar-executable` exposes a function that allows the program to parse the Message into a format that it can work with
@@ -52,7 +51,8 @@ This means that the base interface for GMP messages defined by the Axelar protoc
 
 Solanas `axelar-executable` now expects that the `payload` emitted on the source chain also includes all the `account[]` data for the Relayer to create a proper transaction. If the `account[]` is absent on the GMP call, the Relayer cannot know what accounts to provide when calling the destination contract.
 
-![image](https://github.com/user-attachments/assets/82a2ff39-fec4-4a3a-a894-fe1171a65585)
+![Axelar Message Payload](https://github.com/user-attachments/assets/29a96677-83f5-4727-befa-3f815e31ad39)
+
 
 The source chain that wants to interact with Solana must encode the messages in a specific format that the Solana destination contract understands, and the Relayer can understand. `Accounts[]` requirement also lets the Relayer deterministically derive the accounts when crafting the transaction.
 
@@ -88,7 +88,7 @@ The way how accounts and the payload are encoded is encoding-specific. The `axel
 
 You can see the anatomy of an instruction that the Solana Relayer will send to the destination program when sending the raw payload to it:
 
-![image](https://github.com/user-attachments/assets/fecac1d3-cb81-4626-ade5-ca2f8d79697d)
+![Anatomy of an ix](https://github.com/user-attachments/assets/0312abb4-fe7f-45c7-a8ae-1318489da9d2)
 
 
 ## Exceptions of the `accounts[]` rule: ITS & Governance

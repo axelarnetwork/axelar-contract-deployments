@@ -19,7 +19,7 @@ While `abi` encoding can be used inside Solana programs, the ecosystem primarily
 
 The `axelar-solana-encoding` crate uses Merkle Trees to Merkelise the data and builds commitment schemes. This is necessary because Solana TX and compute limitations prevent doing _everything_ that the EVM gateway can do in a single TX. The defining property of `axelar-solana-encoding` allows the Relayer to send many small transactions without complex on-chain state tracking. Merkle Roots are the commitment values that tie all the small transactions together.
 
-![image](https://github.com/user-attachments/assets/84047adf-15de-4473-aad1-7851e65718eb)
+![Merkle Tree visualisation](https://github.com/user-attachments/assets/6cce2c07-2299-497d-bfdb-e889d3ac67dc)
 
 The fundamental idea of the Merkle Tree: 
 - You can prove that an item is part of the set without requiring the whole set present (e.g. prove **that a message is part of the message batch** or a **verifier is part of a verifier set**)
@@ -33,7 +33,7 @@ The unique property of this approach is that:
 
 Let's take a look at how we construct leaf nodes from verifier sets and message batches:
 
-![image](https://github.com/user-attachments/assets/825de271-9655-4611-8a0b-7a27ff2e6d73)
+![Merkelising the Data](https://github.com/user-attachments/assets/6bbb91c6-7ba1-4c35-a770-cead1a97dc1a)
 
 > [!NOTE]
 > **Payload digest**: this is the data that the verifiers sign. It is a hash that consists of all the messages, verifiers, and other metadata. 
@@ -51,7 +51,7 @@ Let's take a look at how we construct leaf nodes from verifier sets and message 
 > [!NOTE]
 > **Execute Data**: This is the data that the Multisig Prover returns after getting all the signatures. It aggregates the signatures and all the data used to create a **payload digest**. The goal of the data is to allow the gateway to check that the verifiers have signed a payload digest and that the provided messages can be re-hashed to create the payload digest. 
 
-![image](https://github.com/user-attachments/assets/066bf866-4130-4808-8901-5bf493d895fb)
+![Execute Data layout](https://github.com/user-attachments/assets/7a6b784b-32a5-42cb-adee-26cdd430fe84)
 
 After the data has been Merkelised, the Multisig Prover neatly packs it together for the Relayer to consume.
 It encodes:
@@ -81,7 +81,7 @@ This means that our `axelar-solana-encoding` code has a branching mechanism that
 - on Axelars CosmWASM runtime (Multisig Prover), we leverage the Rust-native keccak256 implementation
 - on the Relayer, we leverage the Rust-native keccak256 implementation
 
-![image](https://github.com/user-attachments/assets/d8257c24-abb2-4064-9414-b50618bb07e4)
+![Hashing the data](https://github.com/user-attachments/assets/fe3f4006-6131-40af-a775-df6291bb3f8f)
 
 For encoding the data, we use [udigest crate](https://docs.rs/udigest/0.2.2/udigest/encoding/index.html), which allows us to transform a set of data into a vector of bytes. [Read this article about hashing the data and creating digests](https://www.dfns.co/article/unambiguous-hashing).
 
@@ -108,7 +108,8 @@ The _Storage Limit for Messages_ requirement is a given using Solana PDAs, no ex
 ## Understanding the EVM encoding for comparison sake
 
 To better understand how this approach differs from the EVM Gateways ABI encoding, let's analyze it. The EVM encoding works the following way:
-[![evm encoding](https://github.com/user-attachments/assets/9ffb61a4-74ec-4734-862a-1027fa0e797b)](https://link.excalidraw.com/readonly/91ctxas9n1417Y1XXKwQ)
+
+![evm abi encoding](https://github.com/user-attachments/assets/3e3c32a8-13fe-482a-9d9c-a9f4853a63cc)
 
 Summary from the **payload digest**:
 - all messages in a batch get encoded and hashed in one go

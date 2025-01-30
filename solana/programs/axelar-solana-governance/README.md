@@ -1,7 +1,7 @@
 
 ## High level overview
 
-[![governance hl](https://github.com/user-attachments/assets/d771438c-b7ac-4d69-92d7-3c131ce91bd9)](https://excalidraw.com/#json=pVoAXLtjUps5y9nU8wYu2,cz_P-xoEobAN9qbfe0-MwQ)
+[![governance hl](https://github.com/user-attachments/assets/1d5be514-67d9-4dd6-b635-375300f01ae5)](https://excalidraw.com/#json=pVoAXLtjUps5y9nU8wYu2,cz_P-xoEobAN9qbfe0-MwQ)
 
 The governance module allows decisions taken on the Axelar network to be propagated and executed on the different integrated chains, giving a chance (by timelock) to each chain maintainer to prepare for it's execution. So the governance module acts as a "approved proposal's forwarder" which is connected to the Axelar governance infrastructure via [GMP](https://www.axelar.network/blog/general-message-passing-and-how-can-it-change-web3) messages.
 
