@@ -60,7 +60,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
             showBcs: true,
         },
     });
-
     return fromB64(response.data.bcs.bcsBytes);
 };
 
@@ -128,7 +127,7 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = bcsStructs.its.ITS.parse(bcsBytes);
+    const data = bcsStructs.its.InterchainTokenService.parse(bcsBytes);
     const channelId = data.value.channel.id;
     return '0x' + channelId;
 };
@@ -266,14 +265,6 @@ const parseGatewayInfo = (chain) => {
     };
 };
 
-const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
-    if (!trustedAddresses[destinationChain]) {
-        throw new Error(
-            `${destinationChain} is not trusted. Run 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>' to setup trusted address`,
-        );
-    }
-};
-
 const getStructs = async (client, packageId) => {
     const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
     const structs = {};
@@ -372,7 +363,6 @@ module.exports = {
     getBagContentId,
     moveDir,
     getTransactionList,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
     getStructs,
