@@ -116,12 +116,16 @@ async function generateKeypair(options) {
     }
 }
 
-// Redacted private key from the error message
+// Decodes a Sui private key without exposing the secret key when failing
 function decodePrivateKey(privateKey) {
+    if (typeof privateKey !== 'string' || !privateKey) {
+        throw new Error('Private key must be a non-empty string');
+    }
+
     try {
         return decodeSuiPrivateKey(privateKey);
     } catch (e) {
-        throw new Error(`Invalid Sui private key`);
+        throw new Error('Invalid Sui private key - please verify the format');
     }
 }
 
