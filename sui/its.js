@@ -45,7 +45,7 @@ async function setupTrustedAddress(keypair, client, config, contracts, args, opt
         tx.setSender(sender);
         await saveGeneratedTx(tx, `Set trusted address for ${trustedChain} to ${trustedAddress}`, client, options);
     } else {
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
     }
 
     // Update ITS config
@@ -83,7 +83,7 @@ async function removeTrustedAddress(keypair, client, contracts, args, options) {
         delete contracts.ITS.trustedAddresses[chainName];
     }
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address', options);
 }
 
 async function processCommand(command, config, chain, args, options) {

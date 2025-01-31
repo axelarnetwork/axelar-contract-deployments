@@ -76,7 +76,7 @@ async function execute(keypair, client, chains, chain, args, options) {
         payload,
     };
 
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed', options);
 }
 
 async function processCommand(command, config, args, options) {

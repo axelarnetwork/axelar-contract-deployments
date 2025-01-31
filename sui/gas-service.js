@@ -77,7 +77,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
         });
     }
 
-    await broadcast(client, keypair, tx, 'Gas Paid');
+    await broadcast(client, keypair, tx, 'Gas Paid', options);
 }
 
 async function addGas(keypair, client, gasServiceConfig, args, options) {
@@ -105,7 +105,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Added');
+    await broadcast(client, keypair, tx, 'Gas Added', options);
 }
 
 async function collectGas(keypair, client, gasServiceConfig, args, options) {
@@ -139,7 +139,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Collected');
+    await broadcast(client, keypair, tx, 'Gas Collected', options);
 }
 
 async function refund(keypair, client, gasServiceConfig, args, options) {
@@ -174,7 +174,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Refunded');
+    await broadcast(client, keypair, tx, 'Gas Refunded', options);
 }
 
 async function processCommand(command, chain, args, options) {

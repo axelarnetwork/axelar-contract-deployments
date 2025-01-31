@@ -9,6 +9,7 @@ const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/s
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
+const { prompt } = require('../../common/utils');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const { LedgerSigner } = require('./LedgerSigner');
@@ -133,7 +134,23 @@ function getRawPrivateKey(keypair) {
     return decodePrivateKey(keypair.getSecretKey()).secretKey;
 }
 
-async function broadcast(client, keypair, tx, actionName) {
+// Prompt the user for confirmation before executing a transaction
+async function askForConfirmation(commandOptions = {}) {
+    const { yes } = commandOptions;
+
+    if (!yes) {
+        const aborted = prompt('Confirm Tx?');
+
+        if (aborted) {
+            printInfo('Aborted');
+            process.exit(0);
+        }
+    }
+}
+
+async function broadcast(client, keypair, tx, actionName, commandOptions = {}) {
+    await askForConfirmation(commandOptions);
+
     const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
@@ -148,7 +165,9 @@ async function broadcast(client, keypair, tx, actionName) {
     return receipt;
 }
 
-async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOptions = {}, suiResponseOptions) {
+    await askForConfirmation(commandOptions);
+
     const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -156,7 +175,16 @@ async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiRespons
     return receipt;
 }
 
-const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName) => {
+const broadcastExecuteApprovedMessage = async (
+    client,
+    keypair,
+    discoveryInfo,
+    gatewayInfo,
+    messageInfo,
+    actionName,
+    commandOptions = {},
+) => {
+    await askForConfirmation(commandOptions);
     const receipt = await execute(client, keypair, discoveryInfo, gatewayInfo, messageInfo);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -164,7 +192,9 @@ const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, g
     return receipt;
 };
 
-async function broadcastSignature(client, txBytes, signature, actionName) {
+async function broadcastSignature(client, txBytes, signature, actionName, commandOptions = {}) {
+    await askForConfirmation(commandOptions);
+
     const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,
