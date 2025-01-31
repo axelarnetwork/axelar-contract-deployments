@@ -8,7 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig } = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, writeJSON } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -23,6 +23,7 @@ const {
 } = require('./utils');
 const secp256k1 = require('secp256k1');
 const chalk = require('chalk');
+const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
 
 const COMMAND_TYPE_APPROVE_MESSAGES = 0;
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
@@ -153,7 +154,6 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
-    console.log([sourceChain, messageId, sourceAddress, destinationId, payloadHash]);
     const encodedMessages = bcs
         .vector(bcsStructs.gateway.Message)
         .serialize([
@@ -293,7 +293,6 @@ async function allowFunctions(keypair, client, config, chain, contractConfig, ar
     if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
 
     const tx = new Transaction();
-    console.log(contractConfig.objects);
 
     for (const i in versions) {
         tx.moveCall({
@@ -324,7 +323,6 @@ async function disallowFunctions(keypair, client, config, chain, contractConfig,
     if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
 
     const tx = new Transaction();
-    console.log(contractConfig.objects);
 
     for (const i in versions) {
         tx.moveCall({
@@ -510,6 +508,65 @@ async function testNewField(value, options) {
     console.log(`Set the value to ${value} and it was set to ${returnedValue}.`);
 }
 
+async function pause(keypair, client, config, chain, contracts, args, options) {
+    const response = await client.getObject({
+        id: contracts.objects.Gatewayv0,
+        options: {
+            showContent: true,
+            showBcs: true,
+        },
+    });
+    let allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
+    allowedFunctionsArray = allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
+
+    const versionsArg = [];
+    const allowedFunctionsArg = [];
+
+    for (const version in allowedFunctionsArray) {
+        const allowedFunctions = allowedFunctionsArray[version];
+
+        // Do not dissalow `allow_function` because that locks the gateway forever.
+        if (Number(version) === allowedFunctionsArray.length - 1) {
+            const index = allowedFunctions.indexOf('allow_function');
+
+            if (index > -1) {
+                // only splice array when item is found
+                allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
+            }
+        }
+
+        printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
+
+        versionsArg.push(new Array(allowedFunctions.length).fill(version).join());
+        allowedFunctionsArg.push(allowedFunctions.join());
+    }
+
+    // Write the
+    writeJSON(
+        {
+            versions: versionsArg,
+            disallowedFunctions: allowedFunctionsArg,
+        },
+        `${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`,
+    );
+
+    return disallowFunctions(keypair, client, config, chain, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
+}
+
+async function unpause(keypair, client, config, chain, contracts, args, options) {
+    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`);
+
+    return allowFunctions(
+        keypair,
+        client,
+        config,
+        chain,
+        contracts,
+        [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()],
+        options,
+    );
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
@@ -610,6 +667,20 @@ if (require.main === module) {
         .description('Test the new field added for upgrade-versioned')
         .action((value, options) => {
             testNewField(value, options);
+        });
+
+    program
+        .command('pause')
+        .description('Pause the gateway')
+        .action((options) => {
+            mainProcessor(pause, [], options);
+        });
+
+    program
+        .command('unpause')
+        .description('Unpause the gateway')
+        .action((options) => {
+            mainProcessor(unpause, [], options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });

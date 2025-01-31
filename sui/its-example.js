@@ -136,7 +136,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-    console.log(messageInfo);
+
     await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
 }
 
@@ -240,18 +240,18 @@ async function printReceiveDeploymentInfo(contracts, args, options) {
     const tokenDistributor = options.distributor;
 
     // InterchainTokenService transfer payload from Ethereum to Sui
-    let payload = defaultAbiCoder.encode(
+    const itsMessage = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [messageType, tokenId, byteName, byteSymbol, tokenDecimals, tokenDistributor],
     );
-    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
+    const hubMessage = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, itsMessage]);
 
     printInfo(
         JSON.stringify(
             {
-                payload,
+                payload: hubMessage,
                 tokenId,
-                payloadHash: keccak256(payload),
+                payloadHash: keccak256(hubMessage),
             },
             null,
             2,
@@ -269,18 +269,18 @@ async function printReceiveTransferInfo(contracts, args, options) {
     const itsBytes = options.itsBytes;
     const channelId = options.channelId || Example.objects.ItsChannelId;
 
-    let payload = defaultAbiCoder.encode(
+    const itsMessage = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'bytes', 'bytes', 'uint256', 'bytes'],
         [ITSMessageType.InterchainTokenTransfer, tokenId, sourceAddress, channelId, unitAmount, itsBytes],
     );
-    payload = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, payload]);
+    const hubMessage = defaultAbiCoder.encode(['uint256', 'string', 'bytes'], [ITSMessageType.ReceiveFromItsHub, sourceChain, itsMessage]);
 
     printInfo(
         JSON.stringify(
             {
-                payload,
+                payload: hubMessage,
                 tokenId,
-                payloadHash: keccak256(payload),
+                payloadHash: keccak256(hubMessage),
             },
             null,
             2,
