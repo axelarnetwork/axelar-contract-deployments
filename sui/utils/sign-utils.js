@@ -50,7 +50,7 @@ function getWallet(chain, options) {
 
     switch (options.privateKeyType) {
         case 'bech32': {
-            const decodedKey = decodeSuiPrivateKey(options.privateKey);
+            const decodedKey = decodePrivateKey(options.privateKey);
             const secretKey = decodedKey.secretKey;
             keypair = scheme.fromSecretKey(secretKey);
             break;
@@ -116,8 +116,17 @@ async function generateKeypair(options) {
     }
 }
 
+// Redacted private key from the error message
+function decodePrivateKey(privateKey) {
+    try {
+        return decodeSuiPrivateKey(privateKey);
+    } catch (e) {
+        throw new Error(`Invalid Sui private key`);
+    }
+}
+
 function getRawPrivateKey(keypair) {
-    return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
+    return decodePrivateKey(keypair.getSecretKey()).secretKey;
 }
 
 async function broadcast(client, keypair, tx, actionName) {
