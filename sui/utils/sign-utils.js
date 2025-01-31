@@ -162,7 +162,16 @@ async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOpt
     return receipt;
 }
 
-const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName) => {
+const broadcastExecuteApprovedMessage = async (
+    client,
+    keypair,
+    discoveryInfo,
+    gatewayInfo,
+    messageInfo,
+    actionName,
+    commandOptions = {},
+) => {
+    await askForConfirmation(commandOptions);
     const receipt = await execute(client, keypair, discoveryInfo, gatewayInfo, messageInfo);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -170,7 +179,9 @@ const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, g
     return receipt;
 };
 
-async function broadcastSignature(client, txBytes, signature, actionName) {
+async function broadcastSignature(client, txBytes, signature, actionName, commandOptions = {}) {
+    await askForConfirmation(commandOptions);
+
     const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,

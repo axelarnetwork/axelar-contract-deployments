@@ -145,7 +145,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         payload,
     };
 
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName, options);
 }
 
 async function receiveToken(keypair, client, contracts, args, options) {

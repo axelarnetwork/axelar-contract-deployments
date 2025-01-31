@@ -152,7 +152,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 
     const gmpChannelId = await getSingletonChannelId(client, gmpSingletonObjectId);
     const itsChannelId = await getSingletonChannelId(client, itsSingletonObjectId);
@@ -221,7 +221,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         });
     }
 
-    const result = await broadcast(client, keypair, tx, 'Setup Gateway');
+    const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
 
     const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
         `${packageId}::gateway::Gateway`,
@@ -269,7 +269,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
@@ -288,7 +288,7 @@ async function postDeploySquid(published, keypair, client, config, chain, option
         arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {

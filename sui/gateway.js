@@ -491,7 +491,7 @@ async function testNewField(value, options) {
         arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.u64(value)],
     });
 
-    await broadcast(client, keypair, tx, 'Set new_field');
+    await broadcast(client, keypair, tx, 'Set new_field', options);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     tx = new Transaction();
@@ -529,7 +529,7 @@ async function mainProcessor(processor, args, options) {
         tx.setSender(sender);
         await saveGeneratedTx(tx, message, client, options);
     } else {
-        await broadcast(client, keypair, tx, message);
+        await broadcast(client, keypair, tx, message, options);
     }
 }
 
