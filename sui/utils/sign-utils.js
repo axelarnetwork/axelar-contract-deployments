@@ -121,7 +121,23 @@ function getRawPrivateKey(keypair) {
     return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
 }
 
-async function broadcast(client, keypair, tx, actionName) {
+// Prompt the user for confirmation before executing a transaction
+async function askForConfirmation(commandOptions = {}) {
+    const { yes } = commandOptions;
+
+    if (!yes) {
+        const confirmed = await createConfirmPrompt('Confirm? (y/n)');
+
+        if (!confirmed) {
+            printInfo('Aborted');
+            process.exit(0);
+        }
+    }
+}
+
+async function broadcast(client, keypair, tx, actionName, commandOptions = {}) {
+    await askForConfirmation(commandOptions);
+
     const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
@@ -137,16 +153,7 @@ async function broadcast(client, keypair, tx, actionName) {
 }
 
 async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOptions = {}, suiResponseOptions) {
-    const { yes } = commandOptions;
-
-    if (!yes) {
-        const confirmed = await createConfirmPrompt(`Confirm? (y/n)`);
-
-        if (!confirmed) {
-            printInfo('Aborted');
-            process.exit(0);
-        }
-    }
+    await askForConfirmation(commandOptions);
 
     const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 

@@ -296,7 +296,7 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
-const isAllowed = async (client, keypair, chain, exec) => {
+const isAllowed = async (client, keypair, chain, exec, options) => {
     const addError = (tx) => {
         tx.moveCall({
             target: `${STD_PACKAGE_ID}::ascii::char`,
@@ -309,7 +309,7 @@ const isAllowed = async (client, keypair, chain, exec) => {
     addError(tx);
 
     try {
-        await broadcast(client, keypair, tx);
+        await broadcast(client, keypair, tx, undefined, options);
     } catch (e) {
         const errorMessage = e.cause.effects.status.error;
         let regexp = /address: (.*?),/;
