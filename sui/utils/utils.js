@@ -22,7 +22,7 @@ const {
     SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
 const { Transaction } = require('@mysten/sui/transactions');
-const { broadcast } = require('./sign-utils');
+const { broadcast, broadcastFromTxBuilder } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -69,7 +69,7 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
-    const publishTxn = await builder.signAndExecute(keypair);
+    const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
 
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 

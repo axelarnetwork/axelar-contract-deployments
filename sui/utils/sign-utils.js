@@ -9,6 +9,7 @@ const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/s
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
+const { createConfirmPrompt } = require('../../common/cli-utils');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const { LedgerSigner } = require('./LedgerSigner');
@@ -135,7 +136,18 @@ async function broadcast(client, keypair, tx, actionName) {
     return receipt;
 }
 
-async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOptions = {}, suiResponseOptions) {
+    const { yes } = commandOptions;
+
+    if (!yes) {
+        const confirmed = await createConfirmPrompt(`Confirm? (y/n)`);
+
+        if (!confirmed) {
+            printInfo('Aborted');
+            process.exit(0);
+        }
+    }
+
     const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 
     printInfo(actionName || 'Tx', receipt.digest);

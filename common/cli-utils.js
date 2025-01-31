@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const fs = require('fs');
 const { Option } = require('commander');
+const readline = require('readline');
 
 // A path to the chain configuration files
 const CHAIN_CONFIG_PATH = `${__dirname}/../axelar-chains-config/info`;
@@ -63,8 +64,24 @@ const addOptionsToCommands = (program, optionMethod, options) => {
     }
 };
 
+const createConfirmPrompt = (message) => {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise((resolve) => {
+        rl.question(message ? 'Confirm? (y/n) ' : message, (answer) => {
+            rl.close();
+            const normalizedAnswer = answer.toLowerCase().trim();
+            resolve(normalizedAnswer === 'y' || normalizedAnswer === 'yes');
+        });
+    });
+};
+
 module.exports = {
     addEnvOption,
     addBaseOptions,
     addOptionsToCommands,
+    createConfirmPrompt,
 };
