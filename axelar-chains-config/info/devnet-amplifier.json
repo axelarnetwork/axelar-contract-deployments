@@ -1048,6 +1048,10 @@
         "stellar-test-2025-q1": {
           "codeId": 848,
           "address": "axelar1g03zp32gqx6qg3z59csfj4rm56lkpyqkdw9lg4qdgg6uxyupryrqcycxt9"
+        },
+        "stellar-t1-2025-q1": {
+          "codeId": 848,
+          "address": "axelar1yeglfarfc26ak3je4u6yvcuj0mfsyrp3zranrvn8vnfv370x6lyqkjl0kp"
         }
       },
       "MultisigProver": {
