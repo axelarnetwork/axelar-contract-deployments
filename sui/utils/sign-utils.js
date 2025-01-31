@@ -9,7 +9,7 @@ const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/s
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
-const { createConfirmPrompt } = require('../../common/cli-utils');
+const { prompt } = require('../../common/utils');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
 const { LedgerSigner } = require('./LedgerSigner');
@@ -126,9 +126,9 @@ async function askForConfirmation(commandOptions = {}) {
     const { yes } = commandOptions;
 
     if (!yes) {
-        const confirmed = await createConfirmPrompt('Confirm? (y/n)');
+        const aborted = prompt('Confirm Tx?');
 
-        if (!confirmed) {
+        if (aborted) {
             printInfo('Aborted');
             process.exit(0);
         }
