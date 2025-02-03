@@ -111,7 +111,7 @@ async function executeCombinedSignature(chain, options) {
         throw new Error(`No signature specified in [${combinedSignPath}]`);
     }
 
-    const txResult = await broadcastSignature(client, encodedTxBytes, combinedSignatureBytes, options);
+    const txResult = await broadcastSignature(client, encodedTxBytes, combinedSignatureBytes, '', options);
     printInfo('Transaction result', JSON.stringify(txResult));
 
     fileData.status = 'EXECUTED';
@@ -152,7 +152,7 @@ async function combineSignature(chain, options) {
     }
 
     if (!options.offline) {
-        const txResult = await broadcastSignature(client, txBlockBytes, combinedSignature, options);
+        const txResult = await broadcastSignature(client, txBlockBytes, combinedSignature, '', options);
 
         if (options.executeResultPath) {
             storeSignedTx(options.executeResultPath, txResult);
