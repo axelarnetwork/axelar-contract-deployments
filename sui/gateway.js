@@ -453,7 +453,7 @@ async function checkVersionControl(version, options) {
         const allowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.allowedFunctions.split(',');
 
         for (const allowedFunction of allowedFunctions) {
-            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction]);
+            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction], options);
             const color = allowed ? chalk.green : chalk.red;
             console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
         }
@@ -463,7 +463,7 @@ async function checkVersionControl(version, options) {
         const disallowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.disallowedFunctions.split(',');
 
         for (const disallowedFunction of disallowedFunctions) {
-            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction]);
+            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction], options);
             const color = allowed ? chalk.red : chalk.green;
             console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
         }
@@ -491,7 +491,7 @@ async function testNewField(value, options) {
         arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.u64(value)],
     });
 
-    await broadcast(client, keypair, tx, 'Set new_field');
+    await broadcast(client, keypair, tx, 'Set new_field', options);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     tx = new Transaction();
@@ -529,7 +529,7 @@ async function mainProcessor(processor, args, options) {
         tx.setSender(sender);
         await saveGeneratedTx(tx, message, client, options);
     } else {
-        await broadcast(client, keypair, tx, message);
+        await broadcast(client, keypair, tx, message, options);
     }
 }
 

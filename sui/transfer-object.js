@@ -43,7 +43,7 @@ async function processCommand(chain, options) {
         tx.setSender(sender);
         await saveGeneratedTx(tx, 'Transferred Object', client, options);
     } else {
-        await broadcast(client, keypair, tx, 'Transferred Object');
+        await broadcast(client, keypair, tx, 'Transferred Object', options);
     }
 }
 
