@@ -239,7 +239,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         },
         domainSeparator,
         operator,
-        minimumRotationDelay,
+        minimumRotationDelay: minimumRotationDelay / 1000, // convert from milliseconds to seconds
     };
 }
 
