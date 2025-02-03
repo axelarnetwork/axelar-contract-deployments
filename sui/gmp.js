@@ -52,7 +52,7 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Call Sent');
+    await broadcast(client, keypair, tx, 'Call Sent', options);
 }
 
 async function execute(keypair, client, chains, chain, args, options) {
