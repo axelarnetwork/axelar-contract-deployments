@@ -18,7 +18,7 @@ function parseTrustedChains(config, trustedChain) {
     return trustedChain.split(',');
 }
 
-async function setupTrustedChain(keypair, client, config, contracts, args, options) {
+async function addTrustedChains(keypair, client, config, contracts, args, options) {
     const [trustedChain] = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
