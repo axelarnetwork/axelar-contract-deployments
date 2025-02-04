@@ -623,6 +623,49 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
+    "stellar-2024-q4": {
+      "name": "Stellar",
+      "axelarId": "stellar-2024-q4",
+      "rpc": "https://soroban-testnet.stellar.org",
+      "horizonRpc": "https://horizon-testnet.stellar.org",
+      "networkType": "testnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "explorer": {
+        "name": "Soroban Nownodes",
+        "url": "https://soroban.nownodes.io/testnet"
+      },
+      "contracts": {
+        "axelar_gateway": {
+          "address": "CBMFHKNH46XWDKGKQNCF446O6FB73RB22UYQYQPVOBGZ2T2EF4YDTV43",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "operator": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "domainSeparator": "b9b1bbb1dd01763015cc17bda777b73f787301234b01e6f757553dfa4e4fbc88",
+            "minimumRotationDelay": "0",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "e8898cba5a371e9d9c5622b5b62b25958096b9ab881f1e4bf91d6d29da58fd5e",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        }
+      }
+    },
     "stellar-test-2025-q1": {
       "name": "Stellar",
       "axelarId": "stellar-test-2025-q1",
