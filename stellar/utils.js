@@ -10,13 +10,14 @@ const {
     xdr: { DiagnosticEvent, SorobanTransactionData },
     Address,
     xdr,
+    nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify },
+    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
     BigNumber,
 } = ethers;
 
@@ -291,6 +292,50 @@ const createAuthorizedFunc = (contractAddress, functionName, args) =>
         }),
     );
 
+function addressToScVal(addressString) {
+    return nativeToScVal(Address.fromString(addressString), { type: 'address' });
+}
+
+function hexToScVal(hexString) {
+    return nativeToScVal(Buffer.from(arrayify(hexString)), { type: 'bytes' });
+}
+
+function tokenToScVal(tokenAddress, tokenAmount) {
+    return nativeToScVal(
+        {
+            address: Address.fromString(tokenAddress),
+            amount: tokenAmount,
+        },
+        {
+            type: {
+                address: ['symbol', 'address'],
+                amount: ['symbol', 'i128'],
+            },
+        },
+    );
+}
+
+function tokenMetadataToScVal(decimal, name, symbol) {
+    return nativeToScVal(
+        {
+            decimal,
+            name,
+            symbol,
+        },
+        {
+            type: {
+                decimal: ['symbol', 'u32'],
+                name: ['symbol', 'string'],
+                symbol: ['symbol', 'string'],
+            },
+        },
+    );
+}
+
+function saltToBytes32(salt) {
+    return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -306,4 +351,9 @@ module.exports = {
     serializeValue,
     getBalances,
     createAuthorizedFunc,
+    addressToScVal,
+    hexToScVal,
+    tokenToScVal,
+    tokenMetadataToScVal,
+    saltToBytes32,
 };

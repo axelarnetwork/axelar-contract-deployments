@@ -1043,7 +1043,7 @@
       "explorer": {
         "name": "Scrollscan",
         "url": "https://sepolia.scrollscan.dev",
-        "api": "https://api-sepolia.scrollscan.dev/api"
+        "api": "https://api-sepolia.scrollscan.com/api"
       },
       "confirmations": 2,
       "gasOptions": {
