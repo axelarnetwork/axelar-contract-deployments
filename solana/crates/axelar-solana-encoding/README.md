@@ -4,7 +4,7 @@ This crate defines utilities that are used on the following components:
 - Encodes data on the [**Multisig Prover**](https://github.com/eigerco/axelar-amplifier/blob/acd6d68da408ff9ea8859debd3b04427b08f5be3/contracts/multisig-prover/src/encoding/mod.rs#L21) in a Merkelised way
 - [**Relayer**](https://github.com/eigerco/axelar-solana-relayer) uses the encoded data to send many small transactions to the Axelar Solana Gateway to approve messages or rotate signer sets
 - [**Axelar Solana Gateway**](../../programs/axelar-solana-gateway/README.md) uses the encoding crate to create hashes that are consistent between all implementations
-- All components listed above use the data types defined in this crate. For a high-level overview, see [the program README.md](../../programs/README.md)
+- All components listed above use the data types defined in this crate. For a high-level overview, see [the root README.md](../../../README.md)
 
 ## Using `borsh`
 
