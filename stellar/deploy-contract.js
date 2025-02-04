@@ -161,7 +161,9 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
-            const itsAddress = nativeToScVal(chain?.contracts?.interchain_token_service?.address, { type: 'address' });
+            const itsAddress = options.useDummyItsAddress
+                ? gatewayAddress
+                : nativeToScVal(chain?.contracts?.interchain_token_service?.address, { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
@@ -306,6 +308,7 @@ function main() {
                 .default(15)
                 .argParser(Number),
         )
+        .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example to test a GMP call').default(false))
         .action((contractName, options) => {
             mainProcessor(options, deploy, contractName);
         });
