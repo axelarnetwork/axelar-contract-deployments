@@ -308,7 +308,7 @@ function main() {
                 .default(15)
                 .argParser(Number),
         )
-        .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example to test a GMP call').default(false))
+        .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false))
         .action((contractName, options) => {
             mainProcessor(options, deploy, contractName);
         });
