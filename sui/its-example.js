@@ -14,6 +14,7 @@ const {
     broadcastExecuteApprovedMessage,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -29,6 +30,8 @@ async function sendToken(keypair, client, contracts, args, options) {
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
+
+    await checkTrustedAddresses(destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -87,6 +90,8 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const [symbol, destinationChain, feeAmount] = args;
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
+
+    await checkTrustedAddresses(destinationChain);
 
     const txBuilder = new TxBuilder(client);
 
