@@ -224,7 +224,7 @@ jobs:
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its.js add-trusted-chains $sourceChain $sourceAddress
+          node sui/its.js add-trusted-chains $sourceChain
 
       - name: Send Token to another chain
         run: |
