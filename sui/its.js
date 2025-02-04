@@ -88,20 +88,20 @@ if (require.main === module) {
     // The trusted address is used to verify the message from the source chain.
     const setupTrustedChainsProgram = new Command()
         .name('add-trusted-chains')
-        .command('add-trusted-chains <trusted-chain>')
+        .command('add-trusted-chains <trusted-chains>')
         .description(
-            `Add trusted chain. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed EVM chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed chains`,
         )
-        .action((trustedChain, options) => {
-            mainProcessor(addTrustedChains, options, [trustedChain], processCommand);
+        .action((trustedChains, options) => {
+            mainProcessor(addTrustedChains, options, [trustedChains], processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
         .name('remove-trusted-address')
         .description('Remove trusted address')
-        .command('remove-trusted-address <trusted-chain>')
-        .action((trustedChain, options) => {
-            mainProcessor(removeTrustedChain, options, [trustedChain], processCommand);
+        .command('remove-trusted-address <trusted-chains>')
+        .action((trustedChains, options) => {
+            mainProcessor(removeTrustedChain, options, [trustedChains], processCommand);
         });
 
     program.addCommand(setupTrustedChainsProgram);
