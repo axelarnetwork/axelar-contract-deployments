@@ -49,8 +49,8 @@ node stellar/faucet.js --recipient <address>
 
 Setup
 
-1. Checkout the axelar-cgp-soroban repo.
-2. Compile the Soroban wasm contracts
+1. Checkout the axelar-cgp-stellar repo.
+2. Compile the Stellar wasm contracts
 
 ```bash
 cargo build
@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_gateway --version v1.0.0
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,29 +76,48 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_operators.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_operators --version v1.0.0
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gas_service.optimized.wasm
+node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
 ```
 
 ### Interchain Token Service
 
-Deploy Interchain Token wasm first.
+Deploy Interchain Token and Token Manager wasm first.
+
 ```bash
-node stellar/deploy-contract.js deploy interchain_token --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token.optimized.wasm
-```bash
-node stellar/deploy-contract.js deploy interchain_token_service --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/interchain_token_service.optimized.wasm
+node stellar/deploy-contract.js deploy interchain_token --version v1.0.0
+node stellar/deploy-contract.js deploy token_manager --version v1.0.0
+node stellar/deploy-contract.js deploy interchain_token_service --version v1.0.0
 ```
 
 ### Example
 
+Note that example contract should use `--wasm-path` option to deploy contract
+
 ```bash
-node stellar/deploy-contract.js deploy example --chain-name <CHAIN_NAME> --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/example.optimized.wasm
+node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm
 ```
+
+### Contract upgrades
+
+To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
+
+```bash
+node stellar/deploy-contract.js deploy upgrader --version v1.0.0
+```
+
+After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+```
+
+where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
 
 ## Generate bindings
 
@@ -166,14 +185,6 @@ node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
 ```
 
-#### Upgrade Gateway
-
-To upgrade the gateway, run the following command:
-
-```bash
-node stellar/deploy-contract.js upgrade axelar_gateway --wasm-path ../axelar-cgp-soroban/target/wasm32-unknown-unknown/release/axelar_gateway.optimized.wasm
-```
-
 ### Interchain Token Service
 
 _Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
@@ -188,6 +199,36 @@ node stellar/its.js set-trusted-chain [chain-name]
 
 ```bash
 node stellar/its.js remove-trusted-chain [chain-name]
+```
+
+#### Deploy Interchain Token
+
+```bash
+node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [initial-supply]
+```
+
+#### Deploy Remote Interchain Token
+
+```bash
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
+#### Register Canonical Token
+
+```bash
+node stellar/its.js register-canonical-token [token-address]
+```
+
+#### Deploy Remote Canonical Token
+
+```bash
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] [gas-token-address] [gas-fee-amount]
+```
+
+#### Interchain Transfer
+
+```bash
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
 ```
 
 ## TTL extension and state archival recovery

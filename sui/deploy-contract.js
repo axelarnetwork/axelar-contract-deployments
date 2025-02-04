@@ -68,6 +68,7 @@ const PACKAGE_CONFIGS = {
         Operators: postDeployOperators,
         ITS: postDeployIts,
         Squid: postDeploySquid,
+        Utils: postDeployUtils,
     },
 };
 
@@ -109,6 +110,13 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
     };
 }
 
+async function postDeployUtils(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+    chain.contracts.Utils.objects = {
+        UpgradeCap: upgradeCap,
+    };
+}
+
 async function postDeployGasService(published, keypair, client, config, chain, options) {
     const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::gas_service::GasCollectorCap`,
@@ -144,7 +152,7 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 
     const gmpChannelId = await getSingletonChannelId(client, gmpSingletonObjectId);
     const itsChannelId = await getSingletonChannelId(client, itsSingletonObjectId);
@@ -213,7 +221,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         });
     }
 
-    const result = await broadcast(client, keypair, tx, 'Setup Gateway');
+    const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
 
     const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
         `${packageId}::gateway::Gateway`,
@@ -227,10 +235,11 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
             Gateway: gateway,
             UpgradeCap: upgradeCap,
             Gatewayv0: gatewayv0,
+            OwnerCap: ownerCap,
         },
         domainSeparator,
         operator,
-        minimumRotationDelay,
+        minimumRotationDelay: minimumRotationDelay / 1000, // convert from milliseconds to seconds
     };
 }
 
@@ -265,7 +274,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
@@ -284,7 +293,7 @@ async function postDeploySquid(published, keypair, client, config, chain, option
         arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
@@ -311,6 +320,10 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
+        versions: {
+            0: published.packageId,
+        },
+        deployer: keypair.toSuiAddress(),
     };
 
     chain.contracts[packageName].structs = await getStructs(client, published.packageId);

@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
-const { governanceAddress } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -83,6 +83,32 @@ const addAmplifierOptions = (program, options) => {
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
+    program.hook('preAction', (command) => {
+        const chainName = command.opts().chainName;
+        const contractName = command.opts().contractName;
+
+        if (!CONTRACTS[contractName]) {
+            throw new Error(`contract ${contractName} is not supported`);
+        }
+
+        if (!CONTRACTS[contractName].makeInstantiateMsg) {
+            throw new Error(`makeInstantiateMsg function for contract ${contractName} is not defined`);
+        }
+
+        const scope = CONTRACTS[contractName].scope;
+
+        if (!scope) {
+            throw new Error(`scope of contract ${contractName} is not defined`);
+        }
+
+        if (scope === CONTRACT_SCOPE_CHAIN && !chainName) {
+            throw new Error(`${contractName} requires chainName option`);
+        }
+
+        if (scope === CONTRACT_SCOPE_GLOBAL && chainName) {
+            throw new Error(`${contractName} does not support chainName option`);
+        }
+    });
 };
 
 const addStoreOptions = (program) => {
@@ -95,7 +121,9 @@ const addStoreProposalOptions = (program) => {
         new Option('--builder <builder>', 'a valid docker image name with tag, such as "cosmwasm/workspace-optimizer:0.16.0'),
     );
     program.addOption(
-        new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate'),
+        new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate')
+            .default([])
+            .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
     );
 };
 

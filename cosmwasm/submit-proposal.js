@@ -7,6 +7,7 @@ const { createHash } = require('crypto');
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const {
+    CONTRACTS,
     prepareWallet,
     prepareClient,
     fromHex,
@@ -15,7 +16,8 @@ const {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
@@ -26,7 +28,6 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
-    makeInstantiateMsg,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
 const {
@@ -80,6 +81,7 @@ const callSubmitProposal = async (client, wallet, config, options, proposal) => 
 const storeCode = async (client, wallet, config, options) => {
     const { contractName } = options;
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     const proposal = encodeStoreCodeProposal(options);
 
@@ -94,14 +96,15 @@ const storeCode = async (client, wallet, config, options) => {
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, chainName } = options;
+    const { contractName, instantiate2 } = options;
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
+    await addDefaultInstantiateAddresses(client, config, options);
 
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
     }
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
 
     if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
@@ -115,10 +118,10 @@ const storeInstantiate = async (client, wallet, config, options) => {
 };
 
 const instantiate = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, predictOnly, chainName } = options;
+    const { contractName, instantiate2, predictOnly } = options;
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
-    await updateCodeId(client, config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     let contractAddress;
 
@@ -129,7 +132,7 @@ const instantiate = async (client, wallet, config, options) => {
         return;
     }
 
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
 
     let proposal;
     let proposalType;
@@ -203,7 +206,8 @@ const paramChange = async (client, wallet, config, options) => {
 };
 
 const migrate = async (client, wallet, config, options) => {
-    await updateCodeId(client, config, options);
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+    contractConfig.codeId = await getCodeId(client, config, options);
 
     const proposal = encodeMigrateContractProposal(config, options);
 
@@ -295,7 +299,7 @@ const programHandler = () => {
             options.chains = chains;
             mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { registerItsChainOptions: true, proposalOptions: true, runAs: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')

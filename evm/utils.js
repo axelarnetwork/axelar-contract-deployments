@@ -209,6 +209,11 @@ function isValidBytesAddress(input) {
     return addressRegex.test(input);
 }
 
+function isValidBytesArray(input) {
+    const bytesRegex = /^0x[a-fA-F0-9]/;
+    return bytesRegex.test(input);
+}
+
 const isContract = async (address, provider) => {
     const code = await provider.getCode(address);
     return code && code !== '0x';
@@ -272,6 +277,7 @@ const validationFunctions = {
     isValidAddress,
     isValidPrivateKey,
     isValidTokenId,
+    isValidBytesArray,
 };
 
 function validateParameters(parameters) {

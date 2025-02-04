@@ -20,9 +20,9 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     printInfo,
+    printWarn,
     isString,
     isStringArray,
-    isStringLowercase,
     isKeccak256Hash,
     isNumber,
     toBigNumberString,
@@ -35,6 +35,9 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
+
+const CONTRACT_SCOPE_GLOBAL = 'global';
+const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
@@ -64,6 +67,10 @@ const getLabel = ({ contractName, label }) => label || contractName;
 const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
+    if (!contractName) {
+        return;
+    }
+
     config.axelar = config.axelar || {};
     config.axelar.contracts = config.axelar.contracts || {};
     config.axelar.contracts[contractName] = config.axelar.contracts[contractName] || {};
@@ -99,22 +106,24 @@ const getAmplifierContractConfig = (config, { contractName, chainName }) => {
     return { contractBaseConfig, contractConfig };
 };
 
-const updateCodeId = async (client, config, options) => {
-    const { fetchCodeId, codeId } = options;
+const getCodeId = async (client, config, options) => {
+    const { fetchCodeId, codeId, contractName } = options;
 
-    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+    const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
 
     if (codeId) {
-        contractConfig.codeId = codeId;
-    } else if (fetchCodeId) {
-        contractConfig.codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-    } else if (contractBaseConfig.lastUploadedCodeId) {
-        contractConfig.codeId = contractBaseConfig.lastUploadedCodeId;
-    } else {
-        throw new Error('Code Id is not defined');
+        return codeId;
     }
 
-    printInfo('Using code id', contractConfig.codeId);
+    if (fetchCodeId) {
+        return fetchCodeIdFromCodeHash(client, contractBaseConfig);
+    }
+
+    if (contractBaseConfig.lastUploadedCodeId) {
+        return contractBaseConfig.lastUploadedCodeId;
+    }
+
+    throw new Error('Code Id is not defined');
 };
 
 const uploadContract = async (client, wallet, config, options) => {
@@ -127,14 +136,13 @@ const uploadContract = async (client, wallet, config, options) => {
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-    return await client.upload(account.address, wasm, uploadFee);
+    // uploading through stargate doesn't support defining instantiate permissions
+    return client.upload(account.address, wasm, uploadFee);
 };
 
 const instantiateContract = async (client, wallet, initMsg, config, options) => {
     const { contractName, salt, instantiate2, chainName, admin } = options;
-
     const [account] = await wallet.getAccounts();
-
     const { contractConfig } = getAmplifierContractConfig(config, options);
 
     const {
@@ -161,11 +169,32 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
     return contractAddress;
 };
 
+const migrateContract = async (client, wallet, config, options) => {
+    const { msg } = options;
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const migrateFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
+};
+
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = ({ governanceAddress }, { ServiceRegistry: { address: registryAddress } }) => {
+const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        ServiceRegistry: { address: registryAddress },
+    } = contracts;
+    const { governanceAddress } = contractConfig;
+
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
@@ -177,7 +206,9 @@ const makeCoordinatorInstantiateMsg = ({ governanceAddress }, { ServiceRegistry:
     return { governance_address: governanceAddress, service_registry: registryAddress };
 };
 
-const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
+const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
+    const { governanceAccount } = contractConfig;
+
     if (!validateAddress(governanceAccount)) {
         throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
     }
@@ -185,7 +216,15 @@ const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
     return { governance_account: governanceAccount };
 };
 
-const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
+const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        Rewards: { address: rewardsAddress },
+    } = contracts;
+    const { adminAddress, governanceAddress, blockExpiry } = contractConfig;
+
     if (!validateAddress(adminAddress)) {
         throw new Error('Missing or invalid Multisig.adminAddress in axelar info');
     }
@@ -210,7 +249,9 @@ const makeMultisigInstantiateMsg = ({ adminAddress, governanceAddress, blockExpi
     };
 };
 
-const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
+const makeRewardsInstantiateMsg = (_config, _options, contractConfig) => {
+    const { governanceAddress, rewardsDenom } = contractConfig;
+
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
     }
@@ -222,7 +263,15 @@ const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom }) => {
     return { governance_address: governanceAddress, rewards_denom: rewardsDenom };
 };
 
-const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { AxelarnetGateway: { address: axelarnetGateway } }) => {
+const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        AxelarnetGateway: { address: axelarnetGateway },
+    } = contracts;
+    const { adminAddress, governanceAddress } = contractConfig;
+
     if (!validateAddress(adminAddress)) {
         throw new Error('Missing or invalid Router.adminAddress in axelar info');
     }
@@ -238,27 +287,25 @@ const makeRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { Axelarn
     return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
 };
 
-const makeVotingVerifierInstantiateMsg = (
-    contractConfig,
-    { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    { axelarId },
-) => {
+const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
     const {
-        [axelarId]: {
-            governanceAddress,
-            serviceName,
-            sourceGatewayAddress,
-            votingThreshold,
-            blockExpiry,
-            confirmationHeight,
-            msgIdFormat,
-            addressFormat,
-        },
+        axelar: { contracts },
+    } = config;
+    const {
+        ServiceRegistry: { address: serviceRegistryAddress },
+        Rewards: { address: rewardsAddress },
+    } = contracts;
+    const {
+        governanceAddress,
+        serviceName,
+        sourceGatewayAddress,
+        votingThreshold,
+        blockExpiry,
+        confirmationHeight,
+        msgIdFormat,
+        addressFormat,
     } = contractConfig;
-
-    if (!isStringLowercase(axelarId)) {
-        throw new Error('Missing or invalid axelar ID');
-    }
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -269,35 +316,35 @@ const makeVotingVerifierInstantiateMsg = (
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].votingThreshold in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].blockExpiry in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
     }
 
     if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].confirmationHeight in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
     }
 
     if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].msgIdFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
     }
 
     if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].addressFormat in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
     }
 
     return {
@@ -309,65 +356,55 @@ const makeVotingVerifierInstantiateMsg = (
         voting_threshold: votingThreshold,
         block_expiry: toBigNumberString(blockExpiry),
         confirmation_height: confirmationHeight,
-        source_chain: axelarId,
+        source_chain: chainName,
         msg_id_format: msgIdFormat,
         address_format: addressFormat,
     };
 };
 
-const makeGatewayInstantiateMsg = ({ Router: { address: routerAddress }, VotingVerifier }, { axelarId: chainId }) => {
+const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
+    const { chainName } = options;
     const {
-        [chainId]: { address: verifierAddress },
-    } = VotingVerifier;
+        axelar: {
+            contracts: {
+                Router: { address: routerAddress },
+                VotingVerifier: {
+                    [chainName]: { address: verifierAddress },
+                },
+            },
+        },
+    } = config;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
 };
 
-const makeMultisigProverInstantiateMsg = (config, chainName) => {
+const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
     const {
         axelar: { contracts, chainId: axelarChainId },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
-
-    const { axelarId } = chainConfig;
-
     const {
         Router: { address: routerAddress },
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
         VotingVerifier: {
-            [axelarId]: { address: verifierAddress },
+            [chainName]: { address: verifierAddress },
         },
         Gateway: {
-            [axelarId]: { address: gatewayAddress },
+            [chainName]: { address: gatewayAddress },
         },
-        MultisigProver: contractConfig,
     } = contracts;
-    const {
-        [axelarId]: {
-            adminAddress,
-            governanceAddress,
-            domainSeparator,
-            signingThreshold,
-            serviceName,
-            verifierSetDiffThreshold,
-            encoder,
-            keyType,
-        },
-    } = contractConfig;
-
-    if (!isStringLowercase(axelarId)) {
-        throw new Error(`Missing or invalid axelar ID for chain ${chainName}`);
-    }
+    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+        contractConfig;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
@@ -377,19 +414,19 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid chain ID`);
     }
 
-    const separator = domainSeparator || calculateDomainSeparator(axelarId, routerAddress, axelarChainId);
-    contractConfig[axelarId].domainSeparator = separator;
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+    contractConfig.domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].adminAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
     }
 
     if (!validateAddress(gatewayAddress)) {
-        throw new Error(`Missing or invalid Gateway[${axelarId}].address in axelar info`);
+        throw new Error(`Missing or invalid Gateway[${chainName}].address in axelar info`);
     }
 
     if (!validateAddress(coordinatorAddress)) {
@@ -405,31 +442,31 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${axelarId}].address in axelar info`);
+        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
     }
 
     if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${axelarId}].domainSeparator in axelar info`);
+        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
     }
 
     if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].signingThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].serviceName in axelar info`);
     }
 
     if (!isNumber(verifierSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].verifierSetDiffThreshold in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
     }
 
     if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].encoder in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${axelarId}].keyType in axelar info`);
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].keyType in axelar info`);
     }
 
     return {
@@ -443,18 +480,18 @@ const makeMultisigProverInstantiateMsg = (config, chainName) => {
         domain_separator: separator.replace('0x', ''),
         signing_threshold: signingThreshold,
         service_name: serviceName,
-        chain_name: axelarId,
+        chain_name: chainName,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
     };
 };
 
-const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config) => {
+const makeAxelarnetGatewayInstantiateMsg = (config, _options, contractConfig) => {
+    const { nexus } = contractConfig;
     const {
         axelar: { contracts, axelarId },
     } = config;
-
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -474,7 +511,8 @@ const makeAxelarnetGatewayInstantiateMsg = ({ nexus }, config) => {
     };
 };
 
-const makeInterchainTokenServiceInstantiateMsg = (config, { adminAddress, governanceAddress }) => {
+const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConfig) => {
+    const { adminAddress, governanceAddress } = contractConfig;
     const {
         axelar: { contracts },
     } = config;
@@ -492,95 +530,6 @@ const makeInterchainTokenServiceInstantiateMsg = (config, { adminAddress, govern
         admin_address: adminAddress,
         axelarnet_gateway_address: axelarnetGatewayAddress,
     };
-};
-
-const makeInstantiateMsg = (contractName, chainName, config) => {
-    const {
-        axelar: { contracts },
-    } = config;
-    const chainConfig = getChainConfig(config, chainName);
-
-    const { [contractName]: contractConfig } = contracts;
-
-    switch (contractName) {
-        case 'Coordinator': {
-            if (chainConfig) {
-                throw new Error('Coordinator does not support chainName option');
-            }
-
-            return makeCoordinatorInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'ServiceRegistry': {
-            if (chainConfig) {
-                throw new Error('ServiceRegistry does not support chainName option');
-            }
-
-            return makeServiceRegistryInstantiateMsg(contractConfig);
-        }
-
-        case 'Multisig': {
-            if (chainConfig) {
-                throw new Error('Multisig does not support chainName option');
-            }
-
-            return makeMultisigInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'Rewards': {
-            if (chainConfig) {
-                throw new Error('Rewards does not support chainName option');
-            }
-
-            return makeRewardsInstantiateMsg(contractConfig);
-        }
-
-        case 'Router': {
-            if (chainConfig) {
-                throw new Error('Router does not support chainName option');
-            }
-
-            return makeRouterInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'VotingVerifier': {
-            if (!chainConfig) {
-                throw new Error('VotingVerifier requires chainName option');
-            }
-
-            return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
-        }
-
-        case 'Gateway': {
-            if (!chainConfig) {
-                throw new Error('Gateway requires chainName option');
-            }
-
-            return makeGatewayInstantiateMsg(contracts, chainConfig);
-        }
-
-        case 'MultisigProver': {
-            if (!chainConfig) {
-                throw new Error('MultisigProver requires chainName option');
-            }
-
-            return makeMultisigProverInstantiateMsg(config, chainName);
-        }
-
-        case 'AxelarnetGateway': {
-            if (!chainConfig) {
-                throw new Error('AxelarnetGateway requires chainName option');
-            }
-
-            return makeAxelarnetGatewayInstantiateMsg(contractConfig, config);
-        }
-
-        case 'InterchainTokenService': {
-            return makeInterchainTokenServiceInstantiateMsg(config, contractConfig);
-        }
-    }
-
-    throw new Error(`${contractName} is not supported.`);
 };
 
 const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
@@ -610,6 +559,48 @@ const fetchCodeIdFromCodeHash = async (client, contractBaseConfig) => {
     return codeId;
 };
 
+const fetchCodeIdFromContract = async (client, contractConfig) => {
+    const { address } = contractConfig;
+
+    if (!address) {
+        throw new Error('Contract address not found in the config');
+    }
+
+    const { codeId } = await client.getContract(address);
+
+    return codeId;
+};
+
+const addDefaultInstantiateAddresses = async (client, config, options) => {
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    if (!contractConfig.address) {
+        return;
+    }
+
+    const contract = await client.getContract(contractConfig.address);
+
+    let { instantiateAddresses } = options;
+
+    if (!instantiateAddresses) {
+        instantiateAddresses = [];
+    }
+
+    if (contract.admin && !instantiateAddresses.includes(contract.admin)) {
+        instantiateAddresses.push(contract.admin);
+        printWarn(
+            `Contract ${contractConfig.address} admin address ${contract.admin} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+
+    if (contract.creator && !instantiateAddresses.includes(contract.creator)) {
+        instantiateAddresses.push(contract.creator);
+        printWarn(
+            `Contract ${contractConfig.address} creator address ${contract.creator} was not included in instantiateAddresses list. Adding it by default.`,
+        );
+    }
+};
+
 const getChainTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
@@ -631,7 +622,7 @@ const getChainTruncationParams = (config, chainConfig) => {
 const getInstantiatePermission = (accessType, addresses) => {
     return {
         permission: accessType,
-        addresses: addresses.split(',').map((address) => address.trim()),
+        addresses,
     };
 };
 
@@ -657,9 +648,10 @@ const getStoreCodeParams = (options) => {
         codeHash = createHash('sha256').update(wasm).digest();
     }
 
-    const instantiatePermission = instantiateAddresses
-        ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
-        : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, '');
+    const instantiatePermission =
+        instantiateAddresses && instantiateAddresses.length > 0
+            ? getInstantiatePermission(AccessType.ACCESS_TYPE_ANY_OF_ADDRESSES, instantiateAddresses)
+            : getInstantiatePermission(AccessType.ACCESS_TYPE_NOBODY, []);
 
     return {
         ...getSubmitProposalParams(options),
@@ -846,7 +838,53 @@ const submitProposal = async (client, wallet, config, options, content) => {
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
+const CONTRACTS = {
+    Coordinator: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeCoordinatorInstantiateMsg,
+    },
+    ServiceRegistry: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeServiceRegistryInstantiateMsg,
+    },
+    Multisig: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeMultisigInstantiateMsg,
+    },
+    Rewards: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeRewardsInstantiateMsg,
+    },
+    Router: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeRouterInstantiateMsg,
+    },
+    VotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
+    Gateway: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeGatewayInstantiateMsg,
+    },
+    MultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
+    AxelarnetGateway: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeAxelarnetGatewayInstantiateMsg,
+    },
+    InterchainTokenService: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeInterchainTokenServiceInstantiateMsg,
+    },
+};
+
 module.exports = {
+    CONTRACT_SCOPE_CHAIN,
+    CONTRACT_SCOPE_GLOBAL,
+    CONTRACTS,
     governanceAddress,
     prepareWallet,
     prepareClient,
@@ -857,11 +895,13 @@ module.exports = {
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
-    updateCodeId,
+    getCodeId,
     uploadContract,
     instantiateContract,
-    makeInstantiateMsg,
+    migrateContract,
     fetchCodeIdFromCodeHash,
+    fetchCodeIdFromContract,
+    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,

@@ -111,6 +111,7 @@ jobs:
           echo "PRIVATE_KEY=$SUI_PRIVATE_KEY" >> .env
           echo 'ENV=local' >> .env
           echo 'SKIP_EXISTING = true' >> .env
+          echo 'YES=true' >> .env
 
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json

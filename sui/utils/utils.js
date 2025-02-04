@@ -18,7 +18,11 @@ const {
     bcsStructs,
     getDefinedSuiVersion,
     getInstalledSuiVersion,
+    STD_PACKAGE_ID,
+    SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { broadcast, broadcastFromTxBuilder } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -65,7 +69,7 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
-    const publishTxn = await builder.signAndExecute(keypair);
+    const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
 
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
@@ -89,14 +93,13 @@ const checkSuiVersionMatch = () => {
     }
 };
 
+const readMoveToml = (moveDir) => {
+    return fs.readFileSync(`${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
+};
+
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(
-            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
-            'utf8',
-        );
-
-        const { package: movePackage } = toml.parse(moveToml);
+        const { package: movePackage } = toml.parse(readMoveToml(moveDir));
 
         return movePackage.name;
     } catch (err) {
@@ -293,6 +296,61 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
+const isAllowed = async (client, keypair, chain, exec, options) => {
+    const addError = (tx) => {
+        tx.moveCall({
+            target: `${STD_PACKAGE_ID}::ascii::char`,
+            arguments: [tx.pure.u8(128)],
+        });
+    };
+
+    const tx = new Transaction();
+    exec(tx);
+    addError(tx);
+
+    try {
+        await broadcast(client, keypair, tx, undefined, options);
+    } catch (e) {
+        const errorMessage = e.cause.effects.status.error;
+        let regexp = /address: (.*?),/;
+        const packageId = `0x${regexp.exec(errorMessage)[1]}`;
+
+        regexp = /Identifier\("(.*?)"\)/;
+        const module = regexp.exec(errorMessage)[1];
+
+        regexp = /Some\("(.*?)"\)/;
+        const functionName = regexp.exec(errorMessage)[1];
+
+        if (packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+                return false;
+            }
+        }
+
+        let suiPackageAddress = SUI_PACKAGE_ID;
+
+        while (suiPackageAddress.length < 66) {
+            suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
+        }
+
+        if (
+            packageId === suiPackageAddress &&
+            module === 'dynamic_field' &&
+            (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object')
+        ) {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 2) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -319,4 +377,5 @@ module.exports = {
     parseGatewayInfo,
     getStructs,
     saveGeneratedTx,
+    isAllowed,
 };

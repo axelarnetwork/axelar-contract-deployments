@@ -9,17 +9,19 @@ const {
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
     Address,
+    xdr,
+    nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify },
+    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
     BigNumber,
 } = ethers;
 
-const stellarCmd = 'soroban';
+const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
 
 function getNetworkPassphrase(networkType) {
@@ -240,12 +242,15 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
     );
     const signers = Object.values(verifierSet.signers);
 
+    // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
         .map((signer) => ({
             signer: Address.account(Buffer.from(arrayify(`0x${signer.pub_key.ed25519}`))).toString(),
             weight: Number(signer.weight),
+            pubKey: signer.pub_key.ed25519,
         }))
-        .sort((a, b) => a.signer.localeCompare(b.signer));
+        .sort((a, b) => a.pubKey.localeCompare(b.pubKey))
+        .map(({ signer, weight }) => ({ signer, weight }));
 
     return {
         signers: weightedSigners,
@@ -278,6 +283,59 @@ function serializeValue(value) {
     return value;
 }
 
+const createAuthorizedFunc = (contractAddress, functionName, args) =>
+    xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+        new xdr.InvokeContractArgs({
+            contractAddress: contractAddress.toScAddress(),
+            functionName,
+            args,
+        }),
+    );
+
+function addressToScVal(addressString) {
+    return nativeToScVal(Address.fromString(addressString), { type: 'address' });
+}
+
+function hexToScVal(hexString) {
+    return nativeToScVal(Buffer.from(arrayify(hexString)), { type: 'bytes' });
+}
+
+function tokenToScVal(tokenAddress, tokenAmount) {
+    return nativeToScVal(
+        {
+            address: Address.fromString(tokenAddress),
+            amount: tokenAmount,
+        },
+        {
+            type: {
+                address: ['symbol', 'address'],
+                amount: ['symbol', 'i128'],
+            },
+        },
+    );
+}
+
+function tokenMetadataToScVal(decimal, name, symbol) {
+    return nativeToScVal(
+        {
+            decimal,
+            name,
+            symbol,
+        },
+        {
+            type: {
+                decimal: ['symbol', 'u32'],
+                name: ['symbol', 'string'],
+                symbol: ['symbol', 'string'],
+            },
+        },
+    );
+}
+
+function saltToBytes32(salt) {
+    return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -292,4 +350,10 @@ module.exports = {
     getAmplifierVerifiers,
     serializeValue,
     getBalances,
+    createAuthorizedFunc,
+    addressToScVal,
+    hexToScVal,
+    tokenToScVal,
+    tokenMetadataToScVal,
+    saltToBytes32,
 };

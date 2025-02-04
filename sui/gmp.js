@@ -52,7 +52,7 @@ async function sendCommand(keypair, client, chains, chain, args, options) {
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Call Sent');
+    await broadcast(client, keypair, tx, 'Call Sent', options);
 }
 
 async function execute(keypair, client, chains, chain, args, options) {
@@ -76,7 +76,7 @@ async function execute(keypair, client, chains, chain, args, options) {
         payload,
     };
 
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed');
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, 'Call Executed', options);
 }
 
 async function processCommand(command, config, args, options) {

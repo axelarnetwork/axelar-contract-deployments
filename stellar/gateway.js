@@ -6,7 +6,7 @@ const {
 } = ethers;
 
 const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, getChainConfig } = require('../common');
-const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers } = require('./utils');
+const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
@@ -72,7 +72,7 @@ function getProof(dataHash, wallet, chain, options) {
 
 async function callContract(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
-    const caller = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+    const caller = addressToScVal(wallet.publicKey());
 
     const [destinationChain, destinationAddress, payload] = args;
 
@@ -81,7 +81,7 @@ async function callContract(wallet, _, chain, contractConfig, args, options) {
         caller,
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
-        nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
+        hexToScVal(payload),
     );
 
     await broadcast(operation, wallet, chain, 'Contract Called', options);
