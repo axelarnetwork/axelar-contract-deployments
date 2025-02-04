@@ -86,7 +86,7 @@ if (require.main === module) {
 
     // This command is used to setup the trusted address on the InterchainTokenService contract.
     // The trusted address is used to verify the message from the source chain.
-    const setupTrustedChainsProgram = new Command()
+    const addTrustedChainsProgram = new Command()
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chain>')
         .description(
