@@ -20,39 +20,37 @@ const SPECIAL_UNPAUSE_FUNCTION_TAGS = {
     DEFAULT: 'default',
 };
 
-function getVaraiblesForPackage(chain, packageName) {
-    if (packageName === 'AxelarGateway') {
-        const contractConfig = chain.contracts.AxelarGateway;
-        return {
-            packageId: contractConfig.address,
-            singletonId: contractConfig.objects.Gateway,
-            versionedId: contractConfig.objects.Gatewayv0,
-            ownerCapId: contractConfig.objects.OwnerCap,
-            moduleName: 'gateway',
-            defaultFunctions: {
-                versions: [0, 0],
-                functionNames: ['approve_messages', 'rotate_signers'],
-            },
-            contract: contractConfig,
-        };
-    } else if (packageName === 'InterchainTokenService') {
-        const contractConfig = chain.contracts.InterchainTokenService;
-        return {
-            packageId: contractConfig.address,
-            singletonId: contractConfig.objects.InterchainTokenService,
-            versionedId: contractConfig.objects.InterchainTokenServicev0,
-            ownerCapId: contractConfig.objects.OwnerCap,
-            moduleName: 'interchain_token_service',
-            defaultFunctions: {
-                versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                functionNames: ['register_coin', 'deploy_remote_interchain_token', 'send_interchain_transfer', 'receive_interchain_transfer', 'receive_interchain_transfer_with_data', 'receive_deploy_interchain_token', 'mint_as_distributor', 'mint_to_as_distributor', 'burn_as_distributor' ],
-            },
-            contract: contractConfig,
-        };
-    } else {
-        throw new Error(`Unknown package ${packageName}.`);
+const CONTRACT_INFO = {
+    AxelarGateway: {
+        singletonName: 'Gateway',
+        moduleName: 'gateway',
+        defaultFunctions: {
+            versions: [0, 0],
+            functionNames: ['approve_messages', 'rotate_signers'],
+        },
+    },
+    InterchainTokenService: {
+        singletonName: 'InterchainTokenService',
+        moduleName: 'interchain_token_service',
+        defaultFunctions: {
+            versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            functionNames: ['register_coin', 'deploy_remote_interchain_token', 'send_interchain_transfer', 'receive_interchain_transfer', 'receive_interchain_transfer_with_data', 'receive_deploy_interchain_token', 'mint_as_distributor', 'mint_to_as_distributor', 'burn_as_distributor' ],
+        },
     }
+}
 
+function getVariablesForPackage(chain, packageName) {
+    const contractConfig = chain.contracts[packageName];
+    const info = CONTRACT_INFO[packageName];
+    return {
+        packageId: contractConfig.address,
+        singletonId: contractConfig.objects[info.singletonName],
+        versionedId: contractConfig.objects[info.singletonName + 'v0'],
+        ownerCapId: contractConfig.objects.OwnerCap,
+        moduleName: info.moduleName,
+        defaultFunctions: info.defaultFunctions,
+        contract: contractConfig,
+    }
 }
 
 async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames) {
@@ -89,7 +87,7 @@ async function pause(keypair, client, chain, args, options) {
     const [packageName] = args;
     const functions = options.functions;
 
-    const { packageId, singletonId, versionedId, ownerCapId, moduleName, defaultFunctions, contract } = getVaraiblesForPackage(
+    const { packageId, singletonId, versionedId, ownerCapId, moduleName, defaultFunctions, contract } = getVariablesForPackage(
         chain,
         packageName,
     );
@@ -105,7 +103,7 @@ async function pause(keypair, client, chain, args, options) {
 
             // Do not dissalow `allow_function` because that locks the gateway forever.
             if (Number(version) === allowedFunctionsArray.length - 1) {
-                allowedFunctions = allowedFunctions.filter((allowedFunction) => allowedFunction !== 'allow_function');
+                allowedFunctions = allowedFunctions.filter((allowedFunction) => allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function');
             }
 
             printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
@@ -145,7 +143,7 @@ async function pause(keypair, client, chain, args, options) {
 async function unpause(keypair, client, chain, args, options) {
     const [ packageName ] = args;
     const functions = options.functions;
-    const { packageId, singletonId, ownerCapId, moduleName, defaultFunctions, contract } = getVaraiblesForPackage(chain, packageName);
+    const { packageId, singletonId, ownerCapId, moduleName, defaultFunctions, contract } = getVariablesForPackage(chain, packageName);
 
     let versionsArg = [];
     let allowedFunctionsArg = [];
