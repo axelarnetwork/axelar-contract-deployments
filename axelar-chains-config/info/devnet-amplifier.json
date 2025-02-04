@@ -1004,6 +1004,21 @@
           "codeId": 854,
           "address": "axelar1s3g877l0pk958vzeyrev9vncklrfht7dx2xv9c4u7zmr0y7jzfmq5cxjqm"
         },
+        "stellar-2024-q4": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "CBMFHKNH46XWDKGKQNCF446O6FB73RB22UYQYQPVOBGZ2T2EF4YDTV43",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 854,
+          "address": "axelar1fclvpd3kx4udp3nxw88tk8279z36uvmkn6da0jh7fnz6eddh2n2s09n6tg"
+        },
         "storeCodeProposalId": "78",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
       },
