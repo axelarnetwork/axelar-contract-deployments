@@ -10,7 +10,7 @@ const SPECIAL_CHAINS_TAGS = {
 function parseTrustedChains(config, trustedChain) {
     if (trustedChain === SPECIAL_CHAINS_TAGS.ALL_EVM) {
         const evmChains = Object.keys(config.chains).filter(
-            (chain) => config.chains[chain].chainType === 'evm' && config.chains[chain].contracts.InterchainTokenService,
+            (chain) => config.chains[chain].contracts?.InterchainTokenService?.address,
         );
         return evmChains;
     }
@@ -93,7 +93,7 @@ if (require.main === module) {
             `Add trusted chain. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed EVM chains`,
         )
         .action((trustedChain, options) => {
-            mainProcessor(setupTrustedChain, options, [trustedChain], processCommand);
+            mainProcessor(addTrustedChains, options, [trustedChain], processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
