@@ -663,6 +663,23 @@
               }
             ]
           }
+        },
+        "axelar_operators": {
+          "address": "CACBYHUX23WSXVQTQL3VUESYR7C432RS6TS6WWGOQPOHAZQRAR5A5EVY",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM"
+          }
+        },
+        "axelar_gas_service": {
+          "address": "CB6F5MFEZ6SZATSDWZ2IM2FWJYDS6USSRPYDDGYTB7N6FOLO36FOXAY6",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "operator": "CACBYHUX23WSXVQTQL3VUESYR7C432RS6TS6WWGOQPOHAZQRAR5A5EVY"
+          }
         }
       }
     },
