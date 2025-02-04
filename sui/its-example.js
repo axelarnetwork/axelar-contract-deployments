@@ -82,7 +82,7 @@ async function sendToken(keypair, client, contracts, args, options) {
         typeArguments: [ItsToken.typeArgument],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`);
+    await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`, options);
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -118,7 +118,7 @@ async function sendDeployment(keypair, client, contracts, args, options) {
         typeArguments: [Token.typeArgument],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`);
+    await broadcastFromTxBuilder(txBuilder, keypair, `Sent ${symbol} Deployment on ${destinationChain}`, options);
 }
 
 async function handleReceivedMessage(keypair, client, contracts, args, options, actionName) {
@@ -141,8 +141,8 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
         destination_id: InterchainTokenService.objects.ChannelId,
         payload,
     };
-    console.log(messageInfo);
-    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName);
+
+    await broadcastExecuteApprovedMessage(client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName, options);
 }
 
 async function receiveToken(keypair, client, contracts, args, options) {
@@ -174,7 +174,7 @@ async function deployToken(keypair, client, contracts, args, options) {
 
     txBuilder.tx.transferObjects([cap], walletAddress);
 
-    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`);
+    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`, options);
 
     const publishObject = findPublishedObject(publishTxn);
 
@@ -199,6 +199,7 @@ async function deployToken(keypair, client, contracts, args, options) {
             postDeployTxBuilder,
             keypair,
             `Setup ${symbol} as an origin in InterchainTokenService successfully`,
+            options,
             {
                 showEvents: true,
             },
@@ -214,6 +215,7 @@ async function deployToken(keypair, client, contracts, args, options) {
             postDeployTxBuilder,
             keypair,
             `Setup ${symbol} as a non-origin in InterchainTokenService successfully`,
+            options,
             {
                 showEvents: true,
             },
@@ -310,7 +312,7 @@ async function mintToken(keypair, client, contracts, args, options) {
 
     mintTxBuilder.tx.transferObjects([coin], recipient);
 
-    await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`);
+    await broadcastFromTxBuilder(mintTxBuilder, keypair, `Minted ${amount} ${symbol}`, options);
 }
 
 async function processCommand(command, chain, args, options) {

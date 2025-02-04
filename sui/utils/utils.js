@@ -22,7 +22,7 @@ const {
     SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
 const { Transaction } = require('@mysten/sui/transactions');
-const { broadcast } = require('./sign-utils');
+const { broadcast, broadcastFromTxBuilder } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -68,7 +68,7 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
-    const publishTxn = await builder.signAndExecute(keypair);
+    const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
 
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
@@ -291,7 +291,7 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
-const isAllowed = async (client, keypair, chain, exec) => {
+const isAllowed = async (client, keypair, chain, exec, options) => {
     const addError = (tx) => {
         tx.moveCall({
             target: `${STD_PACKAGE_ID}::ascii::char`,
@@ -304,7 +304,7 @@ const isAllowed = async (client, keypair, chain, exec) => {
     addError(tx);
 
     try {
-        await broadcast(client, keypair, tx);
+        await broadcast(client, keypair, tx, undefined, options);
     } catch (e) {
         const errorMessage = e.cause.effects.status.error;
         let regexp = /address: (.*?),/;

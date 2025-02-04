@@ -195,7 +195,7 @@ async function mainProcessor(processor, args, options) {
         tx.setSender(sender);
         await saveGeneratedTx(tx, message, client, options);
     } else {
-        await broadcast(client, keypair, tx, message);
+        await broadcast(client, keypair, tx, message, options);
     }
 }
 
