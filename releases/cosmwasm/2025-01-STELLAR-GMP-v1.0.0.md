@@ -40,9 +40,9 @@ MULTISIG_REWARD_POOL=multisig_reward_pool
 DEPOSIT_VALUE=100000000
 ```
 
-```bash
-# Deploying VotingVerifier depends on ExternalGateway being deployed first due to `sourceGatewayAddress`.
+- Note that deploying `VotingVerifier` depends on External Gateway being deployed first due to `sourceGatewayAddress`.
 
+```bash
 # Instantiate stellar VotingVerifier
 [1] node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier -n $CHAIN --fetchCodeId --instantiate2
 
