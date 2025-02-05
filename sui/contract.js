@@ -102,6 +102,9 @@ async function pause(keypair, client, chain, args, options) {
         const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
 
         for (const version in allowedFunctionsArray) {
+            if ( options.version !== 'all' && options.version != version ) {
+                continue;
+            }
             let allowedFunctions = allowedFunctionsArray[version];
 
             // Do not dissalow `allow_function` because that locks the gateway forever.
@@ -118,16 +121,11 @@ async function pause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        const unparsedArray = functions.split(',');
-
-        if (unparsedArray.length % 2 !== 0) {
-            throw new Error('Custom functions to pause must be an even length array, pairs of version-function name.');
+        if(options.version == 'all') {
+            throw new Error('Need to specify a version if providing specific functions.');
         }
-
-        for (let i = 0; i < unparsedArray.length / 2; i++) {
-            versionsArg.push(Number(unparsedArray[2 * i]));
-            allowedFunctionsArg.push(unparsedArray[2 * i + 1]);
-        }
+        allowedFunctionsArg = functions.split(',');
+        versionsArg = allowedFunctionsArg.map(() => Number(options.version));
     }
 
     if (!contract.disallowedFunctions) {
@@ -158,16 +156,11 @@ async function unpause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        const unparsedArray = functions.split(',');
-
-        if (unparsedArray.length % 2 !== 0) {
-            throw new Error('Custom functions to allow must be an even length array, pairs of version-function name.');
+        if(options.version == 'all') {
+            throw new Error('Need to specify a version if providing specific functions.');
         }
-
-        for (let i = 0; i < unparsedArray.length / 2; i++) {
-            versionsArg.push(Number(unparsedArray[2 * i]));
-            allowedFunctionsArg.push(unparsedArray[2 * i + 1]);
-        }
+        allowedFunctionsArg = functions.split(',');
+        versionsArg = allowedFunctionsArg.map(() => Number(options.version));
     }
 
     if (contract.disallowedFunctions) {
