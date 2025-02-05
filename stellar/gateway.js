@@ -185,16 +185,6 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         return;
     }
 
-    const validateMessageOperation = contract.call(
-        'validate_message',
-        nativeToScVal(sourceChain, { type: 'string' }),
-        nativeToScVal(messageId, { type: 'string' }),
-        nativeToScVal(sourceAddress, { type: 'string' }),
-        hexToScVal(payload),
-    );
-
-    await broadcast(validateMessageOperation, wallet, chain, 'validate_message called', options);
-
     const appContract = new Contract(destinationAddress);
 
     const appOperation = appContract.call(
