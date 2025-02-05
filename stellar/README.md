@@ -231,6 +231,12 @@ node stellar/its.js deploy-remote-canonical-token [token-address] [destination-c
 node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
 ```
 
+#### Encode Stellar recipient address to bytes
+
+```bash
+node stellar/its.js encode-stellar-recipient 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
+```
+
 ## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
@@ -276,12 +282,4 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
-```
-
-### Utils
-
-#### Convert Stellar Address to Bytes format
-
-```bash
-node stellar/cli-utils.js stellar-address-to-bytes 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
 ```

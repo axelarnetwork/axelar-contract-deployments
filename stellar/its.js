@@ -13,6 +13,7 @@ const {
     addressToScVal,
     hexToScVal,
     saltToBytes32,
+    stellarAddressToBytes,
 } = require('./utils');
 const { prompt } = require('../common/utils');
 
@@ -108,6 +109,11 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
+async function encodeStellarRecipient(wallet, _, chain, contract, args, options) {
+    const [recipient] = args;
+    console.log(stellarAddressToBytes(recipient));
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -185,6 +191,13 @@ if (require.main === module) {
                 [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount],
                 options,
             );
+        });
+
+    program
+        .command('encode-stellar-recipient <recipient>')
+        .description('encode stellar recipient address to bytes format')
+        .action((recipient, options) => {
+            mainProcessor(encodeStellarRecipient, [recipient], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
