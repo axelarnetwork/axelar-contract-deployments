@@ -262,7 +262,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         arguments: [tx.object(creatorCapObjectId), tx.pure.string(chainName), tx.pure.string(itsHubAddress)],
     });
 
-    const setupReceipt = await broadcast(client, keypair, tx, 'Setup');
+    const setupReceipt = await broadcast(client, keypair, tx, 'Setup', options);
 
     const [InterchainTokenServiceObjectId, InterchainTokenServiceV0ObjectId] = getObjectIdsByObjectTypes(setupReceipt, [
         `${published.packageId}::interchain_token_service::InterchainTokenService`,
