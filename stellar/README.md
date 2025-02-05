@@ -277,3 +277,11 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
+
+### Utils
+
+#### Convert Stellar Address to Bytes format
+
+```bash
+node stellar/cli-utils.js stellar-address-to-bytes 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
+```
