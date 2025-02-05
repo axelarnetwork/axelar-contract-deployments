@@ -161,7 +161,7 @@ async function unpause(keypair, client, chain, args, options) {
         const unparsedArray = functions.split(',');
 
         if (unparsedArray.length % 2 !== 0) {
-            throw new Error('Custom functions to pause must be an even length array, pairs of version-function name.');
+            throw new Error('Custom functions to allow must be an even length array, pairs of version-function name.');
         }
 
         for (let i = 0; i < unparsedArray.length / 2; i++) {
@@ -214,8 +214,14 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--functions <functions>',
-                'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing. The comma separated list has to be alternating version numbers and function names.',
+                'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
             ).default('default'),
+        )
+        .addOption(
+            new Option(
+                '--version, <version>',
+                'The version to pause. Use all to pause all versions',
+            ).default('all'),
         )
         .action((packageName, options) => {
             mainProcessor(pause, options, [packageName], processCommand);
@@ -228,8 +234,14 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--functions, <functions>',
-                'The functions to allow. Use use "disallowed" for previously disallowed functions, "default" for the default functions and a comma separated list for custom pausing. The comma separated list has to be alternating version numbers and function names.',
+                'The functions to pause. Use "disallowed" for previously disallowed functions, "default" for the default functions and a comma separated list for custom pausing.',
             ).default('disallowed'),
+        )
+        .addOption(
+            new Option(
+                '--version, <version>',
+                'The version to pause. Use all to pause all versions',
+            ).default('all'),
         )
         .action((packageName, options) => {
             mainProcessor(unpause, options, [packageName], processCommand);
