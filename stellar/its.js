@@ -108,6 +108,20 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
+async function execute(wallet, _, chain, contract, args, options) {
+    const [sourceChain, messageId, sourceAddress, payload] = args;
+
+    const operation = contract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(operation, wallet, chain, 'Execute Called', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -185,6 +199,13 @@ if (require.main === module) {
                 [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount],
                 options,
             );
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .description('its execute')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

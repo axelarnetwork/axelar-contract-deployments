@@ -163,6 +163,37 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
     await broadcast(operation, wallet, chain, 'Amplifier Proof Submitted', options);
 }
 
+async function execute(wallet, _, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [sourceChain, messageId, sourceAddress, destinationAddress, payload] = args;
+    const payloadHash = keccak256(arrayify(payload));
+
+    printInfo('Destination app contract', destinationAddress);
+    printInfo('Payload Hash', payloadHash);
+
+    const operation = contract.call(
+        'validate_message',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(operation, wallet, chain, 'Validate Message Called', options);
+
+    const appContract = new Contract(destinationAddress);
+
+    const appOperation = appContract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(appOperation, wallet, chain, 'Execute Called', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
@@ -221,6 +252,13 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <destinationAddress> <payload>')
+        .description('gateway execute')
+        .action((sourceChain, messageId, sourceAddress, destinationAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, destinationAddress, payload], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
