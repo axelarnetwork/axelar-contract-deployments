@@ -149,7 +149,7 @@ async function processSplitCommand(keypair, client, args, options) {
 
     await CoinManager.splitCoins(tx, client, coinTypeToCoins, keypair.toSuiAddress(), args, options);
 
-    await broadcast(client, keypair, tx, 'Splitted Coins');
+    await broadcast(client, keypair, tx, 'Splitted Coins', options);
 }
 
 async function processMergeCommand(keypair, client, args, options) {
@@ -164,7 +164,7 @@ async function processMergeCommand(keypair, client, args, options) {
         return;
     }
 
-    await broadcast(client, keypair, tx, 'Merged Coins');
+    await broadcast(client, keypair, tx, 'Merged Coins', options);
 }
 
 async function processListCommand(keypair, client, args, options) {
