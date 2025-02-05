@@ -41,7 +41,7 @@ async function setupTrustedChain(keypair, client, config, contracts, args, optio
         tx.setSender(sender);
         await saveGeneratedTx(tx, `Added trusted chain ${trustedChain}`, client, options);
     } else {
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address');
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
     }
 }
 
