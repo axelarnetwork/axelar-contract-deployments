@@ -1,8 +1,7 @@
 const { Command } = require('commander');
 const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, printInfo, writeJSON } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
-const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
 
 const SPECIAL_CHAINS_TAGS = {
     ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
@@ -66,110 +65,6 @@ async function removeTrustedChain(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
 }
 
-async function allowFunctions(keypair, client, config, contractConfig, args, options) {
-    const contracts = contractConfig.InterchainTokenService;
-    const packageId = contracts.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const builder = new TxBuilder(client);
-
-    for (const i in versions) {
-        await builder.moveCall({
-            target: `${packageId}::interchain_token_service::allow_function`,
-            arguments: [contracts.objects.InterchainTokenService, contracts.objects.OwnerCap, versions[i], functionNames[i]],
-        });
-    }
-
-    await broadcastFromTxBuilder(builder, keypair, 'Allow Functions');
-}
-
-async function disallowFunctions(keypair, client, config, contractConfig, args, options) {
-    const contracts = contractConfig.InterchainTokenService;
-    const packageId = contracts.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const builder = new TxBuilder(client);
-
-    for (const i in versions) {
-        await builder.moveCall({
-            target: `${packageId}::interchain_token_service::disallow_function`,
-            arguments: [contracts.objects.InterchainTokenService, contracts.objects.OwnerCap, versions[i], functionNames[i]],
-        });
-    }
-
-    await broadcastFromTxBuilder(builder, keypair, 'Disallow Functions');
-}
-
-async function pause(keypair, client, config, contracts, args, options) {
-    const response = await client.getObject({
-        id: contracts.InterchainTokenService.objects.InterchainTokenServicev0,
-        options: {
-            showContent: true,
-            showBcs: true,
-        },
-    });
-    let allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
-    allowedFunctionsArray = allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
-
-    const versionsArg = [];
-    const allowedFunctionsArg = [];
-
-    for (const version in allowedFunctionsArray) {
-        const allowedFunctions = allowedFunctionsArray[version];
-
-        // Do not dissalow `allow_function` because that locks the gateway forever.
-        if (Number(version) === allowedFunctionsArray.length - 1) {
-            const index = allowedFunctions.indexOf('allow_function');
-
-            if (index > -1) {
-                // only splice array when item is found
-                allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
-            }
-        }
-
-        printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
-
-        versionsArg.push(new Array(allowedFunctions.length).fill(version).join());
-        allowedFunctionsArg.push(allowedFunctions.join());
-    }
-
-    // Write the
-    writeJSON(
-        {
-            versions: versionsArg,
-            disallowedFunctions: allowedFunctionsArg,
-        },
-        `${__dirname}/../axelar-chains-config/info/sui-its-allowed-functions-${options.env}.json`,
-    );
-
-    return await disallowFunctions(keypair, client, config, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
-}
-
-async function unpause(keypair, client, config, contracts, args, options) {
-    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-its-allowed-functions-${options.env}.json`);
-
-    return await allowFunctions(
-        keypair,
-        client,
-        config,
-        contracts,
-        [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()],
-        options,
-    );
-}
-
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -209,35 +104,8 @@ if (require.main === module) {
             mainProcessor(removeTrustedChain, options, [trustedChain], processCommand);
         });
 
-    const allowFunctionsProgram = new Command()
-        .name('allow-functions')
-        .description('Allow functions')
-        .command('allow-functions <versions> <functions>')
-        .action((versions, functions, options) => {
-            mainProcessor(allowFunctions, options, [versions, functions], processCommand);
-        });
-
-    const pauseProgram = new Command()
-        .name('pause')
-        .description('Pause InterchainTokenService')
-        .command('pause')
-        .action((options) => {
-            mainProcessor(pause, options, [], processCommand);
-        });
-
-    const unpauseProgram = new Command()
-        .name('unpause')
-        .description('Unpause InterchainTokenService')
-        .command('unpause')
-        .action((options) => {
-            mainProcessor(unpause, options, [], processCommand);
-        });
-
     program.addCommand(setupTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
-    program.addCommand(allowFunctionsProgram);
-    program.addCommand(pauseProgram);
-    program.addCommand(unpauseProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 

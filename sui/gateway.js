@@ -8,7 +8,7 @@ const {
     constants: { HashZero },
 } = ethers;
 
-const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig, writeJSON } = require('../common/utils');
+const { saveConfig, printInfo, loadConfig, getMultisigProof, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -23,7 +23,6 @@ const {
 } = require('./utils');
 const secp256k1 = require('secp256k1');
 const chalk = require('chalk');
-const { readJSON } = require(`${__dirname}/../axelar-chains-config`);
 
 const COMMAND_TYPE_APPROVE_MESSAGES = 0;
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
@@ -282,66 +281,6 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
     };
 }
 
-async function allowFunctions(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const tx = new Transaction();
-
-    for (const i in versions) {
-        tx.moveCall({
-            target: `${packageId}::gateway::allow_function`,
-            arguments: [
-                tx.object(contractConfig.objects.Gateway),
-                tx.object(contractConfig.objects.OwnerCap),
-                tx.pure.u64(versions[i]),
-                tx.pure.string(functionNames[i]),
-            ],
-        });
-    }
-
-    return {
-        tx,
-        message: 'Allow Functions',
-    };
-}
-
-async function disallowFunctions(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const tx = new Transaction();
-
-    for (const i in versions) {
-        tx.moveCall({
-            target: `${packageId}::gateway::disallow_function`,
-            arguments: [
-                tx.object(contractConfig.objects.Gateway),
-                tx.object(contractConfig.objects.OwnerCap),
-                tx.pure.u64(versions[i]),
-                tx.pure.string(functionNames[i]),
-            ],
-        });
-    }
-
-    return {
-        tx,
-        message: 'Disallow Functions',
-    };
-}
-
 async function checkVersionControl(version, options) {
     const config = loadConfig(options.env);
 
@@ -508,65 +447,6 @@ async function testNewField(value, options) {
     console.log(`Set the value to ${value} and it was set to ${returnedValue}.`);
 }
 
-async function pause(keypair, client, config, chain, contracts, args, options) {
-    const response = await client.getObject({
-        id: contracts.objects.Gatewayv0,
-        options: {
-            showContent: true,
-            showBcs: true,
-        },
-    });
-    let allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
-    allowedFunctionsArray = allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
-
-    const versionsArg = [];
-    const allowedFunctionsArg = [];
-
-    for (const version in allowedFunctionsArray) {
-        const allowedFunctions = allowedFunctionsArray[version];
-
-        // Do not dissalow `allow_function` because that locks the gateway forever.
-        if (Number(version) === allowedFunctionsArray.length - 1) {
-            const index = allowedFunctions.indexOf('allow_function');
-
-            if (index > -1) {
-                // only splice array when item is found
-                allowedFunctions.splice(index, 1); // 2nd parameter means remove one item only
-            }
-        }
-
-        printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
-
-        versionsArg.push(new Array(allowedFunctions.length).fill(version).join());
-        allowedFunctionsArg.push(allowedFunctions.join());
-    }
-
-    // Write the
-    writeJSON(
-        {
-            versions: versionsArg,
-            disallowedFunctions: allowedFunctionsArg,
-        },
-        `${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`,
-    );
-
-    return disallowFunctions(keypair, client, config, chain, contracts, [versionsArg.join(), allowedFunctionsArg.join()], options);
-}
-
-async function unpause(keypair, client, config, chain, contracts, args, options) {
-    const dissalowedFunctions = readJSON(`${__dirname}/../axelar-chains-config/info/sui-gateway-allowed-functions-${options.env}.json`);
-
-    return allowFunctions(
-        keypair,
-        client,
-        config,
-        chain,
-        contracts,
-        [dissalowedFunctions.versions.join(), dissalowedFunctions.disallowedFunctions.join()],
-        options,
-    );
-}
-
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
@@ -640,20 +520,6 @@ if (require.main === module) {
         });
 
     program
-        .command('allow-functions <versions> <functionNames>')
-        .description('Allow certain funcitons on the gateway')
-        .action((versions, functionNames, options) => {
-            mainProcessor(allowFunctions, [versions, functionNames], options);
-        });
-
-    program
-        .command('disallow-functions <versions> <functionNames>')
-        .description('Allow certain funcitons on the gateway')
-        .action((versions, functionNames, options) => {
-            mainProcessor(disallowFunctions, [versions, functionNames], options);
-        });
-
-    program
         .command('check-version-control <version>')
         .description('Check if version control works on a certain version')
         .addOption(new Option('--allowed-functions <allowed-functions>', 'Functions that should be allowed on this version'))
@@ -667,20 +533,6 @@ if (require.main === module) {
         .description('Test the new field added for upgrade-versioned')
         .action((value, options) => {
             testNewField(value, options);
-        });
-
-    program
-        .command('pause')
-        .description('Pause the gateway')
-        .action((options) => {
-            mainProcessor(pause, [], options);
-        });
-
-    program
-        .command('unpause')
-        .description('Unpause the gateway')
-        .action((options) => {
-            mainProcessor(unpause, [], options);
         });
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });

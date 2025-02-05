@@ -112,9 +112,10 @@ async function pause(keypair, client, chain, args, options) {
         const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
 
         for (const version in allowedFunctionsArray) {
-            if (options.version !== 'all' && options.version != version) {
+            if (options.version !== 'all' && options.version !== version) {
                 continue;
             }
+
             let allowedFunctions = allowedFunctionsArray[version];
 
             // Do not dissalow `allow_function` because that locks the gateway forever.
@@ -133,9 +134,10 @@ async function pause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        if (options.version == 'all') {
+        if (options.version === 'all') {
             throw new Error('Need to specify a version if providing specific functions.');
         }
+
         allowedFunctionsArg = functions.split(',');
         versionsArg = allowedFunctionsArg.map(() => Number(options.version));
     }
@@ -168,9 +170,10 @@ async function unpause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        if (options.version == 'all') {
+        if (options.version === 'all') {
             throw new Error('Need to specify a version if providing specific functions.');
         }
+
         allowedFunctionsArg = functions.split(',');
         versionsArg = allowedFunctionsArg.map(() => Number(options.version));
     }
