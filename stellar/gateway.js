@@ -179,8 +179,9 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
 
-    const is_message_approved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
-    if (!is_message_approved) {
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
+
+    if (!messageApproved) {
         printWarn('Contract call not approved at the gateway');
         return;
     }
