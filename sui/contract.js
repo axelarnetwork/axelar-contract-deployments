@@ -34,10 +34,20 @@ const CONTRACT_INFO = {
         moduleName: 'interchain_token_service',
         defaultFunctions: {
             versions: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            functionNames: ['register_coin', 'deploy_remote_interchain_token', 'send_interchain_transfer', 'receive_interchain_transfer', 'receive_interchain_transfer_with_data', 'receive_deploy_interchain_token', 'mint_as_distributor', 'mint_to_as_distributor', 'burn_as_distributor' ],
+            functionNames: [
+                'register_coin',
+                'deploy_remote_interchain_token',
+                'send_interchain_transfer',
+                'receive_interchain_transfer',
+                'receive_interchain_transfer_with_data',
+                'receive_deploy_interchain_token',
+                'mint_as_distributor',
+                'mint_to_as_distributor',
+                'burn_as_distributor',
+            ],
         },
-    }
-}
+    },
+};
 
 function getVariablesForPackage(chain, packageName) {
     const contractConfig = chain.contracts[packageName];
@@ -53,7 +63,7 @@ function getVariablesForPackage(chain, packageName) {
         moduleName: info.moduleName,
         defaultFunctions: info.defaultFunctions,
         contract: contractConfig,
-    }
+    };
 }
 
 async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames) {
@@ -102,14 +112,16 @@ async function pause(keypair, client, chain, args, options) {
         const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
 
         for (const version in allowedFunctionsArray) {
-            if ( options.version !== 'all' && options.version != version ) {
+            if (options.version !== 'all' && options.version != version) {
                 continue;
             }
             let allowedFunctions = allowedFunctionsArray[version];
 
             // Do not dissalow `allow_function` because that locks the gateway forever.
             if (Number(version) === allowedFunctionsArray.length - 1) {
-                allowedFunctions = allowedFunctions.filter((allowedFunction) => allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function');
+                allowedFunctions = allowedFunctions.filter(
+                    (allowedFunction) => allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function',
+                );
             }
 
             printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
@@ -121,7 +133,7 @@ async function pause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        if(options.version == 'all') {
+        if (options.version == 'all') {
             throw new Error('Need to specify a version if providing specific functions.');
         }
         allowedFunctionsArg = functions.split(',');
@@ -142,7 +154,7 @@ async function pause(keypair, client, chain, args, options) {
 }
 
 async function unpause(keypair, client, chain, args, options) {
-    const [ packageName ] = args;
+    const [packageName] = args;
     const functions = options.functions;
     const { packageId, singletonId, ownerCapId, moduleName, defaultFunctions, contract } = getVariablesForPackage(chain, packageName);
 
@@ -156,7 +168,7 @@ async function unpause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else {
-        if(options.version == 'all') {
+        if (options.version == 'all') {
             throw new Error('Need to specify a version if providing specific functions.');
         }
         allowedFunctionsArg = functions.split(',');
@@ -210,12 +222,7 @@ if (require.main === module) {
                 'The functions to allow. Use use "default" for the default functions, "all" for all functions except the most recent "allow_function" and a comma separated list for custom pausing.',
             ).default('default'),
         )
-        .addOption(
-            new Option(
-                '--version, <version>',
-                'The version to pause. Use all to pause all versions',
-            ).default('all'),
-        )
+        .addOption(new Option('--version, <version>', 'The version to pause. Use all to pause all versions').default('all'))
         .action((packageName, options) => {
             mainProcessor(pause, options, [packageName], processCommand);
         });
@@ -230,12 +237,7 @@ if (require.main === module) {
                 'The functions to pause. Use "disallowed" for previously disallowed functions, "default" for the default functions and a comma separated list for custom pausing.',
             ).default('disallowed'),
         )
-        .addOption(
-            new Option(
-                '--version, <version>',
-                'The version to pause. Use all to pause all versions',
-            ).default('all'),
-        )
+        .addOption(new Option('--version, <version>', 'The version to pause. Use all to pause all versions').default('all'))
         .action((packageName, options) => {
             mainProcessor(unpause, options, [packageName], processCommand);
         });
