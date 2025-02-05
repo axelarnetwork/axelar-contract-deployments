@@ -152,7 +152,7 @@ jobs:
         run: node sui/deploy-contract deploy Abi
 
       - name: Deploy InterchainTokenService
-        run: node sui/deploy-contract deploy InterchainTokenService
+        run: node sui/deploy-contract deploy InterchainTokenService -y
 
       - name: Deploy Example
         run: node sui/deploy-contract deploy Example
@@ -236,7 +236,7 @@ jobs:
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its.js add-trusted-chains $sourceChain $sourceAddress
+          node sui/its.js add-trusted-chains $sourceChain
 
       - name: Send Token to another chain
         run: |

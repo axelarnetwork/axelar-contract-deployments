@@ -7,18 +7,16 @@ const SPECIAL_CHAINS_TAGS = {
     ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
 };
 
-function parseTrustedChains(config, trustedChain) {
-    if (trustedChain === SPECIAL_CHAINS_TAGS.ALL_EVM) {
-        const evmChains = Object.keys(config.chains).filter(
-            (chain) => config.chains[chain].chainType === 'evm' && config.chains[chain].contracts.InterchainTokenService,
-        );
+function parseTrustedChains(config, trustedChains) {
+    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL_EVM) {
+        const evmChains = Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
         return evmChains;
     }
 
-    return trustedChain.split(',');
+    return trustedChains;
 }
 
-async function setupTrustedChain(keypair, client, config, contracts, args, options) {
+async function addTrustedChains(keypair, client, config, contracts, args, options) {
     const [trustedChain] = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
@@ -62,7 +60,7 @@ async function removeTrustedChain(keypair, client, contracts, args, options) {
         ],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address');
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address', options);
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -86,25 +84,25 @@ if (require.main === module) {
 
     // This command is used to setup the trusted address on the InterchainTokenService contract.
     // The trusted address is used to verify the message from the source chain.
-    const setupTrustedChainsProgram = new Command()
+    const addTrustedChainsProgram = new Command()
         .name('add-trusted-chains')
-        .command('add-trusted-chains <trusted-chain>')
+        .command('add-trusted-chains <trusted-chains...>')
         .description(
-            `Add trusted chain. The <trusted-chain> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed EVM chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed chains`,
         )
-        .action((trustedChain, options) => {
-            mainProcessor(setupTrustedChain, options, [trustedChain], processCommand);
+        .action((trustedChains, options) => {
+            mainProcessor(addTrustedChains, options, [trustedChains], processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
         .name('remove-trusted-address')
         .description('Remove trusted address')
-        .command('remove-trusted-address <trusted-chain>')
-        .action((trustedChain, options) => {
-            mainProcessor(removeTrustedChain, options, [trustedChain], processCommand);
+        .command('remove-trusted-address <trusted-chains...>')
+        .action((trustedChains, options) => {
+            mainProcessor(removeTrustedChain, options, [trustedChains], processCommand);
         });
 
-    program.addCommand(setupTrustedChainsProgram);
+    program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });

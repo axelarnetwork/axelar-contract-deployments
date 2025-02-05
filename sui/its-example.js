@@ -14,6 +14,7 @@ const {
     broadcastExecuteApprovedMessage,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
 } = require('./utils');
 const { ethers } = require('hardhat');
 const {
@@ -29,6 +30,8 @@ async function sendToken(keypair, client, contracts, args, options) {
     if (!ItsToken) {
         throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
     }
+
+    await checkTrustedAddresses(destinationChain);
 
     const decimals = ItsToken.decimals;
 
@@ -87,6 +90,8 @@ async function sendDeployment(keypair, client, contracts, args, options) {
     const [symbol, destinationChain, feeAmount] = args;
     const Token = contracts[symbol.toUpperCase()];
     const feeUnitAmount = getUnitAmount(feeAmount);
+
+    await checkTrustedAddresses(destinationChain);
 
     const txBuilder = new TxBuilder(client);
 
@@ -193,7 +198,7 @@ async function deployToken(keypair, client, contracts, args, options) {
         const result = await broadcastFromTxBuilder(
             postDeployTxBuilder,
             keypair,
-            `Setup ${symbol} as an origin in ITS successfully`,
+            `Setup ${symbol} as an origin in InterchainTokenService successfully`,
             options,
             {
                 showEvents: true,
@@ -206,9 +211,15 @@ async function deployToken(keypair, client, contracts, args, options) {
             arguments: [InterchainTokenService.objects.InterchainTokenService, TreasuryCap, Metadata],
             typeArguments: [tokenType],
         });
-        await broadcastFromTxBuilder(postDeployTxBuilder, keypair, `Setup ${symbol} as a non-origin in ITS successfully`, options, {
-            showEvents: true,
-        });
+        await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as a non-origin in InterchainTokenService successfully`,
+            options,
+            {
+                showEvents: true,
+            },
+        );
     }
 
     // Save the deployed token info in the contracts object.

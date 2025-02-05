@@ -265,6 +265,10 @@ const parseGatewayInfo = (chain) => {
     };
 };
 
+const checkTrustedAddresses = async (destinationChain) => {
+    // TODO: another PR adds functionality that will enable this
+};
+
 const getStructs = async (client, packageId) => {
     const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
     const structs = {};
