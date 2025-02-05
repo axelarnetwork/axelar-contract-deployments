@@ -152,7 +152,7 @@ jobs:
         run: node sui/deploy-contract deploy Abi
 
       - name: Deploy InterchainTokenService
-        run: node sui/deploy-contract deploy InterchainTokenService
+        run: node sui/deploy-contract deploy InterchainTokenService -y
 
       - name: Deploy Example
         run: node sui/deploy-contract deploy Example
