@@ -171,7 +171,21 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
     printInfo('Destination app contract', destinationAddress);
     printInfo('Payload Hash', payloadHash);
 
-    const operation = contract.call(
+    const isMessageApprovedOperation = contract.call(
+        'is_message_approved',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        nativeToScVal(Buffer.from(payloadHash, 'hex')),
+    );
+
+    const is_message_approved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
+    if (!is_message_approved) {
+        printWarn('Contract call not approved at the gateway');
+        return;
+    }
+
+    const validateMessageOperation = contract.call(
         'validate_message',
         nativeToScVal(sourceChain, { type: 'string' }),
         nativeToScVal(messageId, { type: 'string' }),
@@ -179,7 +193,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         hexToScVal(payload),
     );
 
-    await broadcast(operation, wallet, chain, 'Validate Message Called', options);
+    await broadcast(validateMessageOperation, wallet, chain, 'validate_message called', options);
 
     const appContract = new Contract(destinationAddress);
 
@@ -191,7 +205,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         hexToScVal(payload),
     );
 
-    await broadcast(appOperation, wallet, chain, 'Execute Called', options);
+    await broadcast(appOperation, wallet, chain, 'execute Called', options);
 }
 
 async function mainProcessor(processor, args, options) {
