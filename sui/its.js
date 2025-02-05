@@ -9,13 +9,11 @@ const SPECIAL_CHAINS_TAGS = {
 
 function parseTrustedChains(config, trustedChains) {
     if (trustedChains === SPECIAL_CHAINS_TAGS.ALL_EVM) {
-        const evmChains = Object.keys(config.chains).filter(
-            (chain) => config.chains[chain].contracts?.InterchainTokenService?.address,
-        );
+        const evmChains = Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
         return evmChains;
     }
 
-    return trustedChains
+    return trustedChains;
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
@@ -61,7 +59,7 @@ async function removeTrustedChain(keypair, client, contracts, args, options) {
             chainNames,
         ],
     });
-    
+
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address', options);
 }
 
