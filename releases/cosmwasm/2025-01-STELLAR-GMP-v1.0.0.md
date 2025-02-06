@@ -23,7 +23,7 @@ Create an `.env` config.
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAIN=stellar
+CHAIN=xyz
 ```
 
 ## Deployment
