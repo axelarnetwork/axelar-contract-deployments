@@ -1,4 +1,4 @@
-# DEPLOY COSMWASM FOR STELLAR GMP v1.0.0
+# Stellar GMP Amplifier
 
 |                | **Owner**                            |
 | -------------- | ------------------------------------ |
