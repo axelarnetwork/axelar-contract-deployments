@@ -380,6 +380,7 @@ module.exports = {
     getTransactionList,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
     isAllowed,
