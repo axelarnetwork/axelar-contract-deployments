@@ -3,7 +3,7 @@
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -13,6 +13,7 @@ const {
     addressToScVal,
     hexToScVal,
     saltToBytes32,
+    stellarAddressToBytes,
 } = require('./utils');
 const { prompt } = require('../common/utils');
 
@@ -121,6 +122,11 @@ async function execute(wallet, _, chain, contract, args, options) {
 
     await broadcast(operation, wallet, chain, 'Execute Called', options);
 }
+  
+async function encodeRecipient(wallet, _, chain, contract, args, options) {
+    const [recipient] = args;
+    printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
+}
 
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
@@ -208,6 +214,13 @@ if (require.main === module) {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
+    program
+        .command('encode-recipient <recipient>')
+        .description('Encode stellar address as bytes for ITS recipient')
+        .action((recipient, options) => {
+            mainProcessor(encodeRecipient, [recipient], options);
+        });
+  
     addOptionsToCommands(program, addBaseOptions);
 
     program.parse();

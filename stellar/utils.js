@@ -17,7 +17,7 @@ const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
+    utils: { arrayify, hexlify, hexZeroPad, isHexString, keccak256 },
     BigNumber,
 } = ethers;
 
@@ -336,6 +336,10 @@ function saltToBytes32(salt) {
     return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
 }
 
+function stellarAddressToBytes(address) {
+    return hexlify(Buffer.from(address, 'ascii'));
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -356,4 +360,5 @@ module.exports = {
     tokenToScVal,
     tokenMetadataToScVal,
     saltToBytes32,
+    stellarAddressToBytes,
 };
