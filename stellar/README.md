@@ -234,7 +234,7 @@ node stellar/its.js interchain-transfer [token-id] [destination-chain] [destinat
 #### Encode stellar recipient address to bytes
 
 ```bash
-node stellar/its.js encode-stellar-recipient 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
+node stellar/its.js encode-recipient 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
 ```
 
 ## TTL extension and state archival recovery
