@@ -18,7 +18,7 @@
 
 ## Deployment
 
-Create an `.env` config.
+Create an `.env` config. `CHAIN` should be set to `stellar` for mainnet, and `stellar-2024-q4` for all other networks.
 
 ```yaml
 PRIVATE_KEY=xyz
