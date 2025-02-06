@@ -28,7 +28,7 @@ CHAIN=xyz
 
 ## Deployment
 
-- This rollout will create a new stellar connection
+Deploy Amplifier contracts that connect to the Stellar gateway.
 
 ```bash
 GATEWAY_ADDRESS=gateway
