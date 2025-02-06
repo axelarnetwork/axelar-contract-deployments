@@ -102,7 +102,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         hexToScVal(destinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
-        hexToScVal(data),
+        data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(data),
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
