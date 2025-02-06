@@ -109,6 +109,20 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
+async function execute(wallet, _, chain, contract, args, options) {
+    const [sourceChain, messageId, sourceAddress, payload] = args;
+
+    const operation = contract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(operation, wallet, chain, 'Executed', options);
+}
+
 async function encodeRecipient(wallet, _, chain, contract, args, options) {
     const [recipient] = args;
     printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
@@ -191,6 +205,13 @@ if (require.main === module) {
                 [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount],
                 options,
             );
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .description('Execute ITS message')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
 
     program
