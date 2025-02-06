@@ -66,7 +66,7 @@ function getVariablesForPackage(chain, packageName) {
     };
 }
 
-async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames) {
+async function allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames, options) {
     if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
 
     const builder = new TxBuilder(client);
@@ -78,10 +78,10 @@ async function allowFunctions(keypair, client, packageId, moduleName, singletonI
         });
     }
 
-    await broadcastFromTxBuilder(builder, keypair, 'Allow Functions');
+    await broadcastFromTxBuilder(builder, keypair, 'Allow Functions', options);
 }
 
-async function disallowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames) {
+async function disallowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versions, functionNames, options) {
     if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
 
     const builder = new TxBuilder(client);
@@ -93,7 +93,7 @@ async function disallowFunctions(keypair, client, packageId, moduleName, singlet
         });
     }
 
-    await broadcastFromTxBuilder(builder, keypair, 'Disallow Functions');
+    await broadcastFromTxBuilder(builder, keypair, 'Disallow Functions', options);
 }
 
 async function pause(keypair, client, chain, args, options) {
@@ -152,7 +152,7 @@ async function pause(keypair, client, chain, args, options) {
     contract.disallowedFunctions.versions = contract.disallowedFunctions.versions.concat(versionsArg);
     contract.disallowedFunctions.functionNames = contract.disallowedFunctions.functionNames.concat(allowedFunctionsArg);
 
-    return await disallowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg);
+    return await disallowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg, options);
 }
 
 async function unpause(keypair, client, chain, args, options) {
@@ -193,7 +193,7 @@ async function unpause(keypair, client, chain, args, options) {
         }
     }
 
-    return await allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg);
+    return await allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg, options);
 }
 
 async function processCommand(command, chain, args, options) {
