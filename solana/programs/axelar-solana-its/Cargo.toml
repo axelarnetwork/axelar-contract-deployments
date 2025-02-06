@@ -19,11 +19,12 @@ alloy-sol-types.workspace = true
 axelar-executable.workspace = true
 axelar-message-primitives.workspace = true
 axelar-solana-encoding.workspace = true
-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 bitflags.workspace = true
 borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
+itertools.workspace = true
 mpl-token-metadata.workspace = true
 program-utils.workspace = true
 role-management.workspace = true

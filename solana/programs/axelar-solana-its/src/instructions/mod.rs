@@ -27,6 +27,31 @@ pub mod minter;
 pub mod operator;
 pub mod token_manager;
 
+/// Convenience module with the indices of the accounts passed in the
+/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
+pub mod its_account_indices {
+    /// The index of the gateway root PDA account.
+    pub const GATEWAY_ROOT_PDA_INDEX: usize = 0;
+    /// The index of the system program account.
+    pub const SYSTEM_PROGRAM_INDEX: usize = 1;
+    /// The index of the ITS root PDA account.
+    pub const ITS_ROOT_PDA_INDEX: usize = 2;
+    /// The index of the token manager PDA account.
+    pub const TOKEN_MANAGER_PDA_INDEX: usize = 3;
+    /// The index of the token mint account.
+    pub const TOKEN_MINT_INDEX: usize = 4;
+    /// The index of the token manager ATA account.
+    pub const TOKEN_MANAGER_ATA_INDEX: usize = 5;
+    /// The index of the token program account.
+    pub const TOKEN_PROGRAM_INDEX: usize = 6;
+    /// The index of the associated token program account.
+    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 7;
+    /// The index of the its user roles account.
+    pub const ITS_USER_ROLES_PDA_INDEX: usize = 8;
+    /// The rent account index
+    pub const RENT_ACCOUNT_INDEX: usize = 9;
+}
+
 bitflags! {
     /// Bitmask for the optional accounts passed in some of the instructions.
     #[derive(Debug, PartialEq, Eq)]
