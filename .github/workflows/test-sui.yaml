@@ -236,10 +236,10 @@ jobs:
           echo "deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)" >> $GITHUB_ENV
 
       - name: ITS Flow Limit Set
-        run: node sui/its.js set-flow-limits InterchainTokenService $originTokenId 0 -y
+        run: node sui/its.js set-flow-limits $originTokenId 0 -y
 
       - name: ITS Flow Limit Remove
-        run: node sui/its.js set-flow-limits InterchainTokenService $originTokenId none -y
+        run: node sui/its.js set-flow-limits $originTokenId none -y
 
       - name: Setup Trusted Addresses
         run: |
