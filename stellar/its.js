@@ -120,9 +120,9 @@ async function execute(wallet, _, chain, contract, args, options) {
         hexToScVal(payload),
     );
 
-    await broadcast(operation, wallet, chain, 'Execute Called', options);
+    await broadcast(operation, wallet, chain, 'Executed', options);
 }
-  
+
 async function encodeRecipient(wallet, _, chain, contract, args, options) {
     const [recipient] = args;
     printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
@@ -209,7 +209,7 @@ if (require.main === module) {
 
     program
         .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
-        .description('its execute')
+        .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
         });
@@ -220,7 +220,7 @@ if (require.main === module) {
         .action((recipient, options) => {
             mainProcessor(encodeRecipient, [recipient], options);
         });
-  
+
     addOptionsToCommands(program, addBaseOptions);
 
     program.parse();

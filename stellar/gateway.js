@@ -5,7 +5,7 @@ const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
@@ -166,22 +166,22 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
 async function execute(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
     const [sourceChain, messageId, sourceAddress, destinationAddress, payload] = args;
-    const payloadHash = keccak256(arrayify(payload));
+    const payloadHash = arrayify(keccak256(payload));
 
     printInfo('Destination app contract', destinationAddress);
-    printInfo('Payload Hash', payloadHash);
 
     const isMessageApprovedOperation = contract.call(
         'is_message_approved',
         nativeToScVal(sourceChain, { type: 'string' }),
         nativeToScVal(messageId, { type: 'string' }),
         nativeToScVal(sourceAddress, { type: 'string' }),
+        addressToScVal(destinationAddress),
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
 
     const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
 
-    if (!messageApproved) {
+    if (!messageApproved._value) {
         printWarn('Contract call not approved at the gateway');
         return;
     }
@@ -196,7 +196,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         hexToScVal(payload),
     );
 
-    await broadcast(appOperation, wallet, chain, 'execute Called', options);
+    await broadcast(appOperation, wallet, chain, 'Executed', options);
 }
 
 async function mainProcessor(processor, args, options) {
