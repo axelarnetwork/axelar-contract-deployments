@@ -250,9 +250,10 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 
     const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
 
-    const [ownerCapObjectId, creatorCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [ownerCapObjectId, creatorCapObjectId, operatorCapId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::owner_cap::OwnerCap`,
         `${published.packageId}::creator_cap::CreatorCap`,
+        `${published.packageId}::operator_cap::OperatorCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
