@@ -203,12 +203,6 @@ jobs:
       - name: ITS Unpause
         run: node sui/contract.js unpause InterchainTokenService -y
 
-      - name: ITS Flow Limit Set
-        run: node sui/its.js flow InterchainTokenService -y
-
-      - name: ITS Flow Limit Remove
-        run: node sui/its.js unpause InterchainTokenService -y
-
       - name: Prepare ITS Example Parameters
         run: |
           echo "sourceChain=Ethereum" >> $GITHUB_ENV
@@ -237,8 +231,15 @@ jobs:
 
           echo "transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)" >> $GITHUB_ENV
           echo "transferPayload=$(echo $transferInfo | jq -r .payload)" >> $GITHUB_ENV
+          echo "originTokenId=$(echo $transferInfo | jq -r .tokenId)" >> $GITHUB_ENV
           echo "deployPayload=$(echo $deploymentInfo | jq -r .payload)" >> $GITHUB_ENV
           echo "deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)" >> $GITHUB_ENV
+
+      - name: ITS Flow Limit Set
+        run: node sui/its.js et-flow-limits InterchainTokenService $originTokenId 0 -y
+
+      - name: ITS Flow Limit Remove
+        run: node sui/its.js set-flow-limits InterchainTokenService $originTokenId none -y
 
       - name: Setup Trusted Addresses
         run: |

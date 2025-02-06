@@ -29,8 +29,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
     tokenIds = tokenIds.split(',');
     flowLimits = flowLimits.split(',');
 
-    if (tokenIds.length !== flowLimits.length)
-        throw new Error('<token-ids> and <flow-limits> have to have the same length.');
+    if (tokenIds.length !== flowLimits.length) throw new Error('<token-ids> and <flow-limits> have to have the same length.');
 
     for (const i in tokenIds) {
         const coinTypeTxBuilder = new TxBuilder(client);
@@ -41,7 +40,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 
         await coinTypeTxBuilder.moveCall({
             target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
-            arguments: [InterchainTokenService, tokenId]
+            arguments: [InterchainTokenService, tokenId],
         });
 
         const resp = await coinTypeTxBuilder.devInspect(keypair.toSuiAddress());
@@ -53,17 +52,18 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         });
 
         let flowLimit;
-        if(flowLimits[i] == 'none') {
+
+        if (flowLimits[i] === 'none') {
             flowLimit = await txBuilder.moveCall({
                 target: `${STD_PACKAGE_ID}::option::none`,
                 arguments: [],
-                typeArguments: ["u64"],
+                typeArguments: ['u64'],
             });
         } else {
             flowLimit = await txBuilder.moveCall({
                 target: `${STD_PACKAGE_ID}::option::some`,
                 arguments: [txBuilder.tx.pure.u64(Number(flowLimits[i]))],
-                typeArguments: ["u64"],
+                typeArguments: ['u64'],
             });
         }
 
