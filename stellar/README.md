@@ -185,6 +185,12 @@ node stellar/gateway.js rotate --new-nonce test --signers wallet
 node stellar/gateway.js rotate --new-nonce test2 --current-nonce test --signers wallet
 ```
 
+#### Execute
+
+```bash
+node stellar/gateway.js execute [source-chain] [message-id] [source-address] [destination-address] [payload]
+```
+
 ### Interchain Token Service
 
 _Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
@@ -229,6 +235,18 @@ node stellar/its.js deploy-remote-canonical-token [token-address] [destination-c
 
 ```bash
 node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] [data] [gas-token-address] [gas-fee-amount]
+```
+
+#### Encode stellar recipient address to bytes
+
+```bash
+node stellar/its.js encode-recipient 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
+```
+
+#### Execute
+
+```bash
+node stellar/its.js execute [source-chain] [message-id] [source-address] [payload]
 ```
 
 ## TTL extension and state archival recovery

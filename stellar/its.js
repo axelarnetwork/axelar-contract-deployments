@@ -3,7 +3,7 @@
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -13,6 +13,7 @@ const {
     addressToScVal,
     hexToScVal,
     saltToBytes32,
+    stellarAddressToBytes,
 } = require('./utils');
 const { prompt } = require('../common/utils');
 
@@ -108,6 +109,25 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
+async function execute(wallet, _, chain, contract, args, options) {
+    const [sourceChain, messageId, sourceAddress, payload] = args;
+
+    const operation = contract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(operation, wallet, chain, 'Executed', options);
+}
+
+async function encodeRecipient(wallet, _, chain, contract, args, options) {
+    const [recipient] = args;
+    printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -136,14 +156,14 @@ if (require.main === module) {
 
     program
         .command('set-trusted-chain <chainName>')
-        .description('set a trusted ITS chain')
+        .description('set a trusted InterchainTokenService chain')
         .action((chainName, options) => {
             mainProcessor(setTrustedChain, chainName, options);
         });
 
     program
         .command('remove-trusted-chain <chainName>')
-        .description('remove a trusted ITS chain')
+        .description('remove a trusted InterchainTokenService chain')
         .action((chainName, options) => {
             mainProcessor(removeTrustedChain, chainName, options);
         });
@@ -185,6 +205,20 @@ if (require.main === module) {
                 [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount],
                 options,
             );
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <payload>')
+        .description('Execute ITS message')
+        .action((sourceChain, messageId, sourceAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+        });
+
+    program
+        .command('encode-recipient <recipient>')
+        .description('Encode stellar address as bytes for ITS recipient')
+        .action((recipient, options) => {
+            mainProcessor(encodeRecipient, [recipient], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

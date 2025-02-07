@@ -67,6 +67,8 @@ jobs:
           SUI_ADDRESS=$(sui keytool export --key-identity wallet --json | jq .key.suiAddress | sed 's/"//g')
           echo "SUI_PRIVATE_KEY=${SUI_PRIVATE_KEY}" >> $GITHUB_ENV
           echo "SUI_ADDRESS=${SUI_ADDRESS}" >> $GITHUB_ENV
+          echo "ITS_HUB_CHAIN_NAME=axelar" >> $GITHUB_ENV
+          echo "ITS_HUB_ADDRESS=hub_address" >> $GITHUB_ENV
 
       - name: Spin up Sui Network
         # sui-test-validator will be deprecated in the future.
@@ -89,20 +91,27 @@ jobs:
       - name: Prepare local.json
         run: |
           echo '{
-              "chains": {
-                  "sui": {
-                      "name": "Sui",
-                      "axelarId": "sui",
-                      "networkType": "localnet",
-                      "chainType": "sui",
-                      "tokenSymbol": "SUI",
-                      "rpc": "http://127.0.0.1:9000",
-                      "faucetUrl": "http://127.0.0.1:9123",
-                      "contracts": {
-                          "AxelarGateway": {}
-                      }
-                  }
+            "chains": {
+              "sui": {
+                "name": "Sui",
+                "axelarId": "sui",
+                "networkType": "localnet",
+                "chainType": "sui",
+                "tokenSymbol": "SUI",
+                "rpc": "http://127.0.0.1:9000",
+                "faucetUrl": "http://127.0.0.1:9123",
+                "contracts": {
+                    "AxelarGateway": {}
+                }
               }
+            },
+            "axelar": {
+              "contracts": {
+                "InterchainTokenService": {
+                  "address": "${{ env.ITS_HUB_ADDRESS }}"
+                }
+              }
+            }
           }' > ./axelar-chains-config/info/local.json
 
       # Create .env file with default hardhat private key that's prefunded
@@ -142,8 +151,8 @@ jobs:
       - name: Deploy ABI
         run: node sui/deploy-contract deploy Abi
 
-      - name: Deploy ITS
-        run: node sui/deploy-contract deploy ITS
+      - name: Deploy InterchainTokenService
+        run: node sui/deploy-contract deploy InterchainTokenService -y
 
       - name: Deploy Example
         run: node sui/deploy-contract deploy Example
@@ -160,6 +169,18 @@ jobs:
         run: node sui/gas-service.js collectGas --amount 0.1
 
       ###### Command: Gateway ######
+      - name: Gateway Pause
+        run: node sui/contract.js pause AxelarGateway -y
+
+      - name: Gateway Unpause
+        run: node sui/contract.js unpause AxelarGateway -y
+
+      - name: Gateway Pause All
+        run: node sui/contract.js pause AxelarGateway --functions all -y
+
+      - name: Gateway Unpause
+        run: node sui/contract.js unpause AxelarGateway -y
+
       - name: Gateway Approve
         run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
@@ -181,8 +202,20 @@ jobs:
           node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
           node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
-      ###### Command: ITS Example ######
+      ###### Command: ITS ######
+      - name: ITS Pause
+        run: node sui/contract.js pause InterchainTokenService -y
 
+      - name: ITS Unpause
+        run: node sui/contract.js unpause InterchainTokenService -y
+
+      - name: ITS Pause
+        run: node sui/contract.js pause InterchainTokenService --functions all -y
+
+      - name: ITS Unpause
+        run: node sui/contract.js unpause InterchainTokenService -y
+
+      ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
         run: |
           echo "sourceChain=Ethereum" >> $GITHUB_ENV
@@ -197,7 +230,7 @@ jobs:
           echo "emptyTokenName=Empty" >> $GITHUB_ENV
           echo "emptyTokenDecimals=6" >> $GITHUB_ENV
           config=$(cat axelar-chains-config/info/local.json)
-          echo "channelId=$(echo $config | jq -r '.chains.sui.contracts.ITS.objects.ChannelId')" >> $GITHUB_ENV
+          echo "channelId=$(echo $config | jq -r '.chains.sui.contracts.InterchainTokenService.objects.ChannelId')" >> $GITHUB_ENV
           echo "destinationContractAddress=$(echo $config | jq -r '.chains.sui.contracts.Example.objects.ItsChannelId')" >> $GITHUB_ENV
 
       - name: Deploy Test Tokens
@@ -206,8 +239,8 @@ jobs:
           node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
 
           # Prepare additional parameters for the example:
-          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
-          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
+          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.sourceChain }} ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
+          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.sourceChain }} ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
 
           echo "transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)" >> $GITHUB_ENV
           echo "transferPayload=$(echo $transferInfo | jq -r .payload)" >> $GITHUB_ENV
@@ -216,7 +249,7 @@ jobs:
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its.js setup-trusted-address $sourceChain $sourceAddress
+          node sui/its.js add-trusted-chains $sourceChain
 
       - name: Send Token to another chain
         run: |
@@ -224,8 +257,8 @@ jobs:
 
       - name: Receive Token from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sourceAddress $channelId $transferPayloadHash
-          node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
+          node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $transferPayloadHash
+          node sui/its-example receive-token ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $symbol $transferPayload
 
       - name: Send Token Deployment to another chain
         run: |
@@ -233,8 +266,8 @@ jobs:
 
       - name: Receive Token Deployment from another chain
         run: |
-          node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $sourceAddress $channelId $deployPayloadHash
-          node sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
+          node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $deployPayloadHash
+          node sui/its-example receive-deployment ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $emptyTokenSymbol $deployPayload
 
       ###### Command: Operators ######
 
