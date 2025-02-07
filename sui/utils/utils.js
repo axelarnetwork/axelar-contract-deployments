@@ -346,6 +346,17 @@ const isAllowed = async (client, keypair, chain, exec, options) => {
     return true;
 };
 
+const getAllowedFunctions = async (client, versionedObjectId) => {
+    const response = await client.getObject({
+        id: versionedObjectId,
+        options: {
+            showContent: true,
+        },
+    });
+    const allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
+    return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -367,10 +378,11 @@ module.exports = {
     getBagContentId,
     moveDir,
     getTransactionList,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
     isAllowed,
+    getAllowedFunctions,
 };
