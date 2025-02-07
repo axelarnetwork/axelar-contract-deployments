@@ -278,6 +278,34 @@ async function processCommand(config, chain, options) {
             }
         }
 
+        case 'isContractCallApproved': {
+            const payloadHash = keccak256(arrayify(payload));
+            const { sourceChain, sourceAddress } = options;
+
+            let commandId;
+
+            if (options.messageId) {
+                // Derive commandId for Amplifier gateway
+                commandId = id(`${sourceChain}_${options.messageId}`);
+            } else {
+                commandId = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            }
+
+            if (!options.destination) {
+                throw new Error('Missing destination address');
+            }
+
+            printInfo('Destination address', options.destination);
+            printInfo('Payload Hash', payloadHash);
+
+            if (!(await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, options.destination, payloadHash))) {
+                printWarn('Contract call not approved at the gateway');
+            } else {
+                printInfo('Contract call was approved at the gateway');
+            }
+            return;
+        }
+
         // eslint-disable-next-line no-fallthrough
         case 'execute':
 
@@ -489,6 +517,7 @@ if (require.main === module) {
                 'callContract',
                 'submitBatch',
                 'approve',
+                'isContractCallApproved',
                 'execute',
                 'approveAndExecute',
                 'transferGovernance',
