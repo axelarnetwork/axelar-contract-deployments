@@ -210,7 +210,7 @@ function isValidBytesAddress(input) {
 }
 
 function isValidBytesArray(input) {
-    if (input.length % 2 == 1){
+    if (input.length % 2 === 1){
         return false;
     }
 
