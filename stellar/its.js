@@ -98,7 +98,8 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
 
 async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
-    const [tokenId, destinationChain, destinationAddress, amount, data] = args;
+    const [tokenId, destinationChain, destinationAddress, amount] = args;
+    const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
     const gasTokenAddress = options.gasTokenAddress || getNativeTokenAddress(chain.networkType);
     const gasFeeAmount = options.gasFeeAmount;
 
@@ -109,7 +110,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         hexToScVal(destinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
-        hexToScVal(data),
+        data,
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
@@ -208,8 +209,9 @@ if (require.main === module) {
         });
 
     program
-        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount> <data>')
+        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('interchain transfer')
+        .addOption(new Option('--data <data>', 'data').default(''))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((tokenId, destinationChain, destinationAddress, amount, data, options) => {
