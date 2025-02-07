@@ -44,12 +44,12 @@ function getWallet(chain, options) {
 
     const client = getSuiClient(chain, options.rpc);
 
-    if (options.privateKey === 'ledger') {
-        keypair = new LedgerSigner();
-        return [keypair, client];
-    }
-
     switch (options.privateKeyType) {
+        case 'ledger': {
+            keypair = new LedgerSigner();
+            break;
+        }
+
         case 'bech32': {
             const decodedKey = decodePrivateKey(options.privateKey);
             const secretKey = decodedKey.secretKey;
@@ -85,10 +85,7 @@ async function printWalletInfo(wallet, client, chain, options = {}) {
     let owner;
 
     if (options.privateKey !== 'ledger') {
-        owner =
-            wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
-                ? wallet.toSuiAddress()
-                : wallet;
+        owner = wallet.toSuiAddress();
     } else {
         owner = await wallet.toSuiAddress();
         printInfo('PublicKey', (await wallet.getPublicKey()).address.toString('base64'));
@@ -216,7 +213,13 @@ async function broadcastSignature(client, txBytes, signature, actionName, comman
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
 
-    const publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
+    let publicKey;
+
+    try {
+        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
+q    } catch (e) {
+        throw new Error(`Transaction signature verification failed with error : ${e}`);
+    }
 
     if (publicKey.toSuiAddress() !== (await keypair.toSuiAddress())) {
         throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
