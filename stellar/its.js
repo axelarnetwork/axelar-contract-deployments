@@ -1,7 +1,7 @@
 'use strict';
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 
 const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
 const {
@@ -93,7 +93,8 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
 
 async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
-    const [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount] = args;
+    const [tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount] = args;
+    const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
 
     const operation = contract.call(
         'interchain_transfer',
@@ -102,7 +103,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         hexToScVal(destinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
-        data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(data),
+        data,
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
@@ -197,12 +198,13 @@ if (require.main === module) {
         });
 
     program
-        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount> <data> <gasTokenAddress> <gasFeeAmount>')
+        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount> <gasTokenAddress> <gasFeeAmount>')
         .description('interchain transfer')
-        .action((tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount, options) => {
+        .addOption(new Option('--data <data>', 'data').default(''))
+        .action((tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount, options) => {
             mainProcessor(
                 interchainTransfer,
-                [tokenId, destinationChain, destinationAddress, amount, data, gasTokenAddress, gasFeeAmount],
+                [tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount],
                 options,
             );
         });
