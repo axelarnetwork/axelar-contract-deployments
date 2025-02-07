@@ -133,13 +133,11 @@ async function pause(keypair, client, chain, args, options) {
     } else if (functions === SPECIAL_PAUSE_FUNCTION_TAGS.DEFAULT) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
-    } else {
-        if (options.version === 'all') {
-            throw new Error('Need to specify a version if providing specific functions.');
-        }
-
+    } else if (options.version !== 'all') {
         allowedFunctionsArg = functions.split(',');
         versionsArg = allowedFunctionsArg.map(() => Number(options.version));
+    } else {
+        throw new Error('Need to specify a version if providing specific functions.');
     }
 
     if (!contract.disallowedFunctions) {
@@ -179,13 +177,11 @@ async function unpause(keypair, client, chain, args, options) {
     } else if (functions === SPECIAL_UNPAUSE_FUNCTION_TAGS.DEFAULT) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
-    } else {
-        if (options.version === 'all') {
-            throw new Error('Need to specify a version if providing specific functions.');
-        }
-
+    } else if (options.version !== 'all') {
         allowedFunctionsArg = functions.split(',');
         versionsArg = allowedFunctionsArg.map(() => Number(options.version));
+    } else {
+        throw new Error('Need to specify a version if providing specific functions.');
     }
 
     if (contract.disallowedFunctions) {
