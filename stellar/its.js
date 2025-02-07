@@ -53,8 +53,10 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
 
 async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
-    const [salt, destinationChain, gasTokenAddress, gasFeeAmount] = args;
+    const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
+    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
@@ -78,7 +80,9 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
 async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
 
-    const [tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount] = args;
+    const [tokenAddress, destinationChain] = args;
+    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
@@ -93,8 +97,10 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
 
 async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
-    const [tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount] = args;
+    const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
+    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
         'interchain_transfer',
@@ -177,10 +183,12 @@ if (require.main === module) {
         });
 
     program
-        .command('deploy-remote-interchain-token <salt> <destinationChain> <gasTokenAddress> <gasFeeAmount>')
+        .command('deploy-remote-interchain-token <salt> <destinationChain>')
         .description('deploy remote interchain token')
-        .action((salt, destinationChain, gasTokenAddress, gasFeeAmount, options) => {
-            mainProcessor(deployRemoteInterchainToken, [salt, destinationChain, gasTokenAddress, gasFeeAmount], options);
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .action((salt, destinationChain, options) => {
+            mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
         });
 
     program
@@ -191,22 +199,22 @@ if (require.main === module) {
         });
 
     program
-        .command('deploy-remote-canonical-token <tokenAddress> <destinationChain> <gasTokenAddress> <gasFeeAmount>')
+        .command('deploy-remote-canonical-token <tokenAddress> <destinationChain>')
         .description('deploy remote canonical token')
-        .action((tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount, options) => {
-            mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain, gasTokenAddress, gasFeeAmount], options);
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .action((tokenAddress, destinationChain, options) => {
+            mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
         });
 
     program
-        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount> <gasTokenAddress> <gasFeeAmount>')
+        .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('interchain transfer')
         .addOption(new Option('--data <data>', 'data').default(''))
-        .action((tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount, options) => {
-            mainProcessor(
-                interchainTransfer,
-                [tokenId, destinationChain, destinationAddress, amount, gasTokenAddress, gasFeeAmount],
-                options,
-            );
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .action((tokenId, destinationChain, destinationAddress, amount, options) => {
+            mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount], options);
         });
 
     program
