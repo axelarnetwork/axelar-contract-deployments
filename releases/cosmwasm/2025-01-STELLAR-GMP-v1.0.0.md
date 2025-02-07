@@ -63,8 +63,8 @@ MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.con
 MULTISIG=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Rewards.address | tr -d '"')
 RUN_AS_ACCOUNT=run_as_account
-REWARD_AMOUNT=1000000uamplifier
 DEPOSIT_VALUE=100000000
+REWARD_AMOUNT=1000000uamplifier
 ```
 
 4. Register stellar gateway at the Router
