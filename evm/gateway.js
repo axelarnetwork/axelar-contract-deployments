@@ -17,6 +17,7 @@ const {
     getEVMBatch,
     getEVMAddresses,
     isValidAddress,
+    validateParameters,
     wasEventEmitted,
     mainProcessor,
     printError,
@@ -317,21 +318,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'isContractCallApproved': {
-            const { commandId, payloadHash, sourceChain, sourceAddress } = options;
+            const { commandId, destination, payloadHash, sourceChain, sourceAddress } = options;
 
-            if (!options.destination) {
-                throw new Error('Missing destination address');
-            }
+            validateParameters({
+                isNonEmptyString: { commandId, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
 
-            printInfo('Destination address', options.destination);
-
-            const isApproved = await gateway.isContractCallApproved(
-                commandId,
-                sourceChain,
-                sourceAddress,
-                options.destination,
-                payloadHash,
-            );
+            const isApproved = await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, destination, payloadHash);
 
             if (isApproved) {
                 printInfo('Contract call was approved at the gateway');
@@ -343,22 +337,15 @@ async function processCommand(config, chain, options) {
         }
 
         case 'isMessageApproved': {
-            const { messageId, payloadHash, sourceChain, sourceAddress } = options;
+            const { messageId, destination, payloadHash, sourceChain, sourceAddress } = options;
             const commandId = id(`${sourceChain}_${messageId}`);
 
-            if (!options.destination) {
-                throw new Error('Missing destination address');
-            }
+            validateParameters({
+                isNonEmptyString: { commandId, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
 
-            printInfo('Destination address', options.destination);
-
-            const isApproved = await gateway.isContractCallApproved(
-                commandId,
-                sourceChain,
-                sourceAddress,
-                options.destination,
-                payloadHash,
-            );
+            const isApproved = await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, destination, payloadHash);
 
             if (isApproved) {
                 printInfo('Message was approved at the gateway');
