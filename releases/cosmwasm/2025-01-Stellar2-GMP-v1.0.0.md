@@ -16,12 +16,12 @@
 
 ## Background
 
-1. These are the instructions for deploying Cooswasm for Stellar GMP V1.0.0
+1. These are the instructions for deploying Amplifier contracts for Stellar connection.
 2. The latest official release of axelar-amplifier should be used.
 
 ### Pre-requisite
 
-- Ensure that [External Gateway](../stellar/2025-01-Stellar-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` relies on `External Gateway` due to `sourceGatewayAddress`.
+- Ensure that the [External Gateway](../stellar/2025-01-Stellar-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 ## Deployment
 
@@ -35,19 +35,19 @@ CHAIN=xyz
 
 ### Deploy Amplifier contracts that connect to the Stellar gateway.
 
-1. Instantiate stellar VotingVerifier
+1. Instantiate `VotingVerifier`
 
 ```bash
 node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier -n $CHAIN --fetchCodeId --instantiate2
 ```
 
-2. Instantiate stellar gateway
+2. Instantiate `Gateway`
 
 ```bash
 node ./cosmwasm/deploy-contract.js instantiate -c Gateway -n $CHAIN --fetchCodeId --instantiate2
 ```
 
-3. Instantiate stellar MultisigProver
+3. Instantiate `MultisigProver`
 
 ```bash
 node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver -n $CHAIN --fetchCodeId --instantiate2
@@ -75,8 +75,14 @@ node cosmwasm/submit-proposal.js execute \
  -t "Register Gateway for stellar" \
  -d "Register Gateway address for stellar at Router contract" \
  --deposit $DEPOSIT_VALUE \
-  --runAs $RUN_AS_ACCOUNT \
-  --msg '{"register_chain":{"chain":"'"$CHAIN"'","gateway_address":"'"$GATEWAY"'","msg_id_format":"hex_tx_hash_and_event_index"}}'
+ --runAs $RUN_AS_ACCOUNT \
+ --msg '{
+    "register_chain": {
+      "chain": "'"$CHAIN"'",
+      "gateway_address": "'"$GATEWAY"'",
+      "msg_id_format": "hex_tx_hash_and_event_index"
+    }
+  }'
 ```
 
 5. Register prover contract on coordinator
@@ -87,11 +93,16 @@ node cosmwasm/submit-proposal.js execute \
  -t "Register Multisig Prover for stellar" \
  -d "Register Multisig Prover address for stellar at Coordinator contract" \
  --deposit $DEPOSIT_VALUE \
-  --runAs $RUN_AS_ACCOUNT \
-  --msg '{"register_prover_contract":{"chain_name":"'"$CHAIN"'","new_prover_addr":""'"$MULTISIG_PROVER"'""}}'
+ --runAs $RUN_AS_ACCOUNT \
+ --msg '{
+    "register_prover_contract": {
+      "chain_name": "'"$CHAIN"'",
+      "new_prover_addr": ""'"$MULTISIG_PROVER"'""
+    }
+  }'
 ```
 
-6. Authorize callers on multisig prover
+6. Authorize Stellar Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -100,7 +111,13 @@ node cosmwasm/submit-proposal.js execute \
  -d "Authorize Multisig Prover address for stellar at Multisig contract" \
  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
-  --msg '{"authorize_callers":{"contracts":{"'"$MULTISIG_PROVER"'":"'"$CHAIN"'"}}}'
+  --msg '{
+    "authorize_callers": {
+      "contracts": {
+        "'"$MULTISIG_PROVER"'": "'"$CHAIN"'"
+      }
+    }
+  }'
 ```
 
 7. Update verifier set
@@ -109,16 +126,16 @@ node cosmwasm/submit-proposal.js execute \
 axelard tx wasm execute "'"$MULTISIG_PROVER"'" '"update_verifier_set"' --from amplifier --gas auto --gas-adjustment 1.2
 ```
 
-### Create reward pools and add funds to reward pools
+### Setup reward pools
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `"100"`          | `["8", "10"]`             | `"100"`             |
-| **Testnet**          | `"100"`          | `["8", "10"]`             | `"100"`             |
 | **Stagenet**         | `"100"`          | `["8", "10"]`             | `"100"`             |
-| **Mainnet**          | `"100"`          | `["8", "10"]`             | `"100"`             |
+| **Testnet**          | `"100"`          | `["8", "10"]`             | `"100"`             |
+| **Mainnet**          | `TBD`            | `TBD`                     | `TBD`               |
 
-8. Create verify reward pool
+8. Create reward pool for voting verifier
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -128,24 +145,24 @@ node cosmwasm/submit-proposal.js execute \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg '{
-  "create_pool": {
-    "params": {
-      "epoch_duration": "100",
-      "participation_threshold": [
-        "8",
-        "10"
-      ],
-      "rewards_per_epoch": "100"
-    },
-    "pool_id": {
-      "chain_name": "'"$CHAIN"'",
-      "contract": "'"$VOTING_VERIFIER"'"
+    "create_pool": {
+      "params": {
+        "epoch_duration": "100",
+        "participation_threshold": [
+          "8",
+          "10"
+        ],
+        "rewards_per_epoch": "100"
+      },
+      "pool_id": {
+        "chain_name": "'"$CHAIN"'",
+        "contract": "'"$VOTING_VERIFIER"'"
+      }
     }
-  }
-}'
+  }'
 ```
 
-9. Create multisig reward pool
+9. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -175,9 +192,9 @@ node cosmwasm/submit-proposal.js execute \
 10. Add funds to reward pools
 
 ```bash
-axelard tx wasm execute $REWARDS '{"add_rewards":{"pool_id":{"chain_name":"'"$CHAIN"'","contract":"'"$MULTISIG"'"}}}' --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS '{"add_rewards": {"pool_id": {"chain_name": "'"$CHAIN"'", "contract": "'"$MULTISIG"'"}}}' --amount $REWARD_AMOUNT --from $WALLET
 
-axelard tx wasm execute $REWARDS '{"add_rewards":{"pool_id":{"chain_name":"'"$CHAIN"'","contract":"'"$VOTING_VERIFIER"'"}}}' --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS '{"add_rewards": {"pool_id": {"chain_name": "'"$CHAIN"'", "contract": "'"$VOTING_VERIFIER"'"}}}' --amount $REWARD_AMOUNT --from $WALLET
 ```
 
 ## Checklist
