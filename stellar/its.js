@@ -211,7 +211,7 @@ if (require.main === module) {
         .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('interchain transfer')
         .addOption(new Option('--data <data>', 'data').default(''))
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((tokenId, destinationChain, destinationAddress, amount, data, options) => {
             mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount, data], options);
