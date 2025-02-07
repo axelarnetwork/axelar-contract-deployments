@@ -14,7 +14,6 @@ const {
     hexToScVal,
     saltToBytes32,
     stellarAddressToBytes,
-    getNativeTokenAddress,
 } = require('./utils');
 const { prompt } = require('../common/utils');
 
@@ -56,7 +55,7 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const gasTokenAddress = options.gasTokenAddress || getNativeTokenAddress(chain.networkType);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
@@ -82,7 +81,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
     const spenderScVal = addressToScVal(wallet.publicKey());
 
     const [tokenAddress, destinationChain] = args;
-    const gasTokenAddress = options.gasTokenAddress || getNativeTokenAddress(chain.networkType);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
@@ -100,7 +99,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
-    const gasTokenAddress = options.gasTokenAddress || getNativeTokenAddress(chain.networkType);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(

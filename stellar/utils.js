@@ -23,8 +23,6 @@ const {
 
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
-const STELLAR_NATIVE_TOKEN_TESTNET_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
-const STELLAR_NATIVE_TOKEN_MAINNET_ADDRESS = 'CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA';
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -39,10 +37,6 @@ function getNetworkPassphrase(networkType) {
         default:
             throw new Error(`Unknown network type: ${networkType}`);
     }
-}
-
-function getNativeTokenAddress(networkType) {
-    return networkType === 'mainnet' ? STELLAR_NATIVE_TOKEN_MAINNET_ADDRESS : STELLAR_NATIVE_TOKEN_TESTNET_ADDRESS;
 }
 
 const addBaseOptions = (program, options = {}) => {
@@ -356,7 +350,6 @@ module.exports = {
     getWallet,
     estimateCost,
     getNetworkPassphrase,
-    getNativeTokenAddress,
     addBaseOptions,
     getAmplifierVerifiers,
     serializeValue,
