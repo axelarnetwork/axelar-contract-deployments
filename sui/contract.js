@@ -134,7 +134,6 @@ async function pause(keypair, client, chain, args, options) {
         versionsArg = defaultFunctions.versions;
         allowedFunctionsArg = defaultFunctions.functionNames;
     } else if (options.version !== 'all') {
-
         allowedFunctionsArg = functions.split(',');
         versionsArg = allowedFunctionsArg.map(() => Number(options.version));
     } else {
