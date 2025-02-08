@@ -1,4 +1,4 @@
-const { Contract, Address } = require('@stellar/stellar-sdk');
+const { Contract } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { getWallet, broadcast, addBaseOptions } = require('./utils');
 const { loadConfig, printInfo } = require('../evm/utils');
@@ -9,7 +9,7 @@ async function processCommand(options, _, chain) {
     const wallet = await getWallet(chain, options);
 
     const contract = new Contract(options.address || chain.contracts?.pausable_contract?.address);
-    
+
     let operation;
 
     switch (options.action) {
@@ -19,13 +19,11 @@ async function processCommand(options, _, chain) {
         }
 
         case 'pause': {
-            const owner = Address.fromString(wallet.publicKey()).toScVal();
             operation = contract.call('pause');
             break;
         }
 
         case 'unpause': {
-            const owner = Address.fromString(wallet.publicKey()).toScVal();
             operation = contract.call('unpause');
             break;
         }
@@ -49,9 +47,7 @@ if (require.main === module) {
 
     addBaseOptions(program, { address: true });
     program.addOption(
-        new Option('--action <action>', 'pausable contract action')
-            .choices(['paused', 'pause', 'unpause'])
-            .makeOptionMandatory(true),
+        new Option('--action <action>', 'pausable contract action').choices(['paused', 'pause', 'unpause']).makeOptionMandatory(true),
     );
 
     program.action((options) => {
