@@ -53,8 +53,8 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 | **Mainnet**          | `TBD`             | `TBD`              |
 
 ```bash
-# Add config under "axelar": "contracts": "VotingVerifier"
-$CHAIN : {
+# Add config under "axelar": "contracts": "VotingVerifier" based on Network
+\"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "serviceName": "validators",
   "sourceGatewayAddress": "[external gateway address]",
@@ -68,8 +68,8 @@ $CHAIN : {
   "addressFormat": "stellar"
 }
 
-# Add config under "axelar": "contracts": "MultisigProver"
-$CHAIN : {
+# Add config under "axelar": "contracts": "MultisigProver" based on Network
+\"$CHAIN\" : {
   "governanceAddress": "[governance address]]",
   "adminAddress": "[admin address]",
   "signingThreshold": [
@@ -106,15 +106,7 @@ node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId -
 
 4. Set environment variables
 
-General environment variables
-
-```bash
-RUN_AS_ACCOUNT=[wasm deployer key address]
-DEPOSIT_VALUE=100000000
-REWARD_AMOUNT=1000000uamplifier
-```
-
-Network-specific environment variables: These variables need to be updated by the network.
+- Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
 VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
@@ -122,6 +114,14 @@ GATEWAY=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.G
 MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
 MULTISIG=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Rewards.address | tr -d '"')
+```
+
+- General environment variables
+
+```bash
+RUN_AS_ACCOUNT=[wasm deployer key address]
+DEPOSIT_VALUE=100000000
+REWARD_AMOUNT=1000000uamplifier
 ```
 
 5. Register stellar gateway at the Router
@@ -265,7 +265,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 13. Update ampd with the Stellar chain configuration.
 
 ```bash
-cosmwasm_contract="[$VOTING_VERIFIER\"]"
+cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
 type="StellarMsgVerifier"
 ```
 
