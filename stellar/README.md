@@ -277,3 +277,40 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
+
+## Pausable Contract Functionality
+
+This script allows you to manage the pausable state of a Stellar contract. You can check if the contract is paused, pause the contract, or unpause the contract.
+
+#### Usage
+
+To use this script, run the following command with the appropriate options:
+
+```bash
+node stellar/pause.js --action <action> --address <contract-address>
+```
+
+#### Options
+
+- `--action <action>`: The action to perform on the contract. Choices are `paused`, `pause`, and `unpause`. This option is mandatory.
+- `--address <contract-address>`: The address of the contract to interact with. This option is mandatory.
+
+#### Examples
+
+Check if the contract is paused:
+
+```bash
+node stellar/pause.js --action paused --address CBC2TFJUF4PIZFZXRJJ3K47OBZW5BUJVWBELZDJGMNGNVVNA4A64D5FI
+```
+
+Pause the contract:
+
+```bash
+node stellar/pause.js --action pause --address CBC2TFJUF4PIZFZXRJJ3K47OBZW5BUJVWBELZDJGMNGNVVNA4A64D5FI
+```
+
+Unpause the contract:
+
+```bash
+node stellar/pause.js --action unpause --address CBC2TFJUF4PIZFZXRJJ3K47OBZW5BUJVWBELZDJGMNGNVVNA4A64D5FI
+```
