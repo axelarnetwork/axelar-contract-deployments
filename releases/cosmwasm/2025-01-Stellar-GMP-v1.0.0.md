@@ -53,7 +53,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 | **Mainnet**          | `TBD`             | `TBD`              |
 
 ```bash
-# Add config under "axelar": "contracts": "VotingVerifier" based on Network
+# Add under `config.axelar.contracts.VotingVerifier` based on Network
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "serviceName": "validators",
@@ -70,7 +70,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 # Add config under "axelar": "contracts": "MultisigProver" based on Network
 \"$CHAIN\" : {
-  "governanceAddress": "[governance address]]",
+  "governanceAddress": "[governance address]",
   "adminAddress": "[admin address]",
   "signingThreshold": [
     "6",
@@ -83,7 +83,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 }
 ```
 
-### Deploy Amplifier contracts that connect to the Stellar gateway.
+### Instantiate Amplifier contracts
 
 1. Instantiate `VotingVerifier`
 
@@ -116,7 +116,7 @@ MULTISIG=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.M
 REWARDS=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Rewards.address | tr -d '"')
 ```
 
-- General environment variables
+- Gov proposal environment variables. Update these for each network
 
 ```bash
 RUN_AS_ACCOUNT=[wasm deployer key address]
@@ -142,7 +142,7 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-6. Register chain on ampd
+6. Register chain on ampd. Ask verifiers to run these.
 
 ```bash
 for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-chain-support validators $CHAIN ; done
@@ -185,7 +185,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Update verifier set
+9. Create genesis verifier set
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from amplifier --gas auto --gas-adjustment 1.2
@@ -254,7 +254,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Add funds to reward pools
+12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
