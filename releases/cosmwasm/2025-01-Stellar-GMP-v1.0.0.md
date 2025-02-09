@@ -21,7 +21,7 @@
 
 1. These are the instructions for deploying Amplifier contracts for Stellar connection.
 
-### Pre-requisite
+### Pre-requisites
 
 - Ensure that the [External Gateway](../stellar/2025-01-Stellar-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
@@ -45,38 +45,32 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
 
-| Network              | `votingThreshold` | `signingThreshold` |
-| -------------------- | ----------------- | ------------------ |
-| **Devnet-amplifier** | `["6", "10"]`     | `["6", "10"]`      |
-| **Stagenet**         | `["6", "10"]`     | `["6", "10"]`      |
-| **Testnet**          | `["6", "10"]`     | `["6", "10"]`      |
-| **Mainnet**          | `TBD`             | `TBD`              |
+| Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
+| -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
+| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
+| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
+| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
+| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `TBD`                |
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
-  "serviceName": "validators",
+  "serviceName": "[service name]",
   "sourceGatewayAddress": "[external gateway address]",
-  "votingThreshold": [
-    "6",
-    "10"
-  ],
+  "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": 1,
+  "confirmationHeight": [confirmation height]
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "stellar"
 }
 
-# Add config under "axelar": "contracts": "MultisigProver" based on Network
+# Add under `config.axelar.contracts.MultisigProver` based on Network
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "adminAddress": "[admin address]",
-  "signingThreshold": [
-    "6",
-    "10"
-  ],
-  "serviceName": "validators",
+  "signingThreshold": "[signing threshold]",
+  "serviceName": "[service name]",
   "verifierSetDiffThreshold": 0,
   "encoder": "stellar_xdr",
   "keyType": "ed25519"
@@ -109,17 +103,18 @@ node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId -
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$DEVNET.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Multisig.address | tr -d '"')
-REWARDS=$(cat ./axelar-chains-config/info/$DEVNET.json | jq .axelar.contracts.Rewards.address | tr -d '"')
+VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
+REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
 
 ```bash
 RUN_AS_ACCOUNT=[wasm deployer key address]
+PROVER_ADMIN=[prover admin]
 DEPOSIT_VALUE=100000000
 REWARD_AMOUNT=1000000uamplifier
 ```
@@ -145,12 +140,19 @@ node cosmwasm/submit-proposal.js execute \
 6. Register chain on ampd. Ask verifiers to run these.
 
 ```bash
-for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-chain-support validators $CHAIN ; done
+for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-chain-support "[service name]" $CHAIN ; done
 
 for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-public-key ed25519 ; done
 ```
 
-7. Register prover contract on coordinator
+7. Update ampd with the Stellar chain configuration.
+
+```bash
+cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+type="StellarMsgVerifier"
+```
+
+8. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -167,7 +169,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-8. Authorize Stellar Multisig prover on Multisig
+9. Authorize Stellar Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -185,10 +187,12 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Create genesis verifier set
+10. Create genesis verifier set
+
+Note that this step can only be run once a sufficient number of verifiers have registered.
 
 ```bash
-axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from amplifier --gas auto --gas-adjustment 1.2
+axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
 ```
 
 ### Setup reward pools
@@ -200,7 +204,7 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from amplifie
 | **Testnet**          | `"100"`          | `["8", "10"]`             | `"100"`             |
 | **Mainnet**          | `TBD`            | `TBD`                     | `TBD`               |
 
-10. Create reward pool for voting verifier
+11. Create reward pool for voting verifier
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -212,12 +216,9 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": \"100\",
-        \"participation_threshold\": [
-          \"8\",
-          \"10\"
-        ],
-        \"rewards_per_epoch\": \"100\"
+        \"epoch_duration\": [epoch duration],
+        \"participation_threshold\": [participation threshold],
+        \"rewards_per_epoch\": [rewards per epoch]
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -227,7 +228,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-11. Create reward pool for multisig
+12. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -239,12 +240,9 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": \"100\",
-        \"participation_threshold\": [
-          \"8\",
-          \"10\"
-        ],
-        \"rewards_per_epoch\": \"100\"
+        \"epoch_duration\": [epoch duration],
+        \"participation_threshold\": [participation threshold],
+        \"rewards_per_epoch\": [rewards per epoch]
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -254,19 +252,12 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+13. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-```
-
-13. Update ampd with the Stellar chain configuration.
-
-```bash
-cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
-type="StellarMsgVerifier"
 ```
 
 ## Checklist
