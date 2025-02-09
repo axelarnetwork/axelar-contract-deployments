@@ -139,30 +139,30 @@ if (require.main === module) {
 
     program.name('operators').description('Operators contract management');
 
-    program.command('is_operator <address> ').action((address, options) => {
+    program.command('is_operator <address>').action((address, options) => {
         mainProcessor(isOperator, [address], options);
     });
 
-    program.command('add_operator <address> ').action((address, options) => {
+    program.command('add_operator <address>').action((address, options) => {
         mainProcessor(addOperator, [address], options);
     });
 
-    program.command('remove_operator <address> ').action((address, options) => {
+    program.command('remove_operator <addrsess>').action((address, options) => {
         mainProcessor(removeOperator, [address], options);
     });
 
     program
-        .command('add_gas <sender> <messageId> <spender> <tokenAddress> <tokenAmount> ')
+        .command('add_gas <sender> <messageId> <spender> <tokenAddress> <tokenAmount>')
         .action((sender, messageId, spender, tokenAddress, tokenAmount, options) => {
             mainProcessor(addGas, [sender, messageId, spender, tokenAddress, tokenAmount], options);
         });
 
-    program.command('collect_fees <receiver> <tokenAddress> <tokenAmount> ').action((receiver, tokenAddress, tokenAmount, options) => {
+    program.command('collect_fees <receiver> <tokenAddress> <tokenAmount>').action((receiver, tokenAddress, tokenAmount, options) => {
         mainProcessor(collectFees, [receiver, tokenAddress, tokenAmount], options);
     });
 
     program
-        .command('refund <messageId> <receiver> <tokenAddress> <tokenAmount> ')
+        .command('refund <messageId> <receiver> <tokenAddress> <tokenAmount>')
         .action((messageId, receiver, tokenAddress, tokenAmount, options) => {
             mainProcessor(refund, [messageId, receiver, tokenAddress, tokenAmount], options);
         });
