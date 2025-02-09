@@ -50,7 +50,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 | **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `TBD`                |
+| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `1`                  |
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
@@ -137,22 +137,27 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-6. Register chain on ampd. Ask verifiers to run these.
+6. Update ampd with the Stellar chain configuration.
+
+| Network              | `http_url`                             |
+| -------------------- | -------------------------------------- |
+| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
+| **Stagenet**         | `https://horizon-testnet.stellar.org/` |
+| **Testnet**          | `https://horizon-testnet.stellar.org/` |
+| **Mainnet**          | `https://horizon.stellar.org`          |
 
 ```bash
-for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-chain-support "[service name]" $CHAIN ; done
-
-for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-public-key ed25519 ; done
-```
-
-7. Update ampd with the Stellar chain configuration.
-
-```bash
+[[handlers]]
+http_url=[http url]
 cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
 type="StellarMsgVerifier"
+[[handlers]]
+http_url=[http url]
+cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+type="StellarVerifierSetVerifier"
 ```
 
-8. Register prover contract on coordinator
+7. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -169,7 +174,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Authorize Stellar Multisig prover on Multisig
+8. Authorize Stellar Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -185,6 +190,14 @@ node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
+```
+
+9. Register chain on ampd. Ask verifiers to run these.
+
+```bash
+ampd register-public-key ed25519
+
+ampd register-chain-support "[service name]" $CHAIN
 ```
 
 10. Create genesis verifier set
