@@ -50,7 +50,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 | **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `TBD`                |
+| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | 1                |
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
@@ -60,7 +60,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": [confirmation height]
+  "confirmationHeight": 1,
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "stellar"
 }
@@ -137,7 +137,7 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-6. Register chain on ampd. Ask verifiers to run these.
+6. Register chain and public key from ampd. Ask verifiers to run these.
 
 ```bash
 for i in $(seq 0 4); do kubectl exec -it ampd-set-2-axelar-amplifier-worker-"$i" -n $ENV -c ampd -- ampd register-chain-support "[service name]" $CHAIN ; done
