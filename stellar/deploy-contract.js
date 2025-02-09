@@ -86,7 +86,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     switch (contractName) {
         case 'axelar_gateway': {
             const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
-            const minimumRotationDelay = nativeToScVal(0);
+            const minimumRotationDelay = nativeToScVal(options.minimumRotationDelay);
             const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
             const nonce = options.nonce ? arrayify(id(options.nonce)) : Array(32).fill(0);
             const initialSigners = nativeToScVal([
@@ -308,6 +308,7 @@ function main() {
                 .default(15)
                 .argParser(Number),
         )
+        .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number))
         .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false))
         .action((contractName, options) => {
             mainProcessor(options, deploy, contractName);
