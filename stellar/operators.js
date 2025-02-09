@@ -1,13 +1,13 @@
 'use strict';
 
-const { Address, Contract } = require('@stellar/stellar-sdk');
+const { Address, Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { loadConfig, printInfo, printWarn, parseArgs, validateParameters, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, addBaseOptions, addressToScVal } = require('./utils');
 const { addOptionsToCommands, getChainConfig } = require('../common');
 const { prompt } = require('../common/utils');
 
-async function is_operator(wallet, _, chain, contract, args, options) {
+async function isOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
     const operation = contract.call('is_operator', addressToScVal(address));
     const result = await broadcast(operation, wallet, chain, 'is_operator called', options);
@@ -19,13 +19,13 @@ async function is_operator(wallet, _, chain, contract, args, options) {
     }
 }
 
-async function add_operator(wallet, _, chain, contract, args, options) {
+async function addOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
     const operation = contract.call('add_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'add_operator called', options);
 }
 
-async function remove_operator(wallet, _, chain, contract, args, options) {
+async function removeOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
     const operation = contract.call('remove_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'remove_operator called', options);
@@ -96,15 +96,15 @@ if (require.main === module) {
     program.name('operators').description('Operators contract management');
 
     program.command('is_operator <address> ').action((address, options) => {
-        mainProcessor(is_operator, [address], options);
+        mainProcessor(isOperator, [address], options);
     });
 
     program.command('add_operator <address> ').action((address, options) => {
-        mainProcessor(add_operator, [address], options);
+        mainProcessor(addOperator, [address], options);
     });
 
     program.command('remove_operator <address> ').action((address, options) => {
-        mainProcessor(remove_operator, [address], options);
+        mainProcessor(removeOperator, [address], options);
     });
 
     program
