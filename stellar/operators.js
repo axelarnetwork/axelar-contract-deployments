@@ -1,6 +1,6 @@
 'use strict';
 
-const { Address, Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { loadConfig, printInfo, printWarn, parseArgs, validateParameters, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, addBaseOptions, addressToScVal, tokenToScVal } = require('./utils');
