@@ -3,7 +3,7 @@
 const { Address, Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { loadConfig, printInfo, printWarn, parseArgs, validateParameters, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, addBaseOptions, addressToScVal } = require('./utils');
+const { getWallet, broadcast, addBaseOptions, addressToScVal, tokenToScVal } = require('./utils');
 const { addOptionsToCommands, getChainConfig } = require('../common');
 const { prompt } = require('../common/utils');
 
@@ -31,11 +31,49 @@ async function removeOperator(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'remove_operator called', options);
 }
 
+async function addGas(wallet, _, chain, contract, args, options) {
+    const operator = addressToScVal(wallet.publicKey());
+    const [sender, messageId, spender, tokenAddress, tokenAmount] = args;
+
+    validateParameters({
+        isNonEmptyString: { sender, messageId, spender, tokenAddress },
+        isValidNumber: { tokenAmount },
+    });
+
+    const target = addressToScVal(chain.contracts?.axelar_gas_service?.address);
+    const method = nativeToScVal('add_gas', { type: 'symbol' });
+    const params = nativeToScVal([
+        addressToScVal(sender),
+        nativeToScVal(messageId, { type: 'string' }),
+        addressToScVal(spender),
+        tokenToScVal(tokenAddress, tokenAmount),
+    ]);
+
+    const operation = contract.call('execute', operator, target, method, params);
+
+    await broadcast(operation, wallet, chain, 'add_gas called', options);
+}
+
+async function collectFees(wallet, _, chain, contract, args, options) {
+    const operator = addressToScVal(wallet.publicKey());
+    const [receiver, tokenAddress, tokenAmount] = args;
+
+    validateParameters({
+        isNonEmptyString: { receiver, tokenAddress },
+        isValidNumber: { tokenAmount },
+    });
+
+    const target = addressToScVal(chain.contracts?.axelar_gas_service?.address);
+    const method = nativeToScVal('collect_fees', { type: 'symbol' });
+    const params = nativeToScVal([addressToScVal(receiver), tokenToScVal(tokenAddress, tokenAmount)]);
+
+    const operation = contract.call('execute', operator, target, method, params);
+
+    await broadcast(operation, wallet, chain, 'collect_fees called', options);
+}
+
 async function refund(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
-    const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
-    const target = addressToScVal(gasServiceAddress);
-    const method = nativeToScVal('refund', { type: 'symbol' });
     const [messageId, receiver, tokenAddress, tokenAmount] = args;
 
     validateParameters({
@@ -43,10 +81,12 @@ async function refund(wallet, _, chain, contract, args, options) {
         isValidNumber: { tokenAmount },
     });
 
+    const target = addressToScVal(chain.contracts?.axelar_gas_service?.address);
+    const method = nativeToScVal('refund', { type: 'symbol' });
     const params = nativeToScVal([
-        messageId,
-        Address.fromString(receiver),
-        { address: Address.fromString(tokenAddress), amount: tokenAmount },
+        nativeToScVal(messageId, { type: 'string' }),
+        addressToScVal(receiver),
+        tokenToScVal(tokenAddress, tokenAmount),
     ]);
 
     const operation = contract.call('execute', operator, target, method, params);
@@ -58,12 +98,16 @@ async function execute(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [target, method, params] = args;
 
+    validateParameters({
+        isNonEmptyString: { target, method, params },
+    });
+
     const operation = contract.call(
         'execute',
         operator,
         addressToScVal(target),
         nativeToScVal(method, { type: 'symbol' }),
-        nativeToScVal(parseArgs(params)),
+        nativeToScVal(parseArgs(params || '')),
     );
 
     await broadcast(operation, wallet, chain, 'Executed', options);
@@ -105,6 +149,16 @@ if (require.main === module) {
 
     program.command('remove_operator <address> ').action((address, options) => {
         mainProcessor(removeOperator, [address], options);
+    });
+
+    program
+        .command('add_gas <sender> <messageId> <spender> <tokenAddress> <tokenAmount> ')
+        .action((sender, messageId, spender, tokenAddress, tokenAmount, options) => {
+            mainProcessor(addGas, [sender, messageId, spender, tokenAddress, tokenAmount], options);
+        });
+
+    program.command('collect_fees <receiver> <tokenAddress> <tokenAmount> ').action((receiver, tokenAddress, tokenAmount, options) => {
+        mainProcessor(collectFees, [receiver, tokenAddress, tokenAmount], options);
     });
 
     program
