@@ -32,10 +32,9 @@ async function remove_operator(wallet, _, chain, contract, args, options) {
 }
 
 async function refund(wallet, _, chain, contract, args, options) {
-    const operator = Address.fromString(wallet.publicKey()).toScVal();
-    const gasService = chain.contracts?.axelar_gas_service?.address;
-
-    const target = Address.fromString(gasService).toScVal();
+    const operator = addressToScVal(wallet.publicKey());
+    const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
+    const target = addressToScVal(gasServiceAddress);
     const method = nativeToScVal('refund', { type: 'symbol' });
     const [messageId, receiver, tokenAddress, tokenAmount] = args;
 
@@ -44,19 +43,19 @@ async function refund(wallet, _, chain, contract, args, options) {
         isValidNumber: { tokenAmount },
     });
 
-    const args = nativeToScVal([
+    const params = nativeToScVal([
         messageId,
         Address.fromString(receiver),
         { address: Address.fromString(tokenAddress), amount: tokenAmount },
     ]);
 
-    const operation = contract.call('execute', operator, target, method, args);
+    const operation = contract.call('execute', operator, target, method, params);
 
-    await broadcast(operation, wallet, chain, 'Executed', options);
+    await broadcast(operation, wallet, chain, 'refund called', options);
 }
 
 async function execute(wallet, _, chain, contract, args, options) {
-    const operator = Address.fromString(wallet.publicKey()).toScVal();
+    const operator = addressToScVal(wallet.publicKey());
     const [target, method, params] = args;
 
     const operation = contract.call(
