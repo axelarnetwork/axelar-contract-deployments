@@ -60,7 +60,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": [confirmation height]
+  "confirmationHeight": 1,
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "stellar"
 }
