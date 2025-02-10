@@ -213,8 +213,9 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         ],
     });
 
-    if (policy !== 'any_upgrade') {
-        const upgradeType = UPGRADE_POLICIES[policy];
+    const upgradeType = UPGRADE_POLICIES[policy];
+
+    if (upgradeType) {
         tx.moveCall({
             target: `${suiPackageAddress}::package::${upgradeType}`,
             arguments: [tx.object(upgradeCap)],

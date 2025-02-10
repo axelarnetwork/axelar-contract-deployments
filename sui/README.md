@@ -2,12 +2,12 @@
 
 ## Table of Contents
 
--   [Prerequisites](#prerequisites)
--   [Deployment](#deployment)
--   [Contract Upgrades](#contract-upgrades)
--   [Contract Interactions](#contract-interactions)
--   [Examples](#examples)
--   [Troubleshooting](#troubleshooting)
+- [Prerequisites](#prerequisites)
+- [Deployment](#deployment)
+- [Contract Upgrades](#contract-upgrades)
+- [Contract Interactions](#contract-interactions)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
@@ -79,7 +79,7 @@ node sui/deploy-contract.js deploy VersionControl
 
 ### AxelarGateway
 
--   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
+- By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
 node sui/deploy-contract.js deploy AxelarGateway
@@ -89,13 +89,13 @@ Note: the `minimumRotationDelay` is in `seconds` unit. The default value is `24 
 
 Use `--help` flag to see other setup params that can be overridden.
 
--   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
+- For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
 node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 ```
 
--   You can also provide a JSON object with a full signer set:
+- You can also provide a JSON object with a full signer set:
 
 ```bash
 node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
@@ -179,9 +179,10 @@ node sui/deploy-contract.js upgrade AxelarGateway <policy>
 
 policy should be one of the following:
 
--   `any_upgrade`: Allow any upgrade.
--   `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
--   `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
+- `immutable`: Upgrade policy to make the package immutable by discarding the UpgradeCap. https://docs.sui.io/references/framework/sui/package#sui_package_make_immutable
+- `any_upgrade`: Allow any upgrade.
+- `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
+- `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
@@ -277,7 +278,7 @@ example for adding multisig info to chains config:
 }
 ```
 
-*Note: To sign via ledger replace private-key with 'ledger' keyword in env and update key scheme to ed25519, as it is the only signatureScheme supported by Ledger currently for Sui. 
+\*Note: To sign via ledger replace private-key with 'ledger' keyword in env and update key scheme to ed25519, as it is the only signatureScheme supported by Ledger currently for Sui.
 
 ## Contract Interactions
 
@@ -365,8 +366,8 @@ node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --tr
 
 Note:
 
--   If coin type is not provided, it will split all the coins.
--   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
+- If coin type is not provided, it will split all the coins.
+- If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
 
 ## Setup Trusted Addresses
 
@@ -390,8 +391,8 @@ node sui/its.js remove-trusted-address <sourceChain>,<sourceChain2>,...
 
 ## Examples
 
--   [GMP Example Guide](docs/gmp.md)
--   [ITS Example Guide](docs/its.md)
+- [GMP Example Guide](docs/gmp.md)
+- [ITS Example Guide](docs/its.md)
 
 ## Troubleshooting
 

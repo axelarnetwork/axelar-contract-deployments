@@ -3,6 +3,7 @@ const { fromB64 } = require('@mysten/bcs');
 const { printInfo, validateParameters } = require('../../common/utils');
 const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
 const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
+
 const UPGRADE_POLICIES = {
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
@@ -10,6 +11,8 @@ const UPGRADE_POLICIES = {
 
 function getUpgradePolicyId(policy) {
     switch (policy) {
+        case 'immutable':
+            return -1;
         case 'any_upgrade':
             return 0;
         case 'code_upgrade':
@@ -34,22 +37,30 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
-    const ticket = tx.moveCall({
-        target: `${suiPackageAddress}::package::authorize_upgrade`,
-        arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
-    });
 
-    const receipt = tx.upgrade({
-        modules,
-        dependencies,
-        package: contractConfig.address,
-        ticket,
-    });
+    if (policy === -1) {
+        tx.moveCall({
+            target: `${suiPackageAddress}::package::make_immutable`,
+            arguments: [cap],
+        });
+    } else {
+        const ticket = tx.moveCall({
+            target: `${suiPackageAddress}::package::authorize_upgrade`,
+            arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+        });
 
-    tx.moveCall({
-        target: `${suiPackageAddress}::package::commit_upgrade`,
-        arguments: [cap, receipt],
-    });
+        const receipt = tx.upgrade({
+            modules,
+            dependencies,
+            package: contractConfig.address,
+            ticket,
+        });
+
+        tx.moveCall({
+            target: `${suiPackageAddress}::package::commit_upgrade`,
+            arguments: [cap, receipt],
+        });
+    }
 
     const sender = options.sender || keypair.toSuiAddress();
     tx.setSender(sender);
@@ -69,17 +80,26 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
             },
         });
 
+        printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
+
+        if (options.policy === 'immutable') {
+            contractConfig.objects.UpgradeCap = undefined;
+            return {
+                upgraded: result,
+                packageId: contractConfig.address,
+            };
+        }
+
         const publishedObject = result.objectChanges.find((change) => change.type === 'published');
         const packageId = publishedObject.packageId;
-        contractConfig.address = packageId;
         const versionNumber = parseInt(publishedObject.version) - 1;
-        contractConfig.versions[versionNumber] = publishedObject.packageId;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+        contractConfig.address = packageId;
+        contractConfig.versions[versionNumber] = publishedObject.packageId;
         contractConfig.objects.UpgradeCap = upgradeCap;
 
-        printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} Upgraded Address`, packageId);
-
         updateMoveToml(packageToUpgrade.packageDir, packageId, moveDir);
 
         return { upgraded: result, packageId };
