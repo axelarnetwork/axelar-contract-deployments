@@ -340,6 +340,16 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -361,4 +371,5 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    isValidAddress,
 };
