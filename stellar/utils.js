@@ -342,7 +342,9 @@ function stellarAddressToBytes(address) {
 
 function isValidAddress(address) {
     try {
-        return !!Address.fromString(address);
+        // try conversion
+        Address.fromString(address);
+        return true;
     } catch {
         return false;
     }
