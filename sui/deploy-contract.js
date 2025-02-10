@@ -99,11 +99,14 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  */
 
 async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
-    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0, ownerCap] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0, ownerCap, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::discovery::RelayerDiscovery`,
         `${published.packageId}::relayer_discovery_v0::RelayerDiscovery_v0`,
         `${published.packageId}::owner_cap::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
 
     chain.contracts.RelayerDiscovery.objects = {
         RelayerDiscovery: relayerDiscoveryObjectId,
@@ -184,10 +187,14 @@ async function postDeployExample(published, keypair, client, config, chain, opti
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
-    const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [operatorsObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::operators::Operators`,
         `${published.packageId}::operators::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
     chain.contracts.Operators.objects = {
         Operators: operatorsObjectId,
         OwnerCap: ownerCapObjectId,
@@ -258,7 +265,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const { chainName } = options;
+    const { chainName, policy } = options;
 
     const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
 
@@ -269,6 +276,9 @@ async function postDeployIts(published, keypair, client, config, chain, options)
     ]);
 
     let tx = new Transaction();
+
+    restrictUpgradePolicy(tx, policy, upgradeCapObjectId);
+
     tx.moveCall({
         target: `${published.packageId}::interchain_token_service::setup`,
         arguments: [tx.object(creatorCapObjectId), tx.pure.string(chainName), tx.pure.string(itsHubAddress)],
@@ -301,16 +311,21 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
+    const { policy } = options;
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [squidObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [squidObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::squid::Squid`,
         `${published.packageId}::owner_cap::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
     const channelId = await getSquidChannelId(client, squidObjectId);
     chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
 
     const tx = new Transaction();
+
+    restrictUpgradePolicy(tx, policy, upgradeCap);
+
     tx.moveCall({
         target: `${published.packageId}::discovery::register_transaction`,
         arguments: [
