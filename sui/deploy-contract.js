@@ -407,7 +407,7 @@ async function mainProcessor(args, options, processor) {
 // Common deploy command options for all packages
 const DEPLOY_CMD_OPTIONS = [
     new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-        .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
+        .choices(['immutable', 'any_upgrade', 'code_upgrade', 'dep_upgrade'])
         .default('any_upgrade'),
 ];
 
