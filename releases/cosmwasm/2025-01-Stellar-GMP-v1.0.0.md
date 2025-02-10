@@ -116,11 +116,18 @@ REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewar
 
 - Gov proposal environment variables. Update these for each network
 
+| Network              | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
+| -------------------- | --------------- | ------------------- |
+| **Devnet-amplifier** | `100000000`     | `1000000uamplifier` |
+| **Stagenet**         | `100000000`     | `1000000uaxl`       |
+| **Testnet**          | `2000000000`    | `1000000uaxl`       |
+| **Mainnet**          | `2000000000`    | `1000000uaxl`       |
+
 ```bash
 RUN_AS_ACCOUNT=[wasm deployer key address]
 PROVER_ADMIN=[prover admin]
-DEPOSIT_VALUE=100000000
-REWARD_AMOUNT=1000000uamplifier
+DEPOSIT_VALUE=[deposit value]
+REWARD_AMOUNT=[reward amount]
 ```
 
 5. Register stellar gateway at the Router
