@@ -124,8 +124,8 @@ REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewar
 | **Mainnet**          | `2000000000`    | `1000000uaxl`       |
 
 ```bash
-RUN_AS_ACCOUNT=[wasm deployer key address]
-PROVER_ADMIN=[prover admin]
+RUN_AS_ACCOUNT=[wasm deployer/governance address]
+PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
 DEPOSIT_VALUE=[deposit value]
 REWARD_AMOUNT=[reward amount]
 ```
