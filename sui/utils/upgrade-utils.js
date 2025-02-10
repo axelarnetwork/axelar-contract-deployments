@@ -1,8 +1,10 @@
 const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
 const { printInfo, validateParameters } = require('../../common/utils');
 const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
 const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
+const { broadcast } = require('./sign-utils');
 
 const UPGRADE_POLICIES = {
     immutable: 'make_immutable',
@@ -21,6 +23,35 @@ function getUpgradePolicyId(policy) {
         default:
             throw new Error(`Unknown upgrade policy: ${policy}. Supported policies: any_upgrade, code_upgrade, dep_upgrade`);
     }
+}
+
+function restrictUpgradePolicy(tx, policy, upgradeCap) {
+    const upgradeType = UPGRADE_POLICIES[policy];
+
+    if (upgradeType) {
+        tx.moveCall({
+            target: `${suiPackageAddress}::package::${upgradeType}`,
+            arguments: [tx.object(upgradeCap)],
+        });
+    }
+
+    return tx;
+}
+
+function broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options) {
+    const upgradeType = UPGRADE_POLICIES[options.policy];
+
+    if (!upgradeType) {
+        return;
+    }
+
+    return broadcast(
+        client,
+        keypair,
+        restrictUpgradePolicy(new Transaction(), options.policy, upgradeCap),
+        `Restricted Upgrade Policy (${options.policy})`,
+        options,
+    );
 }
 
 async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
@@ -93,4 +124,6 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 module.exports = {
     UPGRADE_POLICIES,
     upgradePackage,
+    restrictUpgradePolicy,
+    broadcastRestrictedUpgradePolicy,
 };
