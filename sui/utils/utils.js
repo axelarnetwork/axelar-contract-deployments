@@ -217,13 +217,21 @@ const findOwnedObjectIdByType = async (client, ownerAddress, objectType) => {
     return targetObject.data.content.fields.id.id;
 };
 
-const getBagContentId = async (client, objectType, bagId, bagName) => {
-    const result = await client.getDynamicFields({
-        parentId: bagId,
-        name: bagName,
-    });
+const getBagContentFields = async (client, objectType, bagId, bagName) => {
+    let objectId;
+    let nextCursor = null;
 
-    const objectId = result.data.find((cap) => cap.objectType === objectType)?.objectId;
+    do {
+        const result = await client.getDynamicFields({
+            parentId: bagId,
+            name: bagName,
+            cursor: nextCursor,
+        });
+
+        objectId = result.data.find((cap) => cap.objectType.includes(objectType))?.objectId;
+
+        nextCursor = result.data.length > 0 ? result.nextCursor : null;
+    } while (nextCursor && !objectId);
 
     if (!objectId) {
         throw new Error(`${objectType} not found in the capabilities bag`);
@@ -236,7 +244,7 @@ const getBagContentId = async (client, objectType, bagId, bagName) => {
         },
     });
 
-    return objectDetails.data.content.fields.value.fields.id.id;
+    return objectDetails.data.content.fields.value.fields;
 };
 
 const getTransactionList = async (client, discoveryObjectId) => {
@@ -375,7 +383,7 @@ module.exports = {
     getItsChannelId,
     getSquidChannelId,
     getSigners,
-    getBagContentId,
+    getBagContentFields,
     moveDir,
     getTransactionList,
     parseDiscoveryInfo,
