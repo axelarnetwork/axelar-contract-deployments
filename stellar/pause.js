@@ -1,39 +1,31 @@
 const { Contract } = require('@stellar/stellar-sdk');
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { getWallet, broadcast, addBaseOptions } = require('./utils');
 const { loadConfig, printInfo } = require('../evm/utils');
-const { getChainConfig } = require('../common');
+const { getChainConfig, addOptionsToCommands } = require('../common');
 require('./cli-utils');
 
-async function processCommand(options, _, chain) {
+async function paused(contract) {
+    return contract.call('paused');
+}
+
+async function pause(contract) {
+    return contract.call('pause');
+}
+
+async function unpause(contract) {
+    return contract.call('unpause');
+}
+
+async function processCommand(processor, options, contractName) {
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config, options.chainName);
     const wallet = await getWallet(chain, options);
+    const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
 
-    const contract = new Contract(options.address || chain.contracts?.pausable_contract?.address);
+    const operation = await processor(contract);
 
-    let operation;
-
-    switch (options.action) {
-        case 'paused': {
-            operation = contract.call('paused');
-            break;
-        }
-
-        case 'pause': {
-            operation = contract.call('pause');
-            break;
-        }
-
-        case 'unpause': {
-            operation = contract.call('unpause');
-            break;
-        }
-
-        default: {
-            throw new Error(`Unknown action: ${options.action}`);
-        }
-    }
-
-    const returnValue = await broadcast(operation, wallet, chain, `${options.action} performed`, options);
+    const returnValue = await broadcast(operation, wallet, chain, `${processor.name} performed`, options);
 
     if (returnValue.value()) {
         printInfo('Return value', returnValue.value());
@@ -43,17 +35,33 @@ async function processCommand(options, _, chain) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('pausable').description('Pausable contract management');
+    program.name('contract').description('Common contract operations');
 
-    addBaseOptions(program, { address: true });
-    program.addOption(
-        new Option('--action <action>', 'pausable contract action').choices(['paused', 'pause', 'unpause']).makeOptionMandatory(true),
-    );
+    program
+        .command('paused')
+        .description('Check if the contract is paused')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            processCommand(paused, options, contractName);
+        });
 
-    program.action((options) => {
-        const config = loadConfig(options.env);
-        processCommand(options, config, getChainConfig(config, options.chainName));
-    });
+    program
+        .command('pause')
+        .description('Pause the contract')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            processCommand(pause, options, contractName);
+        });
+
+    program
+        .command('unpause')
+        .description('Unpause the contract')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            processCommand(unpause, options, contractName);
+        });
+
+    addOptionsToCommands(program, addBaseOptions);
 
     program.parse();
 }
