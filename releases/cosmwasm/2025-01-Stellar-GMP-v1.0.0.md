@@ -137,7 +137,7 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-6. Update ampd with the Stellar chain configuration.
+6. Update ampd with the Stellar chain configuration. Verifiers should use their own Stellar RPC node for the `http_url` in production.
 
 | Network              | `http_url`                             |
 | -------------------- | -------------------------------------- |
