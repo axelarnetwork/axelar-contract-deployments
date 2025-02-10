@@ -39,29 +39,6 @@ async function removeOperator(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'remove_operator called', options);
 }
 
-async function addGas(wallet, _, chain, contract, args, options) {
-    const operator = addressToScVal(wallet.publicKey());
-    const [sender, messageId, spender, tokenAddress, tokenAmount] = args;
-
-    validateParameters({
-        isNonEmptyString: { sender, messageId, spender, tokenAddress },
-        isValidNumber: { tokenAmount },
-    });
-
-    const target = addressToScVal(chain.contracts?.axelar_gas_service?.address);
-    const method = nativeToScVal('add_gas', { type: 'symbol' });
-    const params = nativeToScVal([
-        addressToScVal(sender),
-        nativeToScVal(messageId, { type: 'string' }),
-        addressToScVal(spender),
-        tokenToScVal(tokenAddress, tokenAmount),
-    ]);
-
-    const operation = contract.call('execute', operator, target, method, params);
-
-    await broadcast(operation, wallet, chain, 'add_gas called', options);
-}
-
 async function collectFees(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [receiver] = args;
@@ -158,12 +135,6 @@ if (require.main === module) {
     const program = new Command();
 
     program.name('operators').description('Operators contract management');
-
-    program
-        .command('add_gas <sender> <messageId> <spender> <tokenAddress> <tokenAmount>')
-        .action((sender, messageId, spender, tokenAddress, tokenAmount, options) => {
-            mainProcessor(addGas, [sender, messageId, spender, tokenAddress, tokenAmount], options);
-        });
 
     program.command('is_operator <address>').action((address, options) => {
         mainProcessor(isOperator, [address], options);
