@@ -163,7 +163,6 @@ type="StellarMsgVerifier"
 http_url=[http url]
 cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
 
-
 [[handlers]]
 type="StellarVerifierSetVerifier"
 http_url=[http url]
