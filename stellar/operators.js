@@ -43,7 +43,7 @@ async function collectFees(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [receiver] = args;
     const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     validateParameters({
@@ -64,7 +64,7 @@ async function refund(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [messageId, receiver] = args;
     const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     validateParameters({
@@ -136,20 +136,20 @@ if (require.main === module) {
 
     program.name('operators').description('Operators contract management');
 
-    program.command('is_operator <address>').action((address, options) => {
+    program.command('is-operator <address>').action((address, options) => {
         mainProcessor(isOperator, [address], options);
     });
 
-    program.command('add_operator <address>').action((address, options) => {
+    program.command('add-operator <address>').action((address, options) => {
         mainProcessor(addOperator, [address], options);
     });
 
-    program.command('remove_operator <addrsess>').action((address, options) => {
+    program.command('remove-operator <addrsess>').action((address, options) => {
         mainProcessor(removeOperator, [address], options);
     });
 
     program
-        .command('collect_fees <receiver>')
+        .command('collect-fees <receiver>')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((receiver, options) => {
