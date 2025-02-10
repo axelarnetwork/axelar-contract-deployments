@@ -179,7 +179,6 @@ node sui/deploy-contract.js upgrade AxelarGateway <policy>
 
 policy should be one of the following:
 
-- `immutable`: Upgrade policy to make the package immutable by discarding the UpgradeCap. https://docs.sui.io/references/framework/sui/package#sui_package_make_immutable
 - `any_upgrade`: Allow any upgrade.
 - `code_upgrade`: Upgrade policy to just add code. https://docs.sui.io/references/framework/sui-framework/package#function-only_additive_upgrades
 - `dep_upgrade`: Upgrade policy to just change dependencies. https://docs.sui.io/references/framework/sui-framework/package#function-only_dep_upgrades
