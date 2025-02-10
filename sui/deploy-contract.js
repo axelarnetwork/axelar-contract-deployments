@@ -143,6 +143,9 @@ async function postDeployGasService(published, keypair, client, config, chain, o
             `${suiPackageAddress}::package::UpgradeCap`,
         ],
     );
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
     chain.contracts.GasService.objects = {
         GasCollectorCap: gasCollectorCapObjectId,
         GasService: gasServiceObjectId,
@@ -153,6 +156,7 @@ async function postDeployGasService(published, keypair, client, config, chain, o
 
 async function postDeployExample(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
+    const { policy } = options;
 
     // GMP Example Params
     const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
@@ -172,6 +176,9 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         target: `${published.packageId}::its::register_transaction`,
         arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
+
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+    restrictUpgradePolicy(tx, policy, upgradeCap);
 
     await broadcast(client, keypair, tx, 'Registered Transaction', options);
 
