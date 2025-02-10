@@ -5,14 +5,13 @@ const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-
 const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
 
 const UPGRADE_POLICIES = {
+    immutable: 'make_immutable',
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
 };
 
 function getUpgradePolicyId(policy) {
     switch (policy) {
-        case 'immutable':
-            return -1;
         case 'any_upgrade':
             return 0;
         case 'code_upgrade':
@@ -38,29 +37,22 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
 
-    if (policy === -1) {
-        tx.moveCall({
-            target: `${suiPackageAddress}::package::make_immutable`,
-            arguments: [cap],
-        });
-    } else {
-        const ticket = tx.moveCall({
-            target: `${suiPackageAddress}::package::authorize_upgrade`,
-            arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
-        });
+    const ticket = tx.moveCall({
+        target: `${suiPackageAddress}::package::authorize_upgrade`,
+        arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
+    });
 
-        const receipt = tx.upgrade({
-            modules,
-            dependencies,
-            package: contractConfig.address,
-            ticket,
-        });
+    const receipt = tx.upgrade({
+        modules,
+        dependencies,
+        package: contractConfig.address,
+        ticket,
+    });
 
-        tx.moveCall({
-            target: `${suiPackageAddress}::package::commit_upgrade`,
-            arguments: [cap, receipt],
-        });
-    }
+    tx.moveCall({
+        target: `${suiPackageAddress}::package::commit_upgrade`,
+        arguments: [cap, receipt],
+    });
 
     const sender = options.sender || keypair.toSuiAddress();
     tx.setSender(sender);
@@ -81,14 +73,6 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
         });
 
         printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
-
-        if (options.policy === 'immutable') {
-            contractConfig.objects.UpgradeCap = undefined;
-            return {
-                upgraded: result,
-                packageId: contractConfig.address,
-            };
-        }
 
         const publishedObject = result.objectChanges.find((change) => change.type === 'published');
         const packageId = publishedObject.packageId;
