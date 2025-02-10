@@ -10,7 +10,6 @@ const {
     printWalletInfo,
     broadcast,
     upgradePackage,
-    UPGRADE_POLICIES,
     getSigners,
     deployPackage,
     getObjectIdsByObjectTypes,
@@ -23,6 +22,8 @@ const {
     checkSuiVersionMatch,
     moveDir,
     getStructs,
+    restrictUpgradePolicy,
+    broadcastRestrictedUpgradePolicy,
 } = require('./utils');
 
 /**
@@ -69,6 +70,7 @@ const PACKAGE_CONFIGS = {
         InterchainTokenService: postDeployIts,
         Squid: postDeploySquid,
         Utils: postDeployUtils,
+        Abi: postDeployAbi,
     },
 };
 
@@ -112,21 +114,37 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
 
 async function postDeployUtils(published, keypair, client, config, chain, options) {
     const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
-    chain.contracts.Utils.objects = {
-        UpgradeCap: upgradeCap,
-    };
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.Utils.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
+}
+
+async function postDeployAbi(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
 }
 
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::gas_service::GasCollectorCap`,
-        `${published.packageId}::gas_service::GasService`,
-        `${published.packageId}::gas_service_v0::GasService_v0`,
-    ]);
+    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
+        published.publishTxn,
+        [
+            `${published.packageId}::gas_service::GasCollectorCap`,
+            `${published.packageId}::gas_service::GasService`,
+            `${published.packageId}::gas_service_v0::GasService_v0`,
+            `${suiPackageAddress}::package::UpgradeCap`,
+        ],
+    );
     chain.contracts.GasService.objects = {
         GasCollectorCap: gasCollectorCapObjectId,
         GasService: gasServiceObjectId,
         GasServicev0: gasServicev0ObjectId,
+        UpgradeCap: upgradeCap,
     };
 }
 
@@ -213,14 +231,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         ],
     });
 
-    const upgradeType = UPGRADE_POLICIES[policy];
-
-    if (upgradeType) {
-        tx.moveCall({
-            target: `${suiPackageAddress}::package::${upgradeType}`,
-            arguments: [tx.object(upgradeCap)],
-        });
-    }
+    restrictUpgradePolicy(tx, policy, upgradeCap);
 
     const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
 
@@ -330,8 +341,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
 
-    printInfo(`Deployed ${packageName} Package`, published.packageId);
-    printInfo(`Deployed ${packageName} Tx`, published.publishTxn.digest);
+    printInfo(`${packageName} Package ID`, published.packageId);
 
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
