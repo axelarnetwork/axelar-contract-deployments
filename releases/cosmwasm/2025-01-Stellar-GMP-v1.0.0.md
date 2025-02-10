@@ -79,22 +79,26 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 ### Instantiate Amplifier contracts
 
+```bash
+CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration]
+```
+
 1. Instantiate `VotingVerifier`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2
+node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 2. Instantiate `Gateway`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2
+node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 3. Instantiate `MultisigProver`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2
+node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 
 ```
 
@@ -148,13 +152,16 @@ node cosmwasm/submit-proposal.js execute \
 
 ```bash
 [[handlers]]
-http_url=[http url]
-cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
 type="StellarMsgVerifier"
-[[handlers]]
 http_url=[http url]
 cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+
+
+[[handlers]]
 type="StellarVerifierSetVerifier"
+http_url=[http url]
+cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+
 ```
 
 7. Register prover contract on coordinator
@@ -192,32 +199,18 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Register chain on ampd. Ask verifiers to run these.
-
-```bash
-ampd register-public-key ed25519
-
-ampd register-chain-support "[service name]" $CHAIN
-```
-
-10. Create genesis verifier set
-
-Note that this step can only be run once a sufficient number of verifiers have registered.
-
-```bash
-axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
-```
-
 ### Setup reward pools
+
+9. Create reward pool for voting verifier
+
+#### Voting Verifier Reward
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `"100"`          | `["8", "10"]`             | `"100"`             |
-| **Stagenet**         | `"100"`          | `["8", "10"]`             | `"100"`             |
-| **Testnet**          | `"100"`          | `["8", "10"]`             | `"100"`             |
+| **Stagenet**         | `"100"`          | `["7", "10"]`             | `"100"`             |
+| **Testnet**          | `"100"`          | `["7", "10"]`             | `"100"`             |
 | **Mainnet**          | `TBD`            | `TBD`                     | `TBD`               |
-
-11. Create reward pool for voting verifier
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -241,7 +234,16 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Create reward pool for multisig
+10. Create reward pool for multisig
+
+#### MultiSig Reward
+
+| Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+| -------------------- | ---------------- | ------------------------- | ------------------- |
+| **Devnet-amplifier** | `"100"`          | `["8", "10"]`             | `"100"`             |
+| **Stagenet**         | `"100"`          | `["8", "10"]`             | `"100"`             |
+| **Testnet**          | `"100"`          | `["7", "10"]`             | `"100"`             |
+| **Mainnet**          | `TBD`            | `TBD`                     | `TBD`               |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -265,12 +267,28 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-13. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+11. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+```
+
+12. Update ampd with the Stellar chain configuration.
+
+```bash
+ampd register-public-key ed25519
+
+ampd register-chain-support "[service name]" $CHAIN
+```
+
+13. Create genesis verifier set
+
+Note that this step can only be run once a sufficient number of verifiers have registered.
+
+```bash
+axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
 ```
 
 ## Checklist
