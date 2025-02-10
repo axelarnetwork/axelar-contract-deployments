@@ -45,6 +45,10 @@ function broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options) 
         return;
     }
 
+    if (!upgradeCap) {
+        throw new Error(`Cannot find upgrade cap to restrict upgrade policy`);
+    }
+
     return broadcast(
         client,
         keypair,
