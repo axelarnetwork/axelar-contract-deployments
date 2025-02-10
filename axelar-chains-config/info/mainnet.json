@@ -2017,7 +2017,8 @@
           "salt": "Multisig v5.5"
         },
         "InterchainTokenService": {
-          "skip": true
+          "skip": true,
+          "address": ""
         },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2681,9 +2682,7 @@
       "finality": "1",
       "tokenSymbol": "XLM",
       "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
-      "contracts": {
-        "AxelarGateway": {}
-      },
+      "contracts": {},
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "Stellar Expert",
