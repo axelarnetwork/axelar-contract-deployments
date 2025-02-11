@@ -205,7 +205,6 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-
 9. Create reward pool for voting verifier
 
 #### Voting Verifier Reward
