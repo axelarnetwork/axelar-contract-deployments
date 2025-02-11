@@ -88,8 +88,7 @@ async function mainProcessor(processor, contractName, args, options) {
         if (returnValue.value()) {
             printInfo('Return value', returnValue.value());
         }
-    }
-    else {
+    } else {
         await processor(chain, contractName, args, options);
 
         saveConfig(config, options.env);
