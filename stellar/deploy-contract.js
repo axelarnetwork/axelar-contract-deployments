@@ -4,7 +4,7 @@ const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorize
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
-const { getDomainSeparator, getChainConfig } = require('../common');
+const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -360,6 +360,10 @@ function main() {
 
     // Add 3rd level commands to 2nd level command `upgrade`
     upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+
+    // Add base options to all 3rd level commands
+    addOptionsToCommands(deployCmd, addBaseOptions);
+    addOptionsToCommands(upgradeCmd, addBaseOptions);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
