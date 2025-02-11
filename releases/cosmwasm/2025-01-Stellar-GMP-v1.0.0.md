@@ -176,7 +176,36 @@ axelard q wasm contract-state smart <router-address> '{"chain_info": "stellar"}'
 }
 ```
 
-6. Register prover contract on coordinator
+6. Update ampd with the Stellar chain configuration. Verifiers should use their own Stellar RPC node for the `http_url` in production.
+
+| Network              | `http_url`                             |
+| -------------------- | -------------------------------------- |
+| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
+| **Stagenet**         | `https://horizon-testnet.stellar.org/` |
+| **Testnet**          | `https://horizon-testnet.stellar.org/` |
+| **Mainnet**          | `https://horizon.stellar.org`          |
+
+```bash
+[[handlers]]
+type="StellarMsgVerifier"
+http_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+
+[[handlers]]
+type="StellarVerifierSetVerifier"
+http_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+```
+
+7. Update ampd with the Stellar chain configuration.
+
+```bash
+ampd register-public-key ed25519
+
+ampd register-chain-support "[service name]" $CHAIN
+```
+
+8. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -192,7 +221,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Authorize Stellar Multisig prover on Multisig
+9. Authorize Stellar Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -210,7 +239,6 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-# Verify by executing this on genesis pod
 axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<stellar-multisig-prover-addr>", "chain_name": "stellar"}}' --output json | jq .
 
 # Result should look like:
@@ -219,7 +247,7 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 }
 ```
 
-8. Create reward pool for voting verifier
+10. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -251,7 +279,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Create reward pool for multisig
+11. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -274,41 +302,12 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-```
-
-11. Update ampd with the Stellar chain configuration. Verifiers should use their own Stellar RPC node for the `http_url` in production.
-
-| Network              | `http_url`                             |
-| -------------------- | -------------------------------------- |
-| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
-| **Stagenet**         | `https://horizon-testnet.stellar.org/` |
-| **Testnet**          | `https://horizon-testnet.stellar.org/` |
-| **Mainnet**          | `https://horizon.stellar.org`          |
-
-```bash
-[[handlers]]
-type="StellarMsgVerifier"
-http_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-
-[[handlers]]
-type="StellarVerifierSetVerifier"
-http_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-```
-
-12. Update ampd with the Stellar chain configuration.
-
-```bash
-ampd register-public-key ed25519
-
-ampd register-chain-support "[service name]" $CHAIN
 ```
 
 13. Create genesis verifier set
