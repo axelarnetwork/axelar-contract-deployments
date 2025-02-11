@@ -85,7 +85,10 @@ async function printWalletInfo(wallet, client, chain, options = {}) {
     let owner;
 
     if (options.privateKey !== 'ledger') {
-        owner = wallet.toSuiAddress();
+        owner =
+        wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
+            ? wallet.toSuiAddress()
+            : wallet;
     } else {
         owner = await wallet.toSuiAddress();
         printInfo('PublicKey', (await wallet.getPublicKey()).address.toString('base64'));
@@ -216,7 +219,7 @@ async function signTransactionBlockBytes(keypair, client, txBytes, options) {
 
     try {
         publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
-q    } catch (e) {
+    } catch (e) {
         throw new Error(`Transaction signature verification failed with error : ${e}`);
     }
 
