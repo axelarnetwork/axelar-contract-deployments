@@ -161,12 +161,12 @@ node cosmwasm/submit-proposal.js execute \
 [[handlers]]
 type="StellarMsgVerifier"
 http_url=[http url]
-cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+cosmwasm_contract="$VOTING_VERIFIER"
 
 [[handlers]]
 type="StellarVerifierSetVerifier"
 http_url=[http url]
-cosmwasm_contract="[\"$VOTING_VERIFIER\"]"
+cosmwasm_contract="$VOTING_VERIFIER"
 
 ```
 
@@ -205,7 +205,6 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-### Setup reward pools
 
 9. Create reward pool for voting verifier
 
@@ -242,7 +241,7 @@ node cosmwasm/submit-proposal.js execute \
 
 10. Create reward pool for multisig
 
-#### MultiSig Reward
+#### Multisig Reward
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
