@@ -4,12 +4,24 @@ const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { stellarCmd, getNetworkPassphrase, addBaseOptions } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast } = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt } = require('../common/utils');
 require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
+
+async function paused(contract) {
+    return contract.call('paused');
+}
+
+async function pause(contract) {
+    return contract.call('pause');
+}
+
+async function unpause(contract) {
+    return contract.call('unpause');
+}
 
 async function getTtl(chain, contractName, _args, _options) {
     printInfo('Contract TTL', contractName);
@@ -67,15 +79,27 @@ async function mainProcessor(processor, contractName, args, options) {
         throw new Error('Contract not found');
     }
 
-    await processor(chain, contractName, args, options);
+    if ([paused, pause, unpause].includes(processor)) {
+        const wallet = await getWallet(chain, options);
+        const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
+        const operation = await processor(contract);
+        const returnValue = await broadcast(operation, wallet, chain, `${processor.name} performed`, options);
 
-    saveConfig(config, options.env);
+        if (returnValue.value()) {
+            printInfo('Return value', returnValue.value());
+        }
+    }
+    else {
+        await processor(chain, contractName, args, options);
+
+        saveConfig(config, options.env);
+    }
 }
 
 if (require.main === module) {
     const program = new Command();
 
-    program.name('contract').description('Manage contract instance and storage `time to live`');
+    program.name('contract').description('Common contract operations');
 
     program
         .command('get-ttl <contractName>')
@@ -102,6 +126,30 @@ if (require.main === module) {
         .description('Restore an archived contract instance')
         .action((contractName, options) => {
             mainProcessor(restoreInstance, contractName, [], options);
+        });
+
+    program
+        .command('paused')
+        .description('Check if the contract is paused')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            mainProcessor(paused, contractName, [], options);
+        });
+
+    program
+        .command('pause')
+        .description('Pause the contract')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            mainProcessor(pause, contractName, [], options);
+        });
+
+    program
+        .command('unpause')
+        .description('Unpause the contract')
+        .argument('<contract-name>', 'contract name to deploy')
+        .action((contractName, options) => {
+            mainProcessor(unpause, contractName, [], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
