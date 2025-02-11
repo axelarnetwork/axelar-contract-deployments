@@ -690,6 +690,30 @@
             "gasServiceAddress": "CB6F5MFEZ6SZATSDWZ2IM2FWJYDS6USSRPYDDGYTB7N6FOLO36FOXAY6",
             "itsAddress": "CBMFHKNH46XWDKGKQNCF446O6FB73RB22UYQYQPVOBGZ2T2EF4YDTV43"
           }
+        },
+        "interchain_token": {
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca"
+        },
+        "token_manager": {
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
+        },
+        "interchain_token_service": {
+          "address": "CANMGANPOQBKM3RCOBNX3WKT7SK3647MVAQGX335AKMD4JKT5FQ3W7ZB",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "7ebdf38b7df81ad0deaae0d09b3123b6f1617ffae9618382c5d11acb7b991191",
+          "initializeArgs": {
+            "owner": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "operator": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+            "gatewayAddress": "CBMFHKNH46XWDKGKQNCF446O6FB73RB22UYQYQPVOBGZ2T2EF4YDTV43",
+            "gasServiceAddress": "CB6F5MFEZ6SZATSDWZ2IM2FWJYDS6USSRPYDDGYTB7N6FOLO36FOXAY6",
+            "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
+            "chainName": "stellar",
+            "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+            "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
+            "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
+          }
         }
       }
     },
