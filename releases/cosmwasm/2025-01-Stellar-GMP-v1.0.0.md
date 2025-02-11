@@ -193,16 +193,6 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-```bash
-# Verify by executing this on genesis pod
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<stellar-multisig-prover-addr>", "chain_name": "stellar"}}' --output json | jq .
-
-# Result should look like:
-{
-  "data": true
-}
-```
-
 7. Authorize Stellar Multisig prover on Multisig
 
 ```bash
@@ -218,6 +208,16 @@ node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
+```
+
+```bash
+# Verify by executing this on genesis pod
+axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<stellar-multisig-prover-addr>", "chain_name": "stellar"}}' --output json | jq .
+
+# Result should look like:
+{
+  "data": true
+}
 ```
 
 8. Create reward pool for voting verifier
