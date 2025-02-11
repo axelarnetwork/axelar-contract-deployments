@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
@@ -63,6 +63,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     tx.moveCall({
@@ -103,6 +104,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Added', options);
@@ -137,6 +139,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(receiver), // Receiver address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Collected', options);
@@ -172,6 +175,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(receiver), // Refund address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Refunded', options);
