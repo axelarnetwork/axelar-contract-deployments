@@ -161,7 +161,6 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-# Verify by executing this on genesis pod
 axelard q wasm contract-state smart <router-address> '{"chain_info": "stellar"}' --output json | jq .
 
 # You should see something like this:
