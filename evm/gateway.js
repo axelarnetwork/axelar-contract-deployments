@@ -17,6 +17,7 @@ const {
     getEVMBatch,
     getEVMAddresses,
     isValidAddress,
+    validateParameters,
     wasEventEmitted,
     mainProcessor,
     printError,
@@ -316,6 +317,45 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'isContractCallApproved': {
+            const { commandId, destination, payloadHash, sourceChain, sourceAddress } = options;
+
+            validateParameters({
+                isNonEmptyString: { commandId, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
+
+            const isApproved = await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, destination, payloadHash);
+
+            if (isApproved) {
+                printInfo('Contract call was approved at the gateway');
+            } else {
+                printWarn('Contract call was not approved at the gateway');
+            }
+
+            break;
+        }
+
+        case 'isMessageApproved': {
+            const { messageId, destination, payloadHash, sourceChain, sourceAddress } = options;
+            const commandId = id(`${sourceChain}_${messageId}`);
+
+            validateParameters({
+                isNonEmptyString: { commandId, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
+
+            const isApproved = await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, destination, payloadHash);
+
+            if (isApproved) {
+                printInfo('Message was approved at the gateway');
+            } else {
+                printWarn('Message was not approved at the gateway');
+            }
+
+            break;
+        }
+
         case 'transferGovernance': {
             const newGovernance = options.destination || chain.contracts.InterchainGovernance?.address;
 
@@ -491,6 +531,8 @@ if (require.main === module) {
                 'approve',
                 'execute',
                 'approveAndExecute',
+                'isContractCallApproved',
+                'isMessageApproved',
                 'transferGovernance',
                 'governance',
                 'mintLimiter',
@@ -504,7 +546,8 @@ if (require.main === module) {
             .makeOptionMandatory(true),
     );
 
-    program.addOption(new Option('--payload <payload>', 'gmp payload'));
+    program.addOption(new Option('--payload <payload>', 'GMP payload'));
+    program.addOption(new Option('--payloadHash <payloadHash>', 'GMP payload hash'));
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
     program.addOption(new Option('--messageId <messageId>', 'GMP call message ID'));
     program.addOption(new Option('--sourceChain <sourceChain>', 'GMP source chain'));
