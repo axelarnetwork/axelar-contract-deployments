@@ -2113,8 +2113,8 @@
         "lastUploadedCodeId": 24
       },
       "InterchainTokenService": {
-        "storeCodeProposalId": "65",
-        "storeCodeProposalCodeHash": "b60d0d227c7a400a0fcc80ed52f0e6688e5da6db676a61ed8b6942823294031d",
+        "storeCodeProposalId": "102",
+        "storeCodeProposalCodeHash": "174688fff71f479dca62066a9db5bb417e8b38db2d066650bf20e7e2b623f854",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "codeId": 17,
