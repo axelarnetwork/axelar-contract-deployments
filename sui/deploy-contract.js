@@ -71,6 +71,7 @@ const PACKAGE_CONFIGS = {
         Squid: postDeploySquid,
         Utils: postDeployUtils,
         Abi: postDeployAbi,
+        VersionControl: postDeployVersionControl,
     },
 };
 
@@ -112,6 +113,7 @@ async function postDeployRelayerDiscovery(published, keypair, client, config, ch
         RelayerDiscovery: relayerDiscoveryObjectId,
         RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
         OwnerCap: ownerCap,
+        UpgradeCap: upgradeCap,
     };
 }
 
@@ -127,10 +129,28 @@ async function postDeployUtils(published, keypair, client, config, chain, option
     }
 }
 
+async function postDeployVersionControl(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.VersionControl.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
+}
+
 async function postDeployAbi(published, keypair, client, config, chain, options) {
     const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
 
     await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.Abi.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
 }
 
 async function postDeployGasService(published, keypair, client, config, chain, options) {
@@ -205,6 +225,7 @@ async function postDeployOperators(published, keypair, client, config, chain, op
     chain.contracts.Operators.objects = {
         Operators: operatorsObjectId,
         OwnerCap: ownerCapObjectId,
+        UpgradeCap: upgradeCap,
     };
 }
 
@@ -276,9 +297,10 @@ async function postDeployIts(published, keypair, client, config, chain, options)
 
     const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
 
-    const [ownerCapObjectId, creatorCapObjectId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [ownerCapObjectId, creatorCapObjectId, operatorCapId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::owner_cap::OwnerCap`,
         `${published.packageId}::creator_cap::CreatorCap`,
+        `${published.packageId}::operator_cap::OperatorCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -305,6 +327,7 @@ async function postDeployIts(published, keypair, client, config, chain, options)
         InterchainTokenServicev0: InterchainTokenServiceV0ObjectId,
         ChannelId: channelId,
         OwnerCap: ownerCapObjectId,
+        OperatorCap: operatorCapId,
         UpgradeCap: upgradeCapObjectId,
     };
 

@@ -1,7 +1,8 @@
 const { Command } = require('commander');
-const { TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
+const { bcs } = require('@mysten/sui/bcs');
 
 const SPECIAL_CHAINS_TAGS = {
     ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
@@ -14,6 +15,73 @@ function parseTrustedChains(config, trustedChains) {
     }
 
     return trustedChains;
+}
+
+async function setFlowLimits(keypair, client, config, contracts, args, options) {
+    let [tokenIds, flowLimits] = args;
+
+    const { InterchainTokenService: itsConfig } = contracts;
+
+    const { OperatorCap, InterchainTokenService } = itsConfig.objects;
+
+    const txBuilder = new TxBuilder(client);
+
+    tokenIds = tokenIds.split(',');
+    flowLimits = flowLimits.split(',');
+
+    if (tokenIds.length !== flowLimits.length) throw new Error('<token-ids> and <flow-limits> have to have the same length.');
+
+    for (const i in tokenIds) {
+        const coinTypeTxBuilder = new TxBuilder(client);
+        let tokenId = await coinTypeTxBuilder.moveCall({
+            target: `${itsConfig.address}::token_id::from_address`,
+            arguments: [tokenIds[i]],
+        });
+
+        await coinTypeTxBuilder.moveCall({
+            target: `${itsConfig.address}::interchain_token_service::registered_coin_type`,
+            arguments: [InterchainTokenService, tokenId],
+        });
+
+        const resp = await coinTypeTxBuilder.devInspect(keypair.toSuiAddress());
+        const coinType = bcs.String.parse(new Uint8Array(resp.results[1].returnValues[0][0]));
+
+        tokenId = await txBuilder.moveCall({
+            target: `${itsConfig.address}::token_id::from_address`,
+            arguments: [tokenIds[i]],
+        });
+
+        let flowLimit;
+
+        if (flowLimits[i] === 'none') {
+            flowLimit = await txBuilder.moveCall({
+                target: `${STD_PACKAGE_ID}::option::none`,
+                arguments: [],
+                typeArguments: ['u64'],
+            });
+        } else {
+            flowLimit = await txBuilder.moveCall({
+                target: `${STD_PACKAGE_ID}::option::some`,
+                arguments: [txBuilder.tx.pure.u64(Number(flowLimits[i]))],
+                typeArguments: ['u64'],
+            });
+        }
+
+        await txBuilder.moveCall({
+            target: `${itsConfig.address}::interchain_token_service::set_flow_limit`,
+            arguments: [InterchainTokenService, OperatorCap, tokenId, flowLimit],
+            typeArguments: [coinType],
+        });
+    }
+
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Set flow limits for ${tokenIds} to ${flowLimits}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
+    }
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
@@ -102,6 +170,15 @@ if (require.main === module) {
             mainProcessor(removeTrustedChain, options, [trustedChains], processCommand);
         });
 
+    const setFlowLimitsProgram = new Command()
+        .name('set-flow-limits')
+        .command('set-flow-limits <token-ids> <flow-limits>')
+        .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists`)
+        .action((tokenIds, flowLimits, options) => {
+            mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
+        });
+
+    program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
 
