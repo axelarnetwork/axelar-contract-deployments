@@ -5,7 +5,7 @@ const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadc
 const { bcs } = require('@mysten/sui/bcs');
 
 const SPECIAL_CHAINS_TAGS = {
-    ALL: 'all'
+    ALL: 'all',
 };
 
 function getAllTrustedChains(config) {
@@ -15,9 +15,11 @@ function getAllTrustedChains(config) {
 
 function parseTrustedChains(config, trustedChains) {
     let allChains = trustedChains;
-    if(trustedChains == SPECIAL_CHAINS_TAGS.ALL){
+
+    if (trustedChains == SPECIAL_CHAINS_TAGS.ALL) {
         allChains = getAllTrustedChains(config);
     }
+
     return allChains.filter((chain) => {
         const chainConfig = config.chains[chain];
         return chainConfig.contracts?.InterchainTokenService && !chainConfig.contracts.InterchainTokenService.skip;
