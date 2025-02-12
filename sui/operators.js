@@ -11,6 +11,7 @@ const {
     findOwnedObjectIdByType,
     saveGeneratedTx,
 } = require('./utils');
+const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 
 function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, moveCall) {
     const operatorId = contractConfig.objects.Operators;
@@ -48,6 +49,7 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
         tx.moveCall({
             target: `${gasServiceConfig.address}::gas_service::collect_gas`,
             arguments: [tx.object(gasServiceConfig.objects.GasService), cap, tx.pure.address(receiver), tx.pure.u64(amount)],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
@@ -79,6 +81,7 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
                 tx.pure.address(receiver),
                 tx.pure.u64(amount),
             ],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
