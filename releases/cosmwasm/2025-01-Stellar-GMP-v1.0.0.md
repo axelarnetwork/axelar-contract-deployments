@@ -254,8 +254,8 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
-| **Stagenet**         | `600`            | `["7", "10"]`             | `TBD`               |
-| **Testnet**          | `14845`          | `["7", "10"]`             | `TBD`               |
+| **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
+| **Testnet**          | `14845`          | `["7", "10"]`             | `100`               |
 | **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
 
 ```bash
