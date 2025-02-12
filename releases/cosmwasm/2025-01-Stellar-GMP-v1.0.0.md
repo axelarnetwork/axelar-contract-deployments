@@ -100,19 +100,19 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Instantiate `VotingVerifier`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier -s $CHAIN --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 2. Instantiate `Gateway`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c Gateway -s $CHAIN --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 3. Instantiate `MultisigProver`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver -s $CHAIN --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 
 ```
 
