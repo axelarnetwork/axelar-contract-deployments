@@ -16,7 +16,7 @@ function getAllTrustedChains(config) {
 function parseTrustedChains(config, trustedChains) {
     let allChains = trustedChains;
 
-    if (trustedChains == SPECIAL_CHAINS_TAGS.ALL) {
+    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL) {
         allChains = getAllTrustedChains(config);
     }
 
