@@ -19,11 +19,11 @@
 
 ## Background
 
-- These are the instructions for deploying Amplifier contracts for Stellar connection.
+These are the instructions for deploying Amplifier contracts for Stellar connection.
 
 ### Pre-requisites
 
-- Ensure that the [External Gateway](../stellar/2025-01-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Ensure that the [External Gateway](../stellar/2025-01-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 ## Deployment
 
