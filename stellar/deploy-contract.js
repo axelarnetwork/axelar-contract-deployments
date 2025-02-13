@@ -116,7 +116,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
-            const chainName = nativeToScVal('stellar', { type: 'string' });
+            const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
 
             if (!chain?.contracts?.interchain_token?.wasmHash) {
