@@ -196,19 +196,17 @@ async function processCommand(config, chain, options) {
         }
 
         case 'deployRemoteCanonicalInterchainToken': {
-            const { originalChain, tokenAddress, destinationChain, gasValue } = options;
+            const { tokenAddress, destinationChain, gasValue } = options;
 
             validateParameters({
                 isValidAddress: { tokenAddress },
-                isString: { originalChain },
                 isNonEmptyString: { destinationChain },
                 isValidNumber: { gasValue },
             });
 
             isValidDestinationChain(config, destinationChain);
 
-            const tx = await interchainTokenFactory.deployRemoteCanonicalInterchainToken(
-                originalChain,
+            const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
                 destinationChain,
                 gasValue,
