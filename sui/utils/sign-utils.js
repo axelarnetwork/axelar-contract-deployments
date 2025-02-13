@@ -135,11 +135,12 @@ function getRawPrivateKey(keypair) {
 }
 
 // Prompt the user for confirmation before executing a transaction
-async function askForConfirmation(commandOptions = {}) {
+async function askForConfirmation(actionName, commandOptions = {}) {
     const { yes } = commandOptions;
 
     if (!yes) {
-        const aborted = prompt('Confirm Tx?');
+        const promptTitle = actionName ? `Confirm ${actionName} Tx?` : 'Confirm Tx?';
+        const aborted = prompt(promptTitle);
 
         if (aborted) {
             printInfo('Aborted');
@@ -149,7 +150,7 @@ async function askForConfirmation(commandOptions = {}) {
 }
 
 async function broadcast(client, keypair, tx, actionName, commandOptions = {}) {
-    await askForConfirmation(commandOptions);
+    await askForConfirmation(actionName, commandOptions);
 
     const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
@@ -166,7 +167,7 @@ async function broadcast(client, keypair, tx, actionName, commandOptions = {}) {
 }
 
 async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOptions = {}, suiResponseOptions) {
-    await askForConfirmation(commandOptions);
+    await askForConfirmation(actionName, commandOptions);
 
     const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 
@@ -184,7 +185,7 @@ const broadcastExecuteApprovedMessage = async (
     actionName,
     commandOptions = {},
 ) => {
-    await askForConfirmation(commandOptions);
+    await askForConfirmation(actionName, commandOptions);
     const receipt = await execute(client, keypair, discoveryInfo, gatewayInfo, messageInfo);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -193,7 +194,7 @@ const broadcastExecuteApprovedMessage = async (
 };
 
 async function broadcastSignature(client, txBytes, signature, actionName, commandOptions = {}) {
-    await askForConfirmation(commandOptions);
+    await askForConfirmation(actionName, commandOptions);
 
     const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,

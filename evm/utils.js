@@ -210,7 +210,11 @@ function isValidBytesAddress(input) {
 }
 
 function isValidBytesArray(input) {
-    const bytesRegex = /^0x[a-fA-F0-9]/;
+    if (input.length % 2 === 1) {
+        return false;
+    }
+
+    const bytesRegex = /^0x[a-fA-F0-9]*/;
     return bytesRegex.test(input);
 }
 
