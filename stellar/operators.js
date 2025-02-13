@@ -144,7 +144,7 @@ if (require.main === module) {
         mainProcessor(addOperator, [address], options);
     });
 
-    program.command('remove-operator <addrsess>').action((address, options) => {
+    program.command('remove-operator <address>').action((address, options) => {
         mainProcessor(removeOperator, [address], options);
     });
 
