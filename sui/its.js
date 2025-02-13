@@ -5,16 +5,20 @@ const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadc
 const { bcs } = require('@mysten/sui/bcs');
 
 const SPECIAL_CHAINS_TAGS = {
-    ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
+    ALL: 'all',
 };
 
-function parseTrustedChains(config, trustedChains) {
-    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL_EVM) {
-        const evmChains = Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
-        return evmChains;
-    }
+function getAllTrustedChains(config) {
+    const allChains = Object.keys(config.chains);
+    return allChains;
+}
 
-    return trustedChains;
+function parseTrustedChains(config, trustedChains) {
+    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL) {
+        const allChains = getAllTrustedChains(config);
+        console.log(allChains);
+        return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
+    }
 }
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
