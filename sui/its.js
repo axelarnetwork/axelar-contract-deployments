@@ -5,7 +5,7 @@ const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadc
 const { bcs } = require('@mysten/sui/bcs');
 
 const SPECIAL_CHAINS_TAGS = {
-    ALL: 'all'
+    ALL: 'all',
 };
 
 function getAllTrustedChains(config) {
