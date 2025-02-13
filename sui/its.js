@@ -18,6 +18,8 @@ function parseTrustedChains(config, trustedChains) {
         const allChains = getAllTrustedChains(config);
         return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
     }
+
+    return trustedChains;
 }
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
