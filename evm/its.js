@@ -652,34 +652,8 @@ if (require.main === module) {
     addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainTokenService'));
-    program.addOption(
-        new Option('--action <action>', 'ITS action')
-            .choices([
-                'contractId',
-                'tokenManagerAddress',
-                'tokenAddress',
-                'interchainTokenAddress',
-                'interchainTokenId',
-                'tokenManagerImplementation',
-                'flowLimit',
-                'flowOutAmount',
-                'flowInAmount',
-                'contractCallValue',
-                'expressExecute',
-                'interchainTransfer',
-                'setFlowLimits',
-                'trustedAddress',
-                'setTrustedAddress',
-                'removeTrustedAddress',
-                'setPauseStatus',
-                'execute',
-                'checks',
-                'migrateInterchainToken',
-                'registerTokenMetadata',
-                'transferMintership',
-            ])
-            .makeOptionMandatory(true),
-    );
+
+    program.argument('<command>', 'ITS command to execute');
 
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
@@ -715,7 +689,8 @@ if (require.main === module) {
     program.addOption(new Option('--pauseStatus <pauseStatus>', 'pause status').choices(['true', 'false']));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
 
-    program.action((options) => {
+    program.action((command, options) => {
+        options.action = command;
         main(options);
     });
 
