@@ -14,16 +14,13 @@ function getAllTrustedChains(config) {
 }
 
 function parseTrustedChains(config, trustedChains) {
-    let allChains = trustedChains;
-
     if (trustedChains === SPECIAL_CHAINS_TAGS.ALL) {
-        allChains = getAllTrustedChains(config);
+        const allChains = getAllTrustedChains(config);
+        console.log(allChains);
+        return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
     }
 
-    return allChains.filter((chain) => {
-        const chainConfig = config.chains[chain];
-        return chainConfig.contracts?.InterchainTokenService && !chainConfig.contracts.InterchainTokenService.skip;
-    });
+    return trustedChains;
 }
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
