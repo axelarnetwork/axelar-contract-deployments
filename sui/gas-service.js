@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
@@ -11,7 +11,6 @@ const {
     getWallet,
     printWalletInfo,
     broadcast,
-    getBcsBytesByObjectId,
     getFormattedAmount,
     addOptionsToCommands,
     addBaseOptions,
@@ -63,6 +62,7 @@ async function payGas(keypair, client, gasServiceConfig, args, options, contract
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     tx.moveCall({
@@ -103,6 +103,7 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Added', options);
@@ -112,14 +113,18 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServiceObjectId = gasServiceConfig.objects.GasServicev0;
 
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
-    const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const result = bcsStructs.gasService.GasService.parse(bytes);
-    const gasServiceBalance = result.value.balance;
+    const balanceQuery = new TxBuilder(client);
+    await balanceQuery.moveCall({
+        target: `${gasServicePackageId}::gas_service::balance`,
+        arguments: [gasServiceConfig.objects.GasService],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
+    });
+    const result = await balanceQuery.devInspect(walletAddress);
+    const gasServiceBalance = bcs.U64.parse(new Uint8Array(result.results[0].returnValues[0][0]));
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -137,6 +142,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(receiver), // Receiver address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Collected', options);
@@ -146,15 +152,19 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServicev0ObjectId = gasServiceConfig.objects.GasServicev0;
 
     const [messageId] = args;
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
-    const bytes = await getBcsBytesByObjectId(client, gasServicev0ObjectId);
-    const result = bcsStructs.gasService.GasService.parse(bytes);
-    const gasServiceBalance = result.value.balance;
+    const balanceQuery = new TxBuilder(client);
+    await balanceQuery.moveCall({
+        target: `${gasServicePackageId}::gas_service::balance`,
+        arguments: [gasServiceConfig.objects.GasService],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
+    });
+    const result = await balanceQuery.devInspect(walletAddress);
+    const gasServiceBalance = bcs.U64.parse(new Uint8Array(result.results[0].returnValues[0][0]));
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -172,6 +182,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(receiver), // Refund address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
     await broadcast(client, keypair, tx, 'Gas Refunded', options);

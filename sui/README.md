@@ -65,6 +65,19 @@ node sui/faucet.js
 
 The following packages need to be deployed in order because they are referenced by other packages.
 
+Command syntax:
+
+```bash
+node sui/deploy-contract.js deploy <package name> [--policy <policy>]
+```
+
+Where the policy can be one of the following:
+
+- `any_upgrade` (default): Allow any upgrade.
+- `code_upgrade`: Upgrade policy to just add code.
+- `dep_upgrade`: Upgrade policy to just change dependencies.
+- `immutable`: Make the package immutable.
+
 #### Utils
 
 ```bash
