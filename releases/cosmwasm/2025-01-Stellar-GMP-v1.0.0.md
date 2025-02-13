@@ -19,7 +19,7 @@
 
 ## Background
 
-1. These are the instructions for deploying Amplifier contracts for Stellar connection.
+- These are the instructions for deploying Amplifier contracts for Stellar connection.
 
 ### Pre-requisites
 
@@ -145,7 +145,7 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 ```
 
 - `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
-- Please add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
+- Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
 
 5. Register stellar gateway at the Router
 
