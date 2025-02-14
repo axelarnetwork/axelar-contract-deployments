@@ -101,7 +101,7 @@ async function storeCap(keypair, client, gasServiceConfig, contractConfig, args,
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::store_cap`,
-        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(gasCollectorCapId)],
+        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(operatorCapId)],
         typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
