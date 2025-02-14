@@ -363,7 +363,7 @@ async function processCommand(config, chain, options) {
         case 'registerTokenMetadata': {
             const { tokenAddress, gasValue } = options;
 
-            validateParameters({ isValidAddress: { tokenAddress }, isNumber: { gasValue } });
+            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
 
