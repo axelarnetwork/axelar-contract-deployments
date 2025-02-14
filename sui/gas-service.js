@@ -138,7 +138,7 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         target: `${gasServicePackageId}::gas_service::collect_gas`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
-            tx.object(gasServiceConfig.objects.GasCollectorCap),
+            tx.object(gasServiceConfig.objects.OperatorCap),
             tx.pure.address(receiver), // Receiver address
             tx.pure.u64(unitAmount), // Amount
         ],
@@ -177,7 +177,7 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         target: `${gasServicePackageId}::gas_service::refund`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
-            tx.object(gasServiceConfig.objects.GasCollectorCap),
+            tx.object(gasServiceConfig.objects.OperatorCap),
             tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
             tx.pure.address(receiver), // Refund address
             tx.pure.u64(unitAmount), // Amount
