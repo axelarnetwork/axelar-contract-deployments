@@ -157,7 +157,8 @@ async function postDeployGasService(published, keypair, client, config, chain, o
     const [OperatorCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
         published.publishTxn,
         [
-            `${published.packageId}::gas_service::OperatorCap`,
+            `${published.packageId}::operator_cap::OperatorCap`,
+            `${published.packageId}::owner_cap::OwnerCap`,
             `${published.packageId}::gas_service::GasService`,
             `${published.packageId}::gas_service_v0::GasService_v0`,
             `${suiPackageAddress}::package::UpgradeCap`,
