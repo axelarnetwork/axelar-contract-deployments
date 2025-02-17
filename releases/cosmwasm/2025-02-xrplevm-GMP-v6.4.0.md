@@ -1,4 +1,4 @@
-# XRPL sidechain GMP Amplifier
+# Ripple EVM Sidechain GMP v6.4.0
 
 |                | **Owner**                                                                   |
 | -------------- | --------------------------------------------------------------------------- |
