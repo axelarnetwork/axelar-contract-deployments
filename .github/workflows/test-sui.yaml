@@ -5,7 +5,7 @@ on: pull_request
 jobs:
   check-relevant-changes:
     name: Check for Relevant Changes
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: blacksmith-2vcpu-ubuntu-2204
     outputs:
       run_tests: ${{ steps.filter.outputs.sui == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
     steps:
