@@ -31,7 +31,6 @@ const {
     validateParameters,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
-const { contract } = require('@stellar/stellar-sdk');
 const path = require('path');
 const fetch = require('node-fetch');
 
@@ -888,33 +887,35 @@ const CONTRACTS = {
 
 const downloadContractFromR2 = async (contractName, contractVersion) => {
     contractName = contractName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-    const file_name = contractName.replace(/-/g, "_");
+    const fileName = contractName.replace(/-/g, "_");
     
     let contractPath;
 
     if (/^v\d+\.\d+\.\d+$/.test(contractVersion)) {
         // remove leading v
         const semanticVersion = contractVersion.slice(1);      
-        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${semanticVersion}/${file_name}.wasm`;
+        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${semanticVersion}/${fileName}.wasm`;
     } else if (/^[a-f0-9]{7,}$/.test(contractVersion)) {
-        contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${file_name}.wasm`;
+        contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } else {
         throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
     }
 
     const response = await fetch(contractPath);
+
     if (!response.ok) {
         throw new Error(`Failed to download contract: ${response.statusText}`);
     }
 
     // Ensure temp directory exists
     const tempDir = path.join(__dirname, '../temp');
+
     if (!existsSync(tempDir)) {
         mkdirSync(tempDir, { recursive: true });
     }
 
     // Define local file path
-    const filePath = path.join(tempDir, `${file_name}.wasm`);
+    const filePath = path.join(tempDir, `${fileName}.wasm`);
 
     // Save the file locally
     const fileStream = createWriteStream(filePath);
