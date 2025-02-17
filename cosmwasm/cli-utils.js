@@ -128,7 +128,11 @@ const addStoreOptions = (program) => {
 };
 
 const addVersionOptions = (program) => {
-    program.addOption(new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload').env('CONTRACT_VERSION'));
+    program.addOption(
+        new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload').env(
+            'CONTRACT_VERSION',
+        ),
+    );
 };
 
 const addStoreProposalOptions = (program) => {

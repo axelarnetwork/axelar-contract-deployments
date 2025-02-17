@@ -884,21 +884,22 @@ const CONTRACTS = {
     },
 };
 
-
 const downloadContractFromR2 = async (contractName, contractVersion) => {
     contractName = contractName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-    const fileName = contractName.replace(/-/g, "_");
-    
+    const fileName = contractName.replace(/-/g, '_');
+
     let contractPath;
 
     if (/^v\d+\.\d+\.\d+$/.test(contractVersion)) {
         // remove leading v
-        const semanticVersion = contractVersion.slice(1);      
+        const semanticVersion = contractVersion.slice(1);
         contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${semanticVersion}/${fileName}.wasm`;
     } else if (/^[a-f0-9]{7,}$/.test(contractVersion)) {
         contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } else {
-        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+        throw new Error(
+            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
+        );
     }
 
     const response = await fetch(contractPath);
@@ -927,7 +928,6 @@ const downloadContractFromR2 = async (contractName, contractVersion) => {
         });
     });
 };
-
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,

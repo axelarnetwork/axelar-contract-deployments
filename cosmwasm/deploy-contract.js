@@ -23,7 +23,6 @@ const {
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
-
 const upload = async (client, wallet, config, options) => {
     const { contractName, contractVersion, artifactPath, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
