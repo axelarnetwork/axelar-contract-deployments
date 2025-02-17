@@ -154,10 +154,11 @@ async function postDeployAbi(published, keypair, client, config, chain, options)
 }
 
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
+    const [OperatorCapObjectId, OwnerCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
         published.publishTxn,
         [
-            `${published.packageId}::gas_service::GasCollectorCap`,
+            `${published.packageId}::operator_cap::OperatorCap`,
+            `${published.packageId}::owner_cap::OwnerCap`,
             `${published.packageId}::gas_service::GasService`,
             `${published.packageId}::gas_service_v0::GasService_v0`,
             `${suiPackageAddress}::package::UpgradeCap`,
@@ -167,7 +168,8 @@ async function postDeployGasService(published, keypair, client, config, chain, o
     await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
 
     chain.contracts.GasService.objects = {
-        GasCollectorCap: gasCollectorCapObjectId,
+        OperatorCap: OperatorCapObjectId,
+        OwnerCap: OwnerCapObjectId,
         GasService: gasServiceObjectId,
         GasServicev0: gasServicev0ObjectId,
         UpgradeCap: upgradeCap,
