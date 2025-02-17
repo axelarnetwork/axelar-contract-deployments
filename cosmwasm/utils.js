@@ -2,8 +2,7 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-
-const { readFileSync } = require('fs');
+const { readFileSync, existsSync, mkdirSync, createWriteStream } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -32,6 +31,9 @@ const {
     validateParameters,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const { contract } = require('@stellar/stellar-sdk');
+const path = require('path');
+const fetch = require('node-fetch');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -40,6 +42,8 @@ const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
+
+const R2_BUCKET_URL = 'https://static.axelar.network';
 
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
@@ -881,6 +885,46 @@ const CONTRACTS = {
     },
 };
 
+
+const downloadContractFromR2 = async (contractName, contractVersion) => {
+    contractName = contractName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    const file_name = contractName.replace(/-/g, "_");
+    let contractPath;
+
+    if (/^\d+\.\d+\.\d+$/.test(contractVersion)) {        
+        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${contractVersion}/${file_name}.wasm`;
+    } else if (/^[a-f0-9]{7,}$/.test(contractVersion)) {
+        contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${file_name}.wasm`;
+    } else {
+        throw new Error(`Invalid contractVersion format: ${contractVersion}`);
+    }
+
+    const response = await fetch(contractPath);
+    if (!response.ok) {
+        throw new Error(`Failed to download contract: ${response.statusText}`);
+    }
+
+    // Ensure temp directory exists
+    const tempDir = path.join(__dirname, '../temp');
+    if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+    }
+
+    // Define local file path
+    const filePath = path.join(tempDir, `${file_name}.wasm`);
+
+    // Save the file locally
+    const fileStream = createWriteStream(filePath);
+    return new Promise((resolve, reject) => {
+        response.body.pipe(fileStream);
+        response.body.on('error', reject);
+        fileStream.on('finish', () => {
+            resolve(tempDir);
+        });
+    });
+};
+
+
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
@@ -913,4 +957,5 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
+    downloadContractFromR2,
 };

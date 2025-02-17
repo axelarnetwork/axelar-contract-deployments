@@ -246,6 +246,7 @@ const programHandler = () => {
     addAmplifierOptions(storeCmd, {
         contractOptions: true,
         storeOptions: true,
+        r2Options: true,
         storeProposalOptions: true,
         proposalOptions: true,
         runAs: true,
@@ -260,6 +261,7 @@ const programHandler = () => {
     addAmplifierOptions(storeInstantiateCmd, {
         contractOptions: true,
         storeOptions: true,
+        r2Options: true,
         storeProposalOptions: true,
         proposalOptions: true,
         instantiateOptions: true,

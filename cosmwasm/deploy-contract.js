@@ -17,22 +17,38 @@ const {
     uploadContract,
     instantiateContract,
     migrateContract,
+    downloadContractFromR2,
 } = require('./utils');
 
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
+
 const upload = async (client, wallet, config, options) => {
-    const { contractName, instantiate2, salt, chainName } = options;
+    const { contractName, contractVersion, artifactPath, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-    printInfo('Uploading contract binary');
+    let wasmPath;
 
+    // Determine source of contract binary
+    if (contractVersion) {
+        wasmPath = await downloadContractFromR2(contractName, contractVersion);
+    } else if (artifactPath) {
+        wasmPath = artifactPath;
+    } else {
+        throw new Error("Either 'contractVersion' or 'artifactPath' must be provided.");
+    }
+
+    // Override options.artifactPath with the resolved wasm path
+    options.artifactPath = wasmPath;
+
+    printInfo('Uploading contract binary');
     const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
 
+    // Handle instantiate2 logic
     if (instantiate2) {
         const [account] = await wallet.getAccounts();
         const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
@@ -115,6 +131,7 @@ const programHandler = () => {
     addAmplifierOptions(uploadCmd, {
         contractOptions: true,
         storeOptions: true,
+        contractVersionOptions: true,
         instantiate2Options: true,
     });
 
@@ -141,6 +158,7 @@ const programHandler = () => {
     addAmplifierOptions(uploadInstantiateCmd, {
         contractOptions: true,
         storeOptions: true,
+        contractVersionOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
     });

@@ -21,6 +21,10 @@ const addAmplifierOptions = (program, options) => {
         addStoreOptions(program);
     }
 
+    if (options.contractVersionOptions) {
+        addVersionOptions(program);
+    }
+
     if (options.storeProposalOptions) {
         addStoreProposalOptions(program);
     }
@@ -78,6 +82,14 @@ const addAmplifierOptions = (program, options) => {
             ),
         );
     }
+
+    program.hook('preAction', (command) => {
+        const opts = command.opts();
+
+        if (!opts.contractVersion && !opts.artifactPath) {
+            throw new Error("Either '--contractVersion' (Contract Version) or '--artifactPath' (Local Path) must be provided.");
+        }
+    });
 };
 
 const addContractOptions = (program) => {
@@ -113,6 +125,10 @@ const addContractOptions = (program) => {
 
 const addStoreOptions = (program) => {
     program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
+};
+
+const addVersionOptions = (program) => {
+    program.addOption(new Option('-v, --contractVersion <contractVersion>', 'released version X.Y.Z or pre-release hash to upload').env('CONTRACT_VERSION'));
 };
 
 const addStoreProposalOptions = (program) => {
