@@ -889,14 +889,17 @@ const CONTRACTS = {
 const downloadContractFromR2 = async (contractName, contractVersion) => {
     contractName = contractName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     const file_name = contractName.replace(/-/g, "_");
+    
     let contractPath;
 
-    if (/^\d+\.\d+\.\d+$/.test(contractVersion)) {        
-        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${contractVersion}/${file_name}.wasm`;
+    if (/^v\d+\.\d+\.\d+$/.test(contractVersion)) {
+        // remove leading v
+        const semanticVersion = contractVersion.slice(1);      
+        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${semanticVersion}/${file_name}.wasm`;
     } else if (/^[a-f0-9]{7,}$/.test(contractVersion)) {
         contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${file_name}.wasm`;
     } else {
-        throw new Error(`Invalid contractVersion format: ${contractVersion}`);
+        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
     }
 
     const response = await fetch(contractPath);
