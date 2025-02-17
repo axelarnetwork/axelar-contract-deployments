@@ -111,8 +111,11 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ### Deploy the contracts
 
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
+Contract wasm binary can be passed by specifiying the artifact directory path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-    `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
@@ -144,6 +147,9 @@ Example deployments:
 10. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "avalanche"`
 11. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "avalanche"`
 12. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "avalanche"`
+13. `node deploy-contract.js upload-instantiate -m [mnemonic] -v "v1.0.0" -c "MultisigProver" -e devnet -n "avalanche"`
+14. `node deploy-contract.js upload-instantiate -m [mnemonic] -v "465d006" -c "MultisigProver" -e devnet -n "avalanche"`
+
 
 ### Constant Address Deployment
 
