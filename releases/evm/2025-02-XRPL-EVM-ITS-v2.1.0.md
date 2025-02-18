@@ -20,7 +20,7 @@
 
 ## Deployment
 
-Ensure that [XRPL EVM GMP](../evm/2025-02-xrplevm-GMP-v6.4.0.md) is deployed first.
+Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -57,7 +57,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register xrplevm ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-xrplevm-GMP-v1.0.0.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v1.0.0.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \

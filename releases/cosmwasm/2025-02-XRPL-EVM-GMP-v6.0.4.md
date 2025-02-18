@@ -23,13 +23,13 @@ These are the instructions for deploying Amplifier contracts for XRPL EVM Sidech
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-02-xrplevm-GMP-v6.4.0.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -38,12 +38,12 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
+- Create an `.env` config. `CHAINS` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
 
 ```yaml
 MNEMONIC=xyz
 ENV=xyz
-CHAIN=xyz
+CHAINS=xyz
 ```
 
 - Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
@@ -255,7 +255,7 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<$CHAINS-multisig-prover-addr>", "chain_name": "$CHAINS"}}' --output json | jq .
+axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<chain-multisig-prover-addr>", "chain_name": "$CHAINS"}}' --output json | jq .
 # Result should look like:
 {
   "data": true
@@ -270,7 +270,7 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 | -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
 | **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
-| **Testnet**          | `14845`          | `["7", "10"]`             | `100`               |
+| **Testnet**          | `600`            | `["7", "10"]`             | `100`               |
 | **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
 
 ```bash
@@ -343,4 +343,4 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_
 
 ## Checklist
 
-The [xrplevm GMP checklist](../evm/2025-02-xrplevm-GMP-v6.4.0.md) will test GMP call.
+The [xrplevm GMP checklist](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) will test GMP call.

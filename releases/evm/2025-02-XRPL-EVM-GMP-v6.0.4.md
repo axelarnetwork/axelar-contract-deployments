@@ -1,4 +1,4 @@
-# XRPL EVM Sidechain GMP v6.4.0
+# XRPL EVM Sidechain GMP v6.0.4
 
 |                | **Owner**                                                                   |
 | -------------- | --------------------------------------------------------------------------- |
@@ -12,7 +12,7 @@
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-- [Releases](https://github.com/axelarnetwork/axelar-cgp-solidity/tree/v6.4.0)
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
 ## Background
 
@@ -36,10 +36,10 @@ An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under 
 
 ```json
 "$CHAINS": {
-    "name": "xrpl EVM",
+    "name": "XRPL EVM Sidechain",
     "axelarId": "$CHAINS",
     "chainId": 1449000,
-    "rpc": "https://rpc.testnet.$CHAINS.org",
+    "rpc": "https://rpc.testnet.xrplevm.org",
     "tokenSymbol": "XRP",
     "confirmations": 1,
     "finality": "finalized",
@@ -48,7 +48,7 @@ An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under 
     "explorer": {
       "name": "Blockscout",
       "url": "https://explorer.testnet.xrplevm.org/",
-      "api": "https://explorer.testnet.xrplevm.org/api/" // TODO: Update after confirming or procuring the correct api
+      "api": "https://explorer.testnet.xrplevm.org/api/"
     },
   "contracts": {}
   }
@@ -143,7 +143,7 @@ node evm/deploy-amplifier-gateway.js \
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -169,7 +169,7 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
