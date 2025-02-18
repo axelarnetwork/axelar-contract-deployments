@@ -1,4 +1,4 @@
-# Ripple EVM Sidechain GMP v6.4.0
+# XRPL EVM Sidechain GMP v6.4.0
 
 |                | **Owner**                                                                   |
 | -------------- | --------------------------------------------------------------------------- |
@@ -18,11 +18,11 @@
 
 Changes in the release:
 
-This is the v6.4.0 deployment of EVM compatible Amplifier Gateway contracts for Ripple Sidechain.
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for XRPL Sidechain.
 
 ## Deployment
 
-Create a `.env` config. `CHAIN` should be set to `xrplevm` for all production networks: `mainnet`, `testnet`, `stagenet` and `devnet-amplifier`.
+Create a `.env` config. `CHAIN` should be set to `$CHAINS` for all production networks: `mainnet`, `testnet`, `stagenet` and `devnet-amplifier`.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -30,16 +30,16 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-An initial `xrplevm` chain config needs to be added to `${ENV}.json` file under `chains` key.
+An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under `chains` key.
 
 #### Devnet-Amplifier / Stagenet / Testnet
 
 ```json
-"xrplevm": {
-    "name": "Ripple EVM",
-    "axelarId": "xrplevm",
-    "chainId": 1440002,
-    "rpc": "https://rpc.xrplevm.org",
+"$CHAINS": {
+    "name": "xrpl EVM",
+    "axelarId": "$CHAINS",
+    "chainId": 1449000,
+    "rpc": "https://rpc.testnet.$CHAINS.org",
     "tokenSymbol": "XRP",
     "confirmations": 1,
     "finality": "finalized",
@@ -47,8 +47,8 @@ An initial `xrplevm` chain config needs to be added to `${ENV}.json` file under 
     "chainType": "evm",
     "explorer": {
       "name": "Blockscout",
-      "url": "https://explorer.xrplevm.org",
-      "api": "https://explorer.xrplevm.org/api"
+      "url": "https://explorer.testnet.xrplevm.org/",
+      "api": "https://explorer.testnet.xrplevm.org/api/" // TODO: Update after confirming or procuring the correct api
     },
   "contracts": {}
   }
@@ -57,9 +57,9 @@ An initial `xrplevm` chain config needs to be added to `${ENV}.json` file under 
 #### Mainnet
 
 ```json
-"xrplevm": {
-    "name": "Ripple EVM",
-    "axelarId": "xrplevm",
+"$CHAINS": {
+    "name": "XRPL EVM",
+    "axelarId": "$CHAINS",
     "chainId": "TBD",
     "rpc": "TBD",
     "tokenSymbol": "XRP",
@@ -82,7 +82,7 @@ An initial `xrplevm` chain config needs to be added to `${ENV}.json` file under 
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
 | **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 2. Deploy `ConstAddrDeployer`:
@@ -93,7 +93,7 @@ An initial `xrplevm` chain config needs to be added to `${ENV}.json` file under 
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | X                                            |
-| **Testnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 ```bash
@@ -108,7 +108,7 @@ node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | X                                            |
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -128,7 +128,7 @@ node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -179,21 +179,20 @@ node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector
 8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
 
 ```bash
+To be skipped for staging connection
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
 
 The following checks should be performed after the rollout
 
-### Ripple EVM -> EVM GMP call
+### XRPL EVM -> EVM GMP call
 
 1. Send a GMP call
 
 ```bash
-node evm/gateway.js -n xrplevm --action callContract --destinationChain [destination-chain] --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+node evm/gateway.js -n $CHAINS --action callContract --destinationChain [destination-chain] --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
 ```
 
 2. Route GMP call via Amplifier
@@ -209,15 +208,15 @@ node evm/gateway.js -n [destination-chain] --action submitProof --multisigSessio
 4. Confirm whether the message is approved
 
 ```bash
-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain xrplevm --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
+node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAINS --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
 ```
 
-### EVM -> Stellar GMP Call
+### EVM -> XRPL GMP Call
 
 1. Send a GMP call
 
 ```bash
-node evm/gateway.js -n [destination-chain] --action callContract --destinationChain xrplevm --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAINS --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
 ```
 
 2. Route GMP call via Amplifier
@@ -227,11 +226,11 @@ node evm/gateway.js -n [destination-chain] --action callContract --destinationCh
 3.  Submit proof with multisig session id
 
 ```bash
-node evm/gateway.js -n xrplevm --action submitProof --multisigSessionId [multisig session id]
+node evm/gateway.js -n $CHAINS --action submitProof --multisigSessionId [multisig session id]
 ```
 
 4. Confirm whether the message is approved
 
 ```bash
-node evm/gateway.js -n xrplevm --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
+node evm/gateway.js -n $CHAINS --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
 ```

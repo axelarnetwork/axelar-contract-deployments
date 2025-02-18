@@ -1,4 +1,4 @@
-# Ripple EVM Sidechain GMP v6.4.0
+# XRPL EVM Sidechain GMP v6.0.4
 
 |                | **Owner**                                                                   |
 | -------------- | --------------------------------------------------------------------------- |
@@ -19,7 +19,7 @@
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for Ripple EVM connection.
+These are the instructions for deploying Amplifier contracts for XRPL EVM Sidechain connection.
 
 ### Pre-requisites
 
@@ -33,15 +33,12 @@ Predict the [External Gateway](../evm/2025-02-xrplevm-GMP-v6.4.0.md) address, as
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
-node evm/deploy-amplifier-gateway.js \
-	-m [deploymentType] \
-	--minimumRotationDelay [minimumRotationDelay] \
-    --predictOnly
+node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
 ```
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `xrplevm` for mainnet, and `xrplevm-2024-q4` for all other networks.
+- Create an `.env` config. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
 
 ```yaml
 MNEMONIC=xyz
@@ -49,12 +46,12 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-- Confirm `VotingVerifier(v1.1.0)`, `Gateway(v1.1.1)` and `MultisigProver(v1.1.1)` contracts are already stored in `$ENV.json`
+- Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
 
 ```bash
-VotingVerifier(v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
-Gateway(v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
-MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+VotingVerifier (v1.1.0) -> "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
+Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f"
+MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
 ```
 
 - Add config in `$ENV.json` to deploy Amplifier contracts.
@@ -75,7 +72,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
-"xrplevm" : {
+"$CHAINS" : {
   "governanceAddress": "[governance address]",
   "serviceName": "[service name]",
   "sourceGatewayAddress": "[external gateway address]",
@@ -87,7 +84,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
-"xrplevm" : {
+"$CHAINS" : {
   "governanceAddress": "[governance address]",
   "adminAddress": "[admin address]",
   "signingThreshold": "[signing threshold]",
@@ -107,9 +104,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 | **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
 | **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
-```bash
-CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based on network]
-```
+`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades
 
 1. Instantiate `VotingVerifier`
 
@@ -134,9 +129,9 @@ node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId -
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier["xrplevm"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway["xrplevm"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver["xrplevm"].address" | tr -d '"')
+VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier["$CHAINS"].address" | tr -d '"')
+GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway["$CHAINS"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver["$CHAINS"].address" | tr -d '"')
 MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
 ```
@@ -160,18 +155,18 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 - `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
 - Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
 
-5. Register `xrplevm` gateway at the Router
+5. Register Gateway at the Router
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Router \
-  -t "Register Gateway for xrplevm" \
-  -d "Register Gateway address for xrplevm at Router contract" \
+  -t "Register Gateway for $CHAINS" \
+  -d "Register Gateway address for $CHAINS at Router contract" \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_chain\": {
-      \"chain\": "xrplevm",
+      \"chain\": \"$CHAINS\",
       \"gateway_address\": \"$GATEWAY\",
       \"msg_id_format\": \"hex_tx_hash_and_event_index\"
       }
@@ -179,11 +174,11 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart <router-address> '{"chain_info": "xrplevm"}' --output json | jq .
+axelard q wasm contract-state smart <router-address> '{"chain_info": "$CHAINS"}' --output json | jq .
 # You should see something like this:
 {
   "data": {
-    "name": "xrplevm",
+    "name": "$CHAINS",
     "gateway": {
       "address": "axelar1hzz0s0ucrhdp6tue2lxk3c03nj6f60qy463we7lgx0wudd72ctmsee8enx"
     },
@@ -193,35 +188,35 @@ axelard q wasm contract-state smart <router-address> '{"chain_info": "xrplevm"}'
 }
 ```
 
-6. Update ampd with the `xrplevm` chain configuration. Verifiers should use their own `xrplevm` RPC node for the `http_url` in production.
+6. Update ampd with the `$CHAINS` chain configuration. Verifiers should use their own `$CHAINS` RPC node for the `http_url` in production.
 
-| Network              | `http_url`              |
-| -------------------- | ----------------------- |
-| **Devnet-amplifier** | https://rpc.xrplevm.org |
-| **Stagenet**         | https://rpc.xrplevm.org |
-| **Testnet**          | https://rpc.xrplevm.org |
-| **Mainnet**          | ``                      |
+| Network              | `http_url`                      |
+| -------------------- | ------------------------------- |
+| **Devnet-amplifier** | https://rpc.testnet.xrplevm.org |
+| **Stagenet**         | https://rpc.testnet.xrplevm.org |
+| **Testnet**          | https://rpc.testnet.xrplevm.org |
+| **Mainnet**          | ``                              |
 
 ```bash
 [[handlers]]
 chain_finalization="RPCFinalizedBlock"
-chain_name="xrplevm"
+chain_name="$CHAINS"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmMsgVerifier"
 
 [[handlers]]
 chain_finalization="RPCFinalizedBlock"
-chain_name="xrplevm"
+chain_name="$CHAINS"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-7. Update ampd with the `xrplevm` chain configuration.
+7. Update ampd with the `$CHAINS` chain configuration.
 
 ```bash
-ampd register-chain-support "[service name]" xrplevm
+ampd register-chain-support "[service name]" $CHAINS
 ```
 
 8. Register prover contract on coordinator
@@ -229,38 +224,38 @@ ampd register-chain-support "[service name]" xrplevm
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
-  -t "Register Multisig Prover for xrplevm" \
-  -d "Register Multisig Prover address for xrplevm at Coordinator contract" \
+  -t "Register Multisig Prover for $CHAINS" \
+  -d "Register Multisig Prover address for $CHAINS at Coordinator contract" \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
-      \"chain_name\": "xrplevm",
+      \"chain_name\": "$CHAINS",
       \"new_prover_addr\": \"$MULTISIG_PROVER\"
     }
   }"
 ```
 
-9. Authorize `xrplevm` Multisig prover on Multisig
+9. Authorize `$CHAINS` Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Multisig \
-  -t "Authorize Multisig Prover for xrplevm" \
-  -d "Authorize Multisig Prover address for xrplevm at Multisig contract" \
+  -t "Authorize Multisig Prover for $CHAINS" \
+  -d "Authorize Multisig Prover address for $CHAINS at Multisig contract" \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"authorize_callers\": {
       \"contracts\": {
-        \"$MULTISIG_PROVER\": "xrplevm"
+        \"$MULTISIG_PROVER\": "$CHAINS"
       }
     }
   }"
 ```
 
 ```bash
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<xrplevm-multisig-prover-addr>", "chain_name": "xrplevm"}}' --output json | jq .
+axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<$CHAINS-multisig-prover-addr>", "chain_name": "$CHAINS"}}' --output json | jq .
 # Result should look like:
 {
   "data": true
@@ -281,8 +276,8 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Rewards \
-  -t "Create pool for xrplevm in xrplevm voting verifier" \
-  -d "Create pool for xrplevm in xrplevm voting verifier" \
+  -t "Create pool for $CHAINS in $CHAINS voting verifier" \
+  -d "Create pool for $CHAINS in $CHAINS voting verifier" \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
@@ -293,7 +288,7 @@ node cosmwasm/submit-proposal.js execute \
         \"rewards_per_epoch\": [rewards per epoch]
       },
       \"pool_id\": {
-        \"chain_name\": "xrplevm",
+        \"chain_name\": "$CHAINS",
         \"contract\": \"$VOTING_VERIFIER\"
       }
     }
@@ -305,8 +300,8 @@ node cosmwasm/submit-proposal.js execute \
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Rewards \
-  -t "Create pool for xrplevm in axelar multisig" \
-  -d "Create pool for xrplevm in axelar multisig" \
+  -t "Create pool for $CHAINS in axelar multisig" \
+  -d "Create pool for $CHAINS in axelar multisig" \
   --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
@@ -317,7 +312,7 @@ node cosmwasm/submit-proposal.js execute \
         \"rewards_per_epoch\": [rewards per epoch]
       },
       \"pool_id\": {
-        \"chain_name\": "xrplevm",
+        \"chain_name\": "$CHAINS",
         \"contract\": \"$MULTISIG\"
       }
     }
@@ -327,8 +322,8 @@ node cosmwasm/submit-proposal.js execute \
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "xrplevm", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "xrplevm", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAINS", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAINS", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
 13. Create genesis verifier set
@@ -348,4 +343,4 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_
 
 ## Checklist
 
-The [xrplevm GMP checklist](../ecm/2025-02--xrplevm-GMP-v6.4.0.md) will test GMP call.
+The [xrplevm GMP checklist](../evm/2025-02-xrplevm-GMP-v6.4.0.md) will test GMP call.
