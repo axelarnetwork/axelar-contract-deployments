@@ -35,6 +35,14 @@ ENV=xyz
 CHAINS=all
 ```
 
+
+| Network              | `deployer address`                           |
+| -------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+
 ### Devnet Amplifier
 
 Amplifier ITS
