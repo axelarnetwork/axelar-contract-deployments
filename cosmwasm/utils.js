@@ -51,6 +51,8 @@ const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
+const pascalToKebab = (str) => str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+
 const isValidCosmosAddress = (str) => {
     try {
         normalizeBech32(str);
@@ -884,24 +886,27 @@ const CONTRACTS = {
     },
 };
 
+
 const downloadContractFromR2 = async (contractName, contractVersion) => {
-    contractName = contractName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-    const fileName = contractName.replace(/-/g, '_');
+    const pathName = pascalToKebab(contractName);
+    const fileName = pascalToSnake(contractName);
+
+    const versionRegex = /^v\d+\.\d+\.\d+$/;
+    const commitRegex = /^[a-f0-9]{7,}$/;
 
     let contractPath;
 
-    if (/^v\d+\.\d+\.\d+$/.test(contractVersion)) {
+    if (versionRegex.test(contractVersion)) {
         // remove leading v
-        const semanticVersion = contractVersion.slice(1);
-        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${contractName}/${semanticVersion}/${fileName}.wasm`;
-    } else if (/^[a-f0-9]{7,}$/.test(contractVersion)) {
+        const semanticVersion = contractVersion.slice(1);      
+        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
+    } else if (commitRegex.test(contractVersion)) {
         contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } else {
-        throw new Error(
-            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
-        );
+        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
     }
 
+    console.log(`Downloading contract from ${contractPath}`);
     const response = await fetch(contractPath);
 
     if (!response.ok) {
@@ -928,6 +933,7 @@ const downloadContractFromR2 = async (contractName, contractVersion) => {
         });
     });
 };
+
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,

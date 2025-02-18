@@ -133,7 +133,7 @@ Available subcommands:
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
-Example deployments:
+Example deployments with order dependency:
 
 1.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "AxelarnetGateway" --instantiate2 -e devnet`
 2.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet`
@@ -147,9 +147,6 @@ Example deployments:
 10. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "avalanche"`
 11. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "avalanche"`
 12. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "avalanche"`
-13. `node deploy-contract.js upload-instantiate -m [mnemonic] -v "v1.0.0" -c "MultisigProver" -e devnet -n "avalanche"`
-14. `node deploy-contract.js upload-instantiate -m [mnemonic] -v "465d006" -c "MultisigProver" -e devnet -n "avalanche"`
-
 
 ### Constant Address Deployment
 

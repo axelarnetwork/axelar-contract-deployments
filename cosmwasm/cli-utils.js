@@ -82,14 +82,6 @@ const addAmplifierOptions = (program, options) => {
             ),
         );
     }
-
-    program.hook('preAction', (command) => {
-        const opts = command.opts();
-
-        if (!opts.contractVersion && !opts.artifactPath) {
-            throw new Error("Either '--contractVersion' (Contract Version) or '--artifactPath' (Local Path) must be provided.");
-        }
-    });
 };
 
 const addContractOptions = (program) => {
@@ -124,16 +116,22 @@ const addContractOptions = (program) => {
 };
 
 const addStoreOptions = (program) => {
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
+    program.addOption(
+        new Option('-a, --artifactPath <artifactPath>', 'artifact path')
+            .env('ARTIFACT_PATH')
+            .conflicts('contractVersion')
+    );
 };
+
 
 const addVersionOptions = (program) => {
     program.addOption(
-        new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload').env(
-            'CONTRACT_VERSION',
-        ),
+        new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload')
+            .env('CONTRACT_VERSION')
+            .conflicts('artifactPath')
     );
 };
+
 
 const addStoreProposalOptions = (program) => {
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));

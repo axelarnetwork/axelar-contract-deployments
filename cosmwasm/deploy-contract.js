@@ -27,16 +27,10 @@ const upload = async (client, wallet, config, options) => {
     const { contractName, contractVersion, artifactPath, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-    let wasmPath;
-
     // Determine source of contract binary
-    if (contractVersion) {
-        wasmPath = await downloadContractFromR2(contractName, contractVersion);
-    } else if (artifactPath) {
-        wasmPath = artifactPath;
-    } else {
-        throw new Error("Either 'contractVersion' or 'artifactPath' must be provided.");
-    }
+    const wasmPath = contractVersion
+    ? await downloadContractFromR2(contractName, contractVersion)
+    : artifactPath || (() => { throw new Error("Either '--contractVersion' or '--artifactPath' must be provided."); })();
 
     // Override options.artifactPath with the resolved wasm path
     options.artifactPath = wasmPath;
