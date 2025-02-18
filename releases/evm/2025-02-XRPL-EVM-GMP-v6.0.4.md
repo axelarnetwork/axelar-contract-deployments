@@ -22,12 +22,12 @@ This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for 
 
 ## Deployment
 
-Create a `.env` config. `CHAIN` should be set to `$CHAINS` for all production networks: `mainnet`, `testnet`, `stagenet` and `devnet-amplifier`.
+Create a `.env` config. `CHAINS` should be set to `$CHAINS` for all production networks: `mainnet`, `testnet`, `stagenet` and `devnet-amplifier`.
 
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAIN=xyz
+CHAINS=xyz
 ```
 
 An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under `chains` key.
