@@ -46,6 +46,13 @@ ENV=xyz
 CHAINS=xyz
 ```
 
+| Network              | `deployer address`                              |
+| -------------------- | ----------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
+| **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` |
+| **Testnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
+| **Mainnet**          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2` |
+
 - Confirm `VotingVerifier`, `Gateway` and `MultisigProver` contracts are already stored in `$ENV.json`
 
 ```bash

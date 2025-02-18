@@ -41,14 +41,14 @@ Amplifier ITS
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "v1.1.0 devnet-amplifier" -m create2
+node evm/deploy-its.js -s "v1.1.0 devnet-amplifier" -m create2 
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "v2.1.0" -m create2
+node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -80,6 +80,19 @@ node evm/its.js -n $CHAINS --action setTrustedAddress --trustedChain all --trust
 ```bash
 # Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
 node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAINS --trustedAddress hub
+```
+
+## Setting up trusted chains on xrplevm
+
+```bash
+# Register token metadata
+node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+
+# Fetch token manager address
+node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
+
+# tranfer mintership to token manager
+node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
 ```
 
 ## Checklist

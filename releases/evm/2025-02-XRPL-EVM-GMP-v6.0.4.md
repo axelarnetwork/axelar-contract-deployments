@@ -179,7 +179,7 @@ node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector
 8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
 
 ```bash
-To be skipped for staging connection
+# To be skipped for staging connection
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
