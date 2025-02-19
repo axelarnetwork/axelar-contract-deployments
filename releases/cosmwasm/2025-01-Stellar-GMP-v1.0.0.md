@@ -126,6 +126,7 @@ GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gate
 MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
 MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
+ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
@@ -168,14 +169,14 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart <router-address> '{"chain_info": "stellar"}' --output json | jq .
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
 
 # You should see something like this:
 {
   "data": {
-    "name": "stellar",
+    "name": \"$CHAIN\",
     "gateway": {
-      "address": "axelar1hzz0s0ucrhdp6tue2lxk3c03nj6f60qy463we7lgx0wudd72ctmsee8enx"
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
     },
     "frozen_status": 0,
     "msg_id_format": "hex_tx_hash_and_event_index"
@@ -248,7 +249,7 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<stellar-multisig-prover-addr>", "chain_name": "stellar"}}' --output json | jq .
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
 
 # Result should look like:
 {
@@ -317,8 +318,11 @@ node cosmwasm/submit-proposal.js execute \
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+
+# Query to check if the funding command worked
+axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
+axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
 ```
 
 13. Create genesis verifier set
@@ -327,6 +331,9 @@ Note that this step can only be run once a sufficient number of verifiers have r
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+
+# Query the multisig prover for active verifier set
+axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
 
 ## Checklist
