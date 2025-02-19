@@ -5,12 +5,12 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
+| **Mainnet**          | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
 
@@ -35,7 +35,6 @@ ENV=xyz
 CHAINS=all
 ```
 
-
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
@@ -49,21 +48,21 @@ Amplifier ITS
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "ITS v2.1.0 devnet-amplifier" -m create2 --proxySalt 'ITS v1.0.0 devnet-amplifier'
+node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "ITS v2.1.0" -m create2 --proxySalt 'ITS v1.0.0'
+node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register xrplevm ITS on ITS Hub
+## Register xrpl-evm ITS on ITS Hub
 
 Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v1.0.0.md).
 

@@ -5,12 +5,12 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
+| **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -276,10 +276,10 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`             | `100`               |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`             | `100`               |
-| **Testnet**          | `600`            | `[\"7\", \"10\"]`             | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`             | `TBD`               |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -354,7 +354,7 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_
 
 
 # Query the multisig prover for active verifier set
-axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' 
+axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
 
 ## Checklist

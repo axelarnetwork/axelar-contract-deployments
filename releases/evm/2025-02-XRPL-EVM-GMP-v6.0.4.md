@@ -5,12 +5,12 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
+| **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
