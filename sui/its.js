@@ -1,17 +1,12 @@
 const { Command } = require('commander');
 const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, getITSChains } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
-const SPECIAL_CHAINS_TAGS = {
-    ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
-};
-
 function parseTrustedChains(config, trustedChains) {
-    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL_EVM) {
-        const evmChains = Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
-        return evmChains;
+    if (trustedChains[0] === 'all' && trustedChains.length === 1) {
+        return getITSChains(config);
     }
 
     return trustedChains;

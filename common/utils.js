@@ -453,6 +453,16 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+function getAllChains(config) {
+    const allChains = Object.keys(config.chains);
+    return allChains;
+}
+
+function getITSChains(config) {
+    const allChains = getAllChains(config);
+    return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -492,4 +502,6 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
+    getAllChains,
+    getITSChains,
 };
