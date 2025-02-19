@@ -20,6 +20,11 @@ async function getAccountInfo(client, address) {
     return accountInfo.result.account_data;
 }
 
+async function getFee(client) {
+    const fee = await client.request({ command: "fee" });
+    return fee.result.drops.open_ledger_fee;
+}
+
 async function sendTransaction(client, signer, tx) {
     const prepared = await client.autofill(tx);
     const signed = signer.sign(prepared);
@@ -106,6 +111,7 @@ module.exports = {
     ...require('../common/utils'),
     getWallet,
     getAccountInfo,
+    getFee,
     mainProcessor,
     sendTransaction,
     hex,
