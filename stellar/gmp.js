@@ -65,7 +65,7 @@ if (require.main === module) {
     program
         .command('send <destinationChain> <destinationAddress> <payload>')
         .description('Send gmp contract call')
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(send, [destinationChain, destinationAddress, payload], options);

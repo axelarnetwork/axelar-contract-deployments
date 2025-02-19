@@ -183,7 +183,7 @@ if (require.main === module) {
     program
         .command('deploy-remote-interchain-token <salt> <destinationChain>')
         .description('deploy remote interchain token')
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((salt, destinationChain, options) => {
             mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
@@ -199,7 +199,7 @@ if (require.main === module) {
     program
         .command('deploy-remote-canonical-token <tokenAddress> <destinationChain>')
         .description('deploy remote canonical token')
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
         .action((tokenAddress, destinationChain, options) => {
             mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
