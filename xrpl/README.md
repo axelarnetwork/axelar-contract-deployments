@@ -15,7 +15,7 @@ Create a new XRPL keypair.
 node xrpl/generate-wallet.js
 ```
 
-Set `SEED` in `.env` to the above value.
+Set `PRIVATE_KEY` in `.env` to the generated wallet's `seed` value.
 
 Devnet and testnet funds can be obtained via the `faucet.js` script:
 

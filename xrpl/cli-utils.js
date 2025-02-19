@@ -10,7 +10,14 @@ const addBaseOptions = (program, _options = {}) => {
         new Option('-n, --chainName <chainName>', 'chain to run the script over').makeOptionMandatory(true).env('CHAIN'),
     );
 
-    program.addOption(new Option('-s, --seed <seed>', 'seed used to derive wallet keypair').makeOptionMandatory(true).env('SEED'));
+    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+
+    program.addOption(new Option('--privateKeyType <privateKeyType>', 'private key type')
+        .makeOptionMandatory(true)
+        .choices(['seed'])
+        .default('seed')
+        .env('PRIVATE_KEY_TYPE'),
+    );
 
     return program;
 };
