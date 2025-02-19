@@ -9,7 +9,6 @@ function parseTrustedChains(config, trustedChains) {
         return getITSChains(config);
     }
 
-    isValidChain(config, trustedChains[0].toLowerCase());
     return trustedChains;
 }
 
