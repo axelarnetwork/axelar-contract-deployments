@@ -1,10 +1,10 @@
 'use strict';
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, addBaseOptions, tokenToScVal, addressToScVal, hexToScVal } = require('./utils');
-const { addOptionsToCommands, getChainConfig } = require('../common');
+const { addOptionsToCommands, getChainConfig, validateParameters } = require('../common');
 require('./cli-utils');
 
 async function send(wallet, _, chain, contractConfig, args, options) {
@@ -12,13 +12,21 @@ async function send(wallet, _, chain, contractConfig, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [destinationChain, destinationAddress, payload] = args;
 
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
+
+    validateParameters({
+        isNonEmptyString: { gasTokenAddress },
+        isValidNumber: { gasFeeAmount },
+    });
+
     const operation = contract.call(
         'send',
         caller,
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
         hexToScVal(payload),
-        tokenToScVal(options.gasTokenAddress, options.gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Send Called', options);

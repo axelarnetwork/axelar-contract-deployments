@@ -305,7 +305,7 @@ function tokenToScVal(tokenAddress, tokenAmount) {
         ? nativeToScVal(null, { type: 'null' })
         : nativeToScVal(
               {
-                  address: Address.fromString(tokenAddress || chain.tokenAddress),
+                  address: Address.fromString(tokenAddress),
                   amount: tokenAmount,
               },
               {

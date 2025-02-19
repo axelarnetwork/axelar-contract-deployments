@@ -3,7 +3,7 @@
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, validateParameters } = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -57,13 +57,20 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
+
+    validateParameters({
+        isNonEmptyString: { gasTokenAddress },
+        isValidNumber: { gasFeeAmount },
+    });
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
         caller,
         hexToScVal(saltBytes32),
         nativeToScVal(destinationChain, { type: 'string' }),
-        tokenToScVal(options.gasTokenAddress, options.gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
     const returnValue = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
@@ -82,13 +89,20 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
 async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
     const [tokenAddress, destinationChain] = args;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
+
+    validateParameters({
+        isNonEmptyString: { gasTokenAddress },
+        isValidNumber: { gasFeeAmount },
+    });
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
         nativeToScVal(tokenAddress, { type: 'address' }),
         nativeToScVal(destinationChain, { type: 'string' }),
         spenderScVal,
-        tokenToScVal(options.gasTokenAddress, options.gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
     const returnValue = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
@@ -99,6 +113,13 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasFeeAmount = options.gasFeeAmount;
+
+    validateParameters({
+        isNonEmptyString: { gasTokenAddress },
+        isValidNumber: { gasFeeAmount },
+    });
 
     const operation = contract.call(
         'interchain_transfer',
@@ -108,7 +129,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         hexToScVal(destinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
         data,
-        tokenToScVal(options.gasTokenAddress, options.gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
