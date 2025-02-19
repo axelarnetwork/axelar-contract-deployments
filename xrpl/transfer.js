@@ -4,7 +4,7 @@ const { getWallet, getAccountInfo, sendTransaction, hex } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 
-async function processCommand(wallet, _, chain, args, options) {
+async function transfer(wallet, _, chain, args, options) {
     const client = new xrpl.Client(chain.rpc);
     await client.connect();
 
@@ -62,7 +62,7 @@ if (require.main === module) {
         .addOption(new Option('--data <data>', 'data'))
         .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default('0'))
         .action((token, amount, destinationChain, destinationAddress, options) => {
-            mainProcessor(processCommand, { token, amount, destinationChain, destinationAddress }, options);
+            mainProcessor(transfer, { token, amount, destinationChain, destinationAddress }, options);
         });
 
     addBaseOptions(program);
