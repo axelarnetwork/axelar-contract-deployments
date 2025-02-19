@@ -237,7 +237,7 @@ node cosmwasm/submit-proposal.js execute \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
-      \"chain_name\": "$CHAINS",
+      \"chain_name\": \"$CHAINS\",
       \"new_prover_addr\": \"$MULTISIG_PROVER\"
     }
   }"
@@ -255,7 +255,7 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"authorize_callers\": {
       \"contracts\": {
-        \"$MULTISIG_PROVER\": "$CHAINS"
+        \"$MULTISIG_PROVER\": \"$CHAINS\"
       }
     }
   }"
@@ -275,10 +275,10 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
-| **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
-| **Testnet**          | `600`            | `["7", "10"]`             | `100`               |
-| **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`             | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`             | `100`               |
+| **Testnet**          | `600`            | `[\"7\", \"10\"]`             | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`             | `TBD`               |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -290,12 +290,12 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
+        \"epoch_duration\": \"[epoch duration]\",
         \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
       \"pool_id\": {
-        \"chain_name\": "$CHAINS",
+        \"chain_name\": \"$CHAINS\",
         \"contract\": \"$VOTING_VERIFIER\"
       }
     }
@@ -314,12 +314,12 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
+        \"epoch_duration\": \"[epoch duration]\",
         \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
       \"pool_id\": {
-        \"chain_name\": "$CHAINS",
+        \"chain_name\": \"$CHAINS\",
         \"contract\": \"$MULTISIG\"
       }
     }
