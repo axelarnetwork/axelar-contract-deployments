@@ -5,7 +5,7 @@ const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadc
 const { bcs } = require('@mysten/sui/bcs');
 
 function parseTrustedChains(config, trustedChains) {
-    if (trustedChains[0] === 'all' && trustedChains.length == 1) {
+    if (trustedChains[0] === 'all' && trustedChains.length === 1) {
         return getITSChains(config);
     }
 

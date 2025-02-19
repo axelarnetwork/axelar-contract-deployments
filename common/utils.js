@@ -466,8 +466,9 @@ function getITSChains(config) {
 function isValidChain(config, chainNames) {
     const allChains = getAllChains(config);
 
-    chainNames.forEach(chainName => {
+    chainNames.forEach((chainName) => {
         const validChain = allChains.includes(chainName);
+
         if (!validChain) {
             throw new Error(`Invalid destination chain: ${chainName}`);
         }
@@ -515,5 +516,5 @@ module.exports = {
     getItsEdgeContract,
     getAllChains,
     getITSChains,
-    isValidChain
+    isValidChain,
 };
