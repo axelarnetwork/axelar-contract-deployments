@@ -9,7 +9,9 @@ function parseTrustedChains(config, trustedChains) {
         return getITSChains(config);
     }
 
-    isValidChain(config, trustedChains);
+    trustedChains.forEach((trustedChain) => {
+        isValidChain(config, trustedChain);
+    });
     return trustedChains;
 }
 

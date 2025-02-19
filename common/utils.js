@@ -463,16 +463,13 @@ function getITSChains(config) {
     return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
 }
 
-function isValidChain(config, chainNames) {
+function isValidChain(config, chainName) {
     const allChains = getAllChains(config);
+    const validChain = allChains.includes(chainName);
 
-    chainNames.forEach((chainName) => {
-        const validChain = allChains.includes(chainName);
-
-        if (!validChain) {
-            throw new Error(`Invalid destination chain: ${chainName}`);
-        }
-    });
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
 }
 
 module.exports = {
