@@ -14,6 +14,7 @@ const {
     hexToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    serializeValue,
 } = require('./utils');
 const { prompt } = require('../common/utils');
 
@@ -48,14 +49,15 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         minter,
     );
 
-    await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
@@ -66,7 +68,8 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
-    await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function registerCanonicalToken(wallet, _, chain, contract, args, options) {
@@ -74,14 +77,15 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
 
-    await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
 
     const [tokenAddress, destinationChain] = args;
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
@@ -92,14 +96,15 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
         tokenToScVal(gasTokenAddress, gasFeeAmount),
     );
 
-    await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasFeeAmount = options.gasFeeAmount;
 
     const operation = contract.call(
