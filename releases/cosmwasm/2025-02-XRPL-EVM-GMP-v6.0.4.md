@@ -351,6 +351,10 @@ Note that this step can only be run once a sufficient number of verifiers have r
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+
+
+# Query the multisig prover for active verifier set
+axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"' 
 ```
 
 ## Checklist
