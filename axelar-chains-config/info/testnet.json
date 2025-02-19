@@ -2492,6 +2492,23 @@
           }
         }
       }
+    },
+    "xrpl-evm-test-1": {
+      "name": "XRPL EVM Sidechain",
+      "axelarId": "xrpl-evm-test-1",
+      "chainId": 1449000,
+      "rpc": "https://rpc.testnet.xrplevm.org",
+      "tokenSymbol": "XRP",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Blockscout",
+        "url": "https://explorer.testnet.xrplevm.org/",
+        "api": "https://explorer.testnet.xrplevm.org/api/"
+      },
+    "contracts": {}
     }
   },
   "stellar": {
