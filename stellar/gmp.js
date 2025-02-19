@@ -13,11 +13,11 @@ async function send(wallet, _, chain, contractConfig, args, options) {
     const [destinationChain, destinationAddress, payload] = args;
 
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasAmount = options.gasAmount;
 
     validateParameters({
         isNonEmptyString: { gasTokenAddress },
-        isValidNumber: { gasFeeAmount },
+        isValidNumber: { gasAmount },
     });
 
     const operation = contract.call(
@@ -26,7 +26,7 @@ async function send(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
         hexToScVal(payload),
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Send Called', options);
@@ -74,7 +74,7 @@ if (require.main === module) {
         .command('send <destinationChain> <destinationAddress> <payload>')
         .description('Send gmp contract call')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(send, [destinationChain, destinationAddress, payload], options);
         });
