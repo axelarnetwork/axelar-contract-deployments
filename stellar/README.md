@@ -282,7 +282,7 @@ node stellar/contract.js restore-instance [contract-name]
 node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-fee-amount [amount]
 
 # Example
-node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234 CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC 1
+node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 #### GMP - Execute Command (Incoming)

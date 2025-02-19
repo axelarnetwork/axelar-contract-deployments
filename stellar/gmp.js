@@ -10,8 +10,7 @@ require('./cli-utils');
 async function send(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
     const caller = addressToScVal(wallet.publicKey());
-
-    const [destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount] = args;
+    const [destinationChain, destinationAddress, payload] = args;
 
     const operation = contract.call(
         'send',
@@ -19,7 +18,7 @@ async function send(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
         hexToScVal(payload),
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(options.gasTokenAddress, options.gasFeeAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Send Called', options);
@@ -64,10 +63,12 @@ if (require.main === module) {
     program.name('gmp').description('Example of Stellar gmp commands');
 
     program
-        .command('send <destinationChain> <destinationAddress> <payload> <gasTokenAddress> <gasFeeAmount>')
+        .command('send <destinationChain> <destinationAddress> <payload>')
         .description('Send gmp contract call')
-        .action((destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount, options) => {
-            mainProcessor(send, [destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount], options);
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
+        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(send, [destinationChain, destinationAddress, payload], options);
         });
 
     program
