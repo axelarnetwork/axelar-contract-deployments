@@ -132,9 +132,7 @@ node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
-node evm/deploy-amplifier-gateway.js \
-	-m [deploymentType] \
-	--minimumRotationDelay [minimumRotationDelay]
+node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay]
 ```
 
 6. Deploy `Operators`
