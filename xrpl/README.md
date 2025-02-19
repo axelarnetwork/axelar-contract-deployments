@@ -20,7 +20,7 @@ Set `SEED` in `.env` to the above value.
 Devnet and testnet funds can be obtained via the `faucet.js` script:
 
 ```bash
-node xrpl/faucet.js -e devnet-amplifier -n xrpl-2025-q1
+node xrpl/faucet.js -e devnet-amplifier -n xrpl-test-1
 ```
 
 ## Deployments
@@ -68,7 +68,7 @@ XRPL_NEXT_SEQUENCE_NUMBER=$(curl -s -X POST $XRPL_RPC_URL -d '{
   "axelar": {
     "contracts": {
       "XrplVotingVerifier": {
-        "xrpl-2025-q1": {
+        "xrpl-test-1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "votingThreshold": [
@@ -80,13 +80,13 @@ XRPL_NEXT_SEQUENCE_NUMBER=$(curl -s -X POST $XRPL_RPC_URL -d '{
         },
       },
       "XrplGateway": {
-        "xrpl-2025-q1": {
+        "xrpl-test-1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs"
         },
       },
       "XrplMultisigProver": {
-        "xrpl-2025-q1": {
+        "xrpl-test-1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
@@ -112,11 +112,11 @@ XRPL_NEXT_SEQUENCE_NUMBER=$(curl -s -X POST $XRPL_RPC_URL -d '{
 ```
 
 ```bash
-node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplVotingVerifier" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-2025-q1
+node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplVotingVerifier" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-test-1
 
-node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplGateway" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-2025-q1
+node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplGateway" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-test-1
 
-node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplMultisigProver" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-2025-q1
+node cosmwasm/deploy-contract.js upload-instantiate -a <path-to-artifacts> -c "XrplMultisigProver" --instantiate2 -e devnet-amplifier -m $MNEMONIC -n xrpl-test-1
 ```
 
 ## GMP/ITS Transfers
@@ -130,5 +130,5 @@ node xrpl/transfer.js send [token] [amount] [destination-chain] [destination-add
 Here's an example of a token transfer that also performs GMP:
 
 ```bash
-node xrpl/transfer.js -e devnet-amplifier -n xrpl-2025-q1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --data 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
+node xrpl/transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --data 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
 ```
