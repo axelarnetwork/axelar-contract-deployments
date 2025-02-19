@@ -27,7 +27,7 @@ Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed fi
 npm ci
 ```
 
-Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain.
+Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -69,9 +69,9 @@ Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplif
 
 ```bash
 node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAINS \
-    -t "Register $CHAINS on ITS Hub" \
-    -d "Register $CHAINS on ITS Hub" \
+    its-hub-register-chains $CHAIN \
+    -t "Register $CHAIN on ITS Hub" \
+    -d "Register $CHAIN on ITS Hub" \
     --deposit $DEPOSIT_VALUE \
     --runAs $RUN_AS_ACCOUNT
 ```
@@ -80,14 +80,14 @@ node cosmwasm/submit-proposal.js \
 
 ```bash
 # Add all trusted chains to xrplevm ITS
-node evm/its.js -n $CHAINS --action setTrustedAddress --trustedChain all --trustedAddress hub
+node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --trustedAddress hub
 ```
 
 ## Set xrplevm as trusted chain on EVM ITS. Similarly, set xrplevm as a trusted chain for every other non EVM ITS contract
 
 ```bash
 # Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
-node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAINS --trustedAddress hub
+node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
 ```
 
 ## Setting up trusted chains on xrplevm
