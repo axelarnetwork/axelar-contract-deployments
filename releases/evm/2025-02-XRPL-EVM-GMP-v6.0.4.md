@@ -30,7 +30,7 @@ ENV=xyz
 CHAINS=xyz
 ```
 
-An initial `$CHAIN` chain config needs to be added to `${ENV}.json` file under `chains` key.
+An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` key.
 
 #### Devnet-Amplifier / Stagenet / Testnet
 
