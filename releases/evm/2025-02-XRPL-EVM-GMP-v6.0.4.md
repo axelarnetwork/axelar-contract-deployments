@@ -22,7 +22,7 @@ This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for 
 
 ## Deployment
 
-Create a `.env` config. `CHAINS` should be set to `$CHAINS` for all production networks: `mainnet`, `testnet`, `stagenet` and `devnet-amplifier`.
+Create an `.env` config. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -30,14 +30,14 @@ ENV=xyz
 CHAINS=xyz
 ```
 
-An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under `chains` key.
+An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` key.
 
 #### Devnet-Amplifier / Stagenet / Testnet
 
 ```json
-"$CHAINS": {
+"$CHAIN": {
     "name": "XRPL EVM Sidechain",
-    "axelarId": "$CHAINS",
+    "axelarId": "$CHAIN",
     "chainId": 1449000,
     "rpc": "https://rpc.testnet.xrplevm.org",
     "tokenSymbol": "XRP",
@@ -57,9 +57,9 @@ An initial `$CHAINS` chain config needs to be added to `${ENV}.json` file under 
 #### Mainnet
 
 ```json
-"$CHAINS": {
+"$CHAIN": {
     "name": "XRPL EVM",
-    "axelarId": "$CHAINS",
+    "axelarId": "$CHAIN",
     "chainId": "TBD",
     "rpc": "TBD",
     "tokenSymbol": "XRP",
@@ -179,7 +179,7 @@ node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector
 8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
 
 ```bash
-# To be skipped for staging connection
+# Only for mainnet and official testnet connection
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
@@ -192,7 +192,7 @@ The following checks should be performed after the rollout
 1. Send a GMP call
 
 ```bash
-node evm/gateway.js -n $CHAINS --action callContract --destinationChain [destination-chain] --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+node evm/gateway.js -n $CHAIN --action callContract --destinationChain [destination-chain] --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
 ```
 
 2. Route GMP call via Amplifier
@@ -208,7 +208,7 @@ node evm/gateway.js -n [destination-chain] --action submitProof --multisigSessio
 4. Confirm whether the message is approved
 
 ```bash
-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAINS --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
+node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
 ```
 
 ### EVM -> XRPL GMP Call
@@ -216,7 +216,7 @@ node evm/gateway.js -n [destination-chain] --action isContractCallApproved --com
 1. Send a GMP call
 
 ```bash
-node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAINS --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
+node evm/gateway.js -n [destination-chain] --action callContract --destinationChain $CHAIN --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payload 0x1234
 ```
 
 2. Route GMP call via Amplifier
@@ -226,11 +226,11 @@ node evm/gateway.js -n [destination-chain] --action callContract --destinationCh
 3.  Submit proof with multisig session id
 
 ```bash
-node evm/gateway.js -n $CHAINS --action submitProof --multisigSessionId [multisig session id]
+node evm/gateway.js -n $CHAIN --action submitProof --multisigSessionId [multisig session id]
 ```
 
 4. Confirm whether the message is approved
 
 ```bash
-node evm/gateway.js -n $CHAINS --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
+node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
 ```
