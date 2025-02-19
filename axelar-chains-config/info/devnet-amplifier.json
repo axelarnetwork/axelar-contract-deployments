@@ -779,9 +779,9 @@
         }
       }
     },
-    "xrpl-2025-q1": {
+    "xrpl-test-1": {
       "name": "XRPL",
-      "axelarId": "xrpl-2025-q1",
+      "axelarId": "xrpl-test-1",
       "rpc": "wss://s.devnet.rippletest.net:51233",
       "multisigAddress": "rw6imvkyuZAmCf67xcmCUKuova7vVmB4YB",
       "tokenSymbol": "XRP",
@@ -1009,7 +1009,7 @@
         }
       },
       "XrplMultisigProver": {
-        "xrpl-2025-q1": {
+        "xrpl-test-1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
           "signingThreshold": [
@@ -1018,8 +1018,8 @@
           ],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
-          "codeId": 1140,
-          "address": "axelar1etlu5c9ear5fw74c7a0kp0fkf9dqkl4dj9s3e73mf928kz8e80eqanuhua",
+          "codeId": 1149,
+          "address": "axelar1ux4uqfm64frtrq3l8vv0y2tarupczk5y7z9h7n3h4dj2fdkur5yqs5x5cy",
           "xrplFee": 300,
           "ticketCountThreshold": 5,
           "availableTickets": [
@@ -1184,7 +1184,7 @@
           "nextSequenceNumber": 31595,
           "lastAssignedTicketNumber": 31342
         },
-        "lastUploadedCodeId": 1140
+        "lastUploadedCodeId": 1149
       },
       "MultisigProver": {
         "avalanche-fuji": {
@@ -1286,8 +1286,8 @@
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
       },
       "XrplVotingVerifier": {
-        "xrpl-2025-q1": {
-          "address": "axelar1uxnzh8slelqphkvfsrcxm8un2ua2feqr5ydjgj0yewkxagran0mq9xvtql",
+        "xrpl-test-1": {
+          "address": "axelar1reufkthph0m6q0fmh82v7y9vha2wxmmf7gmfvd9ty00hultxgdpsz9ryc8",
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "votingThreshold": [
@@ -1296,18 +1296,18 @@
           ],
           "blockExpiry": 5,
           "confirmationHeight": 1,
-          "codeId": 1138
+          "codeId": 1147
         },
-        "lastUploadedCodeId": 1142
+        "lastUploadedCodeId": 1147
       },
       "XrplGateway": {
-        "xrpl-2025-q1": {
-          "codeId": 1139,
-          "address": "axelar1lp42mu9pfguhzd22kqmq63r7va3g25w4m8ryzyxdkgh2vvds269sxespv7",
+        "xrpl-test-1": {
+          "codeId": 1148,
+          "address": "axelar1wmpfadcf0xw9ew8f9e0vnpqekepefhvpdggzsjt98569qcpaw7hsv6hnv5",
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs"
         },
-        "lastUploadedCodeId": 1143
+        "lastUploadedCodeId": 1148
       }
     },
     "axelarId": "axelar",
