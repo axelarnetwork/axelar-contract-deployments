@@ -151,7 +151,7 @@ if (require.main === module) {
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chains...>')
         .description(
-            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
         )
         .action((trustedChains, options) => {
             mainProcessor(addTrustedChains, options, [trustedChains], processCommand);
