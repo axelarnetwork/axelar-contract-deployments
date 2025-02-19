@@ -453,6 +453,27 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+function getAllChains(config) {
+    const allChains = Object.keys(config.chains);
+    return allChains;
+}
+
+function getITSChains(config) {
+    const allChains = getAllChains(config);
+    return allChains.filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
+}
+
+function isValidChain(config, chainNames) {
+    const allChains = getAllChains(config);
+
+    chainNames.forEach(chainName => {
+        const validChain = allChains.includes(chainName);
+        if (!validChain) {
+            throw new Error(`Invalid destination chain: ${chainName}`);
+        }
+    });
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -492,4 +513,7 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
+    getAllChains,
+    getITSChains,
+    isValidChain
 };
