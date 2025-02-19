@@ -41,7 +41,7 @@ async function getWallet(chain, options) {
     const client = new xrpl.Client(chain.rpc);
     await client.connect();
 
-    const wallet = xrpl.Wallet.fromSeed(options.seed);
+    const wallet = xrpl.Wallet.fromSeed(options.privateKey);
     const address = wallet.address;
 
     try {
