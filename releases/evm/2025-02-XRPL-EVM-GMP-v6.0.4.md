@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
+| **Testnet**          | `xrp-evm-test-1`      | 2025-02-19 |
 | **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
