@@ -43,7 +43,7 @@ async function processCommand(chain, options) {
 
 async function listBagContents(chain, options, args) {
     const [objectId, fieldName] = args;
-    const [keypair, client] = getWallet(chain, options);
+    const [client] = getWallet(chain, options);
 
     printInfo('Object Id', objectId);
     const objectDetails = await client.getObject({
@@ -53,7 +53,6 @@ async function listBagContents(chain, options, args) {
         },
     });
 
-    //console.log("objectDetails.data", objectDetails.data.content.fields.value)
     const bagId = objectDetails.data.content.fields.value.fields[fieldName].fields.id.id;
 
     printInfo(`${fieldName} Id`, bagId);
