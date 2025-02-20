@@ -85,6 +85,7 @@ async function deployMultisig(_, chain, client, options) {
 
     chain.contracts.AxelarGateway = {
         address: multisig.address,
+        initialSigners: options.initialSigners,
         transferRate: TRANSFER_RATE,
         tickSize: TICK_SIZE,
         domain: DOMAIN,
