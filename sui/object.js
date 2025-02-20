@@ -1,7 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
 const { loadConfig, validateParameters, getChainConfig, printInfo } = require('../common/utils');
-const { getWallet, printWalletInfo, addExtendedOptions, broadcast } = require('./utils');
+const { getWallet, printWalletInfo, addExtendedOptions, broadcast, paginateAll } = require('./utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -58,13 +58,25 @@ async function listBagContents(chain, options, args) {
 
     printInfo(`${fieldName} Id`, bagId);
 
-
-    const result = await client.getDynamicFields({
+    const result = await paginateAll(client, 'getDynamicFields', {
         parentId: bagId,
         name: 'unregistered_coins',
     });
 
-    printInfo("Contents", result.data)
+    printInfo('Contents Length', result.length);
+    const token = result.find((item) =>
+        item.objectType.includes(`0xc3f5cf87e7dad927ac7286b626ab607ace5df519a1dc6b15aac8af11f4cc5848::bbb::BBB`),
+    );
+    console.log('Token content', token);
+
+    const result2 = await client.getObject({
+        id: token.objectId,
+        options: {
+            showContent: true,
+        },
+    });
+
+    console.log('Token Fields', result2.data.content.fields.value.fields.coin_info.fields);
 }
 
 async function mainProcessor(options, args, processor) {
