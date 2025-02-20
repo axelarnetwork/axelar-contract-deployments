@@ -2517,6 +2517,9 @@
           "tickSize": 6,
           "domain": "axelar.foundation",
           "flags": 4
+        },
+        "InterchainTokenService": {
+          "address": "rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg"
         }
       }
     }
