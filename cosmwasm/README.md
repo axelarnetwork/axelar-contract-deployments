@@ -111,8 +111,11 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ### Deploy the contracts
 
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
+Contract wasm binary can be passed by specifiying the artifact directory path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-    `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
@@ -130,7 +133,7 @@ Available subcommands:
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
-Example deployments:
+Example deployments with order dependency:
 
 1.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "AxelarnetGateway" --instantiate2 -e devnet`
 2.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet`

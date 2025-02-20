@@ -2,8 +2,7 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-
-const { readFileSync } = require('fs');
+const { readFileSync, existsSync, mkdirSync, createWriteStream } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -32,6 +31,8 @@ const {
     validateParameters,
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const path = require('path');
+const fetch = require('node-fetch');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -41,12 +42,16 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
+const R2_BUCKET_URL = 'https://static.axelar.network';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
+
+const pascalToKebab = (str) => str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -881,6 +886,55 @@ const CONTRACTS = {
     },
 };
 
+
+const downloadContractFromR2 = async (contractName, contractVersion) => {
+    const pathName = pascalToKebab(contractName);
+    const fileName = pascalToSnake(contractName);
+
+    const versionRegex = /^v\d+\.\d+\.\d+$/;
+    const commitRegex = /^[a-f0-9]{7,}$/;
+
+    let contractPath;
+
+    if (versionRegex.test(contractVersion)) {
+        // remove leading v
+        const semanticVersion = contractVersion.slice(1);      
+        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
+    } else if (commitRegex.test(contractVersion)) {
+        contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
+    } else {
+        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+    }
+
+    console.log(`Downloading contract from ${contractPath}`);
+    const response = await fetch(contractPath);
+
+    if (!response.ok) {
+        throw new Error(`Failed to download contract: ${response.statusText}`);
+    }
+
+    // Ensure temp directory exists
+    const tempDir = path.join(__dirname, '../temp');
+
+    if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+    }
+
+    // Define local file path
+    const filePath = path.join(tempDir, `${fileName}.wasm`);
+
+    // Save the file locally
+    const fileStream = createWriteStream(filePath);
+    return new Promise((resolve, reject) => {
+        response.body.pipe(fileStream);
+        response.body.on('error', reject);
+        fileStream.on('finish', () => {
+            resolve(tempDir);
+        });
+    });
+};
+
+
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
@@ -913,4 +967,5 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
+    downloadContractFromR2,
 };

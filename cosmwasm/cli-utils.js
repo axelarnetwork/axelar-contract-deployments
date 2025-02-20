@@ -21,6 +21,10 @@ const addAmplifierOptions = (program, options) => {
         addStoreOptions(program);
     }
 
+    if (options.contractVersionOptions) {
+        addVersionOptions(program);
+    }
+
     if (options.storeProposalOptions) {
         addStoreProposalOptions(program);
     }
@@ -112,8 +116,22 @@ const addContractOptions = (program) => {
 };
 
 const addStoreOptions = (program) => {
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
+    program.addOption(
+        new Option('-a, --artifactPath <artifactPath>', 'artifact path')
+            .env('ARTIFACT_PATH')
+            .conflicts('contractVersion')
+    );
 };
+
+
+const addVersionOptions = (program) => {
+    program.addOption(
+        new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload')
+            .env('CONTRACT_VERSION')
+            .conflicts('artifactPath')
+    );
+};
+
 
 const addStoreProposalOptions = (program) => {
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
