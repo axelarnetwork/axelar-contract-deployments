@@ -1,11 +1,9 @@
-const xrpl = require('xrpl');
 const { Command } = require('commander');
+const { generateWallet } = require('./utils');
 const { printInfo } = require('../common');
 
-const KEY_TYPE = xrpl.ECDSA.secp256k1;
-
-async function processCommand(_) {
-    const wallet = xrpl.Wallet.generate(KEY_TYPE);
+function processCommand(_) {
+    const wallet = generateWallet();
     printInfo('Generated new XRPL wallet', wallet);
 }
 

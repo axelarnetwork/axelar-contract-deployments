@@ -6,62 +6,154 @@ const {
     loadConfig,
     saveConfig,
     printInfo,
+    printWarn,
     printError,
 } = require('../common');
 
-const hex = (str) => Buffer.from(str).toString("hex");
+const KEY_TYPE = xrpl.ECDSA.secp256k1;
+
+const hex = (str) => Buffer.from(str).toString('hex');
+
+function roundUpToNearestXRP(amountInDrops) {
+    return Math.ceil(amountInDrops / 1e6) * 1e6;
+}
 
 async function getAccountInfo(client, address) {
-    const accountInfo = await client.request({
-        command: 'account_info',
-        account: address,
-        ledger_index: 'validated',
-    });
-    return accountInfo.result.account_data;
+    try {
+        const accountInfoRes = await client.request({
+            command: 'account_info',
+            account: address,
+            ledger_index: 'validated',
+        });
+
+        const accountInfo = accountInfoRes.result.account_data;
+        return {
+            balance: accountInfo.Balance,
+            sequence: accountInfo.Sequence,
+        }
+    } catch (error) {
+        if (error.data.error === 'actNotFound') {
+            return {
+                balance: '0',
+                sequence: '-1',
+            }
+        }
+
+        printError('Failed to get account info for wallet', address);
+        throw error;
+    }
+}
+
+async function getReserveRequirements(client) {
+    const serverInfoRes = await client.request({ command: 'server_info' });
+    const validatedLedger = serverInfoRes.result.info.validated_ledger;
+    return {
+        baseReserve: validatedLedger.reserve_base_xrp,
+        ownerReserve: validatedLedger.reserve_inc_xrp,
+    }
 }
 
 async function getFee(client) {
-    const fee = await client.request({ command: "fee" });
-    return fee.result.drops.open_ledger_fee;
+    const feeRes = await client.request({ command: 'fee' });
+    return feeRes.result.drops.open_ledger_fee;
+}
+
+async function printWalletInfo(client, wallet, chain) {
+    const address = wallet.address;
+    const { balance, sequence } = await getAccountInfo(client, address);
+    printInfo('Wallet address', address);
+    printInfo('Wallet balance', `${xrpl.dropsToXrp(balance)} ${chain.tokenSymbol || ''}`);
+
+    if (sequence === -1) {
+        printWarn('Wallet is not active because it does not meet the base reserve requirement');
+    } else {
+        printInfo('Wallet sequence', sequence);
+    }
+}
+
+function generateWallet() {
+    return xrpl.Wallet.generate(KEY_TYPE);
+}
+
+function getWallet(options) {
+    return xrpl.Wallet.fromSeed(options.privateKey);
 }
 
 async function sendTransaction(client, signer, tx) {
+    printInfo('Sending transaction', JSON.stringify(tx, null, 2));
     const prepared = await client.autofill(tx);
     const signed = signer.sign(prepared);
+
     const receipt = await client.submitAndWait(signed.tx_blob);
+
     if (receipt.result.meta.TransactionResult !== 'tesSUCCESS') {
-        printError('Transaction failed', txRes.result);
+        printError('Transaction failed', receipt.result);
         throw new Error(`Transaction failed: ${receipt.result.meta.TransactionResult}`);
     }
 
+    printInfo('Transaction sent');
     return receipt;
 }
 
-async function getWallet(chain, options) {
-    const client = new xrpl.Client(chain.rpc);
-    await client.connect();
+async function sendPayment(client, wallet, args) {
+    const { destination, amount, memos = [], fee = undefined } = args;
+    const paymentTx = {
+        TransactionType: 'Payment',
+        Account: wallet.address,
+        Destination: destination,
+        Amount: amount,
+        Fee: fee,
+        Memos: memos.map((memo) => ({
+            Memo: {
+                MemoType: memo.memoType,
+                MemoData: memo.memoData,
+            },
+        })),
+    };
 
-    const wallet = xrpl.Wallet.fromSeed(options.privateKey);
-    const address = wallet.address;
+    return await sendTransaction(client, wallet, paymentTx);
+}
 
-    try {
-        const accountInfo = await getAccountInfo(client, address);
-        const balance = accountInfo.Balance;
-        const sequence = accountInfo.Sequence;
+async function sendSignerListSet(client, wallet, args) {
+    const { quorum, signers } = args;
+    const signerListSetTx = {
+        TransactionType: 'SignerListSet',
+        Account: wallet.address,
+        SignerQuorum: quorum,
+        SignerEntries: signers.map((signer) => ({
+            SignerEntry: {
+                Account: signer.address,
+                SignerWeight: signer.weight,
+            },
+        })),
+    };
 
-        printInfo('Wallet address', address);
-        printInfo('Wallet balance', `${balance / 1e6} ${chain.tokenSymbol || ''}`);
-        printInfo('Wallet sequence', sequence);
-    } catch (error) {
-        if (error.data.error !== 'actNotFound') {
-            printError('Failed to get account info for wallet', address);
-            throw error;
-        }
-    } finally {
-        await client.disconnect();
-    }
+    return await sendTransaction(client, wallet, signerListSetTx);
+}
 
-    return wallet;
+async function sendTicketCreate(client, wallet, args) {
+    const { ticketCount } = args;
+    const ticketCreateTx = {
+        TransactionType: 'TicketCreate',
+        Account: wallet.address,
+        TicketCount: ticketCount,
+    };
+
+    return await sendTransaction(client, wallet, ticketCreateTx);
+}
+
+async function sendAccountSet(client, wallet, args) {
+    const { transferRate, tickSize, domain, flags } = args;
+    const accountSetTx = {
+        TransactionType: 'AccountSet',
+        Account: wallet.address,
+        TransferRate: transferRate,
+        TickSize: tickSize,
+        Domain: domain,
+        SetFlag: flags,
+    };
+
+    return await sendTransaction(client, wallet, accountSetTx);
 }
 
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
@@ -92,14 +184,19 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     console.log('');
     printInfo('Chain', chain.name, chalk.cyan);
 
+    const client = new xrpl.Client(chain.wssRpc);
+
     try {
-        await processCommand(config, chain, options);
+        await client.connect();
+        await processCommand(config, chain, client, options);
     } catch (error) {
         printError(`Failed with error on ${chain.name}`, error.message);
 
         if (!catchErr && !options.ignoreError) {
             throw error;
         }
+    } finally {
+        await client.disconnect();
     }
 
     if (save) {
@@ -109,10 +206,18 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
 module.exports = {
     ...require('../common/utils'),
+    generateWallet,
     getWallet,
     getAccountInfo,
+    getReserveRequirements,
+    printWalletInfo,
     getFee,
     mainProcessor,
     sendTransaction,
+    sendPayment,
+    sendSignerListSet,
+    sendAccountSet,
+    sendTicketCreate,
     hex,
+    roundUpToNearestXRP,
 };

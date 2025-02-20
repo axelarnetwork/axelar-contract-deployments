@@ -30,7 +30,7 @@ node xrpl/faucet.js -e devnet-amplifier -n xrpl-test-1
 Deploy a new XRPL multisig account (the equivalent of the edge AxelarGateway on XRPL):
 
 ```bash
-node xrpl/deploy-multisig.js -e <env> -n <chain-name> --initialSigners <xrpl-addresses>
+node xrpl/deploy-multisig.js -e <env> -n <chain-name> --initial-signers <xrpl-addresses>
 ```
 
 ### CosmWasm contracts
@@ -130,5 +130,5 @@ node xrpl/transfer.js send [token] [amount] [destination-chain] [destination-add
 Here's an example of a token transfer that also performs GMP:
 
 ```bash
-node xrpl/transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --data 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
+node xrpl/transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
 ```
