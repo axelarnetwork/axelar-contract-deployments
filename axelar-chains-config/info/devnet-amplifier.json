@@ -783,7 +783,7 @@
       "name": "XRPL",
       "axelarId": "xrpl-test-1",
       "rpc": "wss://s.devnet.rippletest.net:51233",
-      "multisigAddress": "rw6imvkyuZAmCf67xcmCUKuova7vVmB4YB",
+      "wssRpc": "wss://s.devnet.rippletest.net:51233",
       "tokenSymbol": "XRP",
       "networkType": "testnet",
       "chainType": "xrpl",
@@ -792,6 +792,15 @@
       "explorer": {
         "name": "XRPL Explorer",
         "url": "https://devnet.xrpl.org"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.network",
+          "flags": 4
+        }
       }
     }
   },

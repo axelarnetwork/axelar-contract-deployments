@@ -1,60 +1,48 @@
 const xrpl = require('xrpl');
 const { Command, Option } = require('commander');
-const { getWallet, getAccountInfo, getFee, sendTransaction } = require('./utils');
+const { getWallet, getAccountInfo, getFee, sendPayment, roundUpToNearestXRP } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
 
-const MAX_DROPS_AMOUNT = 1_000_000_000;
+const MAX_CLAIMABLE_DROPS = 1000000000;
 
-async function processCommand(chain, options) {
-    const wallet = await getWallet(chain, options);
+async function faucet(_, client, options) {
+    const wallet = getWallet(options);
     const recipient = options.recipient || wallet.address;
-
+    const { balance: recipientBalance } = await getAccountInfo(client, recipient);
+    const amountInDrops = xrpl.xrpToDrops(options.amount);
+    const recipientBalanceInXrp = xrpl.dropsToXrp(recipientBalance);
     const isDifferentRecipient = wallet.address.toLowerCase() !== recipient.toLowerCase();
+
+    let fee = '0';
+
     if (isDifferentRecipient) {
         printInfo(`Requesting funds for`, recipient);
+        fee = await getFee(client);
     }
 
-    const client = new xrpl.Client(chain.rpc);
-    await client.connect();
-
-    try {
-        const balance = Number((await getAccountInfo(client, recipient)).Balance) / 1e6;
-        if (balance >= Number(options.minBalance)) {
-            printWarn(`Recipient balance (${balance} XRP) above minimum, skipping faucet request`);
-            process.exit(0);
-        }
-    } catch (error) {
-        if (error.data.error !== 'actNotFound') {
-            printWarn('Failed to get account info for recipient', recipient);
-            throw error;
-        }
+    if (Number(recipientBalanceInXrp) >= Number(options.minBalance)) {
+        printWarn(`Recipient balance (${recipientBalanceInXrp} XRP) above minimum, skipping faucet request`);
+        process.exit(0);
     }
 
-    const fee = isDifferentRecipient ? await getFee(client) : '0';
+    const amountToClaim = roundUpToNearestXRP(Number(amountInDrops) + Number(fee));
 
-    const amountInDrops = xrpl.xrpToDrops(options.amount);
-    const amountToClaim = Number(amountInDrops) + Number(fee);
-    if (amountToClaim > MAX_DROPS_AMOUNT) {
-        printWarn(`Amount too high, maximum is ${(MAX_DROPS_AMOUNT - fee) / 1e6} XRP`);
+    if (amountToClaim > MAX_CLAIMABLE_DROPS) {
+        printWarn(`Amount too high, maximum is ${(MAX_CLAIMABLE_DROPS - fee) / 1e6} XRP`);
         process.exit(0);
     }
 
     await client.fundWallet(wallet, { amount: String(amountToClaim / 1e6) });
+
     if (isDifferentRecipient) {
-        const paymentTx = {
-            TransactionType: 'Payment',
-            Account: wallet.address,
-            Destination: recipient,
-            Amount: amountInDrops,
-            Fee: fee,
-        };
-
-        printInfo('Transferring claimed funds', JSON.stringify(paymentTx, null, 2));
-        await sendTransaction(client, wallet, paymentTx);
+        printInfo('Transferring claimed funds');
+        await sendPayment(client, wallet, {
+            destination: recipient,
+            amount: amountInDrops,
+            fee,
+        });
     }
-
-    await client.disconnect();
 
     printInfo('Funds sent', recipient);
 }
@@ -62,7 +50,14 @@ async function processCommand(chain, options) {
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
-    await processor(chain, options);
+    const client = new xrpl.Client(chain.wssRpc);
+    await client.connect();
+
+    try {
+        await processor(chain, client, options);
+    } finally {
+        await client.disconnect();
+    }
 }
 
 if (require.main === module) {
@@ -74,18 +69,18 @@ if (require.main === module) {
         .addOption(
             new Option(
                 '--amount <amount>',
-                'amount of tokens to request from the faucet',
+                'amount of XRP tokens to request from the faucet',
             ).default('100'),
         )
         .addOption(
             new Option(
                 '--minBalance <amount>',
-                'tokens will only be requested from the faucet if recipient balance is below the amount provided',
+                'tokens will only be requested from the faucet if recipient XRP balance is below the amount provided',
             ).default('1'),
         )
         .description('Query the faucet for funds.')
         .action((options) => {
-            mainProcessor(options, processCommand);
+            mainProcessor(options, faucet);
         });
 
     addBaseOptions(program);

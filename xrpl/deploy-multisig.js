@@ -1,92 +1,97 @@
 const xrpl = require('xrpl');
 const { Command, Option } = require('commander');
-const { mainProcessor, getWallet, getAccountInfo, sendTransaction, hex } = require('./utils');
+const {
+    mainProcessor,
+    getWallet,
+    generateWallet,
+    getAccountInfo,
+    getReserveRequirements,
+    hex,
+    sendPayment,
+    sendSignerListSet,
+    sendAccountSet,
+    sendTicketCreate,
+} = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { printInfo, printWarn } = require('../common');
+const { printInfo, printWarn, prompt } = require('../common');
+
+const TRANSFER_RATE = 0; // Don't charge a fee for transferring currencies issued by the multisig
+const TICK_SIZE = 6; // This determines truncation for order book entries, not payments
+const DOMAIN = 'axelar.foundation';
 
 const MAX_TICKET_COUNT = 250;
-const KEY_TYPE = xrpl.ECDSA.secp256k1;
+const MAX_SIGNERS = 32;
 
-const BASE_RESERVE_XRP = 10;
-const OWNER_RESERVE_XRP = 0.2;
+const INITIAL_QUORUM = 1;
+const INITIAL_WEIGHT_PER_SIGNER = 1;
 
-async function processCommand(_, chain, options) {
-    const client = new xrpl.Client(chain.rpc);
-    await client.connect();
+async function deployMultisig(_, chain, client, options) {
+    const wallet = getWallet(options);
+    const { balance } = await getAccountInfo(client, wallet.address);
+    const { baseReserve, ownerReserve } = await getReserveRequirements(client);
 
-    const wallet = await getWallet(chain, options);
-    const balance = Number((await getAccountInfo(client, wallet.address)).Balance) / 1e6;
-    const multisigReserve = BASE_RESERVE_XRP + MAX_TICKET_COUNT * OWNER_RESERVE_XRP;
+    const multisigReserve = Math.ceil(baseReserve + (MAX_TICKET_COUNT + MAX_SIGNERS) * ownerReserve);
+
     if (balance < Number(multisigReserve)) {
-        printWarn(`Wallet XRP balance is insufficient to fund the multisig account reserve (${multisigReserve} XRP)`);
+        printWarn(`Wallet XRP balance (${balance} XRP) is less than required multisig account reserve (${multisigReserve} XRP)`);
         process.exit(0);
     }
 
-    printInfo('Creating multisig account');
-    const multisig = xrpl.Wallet.generate(KEY_TYPE);
-    printInfo('Created multisig account', multisig.address);
+    let multisig;
 
-    const paymentTx = {
-        TransactionType: "Payment",
-        Account: wallet.address,
-        Destination: multisig.address,
-        Amount: xrpl.xrpToDrops(multisigReserve),
-    };
+    if (options.generateWallet) {
+        multisig = generateWallet();
+        printInfo('Generated new multisig account', multisig);
+        printInfo(`Funding multisig account with ${multisigReserve} XRP from wallet`);
+        await sendPayment(client, wallet, {
+            destination: multisig.address,
+            amount: xrpl.xrpToDrops(multisigReserve),
+        });
+        printInfo('Funded multisig account');
+    } else {
+        if (prompt(`Proceed with turning ${wallet.address} into a multisig account?`, options.yes)) {
+            return;
+        }
 
-    printInfo(`Funding multisig account with ${multisigReserve} XRP from wallet`, JSON.stringify(paymentTx, null, 2));
-    await sendTransaction(client, wallet, paymentTx);
-    printInfo('Funded multisig account');
+        multisig = wallet;
+    }
 
-    const signerListSetTx = {
-        TransactionType: "SignerListSet",
-        Account: multisig.address,
-        SignerQuorum: 1,
-        SignerEntries: options.initialSigners.map((signer) => ({
-            SignerEntry: {
-                Account: signer,
-                SignerWeight: 1,
-            },
+    printInfo('Adding initial multisig signer set', options.initialSigners);
+    await sendSignerListSet(client, multisig, {
+        quorum: INITIAL_QUORUM,
+        signers: options.initialSigners.map((signer) => ({
+            address: signer,
+            weight: INITIAL_WEIGHT_PER_SIGNER,
         })),
+    });
+
+    printInfo(`Creating tickets`);
+    await sendTicketCreate(client, multisig, {
+        ticketCount: MAX_TICKET_COUNT,
+    });
+
+    const flags = xrpl.AccountSetAsfFlags.asfDisableMaster
+        & xrpl.AccountSetAsfFlags.asfDisallowIncomingNFTokenOffer
+        & xrpl.AccountSetAsfFlags.asfDisallowIncomingCheck
+        & xrpl.AccountSetAsfFlags.asfDisallowIncomingPayChan;
+
+    printInfo('Configuring account settings');
+    await sendAccountSet(client, multisig, {
+        transferRate: TRANSFER_RATE,
+        tickSize: TICK_SIZE,
+        domain: hex(DOMAIN),
+        flags,
+    });
+
+    chain.contracts.AxelarGateway = {
+        address: multisig.address,
+        transferRate: TRANSFER_RATE,
+        tickSize: TICK_SIZE,
+        domain: DOMAIN,
+        flags,
     };
 
-    printInfo('Adding initial multisig signer set', JSON.stringify(signerListSetTx, null, 2));
-    await sendTransaction(client, multisig, signerListSetTx);
-    printInfo('Added initial multisig signer set', options.initialSigners);
-
-    const ticketCreateTx = {
-        TransactionType: "TicketCreate",
-        Account: multisig.address,
-        TicketCount: MAX_TICKET_COUNT,
-    };
-
-    printInfo('Creating tickets', JSON.stringify(ticketCreateTx, null, 2));
-    await sendTransaction(client, multisig, ticketCreateTx);
-    printInfo('Tickets created');
-
-    const accountSetTx = {
-        TransactionType: "AccountSet",
-        Account: multisig.address,
-        TransferRate: 0,
-        TickSize: 6,
-        Domain: hex("axelar.network"),
-        SetFlag: xrpl.AccountSetAsfFlags.asfDisableMaster
-            & xrpl.AccountSetAsfFlags.asfDisallowIncomingNFTokenOffer
-            & xrpl.AccountSetAsfFlags.asfDisallowIncomingCheck
-            & xrpl.AccountSetAsfFlags.asfDisallowIncomingPayChan,
-    };
-
-    printInfo('Disabling master key pair', JSON.stringify(accountSetTx, null, 2));
-    await sendTransaction(client, multisig, accountSetTx);
-    printInfo('Master key pair disabled');
-
-    chain.multisigAddress = multisig.address;
-
-    printInfo('Created and configured XRPL multisig account successfully', multisig.address);
-    await client.disconnect();
-}
-
-async function main(options) {
-    await mainProcessor(options, processCommand);
+    printInfo('Successfully created and configured XRPL multisig account', multisig.address);
 }
 
 if (require.main === module) {
@@ -94,10 +99,12 @@ if (require.main === module) {
 
     program
         .name('deploy-multisig')
-        .description('Create & configure XRPL multisig account.')
+        .description('Converts a wallet into an XRPL multisig account.')
+        .addOption(new Option('--generate-wallet', 'generate a new wallet account to convert into an XRPL multisig account instead of using active wallet').default(false))
+        .addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'))
         .addOption(
             new Option(
-                '--initialSigners <signers...>',
+                '--initial-signers <signers...>',
                 'XRPL addresses of initial signers',
             ).makeOptionMandatory(true),
         );
@@ -105,7 +112,7 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program.action((options) => {
-        main(options);
+        mainProcessor(options, deployMultisig);
     });
 
     program.parse();

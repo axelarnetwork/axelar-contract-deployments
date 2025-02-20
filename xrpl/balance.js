@@ -1,13 +1,10 @@
 const { Command } = require('commander');
-const { mainProcessor, getWallet } = require('./utils');
+const { mainProcessor, getWallet, printWalletInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_, chain, options) {
-    await getWallet(chain, options);
-}
-
-async function main(options) {
-    await mainProcessor(options, processCommand);
+async function balance(_, chain, client, options) {
+    const wallet = getWallet(options);
+    await printWalletInfo(client, wallet, chain);
 }
 
 if (require.main === module) {
@@ -18,7 +15,7 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program.action((options) => {
-        main(options);
+        mainProcessor(options, balance);
     });
 
     program.parse();
