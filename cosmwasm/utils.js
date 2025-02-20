@@ -292,7 +292,11 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     const {
         axelar: { contracts },
         chains: {
-            [chainName]: { multisigAddress: sourceGatewayAddress },
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: sourceGatewayAddress },
+                },
+            },
         },
     } = config;
     const {
@@ -324,7 +328,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid [${chainName}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
     }
 
     if (!isStringArray(votingThreshold)) {
@@ -431,7 +435,11 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
         chains: {
-            [chainName]: { multisigAddress: xrplMultisigAddress },
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: xrplMultisigAddress },
+                },
+            },
         },
         axelar: {
             contracts: {
@@ -470,7 +478,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     }
 
     if (!isString(xrplMultisigAddress)) {
-        throw new Error(`Missing or invalid [${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
     }
 
     return {
@@ -514,7 +522,11 @@ const makeXrplMultisigProverInstantiateMsg = (config, options, contractConfig) =
     const {
         axelar: { contracts, chainId: axelarChainId },
         chains: {
-            [chainName]: { multisigAddress: xrplMultisigAddress },
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: xrplMultisigAddress },
+                },
+            },
         },
     } = config;
     const {
@@ -591,7 +603,7 @@ const makeXrplMultisigProverInstantiateMsg = (config, options, contractConfig) =
     }
 
     if (!isString(xrplMultisigAddress)) {
-        throw new Error(`Missing or invalid [${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
     }
 
     return {
