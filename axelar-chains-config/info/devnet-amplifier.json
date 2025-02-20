@@ -800,6 +800,9 @@
           "tickSize": 6,
           "domain": "axelar.network",
           "flags": 4
+        },
+        "InterchainTokenService": {
+          "address": "rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC"
         }
       }
     }
