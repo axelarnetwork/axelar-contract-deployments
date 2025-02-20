@@ -301,18 +301,20 @@ function hexToScVal(hexString) {
 }
 
 function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
 }
 
 function tokenMetadataToScVal(decimal, name, symbol) {
