@@ -462,7 +462,7 @@ function getITSChains(config) {
     const allChains = getAllChains(config);
     return allChains.filter(
         (chain) =>
-            config.chains[chain].contracts?.InterchainTokenService?.address && config.chains[chain].contracts?.InterchainTokenService,
+             config.chains[chain].contracts?.InterchainTokenService && config.chains[chain].contracts?.InterchainTokenService?.address
     );
 }
 
