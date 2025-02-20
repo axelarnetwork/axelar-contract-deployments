@@ -76,7 +76,9 @@ function generateWallet() {
 }
 
 function getWallet(options) {
-    return xrpl.Wallet.fromSeed(options.privateKey);
+    return xrpl.Wallet.fromSeed(options.privateKey, {
+        algorithm: KEY_TYPE,
+    });
 }
 
 async function sendTransaction(client, signer, tx) {
