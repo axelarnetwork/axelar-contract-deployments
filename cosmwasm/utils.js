@@ -30,6 +30,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
 } = require('../common');
+const { pascalToSnake, pascalToKebab } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const path = require('path');
 const fetch = require('node-fetch');
@@ -48,10 +49,6 @@ const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.from
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
-
-const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
-
-const pascalToKebab = (str) => str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -131,13 +128,13 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const uploadContract = async (client, wallet, config, options) => {
+const uploadContract = async (client, wallet, config, options, wasmPath) => {
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
 
     const [account] = await wallet.getAccounts();
-    const wasm = readWasmFile(options);
+    const wasm = readFileSync(wasmPath);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
@@ -641,10 +638,10 @@ const getSubmitProposalParams = (options) => {
     };
 };
 
-const getStoreCodeParams = (options) => {
+const getStoreCodeParams = (options, wasmPath) => {
     const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readWasmFile(options);
+    const wasm = readFileSync(wasmPath);
 
     let codeHash;
 
@@ -668,11 +665,11 @@ const getStoreCodeParams = (options) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg) => {
+const getStoreInstantiateParams = (config, options, msg, wasmPath) => {
     const { admin } = options;
 
     return {
-        ...getStoreCodeParams(options),
+        ...getStoreCodeParams(options, wasmPath),
         admin,
         label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
@@ -741,8 +738,8 @@ const getMigrateContractParams = (config, options) => {
     };
 };
 
-const encodeStoreCodeProposal = (options) => {
-    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
+const encodeStoreCodeProposal = (options, wasmPath) => {
+    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options, wasmPath));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
@@ -750,8 +747,8 @@ const encodeStoreCodeProposal = (options) => {
     };
 };
 
-const encodeStoreInstantiateProposal = (config, options, msg) => {
-    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
+const encodeStoreInstantiateProposal = (config, options, msg, wasmPath) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg, wasmPath));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',
@@ -887,54 +884,6 @@ const CONTRACTS = {
 };
 
 
-const downloadContractFromR2 = async (contractName, contractVersion) => {
-    const pathName = pascalToKebab(contractName);
-    const fileName = pascalToSnake(contractName);
-
-    const versionRegex = /^v\d+\.\d+\.\d+$/;
-    const commitRegex = /^[a-f0-9]{7,}$/;
-
-    let contractPath;
-
-    if (versionRegex.test(contractVersion)) {
-        // remove leading v
-        const semanticVersion = contractVersion.slice(1);      
-        contractPath = `${R2_BUCKET_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
-    } else if (commitRegex.test(contractVersion)) {
-        contractPath = `${R2_BUCKET_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
-    } else {
-        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
-    }
-
-    console.log(`Downloading contract from ${contractPath}`);
-    const response = await fetch(contractPath);
-
-    if (!response.ok) {
-        throw new Error(`Failed to download contract: ${response.statusText}`);
-    }
-
-    // Ensure temp directory exists
-    const tempDir = path.join(__dirname, '../temp');
-
-    if (!existsSync(tempDir)) {
-        mkdirSync(tempDir, { recursive: true });
-    }
-
-    // Define local file path
-    const filePath = path.join(tempDir, `${fileName}.wasm`);
-
-    // Save the file locally
-    const fileStream = createWriteStream(filePath);
-    return new Promise((resolve, reject) => {
-        response.body.pipe(fileStream);
-        response.body.on('error', reject);
-        fileStream.on('finish', () => {
-            resolve(tempDir);
-        });
-    });
-};
-
-
 module.exports = {
     CONTRACT_SCOPE_CHAIN,
     CONTRACT_SCOPE_GLOBAL,
@@ -967,5 +916,4 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
-    downloadContractFromR2,
 };

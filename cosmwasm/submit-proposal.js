@@ -30,6 +30,7 @@ const {
     submitProposal,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
+const { getWasmPath } = require('../common/utils');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -42,6 +43,7 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
+const { readFileSync } = require('fs');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -83,7 +85,10 @@ const storeCode = async (client, wallet, config, options) => {
     const contractBaseConfig = getAmplifierBaseContractConfig(config, contractName);
     await addDefaultInstantiateAddresses(client, config, options);
 
-    const proposal = encodeStoreCodeProposal(options);
+    // Determine source of contract binary
+    const wasmPath = await getWasmPath(options, contractName, 'cosmwasm');
+
+    const proposal = encodeStoreCodeProposal(options, wasmPath);
 
     if (!confirmProposalSubmission(options, proposal, StoreCodeProposal)) {
         return;
@@ -92,7 +97,7 @@ const storeCode = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readFileSync(wasmPath)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
@@ -100,12 +105,15 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const { contractConfig, contractBaseConfig } = getAmplifierContractConfig(config, options);
     await addDefaultInstantiateAddresses(client, config, options);
 
+    // Determine source of contract binary
+    const wasmPath = await getWasmPath(options, contractName, 'cosmwasm');
+
     if (instantiate2) {
         throw new Error('instantiate2 not supported for storeInstantiate');
     }
 
     const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
-    const proposal = encodeStoreInstantiateProposal(config, options, initMsg);
+    const proposal = encodeStoreInstantiateProposal(config, options, initMsg, wasmPath);
 
     if (!confirmProposalSubmission(options, proposal, StoreAndInstantiateContractProposal)) {
         return;
@@ -114,7 +122,7 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readFileSync(wasmPath)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {

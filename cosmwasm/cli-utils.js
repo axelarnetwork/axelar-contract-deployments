@@ -21,10 +21,6 @@ const addAmplifierOptions = (program, options) => {
         addStoreOptions(program);
     }
 
-    if (options.contractVersionOptions) {
-        addVersionOptions(program);
-    }
-
     if (options.storeProposalOptions) {
         addStoreProposalOptions(program);
     }
@@ -121,15 +117,20 @@ const addStoreOptions = (program) => {
             .env('ARTIFACT_PATH')
             .conflicts('contractVersion')
     );
-};
 
-
-const addVersionOptions = (program) => {
     program.addOption(
-        new Option('-v, --contractVersion <contractVersion>', 'released version vX.Y.Z or pre-release hash to upload')
+        new Option('-v, --version <contractVersion>', 'released version vX.Y.Z or pre-release commit hash to upload')
             .env('CONTRACT_VERSION')
             .conflicts('artifactPath')
     );
+
+    program.hook('preAction', (thisCommand) => {
+        const opts = thisCommand.opts();
+        if (!opts.artifactPath && !opts.version) {
+            console.error('Error: You must provide either --artifactPath or --version.');
+            process.exit(1);
+        }
+    });
 };
 
 

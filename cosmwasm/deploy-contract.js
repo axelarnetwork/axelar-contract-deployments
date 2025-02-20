@@ -5,6 +5,8 @@ require('dotenv').config();
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
+const { getWasmPath } = require('../common/utils');
+
 const {
     CONTRACTS,
     prepareWallet,
@@ -24,19 +26,14 @@ const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const upload = async (client, wallet, config, options) => {
-    const { contractName, contractVersion, artifactPath, instantiate2, salt, chainName } = options;
+    const { contractName, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
     // Determine source of contract binary
-    const wasmPath = contractVersion
-    ? await downloadContractFromR2(contractName, contractVersion)
-    : artifactPath || (() => { throw new Error("Either '--contractVersion' or '--artifactPath' must be provided."); })();
-
-    // Override options.artifactPath with the resolved wasm path
-    options.artifactPath = wasmPath;
+    const wasmPath = await getWasmPath(options, contractName, 'cosmwasm');
 
     printInfo('Uploading contract binary');
-    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+    const { checksum, codeId } = await uploadContract(client, wallet, config, options, wasmPath);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
@@ -124,7 +121,6 @@ const programHandler = () => {
     addAmplifierOptions(uploadCmd, {
         contractOptions: true,
         storeOptions: true,
-        contractVersionOptions: true,
         instantiate2Options: true,
     });
 
@@ -151,7 +147,6 @@ const programHandler = () => {
     addAmplifierOptions(uploadInstantiateCmd, {
         contractOptions: true,
         storeOptions: true,
-        contractVersionOptions: true,
         instantiateOptions: true,
         instantiate2Options: true,
     });
