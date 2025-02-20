@@ -2492,6 +2492,33 @@
           }
         }
       }
+    },
+    "xrpl-test-1": {
+      "name": "XRPL",
+      "axelarId": "xrpl-test-1",
+      "rpc": "https://s.altnet.rippletest.net:51234",
+      "wssRpc": "wss://s.altnet.rippletest.net:51233",
+      "tokenSymbol": "XRP",
+      "networkType": "testnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://testnet.xrpl.org"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "address": "rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg",
+          "initialSigners": [
+            "ra7SxwMN2GE6FhmV3JcSjaVwhx7ES9uPnA"
+          ],
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": 4
+        }
+      }
     }
   },
   "stellar": {
