@@ -2494,7 +2494,7 @@
       }
     },
     "xrpl-evm-test-1": {
-      "name": "XRPL EVM Sidechain",
+      "name": "XRPL EVM",
       "axelarId": "xrpl-evm-test-1",
       "chainId": 1449000,
       "rpc": "https://rpc.testnet.xrplevm.org",

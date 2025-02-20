@@ -158,6 +158,7 @@ PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
 DEPOSIT_VALUE=[deposit value]
 REWARD_AMOUNT=[reward amount]
 RUN_AS_ACCOUNT=[wasm deployer/governance address]
+EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
 - `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
@@ -291,7 +292,7 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": \"[epoch duration]\",
+        \"epoch_duration\": \"$EPOCH_DURATION\",
         \"participation_threshold\": [participation threshold],
         \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
@@ -328,12 +329,13 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-
+Add Rewards:
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-
-# Query to check if the funding command worked
+```
+Check reward pool to confirm funding worked:
+```bash
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
 ```
@@ -351,9 +353,10 @@ Note that this step can only be run once a sufficient number of verifiers have r
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+```
 
-
-# Query the multisig prover for active verifier set
+Query the multisig prover for active verifier set
+```bash
 axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
 
