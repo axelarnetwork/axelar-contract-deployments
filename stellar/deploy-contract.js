@@ -26,6 +26,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'token_manager',
     'interchain_token_service',
     'upgrader',
+    'example',
 ]);
 
 const CONTRACT_CONFIGS = {
