@@ -2739,7 +2739,7 @@
         "codeId": 25,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
         "xrpl-test-1": {
-          "maxUintBits": 255,
+          "maxUintBits": 256,
           "maxDecimalsWhenTruncating": 255
         }
       },
