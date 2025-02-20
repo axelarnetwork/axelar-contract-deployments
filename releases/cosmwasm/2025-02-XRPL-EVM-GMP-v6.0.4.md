@@ -5,12 +5,12 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | `xrp-evm-test-1`      | 2025-02-19 |
+| **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -136,11 +136,12 @@ node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId -
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier["$CHAIN"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway["$CHAIN"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver["$CHAIN"].address" | tr -d '"')
+VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
 MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
+ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
@@ -157,6 +158,7 @@ PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
 DEPOSIT_VALUE=[deposit value]
 REWARD_AMOUNT=[reward amount]
 RUN_AS_ACCOUNT=[wasm deployer/governance address]
+EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
 - `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
@@ -181,13 +183,13 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart <router-address> '{"chain_info": "$CHAIN"}' --output json | jq .
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
 # You should see something like this:
 {
   "data": {
-    "name": "$CHAIN",
+    "name": \"$CHAIN\",
     "gateway": {
-      "address": "axelar1hzz0s0ucrhdp6tue2lxk3c03nj6f60qy463we7lgx0wudd72ctmsee8enx"
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
     },
     "frozen_status": 0,
     "msg_id_format": "hex_tx_hash_and_event_index"
@@ -237,7 +239,7 @@ node cosmwasm/submit-proposal.js execute \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
-      \"chain_name\": "$CHAIN",
+      \"chain_name\": \"$CHAIN\",
       \"new_prover_addr\": \"$MULTISIG_PROVER\"
     }
   }"
@@ -255,14 +257,14 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"authorize_callers\": {
       \"contracts\": {
-        \"$MULTISIG_PROVER\": "$CHAIN"
+        \"$MULTISIG_PROVER\": \"$CHAIN\"
       }
     }
   }"
 ```
 
 ```bash
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<chain-multisig-prover-addr>", "chain_name": "$CHAIN"}}' --output json | jq .
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
 # Result should look like:
 {
   "data": true
@@ -275,10 +277,10 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
-| **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
-| **Testnet**          | `600`            | `["7", "10"]`             | `100`               |
-| **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -290,12 +292,12 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
+        \"epoch_duration\": \"$EPOCH_DURATION\",
         \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
       \"pool_id\": {
-        \"chain_name\": "$CHAIN",
+        \"chain_name\": \"$CHAIN\",
         \"contract\": \"$VOTING_VERIFIER\"
       }
     }
@@ -314,12 +316,12 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
+        \"epoch_duration\": \"[epoch duration]\",
         \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
       \"pool_id\": {
-        \"chain_name\": "$CHAIN",
+        \"chain_name\": \"$CHAIN\",
         \"contract\": \"$MULTISIG\"
       }
     }
@@ -327,10 +329,15 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-
+Add Rewards:
 ```bash
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAIN", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAIN", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+```
+Check reward pool to confirm funding worked:
+```bash
+axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
+axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
 ```
 
 13. Create genesis verifier set
@@ -346,6 +353,11 @@ Note that this step can only be run once a sufficient number of verifiers have r
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
+```
+
+Query the multisig prover for active verifier set
+```bash
+axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
 
 ## Checklist
