@@ -43,14 +43,14 @@ The script will request the following details:
 - **Chain ID**: The numerical ID for the chain.
 - **Token Symbol**: Native token symbol.
 - **Gas Limit**: Gas limit per transaction.
-- **Private Key**: Private key for transaction signing. This key needs to be properly funded to deploy and interact with smart contract on the target chain.
+- **Private Key**: Private key for transaction signing. This key needs to be properly funded to deploy and interact with smart contracts on the target chain.
 - **RPC URL**: Endpoint for blockchain interactions.
 - **Axelar RPC URL**: Endpoint for Axelar node interactions.
-- **Mnemonic**: Wallet mnemonic for key management. The deployer will need to have a proper axelar wallet funded to perform deployments and proposals on the target axelar network. The deploying wallet will be responsible for funding the validator reward pools that will support the chain. 
+- **Mnemonic**: Wallet mnemonic for key management. The deployer will need to have a properly funded Axelar wallet to perform deployments and proposals on the target Axelar network. The deploying wallet will be responsible for funding the validator reward pools that will support the chain.
 
 ### Custom Network Requirements
 
-For custom devnets the corresponding config json is required and should be copied to the `axelar-chains-config/info` directory.
+For custom devnets, the corresponding config JSON is required and should be copied to the `axelar-chains-config/info` directory.
 
 ## Deployment Steps
 
@@ -71,7 +71,7 @@ The script sets up and exports essential environment variables to be used in sub
 
 ### JSON Configuration Generation
 
-Creates `config.json` with the network and contract details. This is used to update the axelar-chains-config file for the target network.
+Creates `config.json` with the network and contract details. This is used to update the Axelar-chains-config file for the target network.
 
 ### Wallet Management
 
@@ -142,13 +142,13 @@ Common failure points include:
 
 This script automates the complex deployment process for Axelar network integrations, handling configurations, deployments, and verifications efficiently. Users should ensure valid inputs and a stable internet connection during execution.
 
-## Pain Points 
+## Stopping Points
 
-The entire deployment process is broken into multiple steps that account for asynchronous actions that must be coordinted to ensure the necessary deployments and configuration updates have occured.
+The entire deployment process is broken into multiple steps that account for asynchronous actions that must be coordinated to ensure the necessary deployments and configuration updates have occurred.
 
 ### Verifier Updates
 
-The first stopping point is after the Gateway registration proposal has been submiteed and presumably approved. The necessary actions that would need to be coordinated are the config.toml updates that verifiers need to perform by updating ampd with the `$CHAIN` chain name  and the `http_url` (RPC node url) they will utilized.
+The first stopping point is after the Gateway registration proposal has been submitted and presumably approved. The necessary actions that would need to be coordinated are the `config.toml` updates that verifiers need to perform by updating `ampd` with the `$CHAIN` chain name and the `http_url` (RPC node URL) they will utilize.
 
 ```bash
 [[handlers]]
@@ -170,4 +170,19 @@ type="EvmVerifierSetVerifier"
 ampd register-chain-support validators $CHAIN
 ```
 
+### Multisig Proposals
+
+After the gateway is registered and verifiers have been approved, the deployment script will perform a verification that the gateway has been properly registered and proceed to submit two proposals for registering in the multisig address: the `register_prover_contract` and the `authorize_callers`. Since these proposals need to be approved, the script will again stop to let voting proceed.
+
+### Reward Pools and Final Contract Execution
+
+Once the multisig proposals are approved, the script can continue, and the reward pools can be created directly along with the genesis verifier set. The last step is to deploy the gateway on the target chain.
+
+## Major Pain Points
+
+For each asynchronous step, there is coordination overhead. For the first stop, the verifier set needs to be arranged. Although this process does not need to be changed in `mainnet`, we can certainly automate further the `stagenet`, `testnet`, and `devnet-amplifier` deployments if we are able to register chains more directly. A more ambitious goal would be to allow the chain integrators to define the subset of validators that would serve the chain. Further discussion on security implications and technical challenges of such a refactor is needed.
+
+The second aspect relevant for all stops is that the proposal flow has a time window where it can succeed or fail. We should be able to monitor if and when a proposal passes to proceed with the deployment steps automatically. Effectively, having some mechanism to poll a given proposal that can then continue deployment would further streamline the deployment.
+
+Private key management is not going to pass audits for this script as we handle private key data too publicly. In general, the underlying usage of `MNEMONIC` and `PRIVATE_KEY` would need to be extended to support remote signing operations. Key sharing is not recommended in most cases, so having the ability to remotely sign transactions can be desirable for more security-oriented teams.
 
