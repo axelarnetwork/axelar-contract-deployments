@@ -2737,7 +2737,11 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "lastUploadedCodeId": 25,
         "codeId": 25,
-        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+        "xrpl-test-1": {
+          "maxUintBits": 255,
+          "maxDecimalsWhenTruncating": 255
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
@@ -3016,10 +3020,13 @@
             5008598
           ],
           "nextSequenceNumber": 5008631,
-          "lastAssignedTicketNumber": 5008369
+          "lastAssignedTicketNumber": 5008369,
+          "codeId": 30,
+          "address": "axelar18wq8qjlq6vfg2jw2fmvgyphjxrndc7529wq07pvlpnk0j2uvv5fqqqr4gv"
         },
         "storeCodeProposalId": "211",
-        "storeCodeProposalCodeHash": "cb4a0606e7e10bcfb83aa7d181987913bb6c598eccec702d5db3d4c1a36f5871"
+        "storeCodeProposalCodeHash": "cb4a0606e7e10bcfb83aa7d181987913bb6c598eccec702d5db3d4c1a36f5871",
+        "lastUploadedCodeId": 30
       },
       "XrplVotingVerifier": {
         "xrpl-test-1": {
@@ -3031,17 +3038,23 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "storeInstantiateProposalId": "209"
+          "storeInstantiateProposalId": "209",
+          "codeId": 28,
+          "address": "axelar1nwv2cmp4lmwujpaq9t8t4w2xvcewv49jfzxy7apz4lz60h5ycd6qkjt4fr"
         },
-        "storeCodeProposalCodeHash": "ce5ebee459c19caad37ddc094e69b0254be258aa084a23b2f1af8c3794b23c50"
+        "storeCodeProposalCodeHash": "ce5ebee459c19caad37ddc094e69b0254be258aa084a23b2f1af8c3794b23c50",
+        "lastUploadedCodeId": 28
       },
       "XrplGateway": {
         "xrpl-test-1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35"
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "codeId": 29,
+          "address": "axelar14p3h2622cryxta8r34aex69kjea2vp82n0kqvwqt5s3j9dwr77msqwt2tx"
         },
         "storeCodeProposalId": "210",
-        "storeCodeProposalCodeHash": "e781fe07604614d16e8fc5eebedf63ad80ef68a3b99104bc9c9b10ca61bc6bc7"
+        "storeCodeProposalCodeHash": "e781fe07604614d16e8fc5eebedf63ad80ef68a3b99104bc9c9b10ca61bc6bc7",
+        "lastUploadedCodeId": 29
       }
     },
     "axelarId": "axelar",
