@@ -3,7 +3,7 @@
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError } = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -16,7 +16,7 @@ const {
     stellarAddressToBytes,
     serializeValue,
 } = require('./utils');
-const { prompt } = require('../common/utils');
+const { prompt, parseTrustedChains } = require('../common/utils');
 
 async function setTrustedChain(wallet, _, chain, contract, arg, options) {
     const callArg = nativeToScVal(arg, { type: 'string' });
@@ -32,6 +32,35 @@ async function removeTrustedChain(wallet, _, chain, contract, arg, options) {
     const operation = contract.call('remove_trusted_chain', callArg);
 
     await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
+}
+
+async function addTrustedChains(wallet, config, chain, contract, args, options) {
+    const trustedChains = args;
+
+    const parsedTrustedChains = parseTrustedChains(config, trustedChains, options.chainName);
+
+    for (const trustedChain of parsedTrustedChains) {
+        printInfo('Set Trusted Chain', trustedChain);
+
+        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+
+        try {
+            const isTrusted = (
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
+            ).value();
+
+            if (isTrusted) {
+                printInfo('The chain is already trusted', trustedChain);
+                continue;
+            }
+
+            await broadcast(contract.call('set_trusted_chain', trustedChainScVal), wallet, chain, 'Trusted Chain Set', options);
+
+            printInfo('Successfully added as a trusted chain', trustedChain);
+        } catch (error) {
+            printError('Failed to process trusted chain:', trustedChain, error);
+        }
+    }
 }
 
 async function deployInterchainToken(wallet, _, chain, contract, args, options) {
@@ -178,6 +207,13 @@ if (require.main === module) {
         .description('remove a trusted InterchainTokenService chain')
         .action((chainName, options) => {
             mainProcessor(removeTrustedChain, chainName, options);
+        });
+
+    program
+        .command('add-trusted-chains <trustedChains>')
+        .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by commas or special tag 'all'`)
+        .action((trustedChains, options) => {
+            mainProcessor(addTrustedChains, trustedChains, options);
         });
 
     program

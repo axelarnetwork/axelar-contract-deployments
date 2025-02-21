@@ -1,16 +1,8 @@
 const { Command } = require('commander');
 const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, getITSChains } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
-
-function parseTrustedChains(config, trustedChains) {
-    if (trustedChains[0] === 'all' && trustedChains.length === 1) {
-        return getITSChains(config);
-    }
-
-    return trustedChains;
-}
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -80,7 +72,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
-    const [trustedChain] = args;
+    const trustedChains = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
 
@@ -88,11 +80,11 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const txBuilder = new TxBuilder(client);
 
-    const trustedChains = parseTrustedChains(config, trustedChain);
+    const parsedTrustedChains = parseTrustedChains(config, trustedChains, options.chainName);
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
-        arguments: [InterchainTokenService, OwnerCap, trustedChains],
+        arguments: [InterchainTokenService, OwnerCap, parsedTrustedChains],
     });
 
     if (options.offline) {
@@ -154,7 +146,7 @@ if (require.main === module) {
             `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
         )
         .action((trustedChains, options) => {
-            mainProcessor(addTrustedChains, options, [trustedChains], processCommand);
+            mainProcessor(addTrustedChains, options, trustedChains, processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
