@@ -698,6 +698,47 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'set-trusted-chain': {
+            if (args.length < 1) {
+                throw new Error('Missing required arguments: <trusted-chain>');
+            }
+
+            const [trustedChain] = args;
+            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
+
+            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+            }
+
+            validateParameters({ isNonEmptyString: { trustedChain } });
+
+            let trustedChains, trustedAddresses;
+
+            const trustedChainFinal =
+                getChainConfig(config, trustedChain.toLowerCase(), { skipCheck: true })?.axelarId || trustedChain.toLowerCase();
+            const trustedAddressFinal =
+                'hub' || getChainConfig(config, trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address;
+
+            if (trustedChainFinal === undefined || trustedAddressFinal === undefined) {
+                throw new Error(`Invalid chain/address: ${trustedChain}`);
+            }
+
+            trustedChains = [trustedChainFinal];
+            trustedAddresses = [trustedAddressFinal];
+
+            if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
+                return;
+            }
+
+            for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
+                const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
