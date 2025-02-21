@@ -2501,6 +2501,7 @@
       "tokenSymbol": "XRP",
       "confirmations": 1,
       "finality": "finalized",
+      "decimals": 18,
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
