@@ -22,7 +22,7 @@ async function handlePauseOperation(chain, contractName, options, pauseOperation
     }
 }
 
-async function is_paused(chain, contractName, _args, options) {
+async function isPaused(chain, contractName, _args, options) {
     await handlePauseOperation(chain, contractName, options, 'paused');
 }
 
@@ -132,7 +132,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(is_paused, contractName, [], options);
+            mainProcessor(isPaused, contractName, [], options);
         });
 
     program
