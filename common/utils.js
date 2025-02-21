@@ -443,7 +443,7 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 const getItsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId ||
+        chainConfig.contracts.ITS?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
     if (!itsEdgeContract) {
@@ -451,6 +451,15 @@ const getItsEdgeContract = (chainConfig) => {
     }
 
     return itsEdgeContract;
+};
+
+const getItsEdgeChains = (config, excludeChainName) => {
+    return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
+};
+
+const isValidItsEdgeChain = (config, chainName) => {
+    const chainConfig = getChainConfig(config, chainName);
+    return getItsEdgeContract(chainConfig);
 };
 
 module.exports = {
@@ -492,4 +501,6 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
+    getItsEdgeChains,
+    isValidItsEdgeChain,
 };
