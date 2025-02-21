@@ -226,7 +226,7 @@ node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [in
 #### Deploy Remote Interchain Token
 
 ```bash
-node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Register Canonical Token
@@ -238,13 +238,13 @@ node stellar/its.js register-canonical-token [token-address]
 #### Deploy Remote Canonical Token
 
 ```bash
-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Interchain Transfer
 
 ```bash
-node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Encode stellar recipient address to bytes
@@ -289,10 +289,10 @@ node stellar/contract.js restore-instance [contract-name]
 #### GMP - Send Command (Outgoing)
 
 ```bash
-node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-amount [amount]
 
 # Example
-node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234 CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC 1
+node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 #### GMP - Execute Command (Incoming)
