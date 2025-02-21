@@ -1357,10 +1357,6 @@
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
-        },
-        "InterchainTokenService": {
-          "skip": true,
-          "address": ""
         }
       },
       "gasOptions": {
@@ -2279,10 +2275,6 @@
       },
       "timeout": 50000,
       "contracts": {
-        "InterchainTokenService": {
-          "skip": true,
-          "address": ""
-        },
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
           "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",

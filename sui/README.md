@@ -392,7 +392,7 @@ node sui/its.js setup-trusted-address <sourceChain>,<sourceChain2>,... <sourceAd
 or Add all evm chains that have ITS contract deployed
 
 ```bash
-node sui/its.js setup-trusted-address all-evm <sourceAddress>
+node sui/its.js setup-trusted-address all <sourceAddress>
 ```
 
 Remove trusted address
