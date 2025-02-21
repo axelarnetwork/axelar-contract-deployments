@@ -712,8 +712,6 @@ async function processCommand(config, chain, options) {
 
             validateParameters({ isNonEmptyString: { trustedChain } });
 
-            let trustedChains, trustedAddresses;
-
             const trustedChainFinal =
                 getChainConfig(config, trustedChain.toLowerCase(), { skipCheck: true })?.axelarId || trustedChain.toLowerCase();
             const trustedAddressFinal =
@@ -723,8 +721,8 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Invalid chain/address: ${trustedChain}`);
             }
 
-            trustedChains = [trustedChainFinal];
-            trustedAddresses = [trustedAddressFinal];
+            const trustedChains = [trustedChainFinal];
+            const trustedAddresses = [trustedAddressFinal];
 
             if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
                 return;
