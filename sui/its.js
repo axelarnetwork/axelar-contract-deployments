@@ -91,7 +91,7 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Added trusted chain ${trustedChain}`, client, options);
+        await saveGeneratedTx(tx, `Added trusted chain ${trustedChains}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
     }

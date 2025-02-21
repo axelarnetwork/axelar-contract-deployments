@@ -2,7 +2,7 @@
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError, validateParameters } = require('../common');
 const {
     addBaseOptions,
     getWallet,
