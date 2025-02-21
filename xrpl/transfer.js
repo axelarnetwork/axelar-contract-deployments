@@ -23,7 +23,7 @@ function parseAmount(args) {
 
 async function transfer(wallet, _, client, chain, args, options) {
     await sendPayment(client, wallet, {
-        destination: chain.multisigAddress,
+        destination: chain.contracts.AxelarGateway.address,
         amount: parseAmount(args), // args.token is either XRP or IOU.<issuer-address>
         memos: [
             { memoType: hex('destination_address'), memoData: args.destinationAddress.replace('0x', '') },
