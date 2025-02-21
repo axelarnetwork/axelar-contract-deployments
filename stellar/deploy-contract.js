@@ -4,7 +4,7 @@ const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorize
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
-const { getDomainSeparator, getChainConfig } = require('../common');
+const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -26,7 +26,33 @@ const SUPPORTED_CONTRACTS = new Set([
     'token_manager',
     'interchain_token_service',
     'upgrader',
+    'example',
 ]);
+
+const CONTRACT_CONFIGS = {
+    axelar_gateway: () => [
+        new Option('--nonce <nonce>', 'optional nonce for the signer set'),
+        new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
+        new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
+        new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number),
+    ],
+    example: () => [new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false)],
+};
+
+const addDeployOptions = (program) => {
+    // Get the package name from the program name
+    const contractName = program.name();
+    // Find the corresponding options for the package
+    const cmdOptions = CONTRACT_CONFIGS[contractName];
+
+    if (cmdOptions) {
+        const options = cmdOptions();
+        // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
+
+    return program;
+};
 
 function getWasmUrl(contractName, version) {
     if (!SUPPORTED_CONTRACTS.has(contractName)) {
@@ -296,38 +322,49 @@ function main() {
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
     // 2nd level deploy command
-    const deployCmd = new Command('deploy')
-        .description('Deploy a Stellar contract')
-        .argument('<contract-name>', 'contract name to deploy')
-        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-        .addOption(new Option('--version <version>', 'version of the contract to deploy (e.g., v1.0.0)'))
-        .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
-        .addOption(new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'))
-        .addOption(
-            new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
-                .default(15)
-                .argParser(Number),
-        )
-        .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number))
-        .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false))
-        .action((contractName, options) => {
-            mainProcessor(options, deploy, contractName);
-        });
+    const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
 
     // 2nd level upgrade command
-    const upgradeCmd = new Command('upgrade')
-        .description('Upgrade a Stellar contract')
-        .argument('<contract-name>', 'contract name to deploy')
-        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-        .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-        .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
-        .action((contractName, options) => {
-            mainProcessor(options, upgrade, contractName);
-        });
+    const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
 
     // Add base options to all 2nd level commands
     addBaseOptions(upgradeCmd, { address: true });
     addBaseOptions(deployCmd, { address: true });
+
+    // 3rd level commands for `deploy`
+    const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
+        const command = new Command(contractName)
+            .description(`Deploy ${contractName} contract`)
+            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+            .addOption(new Option('--version <version>', 'version of the contract to deploy (e.g., v1.0.0)'))
+            .action((options) => {
+                mainProcessor(options, deploy, contractName);
+            });
+
+        return addDeployOptions(command);
+    });
+
+    // 3rd level commands for `upgrade`
+    const upgradeContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
+        return new Command(contractName)
+            .description(`Upgrade ${contractName} contract`)
+            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+            .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
+            .action((options) => {
+                mainProcessor(options, upgrade, contractName);
+            });
+    });
+
+    // Add 3rd level commands to 2nd level command `deploy`
+    deployContractCmds.forEach((cmd) => deployCmd.addCommand(cmd));
+
+    // Add 3rd level commands to 2nd level command `upgrade`
+    upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+
+    // Add base options to all 3rd level commands
+    addOptionsToCommands(deployCmd, addBaseOptions);
+    addOptionsToCommands(upgradeCmd, addBaseOptions);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
