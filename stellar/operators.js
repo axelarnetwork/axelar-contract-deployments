@@ -44,16 +44,16 @@ async function collectFees(wallet, _, chain, contract, args, options) {
     const [receiver] = args;
     const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasAmount = options.gasAmount;
 
     validateParameters({
         isNonEmptyString: { receiver, gasServiceAddress, gasTokenAddress },
-        isValidNumber: { gasFeeAmount },
+        isValidNumber: { gasAmount },
     });
 
     const target = addressToScVal(gasServiceAddress);
     const method = nativeToScVal('collect_fees', { type: 'symbol' });
-    const params = nativeToScVal([addressToScVal(receiver), tokenToScVal(gasTokenAddress, gasFeeAmount)]);
+    const params = nativeToScVal([addressToScVal(receiver), tokenToScVal(gasTokenAddress, gasAmount)]);
 
     const operation = contract.call('execute', operator, target, method, params);
 
@@ -65,11 +65,11 @@ async function refund(wallet, _, chain, contract, args, options) {
     const [messageId, receiver] = args;
     const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasAmount = options.gasAmount;
 
     validateParameters({
         isNonEmptyString: { messageId, receiver, gasServiceAddress, gasTokenAddress },
-        isValidNumber: { gasFeeAmount },
+        isValidNumber: { gasAmount },
     });
 
     const target = addressToScVal(gasServiceAddress);
@@ -77,7 +77,7 @@ async function refund(wallet, _, chain, contract, args, options) {
     const params = nativeToScVal([
         nativeToScVal(messageId, { type: 'string' }),
         addressToScVal(receiver),
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     ]);
 
     const operation = contract.call('execute', operator, target, method, params);
@@ -151,7 +151,7 @@ if (require.main === module) {
     program
         .command('collect-fees <receiver>')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((receiver, options) => {
             mainProcessor(collectFees, [receiver], options);
         });
@@ -159,7 +159,7 @@ if (require.main === module) {
     program
         .command('refund <messageId> <receiver>')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((messageId, receiver, options) => {
             mainProcessor(refund, [messageId, receiver], options);
         });
