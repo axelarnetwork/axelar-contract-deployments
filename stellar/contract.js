@@ -16,6 +16,7 @@ async function pauseHelper(chain, contractName, _args, options, pauseOperation) 
     const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
     const operation = await contract.call(pauseOperation);
     const returnValue = await broadcast(operation, wallet, chain, `${pauseOperation} performed`, options);
+
     if (returnValue.value()) {
         printInfo('Return value', returnValue.value());
     }
@@ -82,17 +83,17 @@ async function restoreInstance(chain, contractName, _args, options) {
 }
 
 async function mainProcessor(processor, contractName, args, options) {
-        const config = loadConfig(options.env);
-        const chain = getChainConfig(config, options.chainName);
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config, options.chainName);
 
-        if (!chain.contracts[contractName]) {
-            throw new Error('Contract not found');
-        }
-
-        await processor(chain, contractName, args, options);
-
-        saveConfig(config, options.env);
+    if (!chain.contracts[contractName]) {
+        throw new Error('Contract not found');
     }
+
+    await processor(chain, contractName, args, options);
+
+    saveConfig(config, options.env);
+}
 
 if (require.main === module) {
     const program = new Command();
