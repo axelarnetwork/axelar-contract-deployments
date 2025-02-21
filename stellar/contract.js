@@ -11,7 +11,7 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function pauseHelper(chain, contractName, _args, options, pauseOperation) {
+async function handlePauseOperation(chain, contractName, options, pauseOperation) {
     const wallet = await getWallet(chain, options);
     const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
     const operation = await contract.call(pauseOperation);
@@ -22,16 +22,16 @@ async function pauseHelper(chain, contractName, _args, options, pauseOperation) 
     }
 }
 
-async function paused(chain, contractName, _args, options) {
-    await pauseHelper(chain, contractName, _args, options, 'paused');
+async function is_paused(chain, contractName, _args, options) {
+    await handlePauseOperation(chain, contractName, options, 'paused');
 }
 
 async function pause(chain, contractName, _args, options) {
-    await pauseHelper(chain, contractName, _args, options, 'pause');
+    await handlePauseOperation(chain, contractName, options, 'pause');
 }
 
 async function unpause(chain, contractName, _args, options) {
-    await pauseHelper(chain, contractName, _args, options, 'unpause');
+    await handlePauseOperation(chain, contractName, options, 'unpause');
 }
 
 async function getTtl(chain, contractName, _args, _options) {
@@ -128,11 +128,11 @@ if (require.main === module) {
         });
 
     program
-        .command('paused')
+        .command('is_paused')
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(paused, contractName, [], options);
+            mainProcessor(is_paused, contractName, [], options);
         });
 
     program

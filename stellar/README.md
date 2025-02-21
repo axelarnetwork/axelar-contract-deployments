@@ -294,7 +294,7 @@ node stellar/contract.js [action] [contract-name]
 
 - `[action]` can be one of the following:
   - `pause`: Pause the contract
-  - `paused`: Check if the contract is paused
+  - `is_paused`: Check if the contract is paused
   - `unpause`: Unpause the contract
 
 - `[contract-name]`: The name of the contract to interact with. This option is mandatory.
@@ -305,7 +305,7 @@ node stellar/contract.js [action] [contract-name]
 Check if the contract is paused:
 
 ```bash
-node stellar/contract.js paused axelar_gateway
+node stellar/contract.js is_paused axelar_gateway
 ```
 
 Pause the contract:
