@@ -43,6 +43,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
     "tokenSymbol": "XRP",
     "confirmations": 1,
     "finality": "finalized",
+    "decimals": 18,
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
@@ -65,6 +66,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
     "tokenSymbol": "XRP",
     "confirmations": 1,
     "finality": "finalized",
+    "decimals": 18,
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
