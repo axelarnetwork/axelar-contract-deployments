@@ -3,13 +3,12 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmPath } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
-const { prompt, validateParameters, getWasmPath } = require('../common/utils');
+const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
 const { readFileSync } = require('fs');
-const path = require('path');
 const {
     utils: { arrayify, id },
 } = ethers;
@@ -117,7 +116,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options, contractName, 'stellar');
+    const wasmPath = await getWasmPath(options, contractName);
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {

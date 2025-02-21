@@ -13,6 +13,7 @@ const {
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
+const { downloadWasmFile } = require('../common/utils');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
@@ -23,6 +24,19 @@ const {
 
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
+
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
+// TODO Need to be migrated to Pascal Case
+const SUPPORTED_STELLAR_CONTRACTS = new Set([
+    'axelar_gateway',
+    'axelar_operators',
+    'axelar_gas_service',
+    'interchain_token',
+    'token_manager',
+    'interchain_token_service',
+    'upgrader',
+]);
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -340,6 +354,31 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+
+function getStellarWasmUrl(contractName, version) {
+    if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
+        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
+    }
+
+    // TODO - Contract Name will change to PascalCase in future
+    const pathName = contractName.replace(/_/g, '-');
+
+    return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+}
+
+async function getWasmPath(options, contractName) {
+    if (options.wasmPath) {
+        return options.wasmPath;
+    }
+
+    if (options.version) {
+        const url = getStellarWasmUrl(contractName, options.version);
+        return await downloadWasmFile(url, contractName, options.version);
+    }
+
+    throw new Error('Either --wasm-path or --version must be provided');
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -361,4 +400,5 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    getWasmPath,
 };

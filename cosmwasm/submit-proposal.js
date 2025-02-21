@@ -12,7 +12,6 @@ const {
     prepareClient,
     fromHex,
     getSalt,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
@@ -28,9 +27,9 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
+    getWasmPath,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
-const { getWasmPath } = require('../common/utils');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,

@@ -5,7 +5,6 @@ require('dotenv').config();
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
-const { getWasmPath } = require('../common/utils');
 
 const {
     CONTRACTS,
@@ -19,7 +18,7 @@ const {
     uploadContract,
     instantiateContract,
     migrateContract,
-    downloadContractFromR2,
+    getWasmPath,
 } = require('./utils');
 
 const { Command } = require('commander');

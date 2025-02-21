@@ -15,38 +15,10 @@ const {
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
 
-
-const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
-
-// TODO Need to be migrated to Pascal Case
-const SUPPORTED_STELLAR_CONTRACTS = new Set([
-    'axelar_gateway',
-    'axelar_operators',
-    'axelar_gas_service',
-    'interchain_token',
-    'token_manager',
-    'interchain_token_service',
-    'upgrader',
-]);
-
-const SUPPORTED_COSMWASM_CONTRACTS = new Set([
-    'AxelarGateway',
-    'Coordinator',
-    'Gateway',
-    'MultisigProver',
-    'Multisig',
-    'NexusGateway',
-    'Rewards',
-    'Router',
-    'ServiceRegistry',
-    'VotingVerifier',
-    'InterchainTokenService'
-]);
-
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
-const pascalToKebab = (str) => str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-
+const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
+  
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
@@ -364,7 +336,7 @@ function findProjectRoot(startDir) {
     while (currentDir !== path.parse(currentDir).root) {
         const potentialPackageJson = path.join(currentDir, 'package.json');
 
-        if (fs.existsSync(potentialPackageJson)) {
+        if (existsSync(potentialPackageJson)) {
             return currentDir;
         }
 
@@ -486,54 +458,7 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-
-function getStellarWasmUrl(contractName, version) {
-    if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
-        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
-    }
-
-    //TODO - Contract Name will change to PascalCase in future
-    const pathName = contractName.replace(/_/g, '-');
-
-    return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
-}
-
-function getCosmWasmUrl(contractName, contractVersion) {
-    if (!SUPPORTED_COSMWASM_CONTRACTS.has(contractName)) {
-        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
-    }
-
-    const pathName = pascalToKebab(contractName);
-    const fileName = pascalToSnake(contractName);
-
-    const versionRegex = /^v\d+\.\d+\.\d+$/;
-    const commitRegex = /^[a-f0-9]{7,}$/;
-
-    let contractPath;
-
-    if (versionRegex.test(contractVersion)) {
-        // remove leading v
-        const semanticVersion = contractVersion.slice(1);      
-        contractPath = `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
-    } else if (commitRegex.test(contractVersion)) {
-        contractPath = `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
-    } else {
-        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
-    }
-
-    return contractPath;
-}
-
-async function downloadWasmFile(contractType, contractName, version) {
-    let url;
-    if (contractType === 'cosmwasm') {
-        url = getCosmWasmUrl(contractName, version);
-    } else if (contractType === 'stellar') {
-        url = getStellarWasmUrl(contractName, version);
-    } else {
-        throw new Error(`Unsupported contract type: ${contractType}`);
-    }
-
+async function downloadWasmFile(url, contractName, version) {
     const tempDir = path.join(process.cwd(), 'artifacts');
 
     if (!existsSync(tempDir)) {
@@ -556,22 +481,6 @@ async function downloadWasmFile(contractType, contractName, version) {
     } catch (error) {
         throw new Error(`Error downloading WASM file: ${error.message}`);
     }
-}
-
-async function getWasmPath(options, contractName, contractType) {
-    if (options.wasmPath) {
-        return options.wasmPath;
-    }
-
-    if (options.artifactPath) {
-        return `${options.artifactPath}/${pascalToSnake(contractName)}.wasm`;
-    }
-
-    if (options.version) {
-        return await downloadWasmFile(contractType, contractName, options.version);
-    }
-
-    throw new Error('--wasm-path --artifactPath or --version must be provided');
 }
 
 
@@ -614,10 +523,7 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
-    getStellarWasmUrl,
-    getCosmWasmUrl,
     downloadWasmFile,
-    getWasmPath,
     pascalToKebab,
-    pascalToSnake
+    pascalToSnake,
 };

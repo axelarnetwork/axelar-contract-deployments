@@ -115,17 +115,18 @@ const addStoreOptions = (program) => {
     program.addOption(
         new Option('-a, --artifactPath <artifactPath>', 'artifact path')
             .env('ARTIFACT_PATH')
-            .conflicts('contractVersion')
+            .conflicts('contractVersion'),
     );
 
     program.addOption(
         new Option('-v, --version <contractVersion>', 'released version vX.Y.Z or pre-release commit hash to upload')
             .env('CONTRACT_VERSION')
-            .conflicts('artifactPath')
+            .conflicts('artifactPath'),
     );
 
     program.hook('preAction', (thisCommand) => {
         const opts = thisCommand.opts();
+
         if (!opts.artifactPath && !opts.version) {
             console.error('Error: You must provide either --artifactPath or --version.');
             process.exit(1);
