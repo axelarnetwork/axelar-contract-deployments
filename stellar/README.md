@@ -290,8 +290,6 @@ To use this script, run the following command with the appropriate options:
 node stellar/contract.js [action] [contract-name]
 ```
 
-
-
 #### Options
 
 - `[action]` can be one of the following:

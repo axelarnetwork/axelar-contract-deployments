@@ -11,16 +11,26 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function paused(contract) {
-    return contract.call('paused');
+async function pauseHelper(chain, contractName, _args, options, pauseOperation) {
+    const wallet = await getWallet(chain, options);
+    const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
+    const operation = await contract.call(pauseOperation);
+    const returnValue = await broadcast(operation, wallet, chain, `${pauseOperation} performed`, options);
+    if (returnValue.value()) {
+        printInfo('Return value', returnValue.value());
+    }
 }
 
-async function pause(contract) {
-    return contract.call('pause');
+async function paused(chain, contractName, _args, options) {
+    await pauseHelper(chain, contractName, _args, options, 'paused');
 }
 
-async function unpause(contract) {
-    return contract.call('unpause');
+async function pause(chain, contractName, _args, options) {
+    await pauseHelper(chain, contractName, _args, options, 'pause');
+}
+
+async function unpause(chain, contractName, _args, options) {
+    await pauseHelper(chain, contractName, _args, options, 'unpause');
 }
 
 async function getTtl(chain, contractName, _args, _options) {
@@ -72,28 +82,17 @@ async function restoreInstance(chain, contractName, _args, options) {
 }
 
 async function mainProcessor(processor, contractName, args, options) {
-    const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+        const config = loadConfig(options.env);
+        const chain = getChainConfig(config, options.chainName);
 
-    if (!chain.contracts[contractName]) {
-        throw new Error('Contract not found');
-    }
-
-    if ([paused, pause, unpause].includes(processor)) {
-        const wallet = await getWallet(chain, options);
-        const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
-        const operation = await processor(contract);
-        const returnValue = await broadcast(operation, wallet, chain, `${processor.name} performed`, options);
-
-        if (returnValue.value()) {
-            printInfo('Return value', returnValue.value());
+        if (!chain.contracts[contractName]) {
+            throw new Error('Contract not found');
         }
-    } else {
+
         await processor(chain, contractName, args, options);
 
         saveConfig(config, options.env);
     }
-}
 
 if (require.main === module) {
     const program = new Command();
@@ -130,7 +129,7 @@ if (require.main === module) {
     program
         .command('paused')
         .description('Check if the contract is paused')
-        .argument('<contract-name>', 'contract name to deploy')
+        .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
             mainProcessor(paused, contractName, [], options);
         });
@@ -138,7 +137,7 @@ if (require.main === module) {
     program
         .command('pause')
         .description('Pause the contract')
-        .argument('<contract-name>', 'contract name to deploy')
+        .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
             mainProcessor(pause, contractName, [], options);
         });
@@ -146,7 +145,7 @@ if (require.main === module) {
     program
         .command('unpause')
         .description('Unpause the contract')
-        .argument('<contract-name>', 'contract name to deploy')
+        .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
             mainProcessor(unpause, contractName, [], options);
         });
