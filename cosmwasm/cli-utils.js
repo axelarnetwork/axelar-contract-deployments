@@ -128,8 +128,7 @@ const addStoreOptions = (program) => {
         const opts = thisCommand.opts();
 
         if (!opts.artifactPath && !opts.version) {
-            console.error('Error: You must provide either --artifactPath or --version.');
-            process.exit(1);
+            throw new Error('Either --artifactPath or --version is required');
         }
     });
 };
