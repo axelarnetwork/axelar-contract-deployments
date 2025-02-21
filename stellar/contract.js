@@ -11,9 +11,9 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function handlePauseOperation(chain, contractName, options, pauseOperation) {
+async function handlePauseOperation(chain, _, contract, arg, options) {
+    const pauseOperation = arg;
     const wallet = await getWallet(chain, options);
-    const contract = new Contract(chain.contracts?.[contractName]?.address || options.address);
     const operation = await contract.call(pauseOperation);
     const returnValue = await broadcast(operation, wallet, chain, `${pauseOperation} performed`, options);
 
@@ -22,33 +22,20 @@ async function handlePauseOperation(chain, contractName, options, pauseOperation
     }
 }
 
-async function isPaused(chain, contractName, _args, options) {
-    await handlePauseOperation(chain, contractName, options, 'paused');
-}
-
-async function pause(chain, contractName, _args, options) {
-    await handlePauseOperation(chain, contractName, options, 'pause');
-}
-
-async function unpause(chain, contractName, _args, options) {
-    await handlePauseOperation(chain, contractName, options, 'unpause');
-}
-
-async function getTtl(chain, contractName, _args, _options) {
+async function getTtl(chain, contractName, contract, _args, _options) {
     printInfo('Contract TTL', contractName);
-    const ledgerEntry = await getLedgerEntry(chain, contractName);
+    const ledgerEntry = await getLedgerEntry(chain, contract);
     printInfo('Latest Ledger', ledgerEntry.latestLedger);
     printInfo('Expiry Ledger', ledgerEntry.entries[0].liveUntilLedgerSeq);
 }
 
-async function getLedgerEntry(chain, contractName) {
-    const contract = new Contract(chain.contracts[contractName].address);
+async function getLedgerEntry(chain, contract) {
     const instance = contract.getFootprint();
     const server = new SorobanRpc.Server(chain.rpc);
     return await server.getLedgerEntries(...[instance]);
 }
 
-async function extendInstance(chain, contractName, _args, options) {
+async function extendInstance(chain, contractName, _, _args, options) {
     const { yes } = options;
     const { rpc, networkType } = chain;
 
@@ -66,7 +53,7 @@ async function extendInstance(chain, contractName, _args, options) {
     execSync(cmd, { stdio: 'inherit' });
 }
 
-async function restoreInstance(chain, contractName, _args, options) {
+async function restoreInstance(chain, contractName, _, _args, options) {
     const { yes } = options;
     const { rpc, networkType } = chain;
 
@@ -90,7 +77,9 @@ async function mainProcessor(processor, contractName, args, options) {
         throw new Error('Contract not found');
     }
 
-    await processor(chain, contractName, args, options);
+    const contract = new Contract(chain.contracts[contractName].address);
+
+    await processor(chain, contractName, contract, args, options);
 
     saveConfig(config, options.env);
 }
@@ -132,7 +121,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(isPaused, contractName, [], options);
+            mainProcessor(handlePauseOperation, contractName, 'paused', options);
         });
 
     program
@@ -140,7 +129,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(pause, contractName, [], options);
+            mainProcessor(handlePauseOperation, contractName, 'pause', options);
         });
 
     program
@@ -148,7 +137,7 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(unpause, contractName, [], options);
+            mainProcessor(handlePauseOperation, contractName, 'unpause', options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
