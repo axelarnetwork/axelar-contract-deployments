@@ -457,19 +457,9 @@ const getItsEdgeChains = (config, excludeChainName) => {
     return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
 };
 
-const isValidItsEdgeChain = (config, chainName) => {
-    const chainConfig = getChainConfig(config, chainName);
-    return getItsEdgeContract(chainConfig);
-};
-
 const parseTrustedChains = (config, trustedChains, excludeChainName) => {
     const parsedTrustedChains =
-        trustedChains === 'all'
-            ? getItsEdgeChains(config, excludeChainName)
-            : trustedChains
-                  .split(',')
-                  .map((chain) => chain.trim())
-                  .filter((trustedChain) => isValidItsEdgeChain(config, trustedChain));
+        trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
 
     return parsedTrustedChains;
 };

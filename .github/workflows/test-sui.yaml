@@ -218,7 +218,7 @@ jobs:
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
         run: |
-          echo "sourceChain=ethereum" >> $GITHUB_ENV
+          echo "sourceChain=Ethereum" >> $GITHUB_ENV
           echo "transferMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-01" >> $GITHUB_ENV
           echo "deployMessageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-02" >> $GITHUB_ENV
           echo "sourceAddress=0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5" >> $GITHUB_ENV
