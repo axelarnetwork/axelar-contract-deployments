@@ -49,7 +49,7 @@ const PACKAGE_DIRS = [
     'operators',
     'abi',
     'governance',
-    'its',
+    'interchain_token_service',
     'squid',
     'interchain_token',
 ];
