@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
 const { saveConfig, printInfo, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
@@ -49,7 +49,7 @@ const PACKAGE_DIRS = [
     'operators',
     'abi',
     'governance',
-    'interchain_token_service',
+    'its',
     'squid',
     'interchain_token',
 ];
@@ -501,6 +501,22 @@ const addDeployOptions = (program) => {
     return program;
 };
 
+async function syncPackages(keypair, client, config, chain, options) {
+    for (const packageDir of PACKAGE_DIRS) {
+        copyMovePackage(packageDir, null, moveDir);
+        const packageName = readMovePackageName(packageDir);
+        const packageId = chain.contracts[packageName]?.address;
+
+        if (!packageId) {
+            printInfo(`Package ID for ${packageName} not found in config. Skipping...`);
+            continue;
+        }
+
+        updateMoveToml(packageDir, packageId, moveDir);
+        printInfo(`Synced ${packageName} with package ID`, packageId);
+    }
+}
+
 if (require.main === module) {
     // 1st level command
     const program = new Command('deploy-contract').description('Deploy/Upgrade packages');
@@ -537,16 +553,22 @@ if (require.main === module) {
             });
     });
 
+    const syncCmd = new Command('sync').description('Sync local Move packages with deployed addresses').action((options) => {
+        mainProcessor([], options, syncPackages);
+    });
+
     // Add 3rd level commands to 2nd level command `upgrade`
     upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
 
     // Add base options to all 2nd and 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
     addOptionsToCommands(upgradeCmd, addBaseOptions);
+    addBaseOptions(syncCmd);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
     program.addCommand(upgradeCmd);
+    program.addCommand(syncCmd);
 
     program.parse();
 }
