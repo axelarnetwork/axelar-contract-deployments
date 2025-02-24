@@ -2,7 +2,7 @@ const { Command, Option } = require('commander');
 const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -441,6 +441,22 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 }
 
+async function syncPackages(keypair, client, config, chain, options) {
+    for (const packageDir of PACKAGE_DIRS) {
+        copyMovePackage(packageDir, null, moveDir);
+        const packageName = readMovePackageName(packageDir);
+        const packageId = chain.contracts[packageName]?.address;
+
+        if (!packageId) {
+            printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
+            continue;
+        }
+
+        updateMoveToml(packageDir, packageId, moveDir);
+        printInfo(`Synced ${packageName} with package ID`, packageId);
+    }
+}
+
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
     const sui = getChainConfig(config, options.chainName);
@@ -500,22 +516,6 @@ const addDeployOptions = (program) => {
 
     return program;
 };
-
-async function syncPackages(keypair, client, config, chain, options) {
-    for (const packageDir of PACKAGE_DIRS) {
-        copyMovePackage(packageDir, null, moveDir);
-        const packageName = readMovePackageName(packageDir);
-        const packageId = chain.contracts[packageName]?.address;
-
-        if (!packageId) {
-            printInfo(`Package ID for ${packageName} not found in config. Skipping...`);
-            continue;
-        }
-
-        updateMoveToml(packageDir, packageId, moveDir);
-        printInfo(`Synced ${packageName} with package ID`, packageId);
-    }
-}
 
 if (require.main === module) {
     // 1st level command
