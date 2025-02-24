@@ -36,7 +36,7 @@ async function removeTrustedChain(wallet, _, chain, contract, arg, options) {
 async function addTrustedChains(wallet, config, chain, contract, args, options) {
     const trustedChains = args;
 
-    const parsedTrustedChains = parseTrustedChains(config, trustedChains, options.chainName);
+    const parsedTrustedChains = parseTrustedChains(config, trustedChains.toString(), options.chainName);
 
     for (const trustedChain of parsedTrustedChains) {
         printInfo('Set Trusted Chain', trustedChain);
