@@ -48,14 +48,14 @@ Amplifier ITS
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+node evm/deploy-its.js "v2.1.0 devnet-amplifier" create2 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+node evm/deploy-its.js "v2.1.0" create2 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
