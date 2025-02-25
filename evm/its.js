@@ -635,14 +635,14 @@ async function processCommand(config, chain, options) {
         }
 
         case 'linkToken': {
-            const { destinationChain, type, operator, tokenAddress, gasValue } = options;
+            const { destinationChain, type, operator, destinationTokenAddress, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
             const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
                 isString: { destinationChain },
-                isValidAddress: { tokenAddress, operator },
+                isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
             isValidDestinationChain(config, destinationChain);
@@ -661,12 +661,18 @@ async function processCommand(config, chain, options) {
                 return;
             }
 
+            if (
+                prompt(`Proceed with linking tokenId ${tokenId} to ${destinationTokenAddress} on chain ${destinationChain}?`, options.yes)
+            ) {
+                return;
+            }
+
             const linkParams = operator;
 
             const tx = await interchainTokenService.linkToken(
                 deploymentSalt,
                 destinationChain,
-                tokenAddress,
+                destinationTokenAddress,
                 tokenManagerType,
                 linkParams,
                 gasValue,
@@ -741,6 +747,12 @@ if (require.main === module) {
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
     program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address to use for token manager deployment'));
+    program.addOption(
+        new Option(
+            '--destinationTokenAddress <destinationTokenAddress>',
+            'destination token address on the destination chain to the source token to',
+        ),
+    );
     program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
