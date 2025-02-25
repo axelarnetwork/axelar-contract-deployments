@@ -537,9 +537,9 @@ if (require.main === module) {
         .argument('<privateKey>', 'wallet private key')
         .argument('[deployMethod]', 'deployment method', 'create2')
         .argument('[proxyDeployMethod]', 'proxy deployment method', 'create3')
-        .argument('[salt]', 'deployment salt for ITS') 
+        .argument('[salt]', 'deployment salt for ITS')
         .argument('[proxySalt]', 'deployment salt for ITS proxies', 'v1.0.0')
-        .argument('[operatorAddress]', 'address of the ITS operator/rate limiter'); 
+        .argument('[operatorAddress]', 'address of the ITS operator/rate limiter');
 
     addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
