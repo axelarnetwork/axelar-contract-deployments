@@ -634,6 +634,50 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'linkToken': {
+            const { destinationChain, type, operator, tokenAddress, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
+
+            validateParameters({
+                isString: { destinationChain },
+                isValidAddress: { tokenAddress, operator },
+                isValidNumber: { gasValue, tokenManagerType },
+            });
+            isValidDestinationChain(config, destinationChain);
+
+            const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('Expected tokenId', interchainTokenId);
+
+            try {
+                const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+                printInfo(`TokenManager for tokenId ${tokenId} exists on the current chain`, tokenManagerAddress);
+
+                const sourceTokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address on current chain for tokenId ${tokenId}`, sourceTokenAddress);
+            } catch (error) {
+                printError(`TokenManager for tokenId ${tokenId} does not yet exist on the current chain.`);
+                return;
+            }
+
+            const linkParams = operator;
+
+            const tx = await interchainTokenService.linkToken(
+                deploymentSalt,
+                destinationChain,
+                tokenAddress,
+                tokenManagerType,
+                linkParams,
+                gasValue,
+                gasOptions,
+            );
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'LinkTokenStarted');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -677,6 +721,7 @@ if (require.main === module) {
                 'migrateInterchainToken',
                 'registerTokenMetadata',
                 'transferMintership',
+                'linkToken',
             ])
             .makeOptionMandatory(true),
     );

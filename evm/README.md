@@ -257,3 +257,17 @@ To get details of options provided in the command run:
 ```bash
 node evm/verify-contract.js --help
 ```
+
+## Interchain Token Service
+
+### Link Token
+
+#### Legacy custom ITS tokens
+
+Custom tokens that have already registered with ITS (via `deployTokenManager`) prior to ITS v2.1.0 release can continue being linked to new chains via the following approach. However, we do recommend registering them. Token manager type should be passed in via `--type` flag (e.g. `MINT_BURN`).
+
+```bash
+node evm/its.js linkToken --salt [deploy-salt] --destinationChain [destinationChain] --tokenAddress [tokenAddress] --type [type] --operator [operator] --gasValue [gasValue]
+```
+
+The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of hashing the provided salt string.
