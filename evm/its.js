@@ -41,7 +41,6 @@ const tokenManagerImplementations = {
     LOCK_UNLOCK_FEE: 3,
     MINT_BURN: 4,
 };
-const { getITSChains } = require('../common/utils');
 
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
@@ -487,7 +486,9 @@ async function processCommand(config, chain, options) {
             let trustedChains, trustedAddresses;
 
             if (trustedChain === 'all') {
-                trustedChains = getITSChains(config);
+                const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
+                trustedChains = itsChains.map((chain) => chain.axelarId);
+
                 trustedAddresses = trustedChains.map((_) => trustedAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChainFinal =
