@@ -5,7 +5,8 @@ use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::system_instruction;
 
 use crate::helpers::{
-    approve_ix_at_gateway, default_proposal_eta, gmp_sample_metadata, setup_programs,
+    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, gmp_sample_metadata,
+    setup_programs,
 };
 
 #[tokio::test]
@@ -88,5 +89,49 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     assert_eq!(
         new_receiver_funds,
         amount_to_withdraw + initial_receiver_funds
+    );
+}
+
+#[tokio::test]
+async fn test_cannot_withdraw_surpassing_rent_exemption() {
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
+    let fund_receiver = Keypair::new();
+
+    let ix_builder = IxBuilder::new().builder_for_withdraw_tokens(
+        &config_pda,
+        &fund_receiver.pubkey(),
+        1, // Accounts are created with rent exemption by default. Here we just try to withdraw 1 lamport, the minimum possible. That will exceed the rent exemption.
+        default_proposal_eta(),
+    );
+
+    // Send the GMP instruction
+    let meta = gmp_sample_metadata();
+    let mut gmp_call_data = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_msg_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
+
+    // Move time forward to the proposal ETA
+    sol_integration
+        .fixture
+        .set_time(default_proposal_eta() as i64)
+        .await;
+
+    // Send the proposal execution instruction
+    let ix = ix_builder
+        .clone()
+        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+    let res = sol_integration.fixture.send_tx(&[ix]).await;
+    assert!(res.is_err());
+
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Not enough lamports to keep the account alive",
     );
 }

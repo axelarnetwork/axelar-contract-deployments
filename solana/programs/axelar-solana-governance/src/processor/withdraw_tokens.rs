@@ -8,6 +8,8 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::rent::Rent;
+use solana_program::sysvar::Sysvar;
 
 use crate::state::GovernanceConfig;
 
@@ -37,6 +39,18 @@ pub(crate) fn process(
     let config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 
     ensure_valid_governance_root_pda(config_data.bump, config_pda.key)?;
+
+    // Ensure we do not go below the rent-exempt balance
+    let rent = Rent::get()?;
+    let resultant_amount_after_operation = config_pda
+        .lamports()
+        .checked_sub(amount)
+        .expect("to not overflow when calculating resultant_amount_after_operation");
+
+    if resultant_amount_after_operation < rent.minimum_balance(config_pda.data_len()) {
+        msg!("Not enough lamports to keep the account alive");
+        return Err(ProgramError::InsufficientFunds);
+    }
 
     match program_utils::transfer_lamports(config_pda, receiver, amount) {
         Ok(()) => {
