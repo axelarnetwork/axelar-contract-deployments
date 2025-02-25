@@ -34,7 +34,7 @@ async function processCommand(config, chain, options) {
         `node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args '${argsAxelarGasService}'`,
         `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --args '${argsMultisig}'`,
         `node evm/deploy-contract.js -c InterchainGovernance -m create3 --args '${argsInterchainGovernance}'`,
-        `node evm/deploy-its.js -s "testSalt" --proxySalt 'testSalt'`,
+        `node evm/deploy-its.js "testSalt" 'testSalt'`,
         `node evm/gateway.js --action transferMintLimiter`,
         `node evm/gateway.js --action transferGovernance`,
     ];
