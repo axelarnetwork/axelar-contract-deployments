@@ -11,15 +11,30 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function handlePauseOperation(chain, _, contract, arg, options) {
-    const pauseOperation = arg;
+async function submitOperation(chain, _, contract, operation, _args, options) {
+    const pauseOperation = operation;
     const wallet = await getWallet(chain, options);
-    const operation = await contract.call(pauseOperation);
-    const returnValue = await broadcast(operation, wallet, chain, `${pauseOperation} performed`, options);
+    const callOperation = await contract.call(pauseOperation);
+    const returnValue = await broadcast(callOperation, wallet, chain, `${pauseOperation} performed`, options);
 
     if (returnValue.value()) {
         printInfo('Return value', returnValue.value());
     }
+}
+
+async function isPausedCmd(chain, _, contract, _args, options) {
+    const operation = _args;
+    await submitOperation(chain, _, contract, operation, [], options);
+}
+
+async function pauseCmd(chain, _, contract, _args, options) {
+    const operation = _args;
+    await submitOperation(chain, _, contract, operation, [], options);
+}
+
+async function unpauseCmd(chain, _, contract, _args, options) {
+    const operation = _args;
+    await submitOperation(chain, _, contract, operation, [], options);
 }
 
 async function getTtl(chain, contractName, contract, _args, _options) {
@@ -121,7 +136,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(handlePauseOperation, contractName, 'paused', options);
+            mainProcessor(isPausedCmd, contractName, 'paused', options);
         });
 
     program
@@ -129,7 +144,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(handlePauseOperation, contractName, 'pause', options);
+            mainProcessor(pauseCmd, contractName, 'pause', options);
         });
 
     program
@@ -137,7 +152,7 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(handlePauseOperation, contractName, 'unpause', options);
+            mainProcessor(unpauseCmd, contractName, 'unpause', options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
