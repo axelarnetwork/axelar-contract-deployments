@@ -17,7 +17,7 @@ const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
+    utils: { arrayify, hexlify, hexZeroPad, isHexString, keccak256 },
     BigNumber,
 } = ethers;
 
@@ -301,18 +301,20 @@ function hexToScVal(hexString) {
 }
 
 function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
 }
 
 function tokenMetadataToScVal(decimal, name, symbol) {
@@ -336,6 +338,20 @@ function saltToBytes32(salt) {
     return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
 }
 
+function stellarAddressToBytes(address) {
+    return hexlify(Buffer.from(address, 'ascii'));
+}
+
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -356,4 +372,6 @@ module.exports = {
     tokenToScVal,
     tokenMetadataToScVal,
     saltToBytes32,
+    stellarAddressToBytes,
+    isValidAddress,
 };

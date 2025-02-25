@@ -182,7 +182,7 @@ const registerItsChain = async (client, wallet, config, options) => {
             chain: chainConfig.axelarId,
             its_edge_contract: itsEdgeContract,
             truncation: {
-                max_uint: (2n ** BigInt(maxUintBits) - 1n).toString(),
+                max_uint_bits: maxUintBits,
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
             },
         };
@@ -293,8 +293,8 @@ const programHandler = () => {
 
     const registerItsChainCmd = program
         .command('its-hub-register-chains')
-        .description('Submit an execute wasm contract proposal to register an ITS chain')
-        .argument('<chains...>', 'list of chains to register on ITS hub')
+        .description('Submit an execute wasm contract proposal to register an InterchainTokenService chain')
+        .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
         .action((chains, options) => {
             options.chains = chains;
             mainProcessor(registerItsChain, options);

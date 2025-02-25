@@ -5,7 +5,7 @@ const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, getChainConfig } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 
@@ -163,6 +163,42 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
     await broadcast(operation, wallet, chain, 'Amplifier Proof Submitted', options);
 }
 
+async function execute(wallet, _, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [sourceChain, messageId, sourceAddress, destinationAddress, payload] = args;
+    const payloadHash = arrayify(keccak256(payload));
+
+    printInfo('Destination app contract', destinationAddress);
+
+    const isMessageApprovedOperation = contract.call(
+        'is_message_approved',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        addressToScVal(destinationAddress),
+        nativeToScVal(Buffer.from(payloadHash, 'hex')),
+    );
+
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
+
+    if (!messageApproved.value()) {
+        printWarn('Contract call not approved at the gateway');
+        return;
+    }
+
+    const appContract = new Contract(destinationAddress);
+
+    const appOperation = appContract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(appOperation, wallet, chain, 'Executed', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
@@ -221,6 +257,13 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <destinationAddress> <payload>')
+        .description('gateway execute')
+        .action((sourceChain, messageId, sourceAddress, destinationAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, destinationAddress, payload], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

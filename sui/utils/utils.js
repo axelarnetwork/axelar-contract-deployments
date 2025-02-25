@@ -22,7 +22,7 @@ const {
     SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
 const { Transaction } = require('@mysten/sui/transactions');
-const { broadcast } = require('./sign-utils');
+const { broadcast, broadcastFromTxBuilder } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
@@ -60,7 +60,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
             showBcs: true,
         },
     });
-
     return fromB64(response.data.bcs.bcsBytes);
 };
 
@@ -69,7 +68,7 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
-    const publishTxn = await builder.signAndExecute(keypair);
+    const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
 
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
@@ -128,7 +127,7 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = bcsStructs.its.ITS.parse(bcsBytes);
+    const data = bcsStructs.its.InterchainTokenService.parse(bcsBytes);
     const channelId = data.value.channel.id;
     return '0x' + channelId;
 };
@@ -266,12 +265,8 @@ const parseGatewayInfo = (chain) => {
     };
 };
 
-const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
-    if (!trustedAddresses[destinationChain]) {
-        throw new Error(
-            `${destinationChain} is not trusted. Run 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>' to setup trusted address`,
-        );
-    }
+const checkTrustedAddresses = async (destinationChain) => {
+    // TODO: another PR adds functionality that will enable this
 };
 
 const getStructs = async (client, packageId) => {
@@ -296,7 +291,7 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     printInfo(`Unsigned transaction`, txFilePath);
 };
 
-const isAllowed = async (client, keypair, chain, exec) => {
+const isAllowed = async (client, keypair, chain, exec, options) => {
     const addError = (tx) => {
         tx.moveCall({
             target: `${STD_PACKAGE_ID}::ascii::char`,
@@ -309,7 +304,7 @@ const isAllowed = async (client, keypair, chain, exec) => {
     addError(tx);
 
     try {
-        await broadcast(client, keypair, tx);
+        await broadcast(client, keypair, tx, undefined, options);
     } catch (e) {
         const errorMessage = e.cause.effects.status.error;
         let regexp = /address: (.*?),/;
@@ -351,6 +346,17 @@ const isAllowed = async (client, keypair, chain, exec) => {
     return true;
 };
 
+const getAllowedFunctions = async (client, versionedObjectId) => {
+    const response = await client.getObject({
+        id: versionedObjectId,
+        options: {
+            showContent: true,
+        },
+    });
+    const allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
+    return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
+};
+
 module.exports = {
     suiCoinId,
     getAmplifierSigners,
@@ -372,10 +378,11 @@ module.exports = {
     getBagContentId,
     moveDir,
     getTransactionList,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
     getStructs,
     saveGeneratedTx,
     isAllowed,
+    getAllowedFunctions,
 };

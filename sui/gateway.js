@@ -153,6 +153,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
+    console.log([sourceChain, messageId, sourceAddress, destinationId, payloadHash]);
     const encodedMessages = bcs
         .vector(bcsStructs.gateway.Message)
         .serialize([
@@ -281,68 +282,6 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
     };
 }
 
-async function allowFunctions(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const tx = new Transaction();
-    console.log(contractConfig.objects);
-
-    for (const i in versions) {
-        tx.moveCall({
-            target: `${packageId}::gateway::allow_function`,
-            arguments: [
-                tx.object(contractConfig.objects.Gateway),
-                tx.object(contractConfig.objects.OwnerCap),
-                tx.pure.u64(versions[i]),
-                tx.pure.string(functionNames[i]),
-            ],
-        });
-    }
-
-    return {
-        tx,
-        message: 'Allow Functions',
-    };
-}
-
-async function disallowFunctions(keypair, client, config, chain, contractConfig, args, options) {
-    const packageId = contractConfig.address;
-
-    const [versionsArg, functionNamesArg] = args;
-
-    const versions = versionsArg.split(',');
-    const functionNames = functionNamesArg.split(',');
-
-    if (versions.length !== functionNames.length) throw new Error('Versions and Function Names must have a matching length');
-
-    const tx = new Transaction();
-    console.log(contractConfig.objects);
-
-    for (const i in versions) {
-        tx.moveCall({
-            target: `${packageId}::gateway::disallow_function`,
-            arguments: [
-                tx.object(contractConfig.objects.Gateway),
-                tx.object(contractConfig.objects.OwnerCap),
-                tx.pure.u64(versions[i]),
-                tx.pure.string(functionNames[i]),
-            ],
-        });
-    }
-
-    return {
-        tx,
-        message: 'Disallow Functions',
-    };
-}
-
 async function checkVersionControl(version, options) {
     const config = loadConfig(options.env);
 
@@ -453,7 +392,7 @@ async function checkVersionControl(version, options) {
         const allowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.allowedFunctions.split(',');
 
         for (const allowedFunction of allowedFunctions) {
-            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction]);
+            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction], options);
             const color = allowed ? chalk.green : chalk.red;
             console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
         }
@@ -463,7 +402,7 @@ async function checkVersionControl(version, options) {
         const disallowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.disallowedFunctions.split(',');
 
         for (const disallowedFunction of disallowedFunctions) {
-            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction]);
+            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction], options);
             const color = allowed ? chalk.red : chalk.green;
             console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
         }
@@ -491,7 +430,7 @@ async function testNewField(value, options) {
         arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.u64(value)],
     });
 
-    await broadcast(client, keypair, tx, 'Set new_field');
+    await broadcast(client, keypair, tx, 'Set new_field', options);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     tx = new Transaction();
@@ -529,7 +468,7 @@ async function mainProcessor(processor, args, options) {
         tx.setSender(sender);
         await saveGeneratedTx(tx, message, client, options);
     } else {
-        await broadcast(client, keypair, tx, message);
+        await broadcast(client, keypair, tx, message, options);
     }
 }
 
@@ -579,20 +518,6 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
-        });
-
-    program
-        .command('allow-functions <versions> <functionNames>')
-        .description('Allow certain funcitons on the gateway')
-        .action((versions, functionNames, options) => {
-            mainProcessor(allowFunctions, [versions, functionNames], options);
-        });
-
-    program
-        .command('disallow-functions <versions> <functionNames>')
-        .description('Allow certain funcitons on the gateway')
-        .action((versions, functionNames, options) => {
-            mainProcessor(disallowFunctions, [versions, functionNames], options);
         });
 
     program
