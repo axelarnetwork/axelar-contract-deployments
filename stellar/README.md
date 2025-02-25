@@ -216,7 +216,7 @@ node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [in
 #### Deploy Remote Interchain Token
 
 ```bash
-node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Register Canonical Token
@@ -228,13 +228,13 @@ node stellar/its.js register-canonical-token [token-address]
 #### Deploy Remote Canonical Token
 
 ```bash
-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Interchain Transfer
 
 ```bash
-node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-amount [amount]
 ```
 
 #### Encode stellar recipient address to bytes
@@ -279,10 +279,10 @@ node stellar/contract.js restore-instance [contract-name]
 #### GMP - Send Command (Outgoing)
 
 ```bash
-node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-fee-amount [amount]
+node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-amount [amount]
 
 # Example
-node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234 CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC 1
+node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 #### GMP - Execute Command (Incoming)
@@ -294,4 +294,46 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+## Pausable Contract Functionality
+
+Here is how to manage the pausable state of a Stellar contract. You can check if the contract is paused, pause the contract, or unpause the contract.
+
+#### Usage
+
+To use this script, run the following command with the appropriate options:
+
+```bash
+node stellar/contract.js [action] [contract-name]
+```
+
+#### Options
+
+- `[action]` can be one of the following:
+  - `pause`: Pause the contract
+  - `is_paused`: Check if the contract is paused
+  - `unpause`: Unpause the contract
+
+- `[contract-name]`: The name of the contract to interact with. This option is mandatory.
+
+
+#### Examples
+
+Check if the contract is paused:
+
+```bash
+node stellar/contract.js is_paused axelar_gateway
+```
+
+Pause the contract:
+
+```bash
+node stellar/contract.js pause axelar_gateway
+```
+
+Unpause the contract:
+
+```bash
+node stellar/contract.js unpause axelar_gateway
 ```

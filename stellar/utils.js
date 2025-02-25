@@ -301,18 +301,20 @@ function hexToScVal(hexString) {
 }
 
 function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
 }
 
 function tokenMetadataToScVal(decimal, name, symbol) {
@@ -340,6 +342,16 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -361,4 +373,5 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    isValidAddress,
 };
