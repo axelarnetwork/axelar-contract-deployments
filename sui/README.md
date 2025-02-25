@@ -180,6 +180,37 @@ node sui/deploy-contract.js deploy Squid
 node sui/deploy-contract.js deploy Example
 ```
 
+## Sync Packages
+
+This command synchronizes local Move packages with their deployed addresses. This is useful when you don't have all published packages locally but need to deploy a package that depends on others.
+
+**Functionality:**
+
+1.  **Copies Move Packages:** Copies all Move packages from `node_modules/@axelar-network/axelar-cgp-sui/move` to the local `sui/move` directory.
+2.  **Updates `Move.toml`:** Updates the `Move.toml` file for each package, replacing the package name with the corresponding package ID from the `axelar-chain-configs/info/<env>.json` configuration file.
+
+**Use Case:**
+
+This is useful when:
+
+- You want to deploy or upgrade a specific package.
+- This package has dependencies on other packages.
+- You do _not_ have all the published packages (and their `Move.toml` files with correct addresses) locally.
+
+**Example:**
+
+To deploy `InterchainTokenService`, which depends on other packages, and you don't have the up-to-date `Move.toml` files for all dependencies:
+
+```bash
+node sui/deploy-contract.js sync
+```
+
+This command copies all packages and updates their `Move.toml` files with correct package IDs. Then, you can deploy `InterchainTokenService`:
+
+```bash
+node sui/deploy-contract.js deploy InterchainTokenService
+```
+
 ## Contract Upgrades
 
 ### Upgrade Procedures
