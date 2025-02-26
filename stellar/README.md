@@ -207,6 +207,16 @@ node stellar/its.js set-trusted-chain [chain-name]
 node stellar/its.js remove-trusted-chain [chain-name]
 ```
 
+#### Add Trusted Chains
+
+```bash
+node stellar/its.js add-trusted-chains [chain-names]
+
+# Example
+node stellar/its.js add-trusted-chains all
+node stellar/its.js add-trusted-chains "avalanche, sui"
+```
+
 #### Deploy Interchain Token
 
 ```bash
