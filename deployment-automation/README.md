@@ -3,6 +3,7 @@
 ## Overview
 
 This script facilitates the deployment of Axelar network components by automating configurations, wallet setup, contract deployments, and governance integrations. It supports multiple environments, including `mainnet`, `testnet`, `stagenet`, `devnet-amplifier`, and custom `devnet` deployments.
+The automation script reduces the need of an operator to take printed output from the deployment scripts to set as ENV values or inputs to other scripts to complete end to end flow.
 
 ## Features
 
@@ -185,4 +186,3 @@ For each asynchronous step, there is coordination overhead. For the first stop, 
 The second aspect relevant for all stops is that the proposal flow has a time window where it can succeed or fail. We should be able to monitor if and when a proposal passes to proceed with the deployment steps automatically. Effectively, having some mechanism to poll a given proposal that can then continue deployment would further streamline the deployment.
 
 Private key management is not going to pass audits for this script as we handle private key data too publicly. In general, the underlying usage of `MNEMONIC` and `PRIVATE_KEY` would need to be extended to support remote signing operations. Key sharing is not recommended in most cases, so having the ability to remotely sign transactions can be desirable for more security-oriented teams.
-
