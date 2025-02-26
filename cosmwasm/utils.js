@@ -78,8 +78,6 @@ const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt |
 
 const getLabel = ({ contractName, label }) => label || contractName;
 
-const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
-
 const initContractConfig = (config, { contractName, chainName }) => {
     if (!contractName) {
         return;
@@ -852,7 +850,7 @@ const submitProposal = async (client, wallet, config, options, content) => {
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
-function getCosmWasmUrl(contractName, contractVersion) {
+const getCosmWasmUrl = (contractName, contractVersion) => {
     if (!SUPPORTED_COSMWASM_CONTRACTS.has(contractName)) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
@@ -866,30 +864,34 @@ function getCosmWasmUrl(contractName, contractVersion) {
     let contractPath;
 
     if (versionRegex.test(contractVersion)) {
-        // remove leading v
-        const semanticVersion = contractVersion.slice(1);      
+        // Remove leading "v"
+        const semanticVersion = contractVersion.slice(1);
         contractPath = `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
     } else if (commitRegex.test(contractVersion)) {
         contractPath = `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } else {
-        throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+        throw new Error(
+            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
+        );
     }
 
     return contractPath;
-}
+};
 
-async function getWasmPath(options, contractName) {
+
+const getWasmPath = async (options, contractName) => {
     if (options.artifactPath) {
         return `${options.artifactPath}/${pascalToSnake(contractName)}.wasm`;
     }
 
     if (options.version) {
         const url = getCosmWasmUrl(contractName, options.version);
-        return await downloadWasmFile(url , contractName, options.version);
+        return await downloadWasmFile(url, contractName, options.version);
     }
 
     throw new Error('Either --artifactPath or --version must be provided');
-}
+};
+
 
 const CONTRACTS = {
     Coordinator: {
@@ -945,7 +947,6 @@ module.exports = {
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,

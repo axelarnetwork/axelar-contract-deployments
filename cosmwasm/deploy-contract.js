@@ -29,7 +29,7 @@ const upload = async (client, wallet, config, options) => {
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
     // Determine source of contract binary
-    const wasmPath = await getWasmPath(options, contractName, 'cosmwasm');
+    const wasmPath = await getWasmPath(options, contractName);
 
     printInfo('Uploading contract binary');
     const { checksum, codeId } = await uploadContract(client, wallet, config, options, wasmPath);

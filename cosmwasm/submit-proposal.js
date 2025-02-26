@@ -85,7 +85,7 @@ const storeCode = async (client, wallet, config, options) => {
     await addDefaultInstantiateAddresses(client, config, options);
 
     // Determine source of contract binary
-    const wasmPath = await getWasmPath(options, contractName, 'cosmwasm');
+    const wasmPath = await getWasmPath(options, contractName);
 
     const proposal = encodeStoreCodeProposal(options, wasmPath);
 

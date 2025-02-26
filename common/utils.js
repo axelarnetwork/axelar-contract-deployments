@@ -458,7 +458,7 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-async function downloadWasmFile(url, contractName, version) {
+const downloadWasmFile = async (url, contractName, version) => {
     const tempDir = path.join(process.cwd(), 'artifacts');
 
     if (!existsSync(tempDir)) {
@@ -467,21 +467,18 @@ async function downloadWasmFile(url, contractName, version) {
 
     const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
 
-    try {
-        const response = await fetch(url);
+    const response = await fetch(url);
 
-        if (!response.ok) {
-            throw new Error(`Failed to download WASM file: ${response.statusText}`);
-        }
-
-        const buffer = await response.buffer();
-        writeFileSync(outputPath, buffer);
-        printInfo('Successfully downloaded WASM file to', outputPath);
-        return outputPath;
-    } catch (error) {
-        throw new Error(`Error downloading WASM file: ${error.message}`);
+    if (!response.ok) {
+        throw new Error(`Failed to download WASM file: ${response.statusText}`);
     }
-}
+
+    const buffer = await response.buffer();
+    writeFileSync(outputPath, buffer);
+    printInfo('Successfully downloaded WASM file to', outputPath);
+    return outputPath;
+};
+
 
 
 module.exports = {
