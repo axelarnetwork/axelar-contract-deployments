@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { Command, Option } = require('commander');
 const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
@@ -442,6 +443,9 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 }
 
 async function syncPackages(keypair, client, config, chain, options) {
+    // Remove the move directory and its contents if it exists
+    fs.rmSync(moveDir, { recursive: true, force: true });
+
     for (const packageDir of PACKAGE_DIRS) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
