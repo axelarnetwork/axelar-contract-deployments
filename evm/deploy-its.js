@@ -524,29 +524,46 @@ async function processCommand(config, chain, options) {
     }
 }
 
-async function main(privateKey, deployMethod, proxyDeployMethod, salt, proxySalt, operatorAddress, options) {
-    await mainProcessor({ privateKey, deployMethod, proxyDeployMethod, salt, proxySalt, operatorAddress, ...options }, processCommand);
+async function main(options) {
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('deploy-its')
-        .description('Deploy interchain token service and interchain token factory')
-        .argument('<privateKey>', 'wallet private key')
-        .argument('[deployMethod]', 'deployment method', 'create2')
-        .argument('[proxyDeployMethod]', 'proxy deployment method', 'create3')
-        .argument('[salt]', 'deployment salt for ITS')
-        .argument('[proxySalt]', 'deployment salt for ITS proxies', 'v1.0.0')
-        .argument('[operatorAddress]', 'address of the ITS operator/rate limiter');
+    program.name('deploy-its').description('Deploy interchain token service and interchain token factory');
+
+    program.addOption(
+        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
+    );
+    program.addOption(
+        new Option(
+            '--proxyDeployMethod <proxyDeployMethod>',
+            'proxy deployment method, overrides normal deployment method (defaults to create3)',
+        )
+            .choices(['create', 'create3'])
+            .default('create3'),
+    );
 
     addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
+    program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
+    program.addOption(new Option('-s, --salt <salt>', 'deployment salt to use for ITS deployment').env('SALT'));
+    program.addOption(
+        new Option(
+            '--proxySalt <proxySalt>',
+            'deployment salt to use for ITS proxies, this allows deploying latest releases to new chains while deriving the same proxy address',
+        )
+            .default('v1.0.0')
+            .env('PROXY_SALT'),
+    );
+    program.addOption(
+        new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
+    );
 
-    program.action(async (privateKey, deployMethod, proxyDeployMethod, salt, proxySalt, operatorAddress, options) => {
-        await main(privateKey, deployMethod, proxyDeployMethod, salt, proxySalt, operatorAddress, options);
+    program.action(async (options) => {
+        await main(options);
     });
 
     program.parse();

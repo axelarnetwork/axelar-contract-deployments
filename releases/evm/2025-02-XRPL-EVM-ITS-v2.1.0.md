@@ -48,14 +48,14 @@ Amplifier ITS
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js "v2.1.0 devnet-amplifier" create2 'v1.0.0 devnet-amplifier'
+node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
 # Deploy new implementation
-node evm/deploy-its.js "v2.1.0" create2 'v1.0.0'
+node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -79,27 +79,27 @@ node cosmwasm/submit-proposal.js \
 
 ```bash
 # Add all trusted chains to xrplevm ITS
-node evm/its.js -n $CHAIN set-trusted-address all hub
+node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --trustedAddress hub
 ```
 
 ## Set xrplevm as trusted chain on EVM ITS. Similarly, set xrplevm as a trusted chain for every other non EVM ITS contract
 
 ```bash
 # Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
-node evm/its.js -n all set-trusted-address $CHAIN hub
+node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
 ```
 
 ## Setting up trusted chains on xrplevm
 
 ```bash
 # Register token metadata
-node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE 0
+node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
 
 # Fetch token manager address
-node evm/its.js token-manager-address [tokenId]
+node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
 
 # tranfer mintership to token manager
-node evm/its.js transfer-mintership 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE [tokenManager]
+node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
 ```
 
 ## Checklist
@@ -116,7 +116,7 @@ node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wall
 node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination chain] --salt "salt12345" -y
 
 #Transfer token
-node evm/its.js interchain-transfer [tokenId] [destination chain] [recipient] 1 0x 0
+node evm/its.js --action interchainTransfer --destinationChain [destination chain] --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 0
 
 # Ensure GMP call is executed on destination chain, where required
 ```

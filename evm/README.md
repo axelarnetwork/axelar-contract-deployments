@@ -70,7 +70,7 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 To test the Interchain Token Service deployment
 
 ```bash
-node evm/deploy-its create2 '[salt]' 'v1.0.0' 
+node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
