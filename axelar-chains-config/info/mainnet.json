@@ -2016,10 +2016,6 @@
           "predeployCodehash": "0x912095d5076ee40a9dd49c0f9d61d61334c47a78c7512852791652baef26c296",
           "salt": "Multisig v5.5"
         },
-        "InterchainTokenService": {
-          "skip": true,
-          "address": ""
-        },
         "Operators": {
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "address": "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC",
