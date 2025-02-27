@@ -4,7 +4,7 @@ use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{keccak::hashv, signer::Signer};
 
 #[tokio::test]
-async fn test_successfylly_initialize_config() {
+async fn test_successfully_initialize_config() {
     // Setup
     let pt = ProgramTest::default();
     let mut test_fixture = TestFixture::new(pt).await;
@@ -44,7 +44,11 @@ async fn test_different_salts_give_new_configs() {
             &gas_utils.config_authority.pubkey(),
         );
         let _res = test_fixture
-            .init_gas_config_with_params(gas_utils.config_authority.pubkey(), config_pda, salt)
+            .init_gas_config_with_params(
+                gas_utils.config_authority.insecure_clone(),
+                config_pda,
+                salt,
+            )
             .await
             .unwrap();
         // Assert
@@ -68,7 +72,11 @@ async fn test_different_salts_give_new_configs() {
             &gas_utils.config_authority.pubkey(),
         );
         let res = test_fixture
-            .init_gas_config_with_params(gas_utils.config_authority.pubkey(), config_pda, salt)
+            .init_gas_config_with_params(
+                gas_utils.config_authority.insecure_clone(),
+                config_pda,
+                salt,
+            )
             .await;
         assert!(res.is_err());
     }

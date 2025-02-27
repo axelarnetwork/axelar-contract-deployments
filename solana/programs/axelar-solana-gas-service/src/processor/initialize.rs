@@ -27,6 +27,10 @@ pub(crate) fn process_initialize_config(
         return Err(ProgramError::InvalidInstructionData);
     }
 
+    if !authority.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     let (_, bump) = get_config_pda(program_id, &salt, authority.key);
 
     // Check: Gateway Config account uses the canonical bump.
