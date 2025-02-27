@@ -479,8 +479,6 @@ const downloadWasmFile = async (url, contractName, version) => {
     return outputPath;
 };
 
-
-
 module.exports = {
     loadConfig,
     saveConfig,

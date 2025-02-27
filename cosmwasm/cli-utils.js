@@ -136,8 +136,6 @@ const addStoreOptions = (program) => {
     });
 };
 
-
-
 const addStoreProposalOptions = (program) => {
     program.addOption(new Option('--source <source>', "a valid HTTPS URI to the contract's source code"));
     program.addOption(

@@ -748,7 +748,7 @@ const getMigrateContractParams = (config, options) => {
     };
 };
 
-const encodeStoreCodeProposal = (options, wasmPath) => {
+const encodeStoreCodeProposal = (options) => {
     const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
     return {
@@ -935,7 +935,6 @@ const CONTRACTS = {
         makeInstantiateMsg: makeInterchainTokenServiceInstantiateMsg,
     },
 };
-
 
 module.exports = {
     CONTRACT_SCOPE_CHAIN,

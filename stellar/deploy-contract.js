@@ -238,7 +238,7 @@ function main() {
                 .conflicts('version'),
         )
         .addOption(
-            new Option('--version <version>', 'Version of the contract to deploy (e.g., v1.0.0) (required if --wasm-path is not used)')
+            new Option('--version <version>', 'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)')
                 .conflicts('wasmPath'),
         )
         .addOption(new Option('--nonce <nonce>', 'Optional nonce for the signer set'))
