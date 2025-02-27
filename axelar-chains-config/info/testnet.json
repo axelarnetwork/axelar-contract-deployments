@@ -2507,7 +2507,31 @@
     "tokenSymbol": "XLM",
     "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
     "contracts": {
-      "AxelarGateway": {}
+      "AxelarGateway": {},
+      "axelar_gateway": {
+        "address": "CABHGWE76BF2G4CSNLCTOJP65WPZCWJDKBRZCAAVKWPG2LPFNZVM6YPQ",
+        "deployer": "GDRTQVEBBJGTYWVVZ76245QEERBJUGIGQDH6YWRWURSHCH5B7DPLBW4Y",
+        "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+        "initializeArgs": {
+          "owner": "GDRTQVEBBJGTYWVVZ76245QEERBJUGIGQDH6YWRWURSHCH5B7DPLBW4Y",
+          "operator": "GDRTQVEBBJGTYWVVZ76245QEERBJUGIGQDH6YWRWURSHCH5B7DPLBW4Y",
+          "domainSeparator": "9f4d2f8cde4b1353174635431b10ec2c2ab3d024c9ca0da568276c4b6ac167be",
+          "minimumRotationDelay": "0",
+          "previousSignersRetention": "15",
+          "initialSigners": [
+            {
+              "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+              "signers": [
+                {
+                  "signer": "e33854810a4d3c5ab5cffdae760424429a190680cfec5a36a464711fa1f8deb0",
+                  "weight": "1"
+                }
+              ],
+              "threshold": "1"
+            }
+          ]
+        }
+      }
     },
     "explorer": {
       "name": "Stellar Expert",

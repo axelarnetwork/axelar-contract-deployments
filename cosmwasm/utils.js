@@ -138,13 +138,13 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
-const uploadContract = async (client, wallet, config, options, wasmPath) => {
+const uploadContract = async (client, wallet, config, options) => {
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
 
     const [account] = await wallet.getAccounts();
-    const wasm = readFileSync(wasmPath);
+    const wasm = readFileSync(options.wasmResolvedPath);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
@@ -648,10 +648,10 @@ const getSubmitProposalParams = (options) => {
     };
 };
 
-const getStoreCodeParams = (options, wasmPath) => {
+const getStoreCodeParams = (options) => {
     const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readFileSync(wasmPath);
+    const wasm = readFileSync(options.wasmResolvedPath);
 
     let codeHash;
 
@@ -675,11 +675,11 @@ const getStoreCodeParams = (options, wasmPath) => {
     };
 };
 
-const getStoreInstantiateParams = (config, options, msg, wasmPath) => {
+const getStoreInstantiateParams = (config, options, msg) => {
     const { admin } = options;
 
     return {
-        ...getStoreCodeParams(options, wasmPath),
+        ...getStoreCodeParams(options),
         admin,
         label: getLabel(options),
         msg: Buffer.from(JSON.stringify(msg)),
@@ -749,7 +749,7 @@ const getMigrateContractParams = (config, options) => {
 };
 
 const encodeStoreCodeProposal = (options, wasmPath) => {
-    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options, wasmPath));
+    const proposal = StoreCodeProposal.fromPartial(getStoreCodeParams(options));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreCodeProposal',
@@ -757,8 +757,8 @@ const encodeStoreCodeProposal = (options, wasmPath) => {
     };
 };
 
-const encodeStoreInstantiateProposal = (config, options, msg, wasmPath) => {
-    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg, wasmPath));
+const encodeStoreInstantiateProposal = (config, options, msg) => {
+    const proposal = StoreAndInstantiateContractProposal.fromPartial(getStoreInstantiateParams(config, options, msg));
 
     return {
         typeUrl: '/cosmwasm.wasm.v1.StoreAndInstantiateContractProposal',

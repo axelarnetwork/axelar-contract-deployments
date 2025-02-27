@@ -3,7 +3,7 @@
 require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
-const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getWasmPath } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -124,12 +124,15 @@ const addStoreOptions = (program) => {
             .conflicts('artifactPath'),
     );
 
-    program.hook('preAction', (thisCommand) => {
+    program.hook('preAction', async (thisCommand) => {
         const opts = thisCommand.opts();
 
         if (!opts.artifactPath && !opts.version) {
             throw new Error('Either --artifactPath or --version is required');
         }
+
+        const wasmResolvedPath = await getWasmPath(opts, opts.contractName);
+        Object.assign(opts, { wasmResolvedPath });
     });
 };
 

@@ -18,7 +18,6 @@ const {
     uploadContract,
     instantiateContract,
     migrateContract,
-    getWasmPath,
 } = require('./utils');
 
 const { Command } = require('commander');
@@ -28,11 +27,8 @@ const upload = async (client, wallet, config, options) => {
     const { contractName, instantiate2, salt, chainName } = options;
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
-    // Determine source of contract binary
-    const wasmPath = await getWasmPath(options, contractName);
-
     printInfo('Uploading contract binary');
-    const { checksum, codeId } = await uploadContract(client, wallet, config, options, wasmPath);
+    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;

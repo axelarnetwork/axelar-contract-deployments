@@ -116,8 +116,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options, contractName);
-    const wasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmHash = await uploadWasm(options.wasmResolvedPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
@@ -233,18 +232,37 @@ function main() {
     // 2nd level deploy command
     const deployCmd = new Command('deploy')
         .description('Deploy a Stellar contract')
-        .argument('<contract-name>', 'contract name to deploy')
-        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-        .addOption(new Option('--version <version>', 'version of the contract to deploy (e.g., v1.0.0)'))
-        .addOption(new Option('--nonce <nonce>', 'optional nonce for the signer set'))
-        .addOption(new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'))
+        .argument('<contract-name>', 'Contract name to deploy')
         .addOption(
-            new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
-                .default(15)
-                .argParser(Number),
+            new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)')
+                .conflicts('version')
         )
-        .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number))
-        .addOption(new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false))
+        .addOption(
+            new Option('--version <version>', 'Version of the contract to deploy (e.g., v1.0.0) (required if --wasm-path is not used)')
+                .conflicts('wasmPath')
+        )
+        .addOption(new Option('--nonce <nonce>', 'Optional nonce for the signer set'))
+        .addOption(new Option('--domain-separator <domainSeparator>', 'Domain separator (keccak256 hash or "offline")').default('offline'))
+        .addOption(
+            new Option('--previous-signers-retention <previousSignersRetention>', 'Previous signer retention')
+                .default(15)
+                .argParser(Number)
+        )
+        .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'Minimum rotation delay').default(0).argParser(Number))
+        .addOption(
+            new Option('--use-dummy-its-address', 'Use dummy ITS address for example contract to test a GMP call').default(false)
+        )
+        .hook('preAction', async (thisCommand) => {
+            const opts = thisCommand.opts();
+            const contractName = thisCommand.args[0];
+
+            if (!opts.wasmPath && !opts.version) {
+                throw new Error('Either --wasm-path or --version is required');
+            }
+
+            const wasmResolvedPath = await getWasmPath(opts, contractName);
+            Object.assign(opts, { wasmResolvedPath });
+        })
         .action((contractName, options) => {
             mainProcessor(options, deploy, contractName);
         });

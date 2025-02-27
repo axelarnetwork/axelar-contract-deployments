@@ -357,6 +357,8 @@ function stellarAddressToBytes(address) {
 
 const getStellarWasmUrl = (contractName, version) => {
     if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
+        printInfo("Supported contracts", Array.from(SUPPORTED_STELLAR_CONTRACTS).join(', '));
+        printInfo("Contract Name", contractName);
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
