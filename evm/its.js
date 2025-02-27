@@ -750,7 +750,7 @@ if (require.main === module) {
     program.addOption(
         new Option(
             '--destinationTokenAddress <destinationTokenAddress>',
-            'destination token address on the destination chain to the source token to',
+            'token address on the destination chain to link with the token on the source chain corresponding to the tokenId',
         ),
     );
     program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
