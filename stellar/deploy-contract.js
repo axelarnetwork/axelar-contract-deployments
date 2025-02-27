@@ -235,22 +235,22 @@ function main() {
         .argument('<contract-name>', 'Contract name to deploy')
         .addOption(
             new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)')
-                .conflicts('version')
+                .conflicts('version'),
         )
         .addOption(
             new Option('--version <version>', 'Version of the contract to deploy (e.g., v1.0.0) (required if --wasm-path is not used)')
-                .conflicts('wasmPath')
+                .conflicts('wasmPath'),
         )
         .addOption(new Option('--nonce <nonce>', 'Optional nonce for the signer set'))
         .addOption(new Option('--domain-separator <domainSeparator>', 'Domain separator (keccak256 hash or "offline")').default('offline'))
         .addOption(
-            new Option('--previous-signers-retention <previousSignersRetention>', 'Previous signer retention')
+            new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
                 .default(15)
-                .argParser(Number)
+                .argParser(Number),
         )
         .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'Minimum rotation delay').default(0).argParser(Number))
         .addOption(
-            new Option('--use-dummy-its-address', 'Use dummy ITS address for example contract to test a GMP call').default(false)
+            new Option('--use-dummy-its-address', 'Use dummy ITS address for example contract to test a GMP call').default(false),
         )
         .hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();

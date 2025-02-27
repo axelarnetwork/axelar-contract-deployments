@@ -33,7 +33,6 @@ const upload = async (client, wallet, config, options) => {
     printInfo('Uploaded contract binary with codeId', codeId);
     contractBaseConfig.lastUploadedCodeId = codeId;
 
-    // Handle instantiate2 logic
     if (instantiate2) {
         const [account] = await wallet.getAccounts();
         const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');

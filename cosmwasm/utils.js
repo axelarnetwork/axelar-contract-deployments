@@ -871,7 +871,7 @@ const getCosmWasmUrl = (contractName, contractVersion) => {
         contractPath = `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } else {
         throw new Error(
-            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
+            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
         );
     }
 
