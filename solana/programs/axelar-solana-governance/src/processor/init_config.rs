@@ -10,7 +10,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
 use crate::seed_prefixes;
-use crate::state::GovernanceConfig;
+use crate::state::{GovernanceConfig, VALID_PROPOSAL_DELAY_RANGE};
 
 /// Initializes the Governance Config Account with the provided Governance
 /// Config.
@@ -30,6 +30,8 @@ pub(crate) fn process(
     let system_account = next_account_info(accounts_iter)?;
 
     ensure_upgrade_authority(program_id, payer, program_data)?;
+
+    validate(&governance_config)?;
 
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
@@ -56,6 +58,19 @@ pub(crate) fn process(
         governance_config,
         &[seed_prefixes::GOVERNANCE_CONFIG, &[bump]],
     )?;
+
+    Ok(())
+}
+
+fn validate(config: &GovernanceConfig) -> Result<(), ProgramError> {
+    if !VALID_PROPOSAL_DELAY_RANGE.contains(&config.minimum_proposal_eta_delay) {
+        msg!(
+            "The minimum proposal ETA delay must be among {} and {} seconds",
+            VALID_PROPOSAL_DELAY_RANGE.start(),
+            VALID_PROPOSAL_DELAY_RANGE.end()
+        );
+        return Err(ProgramError::InvalidArgument);
+    }
 
     Ok(())
 }
