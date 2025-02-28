@@ -12,7 +12,7 @@ runs:
     - name: Install nightly
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: 1.79
+        toolchain: nightly
 
     - uses: Swatinem/rust-cache@v2
       with:
@@ -41,7 +41,7 @@ runs:
       run: |
         curl -sSfL https://release.anza.xyz/stable/install | sh
         echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-        
+
     - name: Install needed tooling (needed for solana deps)
       shell: bash
       run: |

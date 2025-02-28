@@ -27,6 +27,31 @@ pub mod minter;
 pub mod operator;
 pub mod token_manager;
 
+/// Convenience module with the indices of the accounts passed in the
+/// [`ItsGmpPayload`] instruction (offset by the prefixed GMP accounts).
+pub mod its_account_indices {
+    /// The index of the gateway root PDA account.
+    pub const GATEWAY_ROOT_PDA_INDEX: usize = 0;
+    /// The index of the system program account.
+    pub const SYSTEM_PROGRAM_INDEX: usize = 1;
+    /// The index of the ITS root PDA account.
+    pub const ITS_ROOT_PDA_INDEX: usize = 2;
+    /// The index of the token manager PDA account.
+    pub const TOKEN_MANAGER_PDA_INDEX: usize = 3;
+    /// The index of the token mint account.
+    pub const TOKEN_MINT_INDEX: usize = 4;
+    /// The index of the token manager ATA account.
+    pub const TOKEN_MANAGER_ATA_INDEX: usize = 5;
+    /// The index of the token program account.
+    pub const TOKEN_PROGRAM_INDEX: usize = 6;
+    /// The index of the associated token program account.
+    pub const SPL_ASSOCIATED_TOKEN_ACCOUNT_INDEX: usize = 7;
+    /// The index of the its user roles account.
+    pub const ITS_USER_ROLES_PDA_INDEX: usize = 8;
+    /// The rent account index
+    pub const RENT_ACCOUNT_INDEX: usize = 9;
+}
+
 bitflags! {
     /// Bitmask for the optional accounts passed in some of the instructions.
     #[derive(Debug, PartialEq, Eq)]
@@ -289,6 +314,10 @@ pub struct DeployInterchainTokenInputs {
 
     /// The gas value to be paid for the deploy transaction
     pub(crate) gas_value: u64,
+
+    /// Signing PDA bump
+    #[builder(default, setter(strip_option))]
+    pub(crate) signing_pda_bump: Option<u8>,
 }
 
 /// Parameters for `[InterchainTokenServiceInstruction::DeployTokenManager]`.
@@ -327,6 +356,10 @@ pub struct DeployTokenManagerInputs {
     /// `spl_token_2022::id()`.
     #[builder(default, setter(strip_option))]
     pub(crate) token_program: Option<Pubkey>,
+
+    /// Signing PDA bump
+    #[builder(default, setter(strip_option))]
+    pub(crate) signing_pda_bump: Option<u8>,
 }
 
 /// Parameters for `[InterchainTokenServiceInstruction::InterchainTransfer]`.
@@ -392,6 +425,10 @@ pub struct InterchainTransferInputs {
     /// or `spl_token_2022::id()`. Assumes `spl_token_2022::id()` if not set.
     #[builder(default = spl_token_2022::id())]
     pub(crate) token_program: Pubkey,
+
+    /// Signing PDA bump
+    #[builder(default, setter(strip_option))]
+    pub(crate) signing_pda_bump: Option<u8>,
 }
 
 /// Inputs for the `[InterchainTokenServiceInstruction::CallContractWithInterchainToken]`
@@ -459,6 +496,8 @@ pub fn initialize(
     operator: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (program_data_address, _) =
+        Pubkey::find_program_address(&[crate::id().as_ref()], &bpf_loader_upgradeable::id());
     let (user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &operator);
 
@@ -466,6 +505,7 @@ pub fn initialize(
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -514,7 +554,7 @@ pub fn set_pause_status(payer: Pubkey, paused: bool) -> Result<Instruction, Prog
 ///
 /// If serialization fails.
 pub fn deploy_interchain_token(
-    params: DeployInterchainTokenInputs,
+    mut params: DeployInterchainTokenInputs,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let payer = Pubkey::new_from_array(
@@ -534,6 +574,9 @@ pub fn deploy_interchain_token(
         accounts.append(&mut its_accounts);
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+        let (call_contract_signing_pda, signing_pda_bump) =
+            axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+        params.signing_pda_bump = Some(signing_pda_bump);
 
         accounts.push(AccountMeta::new_readonly(gateway_root_pda, false));
         accounts.push(AccountMeta::new_readonly(
@@ -544,6 +587,8 @@ pub fn deploy_interchain_token(
         accounts.push(AccountMeta::new_readonly(params.gas_service, false));
         accounts.push(AccountMeta::new_readonly(system_program::id(), false));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
+        accounts.push(AccountMeta::new_readonly(call_contract_signing_pda, false));
+        accounts.push(AccountMeta::new_readonly(crate::ID, false));
     };
 
     let data = to_vec(&InterchainTokenServiceInstruction::DeployInterchainToken { params })?;
@@ -561,7 +606,9 @@ pub fn deploy_interchain_token(
 /// # Errors
 ///
 /// If serialization fails.
-pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruction, ProgramError> {
+pub fn deploy_token_manager(
+    mut params: DeployTokenManagerInputs,
+) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let payer = Pubkey::new_from_array(
         params
@@ -590,6 +637,9 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         optional_accounts_mask
     } else {
         let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+        let (call_contract_signing_pda, signing_pda_bump) =
+            axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+        params.signing_pda_bump = Some(signing_pda_bump);
 
         accounts.push(AccountMeta::new_readonly(gateway_root_pda, false));
         accounts.push(AccountMeta::new_readonly(
@@ -600,6 +650,8 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
         accounts.push(AccountMeta::new_readonly(params.gas_service, false));
         accounts.push(AccountMeta::new_readonly(system_program::id(), false));
         accounts.push(AccountMeta::new_readonly(its_root_pda, false));
+        accounts.push(AccountMeta::new_readonly(call_contract_signing_pda, false));
+        accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
         OptionalAccountsFlags::empty()
     };
@@ -622,9 +674,12 @@ pub fn deploy_token_manager(params: DeployTokenManagerInputs) -> Result<Instruct
 /// # Errors
 ///
 /// If serialization fails.
-pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instruction, ProgramError> {
-    let accounts = interchain_transfer_accounts(&params)?;
+pub fn interchain_transfer(
+    mut params: InterchainTransferInputs,
+) -> Result<Instruction, ProgramError> {
+    let (accounts, signing_pda_bump) = interchain_transfer_accounts(&params)?;
 
+    params.signing_pda_bump = Some(signing_pda_bump);
     let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer { params })?;
 
     Ok(Instruction {
@@ -641,10 +696,11 @@ pub fn interchain_transfer(params: InterchainTransferInputs) -> Result<Instructi
 ///
 /// If serialization fails.
 pub fn call_contract_with_interchain_token(
-    params: CallContractWithInterchainTokenInputs,
+    mut params: CallContractWithInterchainTokenInputs,
 ) -> Result<Instruction, ProgramError> {
-    let accounts = interchain_transfer_accounts(&params)?;
+    let (accounts, signing_pda_bump) = interchain_transfer_accounts(&params)?;
 
+    params.signing_pda_bump = Some(signing_pda_bump);
     let data =
         to_vec(&InterchainTokenServiceInstruction::CallContractWithInterchainToken { params })?;
 
@@ -664,7 +720,7 @@ pub fn call_contract_with_interchain_token(
 pub fn call_contract_with_interchain_token_offchain_data(
     mut params: CallContractWithInterchainTokenInputs,
 ) -> Result<(Instruction, Vec<u8>), ProgramError> {
-    let accounts = interchain_transfer_accounts(&params)?;
+    let (accounts, signing_pda_bump) = interchain_transfer_accounts(&params)?;
 
     let Some(destination_chain) = params.destination_chain.as_ref() else {
         return Err(ProgramError::InvalidArgument);
@@ -681,6 +737,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
     let offchain_data = hub_payload.encode();
 
     params.payload_hash = Some(solana_program::keccak::hashv(&[&offchain_data]).0);
+    params.signing_pda_bump = Some(signing_pda_bump);
 
     let data = to_vec(
         &InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData { params },
@@ -698,7 +755,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
 
 fn interchain_transfer_accounts(
     inputs: &InterchainTransferInputs,
-) -> Result<Vec<AccountMeta>, ProgramError> {
+) -> Result<(Vec<AccountMeta>, u8), ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let (interchain_token_pda, _) =
@@ -751,23 +808,30 @@ fn interchain_transfer_accounts(
 
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let (call_contract_signing_pda, signing_pda_bump) =
+        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
 
-    Ok(vec![
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(authority, signer),
-        AccountMeta::new_readonly(gateway_root_pda, false),
-        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new(inputs.gas_config_pda, false),
-        AccountMeta::new_readonly(inputs.gas_service, false),
-        AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new(source_account, false),
-        AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new(token_manager_ata, false),
-        AccountMeta::new_readonly(token_program, false),
-        AccountMeta::new(flow_slot_pda, false),
-    ])
+    Ok((
+        vec![
+            AccountMeta::new_readonly(payer, true),
+            AccountMeta::new_readonly(authority, signer),
+            AccountMeta::new_readonly(gateway_root_pda, false),
+            AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+            AccountMeta::new(inputs.gas_config_pda, false),
+            AccountMeta::new_readonly(inputs.gas_service, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+            AccountMeta::new_readonly(its_root_pda, false),
+            AccountMeta::new_readonly(call_contract_signing_pda, false),
+            AccountMeta::new_readonly(crate::ID, false),
+            AccountMeta::new(source_account, false),
+            AccountMeta::new(mint, false),
+            AccountMeta::new_readonly(token_manager_pda, false),
+            AccountMeta::new(token_manager_ata, false),
+            AccountMeta::new_readonly(token_program, false),
+            AccountMeta::new(flow_slot_pda, false),
+        ],
+        signing_pda_bump,
+    ))
 }
 
 /// Creates an [`InterchainTokenServiceInstruction::SetFlowLimit`].
@@ -1151,6 +1215,7 @@ fn derive_common_its_accounts(
 pub(crate) trait OutboundInstructionInputs {
     fn destination_chain(&mut self) -> Option<String>;
     fn gas_value(&self) -> u64;
+    fn signing_pda_bump(&self) -> Option<u8>;
 }
 
 impl OutboundInstructionInputs for DeployInterchainTokenInputs {
@@ -1161,6 +1226,10 @@ impl OutboundInstructionInputs for DeployInterchainTokenInputs {
     fn gas_value(&self) -> u64 {
         self.gas_value
     }
+
+    fn signing_pda_bump(&self) -> Option<u8> {
+        self.signing_pda_bump
+    }
 }
 
 impl OutboundInstructionInputs for DeployTokenManagerInputs {
@@ -1170,6 +1239,9 @@ impl OutboundInstructionInputs for DeployTokenManagerInputs {
 
     fn gas_value(&self) -> u64 {
         self.gas_value
+    }
+    fn signing_pda_bump(&self) -> Option<u8> {
+        self.signing_pda_bump
     }
 }
 

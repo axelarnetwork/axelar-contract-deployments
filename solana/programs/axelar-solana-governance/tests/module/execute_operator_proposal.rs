@@ -1,17 +1,18 @@
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
-use solana_program_test::tokio;
+use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, events, gmp_memo_metadata,
-    gmp_sample_metadata, init_contract_with_operator, ix_builder_with_memo_proposal_data,
-    ix_builder_with_sample_proposal_data, program_test, setup_programs,
+    approve_ix_at_gateway, assert_msg_present_in_logs, deploy_governance_program, events,
+    gmp_memo_metadata, gmp_sample_metadata, init_contract_with_operator,
+    ix_builder_with_memo_proposal_data, ix_builder_with_sample_proposal_data, setup_programs,
 };
 
 /// This is a full flow test that tests the execution of a proposal that reaches
@@ -27,12 +28,15 @@ async fn test_full_flow_operator_proposal_execution() {
 
     let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(counter_pda, false),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
@@ -169,7 +173,9 @@ async fn test_only_operator_can_execute_ix() {
     // Get the operator key pair;
     let operator = Keypair::new(); // Incorrect operator keypair
 
-    let mut fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+
+    deploy_governance_program(&mut fixture).await;
 
     // Setup gov module (initialize contract)
     let (config_pda, _) =
@@ -240,10 +246,15 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
         )
         .await;
     assert!(res.is_err());
-    assert_msg_present_in_logs(
-        res.err().unwrap(),
-        "Derived proposal PDA does not match provided one",
-    );
+
+    let meta = res.err().unwrap();
+
+    assert!(meta
+        .find_at_least_one_log(&[
+            "Derived proposal PDA does not match provided one",
+            "Provided seeds do not result in a valid address",
+        ])
+        .is_some());
 }
 
 #[tokio::test]

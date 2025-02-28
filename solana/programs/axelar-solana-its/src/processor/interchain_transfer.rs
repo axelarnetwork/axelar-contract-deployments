@@ -219,6 +219,10 @@ pub(crate) fn process_outbound_transfer<'a>(
         .destination_chain
         .take()
         .ok_or(ProgramError::InvalidInstructionData)?;
+    let signing_pda_bump = inputs
+        .signing_pda_bump
+        .take()
+        .ok_or(ProgramError::InvalidInstructionData)?;
     let gas_value = inputs.gas_value;
     let payload = inputs
         .try_into()
@@ -232,6 +236,7 @@ pub(crate) fn process_outbound_transfer<'a>(
         &payload,
         destination_chain,
         gas_value,
+        signing_pda_bump,
         maybe_payload_hash,
     )
 }
@@ -660,7 +665,12 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
             _gas_service_config_pda: next_account_info(accounts_iter)?,
             _gas_service: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
-            its_root_pda: next_account_info(accounts_iter)?,
+            its_root_pda: {
+                let keep = next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                keep
+            },
             source_account: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,

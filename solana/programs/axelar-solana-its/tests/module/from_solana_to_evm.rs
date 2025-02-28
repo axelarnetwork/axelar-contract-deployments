@@ -218,9 +218,6 @@ async fn test_send_deploy_token_manager_from_solana_to_evm() {
 #[rstest]
 #[tokio::test]
 async fn test_send_interchain_transfer_from_solana_to_evm_native() {
-    // InterchainTokens deployed through ITS are always spl-token-2022 programs,
-    // hence we only test spl-token-2022 here.
-
     let ItsProgramWrapper {
         mut solana_chain,
         chain_name: solana_id,
@@ -1880,7 +1877,7 @@ async fn test_call_contract_with_interchain_token_offchain_data() {
     assert_eq!(
         emitted_event,
         &CallContractOffchainDataEvent {
-            sender_key: its_root_pda,
+            sender_key: axelar_solana_its::ID,
             destination_chain: ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             destination_contract_address: ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             payload_hash: solana_sdk::keccak::hashv(&[&offchain_data]).0

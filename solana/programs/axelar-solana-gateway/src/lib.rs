@@ -26,6 +26,8 @@ pub mod seed_prefixes {
     pub const VERIFIER_SET_TRACKER_SEED: &[u8] = b"ver-set-tracker";
     /// The seed prefix for deriving signature verification PDAs
     pub const SIGNATURE_VERIFICATION_SEED: &[u8] = b"gtw-sig-verif";
+    /// The seed prefix for deriving call contract signature verification PDAs
+    pub const CALL_CONTRACT_SIGNING_SEED: &[u8] = b"gtw-call-contract";
     /// The seed prefix for deriving incoming message PDAs
     pub const INCOMING_MESSAGE_SEED: &[u8] = b"incoming message";
     /// The seed prefix for deriving message payload PDAs
@@ -302,6 +304,36 @@ pub fn create_validate_message_signing_pda(
     command_id: &[u8; 32],
 ) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(&[command_id, &[signing_pda_bump]], destination_address)
+}
+
+/// Create a new Signing PDA that is used for `CallContract` call by the source contract to authorize its call
+#[inline]
+#[must_use]
+pub fn get_call_contract_signing_pda(source_program_id: Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[seed_prefixes::CALL_CONTRACT_SIGNING_SEED],
+        &source_program_id,
+    )
+}
+
+/// Create a new Signing PDA that is used for authorizing the source program to call `CallContract`
+///
+/// # Errors
+///
+/// Returns a [`PubkeyError`] if the derived address lies on the ed25519 curve and is therefore not
+/// a valid program derived address when using the destination address as the program ID.
+#[inline]
+pub fn create_call_contract_signing_pda(
+    source_program_id: Pubkey,
+    signing_pda_bump: u8,
+) -> Result<Pubkey, PubkeyError> {
+    Pubkey::create_program_address(
+        &[
+            seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
+            &[signing_pda_bump],
+        ],
+        &source_program_id,
+    )
 }
 
 /// Finds the `MessagePayload` PDA.

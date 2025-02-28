@@ -4,18 +4,22 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::{bpf_loader, bpf_loader_upgradeable};
 
 use super::event_utils::{read_array, read_string, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::GatewayConfig;
-use crate::{assert_valid_gateway_root_pda, event_prefixes};
+use crate::{assert_valid_gateway_root_pda, create_call_contract_signing_pda, event_prefixes};
 
 impl Processor {
     /// This function initializes a cross-chain message by emitting an event containing the call details.
     ///
     /// The message can then be picked up by off-chain components for
     /// cross-chain delivery.
+    ///
+    /// It requires a valid signing PDA & signing PDA bump to be provided for verifying the
+    /// authenticity of the call.
     ///
     /// # Errors
     ///
@@ -42,9 +46,11 @@ impl Processor {
         destination_chain: &str,
         destination_contract_address: &str,
         payload: &[u8],
+        signing_pda_bump: u8,
     ) -> ProgramResult {
         let accounts_iter = &mut accounts.iter();
-        let sender = next_account_info(accounts_iter)?;
+        let sender_program_id = next_account_info(accounts_iter)?;
+        let sender_signing_pda = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
 
         // Check: Gateway Root PDA is initialized.
@@ -58,15 +64,32 @@ impl Processor {
         let payload_hash = solana_program::keccak::hash(payload).to_bytes();
 
         // Check: sender is signer
-        if !sender.is_signer {
+        if !sender_signing_pda.is_signer {
             solana_program::msg!("Error: Sender must be a signer");
             return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        // Check: sender program id is an actual program
+        if !sender_program_id.executable
+            && (sender_program_id.owner == &bpf_loader::ID
+                || sender_program_id.owner == &bpf_loader_upgradeable::ID)
+        {
+            solana_program::msg!("Error: sender must be a program");
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        // check that caller ir valid signing PDA
+        let expected_signing_pda =
+            create_call_contract_signing_pda(*sender_program_id.key, signing_pda_bump)?;
+        if &expected_signing_pda != sender_signing_pda.key {
+            solana_program::msg!("Invalid signing PDA");
+            return Err(GatewayError::InvalidSigningPDA.into());
         }
 
         // Emit an event
         sol_log_data(&[
             event_prefixes::CALL_CONTRACT,
-            &sender.key.to_bytes(),
+            &sender_program_id.key.to_bytes(),
             &payload_hash,
             destination_chain.as_bytes(),
             destination_contract_address.as_bytes(),

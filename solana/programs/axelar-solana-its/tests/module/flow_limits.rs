@@ -16,6 +16,7 @@ use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
 
@@ -42,12 +43,25 @@ async fn test_incoming_interchain_transfer_with_limit(#[case] flow_limit: u64) {
 
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let token_id = Pubkey::create_with_seed(&its_root_pda, "test_token", &axelar_solana_its::id())

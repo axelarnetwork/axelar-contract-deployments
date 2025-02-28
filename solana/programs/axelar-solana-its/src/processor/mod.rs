@@ -1,5 +1,4 @@
 //! Program state processor
-
 use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
@@ -7,26 +6,31 @@ use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
+use itertools::{self, Itertools};
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_program};
 
 use self::interchain_transfer::process_inbound_transfer;
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instructions::{
-    self, InterchainTokenServiceInstruction, OptionalAccountsFlags, OutboundInstructionInputs,
+    self, its_account_indices, InterchainTokenServiceInstruction, OptionalAccountsFlags,
+    OutboundInstructionInputs,
 };
+use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, seed_prefixes, Roles};
+use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
 pub mod interchain_token;
 pub mod interchain_transfer;
@@ -124,6 +128,7 @@ pub fn process_instruction<'a>(
 fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
+    let program_data_account = next_account_info(account_info_iter)?;
     let gateway_root_pda_account = next_account_info(account_info_iter)?;
     let its_root_pda_account = next_account_info(account_info_iter)?;
     let system_account = next_account_info(account_info_iter)?;
@@ -134,6 +139,9 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
     if !system_program::check_id(system_account.key) {
         return Err(ProgramError::IncorrectProgramId);
     }
+
+    // Check: Upgrade Authority
+    ensure_upgrade_authority(program_id, payer, program_data_account)?;
 
     // Check: PDA Account is not initialized
     its_root_pda_account.check_uninitialized_pda()?;
@@ -234,6 +242,8 @@ fn process_inbound_its_gmp_payload<'a>(
     let payload =
         GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
 
+    validate_its_accounts(instruction_accounts, &payload)?;
+
     match payload {
         GMPPayload::InterchainTransfer(transfer) => process_inbound_transfer(
             message,
@@ -270,20 +280,23 @@ where
         .ok_or(ProgramError::InvalidInstructionData)?;
 
     let gas_value = payload.gas_value();
-    let destination_chain = payload.destination_chain();
+    let bump_and_chain = payload
+        .signing_pda_bump()
+        .and_then(|bump| payload.destination_chain().map(|chain| (bump, chain)));
 
     let payload: GMPPayload = payload
         .try_into()
         .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
-    match destination_chain {
-        Some(chain) => {
+    match bump_and_chain {
+        Some((signing_pda_bump, chain)) => {
             process_outbound_its_gmp_payload(
                 payer,
                 other_accounts,
                 &payload,
                 chain,
                 gas_value,
+                signing_pda_bump,
                 None,
             )?;
         }
@@ -321,6 +334,7 @@ fn process_outbound_its_gmp_payload<'a>(
     payload: &GMPPayload,
     destination_chain: String,
     gas_value: u64,
+    signing_pda_bump: u8,
     payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
@@ -330,6 +344,9 @@ fn process_outbound_its_gmp_payload<'a>(
     let gas_service = next_account_info(accounts_iter)?;
     let system_program = next_account_info(accounts_iter)?;
     let its_root_account = next_account_info(accounts_iter)?;
+    let call_contract_signing_acc = next_account_info(accounts_iter)?;
+    let program_account = next_account_info(accounts_iter)?;
+
     let its_root_config = InterchainTokenService::load(its_root_account)?;
     assert_valid_its_root_pda(
         its_root_account,
@@ -341,11 +358,21 @@ fn process_outbound_its_gmp_payload<'a>(
         return Err(ProgramError::Immutable);
     }
 
+    let signing_pda =
+        axelar_solana_gateway::create_call_contract_signing_pda(crate::ID, signing_pda_bump)?;
+
+    if &signing_pda != call_contract_signing_acc.key {
+        msg!("invalid call contract signing account / signing pda bump");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let (payload_hash, call_contract_ix) = if let Some(payload_hash) = payload_hash {
         let ix = axelar_solana_gateway::instructions::call_contract_offchain_data(
             axelar_solana_gateway::id(),
             *gateway_root_account.key,
-            *its_root_account.key,
+            crate::ID,
+            signing_pda,
+            signing_pda_bump,
             ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             payload_hash,
@@ -370,7 +397,9 @@ fn process_outbound_its_gmp_payload<'a>(
         let ix = axelar_solana_gateway::instructions::call_contract(
             axelar_solana_gateway::id(),
             *gateway_root_account.key,
-            *its_root_account.key,
+            crate::ID,
+            signing_pda,
+            signing_pda_bump,
             ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
             ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
             hub_payload,
@@ -405,11 +434,14 @@ fn process_outbound_its_gmp_payload<'a>(
 
     invoke_signed(
         &call_contract_ix,
-        &[its_root_account.clone(), gateway_root_account.clone()],
+        &[
+            program_account.clone(),
+            call_contract_signing_acc.clone(),
+            gateway_root_account.clone(),
+        ],
         &[&[
-            seed_prefixes::ITS_SEED,
-            gateway_root_account.key.as_ref(),
-            &[its_root_config.bump],
+            axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
+            &[signing_pda_bump],
         ]],
     )?;
 
@@ -487,6 +519,63 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     )?;
     its_root_config.paused = paused;
     its_root_config.store(its_root_pda)?;
+
+    Ok(())
+}
+
+fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> ProgramResult {
+    // In this case we cannot derive the mint account, so we just use what we got
+    // and check later against the mint within the `TokenManager` PDA.
+    let maybe_mint = if let GMPPayload::InterchainTransfer(_) = payload {
+        accounts
+            .get(its_account_indices::TOKEN_MINT_INDEX)
+            .map(|account| *account.key)
+    } else {
+        None
+    };
+
+    let gateway_root_pda = accounts
+        .get(its_account_indices::GATEWAY_ROOT_PDA_INDEX)
+        .map(|account| *account.key)
+        .ok_or(ProgramError::InvalidAccountData)?;
+    let token_program = accounts
+        .get(its_account_indices::TOKEN_PROGRAM_INDEX)
+        .map(|account| *account.key)
+        .ok_or(ProgramError::InvalidAccountData)?;
+
+    let (derived_its_accounts, _) = instructions::derive_its_accounts(
+        payload,
+        gateway_root_pda,
+        token_program,
+        maybe_mint,
+        Some(Clock::get()?.unix_timestamp),
+    )?;
+
+    for element in accounts.iter().zip_longest(derived_its_accounts.iter()) {
+        match element {
+            itertools::EitherOrBoth::Both(provided, derived) => {
+                if provided.key != &derived.pubkey {
+                    return Err(ProgramError::InvalidAccountData);
+                }
+            }
+            itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => {
+                return Err(ProgramError::InvalidAccountData);
+            }
+        }
+    }
+
+    // Now we validate the mint account passed for `InterchainTransfer`
+    if let Some(mint) = maybe_mint {
+        let token_manager_pda = accounts
+            .get(its_account_indices::TOKEN_MANAGER_PDA_INDEX)
+            .ok_or(ProgramError::InvalidAccountData)?;
+
+        let token_manager = TokenManager::load(token_manager_pda)?;
+
+        if token_manager.token_address.as_ref() != mint.as_ref() {
+            return Err(ProgramError::InvalidAccountData);
+        }
+    }
 
     Ok(())
 }

@@ -39,9 +39,11 @@ pub enum AxelarMemoInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [signer] The address of payer / sender
-    /// 1. [] gateway root pda
-    /// 2. [] gateway program id
+    /// 0. [] Memo program id
+    /// 1. [w] Memo counter PDA
+    /// 2. [] Memo program CALL CONTRACT signing PDA
+    /// 3. [] gateway root pda
+    /// 4. [] gateway program id
     SendToGateway {
         /// Memo to send to the gateway
         memo: String,
@@ -56,9 +58,11 @@ pub enum AxelarMemoInstruction {
     ///
     /// Accounts expected by this instruction:
     ///
-    /// 0. [signer] The address of payer / sender
-    /// 1. [] gateway root pda
-    /// 2. [] gateway program id
+    /// 0. [] Memo program id
+    /// 1. [w] Memo counter PDA
+    /// 2. [] Memo program CALL CONTRACT signing PDA
+    /// 3. [] gateway root pda
+    /// 4. [] gateway program id
     SendToGatewayOffchainMemo {
         /// Hash of the memo which is going to be sent directly to the relayer.
         memo_hash: [u8; 32],
@@ -109,8 +113,11 @@ pub fn call_gateway_with_memo(
         destination_chain,
         destination_address,
     })?;
+    let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let accounts = vec![
-        AccountMeta::new_readonly(*memo_counter_pda, false),
+        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new(*memo_counter_pda, false),
+        AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(*gateway_program_id, false),
     ];
@@ -138,8 +145,11 @@ pub fn call_gateway_with_offchain_memo(
         destination_chain,
         destination_address,
     })?;
+    let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let accounts = vec![
-        AccountMeta::new_readonly(*memo_counter_pda, false),
+        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new(*memo_counter_pda, false),
+        AccountMeta::new_readonly(signing_pda.0, false),
         AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new_readonly(*gateway_program_id, false),
     ];

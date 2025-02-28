@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
@@ -57,12 +58,15 @@ async fn test_time_lock_is_enforced() {
 async fn test_proposal_can_be_executed_and_reached_memo_program() {
     let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(counter_pda, false),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
@@ -143,10 +147,15 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     // The runtime detects the wrong PDA and returns an error.
     assert!(res.is_err());
-    assert_msg_present_in_logs(
-        res.err().unwrap(),
-        "Derived proposal PDA does not match provided one",
-    );
+
+    let meta = res.err().unwrap();
+
+    assert!(meta
+        .find_at_least_one_log(&[
+            "Derived proposal PDA does not match provided one",
+            "Provided seeds do not result in a valid address",
+        ])
+        .is_some());
 }
 
 #[tokio::test]
@@ -166,12 +175,15 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
     // Using the memo program as target proposal program.
     let memo_program_funds_receiver_account = AccountMeta::new(counter_pda, false);
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
 
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         memo_program_funds_receiver_account.clone(),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
@@ -222,12 +234,15 @@ async fn test_proposal_is_deleted_after_execution() {
     // Memo program solana accounts. gathered from
     // `axelar_solana_memo_program_old::instruction::call_gateway_with_memo`
 
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(counter_pda, false),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 
@@ -273,12 +288,15 @@ async fn test_proposal_is_deleted_after_execution() {
 async fn test_same_proposal_can_be_created_after_execution() {
     let (mut sol_integration, config_pda, counter_pda) = Box::pin(setup_programs()).await;
 
+    let (memo_signing_pda, _) =
+        axelar_solana_gateway::get_call_contract_signing_pda(axelar_solana_memo_program::ID);
     // Using the memo program as target proposal program.
     let memo_program_accounts = &[
+        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(counter_pda, false),
+        AccountMeta::new_readonly(memo_signing_pda, false),
         AccountMeta::new_readonly(sol_integration.gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
-        AccountMeta::new_readonly(axelar_solana_memo_program::id(), false),
         AccountMeta::new_readonly(sol_integration.fixture.payer.pubkey(), true),
     ];
 

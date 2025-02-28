@@ -7,7 +7,7 @@ use axelar_solana_its::state::token_manager;
 use evm_contracts_test_suite::ethers::abi::Bytes;
 use interchain_token_transfer_gmp::{DeployTokenManager, GMPPayload};
 use solana_program_test::tokio;
-use solana_sdk::{pubkey::Pubkey, signer::Signer};
+use solana_sdk::{pubkey::Pubkey, signer::Signer, system_instruction};
 
 use crate::{program_test, relay_to_solana};
 
@@ -17,12 +17,25 @@ async fn test_its_gmp_payload_fail_when_paused() {
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     solana_chain
@@ -82,12 +95,25 @@ async fn test_outbound_deployment_fails_when_paused() {
         .unwrap();
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     solana_chain
@@ -134,12 +160,25 @@ async fn test_fail_to_pause_not_being_owner() {
     let mut solana_chain = program_test().await;
     solana_chain
         .fixture
-        .send_tx(&[axelar_solana_its::instructions::initialize(
-            solana_chain.fixture.payer.pubkey(),
-            solana_chain.gateway_root_pda,
-            solana_chain.fixture.payer.pubkey(),
+        .send_tx_with_custom_signers(
+            &[
+                system_instruction::transfer(
+                    &solana_chain.fixture.payer.pubkey(),
+                    &solana_chain.upgrade_authority.pubkey(),
+                    u32::MAX.into(),
+                ),
+                axelar_solana_its::instructions::initialize(
+                    solana_chain.upgrade_authority.pubkey(),
+                    solana_chain.gateway_root_pda,
+                    solana_chain.fixture.payer.pubkey(),
+                )
+                .unwrap(),
+            ],
+            &[
+                &solana_chain.upgrade_authority.insecure_clone(),
+                &solana_chain.fixture.payer.insecure_clone(),
+            ],
         )
-        .unwrap()])
         .await;
 
     let tx_metadata = solana_chain

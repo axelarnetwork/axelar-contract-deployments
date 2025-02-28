@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use axelar_solana_encoding::types::messages::{CrossChainId, Message};
 use axelar_solana_gateway::state::incoming_message::command_id;
-use axelar_solana_gateway_test_fixtures::base::TestFixture;
+use axelar_solana_gateway_test_fixtures::base::{workspace_root_dir, TestFixture};
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
@@ -13,7 +13,7 @@ use axelar_solana_governance::instructions::builder::{
 use axelar_solana_governance::state::GovernanceConfig;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use borsh::to_vec;
-use solana_program_test::{processor, BanksTransactionResultWithMetadata, ProgramTest};
+use solana_program_test::{tokio, BanksTransactionResultWithMetadata, ProgramTest};
 use solana_sdk::bpf_loader_upgradeable;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::program_error::ProgramError;
@@ -26,15 +26,16 @@ use crate::fixtures::{
 };
 
 pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey, Pubkey) {
-    let mut fixture = TestFixture::new(program_test()).await;
+    let mut fixture = TestFixture::new(ProgramTest::default()).await;
+    let upgrade_authority = Keypair::new();
 
-    // Setup gov module (initialize contract)
+    deploy_governance_program(&mut fixture).await;
+
+    // Init gov module (initialize contract)
     let (gov_config_pda, _) =
         init_contract_with_operator(&mut fixture, operator_keypair().pubkey().to_bytes())
             .await
             .unwrap();
-
-    let upgrade_authority = Keypair::new();
 
     // Setup gateway
     let mut sol_integration = SolanaAxelarIntegration::builder()
@@ -81,12 +82,27 @@ pub(crate) async fn setup_programs() -> (SolanaAxelarIntegrationMetadata, Pubkey
     (sol_integration, gov_config_pda, memo_counter_pda.0)
 }
 
-pub(crate) fn program_test() -> ProgramTest {
-    ProgramTest::new(
-        "axelar_solana_governance",
-        axelar_solana_governance::id(),
-        processor!(axelar_solana_governance::processor::Processor::process_instruction),
-    )
+pub(crate) async fn deploy_governance_program_with_upgrade_authority(
+    fixture: &mut TestFixture,
+    upgrade_authority: &Pubkey,
+) {
+    let program_bytecode =
+        tokio::fs::read(workspace_root_dir().join("target/deploy/axelar_solana_governance.so"))
+            .await
+            .unwrap();
+
+    fixture
+        .register_upgradeable_program(
+            &program_bytecode,
+            upgrade_authority,
+            &axelar_solana_governance::ID,
+        )
+        .await;
+}
+
+pub(crate) async fn deploy_governance_program(fixture: &mut TestFixture) {
+    let upgrade_authority = fixture.payer.pubkey();
+    deploy_governance_program_with_upgrade_authority(fixture, &upgrade_authority).await;
 }
 
 pub(crate) async fn init_contract_with_operator(

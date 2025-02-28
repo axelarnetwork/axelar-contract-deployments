@@ -121,22 +121,39 @@ pub fn process_native_ix(
             destination_address,
         } => {
             msg!("Instruction: SendToGateway");
+            let program_account = next_account_info(account_info_iter)?;
             let counter_pda = next_account_info(account_info_iter)?;
+            let signing_pda_acc = next_account_info(account_info_iter)?;
             let gateway_root_pda = next_account_info(account_info_iter)?;
             let gateway_program = next_account_info(account_info_iter)?;
+
             let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
+            let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
             assert_counter_pda_seeds(&counter_pda_account, counter_pda.key, gateway_root_pda.key);
+            if &signing_pda.0 != signing_pda_acc.key {
+                msg!("invalid signing PDA");
+                return Err(ProgramError::InvalidAccountData);
+            }
             invoke_signed(
                 &axelar_solana_gateway::instructions::call_contract(
                     *gateway_program.key,
                     *gateway_root_pda.key,
-                    *counter_pda.key,
+                    crate::ID,
+                    signing_pda.0,
+                    signing_pda.1,
                     destination_chain,
                     destination_address,
                     memo.into_bytes(),
                 )?,
-                &[counter_pda.clone(), gateway_root_pda.clone()],
-                &[&[gateway_root_pda.key.as_ref(), &[counter_pda_account.bump]]],
+                &[
+                    program_account.clone(),
+                    signing_pda_acc.clone(),
+                    gateway_root_pda.clone(),
+                ],
+                &[&[
+                    axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
+                    &[signing_pda.1],
+                ]],
             )?;
         }
         AxelarMemoInstruction::SendToGatewayOffchainMemo {
@@ -145,22 +162,39 @@ pub fn process_native_ix(
             destination_address,
         } => {
             msg!("Instruction: SendToGatewayOffchainMemo");
+            let program_account = next_account_info(account_info_iter)?;
             let counter_pda = next_account_info(account_info_iter)?;
+            let signing_pda_acc = next_account_info(account_info_iter)?;
             let gateway_root_pda = next_account_info(account_info_iter)?;
             let gateway_program = next_account_info(account_info_iter)?;
+
             let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
             assert_counter_pda_seeds(&counter_pda_account, counter_pda.key, gateway_root_pda.key);
+            let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+            if &signing_pda.0 != signing_pda_acc.key {
+                msg!("invalid signing PDA");
+                return Err(ProgramError::InvalidAccountData);
+            }
             invoke_signed(
                 &axelar_solana_gateway::instructions::call_contract_offchain_data(
                     *gateway_program.key,
                     *gateway_root_pda.key,
-                    *counter_pda.key,
+                    crate::ID,
+                    signing_pda.0,
+                    signing_pda.1,
                     destination_chain,
                     destination_address,
                     memo_hash,
                 )?,
-                &[counter_pda.clone(), gateway_root_pda.clone()],
-                &[&[gateway_root_pda.key.as_ref(), &[counter_pda_account.bump]]],
+                &[
+                    program_account.clone(),
+                    signing_pda_acc.clone(),
+                    gateway_root_pda.clone(),
+                ],
+                &[&[
+                    axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
+                    &[signing_pda.1],
+                ]],
             )?;
         }
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {

@@ -69,7 +69,7 @@ impl TestFixture {
         utils: &GasServiceUtils,
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         self.init_gas_config_with_params(
-            utils.config_authority.pubkey(),
+            utils.config_authority.insecure_clone(),
             utils.config_pda,
             utils.salt,
         )
@@ -79,19 +79,20 @@ impl TestFixture {
     /// init the gas service with raw params
     pub async fn init_gas_config_with_params(
         &mut self,
-        config_authority: Pubkey,
+        config_authority: Keypair,
         config_pda: Pubkey,
         salt: [u8; 32],
     ) -> Result<BanksTransactionResultWithMetadata, BanksTransactionResultWithMetadata> {
         let ix = axelar_solana_gas_service::instructions::init_config(
             &axelar_solana_gas_service::ID,
             &self.payer.pubkey(),
-            &config_authority,
+            &config_authority.pubkey(),
             &config_pda,
             salt,
         )
         .unwrap();
-        self.send_tx(&[ix]).await
+        self.send_tx_with_custom_signers(&[ix], &[config_authority, self.payer.insecure_clone()])
+            .await
     }
 
     /// Initialize a new token mint

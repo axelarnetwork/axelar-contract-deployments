@@ -57,7 +57,7 @@ async fn test_successfully_send_to_gateway() {
     assert_eq!(
         emitted_event,
         &CallContractEvent {
-            sender_key: counter_pda,
+            sender_key: axelar_solana_memo_program::ID,
             destination_chain,
             destination_contract_address: destination_address,
             payload: memo.as_bytes().to_vec(),
@@ -123,7 +123,7 @@ async fn test_successfully_send_to_gateway_with_offchain_data() {
     assert_eq!(
         emitted_event,
         &CallContractOffchainDataEvent {
-            sender_key: counter_pda,
+            sender_key: axelar_solana_memo_program::ID,
             destination_chain,
             destination_contract_address: destination_address,
             payload_hash: solana_sdk::keccak::hash(memo.as_bytes()).0

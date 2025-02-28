@@ -85,7 +85,7 @@ impl crate::EvmSigner {
     /// blockchain network that the signer is connected to.
     pub async fn deploy_axelar_amplifier_gateway(
         &self,
-        recent_signer_sets: &[crate::evm_weighted_signers::WeightedSigners],
+        recent_verifier_set: &[crate::evm_weighted_signers::WeightedSigners],
         owner: Address,
         operator: Address,
     ) -> anyhow::Result<axelar_amplifier_gateway::AxelarAmplifierGateway<ContractMiddleware>> {
@@ -104,7 +104,7 @@ impl crate::EvmSigner {
         .await?;
 
         let bytes_params = crate::evm_weighted_signers::get_gateway_proxy_setup_signers(
-            recent_signer_sets,
+            recent_verifier_set,
             operator,
         );
         let proxy = axelar_amplifier_gateway_proxy::AxelarAmplifierGatewayProxy::deploy(

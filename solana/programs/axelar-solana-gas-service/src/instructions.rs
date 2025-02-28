@@ -174,7 +174,7 @@ pub fn init_config(
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*authority, false),
+        AccountMeta::new_readonly(*authority, true),
         AccountMeta::new(*config_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];

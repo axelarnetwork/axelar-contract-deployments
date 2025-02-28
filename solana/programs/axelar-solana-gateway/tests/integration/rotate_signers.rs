@@ -487,12 +487,12 @@ async fn new_verifier_set_can_approve_messages_while_respecting_signer_retention
         .setup()
         .await;
 
-    let mut new_signer_sets = vec![];
+    let mut new_verifier_sets = vec![];
     let mut previous = metadata.signers.clone();
     for i in 0..previous_signer_retention {
         // Action - rotate the signer set for the first time.
         let new_verifier_set = make_verifier_set(&[1, 200], i, metadata.domain_separator);
-        new_signer_sets.push(new_verifier_set.clone());
+        new_verifier_sets.push(new_verifier_set.clone());
         metadata
             .sign_session_and_rotate_signers(&previous, &new_verifier_set.verifier_set())
             .await
@@ -511,15 +511,15 @@ async fn new_verifier_set_can_approve_messages_while_respecting_signer_retention
     }
 
     assert_eq!(
-        u64::try_from(new_signer_sets.len()).unwrap(),
+        u64::try_from(new_verifier_sets.len()).unwrap(),
         previous_signer_retention,
         "new signer sets"
     );
 
     // Action: can still approve messages, except the initial one
-    for signer_set in new_signer_sets {
+    for verifier_set in new_verifier_sets {
         metadata
-            .sign_session_and_approve_messages(&signer_set, &[random_message()])
+            .sign_session_and_approve_messages(&verifier_set, &[random_message()])
             .await
             .unwrap();
     }

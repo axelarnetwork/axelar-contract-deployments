@@ -253,7 +253,7 @@ async fn test_large_weight_will_validate_whole_batch() {
         .await;
     let payload = Payload::Messages(Messages(vec![random_message(); 5]));
     let verifier_set = metadata.signers.verifier_set();
-    let signer_set_with_only_large_weight = {
+    let verifier_set_with_only_large_weight = {
         let signer = metadata
             .signers
             .signers
@@ -269,7 +269,7 @@ async fn test_large_weight_will_validate_whole_batch() {
         }
     };
     let execute_data = metadata.construct_execute_data_with_custom_verifier_set(
-        &signer_set_with_only_large_weight,
+        &verifier_set_with_only_large_weight,
         &verifier_set,
         payload,
     );

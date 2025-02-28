@@ -165,15 +165,16 @@ async fn fail_if_invalid_signing_pda_seeds() {
         .unwrap();
     let err = metadata.send_tx(&[ix]).await.unwrap_err();
 
-    // assert
-    let err_variant_one = err.find_log("Invalid signing PDA").is_some();
-    let err_variant_two = err
-        .find_log("Provided seeds do not result in a valid address")
-        .is_some();
     // this depends on the bump that gets derived -- sometimes they match, sometimes
     // they don't depending on the random parameters of test run
-    let either_error = err_variant_one || err_variant_two;
-    assert!(either_error);
+
+    // assert
+    assert!(err
+        .find_at_least_one_log(&[
+            "Invalid signing PDA",
+            "Provided seeds do not result in a valid address"
+        ])
+        .is_some());
 }
 
 async fn set_existing_incoming_message_state(

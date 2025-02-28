@@ -4,6 +4,7 @@ use crate::seed_prefixes;
 use borsh::{BorshDeserialize, BorshSerialize};
 use core::any::type_name;
 use core::mem::size_of;
+use core::ops::RangeInclusive;
 use solana_program::pubkey::Pubkey;
 use solana_program::{
     msg,
@@ -17,6 +18,9 @@ pub mod proposal;
 type Hash = [u8; 32];
 /// The [`solana_program::pubkey::Pubkey`] bytes.
 type Address = [u8; 32];
+
+/// The valid range for the proposal delay.
+pub const VALID_PROPOSAL_DELAY_RANGE: RangeInclusive<u32> = 3600..=86400;
 
 /// Governance configuration type.
 #[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
