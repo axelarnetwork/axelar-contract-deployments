@@ -5,7 +5,6 @@ const {
     getDefaultProvider,
     utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     BigNumber,
-    constants: { AddressZero },
     Contract,
 } = ethers;
 const { Command, Option } = require('commander');
@@ -615,8 +614,7 @@ async function processCommand(config, chain, options) {
         }
 
         case 'transfer-mintership': {
-            const [tokenAddress] = args;
-            const { minter } = options;
+            const [tokenAddress, minter] = args;
             validateParameters({ isValidAddress: { tokenAddress, minter } });
 
             const token = new Contract(tokenAddress, IMinter.abi, wallet);
@@ -926,7 +924,6 @@ if (require.main === module) {
         .name('transfer-mintership')
         .description('Transfer mintership')
         .command('transfer-mintership <token-address> <minter>')
-        .addOption(new Option('--minter <minter>', 'token minter').default(AddressZero))
         .action((tokenAddress, minter, options) => {
             options.action = 'transfer-mintership';
             options.args = [tokenAddress, minter];
