@@ -362,7 +362,7 @@ if (require.main === module) {
 
     const deployTokenProgram = new Command()
         .name('deploy-token')
-        .description('Deploy token on Sui.')
+        .description('Deploy token on Sui. The supported token manager modes are lock_unlock (default) and mint_burn.')
         .command('deploy-token <symbol> <name> <decimals>')
         .addOption(
             new Option('--tokenManagerMode <tokenManagerMode>', 'Token Manager Mode')
