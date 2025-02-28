@@ -30,7 +30,7 @@ A CPI must be made to the Axelar Solana Gateway for a destination contract to co
 The second account is a `signing PDA`, meaning the source program must generate a PDA with specific parameters and sign the CPI call for `gateway.call_contract`. This Signature acts as an authorization token that allows the Gateway to interpret that the provided `program_id` is indeed the one that made the call and thus will use the `program_id` as the sender.
 
 
-| PDA name | descriptoin | users | notes | owner |
+| PDA name | description | users | notes | owner |
 | - | - | - | - | - |
 | [CallContract](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/lib.rs#L312-L317) | This acts only as a signing PDA, never initialized; Permits the destination program to call `CallContract` on the Gateway | Destination program will craft this when making the CPI call to the Gateway | Emulates `msg.sender` from Solidity | Destination program |
 
@@ -59,7 +59,7 @@ Receiving messages on Solana is more complex than sending messages. There are a 
 
 ![image](https://github.com/user-attachments/assets/43e0ac3b-04e9-4d76-9075-8b325aec278b)
 
-| PDA name | descriptoin | users | notes | owner |
+| PDA name | description | users | notes | owner |
 | - | - | - | - | - |
 | [Gateway Config](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/state/config.rs) | Tracks all the information about the Gateway, the verifier set epoch, verifier set hashes, verifier rotation delays, etc.  | This PDA is present in all the public interfaces on the Gateway. Relayer and every contract is expected to interact with it | | Gateway |
 | [Verifier Set Tracker](https://github.com/eigerco/solana-axelar/blob/bf3351013ccf5061aaa1195411e2430c67250ec8/solana/programs/axelar-solana-gateway/src/state/verifier_set_tracker.rs) | Tracks information about an individual verifier set | Relayer, when rotating verifier sets; Relayer, when approving messages; | Solana does not have built-in infinite size hash maps as storage variables, using PDA for each verifier set entry allows us to ensure that duplicate verifier sets never get created | Gateway |
