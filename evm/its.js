@@ -649,9 +649,7 @@ async function processCommand(config, chain, options) {
                 return;
             }
 
-            if (
-                prompt(`Proceed with linking tokenId ${tokenId} to ${destinationTokenAddress} on chain ${destinationChain}?`, yes)
-            ) {
+            if (prompt(`Proceed with linking tokenId ${tokenId} to ${destinationTokenAddress} on chain ${destinationChain}?`, yes)) {
                 return;
             }
 
