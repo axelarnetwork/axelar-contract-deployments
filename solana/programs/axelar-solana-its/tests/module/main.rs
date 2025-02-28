@@ -363,7 +363,7 @@ async fn ensure_evm_gateway_approval(
 fn prepare_evm_approve_contract_call(
     payload_hash: [u8; 32],
     destination_address: Address,
-    signer_set: &mut evm_weighted_signers::WeightedSigners,
+    verifier_set: &mut evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
 ) -> (Vec<EvmAxelarMessage>, EvmAxelarProof) {
     // TODO: use address from the contract call once we have the trusted addresses
@@ -382,7 +382,7 @@ fn prepare_evm_approve_contract_call(
     // Build command batch
     let signed_weighted_execute_input = evm_weighted_signers::get_weighted_signatures_proof(
         &approve_contract_call_command,
-        signer_set,
+        verifier_set,
         domain_separator,
     );
 

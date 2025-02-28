@@ -231,7 +231,7 @@ pub struct InitializeConfig {
     /// The order is important:
     /// - first element == oldest entry
     /// - last element == latest entry
-    pub initial_signer_sets: Vec<VerifierSetHash>,
+    pub initial_verifier_set: Vec<VerifierSetHash>,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// The gateway operator.
@@ -395,7 +395,7 @@ pub fn initialize_config(
     payer: Pubkey,
     upgrade_authority: Pubkey,
     domain_separator: [u8; 32],
-    initial_signer_sets: Vec<(VerifierSetHash, Pubkey)>,
+    initial_verifier_sets: Vec<(VerifierSetHash, Pubkey)>,
     minimum_rotation_delay: RotationDelaySecs,
     operator: Pubkey,
     previous_verifier_retention: VerifierSetEpoch,
@@ -411,7 +411,7 @@ pub fn initialize_config(
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
-    for (_hash, pda) in &initial_signer_sets {
+    for (_hash, pda) in &initial_verifier_sets {
         accounts.push(AccountMeta {
             pubkey: *pda,
             is_signer: false,
@@ -421,7 +421,10 @@ pub fn initialize_config(
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
         domain_separator,
-        initial_signer_sets: initial_signer_sets.into_iter().map(|x| (x.0)).collect_vec(),
+        initial_verifier_set: initial_verifier_sets
+            .into_iter()
+            .map(|x| (x.0))
+            .collect_vec(),
         minimum_rotation_delay,
         operator,
         previous_verifier_retention,

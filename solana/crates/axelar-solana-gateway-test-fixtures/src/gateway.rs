@@ -88,12 +88,12 @@ impl SolanaAxelarIntegrationMetadata {
         &mut self,
     ) -> Result<Pubkey, BanksTransactionResultWithMetadata> {
         let (gateway_config_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-        let initial_signer_sets = self.init_gateway_config_verifier_set_data();
+        let initial_verifier_set = self.init_gateway_config_verifier_set_data();
         let ix = axelar_solana_gateway::instructions::initialize_config(
             self.fixture.payer.pubkey(),
             self.upgrade_authority.pubkey(),
             self.domain_separator,
-            initial_signer_sets,
+            initial_verifier_set,
             self.minimum_rotate_signers_delay_seconds,
             self.operator.pubkey(),
             self.previous_signers_retention.into(),

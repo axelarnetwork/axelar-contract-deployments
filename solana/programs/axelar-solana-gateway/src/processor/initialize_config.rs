@@ -72,7 +72,7 @@ impl Processor {
             return Err(ProgramError::InvalidInstructionData);
         }
         let verifier_sets = init_config
-            .initial_signer_sets
+            .initial_verifier_set
             .iter()
             .zip_eq(init_verifier_sets);
         // Expect: Safe as verifier set length cannot realistically exceed `u64::MAX`.

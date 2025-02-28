@@ -123,7 +123,7 @@ async fn test_send_from_solana_to_evm() {
 fn evm_prepare_approve_contract_call(
     solana_id: &str,
     call_contract: &CallContractEvent,
-    signer_set: &mut evm_contracts_test_suite::evm_weighted_signers::WeightedSigners,
+    verifier_set: &mut evm_contracts_test_suite::evm_weighted_signers::WeightedSigners,
     domain_separator: [u8; 32],
 ) -> (
     Vec<evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::Message>,
@@ -146,7 +146,7 @@ fn evm_prepare_approve_contract_call(
     let signed_weighted_execute_input =
         evm_contracts_test_suite::evm_weighted_signers::get_weighted_signatures_proof(
             &approve_contract_call_command,
-            signer_set,
+            verifier_set,
             domain_separator,
         );
     (vec![message], signed_weighted_execute_input)

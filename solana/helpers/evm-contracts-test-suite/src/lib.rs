@@ -235,11 +235,11 @@ pub mod evm_weighted_signers {
     /// ```
     pub fn get_weighted_signatures_proof(
         data: &[u8],
-        signer_set: &mut WeightedSigners,
+        verifier_set: &mut WeightedSigners,
         domain_separator: [u8; 32],
     ) -> evm_contracts_rs::contracts::axelar_amplifier_gateway::Proof {
         let weighted_signer_hash =
-            keccak256(ethers::abi::encode(&[get_weighted_signers(signer_set)]));
+            keccak256(ethers::abi::encode(&[get_weighted_signers(verifier_set)]));
         let packed_msg = encode_packed(&[
             ethers::abi::Token::String("\x19Ethereum Signed Message:\n96".to_string()),
             ethers::abi::Token::FixedBytes(domain_separator.to_vec()),
@@ -248,8 +248,8 @@ pub mod evm_weighted_signers {
         ])
         .unwrap();
         let hash = ethers::utils::keccak256(packed_msg);
-        sort_by_address(&mut signer_set.signers);
-        let signatures = signer_set
+        sort_by_address(&mut verifier_set.signers);
+        let signatures = verifier_set
             .signers
             .iter()
             .map(|signer| {
@@ -260,7 +260,7 @@ pub mod evm_weighted_signers {
             .collect::<Vec<_>>();
         evm_contracts_rs::contracts::axelar_amplifier_gateway::Proof {
             signers: evm_contracts_rs::contracts::axelar_amplifier_gateway::WeightedSigners {
-                signers: signer_set
+                signers: verifier_set
                     .signers
                     .iter()
                     .map(|x| {
@@ -270,8 +270,8 @@ pub mod evm_weighted_signers {
                         }
                     })
                     .collect::<Vec<_>>(),
-                threshold: signer_set.threshold.as_u128(),
-                nonce: signer_set.nonce,
+                threshold: verifier_set.threshold.as_u128(),
+                nonce: verifier_set.nonce,
             },
             signatures,
         }
@@ -280,25 +280,25 @@ pub mod evm_weighted_signers {
     /// (address operator_, WeightedSigners[] memory signers) =
     /// abi.decode(data, (address, WeightedSigners[]));
     pub fn get_gateway_proxy_setup_signers(
-        recent_signer_sets: &[crate::evm_weighted_signers::WeightedSigners],
+        recent_verifier_set: &[crate::evm_weighted_signers::WeightedSigners],
         operator: Address,
     ) -> Vec<u8> {
-        let signer_sets = recent_signer_sets
+        let verifier_set_signers = recent_verifier_set
             .iter()
             .map(get_weighted_signers)
             .collect::<Vec<_>>();
         ethers::abi::encode(&[
             ethers::abi::Token::Address(operator),
-            ethers::abi::Token::Array(signer_sets),
+            ethers::abi::Token::Array(verifier_set_signers),
         ])
     }
 
     /// const WEIGHTED_SIGNERS_TYPE = 'tuple(tuple(address signer,uint128
     /// weight)[] signers,uint128 threshold,bytes32 nonce)';
     pub fn get_weighted_signers(
-        signer_set: &crate::evm_weighted_signers::WeightedSigners,
+        verifier_set: &crate::evm_weighted_signers::WeightedSigners,
     ) -> ethers::abi::Token {
-        let signers = signer_set
+        let signers = verifier_set
             .signers
             .iter()
             .map(|x| {
@@ -311,8 +311,8 @@ pub mod evm_weighted_signers {
 
         ethers::abi::Token::Tuple(vec![
             ethers::abi::Token::Array(signers),
-            ethers::abi::Token::Uint(signer_set.threshold.into()),
-            ethers::abi::Token::FixedBytes(signer_set.nonce.into()),
+            ethers::abi::Token::Uint(verifier_set.threshold.into()),
+            ethers::abi::Token::FixedBytes(verifier_set.nonce.into()),
         ])
     }
 
