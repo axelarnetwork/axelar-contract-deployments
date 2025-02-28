@@ -5,9 +5,10 @@ const {
     getDefaultProvider,
     utils: { hexZeroPad, toUtf8Bytes, keccak256 },
     BigNumber,
+    constants: { AddressZero },
     Contract,
 } = ethers;
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const {
     printInfo,
     prompt,
@@ -299,7 +300,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'interchain-transfer': {
-            const [destinationChain, tokenId, destinationAddress, amount, gasValue, metadata = '0x'] = args;
+            const [destinationChain, tokenId, destinationAddress, amount, gasValue] = args;
+            const { metadata } = options;
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
@@ -355,7 +357,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'register-token-metadata': {
-            const [tokenAddress, gasValue] = args;
+            const [tokenAddress] = args;
+            const { gasValue } = options;
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
@@ -612,7 +615,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'transfer-mintership': {
-            const [tokenAddress, minter] = args;
+            const [tokenAddress] = args;
+            const { minter } = options;
             validateParameters({ isValidAddress: { tokenAddress, minter } });
 
             const token = new Contract(tokenAddress, IMinter.abi, wallet);
@@ -624,7 +628,8 @@ async function processCommand(config, chain, options) {
         }
 
         case 'link-token': {
-            const [tokenId, destinationChain, destinationTokenAddress, type, operator, gasValue] = args;
+            const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
+            const { gasValue } = options;
             const deploymentSalt = getDeploymentSalt(options);
             const tokenManagerType = tokenManagerImplementations[type];
 
@@ -818,17 +823,20 @@ if (require.main === module) {
     const interchainTransferCmd = new Command()
         .name('interchain-transfer')
         .description('Perform interchain transfer')
-        .command('interchain-transfer <destination-chain> <token-id> <destination-address> <amount> <metadata> [gas-value]')
-        .action((destinationChain, tokenId, destinationAddress, amount, metadata, gasValue, options) => {
+        .command('interchain-transfer <destination-chain> <token-id> <destination-address> <amount> <gas-value>')
+        .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
+        .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
+        .action((destinationChain, tokenId, destinationAddress, amount, gasValue, options) => {
             options.action = 'interchain-transfer';
-            options.args = [destinationChain, tokenId, destinationAddress, amount, metadata, gasValue];
+            options.args = [destinationChain, tokenId, destinationAddress, amount, gasValue];
             main(options);
         });
 
     const registerTokenMetadataCmd = new Command()
         .name('register-token-metadata')
         .description('Register token metadata')
-        .command('register-token-metadata <token-address> <gas-value>')
+        .command('register-token-metadata <token-address> ')
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
         .action((tokenAddress, gasValue, options) => {
             options.action = 'register-token-metadata';
             options.args = [tokenAddress, gasValue];
@@ -918,6 +926,7 @@ if (require.main === module) {
         .name('transfer-mintership')
         .description('Transfer mintership')
         .command('transfer-mintership <token-address> <minter>')
+        .addOption(new Option('--minter <minter>', 'token minter').default(AddressZero))
         .action((tokenAddress, minter, options) => {
             options.action = 'transfer-mintership';
             options.args = [tokenAddress, minter];
@@ -928,9 +937,11 @@ if (require.main === module) {
         .name('link-token')
         .description('Link token')
         .command('link-token <token-id> <destination-chain> <destination-token-address> <type> <operator> <gas-value>')
-        .action((tokenId, destinationChain, destinationTokenAddress, type, operator, gasValue, options) => {
+        .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options) => {
             options.action = 'link-token';
-            options.args = [tokenId, destinationChain, destinationTokenAddress, type, operator, gasValue];
+            options.args = [tokenId, destinationChain, destinationTokenAddress, type, operator];
             main(options);
         });
 
