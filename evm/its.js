@@ -837,9 +837,9 @@ if (require.main === module) {
         .description('Register token metadata')
         .command('register-token-metadata <token-address> ')
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
-        .action((tokenAddress, gasValue, options) => {
+        .action((tokenAddress, options) => {
             options.action = 'register-token-metadata';
-            options.args = [tokenAddress, gasValue];
+            options.args = [tokenAddress];
             main(options);
         });
 
