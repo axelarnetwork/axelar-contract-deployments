@@ -455,8 +455,8 @@ const getItsEdgeContract = (chainConfig) => {
 
 const getItsEdgeChains = (config, excludeChainName) => {
     return Object.keys(config.chains)
-    .filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
-    .filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
+        .filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
+        .filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
 };
 
 const parseTrustedChains = (config, trustedChains, excludeChainName) => {
