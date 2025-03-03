@@ -1,40 +1,42 @@
 'use strict';
 
-const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
+const { Address, Contract, SorobanRpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast } = require('./utils');
+const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast, serializeValue, addressToScVal } = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt } = require('../common/utils');
 require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(chain, _, contract, operation, _args, options) {
-    const pauseOperation = operation;
+async function submitOperation(chain, _, contract, operation, options) {
     const wallet = await getWallet(chain, options);
-    const callOperation = await contract.call(pauseOperation);
-    const returnValue = await broadcast(callOperation, wallet, chain, `${pauseOperation} performed`, options);
+    const callOperation = await contract.call(operation);
 
-    if (returnValue.value()) {
-        printInfo('Return value', returnValue.value());
-    }
+    return broadcast(callOperation, wallet, chain, `${operation}`, options);
 }
 
-async function isPausedCmd(chain, _, contract, _args, options) {
-    const operation = _args;
-    await submitOperation(chain, _, contract, operation, [], options);
+async function commonOperation(chain, _, contract, operation, options) {
+    const returnValue = await submitOperation(chain, _, contract, operation, options);
+
+    printInfo('Return value', serializeValue(returnValue.value()));
 }
 
-async function pauseCmd(chain, _, contract, _args, options) {
-    const operation = _args;
-    await submitOperation(chain, _, contract, operation, [], options);
+async function owner(chain, _, contract, operation, options) {
+    const returnValue = await submitOperation(chain, _, contract, operation, options);
+    const ownerScAddress = returnValue.value();
+
+    printInfo('Owner', Address.fromScAddress(ownerScAddress).toString());
 }
 
-async function unpauseCmd(chain, _, contract, _args, options) {
-    const operation = _args;
-    await submitOperation(chain, _, contract, operation, [], options);
+async function transferOwnership(chain, _, contract, args, options) {
+    const newOwner = args;
+    const wallet = await getWallet(chain, options);
+    const operation = contract.call('transfer_ownership', addressToScVal(newOwner));
+
+    await broadcast(operation, wallet, chain, 'transfer_ownership', options);
 }
 
 async function getTtl(chain, contractName, contract, _args, _options) {
@@ -51,13 +53,7 @@ async function getLedgerEntry(chain, contract) {
 }
 
 async function extendInstance(chain, contractName, _, _args, options) {
-    const { yes } = options;
     const { rpc, networkType } = chain;
-
-    if (prompt(`Extend instance ttl for ${contractName}`, yes)) {
-        return;
-    }
-
     const ledgersToExtend = !options.extendBy ? MAX_INSTANCE_TTL_EXTENSION : options.extendBy;
 
     const networkPassphrase = getNetworkPassphrase(networkType);
@@ -69,13 +65,7 @@ async function extendInstance(chain, contractName, _, _args, options) {
 }
 
 async function restoreInstance(chain, contractName, _, _args, options) {
-    const { yes } = options;
     const { rpc, networkType } = chain;
-
-    if (prompt(`Restore instance for ${contractName}`, yes)) {
-        return;
-    }
-
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
 
@@ -85,8 +75,13 @@ async function restoreInstance(chain, contractName, _, _args, options) {
 }
 
 async function mainProcessor(processor, contractName, args, options) {
+    const { yes } = options;
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
+
+    if (prompt(`Proceed with action ${processor.name}`, yes)) {
+        return;
+    }
 
     if (!chain.contracts[contractName]) {
         throw new Error('Contract not found');
@@ -132,11 +127,11 @@ if (require.main === module) {
         });
 
     program
-        .command('is_paused')
+        .command('paused')
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(isPausedCmd, contractName, 'paused', options);
+            mainProcessor(commonOperation, contractName, 'paused', options);
         });
 
     program
@@ -144,7 +139,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(pauseCmd, contractName, 'pause', options);
+            mainProcessor(commonOperation, contractName, 'pause', options);
         });
 
     program
@@ -152,7 +147,22 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(unpauseCmd, contractName, 'unpause', options);
+            mainProcessor(commonOperation, contractName, 'unpause', options);
+        });
+
+    program
+        .command('owner')
+        .description('Retrieve the owner of the contract')
+        .argument('<contract-naame>', 'contract name')
+        .action((contractName, options) => {
+            mainProcessor(owner, contractName, 'owner', options);
+        });
+
+    program
+        .command('transfer-ownership <contractName> <newOwner>')
+        .description('Transfer the ownership of the contract')
+        .action((contractName, newOwner, options) => {
+            mainProcessor(transferOwnership, contractName, newOwner, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

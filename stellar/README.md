@@ -347,3 +347,22 @@ Unpause the contract:
 ```bash
 node stellar/contract.js unpause axelar_gateway
 ```
+
+## Transfer Ownership of the Contract
+
+You can transfer ownership of the contract.
+
+#### Usage
+
+Check the owner of the contract:
+
+```bash
+node stellar/contract.js owner [contract-name]
+```
+
+Transfer the ownership of the contract
+
+```bash
+node stellar/contract.js transfer_ownership [contract-name] [new-owner]
+```
+
