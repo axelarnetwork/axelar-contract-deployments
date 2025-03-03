@@ -39,6 +39,21 @@ async function transferOwnership(chain, _, contract, args, options) {
     await broadcast(operation, wallet, chain, 'transfer_ownership', options);
 }
 
+async function operator(chain, _, contract, operation, options) {
+    const returnValue = await submitOperation(chain, _, contract, operation, options);
+    const operatorScAddress = returnValue.value();
+
+    printInfo('Operator', Address.fromScAddress(operatorScAddress).toString());
+}
+
+async function transferOperatorship(chain, _, contract, args, options) {
+    const newOperator = args;
+    const wallet = await getWallet(chain, options);
+    const operation = contract.call('transfer_operatorship', addressToScVal(newOperator));
+
+    await broadcast(operation, wallet, chain, 'transfer_operatorship', options);
+}
+
 async function getTtl(chain, contractName, contract, _args, _options) {
     printInfo('Contract TTL', contractName);
     const ledgerEntry = await getLedgerEntry(chain, contract);
@@ -163,6 +178,21 @@ if (require.main === module) {
         .description('Transfer the ownership of the contract')
         .action((contractName, newOwner, options) => {
             mainProcessor(transferOwnership, contractName, newOwner, options);
+        });
+
+    program
+        .command('operator')
+        .description('Retrieve the operator of the contract')
+        .argument('<contract-naame>', 'contract name')
+        .action((contractName, options) => {
+            mainProcessor(operator, contractName, 'operator', options);
+        });
+
+    program
+        .command('transfer-operatorship <contractName> <newOperator>')
+        .description('Transfer the operatorship of the contract')
+        .action((contractName, newOperator, options) => {
+            mainProcessor(transferOperatorship, contractName, newOperator, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
