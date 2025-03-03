@@ -417,7 +417,7 @@ Note:
 Add trusted address
 
 ```bash
-node sui/its.js add-trusted-chains <sourceChain>,<sourceChain2>,...
+node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 or Add all evm chains that have ITS contract deployed
