@@ -39,23 +39,12 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
 
+const VERSION_REGEX = /^v\d+\.\d+\.\d+$/;
+const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
+
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
-
-const SUPPORTED_COSMWASM_CONTRACTS = new Set([
-    'AxelarGateway',
-    'Coordinator',
-    'Gateway',
-    'MultisigProver',
-    'Multisig',
-    'NexusGateway',
-    'Rewards',
-    'Router',
-    'ServiceRegistry',
-    'VotingVerifier',
-    'InterchainTokenService',
-]);
 
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
@@ -850,42 +839,33 @@ const submitProposal = async (client, wallet, config, options, content) => {
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
-const getCosmWasmUrl = (contractName, contractVersion) => {
-    if (!SUPPORTED_COSMWASM_CONTRACTS.has(contractName)) {
-        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
-    }
-
+const getContractR2Url = (contractName, contractVersion) => {
     const pathName = pascalToKebab(contractName);
     const fileName = pascalToSnake(contractName);
 
-    const versionRegex = /^v\d+\.\d+\.\d+$/;
-    const commitRegex = /^[a-f0-9]{7,}$/;
-
-    let contractPath;
-
-    if (versionRegex.test(contractVersion)) {
+    if ( VERSION_REGEX.test(contractVersion)) {
         // Remove leading "v"
         const semanticVersion = contractVersion.slice(1);
-        contractPath = `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
-    } else if (commitRegex.test(contractVersion)) {
-        contractPath = `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
-    } else {
-        throw new Error(
-            `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
-        );
+        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
     }
-
-    return contractPath;
+    
+    if ( SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
+    } 
+    
+    throw new Error(
+        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
+    );
 };
 
 
-const getWasmPath = async (options, contractName) => {
+const getWasmFilePath = async (options, contractName) => {
     if (options.artifactPath) {
         return `${options.artifactPath}/${pascalToSnake(contractName)}.wasm`;
     }
 
     if (options.version) {
-        const url = getCosmWasmUrl(contractName, options.version);
+        const url = getContractR2Url(contractName, options.version);
         return await downloadWasmFile(url, contractName, options.version);
     }
 
@@ -967,5 +947,5 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
-    getWasmPath,
+    getWasmFilePath,
 };

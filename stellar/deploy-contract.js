@@ -3,7 +3,7 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmPath } = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmFilePath } = require('./utils');
 const { getDomainSeparator, getChainConfig } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -260,7 +260,7 @@ function main() {
                 throw new Error('Either --wasm-path or --version is required');
             }
 
-            const wasmResolvedPath = await getWasmPath(opts, contractName);
+            const wasmResolvedPath = await getWasmFilePath(opts, contractName);
             Object.assign(opts, { wasmResolvedPath });
         })
         .action((contractName, options) => {

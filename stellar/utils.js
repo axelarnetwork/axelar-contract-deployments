@@ -355,10 +355,8 @@ function stellarAddressToBytes(address) {
 }
 
 
-const getStellarWasmUrl = (contractName, version) => {
+const getContractR2Url = (contractName, version) => {
     if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
-        printInfo("Supported contracts", Array.from(SUPPORTED_STELLAR_CONTRACTS).join(', '));
-        printInfo("Contract Name", contractName);
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
@@ -368,13 +366,13 @@ const getStellarWasmUrl = (contractName, version) => {
     return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
 };
 
-const getWasmPath = async (options, contractName) => {
+const getWasmFilePath = async (options, contractName) => {
     if (options.wasmPath) {
         return options.wasmPath;
     }
 
     if (options.version) {
-        const url = getStellarWasmUrl(contractName, options.version);
+        const url = getContractR2Url(contractName, options.version);
         return await downloadWasmFile(url, contractName, options.version);
     }
 
@@ -403,5 +401,5 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
-    getWasmPath,
+    getWasmFilePath,
 };
