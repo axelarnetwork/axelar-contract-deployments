@@ -1,8 +1,9 @@
+const fs = require('fs');
 const { Command, Option } = require('commander');
-const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -154,10 +155,11 @@ async function postDeployAbi(published, keypair, client, config, chain, options)
 }
 
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
+    const [OperatorCapObjectId, OwnerCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
         published.publishTxn,
         [
-            `${published.packageId}::gas_service::GasCollectorCap`,
+            `${published.packageId}::operator_cap::OperatorCap`,
+            `${published.packageId}::owner_cap::OwnerCap`,
             `${published.packageId}::gas_service::GasService`,
             `${published.packageId}::gas_service_v0::GasService_v0`,
             `${suiPackageAddress}::package::UpgradeCap`,
@@ -167,7 +169,8 @@ async function postDeployGasService(published, keypair, client, config, chain, o
     await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
 
     chain.contracts.GasService.objects = {
-        GasCollectorCap: gasCollectorCapObjectId,
+        OperatorCap: OperatorCapObjectId,
+        OwnerCap: OwnerCapObjectId,
         GasService: gasServiceObjectId,
         GasServicev0: gasServicev0ObjectId,
         UpgradeCap: upgradeCap,
@@ -439,6 +442,25 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 }
 
+async function syncPackages(keypair, client, config, chain, options) {
+    // Remove the move directory and its contents if it exists
+    fs.rmSync(moveDir, { recursive: true, force: true });
+
+    for (const packageDir of PACKAGE_DIRS) {
+        copyMovePackage(packageDir, null, moveDir);
+        const packageName = readMovePackageName(packageDir);
+        const packageId = chain.contracts[packageName]?.address;
+
+        if (!packageId) {
+            printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
+            continue;
+        }
+
+        updateMoveToml(packageDir, packageId, moveDir);
+        printInfo(`Synced ${packageName} with package ID`, packageId);
+    }
+}
+
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
     const sui = getChainConfig(config, options.chainName);
@@ -535,16 +557,22 @@ if (require.main === module) {
             });
     });
 
+    const syncCmd = new Command('sync').description('Sync local Move packages with deployed addresses').action((options) => {
+        mainProcessor([], options, syncPackages);
+    });
+
     // Add 3rd level commands to 2nd level command `upgrade`
     upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
 
     // Add base options to all 2nd and 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
     addOptionsToCommands(upgradeCmd, addBaseOptions);
+    addBaseOptions(syncCmd);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
     program.addCommand(upgradeCmd);
+    program.addCommand(syncCmd);
 
     program.parse();
 }

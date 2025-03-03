@@ -1,21 +1,8 @@
 const { Command } = require('commander');
 const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
-
-const SPECIAL_CHAINS_TAGS = {
-    ALL_EVM: 'all-evm', // All EVM chains that have InterchainTokenService deployed
-};
-
-function parseTrustedChains(config, trustedChains) {
-    if (trustedChains === SPECIAL_CHAINS_TAGS.ALL_EVM) {
-        const evmChains = Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address);
-        return evmChains;
-    }
-
-    return trustedChains;
-}
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -85,7 +72,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
-    const [trustedChain] = args;
+    const trustedChains = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
 
@@ -93,18 +80,18 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const txBuilder = new TxBuilder(client);
 
-    const trustedChains = parseTrustedChains(config, trustedChain);
+    const parsedTrustedChains = parseTrustedChains(config, trustedChains.toString(), options.chainName);
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
-        arguments: [InterchainTokenService, OwnerCap, trustedChains],
+        arguments: [InterchainTokenService, OwnerCap, parsedTrustedChains],
     });
 
     if (options.offline) {
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Added trusted chain ${trustedChain}`, client, options);
+        await saveGeneratedTx(tx, `Added trusted chain ${trustedChains}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
     }
@@ -156,10 +143,10 @@ if (require.main === module) {
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chains...>')
         .description(
-            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. '${SPECIAL_CHAINS_TAGS.ALL_EVM}' to target all InterchainTokenService-deployed chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by commas. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
         )
         .action((trustedChains, options) => {
-            mainProcessor(addTrustedChains, options, [trustedChains], processCommand);
+            mainProcessor(addTrustedChains, options, trustedChains, processCommand);
         });
 
     const removeTrustedChainsProgram = new Command()
