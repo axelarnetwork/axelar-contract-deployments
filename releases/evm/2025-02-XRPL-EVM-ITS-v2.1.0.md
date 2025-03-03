@@ -98,7 +98,7 @@ node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEe
 # Fetch token manager address
 node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
 
-# tranfer mintership to token manager
+# transfer mintership to token manager
 node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
 ```
 
