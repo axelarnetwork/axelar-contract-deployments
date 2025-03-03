@@ -634,6 +634,56 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'linkToken': {
+            const { destinationChain, type, operator, destinationTokenAddress, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
+
+            validateParameters({
+                isString: { destinationChain },
+                isValidAddress: { destinationTokenAddress, operator },
+                isValidNumber: { gasValue, tokenManagerType },
+            });
+            isValidDestinationChain(config, destinationChain);
+
+            const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('Expected tokenId', interchainTokenId);
+
+            try {
+                const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+                printInfo(`TokenManager for tokenId ${tokenId} exists on the current chain`, tokenManagerAddress);
+
+                const sourceTokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address on current chain for tokenId ${tokenId}`, sourceTokenAddress);
+            } catch (error) {
+                printError(`TokenManager for tokenId ${tokenId} does not yet exist on the current chain.`);
+                return;
+            }
+
+            if (
+                prompt(`Proceed with linking tokenId ${tokenId} to ${destinationTokenAddress} on chain ${destinationChain}?`, options.yes)
+            ) {
+                return;
+            }
+
+            const linkParams = operator;
+
+            const tx = await interchainTokenService.linkToken(
+                deploymentSalt,
+                destinationChain,
+                destinationTokenAddress,
+                tokenManagerType,
+                linkParams,
+                gasValue,
+                gasOptions,
+            );
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'LinkTokenStarted');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -677,6 +727,7 @@ if (require.main === module) {
                 'migrateInterchainToken',
                 'registerTokenMetadata',
                 'transferMintership',
+                'linkToken',
             ])
             .makeOptionMandatory(true),
     );
@@ -696,6 +747,12 @@ if (require.main === module) {
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
     program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address to use for token manager deployment'));
+    program.addOption(
+        new Option(
+            '--destinationTokenAddress <destinationTokenAddress>',
+            'token address on the destination chain to link with the token on the source chain corresponding to the tokenId',
+        ),
+    );
     program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
