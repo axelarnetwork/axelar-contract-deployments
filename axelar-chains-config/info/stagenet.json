@@ -2074,7 +2074,10 @@
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "stellar_xdr",
-          "keyType": "ed25519"
+          "keyType": "ed25519",
+          "codeId": 21,
+          "domainSeparator": "0xc8755ff707868d65f9517b68fe63b23e11fbbee5cf8d0fff0783834634a0ab7f",
+          "address": "axelar1mvy2775qkhv69ejm6h8dyrsf8kd6ctt2gxse3c24re5qeeck89cq0kmy92"
         },
         "storeCodeProposalId": "69",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
