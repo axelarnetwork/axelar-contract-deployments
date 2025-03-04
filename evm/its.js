@@ -23,7 +23,6 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
-    parseTrustedChains,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -673,7 +672,7 @@ async function processCommand(config, chain, action, options) {
 
         case 'add-trusted-chain': {
             const [trustedChain] = args;
-            const {trustedAddress} = options;
+            const { trustedAddress } = options;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -682,17 +681,15 @@ async function processCommand(config, chain, action, options) {
 
             validateParameters({ isNonEmptyString: { trustedChain } });
 
-            const trustedChainArg =
-                getChainConfig(config, trustedChain.toLowerCase(), { skipCheck: true })?.axelarId || trustedChain.toLowerCase();
+            const trustedChains = parseTrustedChains(config, trustedChain);
             const trustedAddressArg = trustedAddress
                 ? getChainConfig(config, trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address
                 : getChainConfig(config, trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address || 'hub';
 
-            if (trustedChainArg === undefined || trustedAddressArg === undefined) {
+            if (trustedAddressArg === undefined) {
                 throw new Error(`Invalid chain/address: ${trustedChain}`);
             }
 
-            const trustedChains = [trustedChainArg];
             const trustedAddresses = [trustedAddressArg];
 
             if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
