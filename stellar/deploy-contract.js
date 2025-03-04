@@ -286,7 +286,7 @@ function main() {
                 const wasmResolvedPath = await getWasmFilePath(opts, contractName);
                 Object.assign(opts, { wasmResolvedPath });
             })
-            .action((contractName, options) => {
+            .action((options) => {
                 mainProcessor(options, deploy, contractName);
             });
 
