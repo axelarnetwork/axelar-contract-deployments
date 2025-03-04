@@ -54,3 +54,18 @@ Broadcast a raw, signed transaction blob (e.g., a completed Multisig Prover proo
 ```bash
 node xrpl/broadcast.js -e testnet -n xrpl-test-1 [blob]
 ```
+
+## Decode XRPL Address
+
+Convert an XRPL Address (aka Account ID) into raw bytes (e.g., to be used when specifying an XRPL destination address on ITS):
+
+```bash
+node xrpl/decode-address.js [account-id]
+```
+
+Here's an example:
+
+```bash
+$ node xrpl/decode-address.js r9m9uUCAwMLSnRryXYuUB3cGXojpRznaAo
+Account ID raw bytes: 0x601abcea746a193f32ed460dd933f15441142d6b
+```
