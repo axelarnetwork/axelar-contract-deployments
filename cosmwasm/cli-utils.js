@@ -119,7 +119,10 @@ const addStoreOptions = (program) => {
     );
 
     program.addOption(
-        new Option('-v, --version <contractVersion>', 'Specify a released version (vX.Y.Z) or a commit hash to upload (required if --artifactPath is not used)')
+        new Option(
+            '-v, --version <contractVersion>',
+            'Specify a released version (vX.Y.Z) or a commit hash to upload (required if --artifactPath is not used)',
+        )
             .env('CONTRACT_VERSION')
             .conflicts('artifactPath'),
     );

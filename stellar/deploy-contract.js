@@ -3,7 +3,16 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmFilePath, SUPPORTED_STELLAR_CONTRACTS } = require('./utils');
+const {
+    getWallet,
+    broadcast,
+    serializeValue,
+    addBaseOptions,
+    getNetworkPassphrase,
+    createAuthorizedFunc,
+    getWasmFilePath,
+    SUPPORTED_STELLAR_CONTRACTS,
+} = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -269,20 +278,21 @@ function main() {
         const command = new Command(contractName)
             .description(`Deploy ${contractName} contract`)
             .addOption(
-                new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)')
-                    .conflicts('version'),
+                new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)').conflicts('version'),
             )
             .addOption(
-                new Option('--version <version>', 'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)')
-                    .conflicts('wasmPath'),
+                new Option(
+                    '--version <version>',
+                    'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)',
+                ).conflicts('wasmPath'),
             )
             .hook('preAction', async (thisCommand) => {
                 const opts = thisCommand.opts();
-    
+
                 if (!opts.wasmPath && !opts.version) {
                     throw new Error('Either --wasm-path or --version is required');
                 }
-    
+
                 const wasmResolvedPath = await getWasmFilePath(opts, contractName);
                 Object.assign(opts, { wasmResolvedPath });
             })

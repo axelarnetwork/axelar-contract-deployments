@@ -18,7 +18,7 @@ const fetch = require('node-fetch');
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
-  
+
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }

@@ -92,7 +92,10 @@ const storeCode = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readFileSync(options.wasmResolvedPath)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+        .update(readFileSync(options.wasmResolvedPath))
+        .digest()
+        .toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
@@ -114,7 +117,10 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readFileSync(options.wasmResolvedPath)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
+        .update(readFileSync(options.wasmResolvedPath))
+        .digest()
+        .toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {

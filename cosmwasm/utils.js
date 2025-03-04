@@ -843,7 +843,7 @@ const getContractR2Url = (contractName, contractVersion) => {
     const pathName = pascalToKebab(contractName);
     const fileName = pascalToSnake(contractName);
 
-    if ( VERSION_REGEX.test(contractVersion)) {
+    if (VERSION_REGEX.test(contractVersion)) {
         // Remove leading "v"
         const semanticVersion = contractVersion.slice(1);
         return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
@@ -851,13 +851,10 @@ const getContractR2Url = (contractName, contractVersion) => {
 
     if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
         return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
-    } 
-    
-    throw new Error(
-        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
-    );
-};
+    }
 
+    throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+};
 
 const getWasmFilePath = async (options, contractName) => {
     if (options.artifactPath) {
@@ -871,7 +868,6 @@ const getWasmFilePath = async (options, contractName) => {
 
     throw new Error('Either --artifactPath or --version must be provided');
 };
-
 
 const CONTRACTS = {
     Coordinator: {
