@@ -82,6 +82,6 @@ node xrpl/decode-address.js [account-id]
 Here's an example:
 
 ```bash
-$ node xrpl/decode-address.js r9m9uUCAwMLSnRryXYuUB3cGXojpRznaAo
-Account ID raw bytes: 0x601abcea746a193f32ed460dd933f15441142d6b
+node xrpl/decode-address.js r9m9uUCAwMLSnRryXYuUB3cGXojpRznaAo
+# Account ID raw bytes: 0x601abcea746a193f32ed460dd933f15441142d6b
 ```
