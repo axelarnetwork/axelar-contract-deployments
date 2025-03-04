@@ -36,6 +36,7 @@ const SUPPORTED_STELLAR_CONTRACTS = new Set([
     'token_manager',
     'interchain_token_service',
     'upgrader',
+    'example',
 ]);
 
 function getNetworkPassphrase(networkType) {
@@ -315,18 +316,20 @@ function hexToScVal(hexString) {
 }
 
 function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
 }
 
 function tokenMetadataToScVal(decimal, name, symbol) {
@@ -354,7 +357,6 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
-
 const getContractR2Url = (contractName, version) => {
     if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
@@ -379,6 +381,15 @@ const getWasmFilePath = async (options, contractName) => {
     throw new Error('Either --wasm-path or --version must be provided');
 };
 
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 module.exports = {
     stellarCmd,
@@ -402,4 +413,6 @@ module.exports = {
     saltToBytes32,
     stellarAddressToBytes,
     getWasmFilePath,
+    isValidAddress,
+    SUPPORTED_STELLAR_CONTRACTS,
 };

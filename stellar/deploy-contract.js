@@ -3,8 +3,8 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmFilePath } = require('./utils');
-const { getDomainSeparator, getChainConfig } = require('../common');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc, getWasmFilePath, SUPPORTED_STELLAR_CONTRACTS } = require('./utils');
+const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
@@ -13,6 +13,31 @@ const {
     utils: { arrayify, id },
 } = ethers;
 require('./cli-utils');
+
+const CONTRACT_CONFIGS = {
+    axelar_gateway: () => [
+        new Option('--nonce <nonce>', 'optional nonce for the signer set'),
+        new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
+        new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
+        new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number),
+    ],
+    example: () => [new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false)],
+};
+
+const addDeployOptions = (program) => {
+    // Get the package name from the program name
+    const contractName = program.name();
+    // Find the corresponding options for the package
+    const cmdOptions = CONTRACT_CONFIGS[contractName];
+
+    if (cmdOptions) {
+        const options = cmdOptions();
+        // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
+
+    return program;
+};
 
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
@@ -48,21 +73,21 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         }
 
         case 'interchain_token_service': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
 
-            if (!chain?.contracts?.interchain_token?.wasmHash) {
+            if (!chain.contracts?.interchain_token?.wasmHash) {
                 throw new Error(`interchain_token contract's wasm hash does not exist.`);
             }
 
-            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.interchain_token?.wasmHash, 'hex'), {
+            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain.contracts?.interchain_token?.wasmHash, 'hex'), {
                 type: 'bytes',
             });
 
-            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain?.contracts?.token_manager?.wasmHash, 'hex'), {
+            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain.contracts?.token_manager?.wasmHash, 'hex'), {
                 type: 'bytes',
             });
 
@@ -83,7 +108,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { owner };
 
         case 'axelar_gas_service': {
-            const operatorsAddress = chain?.contracts?.axelar_operators?.address;
+            const operatorsAddress = chain.contracts?.axelar_operators?.address;
             const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { owner, operator };
@@ -94,11 +119,11 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         }
 
         case 'example': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain?.contracts?.axelar_gas_service?.address), { type: 'address' });
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsAddress = options.useDummyItsAddress
                 ? gatewayAddress
-                : nativeToScVal(chain?.contracts?.interchain_token_service?.address, { type: 'address' });
+                : nativeToScVal(chain.contracts?.interchain_token_service?.address, { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
@@ -230,57 +255,65 @@ function main() {
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
     // 2nd level deploy command
-    const deployCmd = new Command('deploy')
-        .description('Deploy a Stellar contract')
-        .argument('<contract-name>', 'Contract name to deploy')
-        .addOption(
-            new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)')
-                .conflicts('version'),
-        )
-        .addOption(
-            new Option('--version <version>', 'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)')
-                .conflicts('wasmPath'),
-        )
-        .addOption(new Option('--nonce <nonce>', 'Optional nonce for the signer set'))
-        .addOption(new Option('--domain-separator <domainSeparator>', 'Domain separator (keccak256 hash or "offline")').default('offline'))
-        .addOption(
-            new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention')
-                .default(15)
-                .argParser(Number),
-        )
-        .addOption(new Option('--minimum-rotation-delay <miniumRotationDelay>', 'Minimum rotation delay').default(0).argParser(Number))
-        .addOption(
-            new Option('--use-dummy-its-address', 'Use dummy ITS address for example contract to test a GMP call').default(false),
-        )
-        .hook('preAction', async (thisCommand) => {
-            const opts = thisCommand.opts();
-            const contractName = thisCommand.args[0];
-
-            if (!opts.wasmPath && !opts.version) {
-                throw new Error('Either --wasm-path or --version is required');
-            }
-
-            const wasmResolvedPath = await getWasmFilePath(opts, contractName);
-            Object.assign(opts, { wasmResolvedPath });
-        })
-        .action((contractName, options) => {
-            mainProcessor(options, deploy, contractName);
-        });
+    const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
 
     // 2nd level upgrade command
-    const upgradeCmd = new Command('upgrade')
-        .description('Upgrade a Stellar contract')
-        .argument('<contract-name>', 'contract name to deploy')
-        .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-        .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-        .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
-        .action((contractName, options) => {
-            mainProcessor(options, upgrade, contractName);
-        });
+    const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
 
     // Add base options to all 2nd level commands
     addBaseOptions(upgradeCmd, { address: true });
     addBaseOptions(deployCmd, { address: true });
+
+    // 3rd level commands for `deploy`
+    const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
+        const command = new Command(contractName)
+            .description(`Deploy ${contractName} contract`)
+            .addOption(
+                new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)')
+                    .conflicts('version'),
+            )
+            .addOption(
+                new Option('--version <version>', 'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)')
+                    .conflicts('wasmPath'),
+            )
+            .hook('preAction', async (thisCommand) => {
+                const opts = thisCommand.opts();
+    
+                if (!opts.wasmPath && !opts.version) {
+                    throw new Error('Either --wasm-path or --version is required');
+                }
+    
+                const wasmResolvedPath = await getWasmFilePath(opts, contractName);
+                Object.assign(opts, { wasmResolvedPath });
+            })
+            .action((contractName, options) => {
+                mainProcessor(options, deploy, contractName);
+            });
+
+        return addDeployOptions(command);
+    });
+
+    // 3rd level commands for `upgrade`
+    const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
+        return new Command(contractName)
+            .description(`Upgrade ${contractName} contract`)
+            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+            .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
+            .action((options) => {
+                mainProcessor(options, upgrade, contractName);
+            });
+    });
+
+    // Add 3rd level commands to 2nd level command `deploy`
+    deployContractCmds.forEach((cmd) => deployCmd.addCommand(cmd));
+
+    // Add 3rd level commands to 2nd level command `upgrade`
+    upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+
+    // Add base options to all 3rd level commands
+    addOptionsToCommands(deployCmd, addBaseOptions);
+    addOptionsToCommands(upgradeCmd, addBaseOptions);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
