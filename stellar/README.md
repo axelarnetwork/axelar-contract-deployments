@@ -321,12 +321,12 @@ node stellar/contract.js [action] [contract-name]
 #### Options
 
 - `[action]` can be one of the following:
-  - `pause`: Pause the contract
-  - `is_paused`: Check if the contract is paused
-  - `unpause`: Unpause the contract
+
+    - `pause`: Pause the contract
+    - `is_paused`: Check if the contract is paused
+    - `unpause`: Unpause the contract
 
 - `[contract-name]`: The name of the contract to interact with. This option is mandatory.
-
 
 #### Examples
 
@@ -348,33 +348,20 @@ Unpause the contract:
 node stellar/contract.js unpause axelar_gateway
 ```
 
-## Transfer Ownership or Opertorsihp of the Contract
+## Transfer Ownership or Operatorship of the Contract
 
-You can transfer ownership or operatorship of the contract.
+To transfer ownership or operatorship of the contract:
 
 #### Usage
 
-Check the owner of the contract:
+Transfer the ownership of the contract:
 
 ```bash
-node stellar/contract.js owner [contract-name]
+node stellar/contract.js transfer-ownership [contract-name] [new-owner]
 ```
 
-Transfer the ownership of the contract
+Transfer the operatorship of the contract:
 
 ```bash
-node stellar/contract.js transfer_ownership [contract-name] [new-owner]
+node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
-
-Check the operator of the contract:
-
-```bash
-node stellar/contract.js operator [contract-name]
-```
-
-Transfer the operatorship of the contract
-
-```bash
-node stellar/contract.js transfer_operatorship [contract-name] [new-operator]
-```
-

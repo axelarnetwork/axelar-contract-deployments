@@ -1,6 +1,6 @@
 'use strict';
 
-const { Address, Contract, SorobanRpc } = require('@stellar/stellar-sdk');
+const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
@@ -11,50 +11,25 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(chain, _, contract, operation, options) {
-    const wallet = await getWallet(chain, options);
-    const callOperation = await contract.call(operation);
+async function submitOperation(wallet, chain, _contractName, contract, operation, args, options, showReturnValue = true) {
+    const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    return broadcast(callOperation, wallet, chain, `${operation}`, options);
+    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+
+    if (showReturnValue) {
+        printInfo(`${operation} returned`, serializeValue(returnValue.value()));
+    }
 }
 
-async function commonOperation(chain, _, contract, operation, options) {
-    const returnValue = await submitOperation(chain, _, contract, operation, options);
-
-    printInfo('Return value', serializeValue(returnValue.value()));
+async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
+    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_ownership', [addressToScVal(args)], options, false);
 }
 
-async function owner(chain, _, contract, operation, options) {
-    const returnValue = await submitOperation(chain, _, contract, operation, options);
-    const ownerScAddress = returnValue.value();
-
-    printInfo('Owner', Address.fromScAddress(ownerScAddress).toString());
+async function transferOperatorship(wallet, chain, _contractName, contract, args, options) {
+    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_operatorship', [addressToScVal(args)], options, false);
 }
 
-async function transferOwnership(chain, _, contract, args, options) {
-    const newOwner = args;
-    const wallet = await getWallet(chain, options);
-    const operation = contract.call('transfer_ownership', addressToScVal(newOwner));
-
-    await broadcast(operation, wallet, chain, 'transfer_ownership', options);
-}
-
-async function operator(chain, _, contract, operation, options) {
-    const returnValue = await submitOperation(chain, _, contract, operation, options);
-    const operatorScAddress = returnValue.value();
-
-    printInfo('Operator', Address.fromScAddress(operatorScAddress).toString());
-}
-
-async function transferOperatorship(chain, _, contract, args, options) {
-    const newOperator = args;
-    const wallet = await getWallet(chain, options);
-    const operation = contract.call('transfer_operatorship', addressToScVal(newOperator));
-
-    await broadcast(operation, wallet, chain, 'transfer_operatorship', options);
-}
-
-async function getTtl(chain, contractName, contract, _args, _options) {
+async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
     printInfo('Contract TTL', contractName);
     const ledgerEntry = await getLedgerEntry(chain, contract);
     printInfo('Latest Ledger', ledgerEntry.latestLedger);
@@ -67,7 +42,7 @@ async function getLedgerEntry(chain, contract) {
     return await server.getLedgerEntries(...[instance]);
 }
 
-async function extendInstance(chain, contractName, _, _args, options) {
+async function extendInstance(_wallet, chain, contractName, _contract, _args, options) {
     const { rpc, networkType } = chain;
     const ledgersToExtend = !options.extendBy ? MAX_INSTANCE_TTL_EXTENSION : options.extendBy;
 
@@ -79,7 +54,7 @@ async function extendInstance(chain, contractName, _, _args, options) {
     execSync(cmd, { stdio: 'inherit' });
 }
 
-async function restoreInstance(chain, contractName, _, _args, options) {
+async function restoreInstance(_wallet, chain, contractName, _contract, _args, _options) {
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
@@ -93,6 +68,7 @@ async function mainProcessor(processor, contractName, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
+    const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {
         return;
@@ -104,7 +80,7 @@ async function mainProcessor(processor, contractName, args, options) {
 
     const contract = new Contract(chain.contracts[contractName].address);
 
-    await processor(chain, contractName, contract, args, options);
+    await processor(wallet, chain, contractName, contract, args, options);
 
     saveConfig(config, options.env);
 }
@@ -146,7 +122,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(commonOperation, contractName, 'paused', options);
+            mainProcessor(submitOperation, contractName, 'paused', options);
         });
 
     program
@@ -154,7 +130,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(commonOperation, contractName, 'pause', options);
+            mainProcessor(submitOperation, contractName, 'pause', options);
         });
 
     program
@@ -162,7 +138,7 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(commonOperation, contractName, 'unpause', options);
+            mainProcessor(submitOperation, contractName, 'unpause', options);
         });
 
     program
@@ -170,7 +146,7 @@ if (require.main === module) {
         .description('Retrieve the owner of the contract')
         .argument('<contract-naame>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(owner, contractName, 'owner', options);
+            mainProcessor(submitOperation, contractName, 'owner', options);
         });
 
     program
@@ -185,7 +161,7 @@ if (require.main === module) {
         .description('Retrieve the operator of the contract')
         .argument('<contract-naame>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(operator, contractName, 'operator', options);
+            mainProcessor(submitOperation, contractName, 'operator', options);
         });
 
     program
