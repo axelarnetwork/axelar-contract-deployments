@@ -2095,7 +2095,11 @@
         },
         "storeCodeProposalId": "70",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
-        "lastUploadedCodeId": 22
+        "lastUploadedCodeId": 22,
+        "stellar": {
+          "codeId": 22,
+          "address": "axelar1xnrpu9vyn7l89hnj2ycrfg0ep9k839ltcu7cflpleurrnv5zw74ssywvvr"
+        }
       },
       "VotingVerifier": {
         "flow": {
