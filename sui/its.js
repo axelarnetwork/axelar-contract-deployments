@@ -101,7 +101,7 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 }
 
 async function removeTrustedChain(keypair, client, contracts, args, options) {
-    const [trustedChain] = args;
+    const trustedChain = args;
 
     const chainNames = trustedChain.split(' ');
 
@@ -157,7 +157,7 @@ if (require.main === module) {
         .description('Remove trusted address')
         .command('remove-trusted-address <trusted-chains...>')
         .action((trustedChains, options) => {
-            mainProcessor(removeTrustedChain, options, [trustedChains], processCommand);
+            mainProcessor(removeTrustedChain, options, trustedChains, processCommand);
         });
 
     const setFlowLimitsProgram = new Command()
