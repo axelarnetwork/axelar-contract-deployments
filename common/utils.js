@@ -440,23 +440,21 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
+const itsEdgeContract = (chainConfig) => {
+    const isItsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
         chainConfig.contracts.ITS?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
-    if (!itsEdgeContract) {
+    if (!isItsEdgeContract) {
         throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
     }
 
-    return itsEdgeContract;
+    return isItsEdgeContract;
 };
 
 const getItsEdgeChains = (config, excludeChainName) => {
-    return Object.keys(config.chains)
-        .filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
-        .filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
+    return Object.keys(config.chains).filter((chain) => itsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
 };
 
 const parseTrustedChains = (config, trustedChains, excludeChainName) => {
@@ -504,6 +502,6 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getItsEdgeContract,
+    itsEdgeContract,
     parseTrustedChains,
 };
