@@ -714,6 +714,12 @@
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
           }
+        },
+        "upgrader": {
+          "address": "CDXG6L2YV3CLQIXQNOKVZSBOCPEFUZBUYWKTLL76EOW2CFZ4WNFEUTQK",
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "a29f0384e948343a4bdc11c8c640c56345cbf91acf770828219766fc6c829382",
+          "initializeArgs": {}
         }
       }
     },
