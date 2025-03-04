@@ -83,7 +83,7 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
     const parsedTrustedChains =
         trustedChains === 'all'
             ? Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
-            : trustedChains.split(' ').map((chain) => chain.trim());
+            : trustedChains;
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
