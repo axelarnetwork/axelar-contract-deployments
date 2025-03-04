@@ -23,6 +23,7 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
+    parseTrustedChains,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -430,11 +431,9 @@ async function processCommand(config, chain, options) {
 
             let trustedChains, trustedAddresses;
 
-            if (trustedChain === 'all') {
-                const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
-                trustedChains = itsChains.map((chain) => chain.axelarId);
-
-                trustedAddresses = trustedChains.map((_) => trustedAddress || chain.contracts?.InterchainTokenService?.address);
+            if (options.trustedChain === 'all') {
+                trustedChains = parseTrustedChains(config, options.trustedChain);
+                trustedAddresses = trustedChains.map((_) => options.trustedAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChainFinal =
                     getChainConfig(config, trustedChain.toLowerCase(), { skipCheck: true })?.axelarId || trustedChain.toLowerCase();

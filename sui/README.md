@@ -417,19 +417,19 @@ Note:
 Add trusted address
 
 ```bash
-node sui/its.js setup-trusted-address <sourceChain>,<sourceChain2>,... <sourceAddress>
+node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 or Add all evm chains that have ITS contract deployed
 
 ```bash
-node sui/its.js setup-trusted-address all <sourceAddress>
+node sui/its.js add-trusted-chains all 
 ```
 
 Remove trusted address
 
 ```bash
-node sui/its.js remove-trusted-address <sourceChain>,<sourceChain2>,...
+node sui/its.js remove-trusted-address <sourceChain> <sourceChain2> ...
 ```
 
 ## Examples

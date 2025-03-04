@@ -440,26 +440,35 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
+const getItsChains = (chainConfig) => {
+    const isItsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.ITS?.objects?.ChannelId ||
+        chainConfig.contracts.ITS?.objects?.ChannelId || // TODO remove this once devnet is redeployed
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
-    if (!itsEdgeContract) {
+    return isItsEdgeContract;
+};
+
+const itsEdgeContract = (chainConfig) => {
+    const isItsEdgeContract = getItsChains(chainConfig);
+
+    if (!isItsEdgeContract) {
         throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
     }
 
-    return itsEdgeContract;
+    return isItsEdgeContract;
 };
 
-const getItsEdgeChains = (config, excludeChainName) => {
-    return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
+const getItsEdgeChains = (config) => {
+    const itsChains = [];
+    Object.keys(config.chains).filter((chain) => getItsChains(config.chains[chain]) && itsChains.push(config.chains[chain].axelarId));
+
+    return itsChains;
 };
 
-const parseTrustedChains = (config, trustedChains, excludeChainName) => {
-    const parsedTrustedChains =
-        trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
+const parseTrustedChains = (config, trustedChains) => {
+    const parsedTrustedChains = trustedChains === 'all' ? getItsEdgeChains(config) : trustedChains.split(',').map((chain) => chain.trim());
 
     return parsedTrustedChains;
 };
@@ -502,6 +511,6 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getItsEdgeContract,
+    itsEdgeContract,
     parseTrustedChains,
 };
