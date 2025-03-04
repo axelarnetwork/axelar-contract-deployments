@@ -854,7 +854,7 @@ const getContractR2Url = (contractName, contractVersion) => {
     } 
     
     throw new Error(
-        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
+        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
     );
 };
 
