@@ -848,13 +848,13 @@ const getContractR2Url = (contractName, contractVersion) => {
         const semanticVersion = contractVersion.slice(1);
         return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
     }
-    
-    if ( SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
+
+    if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
         return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
     } 
     
     throw new Error(
-        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`,
+        `Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`
     );
 };
 
