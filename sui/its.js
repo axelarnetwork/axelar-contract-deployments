@@ -72,7 +72,7 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
-    const trustedChains = args;
+    const trustedChainsArg = args;
 
     const { InterchainTokenService: itsConfig } = contracts;
 
@@ -80,21 +80,21 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const txBuilder = new TxBuilder(client);
 
-    const parsedTrustedChains =
-        trustedChains === 'all'
+    const trustedChains =
+        trustedChainsArg === 'all'
             ? Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
-            : trustedChains;
+            : trustedChainsArg;
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
-        arguments: [InterchainTokenService, OwnerCap, parsedTrustedChains],
+        arguments: [InterchainTokenService, OwnerCap, trustedChains],
     });
 
     if (options.offline) {
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Added trusted chain ${trustedChains}`, client, options);
+        await saveGeneratedTx(tx, `Added trusted chain ${trustedChainsArg}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
     }
