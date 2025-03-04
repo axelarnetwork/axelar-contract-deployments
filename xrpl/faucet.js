@@ -1,15 +1,14 @@
 const xrpl = require('xrpl');
 const { Command, Option } = require('commander');
-const { getWallet, getAccountInfo, getFee, sendPayment, roundUpToNearestXRP } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
-const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
+const { mainProcessor, roundUpToNearestXRP } = require('./utils');
+const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
+const { printInfo, printWarn } = require('../common');
 
 const MAX_CLAIMABLE_DROPS = 1000000000;
 
-async function faucet(_, client, options) {
-    const wallet = getWallet(options);
+async function faucet(_config, wallet, client, _chain, options) {
     const recipient = options.recipient || wallet.address;
-    const { balance: recipientBalance } = await getAccountInfo(client, recipient);
+    const { balance: recipientBalance } = await client.accountInfo(recipient);
     const amountInDrops = xrpl.xrpToDrops(options.amount);
     const recipientBalanceInXrp = xrpl.dropsToXrp(recipientBalance);
     const isDifferentRecipient = wallet.address.toLowerCase() !== recipient.toLowerCase();
@@ -18,7 +17,7 @@ async function faucet(_, client, options) {
 
     if (isDifferentRecipient) {
         printInfo(`Requesting funds for`, recipient);
-        fee = await getFee(client);
+        fee = await client.fee();
     }
 
     if (Number(recipientBalanceInXrp) >= Number(options.minBalance)) {
@@ -33,31 +32,19 @@ async function faucet(_, client, options) {
         process.exit(0);
     }
 
-    await client.fundWallet(wallet, { amount: String(amountToClaim / 1e6) });
+    printInfo(`Funding active wallet ${wallet.address} with`, `${amountToClaim / 1e6} XRP`);
+    await client.fundWallet(wallet, String(amountToClaim / 1e6));
 
     if (isDifferentRecipient) {
-        printInfo('Transferring claimed funds');
-        await sendPayment(client, wallet, {
+        printInfo(`Transferring ${options.amount} XRP from active wallet to recipient`, recipient);
+        await client.sendPayment(wallet, {
             destination: recipient,
             amount: amountInDrops,
             fee,
-        });
+        }, options);
     }
 
     printInfo('Funds sent', recipient);
-}
-
-async function mainProcessor(options, processor) {
-    const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
-    const client = new xrpl.Client(chain.wssRpc);
-    await client.connect();
-
-    try {
-        await processor(chain, client, options);
-    } finally {
-        await client.disconnect();
-    }
 }
 
 if (require.main === module) {
@@ -65,7 +52,7 @@ if (require.main === module) {
 
     program
         .name('faucet')
-        .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
+        .addOption(new Option('--recipient <recipient>', 'recipient to request funds for (default: wallet address)'))
         .addOption(
             new Option(
                 '--amount <amount>',
@@ -80,10 +67,11 @@ if (require.main === module) {
         )
         .description('Query the faucet for funds.')
         .action((options) => {
-            mainProcessor(options, faucet);
+            mainProcessor(faucet, options);
         });
 
     addBaseOptions(program);
+    addSkipPromptOption(program);
 
     program.parse();
 }

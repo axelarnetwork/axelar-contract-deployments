@@ -1,6 +1,7 @@
 'use strict';
 
 const xrpl = require('xrpl');
+const { decodeAccountID } = require('ripple-address-codec');
 const chalk = require('chalk');
 const {
     loadConfig,
@@ -8,157 +9,280 @@ const {
     printInfo,
     printWarn,
     printError,
+    prompt,
+    getChainConfig,
 } = require('../common');
 
-const KEY_TYPE = xrpl.ECDSA.secp256k1;
-
-const hex = (str) => Buffer.from(str).toString('hex');
+function hex(str) {
+    return Buffer.from(str).toString('hex');
+}
 
 function roundUpToNearestXRP(amountInDrops) {
     return Math.ceil(amountInDrops / 1e6) * 1e6;
 }
 
-async function getAccountInfo(client, address) {
-    try {
-        const accountInfoRes = await client.request({
-            command: 'account_info',
-            account: address,
+function generateWallet(options) {
+    return xrpl.Wallet.generate(options.walletKeyType);
+}
+
+function getWallet(options) {
+    return xrpl.Wallet.fromSeed(options.privateKey, {
+        algorithm: options.walletKeyType,
+    });
+}
+
+function deriveAddress(publicKey) {
+    return (new xrpl.Wallet(publicKey)).address;
+}
+
+function decodeAccountIDToHex(accountId) {
+    return hex(decodeAccountID(accountId));
+}
+
+// XRPL token is either:
+// (1) "XRP"
+// (2) "<currency>.<issuer-address>"
+function parseTokenAmount(token, amount) {
+    let parsedAmount;
+
+    if (token === 'XRP') {
+        parsedAmount = xrpl.xrpToDrops(amount);
+    } else {
+        const [currency, issuer] = token.split('.');
+        parsedAmount = {
+            currency,
+            issuer,
+            value: amount,
+        };
+    }
+
+    return parsedAmount;
+}
+
+class XRPLClient {
+    constructor(rpcUrl) {
+        this.client = new xrpl.Client(rpcUrl);
+    }
+
+    async connect() {
+        await this.client.connect();
+    }
+
+    async disconnect() {
+        await this.client.disconnect();
+    }
+
+    async request(command, params = {}) {
+        const response = await this.client.request({ command, ...params });
+        return response.result;
+    }
+
+    async autofill(tx) {
+        return await this.client.autofill(tx);
+    }
+
+    async accountInfo(account) {
+        try {
+            const accountInfoRes = await this.request('account_info', {
+                account,
+                ledger_index: 'validated',
+            });
+
+            const accountInfo = accountInfoRes.account_data;
+            return {
+                balance: accountInfo.Balance,
+                sequence: accountInfo.Sequence,
+            }
+        } catch (error) {
+            if (error.data?.error === 'actNotFound') {
+                return {
+                    balance: '0',
+                    sequence: '-1',
+                }
+            }
+
+            throw error;
+        }
+    }
+
+    async accountLines(account) {
+        const accountLinesRes = await this.request('account_lines', {
+            account,
             ledger_index: 'validated',
         });
 
-        const accountInfo = accountInfoRes.result.account_data;
+        return accountLinesRes.lines;
+    }
+
+    async reserveRequirements() {
+        const serverInfoRes = await this.request('server_info');
+        const validatedLedger = serverInfoRes.info.validated_ledger;
         return {
-            balance: accountInfo.Balance,
-            sequence: accountInfo.Sequence,
+            baseReserve: validatedLedger.reserve_base_xrp,
+            ownerReserve: validatedLedger.reserve_inc_xrp,
         }
-    } catch (error) {
-        if (error.data.error === 'actNotFound') {
-            return {
-                balance: '0',
-                sequence: '-1',
-            }
+    }
+
+    async fee(feeType = 'open_ledger_fee') {
+        const feeRes = await this.request('fee');
+        return feeRes.drops[feeType];
+    }
+
+    async fundWallet(wallet, amount) {
+        return this.client.fundWallet(wallet, { amount });
+    }
+
+    handleReceipt(receipt) {
+        const result = receipt.engine_result;
+
+        if (result !== 'tesSUCCESS') {
+            printError('Transaction failed', `${receipt.engine_result}: ${receipt.engine_result_message}`);
+            process.exit(1);
         }
 
-        printError('Failed to get account info for wallet', address);
-        throw error;
+        printInfo(`Transaction sent`, receipt.tx_json.hash);
     }
-}
 
-async function getReserveRequirements(client) {
-    const serverInfoRes = await client.request({ command: 'server_info' });
-    const validatedLedger = serverInfoRes.result.info.validated_ledger;
-    return {
-        baseReserve: validatedLedger.reserve_base_xrp,
-        ownerReserve: validatedLedger.reserve_inc_xrp,
+    async submitTx(txBlob, failHard = true) {
+        const result = await this.request('submit', {
+            tx_blob: txBlob,
+            fail_hard: failHard,
+        });
+        this.handleReceipt(result);
+        return result;
+
     }
-}
 
-async function getFee(client) {
-    const feeRes = await client.request({ command: 'fee' });
-    return feeRes.result.drops.open_ledger_fee;
+    async buildTx(txType, fields = {}, args = {}) {
+        const tx = {
+            TransactionType: txType,
+            ...fields,
+        };
+
+        if (args.account) {
+            tx.Account = args.account;
+        }
+
+        if (args.fee) {
+            tx.Fee = args.fee;
+        }
+
+        return await this.autofill(tx);
+    }
+
+    async signTx(signer, tx, multisign = false) {
+        return signer.sign(tx, multisign);
+    }
+
+    async signAndSubmitTx(signer, txType, fields = {}, args = {}, options = { multisign: false, yes: false }) {
+        const tx = await this.buildTx(txType, fields, {
+            account: args.account ?? signer.address,
+            ...args,
+        });
+
+        printInfo('Signing transaction', JSON.stringify(tx, null, 2));
+        const signedTx = await this.signTx(signer, tx, options.multisign);
+
+        if (prompt(`Submit ${txType} transaction?`, options.yes)) {
+            printWarn('Transaction cancelled by user.');
+            process.exit(0);
+        }
+
+        return await this.submitTx(signedTx.tx_blob);
+    }
+
+    checkRequiredField(field, fieldName) {
+        if (!field) {
+            throw new Error(`Missing required field: ${fieldName}`);
+        }
+    }
+
+    async sendPayment(signer, { destination, amount, memos = [], ...restArgs }, options = { multisign: false, yes: false }) {
+        this.checkRequiredField(destination, 'destination');
+        this.checkRequiredField(amount, 'amount');
+        return await this.signAndSubmitTx(signer, 'Payment', {
+            Destination: destination,
+            Amount: amount,
+            Memos: memos.length > 0 ? memos.map((memo) => ({
+                Memo: {
+                    MemoType: memo.memoType,
+                    MemoData: memo.memoData,
+                },
+            })) : undefined,
+        }, restArgs, options);
+    }
+
+    async sendSignerListSet(signer, { quorum, signers, ...restArgs }, options = { multisign: false, yes: false }) {
+        this.checkRequiredField(quorum, 'quorum');
+        this.checkRequiredField(signers, 'signers');
+
+        if (signers.length === 0) {
+            throw new Error('Signers list cannot be empty');
+        }
+
+        return await this.signAndSubmitTx(signer, 'SignerListSet', {
+            SignerQuorum: quorum,
+            SignerEntries: signers.map((signer) => ({
+                SignerEntry: {
+                    Account: signer.address,
+                    SignerWeight: signer.weight,
+                },
+            })),
+        }, restArgs, options);
+    }
+
+    async sendTicketCreate(signer, { ticketCount, ...restArgs }, options = { multisign: false, yes: false }) {
+        this.checkRequiredField(ticketCount, 'ticketCount');
+        return await this.signAndSubmitTx(signer, 'TicketCreate', { TicketCount: ticketCount }, restArgs, options);
+    }
+
+    async sendAccountSet(signer, { transferRate, tickSize, domain, flag, ...restArgs }, options = { multisign: false, yes: false }) {
+        return await this.signAndSubmitTx(signer, 'AccountSet', {
+            TransferRate: transferRate,
+            TickSize: tickSize,
+            Domain: domain,
+            SetFlag: flag,
+        }, restArgs, options);
+    }
+
+    async sendTrustSet(signer, { currency, issuer, value, ...restArgs }, options = { multisign: false, yes: false }) {
+        this.checkRequiredField(currency, 'currency');
+        this.checkRequiredField(issuer, 'issuer');
+        this.checkRequiredField(value, 'value');
+        return await this.signAndSubmitTx(signer, 'TrustSet', {
+            LimitAmount: {
+                currency,
+                issuer,
+                value,
+            },
+        }, restArgs, options);
+    }
 }
 
 async function printWalletInfo(client, wallet, chain) {
     const address = wallet.address;
-    const { balance, sequence } = await getAccountInfo(client, address);
+    const { balance, sequence } = await client.accountInfo(address);
     printInfo('Wallet address', address);
     printInfo('Wallet balance', `${xrpl.dropsToXrp(balance)} ${chain.tokenSymbol || ''}`);
 
     if (sequence === -1) {
         printWarn('Wallet is not active because it does not meet the base reserve requirement');
-    } else {
-        printInfo('Wallet sequence', sequence);
-    }
-}
-
-function generateWallet() {
-    return xrpl.Wallet.generate(KEY_TYPE);
-}
-
-function getWallet(options) {
-    return xrpl.Wallet.fromSeed(options.privateKey, {
-        algorithm: KEY_TYPE,
-    });
-}
-
-async function sendTransaction(client, signer, tx) {
-    printInfo('Sending transaction', JSON.stringify(tx, null, 2));
-    const prepared = await client.autofill(tx);
-    const signed = signer.sign(prepared);
-
-    const receipt = await client.submitAndWait(signed.tx_blob);
-
-    if (receipt.result.meta.TransactionResult !== 'tesSUCCESS') {
-        printError('Transaction failed', receipt.result);
-        throw new Error(`Transaction failed: ${receipt.result.meta.TransactionResult}`);
+        return;
     }
 
-    printInfo('Transaction sent');
-    return receipt;
+    printInfo('Wallet sequence', sequence);
+
+    const lines = await client.accountLines(address);
+
+    if (lines.length === 0) {
+        printInfo('Wallet IOU balances', 'No IOU balances found');
+        return;
+    }
+
+    printInfo('Wallet IOU balances', lines.map((line) => `${line.balance} ${line.currency}.${line.account}`).join('  '));
 }
 
-async function sendPayment(client, wallet, args) {
-    const { destination, amount, memos = [], fee = undefined } = args;
-    const paymentTx = {
-        TransactionType: 'Payment',
-        Account: wallet.address,
-        Destination: destination,
-        Amount: amount,
-        Fee: fee,
-        Memos: memos.map((memo) => ({
-            Memo: {
-                MemoType: memo.memoType,
-                MemoData: memo.memoData,
-            },
-        })),
-    };
-
-    return await sendTransaction(client, wallet, paymentTx);
-}
-
-async function sendSignerListSet(client, wallet, args) {
-    const { quorum, signers } = args;
-    const signerListSetTx = {
-        TransactionType: 'SignerListSet',
-        Account: wallet.address,
-        SignerQuorum: quorum,
-        SignerEntries: signers.map((signer) => ({
-            SignerEntry: {
-                Account: signer.address,
-                SignerWeight: signer.weight,
-            },
-        })),
-    };
-
-    return await sendTransaction(client, wallet, signerListSetTx);
-}
-
-async function sendTicketCreate(client, wallet, args) {
-    const { ticketCount } = args;
-    const ticketCreateTx = {
-        TransactionType: 'TicketCreate',
-        Account: wallet.address,
-        TicketCount: ticketCount,
-    };
-
-    return await sendTransaction(client, wallet, ticketCreateTx);
-}
-
-async function sendAccountSet(client, wallet, args) {
-    const { transferRate, tickSize, domain, flags } = args;
-    const accountSetTx = {
-        TransactionType: 'AccountSet',
-        Account: wallet.address,
-        TransferRate: transferRate,
-        TickSize: tickSize,
-        Domain: domain,
-        SetFlag: flags,
-    };
-
-    return await sendTransaction(client, wallet, accountSetTx);
-}
-
-const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
+async function mainProcessor(processor, options, args, save = true, catchErr = false) {
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
@@ -167,32 +291,34 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     const config = loadConfig(options.env);
 
-    if (options.chainName === undefined) {
+    if (!options.chainName) {
         throw new Error('Chain name was not provided');
     }
 
     const chainName = options.chainName.toLowerCase();
 
-    if (config.chains[chainName] === undefined) {
+    const chain = getChainConfig(config, chainName);
+
+    if (!chain) {
         throw new Error(`Chain ${chainName} is not defined in the info file`);
     }
 
-    if (config.chains[chainName].chainType !== 'xrpl') {
+    if (chain.chainType !== 'xrpl') {
         throw new Error(`Cannot run script for a non XRPL chain: ${chainName}`);
     }
-
-    const chain = config.chains[chainName];
 
     console.log('');
     printInfo('Chain', chain.name, chalk.cyan);
 
-    const client = new xrpl.Client(chain.wssRpc);
+    const wallet = getWallet(options);
+
+    const client = new XRPLClient(chain.wssRpc);
+    await client.connect();
 
     try {
-        await client.connect();
-        await processCommand(config, chain, client, options);
+        await processor(config, wallet, client, chain, options, args);
     } catch (error) {
-        printError(`Failed with error on ${chain.name}`, error.message);
+        printError(`Failed with error on ${chainName}`, error.message);
 
         if (!catchErr && !options.ignoreError) {
             throw error;
@@ -204,22 +330,17 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     if (save) {
         saveConfig(config, options.env);
     }
-};
+}
 
 module.exports = {
     ...require('../common/utils'),
     generateWallet,
     getWallet,
-    getAccountInfo,
-    getReserveRequirements,
     printWalletInfo,
-    getFee,
     mainProcessor,
-    sendTransaction,
-    sendPayment,
-    sendSignerListSet,
-    sendAccountSet,
-    sendTicketCreate,
     hex,
     roundUpToNearestXRP,
+    deriveAddress,
+    parseTokenAmount,
+    decodeAccountIDToHex,
 };
