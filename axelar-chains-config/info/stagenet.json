@@ -1894,10 +1894,35 @@
       "approxFinalityWaitTime": 1,
       "tokenSymbol": "XLM",
       "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-      "contracts": {},
       "explorer": {
         "name": "Stellar Expert",
         "url": "https://stellar.expert/explorer/testnet"
+      },
+      "contracts": {
+        "axelar_gateway": {
+          "address": "CA2PWTIEYWVZBWWISEUXZW5T4LWQD7IIHRZP2NYV3FRL7QPYHQG6NGRO",
+          "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+          "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+          "initializeArgs": {
+            "owner": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+            "operator": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+            "domainSeparator": "c8755ff707868d65f9517b68fe63b23e11fbbee5cf8d0fff0783834634a0ab7f",
+            "minimumRotationDelay": "300",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "092496c702fd948b5a7ef46ada69867cececfdb0aad86dda5eaf1f908e4f1e1e",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        }
       }
     }
   },
