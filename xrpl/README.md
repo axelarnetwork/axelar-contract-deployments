@@ -85,3 +85,17 @@ Here's an example:
 node xrpl/decode-address.js r9m9uUCAwMLSnRryXYuUB3cGXojpRznaAo
 # Account ID raw bytes: 0x601abcea746a193f32ed460dd933f15441142d6b
 ```
+
+## Create a Trust Line
+
+Create a trust line between your account and a token issuer (via a TrustSet transaction).
+
+```bash
+node xrpl/trust-set.js -e <env> -n <chain-name> [token-currency] [token-issuer-address]
+```
+
+Here's an example:
+
+```bash
+node xrpl/trust-set.js -e devnet-amplifier -n xrpl-test-1 XYZ r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1
+```
