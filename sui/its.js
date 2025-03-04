@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
@@ -80,10 +80,7 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 
     const txBuilder = new TxBuilder(client);
 
-    const trustedChains =
-        trustedChainsArg === 'all'
-            ? Object.keys(config.chains).filter((chain) => config.chains[chain].contracts?.InterchainTokenService?.address)
-            : trustedChainsArg;
+    const trustedChains = parseTrustedChains(config, trustedChainsArg.toString());
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
