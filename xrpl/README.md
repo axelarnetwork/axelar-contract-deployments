@@ -46,3 +46,11 @@ Here's an example of a token transfer that also performs GMP:
 ```bash
 node xrpl/transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
 ```
+
+## Broadcast Raw Transaction Blob
+
+Broadcast a raw, signed transaction blob (e.g., a completed Multisig Prover proof) to XRPL:
+
+```bash
+node xrpl/broadcast.js -e testnet -n xrpl-test-1 [blob]
+```
