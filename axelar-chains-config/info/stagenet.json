@@ -2055,7 +2055,7 @@
           "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
           "address": "axelar1ktjfpfrlgmh8s76ltjhhv0xcj0st0d0xrjh5rvm3gr5u66x9xvpsm0juw8"
         },
-        "stellar" : {
+        "stellar": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
           "signingThreshold": [
@@ -2134,7 +2134,7 @@
           "codeId": 24,
           "address": "axelar1x8rqw5l5gzye7d063zupr5zlelfvjxq5z6rr7wy643ufuflhl6xqhgr5wt"
         },
-        "stellar" : {
+        "stellar": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "CA2PWTIEYWVZBWWISEUXZW5T4LWQD7IIHRZP2NYV3FRL7QPYHQG6NGRO",
@@ -2145,7 +2145,9 @@
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stellar"
+          "addressFormat": "stellar",
+          "codeId": 24,
+          "address": "axelar14srynuyye43998r24t7n0qjnwa6u2559un6vmvsa6tlj5crazgfq59cqy9"
         },
         "storeCodeProposalId": "72",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
