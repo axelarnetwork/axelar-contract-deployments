@@ -13,6 +13,7 @@ const {
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
+const { downloadContractCode } = require('../common/utils');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
@@ -23,6 +24,20 @@ const {
 
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
+
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
+// TODO Need to be migrated to Pascal Case
+const SUPPORTED_STELLAR_CONTRACTS = new Set([
+    'axelar_gateway',
+    'axelar_operators',
+    'axelar_gas_service',
+    'interchain_token',
+    'token_manager',
+    'interchain_token_service',
+    'upgrader',
+    'example',
+]);
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -346,6 +361,30 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+const getContractR2Url = (contractName, version) => {
+    if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
+        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
+    }
+
+    // TODO - Contract Name will change to PascalCase in future
+    const pathName = contractName.replace(/_/g, '-');
+
+    return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+};
+
+const getWasmFilePath = async (options, contractName) => {
+    if (options.artifactPath) {
+        return options.artifactPath;
+    }
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifactPath or --version must be provided');
+};
+
 function isValidAddress(address) {
     try {
         // try conversion
@@ -377,5 +416,7 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    getWasmFilePath,
     isValidAddress,
+    SUPPORTED_STELLAR_CONTRACTS,
 };

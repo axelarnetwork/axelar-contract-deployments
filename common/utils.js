@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const chalk = require('chalk');
@@ -13,6 +13,11 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const fetch = require('node-fetch');
+
+const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
+
+const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -333,7 +338,7 @@ function findProjectRoot(startDir) {
     while (currentDir !== path.parse(currentDir).root) {
         const potentialPackageJson = path.join(currentDir, 'package.json');
 
-        if (fs.existsSync(potentialPackageJson)) {
+        if (existsSync(potentialPackageJson)) {
             return currentDir;
         }
 
@@ -455,6 +460,26 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+const downloadContractCode = async (url, contractName, version) => {
+    const tempDir = path.join(process.cwd(), 'artifacts');
+
+    if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+    }
+
+    const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Failed to download WASM file: ${response.statusText}`);
+    }
+
+    const buffer = await response.buffer();
+    writeFileSync(outputPath, buffer);
+    return outputPath;
+};
+
 const getItsEdgeChains = (config, excludeChainName) => {
     return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
 };
@@ -464,6 +489,10 @@ const parseTrustedChains = (config, trustedChains, excludeChainName) => {
         trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
 
     return parsedTrustedChains;
+};
+
+const readContractCode = (options) => {
+    return readFileSync(options.wasmResolvedPath);
 };
 
 module.exports = {
@@ -505,5 +534,9 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
+    downloadContractCode,
+    pascalToKebab,
+    pascalToSnake,
     parseTrustedChains,
+    readContractCode,
 };

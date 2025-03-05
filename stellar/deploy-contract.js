@@ -3,31 +3,26 @@
 const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
+const {
+    getWallet,
+    broadcast,
+    serializeValue,
+    addBaseOptions,
+    getNetworkPassphrase,
+    createAuthorizedFunc,
+    getWasmFilePath,
+    SUPPORTED_STELLAR_CONTRACTS,
+} = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
+const { addStoreOptions } = require('../common/cli-utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
-const { writeFileSync, readFileSync } = require('fs');
-const fetch = require('node-fetch');
-const path = require('path');
+const { readFileSync } = require('fs');
 const {
     utils: { arrayify, id },
 } = ethers;
 require('./cli-utils');
-
-const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-cgp-stellar';
-
-const SUPPORTED_CONTRACTS = new Set([
-    'axelar_gateway',
-    'axelar_operators',
-    'axelar_gas_service',
-    'interchain_token',
-    'token_manager',
-    'interchain_token_service',
-    'upgrader',
-    'example',
-]);
 
 const CONTRACT_CONFIGS = {
     axelar_gateway: () => [
@@ -53,57 +48,6 @@ const addDeployOptions = (program) => {
 
     return program;
 };
-
-function getWasmUrl(contractName, version) {
-    if (!SUPPORTED_CONTRACTS.has(contractName)) {
-        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
-    }
-
-    const pathName = contractName.replace(/_/g, '-');
-
-    return `${AXELAR_RELEASE_BASE_URL}/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
-}
-
-async function downloadWasmFile(contractName, version) {
-    const url = getWasmUrl(contractName, version);
-    const tempDir = path.join(process.cwd(), 'artifacts');
-
-    // Create temp directory if it doesn't exist
-    const fs = require('fs');
-
-    if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
-
-    try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Failed to download WASM file: ${response.statusText}`);
-        }
-
-        const buffer = await response.buffer();
-        writeFileSync(outputPath, buffer);
-        printInfo('Successfully downloaded WASM file to', outputPath);
-        return outputPath;
-    } catch (error) {
-        throw new Error(`Error downloading WASM file: ${error.message}`);
-    }
-}
-
-async function getWasmPath(options, contractName) {
-    if (options.wasmPath) {
-        return options.wasmPath;
-    }
-
-    if (options.version) {
-        return await downloadWasmFile(contractName, options.version);
-    }
-
-    throw new Error('Either --wasm-path or --version must be provided');
-}
 
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
@@ -207,8 +151,8 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options, contractName);
-    const wasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmResolvedPath = await getWasmFilePath(options, contractName);
+    const wasmHash = await uploadWasm(wasmResolvedPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
@@ -252,7 +196,7 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { wasmPath, yes } = options;
+    const { artifactPath, yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -267,7 +211,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const newWasmHash = await uploadWasm(artifactPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
@@ -332,23 +276,26 @@ function main() {
     addBaseOptions(deployCmd, { address: true });
 
     // 3rd level commands for `deploy`
-    const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName)
-            .description(`Deploy ${contractName} contract`)
-            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-            .addOption(new Option('--version <version>', 'version of the contract to deploy (e.g., v1.0.0)'))
-            .action((options) => {
-                mainProcessor(options, deploy, contractName);
-            });
+    const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
+        const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
-        return addDeployOptions(command);
+        // Use addStoreOptions from common cli utils
+        addStoreOptions(command);
+
+        addDeployOptions(command);
+
+        command.action((options) => {
+            mainProcessor(options, deploy, contractName);
+        });
+
+        return command;
     });
 
     // 3rd level commands for `upgrade`
-    const upgradeContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
+    const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
-            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+            .addOption(new Option('--artifactPath <artifactPath>', 'path to the WASM file'))
             .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
             .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
             .action((options) => {
