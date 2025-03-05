@@ -47,7 +47,7 @@ async function collectFees(wallet, _, chain, contract, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { receiver, gasServiceAddress, gasTokenAddress },
+        isValidStellarAddress: { receiver, gasServiceAddress, gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -69,6 +69,7 @@ async function refund(wallet, _, chain, contract, args, options) {
 
     validateParameters({
         isNonEmptyString: { messageId, receiver, gasServiceAddress, gasTokenAddress },
+        isValidStellarAddress: { gasServiceAddress, gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -117,7 +118,7 @@ async function mainProcessor(processor, args, options) {
     const contractAddress = chain.contracts?.axelar_operators?.address;
 
     validateParameters({
-        isNonEmptyString: { contractAddress },
+        isValidStellarAddress: { contractAddress },
     });
 
     if (!isValidAddress(contractAddress)) {

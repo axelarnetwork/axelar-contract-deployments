@@ -6,7 +6,7 @@ const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast } = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
-const { prompt } = require('../common/utils');
+const { prompt, validateParameters } = require('../common/utils');
 require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
@@ -92,7 +92,12 @@ async function mainProcessor(processor, contractName, args, options) {
         throw new Error('Contract not found');
     }
 
+    const contractId = chain.contracts[contractName].address;
     const contract = new Contract(chain.contracts[contractName].address);
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     await processor(chain, contractName, contract, args, options);
 
