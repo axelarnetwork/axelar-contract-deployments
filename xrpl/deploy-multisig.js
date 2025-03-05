@@ -4,6 +4,8 @@ const { mainProcessor, generateWallet, hex } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 const { printInfo, printWarn, prompt } = require('../common');
 
+const DISABLE_MASTER_FLAG = xrpl.AccountSetAsfFlags.asfDisableMaster;
+
 const DEFAULTS = {
     TRANSFER_RATE: 0, // Don't charge a fee for transferring currencies issued by the multisig
     TICK_SIZE: 6,     // Determines truncation for order book entries, not payments
@@ -66,7 +68,7 @@ async function deployMultisig(_config, wallet, client, chain, options) {
         transferRate: options.transferRate,
         tickSize: options.tickSize,
         domain: hex(options.domain),
-        flag: xrpl.AccountSetAsfFlags.asfDisableMaster,
+        flag: DISABLE_MASTER_FLAG,
     }, options);
 
     chain.contracts.AxelarGateway = chain.contracts.InterchainTokenService = {
@@ -75,7 +77,7 @@ async function deployMultisig(_config, wallet, client, chain, options) {
         transferRate: options.transferRate,
         tickSize: options.tickSize,
         domain: options.domain,
-        flags: options.flags,
+        flags: [DISABLE_MASTER_FLAG, ...options.flags],
     };
 
     printInfo('Successfully created and configured XRPL multisig account', multisig.address);
