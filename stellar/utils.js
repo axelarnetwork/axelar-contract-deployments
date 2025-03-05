@@ -13,7 +13,7 @@ const {
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
-const { downloadWasmFile } = require('../common/utils');
+const { downloadContractCode } = require('../common/utils');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
@@ -369,16 +369,16 @@ const getContractR2Url = (contractName, version) => {
 };
 
 const getWasmFilePath = async (options, contractName) => {
-    if (options.wasmPath) {
-        return options.wasmPath;
+    if (options.artifactPath) {
+        return options.artifactPath;
     }
 
     if (options.version) {
         const url = getContractR2Url(contractName, options.version);
-        return await downloadWasmFile(url, contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --wasm-path or --version must be provided');
+    throw new Error('Either --artifactPath or --version must be provided');
 };
 
 function isValidAddress(address) {

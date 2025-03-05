@@ -97,11 +97,12 @@ node stellar/deploy-contract.js deploy interchain_token_service --version v1.0.0
 
 ### Example
 
-Note that example contract should use `--wasm-path` option to deploy contract
+Note that example contract should use `--artifactPath` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-```bash
-node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm
-```
+
+-   `node stellar/deploy-contract.js deploy example --artifactPath ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
+
+-   `node stellar/deploy-contract.js deploy example --version v1.0.0`
 
 ### Contract upgrades
 
@@ -114,17 +115,17 @@ node stellar/deploy-contract.js deploy upgrader --version v1.0.0
 After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifactPath ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
-where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
+where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifactPath` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
 
 ## Generate bindings
 
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --wasm-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
+node stellar/generate-bindings.js --artifactPath /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
 ```
 
 ## Contract Interaction

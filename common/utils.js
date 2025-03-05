@@ -1,6 +1,6 @@
 'use strict';
 
-const { existsSync, mkdirSync, writeFileSync } = require('fs');
+const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const chalk = require('chalk');
@@ -458,7 +458,7 @@ const getItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-const downloadWasmFile = async (url, contractName, version) => {
+const downloadContractCode = async (url, contractName, version) => {
     const tempDir = path.join(process.cwd(), 'artifacts');
 
     if (!existsSync(tempDir)) {
@@ -475,7 +475,6 @@ const downloadWasmFile = async (url, contractName, version) => {
 
     const buffer = await response.buffer();
     writeFileSync(outputPath, buffer);
-    printInfo('Successfully downloaded WASM file to', outputPath);
     return outputPath;
 };
 
@@ -488,6 +487,10 @@ const parseTrustedChains = (config, trustedChains, excludeChainName) => {
         trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
 
     return parsedTrustedChains;
+};
+
+const readContractCode = (options) => {
+    return readFileSync(options.wasmResolvedPath);
 };
 
 module.exports = {
@@ -529,8 +532,9 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     getItsEdgeContract,
-    downloadWasmFile,
+    downloadContractCode,
     pascalToKebab,
     pascalToSnake,
     parseTrustedChains,
+    readContractCode,
 };

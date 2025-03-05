@@ -28,7 +28,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -41,7 +41,6 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
-const { readFileSync } = require('fs');
 
 const predictAddress = async (client, contractConfig, options) => {
     const { contractName, salt, chainName, runAs } = options;
@@ -92,10 +91,7 @@ const storeCode = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-        .update(readFileSync(options.wasmResolvedPath))
-        .digest()
-        .toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
@@ -117,10 +113,7 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256')
-        .update(readFileSync(options.wasmResolvedPath))
-        .digest()
-        .toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {

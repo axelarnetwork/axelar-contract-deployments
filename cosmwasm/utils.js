@@ -2,7 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -30,7 +29,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
 } = require('../common');
-const { pascalToSnake, pascalToKebab, downloadWasmFile } = require('../common/utils');
+const { pascalToSnake, pascalToKebab, downloadContractCode, readContractCode } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -133,7 +132,7 @@ const uploadContract = async (client, wallet, config, options) => {
     } = config;
 
     const [account] = await wallet.getAccounts();
-    const wasm = readFileSync(options.wasmResolvedPath);
+    const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
@@ -640,7 +639,7 @@ const getSubmitProposalParams = (options) => {
 const getStoreCodeParams = (options) => {
     const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readFileSync(options.wasmResolvedPath);
+    const wasm = readContractCode(options);
 
     let codeHash;
 
@@ -863,7 +862,7 @@ const getWasmFilePath = async (options, contractName) => {
 
     if (options.version) {
         const url = getContractR2Url(contractName, options.version);
-        return await downloadWasmFile(url, contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
     }
 
     throw new Error('Either --artifactPath or --version must be provided');

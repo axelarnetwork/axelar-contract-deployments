@@ -15,6 +15,7 @@ const {
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
+const { addStoreOptions } = require('../common/cli-utils');
 const { weightedSignersToScVal } = require('./type-utils');
 const { ethers } = require('hardhat');
 const { readFileSync } = require('fs');
@@ -150,7 +151,8 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmHash = await uploadWasm(options.wasmResolvedPath, wallet, chain);
+    const wasmResolvedPath = await getWasmFilePath(options, contractName);
+    const wasmHash = await uploadWasm(wasmResolvedPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
@@ -194,7 +196,7 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { wasmPath, yes } = options;
+    const { artifactPath, yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -209,7 +211,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const newWasmHash = await uploadWasm(artifactPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
@@ -275,39 +277,25 @@ function main() {
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName)
-            .description(`Deploy ${contractName} contract`)
-            .addOption(
-                new Option('--wasm-path <wasmPath>', 'Path to the WASM file (required if --version is not used)').conflicts('version'),
-            )
-            .addOption(
-                new Option(
-                    '--version <version>',
-                    'Released version (vX.Y.Z) or a pre-release commit hash (required if --wasm-path is not used)',
-                ).conflicts('wasmPath'),
-            )
-            .hook('preAction', async (thisCommand) => {
-                const opts = thisCommand.opts();
+        const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
-                if (!opts.wasmPath && !opts.version) {
-                    throw new Error('Either --wasm-path or --version is required');
-                }
+        // Use addStoreOptions from common cli utils
+        addStoreOptions(command);
 
-                const wasmResolvedPath = await getWasmFilePath(opts, contractName);
-                Object.assign(opts, { wasmResolvedPath });
-            })
-            .action((options) => {
-                mainProcessor(options, deploy, contractName);
-            });
+        addDeployOptions(command);
 
-        return addDeployOptions(command);
+        command.action((options) => {
+            mainProcessor(options, deploy, contractName);
+        });
+
+        return command;
     });
 
     // 3rd level commands for `upgrade`
     const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
-            .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
+            .addOption(new Option('--artifactPath <artifactPath>', 'path to the WASM file'))
             .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
             .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
             .action((options) => {
