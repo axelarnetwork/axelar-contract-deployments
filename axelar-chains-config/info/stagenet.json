@@ -1938,6 +1938,15 @@
           "initializeArgs": {
             "owner": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y"
           }
+        },
+        "axelar_gas_service": {
+          "address": "CCCXWUJ76MUDW5KXA6ZDQ3EEJ7JBE4BJNYYOQ2GJMMY2HANHKYFD6OJD",
+          "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+          "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
+          "initializeArgs": {
+            "owner": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+            "operator": "CCHY3MEU3UU2CCHUZEOXN2YG5TVATHTCOT4WQXZKASRZSANFBRZ25AYJ"
+          }
         }
       }
     }
