@@ -429,7 +429,7 @@ node sui/its.js add-trusted-chains all
 Remove trusted address
 
 ```bash
-node sui/its.js remove-trusted-address <sourceChain> <sourceChain2> ...
+node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 ## Examples

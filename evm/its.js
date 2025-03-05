@@ -418,7 +418,7 @@ async function processCommand(config, chain, action, options) {
             break;
         }
 
-        case 'set-trusted-address': {
+        case 'set-trusted-chains': {
             const [itsChain, itsAddress] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
@@ -435,17 +435,15 @@ async function processCommand(config, chain, action, options) {
 
                 trustedAddresses = trustedChains.map((_) => itsAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
-                const trustedChainArg =
+                const trustedChain =
                     getChainConfig(config, itsChain.toLowerCase(), { skipCheck: true })?.axelarId || itsChain.toLowerCase();
-                const trustedAddressArg =
+                const trustedAddress =
                     itsAddress || getChainConfig(config, itsChain.toLowerCase())?.contracts?.InterchainTokenService?.address;
 
-                if (trustedChainArg === undefined || trustedAddressArg === undefined) {
-                    throw new Error(`Invalid chain/address: ${itsChain}`);
-                }
+                validateParameters({ isNonEmptyString: { trustedChain, trustedAddress } });
 
-                trustedChains = [trustedChainArg];
-                trustedAddresses = [trustedAddressArg];
+                trustedChains = [trustedChain];
+                trustedAddresses = [trustedAddress];
             }
 
             if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
@@ -461,8 +459,8 @@ async function processCommand(config, chain, action, options) {
             break;
         }
 
-        case 'remove-trusted-address': {
-            const [trustedChainArg] = args;
+        case 'remove-trusted-chains': {
+            const [trustedChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -471,17 +469,17 @@ async function processCommand(config, chain, action, options) {
 
             let trustedChains;
 
-            if (trustedChainArg === 'all') {
+            if (trustedChain === 'all') {
                 [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
             } else {
-                const trustedChain = config.chains[trustedChainArg.toLowerCase()]?.axelarId;
+                const trustedChain = config.chains[args[0].toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
-                    throw new Error(`Invalid chain: ${trustedChainArg}`);
+                    throw new Error(`Invalid chain: ${trustedChain}`);
                 }
 
-                if ((await interchainTokenService.trustedAddress(trustedChainArg)) === '') {
-                    printError(`No trusted address for chain ${trustedChainArg}`);
+                if ((await interchainTokenService.trustedAddress(trustedChain)) === '') {
+                    printError(`No trusted address for chain ${trustedChain}`);
                     return;
                 }
 
@@ -492,7 +490,7 @@ async function processCommand(config, chain, action, options) {
 
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainsRemoved');
             }
 
             break;
@@ -631,6 +629,7 @@ async function processCommand(config, chain, action, options) {
             const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
+                isValidTokenId: { tokenId },
                 isString: { destinationChain },
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
@@ -670,9 +669,8 @@ async function processCommand(config, chain, action, options) {
             break;
         }
 
-        case 'add-trusted-chain': {
+        case 'add-trusted-chains': {
             const [trustedChain] = args;
-            const { trustedAddress } = options;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -682,15 +680,20 @@ async function processCommand(config, chain, action, options) {
             validateParameters({ isNonEmptyString: { trustedChain } });
 
             const trustedChains = parseTrustedChains(config, trustedChain);
-            const trustedAddressArg = trustedAddress
-                ? getChainConfig(config, trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address
-                : getChainConfig(config, trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address || 'hub';
+            const chainConfig = getChainConfig(config, trustedChain.toLowerCase());
+            const isAmplifier = chainConfig?.contracts?.AxelarGateway?.connectionType === 'amplifier';
 
-            if (trustedAddressArg === undefined) {
+            const trustedAddress = isAmplifier
+                ? 'hub'
+                : options.trustedAddress
+                  ? options.trustedAddress
+                  : chainConfig?.contracts?.InterchainTokenService?.address;
+
+            if (trustedAddress === undefined) {
                 throw new Error(`Invalid chain/address: ${trustedChain}`);
             }
 
-            const trustedAddresses = [trustedAddressArg];
+            const trustedAddresses = [trustedAddress];
 
             if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
                 return;
@@ -718,257 +721,211 @@ if (require.main === module) {
     const program = new Command();
     program.name('ITS').description('Script to perform ITS commands');
 
-    program.addCommand(
-        new Command()
-            .name('contract-id')
-            .description('Get contract ID')
-            .action((options, cmd) => {
-                main(cmd.name(), [], options);
-            }),
-    );
+    program
+        .command('contract-id')
+        .description('Get contract ID')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('token-manager-address')
-            .description('Get token manager address')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('token-manager-address')
+        .description('Get token manager address')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('interchain-token-address')
-            .description('Get interchain token address')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('interchain-token-address')
+        .description('Get interchain token address')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('interchain-token-id')
-            .description('Get interchain token ID')
-            .argument('<sender>', 'Sender address')
-            .action((sender, options, cmd) => {
-                main(cmd.name(), [sender], options);
-            }),
-    );
+    program
+        .command('interchain-token-id')
+        .description('Get interchain token ID')
+        .argument('<sender>', 'Sender address')
+        .action((sender, options, cmd) => {
+            main(cmd.name(), [sender], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('token-manager-implementation')
-            .description('Get token manager implementation address')
-            .action((options, cmd) => {
-                main(cmd.name(), [], options);
-            }),
-    );
+    program
+        .command('token-manager-implementation')
+        .description('Get token manager implementation address')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('flow-limit')
-            .description('Get flow limit for token')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('flow-limit')
+        .description('Get flow limit for token')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('flow-out-amount')
-            .description('Get flow out amount for token')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('flow-out-amount')
+        .description('Get flow out amount for token')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('flow-in-amount')
-            .description('Get flow in amount for token')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('flow-in-amount')
+        .description('Get flow in amount for token')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('contract-call-value')
-            .description('Get contract call value')
-            .argument('<source-chain>', 'Source chain')
-            .argument('<source-address>', 'Source address')
-            .argument('<payload>', 'Payload')
-            .action((sourceChain, sourceAddress, payload, options, cmd) => {
-                main(cmd.name(), [sourceChain, sourceAddress, payload], options);
-            }),
-    );
+    program
+        .command('contract-call-value')
+        .description('Get contract call value')
+        .argument('<source-chain>', 'Source chain')
+        .argument('<source-address>', 'Source address')
+        .argument('<payload>', 'Payload')
+        .action((sourceChain, sourceAddress, payload, options, cmd) => {
+            main(cmd.name(), [sourceChain, sourceAddress, payload], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('express-execute')
-            .description('Execute express command')
-            .argument('<command-id>', 'Command ID')
-            .argument('<source-chain>', 'Source chain')
-            .argument('<source-address>', 'Source address')
-            .argument('<payload>', 'Payload')
-            .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
-                main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
-            }),
-    );
+    program
+        .command('express-execute')
+        .description('Execute express command')
+        .argument('<command-id>', 'Command ID')
+        .argument('<source-chain>', 'Source chain')
+        .argument('<source-address>', 'Source address')
+        .argument('<payload>', 'Payload')
+        .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
+            main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('interchain-transfer')
-            .description('Perform interchain transfer')
-            .argument('<destination-chain>', 'Destination chain')
-            .argument('<token-id>', 'Token ID')
-            .argument('<destination-address>', 'Destination address')
-            .argument('<amount>', 'Amount')
-            .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-            .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
-            .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
-            .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
-                main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
-            }),
-    );
+    program
+        .command('interchain-transfer')
+        .description('Perform interchain transfer')
+        .argument('<destination-chain>', 'Destination chain')
+        .argument('<token-id>', 'Token ID')
+        .argument('<destination-address>', 'Destination address')
+        .argument('<amount>', 'Amount')
+        .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
+        .addOption(new Option('--metadata <metadata>', 'token transfer metadata').default('0x'))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .action((destinationChain, tokenId, destinationAddress, amount, options, cmd) => {
+            main(cmd.name(), [destinationChain, tokenId, destinationAddress, amount], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('register-token-metadata')
-            .description('Register token metadata')
-            .argument('<token-address>', 'Token address')
-            .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
-            .action((tokenAddress, options, cmd) => {
-                main(cmd.name(), [tokenAddress], options);
-            }),
-    );
+    program
+        .command('register-token-metadata')
+        .description('Register token metadata')
+        .argument('<token-address>', 'Token address')
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .action((tokenAddress, options, cmd) => {
+            main(cmd.name(), [tokenAddress], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('set-flow-limits')
-            .description('Set flow limits for multiple tokens')
-            .argument('<token-ids>', 'Comma-separated token IDs')
-            .argument('<flow-limits>', 'Comma-separated flow limits')
-            .action((tokenIds, flowLimits, options, cmd) => {
-                main(cmd.name(), [tokenIds, flowLimits], options);
-            }),
-    );
+    program
+        .command('set-flow-limits')
+        .description('Set flow limits for multiple tokens')
+        .argument('<token-ids>', 'Comma-separated token IDs')
+        .argument('<flow-limits>', 'Comma-separated flow limits')
+        .action((tokenIds, flowLimits, options, cmd) => {
+            main(cmd.name(), [tokenIds, flowLimits], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('trusted-address')
-            .description('Get trusted address for chain')
-            .argument('<trusted-chain>', 'Trusted chain')
-            .action((trustedChain, options, cmd) => {
-                main(cmd.name(), [trustedChain], options);
-            }),
-    );
+    program
+        .command('trusted-address')
+        .description('Get trusted address for chain')
+        .argument('<trusted-chain>', 'Trusted chain')
+        .action((trustedChain, options, cmd) => {
+            main(cmd.name(), [trustedChain], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('set-trusted-address')
-            .description('Set trusted address')
-            .argument('<its-chain>', 'ITS chain')
-            .argument('<its-address>', 'ITS address')
-            .action((itsChain, itsAddress, options, cmd) => {
-                main(cmd.name(), [itsChain, itsAddress], options);
-            }),
-    );
+    program
+        .command('set-trusted-chains')
+        .description('Set trusted address')
+        .argument('<its-chain>', 'ITS chain')
+        .argument('<its-address>', 'ITS address')
+        .action((itsChain, itsAddress, options, cmd) => {
+            main(cmd.name(), [itsChain, itsAddress], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('remove-trusted-address')
-            .description('Remove trusted address')
-            .argument('<trusted-chain>', 'Trusted chain')
-            .action((trustedChain, options, cmd) => {
-                main(cmd.name(), [trustedChain], options);
-            }),
-    );
+    program
+        .command('remove-trusted-chains')
+        .description('Remove trusted chains')
+        .argument('<trusted-chain>', 'Trusted chain')
+        .action((trustedChain, options, cmd) => {
+            main(cmd.name(), [trustedChain], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('set-pause-status')
-            .description('Set pause status')
-            .argument('<pause-status>', 'Pause status (true/false)')
-            .action((pauseStatus, options, cmd) => {
-                main(cmd.name(), [pauseStatus], options);
-            }),
-    );
+    program
+        .command('set-pause-status')
+        .description('Set pause status')
+        .argument('<pause-status>', 'Pause status (true/false)')
+        .action((pauseStatus, options, cmd) => {
+            main(cmd.name(), [pauseStatus], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('execute')
-            .description('Execute command')
-            .argument('<command-id>', 'Command ID')
-            .argument('<source-chain>', 'Source chain')
-            .argument('<source-address>', 'Source address')
-            .argument('<payload>', 'Payload')
-            .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
-                main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
-            }),
-    );
+    program
+        .command('execute')
+        .description('Execute command')
+        .argument('<command-id>', 'Command ID')
+        .argument('<source-chain>', 'Source chain')
+        .argument('<source-address>', 'Source address')
+        .argument('<payload>', 'Payload')
+        .action((commandID, sourceChain, sourceAddress, payload, options, cmd) => {
+            main(cmd.name(), [commandID, sourceChain, sourceAddress, payload], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('checks')
-            .description('Perform contract checks')
-            .action((options, cmd) => {
-                main(cmd.name(), [], options);
-            }),
-    );
+    program
+        .command('checks')
+        .description('Perform contract checks')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('migrate-interchain-token')
-            .description('Migrate interchain token')
-            .argument('<token-id>', 'Token ID')
-            .action((tokenId, options, cmd) => {
-                main(cmd.name(), [tokenId], options);
-            }),
-    );
+    program
+        .command('migrate-interchain-token')
+        .description('Migrate interchain token')
+        .argument('<token-id>', 'Token ID')
+        .action((tokenId, options, cmd) => {
+            main(cmd.name(), [tokenId], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('transfer-mintership')
-            .description('Transfer mintership')
-            .argument('<token-address>', 'Token address')
-            .argument('<minter>', 'Minter address')
-            .action((tokenAddress, minter, options, cmd) => {
-                main(cmd.name(), [tokenAddress, minter], options);
-            }),
-    );
+    program
+        .command('transfer-mintership')
+        .description('Transfer mintership')
+        .argument('<token-address>', 'Token address')
+        .argument('<minter>', 'Minter address')
+        .action((tokenAddress, minter, options, cmd) => {
+            main(cmd.name(), [tokenAddress, minter], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('link-token')
-            .description('Link token')
-            .argument('<token-id>', 'Token ID')
-            .argument('<destination-chain>', 'Destination chain')
-            .argument('<destination-token-address>', 'Destination token address')
-            .argument('<type>', 'Token manager type')
-            .argument('<operator>', 'Operator address')
-            .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-            .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
-            .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
-                main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
-            }),
-    );
+    program
+        .command('link-token')
+        .description('Link token')
+        .argument('<token-id>', 'Token ID')
+        .argument('<destination-chain>', 'Destination chain')
+        .argument('<destination-token-address>', 'Destination token address')
+        .argument('<type>', 'Token manager type')
+        .argument('<operator>', 'Operator address')
+        .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
+            main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
+        });
 
-    program.addCommand(
-        new Command()
-            .name('add-trusted-chain')
-            .description('Add trusted chain')
-            .argument('<trusted-chain>', 'Trusted chain')
-            .addOption(new Option('--trustedAddress', 'set ITS address as trustedAddress'))
-            .action((trustedChain, options, cmd) => {
-                main(cmd.name(), [trustedChain], options);
-            }),
-    );
+    program
+        .command('add-trusted-chains')
+        .description('Add trusted chains')
+        .argument('<trusted-chain>', 'Trusted chain')
+        .addOption(new Option('--trustedAddress <trustedAddress>', 'Trusted Address'))
+        .action((trustedChain, options, cmd) => {
+            main(cmd.name(), [trustedChain], options);
+        });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
 
