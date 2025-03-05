@@ -878,7 +878,23 @@
           }
         }
       }
-    }
+    },
+    "sui-2": {
+      "name": "Sui",
+      "axelarId": "sui-2",
+      "networkType": "testnet",
+      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "tokenSymbol": "SUI",
+      "chainType": "sui",
+      "finality": "1",
+      "decimals": 9,
+      "approxFinalityWaitTime": 1,
+      "contracts": {},
+      "explorer": {
+          "name": "Suiscan",
+          "url": "https://suiscan.xyz/testnet"
+      }
+  }
   },
   "axelar": {
     "contracts": {
