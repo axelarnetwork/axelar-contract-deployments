@@ -81,11 +81,11 @@ class XRPLClient {
         return await this.client.autofill(tx);
     }
 
-    async accountInfo(account) {
+    async accountInfo(account, ledgerIndex = 'validated') {
         try {
             const accountInfoRes = await this.request('account_info', {
                 account,
-                ledger_index: 'validated',
+                ledger_index: ledgerIndex,
             });
 
             const accountInfo = accountInfoRes.account_data;
@@ -103,6 +103,22 @@ class XRPLClient {
 
             throw error;
         }
+    }
+
+    async accountObjects(account, params = {}, limit = 1000, ledgerIndex = 'validated') {
+        const accountObjectsRes = await this.request('account_objects', {
+            account,
+            ledger_index: ledgerIndex,
+            limit,
+            ...params
+        });
+
+        return accountObjectsRes.account_objects;
+    }
+
+    async tickets(account, limit = 1000, ledgerIndex = 'validated') {
+        const ticketRes = await this.accountObjects(account, { type: 'ticket' }, limit, ledgerIndex);
+        return ticketRes.map((ticket) => ticket.TicketSequence);
     }
 
     async accountLines(account) {
@@ -334,6 +350,7 @@ async function mainProcessor(processor, options, args, save = true, catchErr = f
 
 module.exports = {
     ...require('../common/utils'),
+    XRPLClient,
     generateWallet,
     getWallet,
     printWalletInfo,
