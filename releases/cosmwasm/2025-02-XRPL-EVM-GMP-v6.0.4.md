@@ -316,7 +316,7 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": \"[epoch duration]\",
+        \"epoch_duration\": \"$EPOCH_DURATION\",
         \"participation_threshold\": [participation threshold],
         \"rewards_per_epoch\": \"[rewards per epoch]\"
       },
