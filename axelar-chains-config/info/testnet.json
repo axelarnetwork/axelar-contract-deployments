@@ -2510,16 +2510,29 @@
       "contracts": {
         "AxelarGateway": {
           "address": "rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg",
-          "initialSigners": [
-            "ra7SxwMN2GE6FhmV3JcSjaVwhx7ES9uPnA"
-          ],
+          "initialSigner": "ra7SxwMN2GE6FhmV3JcSjaVwhx7ES9uPnA",
           "transferRate": 0,
           "tickSize": 6,
           "domain": "axelar.foundation",
-          "flags": 4
+          "flags": [
+            4,
+            12,
+            13,
+            14
+          ]
         },
         "InterchainTokenService": {
-          "address": "rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg"
+          "address": "rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg",
+          "initialSigner": "ra7SxwMN2GE6FhmV3JcSjaVwhx7ES9uPnA",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14
+          ]
         }
       }
     },
