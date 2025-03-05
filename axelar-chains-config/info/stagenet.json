@@ -1922,6 +1922,14 @@
               }
             ]
           }
+        },
+        "axelar_operators": {
+          "address": "CCHY3MEU3UU2CCHUZEOXN2YG5TVATHTCOT4WQXZKASRZSANFBRZ25AYJ",
+          "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "initializeArgs": {
+            "owner": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y"
+          }
         }
       }
     }
