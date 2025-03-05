@@ -268,7 +268,6 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { contractAddress, upgraderAddress },
         isValidStellarAddress: { contractAddress, upgraderAddress },
     });
 

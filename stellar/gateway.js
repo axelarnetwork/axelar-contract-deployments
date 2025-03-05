@@ -8,6 +8,7 @@ const {
 const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
+const { validateParameters } = require('../common/utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
     if (options.signers === 'wallet') {
@@ -209,6 +210,10 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Axelar Gateway package not found.');
     }
 
+    const contractId = chain.contracts.axelar_gateway.address;
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
     await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
 
     saveConfig(config, options.env);

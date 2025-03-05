@@ -62,6 +62,9 @@ async function extendInstance(chain, contractName, _, _args, options) {
 
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     const cmd = `${stellarCmd} contract extend --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --ledgers-to-extend ${ledgersToExtend}`;
 
@@ -78,6 +81,9 @@ async function restoreInstance(chain, contractName, _, _args, options) {
 
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     const cmd = `${stellarCmd} contract restore --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
 
@@ -98,7 +104,6 @@ async function mainProcessor(processor, contractName, args, options) {
     validateParameters({
         isValidStellarAddress: { contractId },
     });
-
     await processor(chain, contractName, contract, args, options);
 
     saveConfig(config, options.env);
