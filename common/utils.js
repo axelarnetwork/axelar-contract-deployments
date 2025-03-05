@@ -441,17 +441,17 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const itsEdgeContract = (chainConfig) => {
-    const isItsEdgeContract =
+    const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
         chainConfig.contracts.ITS?.objects?.ChannelId || // TODO: remove this once Sui devnet is redeployed
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
-    if (!isItsEdgeContract) {
+    if (!itsEdgeContract) {
         printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
 
-    return isItsEdgeContract;
+    return itsEdgeContract;
 };
 
 const itsEdgeChains = (config) =>
