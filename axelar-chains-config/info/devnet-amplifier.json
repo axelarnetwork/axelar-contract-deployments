@@ -889,12 +889,77 @@
       "finality": "1",
       "decimals": 9,
       "approxFinalityWaitTime": 1,
-      "contracts": {},
+      "contracts": {
+        "Utils": {
+          "address": "0x452273c52cf3a812b187aab052bc62aa55739afadba47a6bbb2d9979a2c98f40",
+          "versions": {
+            "0": "0x452273c52cf3a812b187aab052bc62aa55739afadba47a6bbb2d9979a2c98f40"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {},
+          "objects": {
+            "UpgradeCap": "0xc33558102e4faa6332e6dbc7824cb3cb651c94b1b5ceccf71a9752ab919bbab3"
+          }
+        },
+        "VersionControl": {
+          "address": "0xe361b05ae1f0d37071e915df8648425e5a8c38211d07a1b52e3572e8ded32739",
+          "versions": {
+            "0": "0xe361b05ae1f0d37071e915df8648425e5a8c38211d07a1b52e3572e8ded32739"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "VersionControl": "0xe361b05ae1f0d37071e915df8648425e5a8c38211d07a1b52e3572e8ded32739::version_control::VersionControl"
+          },
+          "objects": {
+            "UpgradeCap": "0x8e993f932c28d69ec63e572874b75293a9b9ecc721757ab8ada97616d453897d"
+          }
+        },
+        "AxelarGateway": {
+          "address": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9",
+          "versions": {
+            "0": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "WeightedSigner": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::weighted_signer::WeightedSigner",
+            "Bytes32": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::bytes32::Bytes32",
+            "WeightedSigners": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::weighted_signers::WeightedSigners",
+            "Signature": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::proof::Signature",
+            "Proof": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::proof::Proof",
+            "Message": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::message::Message",
+            "SignersRotated": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::SignersRotated",
+            "ChannelCreated": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::ChannelCreated",
+            "ChannelDestroyed": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::ChannelDestroyed",
+            "ContractCall": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::ContractCall",
+            "MessageApproved": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::MessageApproved",
+            "MessageExecuted": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::events::MessageExecuted",
+            "AxelarSigners": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::auth::AxelarSigners",
+            "MessageToSign": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::auth::MessageToSign",
+            "Channel": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::channel::Channel",
+            "ApprovedMessage": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::channel::ApprovedMessage",
+            "OwnerCap": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::owner_cap::OwnerCap",
+            "MessageTicket": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::message_ticket::MessageTicket",
+            "MessageStatus": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::message_status::MessageStatus",
+            "Gateway_v0": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::gateway_v0::Gateway_v0",
+            "CommandType": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::gateway_v0::CommandType",
+            "Gateway": "0x4ce01dfb0fb5fb69ab999c252ddfd0637e32ff1f864a75f48ff2784a054717d9::gateway::Gateway"
+          },
+          "objects": {
+            "Gateway": "0x0bc4f31d0a196a472e6684b5f4ae4016d693261285fca86effdde843de78b4c0",
+            "UpgradeCap": "0xd4bd3c915b9972c8c64adb26cb3d441ff3a8c0ef4da7a81ce97de2e9ea070186",
+            "Gatewayv0": "0x8a02e08f4603f62bdfeb08a9d29229bfd2272bf60c49a37896c96dfa8e4e9fa4",
+            "OwnerCap": "0x4b14fa4ed7ae1a2378395ae209fd9fe19b777d2c6fb96ff7aa2c077d049326f9"
+          },
+          "domainSeparator": "0xa5ea3e93481643015f6273d6938484afb463de5c25f980ec72b63d56ebd55d55",
+          "operator": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "minimumRotationDelay": 0
+        }
+      },
       "explorer": {
-          "name": "Suiscan",
-          "url": "https://suiscan.xyz/testnet"
+        "name": "Suiscan",
+        "url": "https://suiscan.xyz/testnet"
       }
-  }
+    }
   },
   "axelar": {
     "contracts": {
