@@ -67,20 +67,18 @@ async function setFlowLimits(keypair, client, config, contracts, args, options) 
         tx.setSender(sender);
         await saveGeneratedTx(tx, `Set flow limits for ${tokenIds} to ${flowLimits}`, client, options);
     } else {
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Set flow limits', options);
     }
 }
 
 async function addTrustedChains(keypair, client, config, contracts, args, options) {
-    const trustedChainsArg = args;
-
     const { InterchainTokenService: itsConfig } = contracts;
 
     const { OwnerCap, InterchainTokenService } = itsConfig.objects;
 
     const txBuilder = new TxBuilder(client);
 
-    const trustedChains = parseTrustedChains(config, trustedChainsArg.toString());
+    const trustedChains = parseTrustedChains(config, args);
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::add_trusted_chains`,
@@ -91,13 +89,13 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Added trusted chain ${trustedChainsArg}`, client, options);
+        await saveGeneratedTx(tx, `Added trusted chain ${args}`, client, options);
     } else {
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Setup Trusted Address', options);
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Add Trusted Chains', options);
     }
 }
 
-async function removeTrustedChain(keypair, client, contracts, args, options) {
+async function removeTrustedChains(keypair, client, contracts, args, options) {
     const trustedChain = args;
 
     const chainNames = trustedChain.split(' ');
@@ -115,7 +113,7 @@ async function removeTrustedChain(keypair, client, contracts, args, options) {
         ],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Address', options);
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Chains', options);
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -137,8 +135,8 @@ if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
 
-    // This command is used to setup the trusted address on the InterchainTokenService contract.
-    // The trusted address is used to verify the message from the source chain.
+    // This command is used to setup the trusted chains on the InterchainTokenService contract.
+    // The trusted chain is used to verify the message from the source chain.
     const addTrustedChainsProgram = new Command()
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chains...>')
@@ -150,11 +148,11 @@ if (require.main === module) {
         });
 
     const removeTrustedChainsProgram = new Command()
-        .name('remove-trusted-address')
-        .description('Remove trusted address')
-        .command('remove-trusted-address <trusted-chains...>')
+        .name('remove-trusted-chains')
+        .description('Remove trusted chains')
+        .command('remove-trusted-chains <trusted-chains...>')
         .action((trustedChains, options) => {
-            mainProcessor(removeTrustedChain, options, trustedChains, processCommand);
+            mainProcessor(removeTrustedChains, options, trustedChains, processCommand);
         });
 
     const setFlowLimitsProgram = new Command()

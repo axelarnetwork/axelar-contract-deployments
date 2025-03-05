@@ -440,37 +440,27 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsChains = (chainConfig) => {
+const itsEdgeContract = (chainConfig) => {
     const isItsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.ITS?.objects?.ChannelId || // TODO remove this once devnet is redeployed
+        chainConfig.contracts.ITS?.objects?.ChannelId || // TODO: remove this once Sui devnet is redeployed
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
-    return isItsEdgeContract;
-};
-
-const itsEdgeContract = (chainConfig) => {
-    const isItsEdgeContract = getItsChains(chainConfig);
-
     if (!isItsEdgeContract) {
-        throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
+        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
 
     return isItsEdgeContract;
 };
 
-const getItsEdgeChains = (config) => {
-    const itsChains = [];
-    Object.keys(config.chains).filter((chain) => getItsChains(config.chains[chain]) && itsChains.push(config.chains[chain].axelarId));
-
-    return itsChains;
-};
+const itsEdgeChains = (config) =>
+    Object.values(config.chains)
+        .filter(itsEdgeContract)
+        .map((chain) => chain.axelarId);
 
 const parseTrustedChains = (config, trustedChains) => {
-    const parsedTrustedChains = trustedChains === 'all' ? getItsEdgeChains(config) : trustedChains.split(',').map((chain) => chain.trim());
-
-    return parsedTrustedChains;
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains.map((chain) => chain.trim());
 };
 
 module.exports = {

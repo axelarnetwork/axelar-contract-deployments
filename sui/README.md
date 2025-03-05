@@ -412,24 +412,24 @@ Note:
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
 
-## Setup Trusted Addresses
+## Setup Trusted Chains
 
-Add trusted address
+Add trusted chains
 
 ```bash
 node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
-or Add all evm chains that have ITS contract deployed
+or Add all chains that have ITS contract deployed
 
 ```bash
-node sui/its.js add-trusted-chains all 
+node sui/its.js add-trusted-chains all
 ```
 
-Remove trusted address
+Remove trusted chains
 
 ```bash
-node sui/its.js remove-trusted-address <sourceChain> <sourceChain2> ...
+node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 ## Examples
