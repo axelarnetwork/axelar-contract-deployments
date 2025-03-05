@@ -16,7 +16,7 @@ async function submitOperation(wallet, chain, _contractName, contract, operation
 
     const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
 
-    if (showReturnValue) {
+    if (showReturnValue && returnValue.value()) {
         printInfo(`${operation} returned`, serializeValue(returnValue.value()));
     }
 }
@@ -144,7 +144,7 @@ if (require.main === module) {
     program
         .command('owner')
         .description('Retrieve the owner of the contract')
-        .argument('<contract-naame>', 'contract name')
+        .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
             mainProcessor(submitOperation, contractName, 'owner', options);
         });
@@ -159,7 +159,7 @@ if (require.main === module) {
     program
         .command('operator')
         .description('Retrieve the operator of the contract')
-        .argument('<contract-naame>', 'contract name')
+        .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
             mainProcessor(submitOperation, contractName, 'operator', options);
         });
