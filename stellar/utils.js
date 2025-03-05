@@ -261,6 +261,10 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
 };
 
 function serializeValue(value) {
+    if (value instanceof xdr.ScAddress) {
+        return Address.fromScAddress(value).toString();
+    }
+
     if (value instanceof Uint8Array) {
         return Buffer.from(value).toString('hex');
     }
