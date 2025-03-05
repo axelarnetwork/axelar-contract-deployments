@@ -31,7 +31,9 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'object') {
+    if (typeof info === 'boolean') {
+        info = String(info);
+    } else if (typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }
 
