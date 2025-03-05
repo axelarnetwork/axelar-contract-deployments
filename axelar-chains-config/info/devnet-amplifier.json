@@ -1176,6 +1176,21 @@
           "codeId": 854,
           "address": "axelar1ac43p98m4pfv7zxrce3e99gwy5nf2crnwg3mu5rmxs09zvy2py9sxrgm8m"
         },
+        "sui-2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x988bbe6e98f653887e78912f529247675030334ae4b0fbc1d1f512f0f95b71e4",
+          "msgIdFormat": "base58_tx_digest_and_event_index",
+          "addressFormat": "sui",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "codeId": 854,
+          "address": "axelar1s8auce7fhjd4840czcfgjw4c47epatvqdx2m7kr9qdt9ds62qnzq5uj2k5"
+        },
         "stellar-test-2025-q1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1230,6 +1245,10 @@
         "sui": {
           "codeId": 848,
           "address": "axelar152hkx77822ukgynf333snz5y9p3y9c8jgljlqguze4f4km4sfkfsmfl3na"
+        },
+        "sui-2": {
+          "codeId": 848,
+          "address": "axelar1tk4h84tv0tatkeyc9hpum4dr30xpmt09g0wdsc7tgdp7mlutlheqrwcxjz"
         },
         "storeCodeProposalId": "64",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
@@ -1322,6 +1341,21 @@
           "codeId": 855,
           "domainSeparator": "0x8a4b7c0ae3e02feb8a34711648ee44a4c9fc56ac90b41b74619a75e75de13c37",
           "address": "axelar1lnu9xwpmfzh47876tawjqm5nelevra4v6gmhqchd2tezjwqu2d6stlz4r8"
+        },
+        "sui-2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "bcs",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xa5ea3e93481643015f6273d6938484afb463de5c25f980ec72b63d56ebd55d55",
+          "address": "axelar175r02r0d2u9lnjthw8jzk3wrmwfkqenxccw4kz6cnez7v4l2yrlqt9smv5"
         },
         "stellar-test-2025-q1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
