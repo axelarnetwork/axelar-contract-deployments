@@ -33,6 +33,8 @@ const {
 } = require('../common');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
+const { XRPLClient } = require('../xrpl/utils');
+
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 
@@ -517,12 +519,13 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     return { router_address: routerAddress, verifier_address: verifierAddress };
 };
 
-const makeXrplMultisigProverInstantiateMsg = (config, options, contractConfig) => {
+const makeXrplMultisigProverInstantiateMsg = async (config, options, contractConfig) => {
     const { chainName } = options;
     const {
         axelar: { contracts, chainId: axelarChainId },
         chains: {
             [chainName]: {
+                wssRpc,
                 contracts: {
                     AxelarGateway: { address: xrplMultisigAddress },
                 },
@@ -549,9 +552,6 @@ const makeXrplMultisigProverInstantiateMsg = (config, options, contractConfig) =
         verifierSetDiffThreshold,
         xrplFee,
         ticketCountThreshold,
-        availableTickets, // TODO: Fetch via RPC
-        nextSequenceNumber, // TODO: Fetch via RPC
-        lastAssignedTicketNumber, // TODO: Fetch via RPC
     } = contractConfig;
 
     if (!validateAddress(routerAddress)) {
@@ -605,6 +605,14 @@ const makeXrplMultisigProverInstantiateMsg = (config, options, contractConfig) =
     if (!isString(xrplMultisigAddress)) {
         throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
     }
+
+    const client = new XRPLClient(wssRpc);
+    await client.connect();
+    const availableTickets = await client.tickets(xrplMultisigAddress);
+    const lastAssignedTicketNumber = Math.min(...availableTickets) - 1;
+    const accountInfo = await client.accountInfo(xrplMultisigAddress);
+    const nextSequenceNumber = accountInfo.sequence + 1; // 1 sequence number reserved for the genesis signer set rotation
+    await client.disconnect();
 
     return {
         admin_address: adminAddress,
