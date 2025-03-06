@@ -2,6 +2,7 @@
 
 const xrpl = require('xrpl');
 const { decodeAccountID } = require('ripple-address-codec');
+const { decode: decodeTxBlob } = require('ripple-binary-codec');
 const chalk = require('chalk');
 const {
     loadConfig,
@@ -110,7 +111,7 @@ class XRPLClient {
             account,
             ledger_index: ledgerIndex,
             limit,
-            ...params
+            ...params,
         });
 
         return accountObjectsRes.account_objects;
@@ -360,4 +361,5 @@ module.exports = {
     deriveAddress,
     parseTokenAmount,
     decodeAccountIDToHex,
+    decodeTxBlob,
 };

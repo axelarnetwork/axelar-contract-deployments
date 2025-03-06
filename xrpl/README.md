@@ -86,6 +86,29 @@ node xrpl/decode-address.js r9m9uUCAwMLSnRryXYuUB3cGXojpRznaAo
 # Account ID raw bytes: 0x601abcea746a193f32ed460dd933f15441142d6b
 ```
 
+## Decode Raw Transaction Blob
+
+Deserialize a raw transaction blob into a readable transaction object:
+
+```bash
+node xrpl/decode-tx-blob.js <tx-blob>
+```
+
+Here's a truncated example:
+
+```bash
+node xrpl/decode-tx-blob.js 120000220000000024000000002029004c6ce7614[...]738623034353436656239322d3732393935e1f1
+# Decoded transaction: {
+#   "TransactionType": "Payment",
+#   "Flags": 0,
+#   "Sequence": 0,
+#   "TicketSequence": 5008615,
+#   "Amount": "1000000",
+#   "Fee": "5000",
+#    [...]
+# }
+```
+
 ## Create a Trust Line
 
 Create a trust line between your account and a token issuer (via a TrustSet transaction).

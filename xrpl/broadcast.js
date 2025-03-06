@@ -1,11 +1,10 @@
-const { decode } = require('ripple-binary-codec');
 const { Command } = require('commander');
-const { mainProcessor, printInfo, prompt } = require('./utils');
+const { mainProcessor, printInfo, prompt, decodeTxBlob } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function broadcast(_config, _wallet, client, _chain, options, args) {
     const { txBlob } = args;
-    const tx = decode(txBlob);
+    const tx = decodeTxBlob(txBlob);
     printInfo('Preparing to broadcast transaction', tx);
 
     if (prompt(`Submit ${tx.TransactionType} transaction?`, options.yes)) {
