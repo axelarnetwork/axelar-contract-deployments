@@ -89,7 +89,7 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -121,7 +121,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -145,7 +145,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -195,6 +195,12 @@ async function mainProcessor(processor, args, options) {
     if (!chain.contracts?.interchain_token_service) {
         throw new Error('Interchain Token Service package not found.');
     }
+
+    const contractId = chain.contracts.interchain_token_service.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     const contract = new Contract(chain.contracts.interchain_token_service.address);
 

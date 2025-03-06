@@ -6,7 +6,7 @@ const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast, serializeValue, addressToScVal } = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
-const { prompt } = require('../common/utils');
+const { prompt, validateParameters } = require('../common/utils');
 require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
@@ -49,6 +49,10 @@ async function extendInstance(_wallet, chain, contractName, _contract, _args, op
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
 
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
     const cmd = `${stellarCmd} contract extend --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}" --ledgers-to-extend ${ledgersToExtend}`;
 
     execSync(cmd, { stdio: 'inherit' });
@@ -58,6 +62,10 @@ async function restoreInstance(_wallet, chain, contractName, _contract, _args, _
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     const cmd = `${stellarCmd} contract restore --id ${contractId} --source-account wallet --network ${networkType} --rpc-url ${rpc} --network-passphrase "${networkPassphrase}"`;
 
@@ -78,8 +86,12 @@ async function mainProcessor(processor, contractName, args, options) {
         throw new Error('Contract not found');
     }
 
+    const contractId = chain.contracts[contractName].address;
     const contract = new Contract(chain.contracts[contractName].address);
 
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
     await processor(wallet, chain, contractName, contract, args, options);
 
     saveConfig(config, options.env);
