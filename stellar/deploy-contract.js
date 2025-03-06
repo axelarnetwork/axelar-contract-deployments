@@ -27,8 +27,8 @@ require('./cli-utils');
 const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-cgp-stellar';
 
 const SUPPORTED_CONTRACTS = new Set([
-    'AxelarGateway',
     'AxelarExample',
+    'AxelarGateway',
     'AxelarOperators',
     'AxelarGasService',
     'InterchainToken',
