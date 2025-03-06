@@ -86,20 +86,21 @@ async function downloadWasmFile(contractName, version) {
 
         const buffer = await response.buffer();
         writeFileSync(outputPath, buffer);
-        printInfo('Successfully downloaded WASM file to', outputPath);
+        printInfo('Successfully downloaded WASM file', {contractName, outputPath});
         return outputPath;
     } catch (error) {
         throw new Error(`Error downloading WASM file: ${error.message}`);
     }
 }
 
-async function getWasmPath(options, contractName) {
-    if (options.wasmPath) {
-        return options.wasmPath;
+async function getWasmPath(wasmPath, version, contractName) {
+    if (wasmPath) {
+        return wasmPath;
     }
 
-    if (options.version) {
-        return await downloadWasmFile(contractName, options.version);
+    if (version) {
+        printInfo(`Downloading WASM file`, {version, contractName});
+        return await downloadWasmFile(contractName, version);
     }
 
     throw new Error('Either --wasm-path or --version must be provided');
@@ -211,7 +212,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options, contractName);
+    const wasmPath = await getWasmPath(options.wasmPath, options.version, contractName);
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
@@ -260,7 +261,7 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { wasmPath, yes } = options;
+    const { yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -275,6 +276,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
+    const wasmPath = await getWasmPath(options.wasmPath, options.newVersion, contractName);
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
@@ -351,7 +353,7 @@ function main() {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-            .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
+            .addOption(new Option('--new-version <newVersion>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
             .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
             .addHelpText(
                 'after',
