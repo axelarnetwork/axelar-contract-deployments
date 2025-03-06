@@ -329,15 +329,9 @@ function main() {
     // 1st level command
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
-    // 2nd level deploy command
+    // 2nd level commands
     const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
-
-    // 2nd level upgrade command
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
-
-    // Add base options to all 2nd level commands
-    addBaseOptions(upgradeCmd, { address: true });
-    addBaseOptions(deployCmd, { address: true });
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
