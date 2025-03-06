@@ -487,9 +487,7 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const getItsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
-        chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.ITS?.objects?.ChannelId;
+    const itsEdgeContract = chainConfig.contracts.InterchainTokenService?.address || chainConfig.contracts.ITS?.objects?.ChannelId;
 
     if (!itsEdgeContract) {
         throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
