@@ -27,24 +27,26 @@ require('./cli-utils');
 const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-cgp-stellar';
 
 const SUPPORTED_CONTRACTS = new Set([
-    'axelar_gateway',
-    'axelar_operators',
-    'axelar_gas_service',
-    'interchain_token',
-    'token_manager',
-    'interchain_token_service',
-    'upgrader',
-    'example',
+    'AxelarExample',
+    'AxelarGateway',
+    'AxelarOperators',
+    'AxelarGasService',
+    'InterchainToken',
+    'TokenManager',
+    'InterchainTokenService',
+    'Upgrader',
 ]);
 
 const CONTRACT_CONFIGS = {
-    axelar_gateway: () => [
+    AxelarGateway: () => [
         new Option('--nonce <nonce>', 'optional nonce for the signer set'),
         new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
         new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
         new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number),
     ],
-    example: () => [new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false)],
+    AxelarExample: () => [
+        new Option('--use-dummy-its-address', 'use dummy its address for AxelarExample contract to test a GMP call').default(false),
+    ],
 };
 
 const addDeployOptions = (program) => {
@@ -124,7 +126,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
-        case 'axelar_gateway': {
+        case 'AxelarGateway': {
             const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
             const minimumRotationDelay = nativeToScVal(options.minimumRotationDelay);
             const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
@@ -152,14 +154,14 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'interchain_token_service': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
+        case 'InterchainTokenService': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGasService?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-            const interchainTokenWasmHash = wasmHashToScVal(await uploadContract('interchain_token', options, wallet, chain));
-            const tokenManagerWasmHash = wasmHashToScVal(await uploadContract('token_manager', options, wallet, chain));
+            const interchainTokenWasmHash = wasmHashToScVal(await uploadContract('InterchainToken', options, wallet, chain));
+            const tokenManagerWasmHash = wasmHashToScVal(await uploadContract('TokenManager', options, wallet, chain));
 
             return {
                 owner,
@@ -174,30 +176,31 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'axelar_operators':
+        case 'AxelarOperators':
             return { owner };
 
         case 'axelar_gas_service': {
-            const operatorsAddress = chain.contracts?.axelar_operators?.address;
+            const operatorsAddress = chain.contracts?.AxelarOperators?.address;
 
             validateParameters({
                 isValidStellarAddress: { operatorsAddress },
             });
+
             const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { owner, operator };
         }
 
-        case 'upgrader': {
+        case 'Upgrader': {
             return {};
         }
 
-        case 'example': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
+        case 'AxelarExample': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGasService?.address), { type: 'address' });
             const itsAddress = options.useDummyItsAddress
                 ? gatewayAddress
-                : nativeToScVal(chain.contracts?.interchain_token_service?.address, { type: 'address' });
+                : nativeToScVal(chain.contracts?.InterchainTokenService?.address, { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
@@ -257,7 +260,7 @@ async function uploadWasm(filePath, wallet, chain) {
 async function upgrade(options, _, chain, contractName) {
     const { yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
-    const upgraderAddress = chain.contracts.upgrader?.address;
+    const upgraderAddress = chain.contracts.Upgrader?.address;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
@@ -275,7 +278,7 @@ async function upgrade(options, _, chain, contractName) {
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
-        contract: chain.contracts.upgrader.address,
+        contract: chain.contracts.Upgrader.address,
         function: 'upgrade',
         args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),

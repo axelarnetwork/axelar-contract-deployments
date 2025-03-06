@@ -489,8 +489,7 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 const getItsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.ITS?.objects?.ChannelId ||
-        chainConfig.contracts.interchain_token_service?.address;
+        chainConfig.contracts.ITS?.objects?.ChannelId;
 
     if (!itsEdgeContract) {
         throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
