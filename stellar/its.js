@@ -197,9 +197,11 @@ async function mainProcessor(processor, args, options) {
     }
 
     const contractId = chain.contracts.interchain_token_service.address;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });
+
     const contract = new Contract(chain.contracts.interchain_token_service.address);
 
     await processor(wallet, config, chain, contract, args, options);

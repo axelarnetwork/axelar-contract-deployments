@@ -211,9 +211,11 @@ async function mainProcessor(processor, args, options) {
     }
 
     const contractId = chain.contracts.axelar_gateway.address;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });
+
     await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
 
     saveConfig(config, options.env);

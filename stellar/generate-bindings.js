@@ -11,9 +11,11 @@ require('./cli-utils');
 
 function processCommand(options, _, chain) {
     const { wasmPath, contractId, outputDir } = options;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });
+
     const overwrite = true;
 
     const { rpc, networkType } = chain;

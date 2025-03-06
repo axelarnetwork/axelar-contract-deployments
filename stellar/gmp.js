@@ -61,9 +61,11 @@ async function mainProcessor(processor, args, options) {
     }
 
     const contractId = chain.contracts.example.address;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });
+
     await processor(wallet, config, chain, chain.contracts.example, args, options);
 
     saveConfig(config, options.env);

@@ -175,6 +175,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain.contracts?.axelar_operators?.address;
+
             validateParameters({
                 isValidStellarAddress: { operatorsAddress },
             });
@@ -233,6 +234,7 @@ async function deploy(options, config, chain, contractName) {
 
         const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
         const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
+
         validateParameters({
             isValidStellarAddress: { contractAddress },
         });

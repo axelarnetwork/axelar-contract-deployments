@@ -48,6 +48,7 @@ async function extendInstance(_wallet, chain, contractName, _contract, _args, op
 
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });
@@ -61,6 +62,7 @@ async function restoreInstance(_wallet, chain, contractName, _contract, _args, _
     const { rpc, networkType } = chain;
     const networkPassphrase = getNetworkPassphrase(networkType);
     const contractId = chain.contracts[contractName].address;
+
     validateParameters({
         isValidStellarAddress: { contractId },
     });

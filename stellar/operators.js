@@ -17,11 +17,13 @@ const { prompt } = require('../common/utils');
 
 async function isOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
-    const operation = contract.call('is_operator', addressToScVal(address));
-    const result = await broadcast(operation, wallet, chain, 'is_operator called', options);
+
     validateParameters({
         isValidStellarAddress: { address },
     });
+
+    const operation = contract.call('is_operator', addressToScVal(address));
+    const result = await broadcast(operation, wallet, chain, 'is_operator called', options);
 
     if (result.value()) {
         printInfo(address + ' is an operator');
@@ -32,19 +34,23 @@ async function isOperator(wallet, _, chain, contract, args, options) {
 
 async function addOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
-    const operation = contract.call('add_operator', addressToScVal(address));
+
     validateParameters({
         isValidStellarAddress: { address },
     });
+
+    const operation = contract.call('add_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'add_operator called', options);
 }
 
 async function removeOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
-    const operation = contract.call('remove_operator', addressToScVal(address));
+
     validateParameters({
         isValidStellarAddress: { address },
     });
+
+    const operation = contract.call('remove_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'remove_operator called', options);
 }
 
