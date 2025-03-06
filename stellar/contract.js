@@ -11,7 +11,7 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true, operation = '') {
+async function submitOperation(wallet, chain, _contractName, contract, args, options, operation = '') {
     if (!operation) {
         operation = args.operation;
     }
@@ -21,17 +21,17 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
     const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, args.simulate);
     const result = args.simulate ? returnValue.result.retval._value : returnValue.value();
 
-    if (showReturnValue && result !== undefined) {
-        printInfo(`${operation} returned`, serializeValue(result));
+    if (result !== undefined) {
+        printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
     }
 }
 
 async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, false, 'transfer_ownership');
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_ownership');
 }
 
 async function transferOperatorship(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, false, 'transfer_operatorship');
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_operatorship');
 }
 
 async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
