@@ -608,7 +608,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
     const client = new XRPLClient(wssRpc);
     await client.connect();
-    const availableTickets = await client.tickets(xrplMultisigAddress);
+    const availableTickets = (await client.tickets(xrplMultisigAddress)).sort();
     const lastAssignedTicketNumber = Math.min(...availableTickets) - 1;
     const accountInfo = await client.accountInfo(xrplMultisigAddress);
     const nextSequenceNumber = accountInfo.sequence + 1; // 1 sequence number reserved for the genesis signer set rotation
