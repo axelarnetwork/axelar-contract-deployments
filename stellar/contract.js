@@ -22,7 +22,7 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
         const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, true);
 
         if (showReturnValue && '_value' in returnValue.result.retval) {
-            printInfo(`${operation} returned`, returnValue.result.retval._value);
+            printInfo(`${operation} returned`, serializeValue(returnValue.result.retval._value));
         }
     } else {
         const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
