@@ -82,9 +82,6 @@ function getWasmUrl(contractName, version) {
 
 async function downloadWasmFile(contractName, version) {
     const url = getWasmUrl(contractName, version);
-
-    console.log('ahram', contractName, url);
-
     const tempDir = path.join(process.cwd(), 'artifacts');
 
     // Create temp directory if it doesn't exist
