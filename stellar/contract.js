@@ -18,18 +18,11 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
 
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    if (args.simulate) {
-        const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, true);
+    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, args.simulate);
+    const result = args.simulate ? returnValue.result.retval._value : returnValue.value();
 
-        if (showReturnValue && '_value' in returnValue.result.retval) {
-            printInfo(`${operation} returned`, serializeValue(returnValue.result.retval._value));
-        }
-    } else {
-        const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
-
-        if (showReturnValue && returnValue.value()) {
-            printInfo(`${operation} returned`, serializeValue(returnValue.value()));
-        }
+    if (showReturnValue && result !== undefined) {
+        printInfo(`${operation} returned`, serializeValue(result));
     }
 }
 
