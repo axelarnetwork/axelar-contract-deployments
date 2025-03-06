@@ -11,10 +11,11 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true, operation = "") {
+async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true, operation = '') {
     if (!operation) {
         operation = args.operation;
     }
+
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
     if (args.simulate) {
