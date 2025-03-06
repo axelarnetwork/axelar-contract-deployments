@@ -93,7 +93,7 @@ async function downloadWasmFile(contractName, version) {
     }
 }
 
-async function getWasmPath(wasmPath, version, contractName) {
+async function getWasmFile(wasmPath, version, contractName) {
     if (wasmPath) {
         return wasmPath;
     }
@@ -212,7 +212,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options.wasmPath, options.version, contractName);
+    const wasmPath = await getWasmFile(options.wasmPath, options.version, contractName);
     const wasmHash = await uploadWasm(wasmPath, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
@@ -276,7 +276,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const wasmPath = await getWasmPath(options.wasmPath, options.newVersion, contractName);
+    const wasmPath = await getWasmFile(options.wasmPath, options.newVersion, contractName);
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
@@ -299,7 +299,7 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
     return Promise.all(
         [
             createAuthorizedFunc(contractAddress, 'upgrade', [nativeToScVal(newWasmHash)]),
-            createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]),
+            migrationData ? createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]) : null,
         ].map((auth) =>
             authorizeInvocation(
                 wallet,
