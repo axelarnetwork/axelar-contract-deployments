@@ -911,6 +911,30 @@
             "OwnerCap": "0xc4ff846f69139aa973c383b9e8eebf6694d3297e3c451d88a9d14f6206691999",
             "UpgradeCap": "0xa0dcdab65db4b919b64e067cd881ea0b98f9ebf0d86dbfbff37f374a4895db3f"
           }
+        },
+        "GasService": {
+          "address": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa",
+          "versions": {
+            "0": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "GasPaid": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::events::GasPaid",
+            "GasAdded": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::events::GasAdded",
+            "Refunded": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::events::Refunded",
+            "GasCollected": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::events::GasCollected",
+            "OwnerCap": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::owner_cap::OwnerCap",
+            "OperatorCap": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::operator_cap::OperatorCap",
+            "GasService_v0": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::gas_service_v0::GasService_v0",
+            "GasService": "0x637063e4c4ecf195c8dc0170cc82e68f8cbe94f019935cb848500352a03dd6fa::gas_service::GasService"
+          },
+          "objects": {
+            "OperatorCap": "0x43e0d6b8b20aa4d8c4b808eb18fc77f77798d1332759680e281e75115ea4e492",
+            "OwnerCap": "0xef03b96127738a14e168bc130491f6e79c4faef32bf6400ae2b5b58c117ef1a0",
+            "GasService": "0xffd87a3b283764aad9197a0d0d5880c9085c68a5d055cfe9bac65298dd7f4cfc",
+            "GasServicev0": "0x451d2d47a45525077d8d1f6aa91c46b9956dbdcf147c82b3196de90209978441",
+            "UpgradeCap": "0xadb206f125e702f91add25459ab84b66370d9aeb3fda0de5db1bcbb322ee2bbc"
+          }
         }
       },
       "explorer": {
