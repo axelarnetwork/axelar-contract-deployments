@@ -172,7 +172,7 @@ if (require.main === module) {
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
             mainProcessor(submitOperation, contractName, { operation: 'operator', simulate: true }, options);
-        }); // simulate this
+        });
 
     program
         .command('transfer-operatorship <contractName> <newOperator>')
