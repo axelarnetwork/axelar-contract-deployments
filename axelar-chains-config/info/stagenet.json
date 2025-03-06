@@ -1959,6 +1959,10 @@
         "interchain_token": {
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca"
+        },
+        "token_manager": {
+          "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
+          "wasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
         }
       }
     }
