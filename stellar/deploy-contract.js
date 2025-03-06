@@ -212,8 +212,8 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmFile(options.wasmPath, options.version, contractName);
-    const wasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmFile = await getWasmFile(options.wasmPath, options.version, contractName);
+    const wasmHash = await uploadWasm(wasmFile, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
@@ -276,8 +276,8 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const wasmPath = await getWasmFile(options.wasmPath, options.newVersion, contractName);
-    const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmFile = await getWasmFile(options.wasmPath, options.newVersion, contractName);
+    const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     printInfo('upgrade() calldata', { contractAddress, newVersion: options.newVersion, newWasmHash, migrationData: options.migrationData });
@@ -363,10 +363,10 @@ function main() {
 Examples:
   # using Vec<Address> as migration data:
   $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --new-version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
-  
+
   # default void migration data:
   $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1
-  
+
   # equivalent explicit void migration data:
   $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1 --migration-data '()'
 `,
