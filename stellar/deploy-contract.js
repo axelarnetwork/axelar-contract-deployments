@@ -86,7 +86,7 @@ async function downloadWasmFile(contractName, version) {
 
         const buffer = await response.buffer();
         writeFileSync(outputPath, buffer);
-        printInfo('Successfully downloaded WASM file', {contractName, outputPath});
+        printInfo('Successfully downloaded WASM file', { contractName, outputPath });
         return outputPath;
     } catch (error) {
         throw new Error(`Error downloading WASM file: ${error.message}`);
@@ -99,7 +99,7 @@ async function getWasmPath(wasmPath, version, contractName) {
     }
 
     if (version) {
-        printInfo(`Downloading WASM file`, {version, contractName});
+        printInfo(`Downloading WASM file`, { version, contractName });
         return await downloadWasmFile(contractName, version);
     }
 
