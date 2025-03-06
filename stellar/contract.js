@@ -11,15 +11,16 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true) {
-    const operation = args.operation;
+async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true, operation = "") {
+    if (!operation) {
+        operation = args.operation;
+    }
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
     if (args.simulate) {
         const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, true);
 
         if (showReturnValue && '_value' in returnValue.result.retval) {
-            console.log(returnValue);
             printInfo(`${operation} returned`, returnValue.result.retval._value);
         }
     } else {
@@ -32,11 +33,11 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
 }
 
 async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_ownership', [addressToScVal(args)], options, false);
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, false, 'transfer_ownership');
 }
 
 async function transferOperatorship(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_operatorship', [addressToScVal(args)], options, false);
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, false, 'transfer_operatorship');
 }
 
 async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
@@ -163,7 +164,7 @@ if (require.main === module) {
         .command('transfer-ownership <contractName> <newOwner>')
         .description('Transfer the ownership of the contract')
         .action((contractName, newOwner, options) => {
-            mainProcessor(transferOwnership, contractName, { operation: newOwner }, options);
+            mainProcessor(transferOwnership, contractName, newOwner, options);
         });
 
     program
@@ -178,7 +179,7 @@ if (require.main === module) {
         .command('transfer-operatorship <contractName> <newOperator>')
         .description('Transfer the operatorship of the contract')
         .action((contractName, newOperator, options) => {
-            mainProcessor(transferOperatorship, contractName, { operation: newOperator }, options);
+            mainProcessor(transferOperatorship, contractName, newOperator, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
