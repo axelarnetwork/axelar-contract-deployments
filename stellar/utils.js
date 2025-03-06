@@ -149,7 +149,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}) {
+async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc);
 
     if (options.estimateCost) {
@@ -157,6 +157,17 @@ async function broadcast(operation, wallet, chain, action, options = {}) {
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
+    }
+
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const response = await server.simulateTransaction(tx);
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);

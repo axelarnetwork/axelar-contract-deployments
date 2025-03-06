@@ -11,13 +11,23 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(wallet, chain, _contractName, contract, operation, args, options, showReturnValue = true) {
+async function submitOperation(wallet, chain, _contractName, contract, args, options, showReturnValue = true) {
+    const operation = args.operation;
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+    if (args.simulate) {
+        const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, true);
 
-    if (showReturnValue && returnValue.value()) {
-        printInfo(`${operation} returned`, serializeValue(returnValue.value()));
+        if (showReturnValue && '_value' in returnValue.result.retval) {
+            console.log(returnValue);
+            printInfo(`${operation} returned`, returnValue.result.retval._value);
+        }
+    } else {
+        const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+
+        if (showReturnValue && returnValue.value()) {
+            printInfo(`${operation} returned`, serializeValue(returnValue.value()));
+        }
     }
 }
 
@@ -122,7 +132,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'paused', options);
+            mainProcessor(submitOperation, contractName, { operation: 'paused', simulate: true }, options);
         });
 
     program
@@ -130,7 +140,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'pause', options);
+            mainProcessor(submitOperation, contractName, { operation: 'pause' }, options);
         });
 
     program
@@ -138,7 +148,7 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'unpause', options);
+            mainProcessor(submitOperation, contractName, { operation: 'unpause' }, options);
         });
 
     program
@@ -146,14 +156,14 @@ if (require.main === module) {
         .description('Retrieve the owner of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'owner', options);
+            mainProcessor(submitOperation, contractName, { operation: 'owner', simulate: true }, options);
         });
 
     program
         .command('transfer-ownership <contractName> <newOwner>')
         .description('Transfer the ownership of the contract')
         .action((contractName, newOwner, options) => {
-            mainProcessor(transferOwnership, contractName, newOwner, options);
+            mainProcessor(transferOwnership, contractName, { operation: newOwner }, options);
         });
 
     program
@@ -161,14 +171,14 @@ if (require.main === module) {
         .description('Retrieve the operator of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'operator', options);
-        });
+            mainProcessor(submitOperation, contractName, { operation: 'operator', simulate: true }, options);
+        }); // simulate this
 
     program
         .command('transfer-operatorship <contractName> <newOperator>')
         .description('Transfer the operatorship of the contract')
         .action((contractName, newOperator, options) => {
-            mainProcessor(transferOperatorship, contractName, newOperator, options);
+            mainProcessor(transferOperatorship, contractName, { operation: newOperator }, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
