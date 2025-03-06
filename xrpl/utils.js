@@ -280,9 +280,14 @@ async function printWalletInfo(client, wallet, chain) {
     const address = wallet.address;
     const { balance, sequence } = await client.accountInfo(address);
     printInfo('Wallet address', address);
-    printInfo('Wallet balance', `${xrpl.dropsToXrp(balance)} ${chain.tokenSymbol || ''}`);
 
-    if (sequence === -1) {
+    if (balance === "0") {
+        printError('Wallet balance', '0');
+    } else {
+        printInfo('Wallet balance', `${xrpl.dropsToXrp(balance)} ${chain.tokenSymbol || ''}`);
+    }
+
+    if (sequence === "-1") {
         printWarn('Wallet is not active because it does not meet the base reserve requirement');
         return;
     }
