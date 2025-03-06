@@ -26,18 +26,16 @@ require('./cli-utils');
 
 const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-cgp-stellar';
 
-const CONTRACT_PATHS = {
-    AxelarGateway: 'stellar_axelar_gateway',
-    AxelarExample: 'stellar_axelar_example',
-    AxelarOperators: 'stellar_axelar_operators',
-    AxelarGasService: 'stellar_axelar_gas_service',
-    InterchainToken: 'stellar_interchain_token',
-    TokenManager: 'stellar_token_manager',
-    InterchainTokenService: 'stellar_interchain_token_service',
-    Upgrader: 'stellar_upgrader',
-};
-
-const SUPPORTED_CONTRACTS = new Set(Object.keys(CONTRACT_PATHS));
+const SUPPORTED_CONTRACTS = new Set([
+    'AxelarGateway',
+    'AxelarExample',
+    'AxelarOperators',
+    'AxelarGasService',
+    'InterchainToken',
+    'TokenManager',
+    'InterchainTokenService',
+    'Upgrader',
+]);
 
 const CONTRACT_CONFIGS = {
     AxelarGateway: () => [
@@ -71,13 +69,22 @@ function getWasmUrl(contractName, version) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
-    const pathName = CONTRACT_PATHS[contractName];
+    // Convert `AxelarGateway` → `stellar-axelar-gateway`
+    const dirPath = `stellar-${contractName
+        .replace(/([A-Z])/g, '-$1')
+        .toLowerCase()
+        .slice(1)}`;
 
-    return `${AXELAR_RELEASE_BASE_URL}/${pathName}/${version}/wasm/${pathName}.wasm`;
+    const fileName = dirPath.replace(/-/g, '_');
+
+    return `${AXELAR_RELEASE_BASE_URL}/${dirPath}/${version}/wasm/${fileName}.wasm`;
 }
 
 async function downloadWasmFile(contractName, version) {
     const url = getWasmUrl(contractName, version);
+
+    console.log('ahram', contractName, url);
+
     const tempDir = path.join(process.cwd(), 'artifacts');
 
     // Create temp directory if it doesn't exist
