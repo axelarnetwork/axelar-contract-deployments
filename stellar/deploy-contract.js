@@ -280,8 +280,6 @@ async function upgrade(options, _, chain, contractName) {
     const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    printInfo('upgrade() calldata', { contractAddress, version: options.version, newWasmHash, migrationData: options.migrationData });
-
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
