@@ -376,7 +376,34 @@ function main() {
     program.parse();
 }
 
-const sanitizeMigrationData = (migrationData) => (migrationData === '()' ? null : migrationData);
+function sanitizeMigrationData(migrationData) {
+    if (migrationData === null || migrationData === '()') return null;
+
+    try {
+        return Address.fromString(migrationData);
+    } catch (_) {
+        // not an address, continue to next parsing attempt
+    }
+
+    let parsed;
+
+    try {
+        parsed = JSON.parse(migrationData);
+    } catch (_) {
+        // not json, keep as string
+        return migrationData;
+    }
+
+    if (Array.isArray(parsed)) {
+        return parsed.map(sanitizeMigrationData);
+    }
+
+    if (parsed !== null && typeof parsed === 'object') {
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
+    }
+
+    return parsed;
+}
 
 if (require.main === module) {
     main();
