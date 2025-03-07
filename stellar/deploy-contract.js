@@ -271,21 +271,21 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isValidStellarAddress: { contractAddress, newVersion: options.newVersion, upgraderAddress },
+        isValidStellarAddress: { contractAddress, version: options.version, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
 
-    const wasmFile = await getWasmFile(options.wasmPath, options.newVersion, contractName);
+    const wasmFile = await getWasmFile(options.wasmPath, options.version, contractName);
     const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    printInfo('upgrade() calldata', { contractAddress, newVersion: options.newVersion, newWasmHash, migrationData: options.migrationData });
+    printInfo('upgrade() calldata', { contractAddress, version: options.version, newWasmHash, migrationData: options.migrationData });
 
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
-        args: [contractAddress, options.newVersion, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -355,20 +355,20 @@ function main() {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-            .addOption(new Option('--new-version <newVersion>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
+            .addOption(new Option('--version <version>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
             .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
             .addHelpText(
                 'after',
                 `
 Examples:
   # using Vec<Address> as migration data:
-  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --new-version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
 
   # default void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
 
   # equivalent explicit void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1 --migration-data '()'
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
 `,
             )
             .action((options) => {
