@@ -107,7 +107,7 @@ impl<'payload> AxelarMessagePayload<'payload> {
 }
 
 /// Error type for payload operations.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum PayloadError {
     /// Invalid encoding scheme
     #[error("Invalid encoding scheme")]

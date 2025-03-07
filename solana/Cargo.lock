@@ -932,6 +932,7 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

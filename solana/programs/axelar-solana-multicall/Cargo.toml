@@ -19,6 +19,7 @@ axelar-executable.workspace = true
 borsh.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 solana-program.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }

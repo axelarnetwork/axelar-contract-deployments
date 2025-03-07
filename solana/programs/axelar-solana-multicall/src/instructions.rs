@@ -2,6 +2,7 @@
 
 use axelar_executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
 use borsh::{BorshDeserialize, BorshSerialize};
+use error::BuilderError;
 use solana_program::instruction::AccountMeta;
 use solana_program::pubkey::Pubkey;
 
@@ -210,7 +211,7 @@ impl MultiCallPayloadBuilder {
     /// - [`PayloadError::InvalidEncodingScheme`] - The encoding scheme was not set.
     /// - [`PayloadError::BorshSerializeError`] - The payload could not be borsh encoded.
     /// - [`PayloadError::AbiError`] - Error encoding the payload using the ABI encoder.
-    pub fn build(&mut self) -> Result<AxelarMessagePayload<'_>, PayloadError> {
+    pub fn build(&mut self) -> Result<AxelarMessagePayload<'_>, BuilderError> {
         let encoding = self.encoding.ok_or(PayloadError::InvalidEncodingScheme)?;
         let mut top_level_accounts = Vec::new();
         let mut program_payloads = Vec::with_capacity(self.payloads.len());
@@ -219,6 +220,10 @@ impl MultiCallPayloadBuilder {
         // get ownership of the payloads while keeping `self` in a valid state so the returned `AxelarMessagePayload`
         // can reference `self.encoded_payload_buffer`.
         for (program_id, mut accounts, instruction_data) in core::mem::take(&mut self.payloads) {
+            if accounts.is_empty() {
+                return Err(BuilderError::NotAccountForIxError);
+            }
+
             let current_index = top_level_accounts.len();
 
             top_level_accounts.push(AccountMeta {
@@ -258,6 +263,29 @@ impl MultiCallPayloadBuilder {
     }
 }
 
+/// Error types for the multicall program builder.
+pub mod error {
+    use axelar_executable::PayloadError;
+    use thiserror::Error;
+
+    /// Error types for the multicall program builder.
+    #[derive(Error, Debug, PartialEq)]
+    pub enum BuilderError {
+        /// Error types for the multicall program builder payload.
+        #[error("Payload encoding scheme not set")]
+        PayloadError(PayloadError),
+        /// Error when an ix does not have any accounts.
+        #[error("Program ix must have at least one account")]
+        NotAccountForIxError,
+    }
+
+    impl From<PayloadError> for BuilderError {
+        fn from(error: PayloadError) -> Self {
+            Self::PayloadError(error)
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
@@ -290,5 +318,20 @@ mod tests {
 
             assert_eq!(payload, decoded);
         }
+    }
+
+    #[test]
+    fn test_multicall_do_not_allow_empty_accounts_on_ixs() {
+        let builder = super::MultiCallPayloadBuilder::default();
+        let program_id = solana_program::system_program::id();
+        let accounts = vec![]; // No accounts
+
+        let mut res = builder
+            .encoding_scheme(EncodingScheme::Borsh)
+            .add_instruction(program_id, accounts, vec![1, 2, 3])
+            .unwrap();
+
+        let err = res.build().err().unwrap();
+        assert_eq!(err, super::error::BuilderError::NotAccountForIxError);
     }
 }
