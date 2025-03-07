@@ -56,17 +56,17 @@ async function mainProcessor(processor, args, options) {
     printInfo('Environment', options.env);
     printInfo('Chain Name', options.chainName);
 
-    if (!chain.contracts?.example) {
-        throw new Error('Example package not found.');
+    if (!chain.contracts?.AxelarExample) {
+        throw new Error('AxelarExample package not found.');
     }
 
-    const contractId = chain.contracts.example.address;
+    const contractId = chain.contracts.AxelarExample.address;
 
     validateParameters({
         isValidStellarAddress: { contractId },
     });
 
-    await processor(wallet, config, chain, chain.contracts.example, args, options);
+    await processor(wallet, config, chain, chain.contracts.AxelarExample, args, options);
 
     saveConfig(config, options.env);
 }

@@ -57,7 +57,7 @@ async function removeOperator(wallet, _, chain, contract, args, options) {
 async function collectFees(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [receiver] = args;
-    const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
+    const gasServiceAddress = chain.contracts?.AxelarGasService?.address;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
 
@@ -79,7 +79,7 @@ async function collectFees(wallet, _, chain, contract, args, options) {
 async function refund(wallet, _, chain, contract, args, options) {
     const operator = addressToScVal(wallet.publicKey());
     const [messageId, receiver] = args;
-    const gasServiceAddress = chain.contracts?.axelar_gas_service?.address;
+    const gasServiceAddress = chain.contracts?.AxelarGasService?.address;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
 
@@ -131,7 +131,7 @@ async function mainProcessor(processor, args, options) {
         return;
     }
 
-    const contractAddress = chain.contracts?.axelar_operators?.address;
+    const contractAddress = chain.contracts?.AxelarOperators?.address;
 
     validateParameters({
         isValidStellarAddress: { contractAddress },
