@@ -106,6 +106,11 @@ async function getWasmFile(options, contractName) {
     throw new Error('Either --wasm-path or --version must be provided');
 }
 
+async function uploadContract(contractName, options, wallet, chain) {
+    const wasmFile = await getWasmFile(options, contractName);
+    return await uploadWasm(wasmFile, wallet, chain);
+}
+
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
@@ -145,11 +150,8 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-
-            const interchainTokenWasmFile = await getWasmFile(options, 'interchain_token');
-            const interchainTokenWasmUploaded = await uploadWasm(interchainTokenWasmFile, wallet, chain);
-            const tokenManagerWasmFile = await getWasmFile(options, 'token_manager');
-            const tokenManagerWasmUploaded = await uploadWasm(tokenManagerWasmFile, wallet, chain);
+            const interchainTokenWasmUploaded = await uploadContract('interchain_token', options, wallet, chain);
+            const tokenManagerWasmUploaded = await uploadContract('token_manager', options, wallet, chain);
 
             const interchainTokenWasmHash = nativeToScVal(Buffer.from(interchainTokenWasmUploaded, 'hex'), {
                 type: 'bytes',
@@ -213,9 +215,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmFile = await getWasmFile(options, contractName);
-    const wasmHash = await uploadWasm(wasmFile, wallet, chain);
-
+    const wasmHash = await uploadContract(contractName, options, wallet, chain);
     const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
