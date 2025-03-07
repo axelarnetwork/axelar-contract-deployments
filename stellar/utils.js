@@ -374,6 +374,13 @@ function wasmHashToScVal(wasmHash) {
     });
 }
 
+function pascalToKebab(str) {
+    return str
+        .replace(/([A-Z])/g, '-$1')
+        .toLowerCase()
+        .slice(1);
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -397,4 +404,5 @@ module.exports = {
     stellarAddressToBytes,
     isValidAddress,
     wasmHashToScVal,
+    pascalToKebab,
 };

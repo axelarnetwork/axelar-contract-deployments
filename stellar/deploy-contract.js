@@ -9,8 +9,9 @@ const {
     serializeValue,
     addBaseOptions,
     getNetworkPassphrase,
-    createAuthorizedFunc,
+    createAuthorizedFunc,    
     wasmHashToScVal,
+    pascalToKebab,
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
@@ -70,11 +71,7 @@ function getWasmUrl(contractName, version) {
     }
 
     // Convert `AxelarGateway` → `stellar-axelar-gateway`
-    const dirPath = `stellar-${contractName
-        .replace(/([A-Z])/g, '-$1')
-        .toLowerCase()
-        .slice(1)}`;
-
+    const dirPath = `stellar-${pascalToKebab(contractName)}`;
     const fileName = dirPath.replace(/-/g, '_');
 
     return `${AXELAR_RELEASE_BASE_URL}/${dirPath}/${version}/wasm/${fileName}.wasm`;
