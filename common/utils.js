@@ -30,9 +30,7 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'boolean') {
-        info = String(info);
-    } else if (typeof info === 'object') {
+    if (typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }
 
@@ -442,28 +440,27 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsEdgeContract = (chainConfig) => {
+const itsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.ITS?.objects?.ChannelId ||
+        chainConfig.contracts.ITS?.objects?.ChannelId || // TODO: remove this once Sui devnet is redeployed
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId ||
         chainConfig.contracts.interchain_token_service?.address;
 
     if (!itsEdgeContract) {
-        throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
+        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
 
     return itsEdgeContract;
 };
 
-const getItsEdgeChains = (config, excludeChainName) => {
-    return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
-};
+const itsEdgeChains = (config) =>
+    Object.values(config.chains)
+        .filter(itsEdgeContract)
+        .map((chain) => chain.axelarId);
 
-const parseTrustedChains = (config, trustedChains, excludeChainName) => {
-    const parsedTrustedChains =
-        trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
-
-    return parsedTrustedChains;
+const parseTrustedChains = (config, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains.map((chain) => chain.trim());
 };
 
 module.exports = {
@@ -504,6 +501,6 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getItsEdgeContract,
+    itsEdgeContract,
     parseTrustedChains,
 };
