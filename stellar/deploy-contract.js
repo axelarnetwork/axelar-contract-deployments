@@ -146,15 +146,16 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
 
-            if (!chain.contracts?.interchain_token?.wasmHash) {
-                throw new Error(`interchain_token contract's wasm hash does not exist.`);
-            }
+            const interchainTokenWasmFile = await getWasmFile(options, 'interchain_token');
+            const interchainTokenWasmUploaded = await uploadWasm(interchainTokenWasmFile, wallet, chain);
+            const tokenManagerWasmFile = await getWasmFile(options, 'token_manager');
+            const tokenManagerWasmUploaded = await uploadWasm(tokenManagerWasmFile, wallet, chain);
 
-            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain.contracts?.interchain_token?.wasmHash, 'hex'), {
+            const interchainTokenWasmHash = nativeToScVal(Buffer.from(interchainTokenWasmUploaded, 'hex'), {
                 type: 'bytes',
             });
 
-            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain.contracts?.token_manager?.wasmHash, 'hex'), {
+            const tokenManagerWasmHash = nativeToScVal(Buffer.from(tokenManagerWasmUploaded, 'hex'), {
                 type: 'bytes',
             });
 
@@ -215,40 +216,33 @@ async function deploy(options, config, chain, contractName) {
     const wasmFile = await getWasmFile(options, contractName);
     const wasmHash = await uploadWasm(wasmFile, wallet, chain);
 
-    if (contractName === 'interchain_token' || contractName === 'token_manager') {
-        chain.contracts[contractName] = {
-            deployer: wallet.publicKey(),
-            wasmHash: serializeValue(wasmHash),
-        };
-    } else {
-        const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
-        const serializedArgs = Object.fromEntries(
-            Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
-        );
-        const operation = Operation.createCustomContract({
-            wasmHash,
-            address: Address.fromString(wallet.publicKey()),
-            // requires that initializeArgs returns the parameters in the appropriate order
-            constructorArgs: Object.values(initializeArgs),
-        });
-        printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
+    const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
+    const serializedArgs = Object.fromEntries(
+        Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
+    );
+    const operation = Operation.createCustomContract({
+        wasmHash,
+        address: Address.fromString(wallet.publicKey()),
+        // requires that initializeArgs returns the parameters in the appropriate order
+        constructorArgs: Object.values(initializeArgs),
+    });
+    printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-        const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-        const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
+    const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
 
-        validateParameters({
-            isValidStellarAddress: { contractAddress },
-        });
+    validateParameters({
+        isValidStellarAddress: { contractAddress },
+    });
 
-        printInfo('Contract initialized at address', contractAddress);
+    printInfo('Contract initialized at address', contractAddress);
 
-        chain.contracts[contractName] = {
-            address: contractAddress,
-            deployer: wallet.publicKey(),
-            wasmHash: serializeValue(wasmHash),
-            initializeArgs: serializedArgs,
-        };
-    }
+    chain.contracts[contractName] = {
+        address: contractAddress,
+        deployer: wallet.publicKey(),
+        wasmHash: serializeValue(wasmHash),
+        initializeArgs: serializedArgs,
+    };
 
     printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
 }
