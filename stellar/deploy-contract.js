@@ -278,8 +278,6 @@ async function upgrade(options, _, chain, contractName) {
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    options.migrationData = sanitizeMigrationData(options.migrationData);
-
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
@@ -291,8 +289,6 @@ async function upgrade(options, _, chain, contractName) {
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     printInfo('Contract upgraded successfully!', contractAddress);
 }
-
-const sanitizeMigrationData = (migrationData) => (migrationData === '()' ? null : migrationData);
 
 async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
     // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
@@ -358,6 +354,7 @@ function main() {
             .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
             .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null))
             .action((options) => {
+                options.migrationData = sanitizeMigrationData(options.migrationData);
                 mainProcessor(options, upgrade, contractName);
             });
     });
@@ -378,6 +375,8 @@ function main() {
 
     program.parse();
 }
+
+const sanitizeMigrationData = (migrationData) => (migrationData === '()' ? null : migrationData);
 
 if (require.main === module) {
     main();
