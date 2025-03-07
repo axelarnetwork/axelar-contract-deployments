@@ -271,7 +271,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isValidStellarAddress: { contractAddress, upgraderAddress },
+        isValidStellarAddress: { contractAddress, newVersion: options.newVersion, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
@@ -279,6 +279,8 @@ async function upgrade(options, _, chain, contractName) {
     const wasmPath = await getWasmFile(options.wasmPath, options.newVersion, contractName);
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
+
+    printInfo('upgrade() calldata', { contractAddress, newVersion: options.newVersion, newWasmHash, migrationData: options.migrationData });
 
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
@@ -299,7 +301,7 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
     return Promise.all(
         [
             createAuthorizedFunc(contractAddress, 'upgrade', [nativeToScVal(newWasmHash)]),
-            migrationData ? createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]) : null,
+            createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]),
         ].map((auth) =>
             authorizeInvocation(
                 wallet,
