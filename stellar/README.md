@@ -123,7 +123,7 @@ Note: The `--wasm-path` flag is optional, so long as the `--new-version` flag is
 
 #### Example `MIGRATION_DATA` Type Input
 
-For no migration data, omit the `--migration-data` flag, or pass `()` for the data.
+For no migration data, omit the `--migration-data` flag, or pass `'()'` for the data.
 
 ```bash
 node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSION>
