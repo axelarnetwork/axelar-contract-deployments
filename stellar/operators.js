@@ -17,6 +17,11 @@ const { prompt } = require('../common/utils');
 
 async function isOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
     const operation = contract.call('is_operator', addressToScVal(address));
     const result = await broadcast(operation, wallet, chain, 'is_operator called', options);
 
@@ -29,12 +34,22 @@ async function isOperator(wallet, _, chain, contract, args, options) {
 
 async function addOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
     const operation = contract.call('add_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'add_operator called', options);
 }
 
 async function removeOperator(wallet, _, chain, contract, args, options) {
     const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
     const operation = contract.call('remove_operator', addressToScVal(address));
     await broadcast(operation, wallet, chain, 'remove_operator called', options);
 }
@@ -47,7 +62,8 @@ async function collectFees(wallet, _, chain, contract, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { receiver, gasServiceAddress, gasTokenAddress },
+        isNonEmptyString: { receiver },
+        isValidStellarAddress: { gasServiceAddress, gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -68,7 +84,8 @@ async function refund(wallet, _, chain, contract, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { messageId, receiver, gasServiceAddress, gasTokenAddress },
+        isNonEmptyString: { messageId, receiver },
+        isValidStellarAddress: { gasServiceAddress, gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -117,7 +134,7 @@ async function mainProcessor(processor, args, options) {
     const contractAddress = chain.contracts?.axelar_operators?.address;
 
     validateParameters({
-        isNonEmptyString: { contractAddress },
+        isValidStellarAddress: { contractAddress },
     });
 
     if (!isValidAddress(contractAddress)) {

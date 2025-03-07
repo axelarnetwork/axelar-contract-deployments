@@ -175,6 +175,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
 
         case 'axelar_gas_service': {
             const operatorsAddress = chain.contracts?.axelar_operators?.address;
+
+            validateParameters({
+                isValidStellarAddress: { operatorsAddress },
+            });
             const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { owner, operator };
@@ -231,6 +235,10 @@ async function deploy(options, config, chain, contractName) {
         const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
         const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
 
+        validateParameters({
+            isValidStellarAddress: { contractAddress },
+        });
+
         printInfo('Contract initialized at address', contractAddress);
 
         chain.contracts[contractName] = {
@@ -262,7 +270,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { contractAddress, upgraderAddress },
+        isValidStellarAddress: { contractAddress, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
@@ -321,15 +329,9 @@ function main() {
     // 1st level command
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
-    // 2nd level deploy command
+    // 2nd level commands
     const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
-
-    // 2nd level upgrade command
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
-
-    // Add base options to all 2nd level commands
-    addBaseOptions(upgradeCmd, { address: true });
-    addBaseOptions(deployCmd, { address: true });
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
