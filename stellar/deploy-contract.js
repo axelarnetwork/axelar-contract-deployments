@@ -352,7 +352,7 @@ function main() {
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
             .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null))
             .action((options) => {
                 mainProcessor(options, upgrade, contractName);
             });
