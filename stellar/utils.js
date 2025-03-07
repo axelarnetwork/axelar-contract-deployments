@@ -99,7 +99,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action} Tx`, sendResponse.hash);
+        printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
@@ -166,7 +166,7 @@ async function broadcast(operation, wallet, chain, action, options = {}, simulat
         if (response.error) {
             throw new Error(response.error);
         }
-
+        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
         return response;
     }
 

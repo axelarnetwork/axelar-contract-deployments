@@ -24,6 +24,9 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
     if (result !== undefined) {
         printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
     }
+    else {
+        printInfo(`${_contractName}:${operation} succeeded`);
+    }
 }
 
 async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
