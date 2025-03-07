@@ -93,14 +93,14 @@ async function downloadWasmFile(contractName, version) {
     }
 }
 
-async function getWasmFile(wasmPath, version, contractName) {
-    if (wasmPath) {
-        return wasmPath;
+async function getWasmFile(options, contractName) {
+    if (options.wasmPath) {
+        return options.wasmPath;
     }
 
-    if (version) {
-        printInfo(`Downloading WASM file`, { version, contractName });
-        return await downloadWasmFile(contractName, version);
+    if (options.version) {
+        printInfo(`Downloading WASM file`, { version: options.version, contractName });
+        return await downloadWasmFile(contractName, options.version);
     }
 
     throw new Error('Either --wasm-path or --version must be provided');
@@ -212,7 +212,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmFile = await getWasmFile(options.wasmPath, options.version, contractName);
+    const wasmFile = await getWasmFile(options, contractName);
     const wasmHash = await uploadWasm(wasmFile, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
@@ -276,7 +276,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const wasmFile = await getWasmFile(options.wasmPath, options.version, contractName);
+    const wasmFile = await getWasmFile(options, contractName);
     const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
