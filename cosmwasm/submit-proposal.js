@@ -29,7 +29,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, itsEdgeContract } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -176,11 +176,9 @@ const registerItsChain = async (client, wallet, config, options) => {
         const chainConfig = getChainConfig(config, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
-        const itsEdgeContract = getItsEdgeContract(chainConfig);
-
         return {
             chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContract,
+            its_edge_contract: itsEdgeContract(chainConfig),
             truncation: {
                 max_uint: (2n ** BigInt(maxUintBits) - 1n).toString(),
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
