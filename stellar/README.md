@@ -132,13 +132,13 @@ node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSI
 or
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSION> --migration-data ()
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSION> --migration-data '()'
 ```
 
 For migration data of type `String`, omit the `--migration-data` flag and pass the string directly.
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSION> --migration-data "my string"
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --new-version <NEW_VERSION> --migration-data 'my string'
 ```
 
 For migration data of type `Vec<Address>`, omit the `--migration-data` flag and pass the array as such:
