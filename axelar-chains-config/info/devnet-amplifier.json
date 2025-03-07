@@ -691,6 +691,14 @@
             "itsAddress": "CCD7JXLHOJKQDPKOXQTK6PYACFYQPRC25IVKHQDOMP3ANFMBWO5FZZAN"
           }
         },
+        "interchain_token": {
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca"
+        },
+        "token_manager": {
+          "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
+          "wasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
+        },
         "interchain_token_service": {
           "address": "CCD7JXLHOJKQDPKOXQTK6PYACFYQPRC25IVKHQDOMP3ANFMBWO5FZZAN",
           "deployer": "GDUITDF2LI3R5HM4KYRLLNRLEWKYBFVZVOEB6HSL7EOW2KO2LD6V4GPM",
