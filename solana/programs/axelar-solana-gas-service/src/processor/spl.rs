@@ -3,6 +3,7 @@ use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::Instruction;
 use solana_program::log::sol_log_data;
+use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
@@ -77,6 +78,11 @@ pub(crate) fn process_pay_spl_for_contract_call(
     gas_fee_amount: u64,
     decimals: u8,
 ) -> ProgramResult {
+    if gas_fee_amount == 0 {
+        msg!("Gas fee amount cannot be zero");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let (accounts, signer_pubkeys) = accounts.split_at(6);
     let accounts = &mut accounts.iter();
     let sender = next_account_info(accounts)?;
@@ -144,6 +150,11 @@ pub(crate) fn add_spl_gas(
     refund_address: Pubkey,
     decimals: u8,
 ) -> ProgramResult {
+    if gas_fee_amount == 0 {
+        msg!("Gas fee amount cannot be zero");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let (accounts, signer_pubkeys) = accounts.split_at(6);
     let accounts = &mut accounts.iter();
     let sender = next_account_info(accounts)?;
@@ -206,6 +217,11 @@ pub(crate) fn collect_fees_spl(
     amount: u64,
     decimals: u8,
 ) -> ProgramResult {
+    if amount == 0 {
+        msg!("Gas fee amount cannot be zero");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let accounts = &mut accounts.iter();
     let authority = next_account_info(accounts)?;
     let receiver_account = next_account_info(accounts)?;
@@ -273,6 +289,11 @@ pub(crate) fn refund_spl(
     fees: u64,
     decimals: u8,
 ) -> ProgramResult {
+    if fees == 0 {
+        msg!("Gas fee amount cannot be zero");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let accounts = &mut accounts.iter();
     let authority = next_account_info(accounts)?;
     let receiver_account = next_account_info(accounts)?;
@@ -591,5 +612,86 @@ impl SplGasRefundedEvent {
             receiver,
             fees,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_process_pay_spl_for_contract_call_cannot_pay_zero_gas_fee() {
+        let program_id = Pubkey::new_unique();
+        let accounts = vec![];
+        let destination_chain = "destination_chain".to_owned();
+        let destination_address = "destination_address".to_owned();
+        let payload_hash = [0; 32];
+        let refund_address = Pubkey::new_unique();
+        let params = vec![];
+        let gas_fee_amount = 0;
+        let decimals = 0;
+
+        let result = process_pay_spl_for_contract_call(
+            &program_id,
+            &accounts,
+            destination_chain,
+            destination_address,
+            payload_hash,
+            refund_address,
+            &params,
+            gas_fee_amount,
+            decimals,
+        );
+
+        assert_eq!(result, Err(ProgramError::InvalidInstructionData));
+    }
+
+    #[test]
+    fn test_add_spl_gas_cannot_add_zero_gas_fee() {
+        let program_id = Pubkey::new_unique();
+        let accounts = vec![];
+        let tx_hash = [0; 64];
+        let log_index = 0;
+        let gas_fee_amount = 0;
+        let refund_address = Pubkey::new_unique();
+        let decimals = 0;
+
+        let result = add_spl_gas(
+            &program_id,
+            &accounts,
+            tx_hash,
+            log_index,
+            gas_fee_amount,
+            refund_address,
+            decimals,
+        );
+
+        assert_eq!(result, Err(ProgramError::InvalidInstructionData));
+    }
+
+    #[test]
+    fn test_collect_fees_spl_cannot_collect_zero_gas_fee() {
+        let program_id = Pubkey::new_unique();
+        let accounts = vec![];
+        let amount = 0;
+        let decimals = 0;
+
+        let result = collect_fees_spl(&program_id, &accounts, amount, decimals);
+
+        assert_eq!(result, Err(ProgramError::InvalidInstructionData));
+    }
+
+    #[test]
+    fn test_refund_spl_cannot_refund_zero_gas_fee() {
+        let program_id = Pubkey::new_unique();
+        let accounts = vec![];
+        let tx_hash = [0; 64];
+        let log_index = 0;
+        let fees = 0;
+        let decimals = 0;
+
+        let result = refund_spl(&program_id, &accounts, tx_hash, log_index, fees, decimals);
+
+        assert_eq!(result, Err(ProgramError::InvalidInstructionData));
     }
 }
