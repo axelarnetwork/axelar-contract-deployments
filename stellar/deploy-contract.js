@@ -278,6 +278,8 @@ async function upgrade(options, _, chain, contractName) {
     const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
+    options.migrationData = sanitizeMigrationData(options.migrationData);
+
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
@@ -289,6 +291,8 @@ async function upgrade(options, _, chain, contractName) {
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     printInfo('Contract upgraded successfully!', contractAddress);
 }
+
+const sanitizeMigrationData = (migrationData) => (migrationData === '()' ? null : migrationData);
 
 async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
     // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
