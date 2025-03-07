@@ -114,10 +114,50 @@ node stellar/deploy-contract.js deploy upgrader --version v1.0.0
 After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
 where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
+
+Note: The `--wasm-path` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
+
+#### Example `MIGRATION_DATA` Type Input
+
+For no migration data, omit the `--migration-data` flag, or pass `'()'` for the data.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION>
+```
+
+or
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '()'
+```
+
+For migration data of type `String`, omit the `--migration-data` flag and pass the string directly.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 'my string'
+```
+
+For migration data of type `Vec<Address>`, omit the `--migration-data` flag and pass the array as such:
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '["GAA...", "GAB..."]'
+```
+
+For migration data of type `u64`, omit the `--migration-data` flag and pass the number directly.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 1234567890
+```
+
+For migration data of type `bool`, omit the `--migration-data` flag and pass the boolean directly:
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
+```
 
 ## Generate bindings
 

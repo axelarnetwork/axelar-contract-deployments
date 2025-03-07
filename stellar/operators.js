@@ -23,9 +23,9 @@ async function isOperator(wallet, _, chain, contract, args, options) {
     });
 
     const operation = contract.call('is_operator', addressToScVal(address));
-    const result = await broadcast(operation, wallet, chain, 'is_operator called', options);
+    const result = await broadcast(operation, wallet, chain, 'is_operator called', options, true);
 
-    if (result.value()) {
+    if (result.result.retval._value) {
         printInfo(address + ' is an operator');
     } else {
         printWarn(address + ' is not an operator');

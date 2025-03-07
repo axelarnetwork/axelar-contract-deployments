@@ -86,19 +86,20 @@ async function downloadWasmFile(contractName, version) {
 
         const buffer = await response.buffer();
         writeFileSync(outputPath, buffer);
-        printInfo('Successfully downloaded WASM file to', outputPath);
+        printInfo('Successfully downloaded WASM file', { contractName, outputPath });
         return outputPath;
     } catch (error) {
         throw new Error(`Error downloading WASM file: ${error.message}`);
     }
 }
 
-async function getWasmPath(options, contractName) {
+async function getWasmFile(options, contractName) {
     if (options.wasmPath) {
         return options.wasmPath;
     }
 
     if (options.version) {
+        printInfo(`Downloading WASM file`, { version: options.version, contractName });
         return await downloadWasmFile(contractName, options.version);
     }
 
@@ -211,8 +212,8 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmPath = await getWasmPath(options, contractName);
-    const wasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmFile = await getWasmFile(options, contractName);
+    const wasmHash = await uploadWasm(wasmFile, wallet, chain);
 
     if (contractName === 'interchain_token' || contractName === 'token_manager') {
         chain.contracts[contractName] = {
@@ -260,7 +261,7 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { wasmPath, yes } = options;
+    const { yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -270,18 +271,19 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isValidStellarAddress: { contractAddress, upgraderAddress },
+        isValidStellarAddress: { contractAddress, version: options.version, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
 
-    const newWasmHash = await uploadWasm(wasmPath, wallet, chain);
+    const wasmFile = await getWasmFile(options, contractName);
+    const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
-        args: [contractAddress, options.newVersion, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -351,9 +353,24 @@ function main() {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
-            .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
+            .addOption(new Option('--version <version>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
+            .addHelpText(
+                'after',
+                `
+Examples:
+  # using Vec<Address> as migration data:
+  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+
+  # default void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
+
+  # equivalent explicit void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
+`,
+            )
             .action((options) => {
+                options.migrationData = sanitizeMigrationData(options.migrationData);
                 mainProcessor(options, upgrade, contractName);
             });
     });
@@ -373,6 +390,35 @@ function main() {
     program.addCommand(upgradeCmd);
 
     program.parse();
+}
+
+function sanitizeMigrationData(migrationData) {
+    if (migrationData === null || migrationData === '()') return null;
+
+    try {
+        return Address.fromString(migrationData);
+    } catch (_) {
+        // not an address, continue to next parsing attempt
+    }
+
+    let parsed;
+
+    try {
+        parsed = JSON.parse(migrationData);
+    } catch (_) {
+        // not json, keep as string
+        return migrationData;
+    }
+
+    if (Array.isArray(parsed)) {
+        return parsed.map(sanitizeMigrationData);
+    }
+
+    if (parsed !== null && typeof parsed === 'object') {
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
+    }
+
+    return parsed;
 }
 
 if (require.main === module) {
