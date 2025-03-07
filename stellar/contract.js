@@ -11,22 +11,29 @@ require('./cli-utils');
 
 const MAX_INSTANCE_TTL_EXTENSION = 535679;
 
-async function submitOperation(wallet, chain, _contractName, contract, operation, args, options, showReturnValue = true) {
+async function submitOperation(wallet, chain, _contractName, contract, args, options, operation = '') {
+    if (!operation) {
+        operation = args.operation;
+    }
+
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, args.simulate);
+    const result = args.simulate ? returnValue.result.retval._value : returnValue.value();
 
-    if (showReturnValue && returnValue.value()) {
-        printInfo(`${operation} returned`, serializeValue(returnValue.value()));
+    if (result !== undefined) {
+        printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
+    } else {
+        printInfo(`${_contractName}:${operation} succeeded`);
     }
 }
 
 async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_ownership', [addressToScVal(args)], options, false);
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_ownership');
 }
 
 async function transferOperatorship(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, 'transfer_operatorship', [addressToScVal(args)], options, false);
+    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_operatorship');
 }
 
 async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
@@ -134,7 +141,7 @@ if (require.main === module) {
         .description('Check if the contract is paused')
         .argument('<contract-name>', 'contract name to check paused')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'paused', options);
+            mainProcessor(submitOperation, contractName, { operation: 'paused', simulate: true }, options);
         });
 
     program
@@ -142,7 +149,7 @@ if (require.main === module) {
         .description('Pause the contract')
         .argument('<contract-name>', 'contract name to pause')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'pause', options);
+            mainProcessor(submitOperation, contractName, { operation: 'pause' }, options);
         });
 
     program
@@ -150,7 +157,7 @@ if (require.main === module) {
         .description('Unpause the contract')
         .argument('<contract-name>', 'contract name to unpause')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'unpause', options);
+            mainProcessor(submitOperation, contractName, { operation: 'unpause' }, options);
         });
 
     program
@@ -158,7 +165,7 @@ if (require.main === module) {
         .description('Retrieve the owner of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'owner', options);
+            mainProcessor(submitOperation, contractName, { operation: 'owner', simulate: true }, options);
         });
 
     program
@@ -173,7 +180,7 @@ if (require.main === module) {
         .description('Retrieve the operator of the contract')
         .argument('<contract-name>', 'contract name')
         .action((contractName, options) => {
-            mainProcessor(submitOperation, contractName, 'operator', options);
+            mainProcessor(submitOperation, contractName, { operation: 'operator', simulate: true }, options);
         });
 
     program
