@@ -9,7 +9,7 @@ const {
     serializeValue,
     addBaseOptions,
     getNetworkPassphrase,
-    createAuthorizedFunc,    
+    createAuthorizedFunc,
     wasmHashToScVal,
     pascalToKebab,
 } = require('./utils');
