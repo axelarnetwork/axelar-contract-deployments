@@ -368,6 +368,12 @@ function isValidAddress(address) {
     }
 }
 
+function wasmHashToScVal(wasmHash) {
+    return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
+        type: 'bytes',
+    });
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -390,4 +396,5 @@ module.exports = {
     saltToBytes32,
     stellarAddressToBytes,
     isValidAddress,
+    wasmHashToScVal,
 };

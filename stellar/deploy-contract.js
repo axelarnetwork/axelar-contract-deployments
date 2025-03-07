@@ -3,7 +3,15 @@
 const { Address, nativeToScVal, scValToNative, Operation, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, addBaseOptions, getNetworkPassphrase, createAuthorizedFunc } = require('./utils');
+const {
+    getWallet,
+    broadcast,
+    serializeValue,
+    addBaseOptions,
+    getNetworkPassphrase,
+    createAuthorizedFunc,
+    wasmHashToScVal,
+} = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { weightedSignersToScVal } = require('./type-utils');
@@ -150,16 +158,8 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-            const interchainTokenWasmUploaded = await uploadContract('interchain_token', options, wallet, chain);
-            const tokenManagerWasmUploaded = await uploadContract('token_manager', options, wallet, chain);
-
-            const interchainTokenWasmHash = nativeToScVal(Buffer.from(interchainTokenWasmUploaded, 'hex'), {
-                type: 'bytes',
-            });
-
-            const tokenManagerWasmHash = nativeToScVal(Buffer.from(tokenManagerWasmUploaded, 'hex'), {
-                type: 'bytes',
-            });
+            const interchainTokenWasmHash = wasmHashToScVal(await uploadContract('interchain_token', options, wallet, chain));
+            const tokenManagerWasmHash = wasmHashToScVal(await uploadContract('token_manager', options, wallet, chain));
 
             return {
                 owner,
