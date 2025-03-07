@@ -352,7 +352,18 @@ function main() {
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
             .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
+            .addHelpText('after', `
+Examples:
+  # using Vec<Address> as migration data:
+  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --new-version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+  
+  # default void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1\t\t\t\t
+  
+  # equivalent explicit void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --new-version 1.0.1 --migration-data '()'
+            `)
             .action((options) => {
                 options.migrationData = sanitizeMigrationData(options.migrationData);
                 mainProcessor(options, upgrade, contractName);
