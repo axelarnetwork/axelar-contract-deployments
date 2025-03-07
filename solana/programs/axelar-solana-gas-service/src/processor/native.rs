@@ -32,12 +32,7 @@ pub(crate) fn process_pay_native_for_contract_call(
     let config_pda = next_account_info(accounts)?;
     let system_program = next_account_info(accounts)?;
 
-    {
-        config_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = config_pda.try_borrow_data()?;
-        let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-        assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
-    }
+    try_load_config(program_id, config_pda)?;
 
     invoke(
         &system_instruction::transfer(sender.key, config_pda.key, gas_fee_amount),
@@ -59,6 +54,18 @@ pub(crate) fn process_pay_native_for_contract_call(
     Ok(())
 }
 
+/// Performs all the config checks and returns the config if it is valid
+fn try_load_config(
+    program_id: &Pubkey,
+    config_pda: &AccountInfo<'_>,
+) -> Result<Config, ProgramError> {
+    config_pda.check_initialized_pda_without_deserialization(program_id)?;
+    let data = config_pda.try_borrow_data()?;
+    let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
+    assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+    Ok(*config)
+}
+
 pub(crate) fn add_native_gas(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
@@ -77,12 +84,7 @@ pub(crate) fn add_native_gas(
     let config_pda = next_account_info(accounts)?;
     let system_program = next_account_info(accounts)?;
 
-    {
-        config_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = config_pda.try_borrow_data()?;
-        let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-        assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
-    }
+    try_load_config(program_id, config_pda)?;
 
     invoke(
         &system_instruction::transfer(sender.key, config_pda.key, gas_fee_amount),
@@ -119,10 +121,7 @@ pub(crate) fn collect_fees_native(
 
     {
         // Check: Valid Config PDA
-        config_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = config_pda.try_borrow_data()?;
-        let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-        assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+        let config = try_load_config(program_id, config_pda)?;
 
         // Check: Authority mtaches
         if authority.key != &config.authority {
@@ -154,10 +153,7 @@ pub(crate) fn refund_native(
 
     {
         // Check: Valid Config PDA
-        config_pda.check_initialized_pda_without_deserialization(program_id)?;
-        let data = config_pda.try_borrow_data()?;
-        let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-        assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+        let config = try_load_config(program_id, config_pda)?;
 
         // Check: Authority mtaches
         if authority.key != &config.authority {
