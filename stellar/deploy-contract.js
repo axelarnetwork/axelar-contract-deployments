@@ -229,7 +229,7 @@ async function deploy(options, config, chain, contractName) {
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
     const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-    const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
+    const contractAddress = Address.fromScAddress(deployResponse.address()).toString();
 
     validateParameters({
         isValidStellarAddress: { contractAddress },
