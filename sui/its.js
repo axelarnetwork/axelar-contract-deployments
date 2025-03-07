@@ -98,7 +98,7 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
 async function removeTrustedChains(keypair, client, contracts, args, options) {
     const trustedChains = args;
 
-    const chainNames = trustedChain.split(' ');
+    const chainNames = trustedChains.split(' ');
 
     if (chainNames.length === 0) throw new Error('No chains names provided');
 
