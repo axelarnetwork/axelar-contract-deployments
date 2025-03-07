@@ -23,8 +23,7 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
 
     if (result !== undefined) {
         printInfo(`${_contractName}:${operation} returned`, serializeValue(result));
-    }
-    else {
+    } else {
         printInfo(`${_contractName}:${operation} succeeded`);
     }
 }

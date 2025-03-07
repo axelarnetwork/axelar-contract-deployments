@@ -166,6 +166,7 @@ async function broadcast(operation, wallet, chain, action, options = {}, simulat
         if (response.error) {
             throw new Error(response.error);
         }
+
         printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
         return response;
     }
