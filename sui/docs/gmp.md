@@ -44,7 +44,7 @@ destinationId=$(echo $config | jq -r '.sui.contracts.Example.objects.GmpChannelI
 
 ## Send Command (Outgoing)
 
-Send a messsage from SUI to the destination chain.
+Send a message from SUI to the destination chain.
 
 Example:
 
