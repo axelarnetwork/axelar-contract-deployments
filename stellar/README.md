@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --version v1.0.0
+node stellar/deploy-contract.js deploy axelar_gateway --version 1.0.0
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,13 +76,13 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --version v1.0.0
+node stellar/deploy-contract.js deploy axelar_operators --version 1.0.0
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
+node stellar/deploy-contract.js deploy axelar_gas_service --version 1.0.0
 ```
 
 ### Interchain Token Service
@@ -90,9 +90,9 @@ node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
 Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token --version v1.0.0
-node stellar/deploy-contract.js deploy token_manager --version v1.0.0
-node stellar/deploy-contract.js deploy interchain_token_service --version v1.0.0
+node stellar/deploy-contract.js deploy interchain_token --version 1.0.0
+node stellar/deploy-contract.js deploy token_manager --version 1.0.0
+node stellar/deploy-contract.js deploy interchain_token_service --version 1.0.0
 ```
 
 ### Example
@@ -108,7 +108,7 @@ node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-stellar
 To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
 
 ```bash
-node stellar/deploy-contract.js deploy upgrader --version v1.0.0
+node stellar/deploy-contract.js deploy upgrader --version 1.0.0
 ```
 
 After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
