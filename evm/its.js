@@ -558,6 +558,7 @@ async function processCommand(config, chain, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
+            // TODO: simplify ITS trusted address checks
             const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
 
             printInfo('Trusted chains', trustedChains);
