@@ -263,8 +263,8 @@ async function uploadWasm(filePath, wallet, chain) {
 async function upgrade(options, _, chain, contractName) {
     const { yes, version } = options;
 
-    if (!version) {
-        throw new Error('Version is required to upgrade');
+    if (!version && !options.wasmPath) {
+        throw new Error('--version or --wasm-path required to upgrade');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
