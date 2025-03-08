@@ -318,7 +318,16 @@ async function processCommand(config, chain, options) {
         }
 
         case 'isContractCallApproved': {
-            const { commandId, destination, payloadHash, sourceChain, sourceAddress } = options;
+            const { destination, payloadHash, sourceChain, sourceAddress } = options;
+
+            let commandId;
+
+            if (options.messageId) {
+                // Derive commandId for Amplifier gateway
+                commandId = id(`${sourceChain}_${options.messageId}`);
+            } else {
+                commandId = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+            }
 
             validateParameters({
                 isNonEmptyString: { commandId, payloadHash, sourceChain, sourceAddress },
