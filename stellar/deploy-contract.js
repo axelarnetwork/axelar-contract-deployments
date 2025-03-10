@@ -10,7 +10,7 @@ const {
     addBaseOptions,
     getNetworkPassphrase,
     createAuthorizedFunc,
-    wasmHashToScVal,
+    BytesToScVal,
     pascalToKebab,
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
@@ -163,8 +163,8 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-            const interchainTokenWasmHash = wasmHashToScVal(await uploadContract('InterchainToken', options, wallet, chain));
-            const tokenManagerWasmHash = wasmHashToScVal(await uploadContract('TokenManager', options, wallet, chain));
+            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', options, wallet, chain));
+            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', options, wallet, chain));
 
             return {
                 owner,

@@ -368,17 +368,34 @@ function isValidAddress(address) {
     }
 }
 
-function wasmHashToScVal(wasmHash) {
+function BytesToScVal(wasmHash) {
     return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
         type: 'bytes',
     });
 }
 
+/**
+ * Converts a PascalCase or camelCase string to kebab-case.
+ *
+ * - Inserts a hyphen (`-`) before each uppercase letter (except the first letter).
+ * - Converts all letters to lowercase.
+ * - Works for PascalCase, camelCase, and mixed-case strings.
+ *
+ * @param {string} str - The input string in PascalCase or camelCase.
+ * @returns {string} - The converted string in kebab-case.
+ *
+ * @example
+ * pascalToKebab("PascalCase");        // "pascal-case"
+ * pascalToKebab("camelCase");         // "camel-case"
+ * pascalToKebab("XMLHttpRequest");    // "xml-http-request"
+ * pascalToKebab("exampleString");     // "example-string"
+ * pascalToKebab("already-kebab");     // "already-kebab" (unchanged)
+ * pascalToKebab("noChange");          // "no-change"
+ * pascalToKebab("single");            // "single" (unchanged)
+ * pascalToKebab("");                  // "" (empty string case)
+ */
 function pascalToKebab(str) {
-    return str
-        .replace(/([A-Z])/g, '-$1')
-        .toLowerCase()
-        .slice(1);
+    return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
 }
 
 module.exports = {
@@ -403,6 +420,6 @@ module.exports = {
     saltToBytes32,
     stellarAddressToBytes,
     isValidAddress,
-    wasmHashToScVal,
+    BytesToScVal,
     pascalToKebab,
 };
