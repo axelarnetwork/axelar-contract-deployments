@@ -2595,6 +2595,49 @@
       "url": "https://stellar.expert/explorer/testnet"
     }
   },
+  "stellar-2024-q4": {
+    "name": "Stellar",
+    "axelarId": "stellar-2024-q4",
+    "rpc": "https://soroban-testnet.stellar.org",
+    "horizonRpc": "https://horizon-testnet.stellar.org",
+    "networkType": "testnet",
+    "chainType": "stellar",
+    "decimals": 7,
+    "finality": "1",
+    "approxFinalityWaitTime": 1,
+    "tokenSymbol": "XLM",
+    "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    "contracts": {
+      "AxelarGateway": {
+        "address": "CAGZUZJSRQ6SMERPUPUHDDOG6HWPNHX4H7IWTZA5G6WQAQO5VWV3X2EC",
+        "deployer": "GBAPBVQIFCOMGYHFUIXIEGGATEQMVSVQGVZNN5WWFAVKET6M3M4644EG",
+        "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+        "initializeArgs": {
+          "owner": "GBAPBVQIFCOMGYHFUIXIEGGATEQMVSVQGVZNN5WWFAVKET6M3M4644EG",
+          "operator": "GBAPBVQIFCOMGYHFUIXIEGGATEQMVSVQGVZNN5WWFAVKET6M3M4644EG",
+          "domainSeparator": "1136595996006398ba58fb5238e6c72694e283ac7e73353d9487c87caae070bb",
+          "minimumRotationDelay": "3600",
+          "previousSignersRetention": "15",
+          "initialSigners": [
+            {
+              "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+              "signers": [
+                {
+                  "signer": "40f0d608289cc360e5a22e8218c09920cacab03572d6f6d6282aa24fccdb39ee",
+                  "weight": "1"
+                }
+              ],
+              "threshold": "1"
+            }
+          ]
+        }
+      }
+    },
+    "explorer": {
+      "name": "Stellar Expert",
+      "url": "https://stellar.expert/explorer/testnet"
+    }
+  },
   "axelar": {
     "contracts": {
       "ServiceRegistry": {
