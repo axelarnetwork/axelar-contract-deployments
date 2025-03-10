@@ -469,20 +469,24 @@ async function upgrade(_, chain, options) {
     printInfo(`Current ITS implementation`, currImplementation);
     printInfo(`New ITS implementation`, contractConfig.implementation);
 
-    if (predictOnly || prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
-        return;
+    if (currImplementation === contractConfig.implementation) {
+        printWarn(`ITS implementation is already up to date`);
+    } else {
+        if (predictOnly || prompt(`Proceed with ITS upgrade on ${chain.name}?`, options.yes)) {
+            return;
+        }
+
+        const receipt = await contract
+            .upgrade(contractConfig.implementation, codehash, '0x', gasOptions)
+            .then((tx) => tx.wait(chain.confirmations));
+
+        if (!wasEventEmitted(receipt, contract, 'Upgraded')) {
+            printError('Upgrade failed');
+            return;
+        }
+
+        printInfo(`Upgraded Interchain Token Service`);
     }
-
-    const receipt = await contract
-        .upgrade(contractConfig.implementation, codehash, '0x', gasOptions)
-        .then((tx) => tx.wait(chain.confirmations));
-
-    if (!wasEventEmitted(receipt, contract, 'Upgraded')) {
-        printError('Upgrade failed');
-        return;
-    }
-
-    printInfo(`Upgraded Interchain Token Service`);
 
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
@@ -494,26 +498,30 @@ async function upgrade(_, chain, options) {
     printInfo(`Current ITS Factory implementation`, factoryImplementation);
     printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
-    if (
-        options.predictOnly ||
-        prompt(
-            `Proceed with ITS Factory upgrade to implementation ${itsFactoryContractConfig.implementation} on ${chain.name}?`,
-            options.yes,
-        )
-    ) {
-        return;
+    if (factoryImplementation === itsFactoryContractConfig.implementation) {
+        printWarn(`ITS Factory implementation is already up to date`);
+    } else {
+        if (
+            options.predictOnly ||
+            prompt(
+                `Proceed with ITS Factory upgrade to implementation ${itsFactoryContractConfig.implementation} on ${chain.name}?`,
+                options.yes,
+            )
+        ) {
+            return;
+        }
+
+        const factoryReceipt = await itsFactory
+            .upgrade(itsFactoryContractConfig.implementation, factoryCodehash, '0x', gasOptions)
+            .then((tx) => tx.wait(chain.confirmations));
+
+        if (!wasEventEmitted(factoryReceipt, itsFactory, 'Upgraded')) {
+            printError('Upgrade failed');
+            return;
+        }
+
+        printInfo(`Upgraded Interchain Token Factory`);
     }
-
-    const factoryReceipt = await itsFactory
-        .upgrade(itsFactoryContractConfig.implementation, factoryCodehash, '0x', gasOptions)
-        .then((tx) => tx.wait(chain.confirmations));
-
-    if (!wasEventEmitted(factoryReceipt, itsFactory, 'Upgraded')) {
-        printError('Upgrade failed');
-        return;
-    }
-
-    printInfo(`Upgraded Interchain Token Factory`);
 }
 
 async function processCommand(config, chain, options) {
