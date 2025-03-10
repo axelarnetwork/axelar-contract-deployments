@@ -133,7 +133,7 @@ async function deployAll(config, wallet, chain, options) {
     // Register all EVM chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter(
-        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.skip !== true,
+        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.address,
     );
     const trustedChains = itsChains.map((chain) => chain.axelarId);
     const trustedAddresses = itsChains.map((chain) =>

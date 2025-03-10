@@ -487,6 +487,7 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 const itsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.ITS?.objects?.ChannelId || // TODO: remove this once Sui devnet is redeployed
         chainConfig.contracts.InterchainTokenService?.address ||
         chainConfig.contracts.interchain_token_service?.address; // stellar
 
