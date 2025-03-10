@@ -182,7 +182,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
         case 'AxelarOperators':
             return { owner };
 
-        case 'axelar_gas_service': {
+        case 'AxelarGasService': {
             const operatorsAddress = chain.contracts?.AxelarOperators?.address;
 
             validateParameters({
