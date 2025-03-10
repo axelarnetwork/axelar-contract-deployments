@@ -34,7 +34,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'token_manager',
     'interchain_token_service',
     'upgrader',
-    'example',
+    'axelar_example',
 ]);
 
 const CONTRACT_CONFIGS = {
@@ -192,7 +192,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return {};
         }
 
-        case 'example': {
+        case 'axelar_example': {
             const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
             const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
             const itsAddress = options.useDummyItsAddress
