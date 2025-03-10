@@ -279,7 +279,6 @@ function main() {
     const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
-        // Use addStoreOptions from common cli utils
         addStoreOptions(command);
 
         addDeployOptions(command);

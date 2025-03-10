@@ -13,7 +13,7 @@ const {
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
-const { downloadContractCode } = require('../common/utils');
+const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
@@ -362,10 +362,13 @@ const getContractR2Url = (contractName, version) => {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
-    // TODO - Contract Name will change to PascalCase in future
-    const pathName = contractName.replace(/_/g, '-');
-
-    return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+    if (VERSION_REGEX.test(version) || SHORT_COMMIT_HASH_REGEX.test(version)) {
+        // TODO: Contract Name will change to PascalCase in future
+        const pathName = contractName.replace(/_/g, '-');
+        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+    }
+    
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
 const getWasmFilePath = async (options, contractName) => {

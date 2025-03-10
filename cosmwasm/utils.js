@@ -29,7 +29,7 @@ const {
     calculateDomainSeparator,
     validateParameters,
 } = require('../common');
-const { pascalToSnake, pascalToKebab, downloadContractCode, readContractCode } = require('../common/utils');
+const { pascalToSnake, pascalToKebab, downloadContractCode, readContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -37,9 +37,6 @@ const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
 
 const CONTRACT_SCOPE_GLOBAL = 'global';
 const CONTRACT_SCOPE_CHAIN = 'chain';
-
-const VERSION_REGEX = /^v\d+\.\d+\.\d+$/;
-const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 

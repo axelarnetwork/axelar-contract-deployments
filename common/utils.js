@@ -19,6 +19,9 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
+const VERSION_REGEX = /^v\d+\.\d+\.\d+$/;
+const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
+
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
@@ -475,6 +478,7 @@ const downloadContractCode = async (url, contractName, version) => {
 
     const buffer = await response.buffer();
     writeFileSync(outputPath, buffer);
+
     return outputPath;
 };
 
@@ -537,4 +541,6 @@ module.exports = {
     pascalToSnake,
     parseTrustedChains,
     readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
 };
