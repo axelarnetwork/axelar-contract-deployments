@@ -8,6 +8,7 @@ const {
 const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
+const { validateParameters } = require('../common/utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
     if (options.signers === 'wallet') {
@@ -179,9 +180,9 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
 
-    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options, true);
 
-    if (!messageApproved.value()) {
+    if (!messageApproved.result.retval._value) {
         printWarn('Contract call not approved at the gateway');
         return;
     }
@@ -208,6 +209,12 @@ async function mainProcessor(processor, args, options) {
     if (!chain.contracts?.axelar_gateway) {
         throw new Error('Axelar Gateway package not found.');
     }
+
+    const contractId = chain.contracts.axelar_gateway.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
 

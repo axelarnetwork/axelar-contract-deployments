@@ -89,18 +89,18 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
         const tx = txBuilder.tx;
         const sender = options.sender || keypair.toSuiAddress();
         tx.setSender(sender);
-        await saveGeneratedTx(tx, `Added trusted chain ${args}`, client, options);
+        await saveGeneratedTx(tx, `Added trusted chains ${args}`, client, options);
     } else {
         await broadcastFromTxBuilder(txBuilder, keypair, 'Add Trusted Chains', options);
     }
 }
 
 async function removeTrustedChains(keypair, client, contracts, args, options) {
-    const trustedChain = args;
+    const trustedChains = args;
 
-    const chainNames = trustedChain.split(' ');
+    const chainNames = trustedChains.split(' ');
 
-    if (chainNames.length === 0) throw new Error('No chain names provided');
+    if (chainNames.length === 0) throw new Error('No chains names provided');
 
     const txBuilder = new TxBuilder(client);
 
