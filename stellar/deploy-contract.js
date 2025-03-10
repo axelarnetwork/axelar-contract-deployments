@@ -255,7 +255,12 @@ async function uploadWasm(filePath, wallet, chain) {
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { yes } = options;
+    const { yes, version } = options;
+
+    if (!version && !options.wasmPath) {
+        throw new Error('--version or --wasm-path required to upgrade');
+    }
+
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -265,7 +270,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isValidStellarAddress: { contractAddress, version: options.version, upgraderAddress },
+        isValidStellarAddress: { contractAddress, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
@@ -277,7 +282,7 @@ async function upgrade(options, _, chain, contractName) {
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.upgrader.address,
         function: 'upgrade',
-        args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        args: [contractAddress, version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
