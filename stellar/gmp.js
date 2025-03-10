@@ -16,7 +16,7 @@ async function send(wallet, _, chain, contractConfig, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -59,6 +59,12 @@ async function mainProcessor(processor, args, options) {
     if (!chain.contracts?.example) {
         throw new Error('Example package not found.');
     }
+
+    const contractId = chain.contracts.example.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
 
     await processor(wallet, config, chain, chain.contracts.example, args, options);
 

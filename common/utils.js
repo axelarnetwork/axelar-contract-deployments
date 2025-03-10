@@ -13,6 +13,7 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const StellarSdk = require('@stellar/stellar-sdk');
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -246,6 +247,46 @@ function isValidTimeFormat(timeString) {
     return regex.test(timeString);
 }
 
+/**
+ * Validate if the given address is a Stellar address.
+ *
+ * A valid Stellar address is either:
+ * - a valid Stellar account address (starts with 'G')
+ * - a valid Stellar contract address (starts with 'C')
+ *
+ * @param {string} address - The input Stellar address.
+ * @returns {boolean} - True if the address is valid, otherwise false.
+ */
+function isValidStellarAddress(address) {
+    return isValidStellarAccount(address) || isValidStellarContract(address);
+}
+
+/**
+ * Validate if the given address is a Stellar account address.
+ *
+ * A valid Stellar account address:
+ * - Is a 56-character Base32-encoded string starting with 'G'.
+ *
+ * @param {string} address - The input Stellar account address.
+ * @returns {boolean} - True if the address is a valid Stellar account, otherwise false.
+ */
+function isValidStellarAccount(address) {
+    return StellarSdk.StrKey.isValidEd25519PublicKey(address);
+}
+
+/**
+ * Validate if the given address is a Stellar contract address.
+ *
+ * A valid Stellar contract address can be:
+ * - A 56-character Base32-encoded string starting with 'C'.
+ *
+ * @param {string} address - The input Stellar contract address.
+ * @returns {boolean} - True if the address is a valid Stellar contract, otherwise false.
+ */
+function isValidStellarContract(address) {
+    return StellarSdk.StrKey.isValidContract(address);
+}
+
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
@@ -256,6 +297,9 @@ const validationFunctions = {
     isString,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isValidStellarAddress,
+    isValidStellarAccount,
+    isValidStellarContract,
 };
 
 function validateParameters(parameters) {
@@ -502,4 +546,7 @@ module.exports = {
     calculateDomainSeparator,
     itsEdgeContract,
     parseTrustedChains,
+    isValidStellarAddress,
+    isValidStellarAccount,
+    isValidStellarContract,
 };

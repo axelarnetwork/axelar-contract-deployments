@@ -99,7 +99,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action} Tx`, sendResponse.hash);
+        printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
@@ -149,7 +149,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}) {
+async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc);
 
     if (options.estimateCost) {
@@ -157,6 +157,18 @@ async function broadcast(operation, wallet, chain, action, options = {}) {
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
+    }
+
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const response = await server.simulateTransaction(tx);
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
+        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
@@ -356,6 +368,12 @@ function isValidAddress(address) {
     }
 }
 
+function wasmHashToScVal(wasmHash) {
+    return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
+        type: 'bytes',
+    });
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -378,4 +396,5 @@ module.exports = {
     saltToBytes32,
     stellarAddressToBytes,
     isValidAddress,
+    wasmHashToScVal,
 };
