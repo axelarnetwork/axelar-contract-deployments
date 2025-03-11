@@ -487,12 +487,19 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 const itsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
-        chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.interchain_token_service?.address; // stellar
+        chainConfig.contracts.InterchainTokenService?.address;
 
     if (!itsEdgeContract) {
         printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
+
+    return itsEdgeContract;
+};
+
+const tryItsEdgeContract = (chainConfig) => {
+    const itsEdgeContract =
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
 
     return itsEdgeContract;
 };
@@ -503,7 +510,7 @@ const itsEdgeChains = (config) =>
         .map((chain) => chain.axelarId);
 
 const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains.map((chain) => chain.trim());
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
 module.exports = {
@@ -545,6 +552,7 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     itsEdgeContract,
+    tryItsEdgeContract,
     parseTrustedChains,
     isValidStellarAddress,
     isValidStellarAccount,
