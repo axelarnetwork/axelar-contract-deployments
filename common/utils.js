@@ -31,7 +31,9 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'object') {
+    if (typeof info === 'boolean') {
+        info = String(info);
+    } else if (typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }
 
@@ -496,6 +498,14 @@ const itsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+const tryItsEdgeContract = (chainConfig) => {
+    const itsEdgeContract =
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
+
+    return itsEdgeContract;
+};
+
 const itsEdgeChains = (config) =>
     Object.values(config.chains)
         .filter(itsEdgeContract)
@@ -544,6 +554,7 @@ module.exports = {
     getSaltFromKey,
     calculateDomainSeparator,
     itsEdgeContract,
+    tryItsEdgeContract,
     parseTrustedChains,
     isValidStellarAddress,
     isValidStellarAccount,
