@@ -2610,17 +2610,6 @@
             "Operators": "0xa8edeba4d7fe6dc098523016870f03e0411b296750926d11e55cf2c4180ef028",
             "OwnerCap": "0x6a3565b574e1d7a7b18959719190785a9a3f2c54bf2291ec82d3c59620ef7338"
           }
-        },
-        "Abi": {
-          "address": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
-          "versions": {
-            "0": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1"
-          },
-          "structs": {
-            "AbiReader": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiReader",
-            "AbiWriter": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiWriter"
-          }
         }
       }
     }
