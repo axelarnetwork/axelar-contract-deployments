@@ -266,7 +266,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
 | **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
 | **Testnet**          | `14845`          | `["7", "10"]`             | `100`               |
-| **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
+| **Mainnet**          | `14845`          | `["8", "10"]`             | `920000000`         |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
