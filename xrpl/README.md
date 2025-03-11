@@ -122,3 +122,17 @@ Here's an example:
 ```bash
 node xrpl/trust-set.js -e devnet-amplifier -n xrpl-test-1 XYZ r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1
 ```
+
+## Modify Account Properties
+
+Modify an account's properties (via an AccountSet transaction).
+
+```bash
+node xrpl/transfer.js -e <env> -n <source-chain> --multisign --account <account> --transferRate <transferRate> --tickSize <tickSize> --domain <domain> --flag <flag>
+```
+
+Here's an example:
+
+```bash
+node xrpl/account-set.js -e testnet -n xrpl-test-1 --multisign --account rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg --transferRate 0 --tickSize 6 --domain axelar.foundation --flag 14
+```
