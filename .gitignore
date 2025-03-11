@@ -112,6 +112,8 @@ local.json
 keys.json
 
 temp-arguments.js
+*Untitled*
+*.wasm
 
 # Sui Move Packages
 sui/move
