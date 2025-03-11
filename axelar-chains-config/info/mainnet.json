@@ -2678,7 +2678,16 @@
       "finality": "1",
       "tokenSymbol": "XLM",
       "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
-      "contracts": {},
+      "contracts": {
+        "AxelarOperators": {
+          "address": "CCO23C66LAPU5YO66VNXB75T7SDVZ5UZ2GHAU3M7T2YGRKHJI3B2LZPQ",
+          "deployer": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S",
+          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "initializeArgs": {
+            "owner": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S"
+          }
+        }
+      },
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "Stellar Expert",
