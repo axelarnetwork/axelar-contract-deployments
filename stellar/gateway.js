@@ -46,7 +46,7 @@ function getProof(dataHash, wallet, chain, options) {
     });
     const signersHash = keccak256(signers.toXDR());
 
-    const domainSeparator = chain.contracts.axelar_gateway?.initializeArgs?.domainSeparator;
+    const domainSeparator = chain.contracts.AxelarGateway?.initializeArgs?.domainSeparator;
 
     if (!domainSeparator) {
         throw new Error('Domain separator not found');
@@ -206,17 +206,17 @@ async function mainProcessor(processor, args, options) {
 
     const wallet = await getWallet(chain, options);
 
-    if (!chain.contracts?.axelar_gateway) {
+    if (!chain.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    const contractId = chain.contracts.axelar_gateway.address;
+    const contractId = chain.contracts.AxelarGateway.address;
 
     validateParameters({
         isValidStellarAddress: { contractId },
     });
 
-    await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
+    await processor(wallet, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }

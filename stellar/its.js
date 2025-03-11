@@ -195,17 +195,17 @@ async function mainProcessor(processor, args, options) {
         return;
     }
 
-    if (!chain.contracts?.interchain_token_service) {
+    if (!chain.contracts?.InterchainTokenService) {
         throw new Error('Interchain Token Service package not found.');
     }
 
-    const contractId = chain.contracts.interchain_token_service.address;
+    const contractId = chain.contracts.InterchainTokenService.address;
 
     validateParameters({
         isValidStellarAddress: { contractId },
     });
 
-    const contract = new Contract(chain.contracts.interchain_token_service.address);
+    const contract = new Contract(chain.contracts.InterchainTokenService.address);
 
     await processor(wallet, config, chain, contract, args, options);
 
