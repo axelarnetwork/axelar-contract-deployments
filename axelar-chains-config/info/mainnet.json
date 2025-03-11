@@ -2670,7 +2670,7 @@
     "stellar": {
       "name": "Stellar",
       "axelarId": "stellar",
-      "rpc": "https://rpc.ankr.com/stellar_soroban",
+      "rpc": "https://mainnet.sorobanrpc.com",
       "horizonRpc": "https://horizon.stellar.org",
       "networkType": "mainnet",
       "chainType": "stellar",
