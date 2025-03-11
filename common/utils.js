@@ -486,25 +486,33 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsEdgeContract = (chainConfig) => {
-    const itsEdgeContract = chainConfig.contracts.InterchainTokenService?.address || chainConfig.contracts.ITS?.objects?.ChannelId;
+const itsEdgeContract = (chainConfig) => {
+    const itsEdgeContract =
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
 
     if (!itsEdgeContract) {
-        throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
+        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
 
     return itsEdgeContract;
 };
 
-const getItsEdgeChains = (config, excludeChainName) => {
-    return Object.keys(config.chains).filter((chain) => getItsEdgeContract(config.chains[chain]) && chain !== excludeChainName);
+const tryItsEdgeContract = (chainConfig) => {
+    const itsEdgeContract =
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
+
+    return itsEdgeContract;
 };
 
-const parseTrustedChains = (config, trustedChains, excludeChainName) => {
-    const parsedTrustedChains =
-        trustedChains === 'all' ? getItsEdgeChains(config, excludeChainName) : trustedChains.split(',').map((chain) => chain.trim());
+const itsEdgeChains = (config) =>
+    Object.values(config.chains)
+        .filter(itsEdgeContract)
+        .map((chain) => chain.axelarId);
 
-    return parsedTrustedChains;
+const parseTrustedChains = (config, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
 module.exports = {
@@ -545,7 +553,8 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getItsEdgeContract,
+    itsEdgeContract,
+    tryItsEdgeContract,
     parseTrustedChains,
     isValidStellarAddress,
     isValidStellarAccount,
