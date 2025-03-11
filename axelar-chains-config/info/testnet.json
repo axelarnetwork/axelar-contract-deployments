@@ -2883,7 +2883,11 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "lastUploadedCodeId": 27,
         "codeId": 27,
-        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+        "sui": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
