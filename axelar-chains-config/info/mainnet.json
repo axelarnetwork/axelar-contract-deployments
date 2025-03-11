@@ -2610,6 +2610,30 @@
             "Operators": "0xa8edeba4d7fe6dc098523016870f03e0411b296750926d11e55cf2c4180ef028",
             "OwnerCap": "0x6a3565b574e1d7a7b18959719190785a9a3f2c54bf2291ec82d3c59620ef7338"
           }
+        },
+        "GasService": {
+          "address": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63",
+          "versions": {
+            "0": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63"
+          },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
+          "structs": {
+            "GasPaid": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasPaid",
+            "GasAdded": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasAdded",
+            "Refunded": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::Refunded",
+            "GasCollected": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasCollected",
+            "OwnerCap": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::owner_cap::OwnerCap",
+            "OperatorCap": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::operator_cap::OperatorCap",
+            "GasService_v0": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::gas_service_v0::GasService_v0",
+            "GasService": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::gas_service::GasService"
+          },
+          "objects": {
+            "OperatorCap": "0x640dd897f312bd5628bfb5230f63c20afd0494be1c28dcd2edb0a3cb7c55785f",
+            "OwnerCap": "0x8be36a47832d041e318483f602232a8603245a779111b5f95a2eba348e9d32cd",
+            "GasService": "0x0a3a8e08d156595e5a097964d5d294fcfc9ff75f736b55f44470a93e48bdeb8f",
+            "GasServicev0": "0x1987e5f87158df4e915a57e285f6081d6bf19d1aa033fd1dea18dc428d50b577",
+            "UpgradeCap": "0xd475ca903bc13e125ed0b6742cd88ceffad1361f01b7bed50bd1108797abd5c0"
+          }
         }
       }
     }
