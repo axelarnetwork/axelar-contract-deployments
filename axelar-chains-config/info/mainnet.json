@@ -2690,6 +2690,28 @@
             "OperatorCap": "0x89317f6bf7f134df64015232cfdb7ee55115e8c64f7f6f6e4fa1358c361f0544",
             "UpgradeCap": "0x32c23055d49d04c34f48456eaff3bea01b9ccd27415f4a8412ded09f15b345bb"
           }
+        },
+        "Example": {
+          "address": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6",
+          "versions": {
+            "0": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6"
+          },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
+          "structs": {
+            "Singleton": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::its::Singleton",
+            "Executed": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::gmp::Executed",
+            "ExecutedWithToken": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::its::ExecutedWithToken",
+            "TOKEN": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token::TOKEN",
+            "TOKEN_A": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_a::TOKEN_A",
+            "TOKEN_B": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_b::TOKEN_B",
+            "TOKEN_C": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_c::TOKEN_C"
+          },
+          "objects": {
+            "GmpSingleton": "0x38dd67b410841bf774f4a77b9263cad1635944b2b74fc6c958930cdf83fdb437",
+            "GmpChannelId": "0x65ed524e2eb0641154cf15bf5e8978717d60d90297d8550d82cc5b13b4ad0696",
+            "ItsSingleton": "0x195f0f30d9db38a1885d276b59cb1b784b9d1827b4a425fa0cd9e0951eb24f7b",
+            "ItsChannelId": "0x4792c09a603efe058c778bd0c63ef6a6d69b1f89107b861d64dc9497be6ccb1e"
+          }
         }
       }
     }
