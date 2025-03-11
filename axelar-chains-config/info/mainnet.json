@@ -2666,24 +2666,6 @@
           }
         }
       }
-    },
-    "stellar": {
-      "name": "Stellar",
-      "axelarId": "stellar",
-      "rpc": "https://rpc.ankr.com/stellar_soroban",
-      "horizonRpc": "https://horizon.stellar.org",
-      "networkType": "mainnet",
-      "chainType": "stellar",
-      "decimals": 7,
-      "finality": "1",
-      "tokenSymbol": "XLM",
-      "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
-      "contracts": {},
-      "approxFinalityWaitTime": 1,
-      "explorer": {
-        "name": "Stellar Expert",
-        "url": "https://stellar.expert/explorer/public"
-      }
     }
   },
   "axelar": {
