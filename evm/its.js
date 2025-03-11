@@ -431,7 +431,7 @@ async function processCommand(config, chain, action, options) {
             let trustedChains, trustedAddresses;
 
             if (itsChain === 'all') {
-                trustedChains = parseTrustedChains(config, itsChain);
+                trustedChains = parseTrustedChains(config, [itsChain]);
 
                 trustedAddresses = trustedChains.map((_) => itsAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
@@ -460,7 +460,7 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'remove-trusted-chains': {
-            const [trustedChain] = args;
+            const [itsChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -469,10 +469,10 @@ async function processCommand(config, chain, action, options) {
 
             let trustedChains;
 
-            if (trustedChain === 'all') {
+            if (itsChain === 'all') {
                 [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
             } else {
-                const trustedChain = config.chains[args[0].toLowerCase()]?.axelarId;
+                const trustedChain = config.chains[itsChain.toLowerCase()]?.axelarId;
 
                 if (trustedChain === undefined) {
                     throw new Error(`Invalid chain: ${trustedChain}`);
