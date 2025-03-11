@@ -2590,27 +2590,6 @@
             "OwnerCap": "0x7d371a39e25394a89d0d7362e0fff3975d049011efff0af1cbd1ff99cfc47ff9"
           }
         },
-        "GasService": {
-          "address": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
-          "versions": {
-            "0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3"
-          },
-          "structs": {
-            "GasPaid": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasPaid",
-            "GasAdded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasAdded",
-            "Refunded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::Refunded",
-            "GasCollected": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasCollected",
-            "GasService_v0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service_v0::GasService_v0",
-            "GasService": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasService",
-            "GasCollectorCap": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasCollectorCap"
-          },
-          "objects": {
-            "GasCollectorCap": "0x51b52346a545c4514816a783050251b042c390b449dd1f771bc648e928922b96",
-            "GasService": "0x8abc5f5c1e811e6bc6736eb8d0fd60dc916139507af3d9015beeb131bb66a219",
-            "GasServicev0": "0x06b3e80aa5df5b9bbbb589c2c0d32ddd8c6a3cdd8c971f5a98dfc323312ccd41"
-          }
-        },
         "Operators": {
           "address": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f",
           "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
@@ -2641,28 +2620,6 @@
           "structs": {
             "AbiReader": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiReader",
             "AbiWriter": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiWriter"
-          }
-        },
-        "Example": {
-          "address": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
-          "versions": {
-            "0": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a"
-          },
-          "structs": {
-            "Singleton": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::its::Singleton",
-            "Executed": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::gmp::Executed",
-            "ExecutedWithToken": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::its::ExecutedWithToken",
-            "TOKEN": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token::TOKEN",
-            "TOKEN_A": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_a::TOKEN_A",
-            "TOKEN_B": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_b::TOKEN_B",
-            "TOKEN_C": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_c::TOKEN_C"
-          },
-          "objects": {
-            "GmpSingleton": "0x8518e55d97287cd83189c5b871669d71add4170ea985f4e680dd1eea50cf5e9b",
-            "GmpChannelId": "0x90b2a5c34cbc17177e01dd3181a30bee98ad2284ef6e724d83d242e330e3f457",
-            "ItsSingleton": "0x87802a933e2a10416bae1ba4c56a6908524882170bc1b5cbc23aa74a660c5781",
-            "ItsChannelId": "0x165c917c2d3441af29775da034f1b536f670511ed6cfd6cbdc320dcceba152e5"
           }
         }
       }
