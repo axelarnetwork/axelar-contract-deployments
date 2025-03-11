@@ -487,8 +487,7 @@ const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.fr
 const itsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
-        chainConfig.contracts.InterchainTokenService?.address ||
-        chainConfig.contracts.interchain_token_service?.address; // stellar
+        chainConfig.contracts.InterchainTokenService?.address;
 
     if (!itsEdgeContract) {
         printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
