@@ -197,7 +197,7 @@ class XRPLClient {
             ...args,
         });
 
-        printInfo('Signing transaction', JSON.stringify(tx, null, 2));
+        printInfo(`${options.multisign ? 'Multi-' : ''}Signing transaction`, JSON.stringify(tx, null, 2));
         const signedTx = await this.signTx(signer, tx, options.multisign);
 
         if (prompt(`Submit ${txType} transaction?`, options.yes)) {
