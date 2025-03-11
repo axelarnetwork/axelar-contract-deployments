@@ -502,7 +502,7 @@ const itsEdgeChains = (config) =>
         .map((chain) => chain.axelarId);
 
 const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains.map((chain) => chain.trim());
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
 module.exports = {
