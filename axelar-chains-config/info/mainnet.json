@@ -2634,6 +2634,20 @@
             "GasServicev0": "0x1987e5f87158df4e915a57e285f6081d6bf19d1aa033fd1dea18dc428d50b577",
             "UpgradeCap": "0xd475ca903bc13e125ed0b6742cd88ceffad1361f01b7bed50bd1108797abd5c0"
           }
+        },
+        "Abi": {
+          "address": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a",
+          "versions": {
+            "0": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a"
+          },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
+          "structs": {
+            "AbiReader": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a::abi::AbiReader",
+            "AbiWriter": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a::abi::AbiWriter"
+          },
+          "objects": {
+            "UpgradeCap": "0x1cbb460e5ef7ce003942a850ce9d9d235f451fbc1a56f2aca124bb843c8c3ba0"
+          }
         }
       }
     }
