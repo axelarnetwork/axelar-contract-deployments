@@ -1910,7 +1910,7 @@
         "url": "https://stellar.expert/explorer/testnet"
       },
       "contracts": {
-        "axelar_gateway": {
+        "AxelarGateway": {
           "address": "CA2PWTIEYWVZBWWISEUXZW5T4LWQD7IIHRZP2NYV3FRL7QPYHQG6NGRO",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
@@ -1934,7 +1934,7 @@
             ]
           }
         },
-        "axelar_operators": {
+        "AxelarOperators": {
           "address": "CCHY3MEU3UU2CCHUZEOXN2YG5TVATHTCOT4WQXZKASRZSANFBRZ25AYJ",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
@@ -1942,7 +1942,7 @@
             "owner": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y"
           }
         },
-        "axelar_gas_service": {
+        "AxelarGasService": {
           "address": "CCCXWUJ76MUDW5KXA6ZDQ3EEJ7JBE4BJNYYOQ2GJMMY2HANHKYFD6OJD",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
@@ -1951,13 +1951,13 @@
             "operator": "CCHY3MEU3UU2CCHUZEOXN2YG5TVATHTCOT4WQXZKASRZSANFBRZ25AYJ"
           }
         },
-        "upgrader": {
+        "Upgrader": {
           "address": "CAA7Z6JYR3UMQDAP2XYPCRX7UMT7CQC4ICHPLJL7ZMEOVILN2QNQ5P6R",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "a29f0384e948343a4bdc11c8c640c56345cbf91acf770828219766fc6c829382",
           "initializeArgs": {}
         },
-        "example": {
+        "AxelarExample": {
           "address": "CDNVCL7OGSPWEQ5LWUP2LSDBZCAYFNRPUXEG7W72CH5ZPTIBQEGU4V7U",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "a4dbe77402308e9152dfd31777519b2ff19167db81c5a15f3032a15ee3ea3bc9",
@@ -1967,7 +1967,7 @@
             "itsAddress": "CB2OYTFGK2VJYDD5QXJ5QDSORCLR37QOPRSLSSSHDMEFKGRACVZIJDRR"
           }
         },
-        "interchain_token_service": {
+        "InterchainTokenService": {
           "address": "CB2OYTFGK2VJYDD5QXJ5QDSORCLR37QOPRSLSSSHDMEFKGRACVZIJDRR",
           "deployer": "GAESJFWHAL6ZJC22P32GVWTJQZ6OZ3H5WCVNQ3O2L2XR7EEOJ4PB4I6Y",
           "wasmHash": "7ebdf38b7df81ad0deaae0d09b3123b6f1617ffae9618382c5d11acb7b991191",
