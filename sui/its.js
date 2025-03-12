@@ -95,12 +95,10 @@ async function addTrustedChains(keypair, client, config, contracts, args, option
     }
 }
 
-async function removeTrustedChains(keypair, client, contracts, args, options) {
+async function removeTrustedChains(keypair, client, config, contracts, args, options) {
     const trustedChains = args;
 
-    const chainNames = trustedChains.split(' ');
-
-    if (chainNames.length === 0) throw new Error('No chains names provided');
+    if (trustedChains.length === 0) throw new Error('No chains names provided');
 
     const txBuilder = new TxBuilder(client);
 
@@ -109,7 +107,7 @@ async function removeTrustedChains(keypair, client, contracts, args, options) {
         arguments: [
             contracts.InterchainTokenService.objects.InterchainTokenService,
             contracts.InterchainTokenService.objects.OwnerCap,
-            chainNames,
+            trustedChains,
         ],
     });
 
