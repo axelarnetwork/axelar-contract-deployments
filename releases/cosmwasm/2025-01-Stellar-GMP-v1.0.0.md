@@ -146,7 +146,7 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 ```
 
 - `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
-- Add a community post for the mainnet proposal. i.e: https://www.mintscan.io/axelar/proposals/274
+- Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register stellar gateway at the Router
 
