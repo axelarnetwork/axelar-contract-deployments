@@ -2727,13 +2727,13 @@
           "initializeArgs": {}
         },
         "AxelarExample": {
-          "address": "CBZY72NBQTAKTFLBBKX2GU3JMOMCYRB7RBIA5ENELGH6PNUJHSWSSOX4",
+          "address": "CDEKXENLFI5A4XF5X2NQRDX5BK6MS2G47MU52N66Z6GAU4WUQ3RCH24M",
           "deployer": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S",
           "wasmHash": "a4dbe77402308e9152dfd31777519b2ff19167db81c5a15f3032a15ee3ea3bc9",
           "initializeArgs": {
             "gatewayAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
             "gasServiceAddress": "CDZNIEA5FLJY2L4BWFW3P6WPFYWQNZTNP6ED2K5UHD5PNYTIMNFZDD3W",
-            "itsAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF"
+            "itsAddress": "CBDBMIOFHGWUFRYH3D3STI2DHBOWGDDBCRKQEUB4RGQEBVG74SEED6C6"
           }
         },
         "InterchainTokenService": {
@@ -2955,7 +2955,11 @@
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "lastUploadedCodeId": 15,
         "codeId": 25,
-        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+        "stellar": {
+          "maxUintBits": 127,
+          "maxDecimalsWhenTruncating": 255
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "269",
