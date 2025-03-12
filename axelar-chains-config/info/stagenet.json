@@ -2228,11 +2228,10 @@
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "codeId": 29,
         "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
-        "lastUploadedCodeId": 29,
         "stellar": {
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
-        }
+        },
         "sui": {
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 6
