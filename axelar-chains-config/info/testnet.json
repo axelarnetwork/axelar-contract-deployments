@@ -2441,6 +2441,108 @@
             "Operators": "0xa2e20bc8985680ac4b13f2d866d4a96fb749097b8c92e133fbdfd3b7755b2c18",
             "OwnerCap": "0xa3b2b74c6aff5f05ddf9175d3138285209219b84b359b917ea273b05d2b6bb56"
           }
+        },
+        "GasService": {
+          "address": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9",
+          "versions": {
+            "0": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9"
+          },
+          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "structs": {
+            "GasPaid": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::events::GasPaid",
+            "GasAdded": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::events::GasAdded",
+            "Refunded": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::events::Refunded",
+            "GasCollected": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::events::GasCollected",
+            "OwnerCap": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::owner_cap::OwnerCap",
+            "OperatorCap": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::operator_cap::OperatorCap",
+            "GasService_v0": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::gas_service_v0::GasService_v0",
+            "GasService": "0xddf711b99aec5c72594e5cf2da4014b2d30909850a759d2e8090add1088dbbc9::gas_service::GasService"
+          },
+          "objects": {
+            "OperatorCap": "0xec360458e56d03e710d10c4e47894778813e83a8617a6402bace6bd172a3885f",
+            "OwnerCap": "0x6e56e30a1a980959c780b42171822774cb3e9fbb6012e2ee86f05e4340df9270",
+            "GasService": "0xac1a4ad12d781c2f31edc2aa398154d53dbda0d50cb39a4319093e3b357bc27d",
+            "GasServicev0": "0x6ca4a8979cf49cf04ddb8c079351bbd22f9d36937ac3833203c2644e671d6316",
+            "UpgradeCap": "0x20943258ed746c38b8dacffc8784781989490e2e03f8596ee8dd2729e752ae86"
+          }
+        },
+        "Abi": {
+          "address": "0xe154e89d5c53fbc19080c121add1cccfd14f9d5f8a07a28ad1878f8b17db101b",
+          "versions": {
+            "0": "0xe154e89d5c53fbc19080c121add1cccfd14f9d5f8a07a28ad1878f8b17db101b"
+          },
+          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "structs": {
+            "AbiReader": "0xe154e89d5c53fbc19080c121add1cccfd14f9d5f8a07a28ad1878f8b17db101b::abi::AbiReader",
+            "AbiWriter": "0xe154e89d5c53fbc19080c121add1cccfd14f9d5f8a07a28ad1878f8b17db101b::abi::AbiWriter"
+          },
+          "objects": {
+            "UpgradeCap": "0xf1bdc2288f6b2f7cefe24204290b5608aaa7decd1eed66e8a63ed906246dfb61"
+          }
+        },
+        "InterchainTokenService": {
+          "address": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce",
+          "versions": {
+            "0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce"
+          },
+          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "structs": {
+            "FlowLimit": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::flow_limit::FlowLimit",
+            "CoinManagement": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_management::CoinManagement",
+            "CoinInfo": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_info::CoinInfo",
+            "CoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::coin_data::CoinData",
+            "CreatorCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::creator_cap::CreatorCap",
+            "TokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::TokenId",
+            "UnregisteredTokenId": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::token_id::UnregisteredTokenId",
+            "UnregisteredCoinData": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::unregistered_coin_data::UnregisteredCoinData",
+            "CoinRegistered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::CoinRegistered",
+            "InterchainTransfer": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTransfer",
+            "InterchainTokenDeploymentStarted": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTokenDeploymentStarted",
+            "InterchainTransferReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::InterchainTransferReceived",
+            "UnregisteredCoinReceived": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::UnregisteredCoinReceived",
+            "TrustedChainAdded": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainAdded",
+            "TrustedChainRemoved": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::TrustedChainRemoved",
+            "FlowLimitSet": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::FlowLimitSet",
+            "DistributorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::DistributorshipTransfered",
+            "OperatorshipTransfered": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::events::OperatorshipTransfered",
+            "TrustedChain": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChain",
+            "TrustedChains": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::trusted_chains::TrustedChains",
+            "InterchainTransferTicket": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_transfer_ticket::InterchainTransferTicket",
+            "InterchainTokenService_v0": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_token_service_v0::InterchainTokenService_v0",
+            "OwnerCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::owner_cap::OwnerCap",
+            "OperatorCap": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::operator_cap::OperatorCap",
+            "InterchainTokenService": "0xe7818984af6b3e322a6d999ca291a125fc3f82e13e5e6d9affc3a712f96bc7ce::interchain_token_service::InterchainTokenService"
+          },
+          "objects": {
+            "InterchainTokenService": "0x55fcd94e5293ff04c512a23c835d79b75e52611f66496e2d02cca439b84fa73c",
+            "InterchainTokenServicev0": "0x3db92fb4f4f5d75249a86876c4a64a204d017e1355d77b035dfae03b2a158509",
+            "ChannelId": "0xae0eaa7d1f1ddfba704f87391380b932b0e8a1e778bc70355dba7d3b1add0119",
+            "OwnerCap": "0x0878df5c58f0d14a54ad5363cb81803e7075914821f2954f6141b40e878d35be",
+            "OperatorCap": "0xff1e6be4d0904970c0fbec31e8390a7fb227a3d2b9b5bd2d1fa9ce24f9994982",
+            "UpgradeCap": "0x5c7ce319e54e55442fe915b487db458bcfe00f2521e23eeb8fe05d46920b6b40"
+          }
+        },
+        "Example": {
+          "address": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64",
+          "versions": {
+            "0": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64"
+          },
+          "deployer": "0xadc53ffb50d2fc245ddb88223619b837f743fbd420745d97a3c3e14e0beb7940",
+          "structs": {
+            "Singleton": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::Singleton",
+            "Executed": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::gmp::Executed",
+            "ExecutedWithToken": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::its::ExecutedWithToken",
+            "TOKEN": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token::TOKEN",
+            "TOKEN_A": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_a::TOKEN_A",
+            "TOKEN_B": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_b::TOKEN_B",
+            "TOKEN_C": "0xe2ab24d80d9ec892dd09d3011ba183fcdfee3da67709a822c9ace64e8cc38d64::token_c::TOKEN_C"
+          },
+          "objects": {
+            "GmpSingleton": "0xf1803cd8ea30c1fa7ac4a8d7062483dfe0ff266d0f11d232d7cd9387a6de8dcf",
+            "GmpChannelId": "0xe1903707becbbe8ee6e96e6f4f179c7fd1a30f9147a111c50e32afec6dc65f18",
+            "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
+            "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
+          }
         }
       }
     },
@@ -2532,26 +2634,6 @@
           "address": "0x0E7620b73a53980f2138B43314fa944AE990d387"
         }
       }
-    }
-  },
-  "stellar": {
-    "name": "Stellar",
-    "axelarId": "stellar",
-    "rpc": "https://soroban-testnet.stellar.org",
-    "horizonRpc": "https://horizon-testnet.stellar.org",
-    "networkType": "testnet",
-    "chainType": "stellar",
-    "decimals": 7,
-    "finality": "1",
-    "approxFinalityWaitTime": 1,
-    "tokenSymbol": "XLM",
-    "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-    "contracts": {
-      "AxelarGateway": {}
-    },
-    "explorer": {
-      "name": "Stellar Expert",
-      "url": "https://stellar.expert/explorer/testnet"
     }
   },
   "axelar": {
@@ -2781,7 +2863,11 @@
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "lastUploadedCodeId": 27,
         "codeId": 27,
-        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+        "sui": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "174",
