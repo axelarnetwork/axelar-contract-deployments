@@ -49,7 +49,7 @@ node stellar/faucet.js --recipient <address>
 
 Setup
 
-1. Checkout the axelar-cgp-stellar repo.
+1. Checkout the axelar-amplifier-stellar repo.
 2. Compile the Stellar wasm contracts
 
 ```bash
@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,13 +76,13 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0
 ```
 
 ### Interchain Token Service
@@ -90,31 +90,29 @@ node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
 Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token --version v1.0.0
-node stellar/deploy-contract.js deploy token_manager --version v1.0.0
-node stellar/deploy-contract.js deploy interchain_token_service --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainToken --version v1.0.0
+node stellar/deploy-contract.js deploy TokenManager --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 ```
 
 ### Example
 
-Note that example contract should use `--wasm-path` option to deploy contract
-
 ```bash
-node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm
+node stellar/deploy-contract.js deploy AxelarExample --version v1.0.0
 ```
 
 ### Contract upgrades
 
-To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
+To facilitate contract upgrades, the `Upgrader` contract needs to be deployed first.
 
 ```bash
-node stellar/deploy-contract.js deploy upgrader --version v1.0.0
+node stellar/deploy-contract.js deploy Upgrader --version v1.0.0
 ```
 
-After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
+After the `Upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
 where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
@@ -373,19 +371,19 @@ node stellar/contract.js [action] [contract-name]
 Check if the contract is paused:
 
 ```bash
-node stellar/contract.js paused axelar_gateway
+node stellar/contract.js paused AxelarGateway
 ```
 
 Pause the contract:
 
 ```bash
-node stellar/contract.js pause axelar_gateway
+node stellar/contract.js pause AxelarGateway
 ```
 
 Unpause the contract:
 
 ```bash
-node stellar/contract.js unpause axelar_gateway
+node stellar/contract.js unpause AxelarGateway
 ```
 
 ## Transfer Ownership or Operatorship of the Contract
