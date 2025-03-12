@@ -1,6 +1,6 @@
 //! Parse Solana events from transaction data
 
-use axelar_solana_gas_service::processor::GasServiceEvent;
+use axelar_solana_gas_service_events::events::GasServiceEvent;
 use axelar_solana_gateway::processor::GatewayEvent;
 use base64::{engine::general_purpose, Engine};
 
@@ -182,13 +182,13 @@ where
 /// - if the event was detected via the discriminant but the data does not match the discriminant type
 pub fn parse_gas_service_log<T>(
     log: &T,
-) -> Result<GasServiceEvent, axelar_solana_gas_service::event_utils::EventParseError>
+) -> Result<GasServiceEvent, axelar_solana_gas_service_events::event_utils::EventParseError>
 where
     T: AsRef<str>,
 {
-    use axelar_solana_gas_service::event_prefixes::*;
-    use axelar_solana_gas_service::event_utils::EventParseError;
-    use axelar_solana_gas_service::processor::{
+    use axelar_solana_gas_service_events::event_prefixes::*;
+    use axelar_solana_gas_service_events::event_utils::EventParseError;
+    use axelar_solana_gas_service_events::events::{
         NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
         SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent,
     };
@@ -273,7 +273,7 @@ fn handle_success_log<K>(program_stack: &mut Vec<ProgramInvocationState<K>>) {
 mod tests {
     use core::str::FromStr;
 
-    use axelar_solana_gas_service::processor::NativeGasPaidForContractCallEvent;
+    use axelar_solana_gas_service_events::events::NativeGasPaidForContractCallEvent;
     use axelar_solana_gateway::processor::CallContractEvent;
     use pretty_assertions::assert_eq;
     use solana_sdk::pubkey::Pubkey;

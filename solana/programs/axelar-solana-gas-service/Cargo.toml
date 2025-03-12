@@ -11,10 +11,10 @@ edition.workspace = true
 solana-program.workspace = true
 spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+axelar-solana-gas-service-events.workspace = true
 bytemuck.workspace = true
 borsh.workspace = true
 program-utils.workspace = true
-thiserror.workspace = true
 
 [dev-dependencies]
 solana-sdk.workspace = true

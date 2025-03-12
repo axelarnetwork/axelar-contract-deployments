@@ -762,6 +762,7 @@ dependencies = [
 name = "axelar-solana-gas-service"
 version = "0.1.0"
 dependencies = [
+ "axelar-solana-gas-service-events",
  "axelar-solana-gateway-test-fixtures",
  "borsh 1.5.3",
  "bytemuck",
@@ -773,6 +774,13 @@ dependencies = [
  "solana-sdk",
  "spl-token",
  "spl-token-2022 5.0.2",
+]
+
+[[package]]
+name = "axelar-solana-gas-service-events"
+version = "0.1.0"
+dependencies = [
+ "solana-program",
  "thiserror 1.0.69",
 ]
 
@@ -816,6 +824,7 @@ dependencies = [
  "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
+ "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "bincode",
  "ed25519-dalek 2.1.1",
@@ -3118,7 +3127,7 @@ dependencies = [
 name = "gateway-event-stack"
 version = "0.1.0"
 dependencies = [
- "axelar-solana-gas-service",
+ "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "base64 0.21.7",
  "pretty_assertions",

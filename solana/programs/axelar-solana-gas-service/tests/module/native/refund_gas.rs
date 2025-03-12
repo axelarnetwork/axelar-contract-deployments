@@ -1,4 +1,4 @@
-use axelar_solana_gas_service::processor::{GasServiceEvent, NativeGasRefundedEvent};
+use axelar_solana_gas_service_events::events::{GasServiceEvent, NativeGasRefundedEvent};
 use axelar_solana_gateway_test_fixtures::{base::TestFixture, gas_service::get_gas_service_events};
 use gateway_event_stack::ProgramInvocationState;
 use solana_program_test::{tokio, ProgramTest};

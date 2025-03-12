@@ -1,4 +1,3 @@
-use axelar_solana_gas_service::processor::{GasServiceEvent, SplGasAddedEvent};
 use axelar_solana_gateway_test_fixtures::{base::TestFixture, gas_service::get_gas_service_events};
 use gateway_event_stack::ProgramInvocationState;
 use solana_program_test::{tokio, ProgramTest};
@@ -10,6 +9,8 @@ use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 #[case(spl_token_2022::id())]
 async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
     // Setup the test fixture and deploy the gas service program
+
+    use axelar_solana_gas_service_events::events::{GasServiceEvent, SplGasAddedEvent};
 
     let pt = ProgramTest::default();
     let mut test_fixture = TestFixture::new(pt).await;

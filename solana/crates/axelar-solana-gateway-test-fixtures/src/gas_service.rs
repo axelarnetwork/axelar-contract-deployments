@@ -1,7 +1,7 @@
 //! Utilities for working with the Axelar gas service
 
 use crate::base::TestFixture;
-use axelar_solana_gas_service::processor::GasServiceEvent;
+use axelar_solana_gas_service_events::events::GasServiceEvent;
 use axelar_solana_gateway::BytemuckedPda;
 use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use solana_program_test::{tokio, BanksTransactionResultWithMetadata};

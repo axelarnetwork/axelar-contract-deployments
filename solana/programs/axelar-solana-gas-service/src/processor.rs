@@ -8,10 +8,6 @@ use crate::{
     instructions::{GasServiceInstruction, PayWithNativeToken, PayWithSplToken},
 };
 
-pub use self::native::{
-    NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
-};
-pub use self::spl::{SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent};
 use self::{
     initialize::process_initialize_config,
     native::{
@@ -127,21 +123,4 @@ pub fn process_instruction(
             } => refund_native(program_id, accounts, tx_hash, log_index, fees),
         },
     }
-}
-
-/// Even emitted by the Axelar Solana Gas service
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum GasServiceEvent {
-    /// Event when SOL was used to pay for a contract call
-    NativeGasPaidForContractCall(NativeGasPaidForContractCallEvent),
-    /// Event when SOL was added to fund an already emitted contract call
-    NativeGasAdded(NativeGasAddedEvent),
-    /// Event when SOL was refunded
-    NativeGasRefunded(NativeGasRefundedEvent),
-    /// Event when an SPL token was used to pay for a contract call
-    SplGasPaidForContractCall(SplGasPaidForContractCallEvent),
-    /// Event when an SPL token was added to fund an already emitted contract call
-    SplGasAdded(SplGasAddedEvent),
-    /// Event when an SPL token was refunded
-    SplGasRefunded(SplGasRefundedEvent),
 }
