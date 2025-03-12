@@ -99,7 +99,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action} Tx`, sendResponse.hash);
+        printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
@@ -149,7 +149,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}) {
+async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc);
 
     if (options.estimateCost) {
@@ -157,6 +157,18 @@ async function broadcast(operation, wallet, chain, action, options = {}) {
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
+    }
+
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const response = await server.simulateTransaction(tx);
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
+        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
@@ -261,6 +273,10 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
 };
 
 function serializeValue(value) {
+    if (value instanceof xdr.ScAddress) {
+        return Address.fromScAddress(value).toString();
+    }
+
     if (value instanceof Uint8Array) {
         return Buffer.from(value).toString('hex');
     }
@@ -301,18 +317,20 @@ function hexToScVal(hexString) {
 }
 
 function tokenToScVal(tokenAddress, tokenAmount) {
-    return nativeToScVal(
-        {
-            address: Address.fromString(tokenAddress),
-            amount: tokenAmount,
-        },
-        {
-            type: {
-                address: ['symbol', 'address'],
-                amount: ['symbol', 'i128'],
-            },
-        },
-    );
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
 }
 
 function tokenMetadataToScVal(decimal, name, symbol) {
@@ -340,6 +358,46 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function BytesToScVal(wasmHash) {
+    return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
+        type: 'bytes',
+    });
+}
+
+/**
+ * Converts a PascalCase or camelCase string to kebab-case.
+ *
+ * - Inserts a hyphen (`-`) before each uppercase letter (except the first letter).
+ * - Converts all letters to lowercase.
+ * - Works for PascalCase, camelCase, and mixed-case strings.
+ *
+ * @param {string} str - The input string in PascalCase or camelCase.
+ * @returns {string} - The converted string in kebab-case.
+ *
+ * @example
+ * pascalToKebab("PascalCase");        // "pascal-case"
+ * pascalToKebab("camelCase");         // "camel-case"
+ * pascalToKebab("XMLHttpRequest");    // "xml-http-request"
+ * pascalToKebab("exampleString");     // "example-string"
+ * pascalToKebab("already-kebab");     // "already-kebab" (unchanged)
+ * pascalToKebab("noChange");          // "no-change"
+ * pascalToKebab("single");            // "single" (unchanged)
+ * pascalToKebab("");                  // "" (empty string case)
+ */
+function pascalToKebab(str) {
+    return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -361,4 +419,7 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    isValidAddress,
+    BytesToScVal,
+    pascalToKebab,
 };

@@ -1,106 +1,151 @@
-const { Contract, Address, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command, Option } = require('commander');
-const { getWallet, broadcast, addBaseOptions } = require('./utils');
-const { loadConfig, printInfo, parseArgs, validateParameters } = require('../evm/utils');
-const { getChainConfig } = require('../common');
-require('./cli-utils');
+'use strict';
 
-async function processCommand(options, _, chain) {
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Command, Option } = require('commander');
+const { getWallet, broadcast, addBaseOptions, addressToScVal, tokenToScVal, isValidAddress } = require('./utils');
+const {
+    loadConfig,
+    printInfo,
+    printWarn,
+    parseArgs,
+    validateParameters,
+    saveConfig,
+    addOptionsToCommands,
+    getChainConfig,
+} = require('../common');
+const { prompt } = require('../common/utils');
+
+async function isOperator(wallet, _, chain, contract, args, options) {
+    const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
+    const operation = contract.call('is_operator', addressToScVal(address));
+    const result = await broadcast(operation, wallet, chain, 'is_operator called', options, true);
+
+    if (result.result.retval._value) {
+        printInfo(address + ' is an operator');
+    } else {
+        printWarn(address + ' is not an operator');
+    }
+}
+
+async function addOperator(wallet, _, chain, contract, args, options) {
+    const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
+    const operation = contract.call('add_operator', addressToScVal(address));
+    await broadcast(operation, wallet, chain, 'add_operator called', options);
+}
+
+async function removeOperator(wallet, _, chain, contract, args, options) {
+    const [address] = args;
+
+    validateParameters({
+        isValidStellarAddress: { address },
+    });
+
+    const operation = contract.call('remove_operator', addressToScVal(address));
+    await broadcast(operation, wallet, chain, 'remove_operator called', options);
+}
+
+async function collectFees(wallet, _, chain, contract, args, options) {
+    const operator = addressToScVal(wallet.publicKey());
+    const [receiver] = args;
+    const gasServiceAddress = chain.contracts?.AxelarGasService?.address;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isNonEmptyString: { receiver },
+        isValidStellarAddress: { gasServiceAddress, gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
+
+    const target = addressToScVal(gasServiceAddress);
+    const method = nativeToScVal('collect_fees', { type: 'symbol' });
+    const params = nativeToScVal([addressToScVal(receiver), tokenToScVal(gasTokenAddress, gasAmount)]);
+
+    const operation = contract.call('execute', operator, target, method, params);
+
+    await broadcast(operation, wallet, chain, 'collect_fees called', options);
+}
+
+async function refund(wallet, _, chain, contract, args, options) {
+    const operator = addressToScVal(wallet.publicKey());
+    const [messageId, receiver] = args;
+    const gasServiceAddress = chain.contracts?.AxelarGasService?.address;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isNonEmptyString: { messageId, receiver },
+        isValidStellarAddress: { gasServiceAddress, gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
+
+    const target = addressToScVal(gasServiceAddress);
+    const method = nativeToScVal('refund', { type: 'symbol' });
+    const params = nativeToScVal([
+        nativeToScVal(messageId, { type: 'string' }),
+        addressToScVal(receiver),
+        tokenToScVal(gasTokenAddress, gasAmount),
+    ]);
+
+    const operation = contract.call('execute', operator, target, method, params);
+
+    await broadcast(operation, wallet, chain, 'refund called', options);
+}
+
+async function execute(wallet, _, chain, contract, args, options) {
+    const operator = addressToScVal(wallet.publicKey());
+    const [target, method, params] = args;
+
+    validateParameters({
+        isNonEmptyString: { target, method, params },
+    });
+
+    const operation = contract.call(
+        'execute',
+        operator,
+        addressToScVal(target),
+        nativeToScVal(method, { type: 'symbol' }),
+        nativeToScVal(parseArgs(params || '')),
+    );
+
+    await broadcast(operation, wallet, chain, 'Executed', options);
+}
+
+async function mainProcessor(processor, args, options) {
+    const { yes } = options;
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config, options.chainName);
     const wallet = await getWallet(chain, options);
 
-    const contract = new Contract(options.address || chain.contracts?.axelar_operators?.address);
-
-    let operation;
-
-    switch (options.action) {
-        case 'is_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
-
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('is_operator', operator);
-            break;
-        }
-
-        case 'add_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
-
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('add_operator', operator);
-            break;
-        }
-
-        case 'remove_operator': {
-            if (!options.args) {
-                throw new Error(`Missing --args operatorAddress the params.`);
-            }
-
-            const operator = Address.fromString(options.args).toScVal();
-            operation = contract.call('remove_operator', operator);
-            break;
-        }
-
-        case 'refund': {
-            const operator = Address.fromString(wallet.publicKey()).toScVal();
-            const gasService = options.target || chain.contracts?.axelar_gas_service?.address;
-
-            if (!gasService) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
-
-            const target = Address.fromString(gasService).toScVal();
-            const method = nativeToScVal('refund', { type: 'symbol' });
-            const [messageId, receiver, tokenAddress, tokenAmount] = parseArgs(options.args || '');
-
-            validateParameters({
-                isNonEmptyString: { messageId, receiver, tokenAddress },
-                isValidNumber: { tokenAmount },
-            });
-
-            const args = nativeToScVal([
-                messageId,
-                Address.fromString(receiver),
-                { address: Address.fromString(tokenAddress), amount: tokenAmount },
-            ]);
-
-            operation = contract.call('execute', operator, target, method, args);
-            break;
-        }
-
-        case 'execute': {
-            const operator = Address.fromString(wallet.publicKey()).toScVal();
-
-            if (!options.target) {
-                throw new Error(`Missing target address param.`);
-            }
-
-            const target = Address.fromString(options.target).toScVal();
-
-            if (!options.method) {
-                throw new Error(`Missing method name param.`);
-            }
-
-            const method = nativeToScVal(options.method, { type: 'symbol' });
-
-            const args = nativeToScVal(parseArgs(options.args || ''));
-
-            operation = contract.call('execute', operator, target, method, args);
-            break;
-        }
-
-        default: {
-            throw new Error(`Unknown action: ${options.action}`);
-        }
+    if (prompt(`Proceed with action ${processor.name}`, yes)) {
+        return;
     }
 
-    const returnValue = await broadcast(operation, wallet, chain, `${options.action} performed`, options);
+    const contractAddress = chain.contracts?.AxelarOperators?.address;
 
-    if (returnValue.value()) {
-        printInfo('Return value', returnValue.value());
+    validateParameters({
+        isValidStellarAddress: { contractAddress },
+    });
+
+    if (!isValidAddress(contractAddress)) {
+        throw new Error('Invalid operators contract');
     }
+
+    const contract = new Contract(contractAddress);
+
+    await processor(wallet, config, chain, contract, args, options);
+
+    saveConfig(config, options.env);
 }
 
 if (require.main === module) {
@@ -108,20 +153,39 @@ if (require.main === module) {
 
     program.name('operators').description('Operators contract management');
 
-    addBaseOptions(program, { address: true });
-    program.addOption(
-        new Option('--action <action>', 'operator contract action')
-            .choices(['is_operator', 'add_operator', 'remove_operator', 'refund', 'execute'])
-            .makeOptionMandatory(true),
-    );
-    program.addOption(new Option('--args <args>', 'arguments for the contract call'));
-    program.addOption(new Option('--target <target>', 'target contract for the execute call'));
-    program.addOption(new Option('--method <method>', 'target method for the execute call'));
-
-    program.action((options) => {
-        const config = loadConfig(options.env);
-        processCommand(options, config, getChainConfig(config, options.chainName));
+    program.command('is-operator <address>').action((address, options) => {
+        mainProcessor(isOperator, [address], options);
     });
+
+    program.command('add-operator <address>').action((address, options) => {
+        mainProcessor(addOperator, [address], options);
+    });
+
+    program.command('remove-operator <address>').action((address, options) => {
+        mainProcessor(removeOperator, [address], options);
+    });
+
+    program
+        .command('collect-fees <receiver>')
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .action((receiver, options) => {
+            mainProcessor(collectFees, [receiver], options);
+        });
+
+    program
+        .command('refund <messageId> <receiver>')
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .action((messageId, receiver, options) => {
+            mainProcessor(refund, [messageId, receiver], options);
+        });
+
+    program.command('execute <target> <method> <params>').action((target, method, params, options) => {
+        mainProcessor(execute, [target, method, params], options);
+    });
+
+    addOptionsToCommands(program, addBaseOptions);
 
     program.parse();
 }

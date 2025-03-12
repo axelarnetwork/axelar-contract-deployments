@@ -2,8 +2,7 @@
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo } = require('../common');
+const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError, validateParameters } = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -14,8 +13,9 @@ const {
     hexToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    serializeValue,
 } = require('./utils');
-const { prompt } = require('../common/utils');
+const { prompt, parseTrustedChains } = require('../common/utils');
 
 async function setTrustedChain(wallet, _, chain, contract, arg, options) {
     const callArg = nativeToScVal(arg, { type: 'string' });
@@ -33,6 +33,35 @@ async function removeTrustedChain(wallet, _, chain, contract, arg, options) {
     await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
 }
 
+async function addTrustedChains(wallet, config, chain, contract, args, options) {
+    const trustedChains = args;
+
+    const parsedTrustedChains = parseTrustedChains(config, trustedChains.toString(), options.chainName);
+
+    for (const trustedChain of parsedTrustedChains) {
+        printInfo('Set Trusted Chain', trustedChain);
+
+        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+
+        try {
+            const isTrusted = (
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
+            ).value();
+
+            if (isTrusted) {
+                printInfo('The chain is already trusted', trustedChain);
+                continue;
+            }
+
+            await broadcast(contract.call('set_trusted_chain', trustedChainScVal), wallet, chain, 'Trusted Chain Set', options);
+
+            printInfo('Successfully added as a trusted chain', trustedChain);
+        } catch (error) {
+            printError('Failed to process trusted chain:', trustedChain, error);
+        }
+    }
+}
+
 async function deployInterchainToken(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const minter = caller;
@@ -48,25 +77,32 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         minter,
     );
 
-    await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
         caller,
         hexToScVal(saltBytes32),
         nativeToScVal(destinationChain, { type: 'string' }),
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function registerCanonicalToken(wallet, _, chain, contract, args, options) {
@@ -74,33 +110,44 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
 
-    await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
-
     const [tokenAddress, destinationChain] = args;
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
         nativeToScVal(tokenAddress, { type: 'address' }),
         nativeToScVal(destinationChain, { type: 'string' }),
         spenderScVal,
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
 async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
-    const gasTokenAddress = options.gasTokenAddress || chain?.tokenAddress;
-    const gasFeeAmount = options.gasFeeAmount;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
 
     const operation = contract.call(
         'interchain_transfer',
@@ -110,7 +157,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         hexToScVal(destinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
         data,
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
@@ -145,11 +192,17 @@ async function mainProcessor(processor, args, options) {
         return;
     }
 
-    if (!chain.contracts?.interchain_token_service) {
+    if (!chain.contracts?.InterchainTokenService) {
         throw new Error('Interchain Token Service package not found.');
     }
 
-    const contract = new Contract(chain.contracts.interchain_token_service.address);
+    const contractId = chain.contracts.InterchainTokenService.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
+    const contract = new Contract(chain.contracts.InterchainTokenService.address);
 
     await processor(wallet, config, chain, contract, args, options);
 
@@ -176,6 +229,13 @@ if (require.main === module) {
         });
 
     program
+        .command('add-trusted-chains <trustedChains>')
+        .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by commas or special tag 'all'`)
+        .action((trustedChains, options) => {
+            mainProcessor(addTrustedChains, trustedChains, options);
+        });
+
+    program
         .command('deploy-interchain-token <symbol> <name> <decimals> <salt> <initialSupply>')
         .description('deploy interchain token')
         .action((symbol, name, decimal, salt, initialSupply, options) => {
@@ -185,8 +245,8 @@ if (require.main === module) {
     program
         .command('deploy-remote-interchain-token <salt> <destinationChain>')
         .description('deploy remote interchain token')
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((salt, destinationChain, options) => {
             mainProcessor(deployRemoteInterchainToken, [salt, destinationChain], options);
         });
@@ -201,8 +261,8 @@ if (require.main === module) {
     program
         .command('deploy-remote-canonical-token <tokenAddress> <destinationChain>')
         .description('deploy remote canonical token')
-        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((tokenAddress, destinationChain, options) => {
             mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
         });
@@ -212,7 +272,7 @@ if (require.main === module) {
         .description('interchain transfer')
         .addOption(new Option('--data <data>', 'data').default(''))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
-        .addOption(new Option('--gas-fee-amount <gasFeeAmount>', 'gas fee amount').default(0))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((tokenId, destinationChain, destinationAddress, amount, options) => {
             mainProcessor(interchainTransfer, [tokenId, destinationChain, destinationAddress, amount], options);
         });

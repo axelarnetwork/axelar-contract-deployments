@@ -190,11 +190,20 @@ async function deployToken(keypair, client, contracts, args, options) {
     const postDeployTxBuilder = new TxBuilder(client);
 
     if (options.origin) {
-        await postDeployTxBuilder.moveCall({
-            target: `${Example.address}::its::register_coin`,
-            arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
-            typeArguments: [tokenType],
-        });
+        if (options.tokenManagerMode === 'lock_unlock') {
+            await postDeployTxBuilder.moveCall({
+                target: `${Example.address}::its::register_coin`,
+                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata],
+                typeArguments: [tokenType],
+            });
+        } else {
+            await postDeployTxBuilder.moveCall({
+                target: `${Example.address}::its::register_coin_with_cap`,
+                arguments: [InterchainTokenService.objects.InterchainTokenService, Metadata, TreasuryCap],
+                typeArguments: [tokenType],
+            });
+        }
+
         const result = await broadcastFromTxBuilder(
             postDeployTxBuilder,
             keypair,
@@ -353,8 +362,13 @@ if (require.main === module) {
 
     const deployTokenProgram = new Command()
         .name('deploy-token')
-        .description('Deploy token on Sui.')
+        .description('Deploy token on Sui. The supported token manager modes are lock_unlock (default) and mint_burn.')
         .command('deploy-token <symbol> <name> <decimals>')
+        .addOption(
+            new Option('--tokenManagerMode <tokenManagerMode>', 'Token Manager Mode')
+                .default('lock_unlock')
+                .choices(['lock_unlock', 'mint_burn']),
+        )
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
