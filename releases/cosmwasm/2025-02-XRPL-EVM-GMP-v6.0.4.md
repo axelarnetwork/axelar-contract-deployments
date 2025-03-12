@@ -161,8 +161,8 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
-- Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
+- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
+- Add a community post for the mainnet proposal. i.e: https://www.mintscan.io/axelar/proposals/274
 
 5. Register Gateway at the Router
 
