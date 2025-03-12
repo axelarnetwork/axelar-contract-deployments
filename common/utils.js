@@ -475,6 +475,20 @@ const getChainConfig = (config, chainName, options = {}) => {
     return chainConfig;
 };
 
+const getChainConfigByAxelarId = (config, chainAxelarId) => {
+    if (chainAxelarId === 'axelar') {
+        return config.axelar;
+    }
+
+    for (const chain of Object.values(config.chains)) {
+        if (chain.axelarId === chainAxelarId) {
+            return chain;
+        }
+    }
+
+    throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
+};
+
 const getMultisigProof = async (config, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -547,6 +561,7 @@ module.exports = {
     validateParameters,
     getDomainSeparator,
     getChainConfig,
+    getChainConfigByAxelarId,
     getMultisigProof,
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
