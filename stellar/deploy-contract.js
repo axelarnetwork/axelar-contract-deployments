@@ -27,16 +27,16 @@ require('./cli-utils');
 
 const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/stellar';
 
-const SUPPORTED_CONTRACTS = new Set([
+const SUPPORTED_CONTRACT_NAMES = new Set([
     'AxelarExample',
     'AxelarGateway',
     'AxelarOperators',
     'AxelarGasService',
-    'InterchainToken',
-    'TokenManager',
     'InterchainTokenService',
     'Upgrader',
 ]);
+
+const SUPPORTED_ITS_CHILD_CONTRACT_NAMES = new Set(['InterchainToken', 'TokenManager']);
 
 const CONTRACT_CONFIGS = {
     AxelarGateway: () => [
@@ -66,7 +66,7 @@ const addDeployOptions = (program) => {
 };
 
 function getWasmUrl(contractName, version) {
-    if (!SUPPORTED_CONTRACTS.has(contractName)) {
+    if (!SUPPORTED_CONTRACT_NAMES.has(contractName)) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
@@ -260,7 +260,7 @@ async function uploadWasm(filePath, wallet, chain) {
     return wasmResponse.value();
 }
 
-async function upgrade(options, _, chain, contractName) {
+async function upgrade(options, _, chain, contractName, wasmHash) {
     const { yes } = options;
 
     if (!options.version && !options.wasmPath) {
@@ -270,6 +270,10 @@ async function upgrade(options, _, chain, contractName) {
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.Upgrader?.address;
     const wallet = await getWallet(chain, options);
+
+    if (options.upgradeChildren) {
+        options = await upgradeChildren(options, chain, contractName, wallet);
+    }
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
         return;
@@ -281,8 +285,13 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const wasmFile = await getWasmFile(options, contractName);
-    const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
+    let newWasmHash = wasmHash;
+
+    if (!newWasmHash) {
+        const wasmFile = await getWasmFile(options, contractName);
+        newWasmHash = await uploadWasm(wasmFile, wallet, chain);
+    }
+
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const version = sanitizeUpgradeVersion(options.version);
@@ -296,7 +305,50 @@ async function upgrade(options, _, chain, contractName) {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('Contract upgraded successfully!', contractAddress);
+    printInfo('Contract upgraded successfully!', { contractName, contractAddress });
+}
+
+/* NOTE: Specifying migrationData for child contracts not yet supported. */
+async function upgradeChildren(options, chain, parentContractName, wallet) {
+    switch (parentContractName) {
+        case SUPPORTED_CONTRACT_NAMES.InterchainTokenService:
+            return upgradeITSChildren(options, chain, wallet);
+        default:
+            printInfo(`No child contracts to upgrade for ${parentContractName}`);
+            break;
+    }
+}
+
+/* Returns the migrationData necessary for InterchainTokenService upgrade. */
+async function upgradeITSChildren(options, chain, wallet) {
+    const migrationData = [];
+
+    Array.from(SUPPORTED_ITS_CHILD_CONTRACT_NAMES).map(async (childContractName) => {
+        printInfo(`Starting implicit upgrade of InterchainTokenService child contracts`, childContractName);
+
+        const childWasmPathOption = getChildWasmPathOption(childContractName);
+        const childWasmPath = options[childWasmPathOption];
+
+        if (!options.version && !childWasmPath) {
+            const childWasmPathKebab = pascalToKebab(`${childContractName}WasmPath`);
+            printInfo(`Skipping ${childContractName} upgrade: no --version or --${childWasmPathKebab} specified`);
+            return;
+        }
+
+        if (childWasmPath) {
+            options = { ...options, wasmPath: childWasmPath };
+        }
+
+        const wasmFile = await getWasmFile(options, childContractName);
+        const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
+        migrationData.push(newWasmHash);
+
+        printInfo(`Upgrading ${childContractName} child contract with ${options.version ?? 'custom'} WASM`, newWasmHash);
+
+        await mainProcessor(options, upgrade, childContractName, newWasmHash);
+    });
+
+    return { ...options, migrationData };
 }
 
 async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
@@ -322,7 +374,7 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
     );
 }
 
-async function mainProcessor(options, processor, contractName) {
+async function mainProcessor(options, processor, contractName, wasmHash) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
 
@@ -330,7 +382,7 @@ async function mainProcessor(options, processor, contractName) {
         chain.contracts = {};
     }
 
-    await processor(options, config, chain, contractName);
+    await processor(options, config, chain, contractName, wasmHash);
     saveConfig(config, options.env);
 }
 
@@ -343,7 +395,7 @@ function main() {
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
 
     // 3rd level commands for `deploy`
-    const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
+    const deployContractCmds = Array.from(SUPPORTED_CONTRACT_NAMES).map((contractName) => {
         const command = new Command(contractName)
             .description(`Deploy ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
@@ -356,30 +408,61 @@ function main() {
     });
 
     // 3rd level commands for `upgrade`
-    const upgradeContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        return new Command(contractName)
+    const upgradeContractCmds = Array.from(SUPPORTED_CONTRACT_NAMES).map((contractName) => {
+        const command = new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
             .addOption(new Option('--wasm-path <wasmPath>', 'path to the WASM file'))
             .addOption(new Option('--version <version>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'));
+
+        if (contractName === 'InterchainTokenService') {
+            command
+                .addOption(new Option('--upgrade-children', 'automatically upgrade InterchainToken, TokenManager contracts').default(false))
+                .addOption(
+                    new Option(
+                        '--interchain-token-wasm-path <interchainTokenWasmPath>',
+                        'path to the InterchainToken WASM file (only needed if not using --version)',
+                    ),
+                )
+                .addOption(
+                    new Option(
+                        '--token-manager-wasm-path <tokenManagerWasmPath>',
+                        'path to the TokenManager WASM file (only needed if not using --version)',
+                    ),
+                );
+        }
+
+        command
             .addHelpText(
                 'after',
                 `
 Examples:
   # using Vec<Address> as migration data:
-  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version v2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
 
   # default void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version v1.0.1
 
   # equivalent explicit void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
-`,
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version v1.0.1 --migration-data '()'
+${
+    contractName === 'InterchainTokenService'
+        ? `
+  # upgrade InterchainTokenService and child contracts using version:
+  $ deploy-contract upgrade InterchainTokenService deploy --version v1.1.0 --upgrade-children
+
+  # upgrade InterchainTokenService and child contracts using custom WASM paths:
+  $ deploy-contract upgrade InterchainTokenService deploy --wasm-path {releasePath}/stellar_interchain_token_service.optimized.wasm --upgrade-children --interchain-token-wasm-path {releasePath}/stellar_interchain_token.optimized.wasm --token-manager-wasm-path {releasePath}/stellar_token_manager.optimized.wasm
+`
+        : ''
+}`,
             )
             .action((options) => {
                 options.migrationData = sanitizeMigrationData(options.migrationData);
                 mainProcessor(options, upgrade, contractName);
             });
+
+        return command;
     });
 
     // Add 3rd level commands to 2nd level command `deploy`
@@ -435,6 +518,10 @@ function sanitizeUpgradeVersion(version) {
     }
 
     return version;
+}
+
+function getChildWasmPathOption(childContractName) {
+    return `${childContractName.charAt(0).toLowerCase()}${childContractName.slice(1)}WasmPath`;
 }
 
 if (require.main === module) {
