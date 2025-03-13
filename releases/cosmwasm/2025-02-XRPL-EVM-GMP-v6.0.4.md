@@ -1,15 +1,16 @@
 # XRPL EVM Sidechain GMP v6.0.4
 
-|                | **Owner**                                                                   |
-| -------------- | --------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**          | `xrp-evm-test-1`      | 2025-02-19 |
+| **Testnet**(staging) | `xrp-evm-test-1`      | 2025-02-19 |
+| **Testnet**          | In Progress           | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
@@ -29,7 +30,7 @@ Predict the [External Gateway](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) address, a
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -38,7 +39,7 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
+- Create an `.env` config. `CHAIN` should be set to `xrpl-evm`.
 
 ```yaml
 MNEMONIC=xyz
