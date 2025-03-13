@@ -37,6 +37,7 @@
     "@stellar/stellar-sdk": "^13.0.0",
     "axios": "^1.7.2",
     "csv-parser": "^3.0.0",
+    "ganache": "^7.9.2",
     "path": "^0.12.7",
     "toml": "^3.0.0",
     "xrpl": "4.2.5"
