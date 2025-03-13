@@ -10,7 +10,7 @@ const {
     addBaseOptions,
     getNetworkPassphrase,
     createAuthorizedFunc,
-    getWasmFilePath,
+    getContractCodePath,
     SUPPORTED_STELLAR_CONTRACTS,
     BytesToScVal,
 } = require('./utils');
@@ -264,24 +264,29 @@ function main() {
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Deploy ${contractName} contract`);
-
+        const command = new Command(contractName)
+            .description(`Deploy ${contractName} contract`);
+    
         addStoreOptions(command);
-
-        program.hook('preAction', async (thisCommand) => {
+        addDeployOptions(command);
+    
+        // Attach the preAction hook to this specific command
+        command.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
-            const contractCodePath = await getContractCodePath(opts, opts.contractName);
+    
+            // Pass contractName directly since it's known in this scope
+            const contractCodePath = await getContractCodePath(opts, contractName);
             Object.assign(opts, { contractCodePath });
         });
-
-        addDeployOptions(command);
-
+    
+        // Main action handler
         command.action((options) => {
             mainProcessor(options, deploy, contractName);
         });
-
+    
         return command;
     });
+
 
     // 3rd level commands for `upgrade`
     const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
@@ -295,13 +300,13 @@ function main() {
                 `
 Examples:
   # using Vec<Address> as migration data:
-  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+  $ deploy-contract upgrade axelar-operators deploy --artifact-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
 
   # default void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
+  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
 
   # equivalent explicit void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
+  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
 `,
             )
             .action((options) => {

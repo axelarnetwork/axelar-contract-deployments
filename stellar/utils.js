@@ -384,19 +384,19 @@ const getContractR2Url = (contractName, version) => {
 
     const pathName = contractName.replace(/_/g, '-');
 
-    if (VERSION_REGEX.test(contractVersion)) {
+    if (VERSION_REGEX.test(version)) {
         // Extra v for versioned releases in R2
         return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/${dirPath}/v${version}/wasm/${fileName}.wasm`;
     }
     
-    if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
+    if (SHORT_COMMIT_HASH_REGEX.test(version)) {
         return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
     }
     
     throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
 };
 
-const getWasmFilePath = async (options, contractName) => {
+const getContractCodePath = async (options, contractName) => {
     if (options.artifactPath) {
         return options.artifactPath;
     }
@@ -470,7 +470,7 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
-    getWasmFilePath,
+    getContractCodePath,
     isValidAddress,
     SUPPORTED_STELLAR_CONTRACTS,
     BytesToScVal,

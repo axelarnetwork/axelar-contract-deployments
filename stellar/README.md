@@ -120,7 +120,7 @@ node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifact-path ./axelar
 
 where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifact-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
 
-Note: The `--wasm-path` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
+Note: The `--artifact-path` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
 
 #### Example `MIGRATION_DATA` Type Input
 

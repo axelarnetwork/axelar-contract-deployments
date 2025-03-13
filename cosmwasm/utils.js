@@ -840,7 +840,7 @@ const getContractR2Url = (contractName, contractVersion) => {
     const fileName = pascalToSnake(contractName);
 
     if (VERSION_REGEX.test(contractVersion)) {
-        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${semanticVersion}/${fileName}.wasm`;
+        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${contractVersion}/${fileName}.wasm`;
     }
 
     if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
