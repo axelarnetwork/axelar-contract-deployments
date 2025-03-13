@@ -75,38 +75,51 @@ node cosmwasm/submit-proposal.js \
     --runAs $RUN_AS_ACCOUNT
 ```
 
-## Setting up trusted chains on xrplevm
+## Set trusted chains on XRPL EVM
 
 ```bash
 # Add all trusted chains to xrplevm ITS
 node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --trustedAddress hub
 ```
 
-## Set xrplevm as trusted chain on EVM ITS. Similarly, set xrplevm as a trusted chain for every other non EVM ITS contract
+## Set XRPL EVM as trusted chain on remote ITS contracts
+
+Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
 # Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
 node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
 ```
 
-## Setting up trusted chains on xrplevm
+## Link XRP token
+
+- Register XRP token metadata with ITS Hub.
 
 ```bash
-# Register token metadata
 node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-
-# Fetch token manager address
-node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
-
-# tranfer mintership to token manager
-node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
 ```
+
+- Submit `linkToken` msg from XRPL to XRPL EVM with the XRP token address as the destination token address.
+
+- Query the linked token manager address for the XRP token.
+
+```bash
+node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
+```
+
+- The XRP token mint permission should then be transferred to the token manager.
 
 ## Checklist
 
-The following checks should be performed after the rollout
+The following checks should be performed after the rollout.
 
-- [ ] Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
+- Run post-deployment checks.
+
+```bash
+node evm/its.js --action checks -n $CHAIN -y
+```
+
+- Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
 # Create a token on chain. Substitute the `wallet` below with the deployer key

@@ -114,7 +114,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action} Tx`, sendResponse.hash);
+        printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
@@ -164,7 +164,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}) {
+async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc);
 
     if (options.estimateCost) {
@@ -172,6 +172,18 @@ async function broadcast(operation, wallet, chain, action, options = {}) {
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
+    }
+
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const response = await server.simulateTransaction(tx);
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
+        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
@@ -276,6 +288,10 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
 };
 
 function serializeValue(value) {
+    if (value instanceof xdr.ScAddress) {
+        return Address.fromScAddress(value).toString();
+    }
+
     if (value instanceof Uint8Array) {
         return Buffer.from(value).toString('hex');
     }
@@ -362,13 +378,17 @@ const getContractR2Url = (contractName, version) => {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
-    if (VERSION_REGEX.test(version) || SHORT_COMMIT_HASH_REGEX.test(version)) {
-        // TODO: Contract Name will change to PascalCase in future
-        const pathName = contractName.replace(/_/g, '-');
+    const pathName = contractName.replace(/_/g, '-');
+
+    if (VERSION_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/v${version}/wasm/stellar_${contractName}.wasm`;
+    }
+    
+    if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
         return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
     }
     
-    throw new Error(`Invalid version format: ${version}. Must be a semantic version (including prefix v) or a commit hash`);
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
 };
 
 const getWasmFilePath = async (options, contractName) => {
@@ -381,7 +401,7 @@ const getWasmFilePath = async (options, contractName) => {
         return await downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifactPath or --version must be provided');
+    throw new Error('Either --artifact-path or --version must be provided');
 };
 
 function isValidAddress(address) {
@@ -392,6 +412,36 @@ function isValidAddress(address) {
     } catch {
         return false;
     }
+}
+
+function BytesToScVal(wasmHash) {
+    return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
+        type: 'bytes',
+    });
+}
+
+/**
+ * Converts a PascalCase or camelCase string to kebab-case.
+ *
+ * - Inserts a hyphen (`-`) before each uppercase letter (except the first letter).
+ * - Converts all letters to lowercase.
+ * - Works for PascalCase, camelCase, and mixed-case strings.
+ *
+ * @param {string} str - The input string in PascalCase or camelCase.
+ * @returns {string} - The converted string in kebab-case.
+ *
+ * @example
+ * pascalToKebab("PascalCase");        // "pascal-case"
+ * pascalToKebab("camelCase");         // "camel-case"
+ * pascalToKebab("XMLHttpRequest");    // "xml-http-request"
+ * pascalToKebab("exampleString");     // "example-string"
+ * pascalToKebab("already-kebab");     // "already-kebab" (unchanged)
+ * pascalToKebab("noChange");          // "no-change"
+ * pascalToKebab("single");            // "single" (unchanged)
+ * pascalToKebab("");                  // "" (empty string case)
+ */
+function pascalToKebab(str) {
+    return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
 }
 
 module.exports = {
@@ -418,4 +468,6 @@ module.exports = {
     getWasmFilePath,
     isValidAddress,
     SUPPORTED_STELLAR_CONTRACTS,
+    BytesToScVal,
+    pascalToKebab,
 };

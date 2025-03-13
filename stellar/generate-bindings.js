@@ -6,10 +6,16 @@ const { loadConfig } = require('../evm/utils');
 const path = require('path');
 const { stellarCmd, getNetworkPassphrase } = require('./utils');
 const { addEnvOption } = require('../common');
+const { validateParameters } = require('../common/utils');
 require('./cli-utils');
 
 function processCommand(options, _, chain) {
     const { artifactPath, contractId, outputDir } = options;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
     const overwrite = true;
 
     const { rpc, networkType } = chain;

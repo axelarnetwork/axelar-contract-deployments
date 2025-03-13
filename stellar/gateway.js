@@ -8,6 +8,7 @@ const {
 const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
 const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
+const { validateParameters } = require('../common/utils');
 
 const getNewSigners = async (wallet, config, chain, options) => {
     if (options.signers === 'wallet') {
@@ -45,7 +46,7 @@ function getProof(dataHash, wallet, chain, options) {
     });
     const signersHash = keccak256(signers.toXDR());
 
-    const domainSeparator = chain.contracts.axelar_gateway?.initializeArgs?.domainSeparator;
+    const domainSeparator = chain.contracts.AxelarGateway?.initializeArgs?.domainSeparator;
 
     if (!domainSeparator) {
         throw new Error('Domain separator not found');
@@ -179,9 +180,9 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
 
-    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options, true);
 
-    if (!messageApproved.value()) {
+    if (!messageApproved.result.retval._value) {
         printWarn('Contract call not approved at the gateway');
         return;
     }
@@ -205,11 +206,17 @@ async function mainProcessor(processor, args, options) {
 
     const wallet = await getWallet(chain, options);
 
-    if (!chain.contracts?.axelar_gateway) {
+    if (!chain.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
+    const contractId = chain.contracts.AxelarGateway.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
+    await processor(wallet, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }

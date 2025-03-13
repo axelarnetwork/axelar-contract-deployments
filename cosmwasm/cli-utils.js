@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
-const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getWasmFilePath } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getContractCodePath } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -23,8 +23,8 @@ const addAmplifierOptions = (program, options) => {
 
         program.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
-            const wasmResolvedPath = await getWasmFilePath(opts, opts.contractName);
-            Object.assign(opts, { wasmResolvedPath });
+            const contractCodePath = await getContractCodePath(opts, opts.contractName);
+            Object.assign(opts, { contractCodePath });
         });
     }
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const { Address, nativeToScVal, scValToNative, Operation, StrKey, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative, Operation, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const {
@@ -12,6 +12,7 @@ const {
     createAuthorizedFunc,
     getWasmFilePath,
     SUPPORTED_STELLAR_CONTRACTS,
+    BytesToScVal,
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
@@ -25,13 +26,15 @@ const {
 require('./cli-utils');
 
 const CONTRACT_CONFIGS = {
-    axelar_gateway: () => [
+    AxelarGateway: () => [
         new Option('--nonce <nonce>', 'optional nonce for the signer set'),
         new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
         new Option('--previous-signers-retention <previousSignersRetention>', 'previous signer retention').default(15).argParser(Number),
         new Option('--minimum-rotation-delay <miniumRotationDelay>', 'minimum rotation delay').default(0).argParser(Number),
     ],
-    example: () => [new Option('--use-dummy-its-address', 'use dummy its address for example contract to test a GMP call').default(false)],
+    AxelarExample: () => [
+        new Option('--use-dummy-its-address', 'use dummy its address for AxelarExample contract to test a GMP call').default(false),
+    ],
 };
 
 const addDeployOptions = (program) => {
@@ -54,7 +57,7 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
 
     switch (contractName) {
-        case 'axelar_gateway': {
+        case 'AxelarGateway': {
             const domainSeparator = nativeToScVal(Buffer.from(arrayify(await getDomainSeparator(config, chain, options))));
             const minimumRotationDelay = nativeToScVal(options.minimumRotationDelay);
             const previousSignersRetention = nativeToScVal(options.previousSignersRetention);
@@ -82,24 +85,14 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'interchain_token_service': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
+        case 'InterchainTokenService': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGasService?.address), { type: 'address' });
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-
-            if (!chain.contracts?.interchain_token?.wasmHash) {
-                throw new Error(`interchain_token contract's wasm hash does not exist.`);
-            }
-
-            const interchainTokenWasmHash = nativeToScVal(Buffer.from(chain.contracts?.interchain_token?.wasmHash, 'hex'), {
-                type: 'bytes',
-            });
-
-            const tokenManagerWasmHash = nativeToScVal(Buffer.from(chain.contracts?.token_manager?.wasmHash, 'hex'), {
-                type: 'bytes',
-            });
+            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', options, wallet, chain));
+            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', options, wallet, chain));
 
             return {
                 owner,
@@ -114,26 +107,31 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             };
         }
 
-        case 'axelar_operators':
+        case 'AxelarOperators':
             return { owner };
 
-        case 'axelar_gas_service': {
-            const operatorsAddress = chain.contracts?.axelar_operators?.address;
+        case 'AxelarGasService': {
+            const operatorsAddress = chain.contracts?.AxelarOperators?.address;
+
+            validateParameters({
+                isValidStellarAddress: { operatorsAddress },
+            });
+
             const operator = operatorsAddress ? nativeToScVal(Address.fromString(operatorsAddress), { type: 'address' }) : owner;
 
             return { owner, operator };
         }
 
-        case 'upgrader': {
+        case 'Upgrader': {
             return {};
         }
 
-        case 'example': {
-            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gateway?.address), { type: 'address' });
-            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.axelar_gas_service?.address), { type: 'address' });
+        case 'AxelarExample': {
+            const gatewayAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGateway?.address), { type: 'address' });
+            const gasServiceAddress = nativeToScVal(Address.fromString(chain.contracts?.AxelarGasService?.address), { type: 'address' });
             const itsAddress = options.useDummyItsAddress
                 ? gatewayAddress
-                : nativeToScVal(chain.contracts?.interchain_token_service?.address, { type: 'address' });
+                : nativeToScVal(chain.contracts?.InterchainTokenService?.address, { type: 'address' });
 
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
@@ -151,39 +149,34 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmResolvedPath = await getWasmFilePath(options, contractName);
-    const wasmHash = await uploadWasm(wasmResolvedPath, wallet, chain);
+    const wasmHash = await uploadContract(contractName, options, wallet, chain);
+    const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
+    const serializedArgs = Object.fromEntries(
+        Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
+    );
+    const operation = Operation.createCustomContract({
+        wasmHash,
+        address: Address.fromString(wallet.publicKey()),
+        // requires that initializeArgs returns the parameters in the appropriate order
+        constructorArgs: Object.values(initializeArgs),
+    });
+    printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    if (contractName === 'interchain_token' || contractName === 'token_manager') {
-        chain.contracts[contractName] = {
-            deployer: wallet.publicKey(),
-            wasmHash: serializeValue(wasmHash),
-        };
-    } else {
-        const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
-        const serializedArgs = Object.fromEntries(
-            Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
-        );
-        const operation = Operation.createCustomContract({
-            wasmHash,
-            address: Address.fromString(wallet.publicKey()),
-            // requires that initializeArgs returns the parameters in the appropriate order
-            constructorArgs: Object.values(initializeArgs),
-        });
-        printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
+    const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = Address.fromScAddress(deployResponse.address()).toString();
 
-        const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-        const contractAddress = StrKey.encodeContract(Address.fromScAddress(deployResponse.address()).toBuffer());
+    validateParameters({
+        isValidStellarAddress: { contractAddress },
+    });
 
-        printInfo('Contract initialized at address', contractAddress);
+    printInfo('Contract initialized at address', contractAddress);
 
-        chain.contracts[contractName] = {
-            address: contractAddress,
-            deployer: wallet.publicKey(),
-            wasmHash: serializeValue(wasmHash),
-            initializeArgs: serializedArgs,
-        };
-    }
+    chain.contracts[contractName] = {
+        address: contractAddress,
+        deployer: wallet.publicKey(),
+        wasmHash: serializeValue(wasmHash),
+        initializeArgs: serializedArgs,
+    };
 
     printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
 }
@@ -198,7 +191,7 @@ async function uploadWasm(filePath, wallet, chain) {
 async function upgrade(options, _, chain, contractName) {
     const { artifactPath, yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
-    const upgraderAddress = chain.contracts.upgrader?.address;
+    const upgraderAddress = chain.contracts.Upgrader?.address;
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with upgrade on ${chain.name}?`, yes)) {
@@ -206,7 +199,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isNonEmptyString: { contractAddress, upgraderAddress },
+        isValidStellarAddress: { contractAddress, version: options.version, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
@@ -215,9 +208,9 @@ async function upgrade(options, _, chain, contractName) {
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({
-        contract: chain.contracts.upgrader.address,
+        contract: chain.contracts.Upgrader.address,
         function: 'upgrade',
-        args: [contractAddress, options.newVersion, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -265,21 +258,21 @@ function main() {
     // 1st level command
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
-    // 2nd level deploy command
+    // 2nd level commands
     const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
-
-    // 2nd level upgrade command
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
-
-    // Add base options to all 2nd level commands
-    addBaseOptions(upgradeCmd, { address: true });
-    addBaseOptions(deployCmd, { address: true });
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
         addStoreOptions(command);
+
+        program.hook('preAction', async (thisCommand) => {
+            const opts = thisCommand.opts();
+            const contractCodePath = await getContractCodePath(opts, opts.contractName);
+            Object.assign(opts, { contractCodePath });
+        });
 
         addDeployOptions(command);
 
@@ -294,10 +287,25 @@ function main() {
     const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
         return new Command(contractName)
             .description(`Upgrade ${contractName} contract`)
-            .addOption(new Option('--artifactPath <artifactPath>', 'path to the WASM file'))
-            .addOption(new Option('--new-version <newVersion>', 'new version of the contract'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default('()'))
+            .addOption(new Option('--artifact-path <artifactPath>', 'path to the WASM file'))
+            .addOption(new Option('--version <version>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
+            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
+            .addHelpText(
+                'after',
+                `
+Examples:
+  # using Vec<Address> as migration data:
+  $ deploy-contract upgrade axelar-operators deploy --wasm-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+
+  # default void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
+
+  # equivalent explicit void migration data:
+  $ deploy-contract upgrade axelar-gateway deploy --wasm-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
+`,
+            )
             .action((options) => {
+                options.migrationData = sanitizeMigrationData(options.migrationData);
                 mainProcessor(options, upgrade, contractName);
             });
     });
@@ -317,6 +325,35 @@ function main() {
     program.addCommand(upgradeCmd);
 
     program.parse();
+}
+
+function sanitizeMigrationData(migrationData) {
+    if (migrationData === null || migrationData === '()') return null;
+
+    try {
+        return Address.fromString(migrationData);
+    } catch (_) {
+        // not an address, continue to next parsing attempt
+    }
+
+    let parsed;
+
+    try {
+        parsed = JSON.parse(migrationData);
+    } catch (_) {
+        // not json, keep as string
+        return migrationData;
+    }
+
+    if (Array.isArray(parsed)) {
+        return parsed.map(sanitizeMigrationData);
+    }
+
+    if (parsed !== null && typeof parsed === 'object') {
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
+    }
+
+    return parsed;
 }
 
 if (require.main === module) {
