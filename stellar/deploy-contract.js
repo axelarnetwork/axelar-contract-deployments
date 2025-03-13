@@ -25,7 +25,7 @@ const {
 } = ethers;
 require('./cli-utils');
 
-const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-amplifier-stellar';
+const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/stellar';
 
 const SUPPORTED_CONTRACTS = new Set([
     'AxelarExample',
