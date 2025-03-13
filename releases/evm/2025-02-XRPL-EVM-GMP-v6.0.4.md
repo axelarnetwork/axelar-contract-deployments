@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
-| **Testnet**(staging) | `xrp-evm-test-1`      | 2025-02-19 |
+| **Testnet**(staging) | Completed             | 2025-02-19 |
+| **Testnet**          | In Progress           | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
@@ -32,6 +32,12 @@ CHAINS=xyz
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` key.
+
+Update npm dependencies (including contracts)
+
+```bash
+npm ci
+```
 
 #### Devnet-Amplifier / Stagenet / Testnet
 
