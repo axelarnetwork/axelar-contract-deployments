@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { defaultAbiCoder, keccak256, Interface, parseEther },
+    utils: { defaultAbiCoder, keccak256, parseEther },
     Contract,
     BigNumber,
     constants: { AddressZero },
@@ -19,7 +19,6 @@ const {
     getCurrentTimeInSeconds,
     wasEventEmitted,
     printWarn,
-    printError,
     getBytecodeHash,
     isValidAddress,
     mainProcessor,
@@ -32,7 +31,7 @@ const {
 const { addBaseOptions } = require('./cli-utils.js');
 const { getWallet } = require('./sign-utils.js');
 const IAxelarServiceGovernance = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarServiceGovernance.json');
-const IGateway = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IAxelarGateway.json');
+const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGateway.sol/AxelarGateway.json');
 const IUpgradable = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IUpgradable.json');
 const ProposalType = {
     ScheduleTimelock: 0,
@@ -51,7 +50,7 @@ async function getSetupParams(governance, targetContractName, target, contracts,
 
     switch (targetContractName) {
         case 'AxelarGateway': {
-            const gateway = new Contract(target, IGateway.abi, wallet);
+            const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
             const currMintLimiter = await gateway.mintLimiter();
 
@@ -59,19 +58,19 @@ async function getSetupParams(governance, targetContractName, target, contracts,
                 printWarn(`Gateway governor ${currGovernance} does not match governance contract: ${governance.address}`);
             }
 
-            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address;
+            let newGovernance = options.newGovernance || contracts.InterchainGovernance?.address || AddressZero;
 
             if (newGovernance === currGovernance) {
                 newGovernance = AddressZero;
             }
 
-            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address;
+            let newMintLimiter = options.newMintLimiter || contracts.Multisig?.address || AddressZero;
 
-            if (newMintLimiter === `${currMintLimiter}`) {
+            if (newMintLimiter === currMintLimiter) {
                 newMintLimiter = AddressZero;
             }
 
-            if (newGovernance !== '0x' || newMintLimiter !== '0x') {
+            if (newGovernance !== AddressZero || newMintLimiter !== AddressZero) {
                 setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [newGovernance, newMintLimiter, '0x']);
             }
 
@@ -147,7 +146,7 @@ async function getProposalCalldata(governance, chain, wallet, options) {
                 throw new Error(`Invalid new gateway governance address: ${newGovernance}`);
             }
 
-            const gateway = new Contract(target, IGateway.abi, wallet);
+            const gateway = new Contract(target, AxelarGateway.abi, wallet);
             const currGovernance = await gateway.governance();
 
             printInfo('Current gateway governance', currGovernance);
@@ -423,62 +422,6 @@ async function processCommand(_, chain, options) {
             break;
         }
 
-        case 'executeMultisig': {
-            if (contractName === 'InterchainGovernance') {
-                throw new Error(`Invalid governance action for InterchainGovernance: ${action}`);
-            }
-
-            const proposalHash = keccak256(defaultAbiCoder.encode(['address', 'bytes', 'uint256'], [target, calldata, nativeValue]));
-            const isApproved = await governance.multisigApprovals(proposalHash);
-
-            if (!isApproved) {
-                throw new Error('Multisig proposal has not been approved.');
-            }
-
-            const isSigner = await governance.isSigner(wallet.address);
-
-            if (!isSigner) {
-                throw new Error(`Caller is not a valid signer address: ${wallet.address}`);
-            }
-
-            const executeInterface = new Interface(governance.interface.fragments);
-            const executeCalldata = executeInterface.encodeFunctionData('executeMultisigProposal', [target, calldata, nativeValue]);
-            const topic = keccak256(executeCalldata);
-
-            const hasSignerVoted = await governance.hasSignerVoted(wallet.address, topic);
-
-            if (hasSignerVoted) {
-                throw new Error(`Signer has already voted: ${wallet.address}`);
-            }
-
-            const signerVoteCount = await governance.getSignerVotesCount(topic);
-            printInfo(`${signerVoteCount} signers have already voted.`);
-
-            let receipt;
-
-            if (prompt('Proceed with executing this proposal?', yes)) {
-                throw new Error('Proposal execution cancelled.');
-            }
-
-            try {
-                const tx = await governance.executeMultisigProposal(target, calldata, nativeValue, gasOptions);
-                receipt = await tx.wait(chain.confirmations);
-            } catch (error) {
-                printError(error);
-                return;
-            }
-
-            const eventEmitted = wasEventEmitted(receipt, governance, 'MultisigExecuted');
-
-            if (!eventEmitted) {
-                throw new Error('Multisig proposal execution failed.');
-            }
-
-            printInfo('Multisig proposal executed.');
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown proposal action ${proposalAction}`);
         }
@@ -564,7 +507,6 @@ if (require.main === module) {
             'cancel',
             'scheduleMultisig',
             'submitMultisig',
-            'executeMultisig',
             'cancelMultisig',
         ]),
     );

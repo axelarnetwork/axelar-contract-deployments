@@ -23,20 +23,27 @@ const {
     getGasOptions,
     isNonEmptyString,
     isValidChain,
+    getChainConfig,
+    getItsEdgeContract,
+    getChainConfigByAxelarId,
+    isConsensusChain,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
+const ITokenManager = getContractJSON('ITokenManager');
 const IOwnable = getContractJSON('IOwnable');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
-    MINT_BURN: 0,
+    INTERCHAIN_TOKEN: 0,
     MINT_BURN_FROM: 1,
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
 };
 
 function getDeploymentSalt(options) {
@@ -67,6 +74,14 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
     const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
+
+    // If ITS Hub is deployed, register it as a trusted chain as well
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (itsHubAddress) {
+        allChains.push(config.axelar?.axelarId);
+    }
+
     const trustedAddressesValues = await Promise.all(
         allChains.map(async (chainName) => await interchainTokenService.trustedAddress(chainName)),
     );
@@ -161,7 +176,7 @@ async function processCommand(config, chain, options) {
             printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
 
             try {
-                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32);
+                await interchainTokenService.deployedTokenManager(tokenIdBytes32);
                 printInfo(`TokenManager for tokenId: ${tokenId} exists at address:`, tokenManagerAddress);
             } catch (error) {
                 printInfo(`TokenManager for tokenId: ${tokenId} does not yet exist.`);
@@ -179,7 +194,7 @@ async function processCommand(config, chain, options) {
             printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
 
             try {
-                await interchainTokenService.validTokenAddress(tokenIdBytes32);
+                await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
             } catch (error) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
@@ -213,7 +228,11 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowLimit = await interchainTokenService.flowLimit(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowLimit = await tokenManager.flowLimit();
             printInfo(`Flow limit for TokenManager with tokenId ${tokenId}`, flowLimit);
 
             break;
@@ -224,7 +243,11 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowOutAmount = await interchainTokenService.flowOutAmount(tokenIdBytes32);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const flowOutAmount = await tokenManager.flowOutAmount();
             printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowOutAmount);
 
             break;
@@ -235,65 +258,12 @@ async function processCommand(config, chain, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const flowInAmount = await interchainTokenService.flowInAmount(tokenIdBytes32);
-            printInfo(`Flow out amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
 
-            break;
-        }
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
 
-        case 'deployTokenManager': {
-            const { destinationChain, type, params, gasValue } = options;
-
-            const deploymentSalt = getDeploymentSalt(options);
-
-            validateParameters({
-                isString: { destinationChain },
-                isValidCalldata: { params },
-                isValidNumber: { gasValue },
-            });
-
-            isValidDestinationChain(config, destinationChain);
-
-            const tx = await interchainTokenService.deployTokenManager(
-                deploymentSalt,
-                destinationChain,
-                tokenManagerImplementations[type],
-                params,
-                gasValue,
-                gasOptions,
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
-
-            break;
-        }
-
-        case 'deployInterchainToken': {
-            const { destinationChain, name, symbol, decimals, minter, gasValue } = options;
-
-            const deploymentSalt = getDeploymentSalt(options);
-
-            validateParameters({
-                isNonEmptyString: { name, symbol },
-                isString: { destinationChain },
-                isAddress: { minter },
-                isValidNumber: { decimals, gasValue },
-            });
-
-            isValidDestinationChain(config, destinationChain);
-
-            const tx = await interchainTokenService.deployInterchainToken(
-                deploymentSalt,
-                destinationChain,
-                name,
-                symbol,
-                decimals,
-                minter,
-                gasValue,
-                { value: gasValue, ...gasOptions },
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+            const flowInAmount = await tokenManager.flowInAmount();
+            printInfo(`Flow in amount for TokenManager with tokenId ${tokenId}`, flowInAmount);
 
             break;
         }
@@ -344,22 +314,24 @@ async function processCommand(config, chain, options) {
                 isValidCalldata: { metadata },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
             const tokenManager = new Contract(
-                await interchainTokenService.validTokenManagerAddress(tokenIdBytes32),
+                await interchainTokenService.deployedTokenManager(tokenIdBytes32),
                 getContractJSON('ITokenManager').abi,
                 wallet,
             );
             const token = new Contract(
-                await interchainTokenService.validTokenAddress(tokenIdBytes32),
+                await interchainTokenService.registeredTokenAddress(tokenIdBytes32),
                 getContractJSON('InterchainToken').abi,
                 wallet,
             );
 
-            const implementationType = await tokenManager.implementationType();
+            const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();
             amount = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
             const balance = await token.balanceOf(wallet.address);
@@ -368,8 +340,11 @@ async function processCommand(config, chain, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amount}`);
             }
 
-            if (implementationType !== tokenManagerImplementations.MINT_BURN) {
-                printInfo('Approving ITS for a transfer');
+            if (
+                implementationType !== tokenManagerImplementations.MINT_BURN &&
+                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
+            ) {
+                printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
             }
 
@@ -388,38 +363,29 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'callContractWithInterchainToken': {
-            const { destinationChain, destinationAddress, amount, data, gasValue } = options;
+        case 'registerTokenMetadata': {
+            const { tokenAddress, gasValue } = options;
 
-            validateParameters({
-                isValidTokenId: { tokenId },
-                isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue },
-                isValidCalldata: { data },
-            });
+            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
-            isValidDestinationChain(config, destinationChain);
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
 
-            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
-
-            const tx = await interchainTokenService.callContractWithInterchainToken(
-                tokenIdBytes32,
-                destinationChain,
-                destinationAddress,
-                amount,
-                data,
-                gasValue,
-                { value: gasValue, ...gasOptions },
-            );
-
-            await handleTx(tx, chain, interchainTokenService, options.action, 'InterchainTransfer', 'InterchainTransferWithData');
+            await handleTx(tx, chain, interchainTokenService, options.action);
 
             break;
         }
 
         case 'setFlowLimits': {
-            const { tokenIds, flowLimits } = options;
+            const tokenIds = options.tokenIds.split(',');
+            const flowLimitsStrings = options.flowLimits.split(',');
+            const flowLimits = [];
+
+            for (const flowLimit of flowLimitsStrings) {
+                flowLimits.push(Number(flowLimit));
+            }
+
             const tokenIdsBytes32 = [];
+            const tokenManagers = [];
 
             for (const tokenId of tokenIds) {
                 if (!isValidTokenId(tokenId)) {
@@ -428,13 +394,20 @@ async function processCommand(config, chain, options) {
 
                 const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
                 tokenIdsBytes32.push(tokenIdBytes32);
+
+                const tokenManager = new Contract(
+                    await interchainTokenService.deployedTokenManager(tokenIdBytes32),
+                    getContractJSON('ITokenManager').abi,
+                    wallet,
+                );
+                tokenManagers.push(tokenManager);
             }
 
             validateParameters({ isNumberArray: { flowLimits } });
 
             const tx = await interchainTokenService.setFlowLimits(tokenIdsBytes32, flowLimits, gasOptions);
 
-            await handleTx(tx, chain, interchainTokenService, options.action, 'FlowLimitSet');
+            await handleTx(tx, chain, tokenManagers[0], options.action, 'FlowLimitSet');
 
             break;
         }
@@ -469,11 +442,14 @@ async function processCommand(config, chain, options) {
             if (options.trustedChain === 'all') {
                 const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
                 trustedChains = itsChains.map((chain) => chain.axelarId);
-                trustedAddresses = itsChains.map((_) => chain.contracts?.InterchainTokenService?.address);
+                trustedAddresses = itsChains.map((_) => options.trustedAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
-                const trustedChain = config.chains[options.trustedChain.toLowerCase()]?.axelarId;
+                const trustedChain =
+                    getChainConfig(config, options.trustedChain.toLowerCase(), { skipCheck: true })?.axelarId ||
+                    options.trustedChain.toLowerCase();
                 const trustedAddress =
-                    options.trustedAddress || config.chains[options.trustedChain.toLowerCase()]?.contracts?.InterchainTokenService?.address;
+                    options.trustedAddress ||
+                    getChainConfig(config, options.trustedChain.toLowerCase())?.contracts?.InterchainTokenService?.address;
 
                 if (trustedChain === undefined || trustedAddress === undefined) {
                     throw new Error(`Invalid chain/address: ${options.trustedChain}`);
@@ -540,7 +516,7 @@ async function processCommand(config, chain, options) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
-            const pauseStatus = options.pauseStatus;
+            const pauseStatus = options.pauseStatus === 'true';
 
             const tx = await interchainTokenService.setPauseStatus(pauseStatus, gasOptions);
 
@@ -571,7 +547,6 @@ async function processCommand(config, chain, options) {
 
         case 'checks': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
-
             const contractConfig = chain.contracts[contractName];
 
             const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
@@ -583,33 +558,35 @@ async function processCommand(config, chain, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
+            // TODO: simplify ITS trusted address checks
             const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
 
             printInfo('Trusted chains', trustedChains);
             printInfo('Trusted addresses', trustedAddresses);
 
-            // check if all trusted addresses match ITS address
-            for (const trustedAddress of trustedAddresses) {
-                if (trustedAddress !== interchainTokenServiceAddress) {
-                    printError(
-                        `Error: Trusted address ${trustedAddress} does not match InterchainTokenService address ${interchainTokenServiceAddress}`,
-                    );
+            for (let i = 0; i < trustedAddresses.length; i++) {
+                const trustedAddress = trustedAddresses[i];
+                const trustedChain = trustedChains[i];
+                const chainConfig = getChainConfigByAxelarId(config, trustedChain);
 
-                    break;
+                if ((isConsensusChain(chain) && isConsensusChain(chainConfig)) || chainConfig.axelarId === config.axelar.axelarId) {
+                    if (trustedAddress !== getItsEdgeContract(chainConfig)) {
+                        printError(
+                            `Error: Trusted address on ${chain.name}'s ITS contract for ${trustedChain} is ${trustedAddress} which does not match ITS address from the config ${interchainTokenServiceAddress}`,
+                        );
+                    }
+                } else if (trustedAddress !== 'hub') {
+                    printError(
+                        `Error: Trusted address on ${chain.name}'s ITS contract for ${trustedChain} is ${trustedAddress} which does not match "hub"`,
+                    );
                 }
             }
-
-            const gateway = await interchainTokenService.gateway();
-            const gasService = await interchainTokenService.gasService();
-
-            const configGateway = chain.contracts.AxelarGateway?.address;
-            const configGasService = chain.contracts.AxelarGasService?.address;
 
             const chainNameHash = await interchainTokenService.chainNameHash();
             const configChainNameHash = keccak256(toUtf8Bytes(chain.axelarId));
 
-            compare(gateway, configGateway, 'AxelarGateway');
-            compare(gasService, configGasService, 'AxelarGasService');
+            compare(await interchainTokenService.gateway(), chain.contracts.AxelarGateway?.address, 'AxelarGateway');
+            compare(await interchainTokenService.gasService(), chain.contracts.AxelarGasService?.address, 'AxelarGasService');
             compare(chainNameHash, configChainNameHash, 'chainNameHash');
 
             const toCheck = {
@@ -636,6 +613,81 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'migrateInterchainToken': {
+            const { tokenId } = options;
+
+            validateParameters({ isKeccak256Hash: { tokenId } });
+
+            const tx = await interchainTokenService.migrateInterchainToken(tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action);
+
+            break;
+        }
+
+        case 'transferMintership': {
+            const { tokenAddress, minter } = options;
+
+            validateParameters({ isValidAddress: { tokenAddress, minter } });
+
+            const token = new Contract(tokenAddress, IMinter.abi, wallet);
+            const tx = await token.transferMintership(minter);
+
+            await handleTx(tx, chain, token, options.action, 'RolesRemoved', 'RolesAdded');
+
+            break;
+        }
+
+        case 'linkToken': {
+            const { destinationChain, type, operator, destinationTokenAddress, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
+
+            validateParameters({
+                isString: { destinationChain },
+                isValidAddress: { destinationTokenAddress, operator },
+                isValidNumber: { gasValue, tokenManagerType },
+            });
+            isValidDestinationChain(config, destinationChain);
+
+            const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('Expected tokenId', interchainTokenId);
+
+            try {
+                const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+                printInfo(`TokenManager for tokenId ${tokenId} exists on the current chain`, tokenManagerAddress);
+
+                const sourceTokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address on current chain for tokenId ${tokenId}`, sourceTokenAddress);
+            } catch (error) {
+                printError(`TokenManager for tokenId ${tokenId} does not yet exist on the current chain.`);
+                return;
+            }
+
+            if (
+                prompt(`Proceed with linking tokenId ${tokenId} to ${destinationTokenAddress} on chain ${destinationChain}?`, options.yes)
+            ) {
+                return;
+            }
+
+            const linkParams = operator;
+
+            const tx = await interchainTokenService.linkToken(
+                deploymentSalt,
+                destinationChain,
+                destinationTokenAddress,
+                tokenManagerType,
+                linkParams,
+                gasValue,
+                gasOptions,
+            );
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'LinkTokenStarted');
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -651,7 +703,7 @@ if (require.main === module) {
 
     program.name('ITS').description('Script to perform ITS commands');
 
-    addExtendedOptions(program, { address: true, salt: true });
+    addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').default('InterchainTokenService'));
     program.addOption(
@@ -666,12 +718,9 @@ if (require.main === module) {
                 'flowLimit',
                 'flowOutAmount',
                 'flowInAmount',
-                'deployTokenManager',
-                'deployInterchainToken',
                 'contractCallValue',
                 'expressExecute',
                 'interchainTransfer',
-                'callContractWithInterchainToken',
                 'setFlowLimits',
                 'trustedAddress',
                 'setTrustedAddress',
@@ -679,6 +728,10 @@ if (require.main === module) {
                 'setPauseStatus',
                 'execute',
                 'checks',
+                'migrateInterchainToken',
+                'registerTokenMetadata',
+                'transferMintership',
+                'linkToken',
             ])
             .makeOptionMandatory(true),
     );
@@ -697,6 +750,14 @@ if (require.main === module) {
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--params <params>', 'params for TokenManager deployment'));
+    program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address to use for token manager deployment'));
+    program.addOption(
+        new Option(
+            '--destinationTokenAddress <destinationTokenAddress>',
+            'token address on the destination chain to link with the token on the source chain corresponding to the tokenId',
+        ),
+    );
+    program.addOption(new Option('--operator <operator>', 'operator address to use for token manager'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));

@@ -106,9 +106,23 @@ dist
 build/
 cache/
 artifacts/
+chains-info/
 
 local.json
 keys.json
 
 temp-arguments.js
 rpcs.toml
+*Untitled*
+*.wasm
+checksums.txt
+
+# Sui Move Packages
+sui/move
+
+# VSCode
+.vscode
+.DS_Store
+
+# Jetbrains
+.idea

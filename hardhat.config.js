@@ -6,6 +6,8 @@ const chains = require(`${__dirname}/axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`${__dirname}/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
 
+networks.hardhat.hardfork = process.env.EVM_VERSION || 'merge';
+
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */

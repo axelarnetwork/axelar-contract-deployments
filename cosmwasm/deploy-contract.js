@@ -1,442 +1,161 @@
 'use strict';
 
 require('dotenv').config();
-const { isNil } = require('lodash');
 
-const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
-const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
+const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
-const { printInfo, loadConfig, saveConfig, isString, isStringArray, isNumber, prompt } = require('../evm/utils');
-const { uploadContract, instantiateContract, isValidCosmosAddress } = require('./utils');
+const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
+const {
+    CONTRACTS,
+    prepareWallet,
+    prepareClient,
+    fromHex,
+    getSalt,
+    initContractConfig,
+    getAmplifierContractConfig,
+    getCodeId,
+    uploadContract,
+    instantiateContract,
+    migrateContract,
+} = require('./utils');
 
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
+const { addAmplifierOptions } = require('./cli-utils');
 
-const validateAddress = (address) => {
-    return isString(address) && isValidCosmosAddress(address);
+const upload = async (client, wallet, config, options) => {
+    const { contractName, instantiate2, salt, chainName } = options;
+    const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
+
+    printInfo('Uploading contract binary');
+
+    const { checksum, codeId } = await uploadContract(client, wallet, config, options);
+
+    printInfo('Uploaded contract binary with codeId', codeId);
+    contractBaseConfig.lastUploadedCodeId = codeId;
+
+    if (instantiate2) {
+        const [account] = await wallet.getAccounts();
+        const address = instantiate2Address(fromHex(checksum), account.address, getSalt(salt, contractName, chainName), 'axelar');
+
+        contractConfig.address = address;
+
+        printInfo('Expected contract address', address);
+    }
 };
 
-const makeServiceRegistryInstantiateMsg = ({ governanceAccount }) => {
-    if (!validateAddress(governanceAccount)) {
-        throw new Error('Missing or invalid ServiceRegistry.governanceAccount in axelar info');
+const instantiate = async (client, wallet, config, options) => {
+    const { contractName, chainName, yes } = options;
+
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const codeId = await getCodeId(client, config, options);
+    printInfo('Using code id', codeId);
+
+    if (prompt(`Proceed with instantiation on axelar?`, yes)) {
+        return;
     }
 
-    return { governance_account: governanceAccount };
+    contractConfig.codeId = codeId;
+
+    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
+    const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
+
+    contractConfig.address = contractAddress;
+
+    printInfo(`Instantiated ${chainName ? chainName.concat(' ') : ''}${contractName}. Address`, contractAddress);
 };
 
-const makeMultisigInstantiateMsg = ({ governanceAddress, blockExpiry }, { Rewards: { address: rewardsAddress } }) => {
-    if (!validateAddress(governanceAddress)) {
-        throw new Error('Missing or invalid Multisig.governanceAddress in axelar info');
-    }
-
-    if (!validateAddress(rewardsAddress)) {
-        throw new Error('Missing or invalid Rewards.address in axelar info');
-    }
-
-    if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
-    }
-
-    return { governance_address: governanceAddress, rewards_address: rewardsAddress, block_expiry: blockExpiry };
+const uploadInstantiate = async (client, wallet, config, options) => {
+    await upload(client, wallet, config, options);
+    await instantiate(client, wallet, config, options);
 };
 
-const makeRewardsInstantiateMsg = ({ governanceAddress, rewardsDenom, params }) => {
-    if (!validateAddress(governanceAddress)) {
-        throw new Error('Missing or invalid Rewards.governanceAddress in axelar info');
+const migrate = async (client, wallet, config, options) => {
+    const { yes } = options;
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const codeId = await getCodeId(client, config, options);
+    printInfo('Using code id', codeId);
+
+    if (prompt(`Proceed with contract migration on axelar?`, yes)) {
+        return;
     }
 
-    if (!isString(rewardsDenom)) {
-        throw new Error('Missing or invalid Rewards.rewardsDenom in axelar info');
-    }
+    contractConfig.codeId = codeId;
 
-    return { governance_address: governanceAddress, rewards_denom: rewardsDenom, params };
+    const { transactionHash } = await migrateContract(client, wallet, config, options);
+    printInfo('Migration completed. Transaction hash', transactionHash);
 };
 
-const makeConnectionRouterInstantiateMsg = ({ adminAddress, governanceAddress }, { NexusGateway: { address: nexusGateway } }) => {
-    if (!validateAddress(adminAddress)) {
-        throw new Error('Missing or invalid ConnectionRouter.adminAddress in axelar info');
-    }
-
-    if (!validateAddress(governanceAddress)) {
-        throw new Error('Missing or invalid ConnectionRouter.governanceAddress in axelar info');
-    }
-
-    if (!validateAddress(nexusGateway)) {
-        throw new Error('Missing or invalid NexusGateway.address in axelar info');
-    }
-
-    return { admin_address: adminAddress, governance_address: governanceAddress, nexus_gateway: nexusGateway };
-};
-
-const makeNexusGatewayInstantiateMsg = ({ nexus }, { ConnectionRouter: { address: router } }) => {
-    if (!validateAddress(nexus)) {
-        throw new Error('Missing or invalid NexusGateway.nexus in axelar info');
-    }
-
-    if (!validateAddress(router)) {
-        throw new Error('Missing or invalid ConnectionRouter.address in axelar info');
-    }
-
-    return { nexus, router };
-};
-
-const makeVotingVerifierInstantiateMsg = (
-    contractConfig,
-    { ServiceRegistry: { address: serviceRegistryAddress }, Rewards: { address: rewardsAddress } },
-    { id: chainId },
-) => {
-    const {
-        [chainId]: { serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight },
-    } = contractConfig;
-
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    if (!validateAddress(rewardsAddress)) {
-        throw new Error('Missing or invalid Rewards.address in axelar info');
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].serviceName in axelar info`);
-    }
-
-    if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].sourceGatewayAddress in axelar info`);
-    }
-
-    if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].votingThreshold in axelar info`);
-    }
-
-    if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].blockExpiry in axelar info`);
-    }
-
-    if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].confirmationHeight in axelar info`);
-    }
-
-    return {
-        service_registry_address: serviceRegistryAddress,
-        rewards_address: rewardsAddress,
-        service_name: serviceName,
-        source_gateway_address: sourceGatewayAddress,
-        voting_threshold: votingThreshold,
-        block_expiry: blockExpiry,
-        confirmation_height: confirmationHeight,
-        source_chain: chainId,
-    };
-};
-
-const makeGatewayInstantiateMsg = ({ ConnectionRouter: { address: connectionRouterAddress }, VotingVerifier }, { id: chainId }) => {
-    const {
-        [chainId]: { address: verifierAddress },
-    } = VotingVerifier;
-
-    if (!validateAddress(connectionRouterAddress)) {
-        throw new Error('Missing or invalid ConnectionRouter.address in axelar info');
-    }
-
-    if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
-    }
-
-    return { router_address: connectionRouterAddress, verifier_address: verifierAddress };
-};
-
-const makeMultisigProverInstantiateMsg = (contractConfig, contracts, { id: chainId }) => {
-    const {
-        Multisig: { address: multisigAddress },
-        ServiceRegistry: { address: serviceRegistryAddress },
-        VotingVerifier: {
-            [chainId]: { address: verifierAddress },
-        },
-        Gateway: {
-            [chainId]: { address: gatewayAddress },
-        },
-    } = contracts;
-    const {
-        [chainId]: { adminAddress, destinationChainID, signingThreshold, serviceName, workerSetDiffThreshold, encoder, keyType },
-    } = contractConfig;
-
-    if (!validateAddress(adminAddress)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].adminAddress in axelar info`);
-    }
-
-    if (!validateAddress(gatewayAddress)) {
-        throw new Error(`Missing or invalid Gateway[${chainId}].address in axelar info`);
-    }
-
-    if (!validateAddress(multisigAddress)) {
-        throw new Error('Missing or invalid Multisig.address in axelar info');
-    }
-
-    if (!validateAddress(serviceRegistryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainId}].address in axelar info`);
-    }
-
-    if (!isString(destinationChainID)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].destinationChainID in axelar info`);
-    }
-
-    if (!isStringArray(signingThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].signingThreshold in axelar info`);
-    }
-
-    if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].serviceName in axelar info`);
-    }
-
-    if (!isNumber(workerSetDiffThreshold)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].workerSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].encoder in axelar info`);
-    }
-
-    if (!isString(keyType)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainId}].keyType in axelar info`);
-    }
-
-    return {
-        admin_address: adminAddress,
-        gateway_address: gatewayAddress,
-        multisig_address: multisigAddress,
-        service_registry_address: serviceRegistryAddress,
-        voting_verifier_address: verifierAddress,
-        destination_chain_id: destinationChainID,
-        signing_threshold: signingThreshold,
-        service_name: serviceName,
-        chain_name: chainId,
-        worker_set_diff_threshold: workerSetDiffThreshold,
-        encoder,
-        key_type: keyType,
-    };
-};
-
-const makeInstantiateMsg = (contractName, chainName, config) => {
-    const {
-        axelar: { contracts },
-        chains: { [chainName]: chainConfig },
-    } = config;
-
-    const { [contractName]: contractConfig } = contracts;
-
-    const { codeId } = contractConfig;
-
-    if (!isNumber(codeId)) {
-        throw new Error('Code Id is not defined');
-    }
-
-    switch (contractName) {
-        case 'ServiceRegistry': {
-            if (chainConfig) {
-                throw new Error('ServiceRegistry does not support chainNames option');
-            }
-
-            return makeServiceRegistryInstantiateMsg(contractConfig);
-        }
-
-        case 'Multisig': {
-            if (chainConfig) {
-                throw new Error('Multisig does not support chainNames option');
-            }
-
-            return makeMultisigInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'Rewards': {
-            if (chainConfig) {
-                throw new Error('Rewards does not support chainNames option');
-            }
-
-            return makeRewardsInstantiateMsg(contractConfig);
-        }
-
-        case 'ConnectionRouter': {
-            if (chainConfig) {
-                throw new Error('ConnectionRouter does not support chainNames option');
-            }
-
-            return makeConnectionRouterInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'NexusGateway': {
-            if (chainConfig) {
-                throw new Error('NexusGateway does not support chainNames option');
-            }
-
-            return makeNexusGatewayInstantiateMsg(contractConfig, contracts);
-        }
-
-        case 'VotingVerifier': {
-            if (!chainConfig) {
-                throw new Error('VotingVerifier requires chainNames option');
-            }
-
-            return makeVotingVerifierInstantiateMsg(contractConfig, contracts, chainConfig);
-        }
-
-        case 'Gateway': {
-            if (!chainConfig) {
-                throw new Error('Gateway requires chainNames option');
-            }
-
-            return makeGatewayInstantiateMsg(contracts, chainConfig);
-        }
-
-        case 'MultisigProver': {
-            if (!chainConfig) {
-                throw new Error('MultisigProver requires chainNames option');
-            }
-
-            return makeMultisigProverInstantiateMsg(contractConfig, contracts, chainConfig);
-        }
-    }
-
-    throw new Error(`${contractName} is not supported.`);
-};
-
-const prepareWallet = ({ mnemonic }) => DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
-
-const prepareClient = ({ axelar: { rpc } }, wallet) =>
-    SigningCosmWasmClient.connectWithSigner(rpc, wallet).then((client) => {
-        return { wallet, client };
-    });
-
-const upload = (client, wallet, chainName, config, options) => {
-    const { reuseCodeId, contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
-
-    if (!reuseCodeId || isNil(contractConfig.codeId)) {
-        printInfo('Uploading contract binary');
-
-        return uploadContract(client, wallet, config, options)
-            .then(({ address, codeId }) => {
-                printInfo('Uploaded contract binary');
-                contractConfig.codeId = codeId;
-
-                if (!address) {
-                    return;
-                }
-
-                if (chainConfig) {
-                    contractConfig[chainConfig.axelarId] = {
-                        ...contractConfig[chainConfig.axelarId],
-                        address,
-                    };
-                } else {
-                    contractConfig.address = address;
-                }
-
-                printInfo('Expected contract address', address);
-            })
-            .then(() => ({ wallet, client }));
-    }
-
-    printInfo('Skipping upload. Reusing previously uploaded binary');
-    return Promise.resolve({ wallet, client });
-};
-
-const instantiate = (client, wallet, chainName, config, options) => {
-    const { contractName } = options;
-    const {
-        axelar: {
-            contracts: { [contractName]: contractConfig },
-        },
-        chains: { [chainName]: chainConfig },
-    } = config;
-
-    const initMsg = makeInstantiateMsg(contractName, chainName, config);
-    return instantiateContract(client, wallet, initMsg, config, options).then((contractAddress) => {
-        if (chainConfig) {
-            contractConfig[chainConfig.axelarId] = {
-                ...contractConfig[chainConfig.axelarId],
-                address: contractAddress,
-            };
-        } else {
-            contractConfig.address = contractAddress;
-        }
-
-        printInfo(`Instantiated ${chainName === 'none' ? '' : chainName.concat(' ')}${contractName}. Address`, contractAddress);
-    });
-};
-
-const main = async (options) => {
-    const { env, chainNames, uploadOnly, yes, instantiate2 } = options;
+const mainProcessor = async (processor, options) => {
+    const { env } = options;
     const config = loadConfig(env);
 
-    let chains = chainNames.split(',').map((str) => str.trim());
+    initContractConfig(config, options);
 
-    if (chainNames === 'all') {
-        chains = Object.keys(config.chains);
-    }
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
 
-    if (chains.length !== 1 && instantiate2) {
-        throw new Error('Cannot pass --instantiate2 with more than one chain');
-    }
+    await processor(client, wallet, config, options);
 
-    const undefinedChain = chains.find((chain) => !config.chains[chain.toLowerCase()] && chain !== 'none');
-
-    if (undefinedChain) {
-        throw new Error(`Chain ${undefinedChain} is not defined in the info file`);
-    }
-
-    await prepareWallet(options)
-        .then((wallet) => prepareClient(config, wallet))
-        .then(({ wallet, client }) => upload(client, wallet, chains[0], config, options))
-        .then(({ wallet, client }) => {
-            if (uploadOnly || prompt(`Proceed with deployment on axelar?`, yes)) {
-                return;
-            }
-
-            return chains.reduce((promise, chain) => {
-                return promise.then(() => instantiate(client, wallet, chain.toLowerCase(), config, options));
-            }, Promise.resolve());
-        })
-        .then(() => saveConfig(config, env));
+    saveConfig(config, env);
 };
 
 const programHandler = () => {
     const program = new Command();
 
-    program.name('upload-contract').description('Upload CosmWasm contracts');
+    program.name('deploy-contract').description('Deploy CosmWasm contracts');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true).env('ARTIFACT_PATH'));
-    program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
-    program.addOption(new Option('-n, --chainNames <chainNames>', 'chain names').default('none'));
-    program.addOption(new Option('-r, --reuseCodeId', 'reuse code Id'));
-    program.addOption(new Option('-s, --salt <salt>', 'salt for instantiate2. defaults to contract name').env('SALT'));
-    program.addOption(
-        new Option(
-            '-u, --uploadOnly',
-            'upload the contract without instantiating. prints expected contract address if --instantiate2 is passed',
-        ),
-    );
-    program.addOption(new Option('--instantiate2', 'use instantiate2 for constant address deployment'));
-    program.addOption(new Option('--aarch64', 'aarch64').env('AARCH64').default(false));
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    const uploadCmd = program
+        .command('upload')
+        .description('Upload wasm binary')
+        .action((options) => {
+            mainProcessor(upload, options);
+        });
+    addAmplifierOptions(uploadCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        instantiate2Options: true,
+    });
 
-    program.action((options) => {
-        main(options);
+    const instantiateCmd = program
+        .command('instantiate')
+        .description('Instantiate contract')
+        .action((options) => {
+            mainProcessor(instantiate, options);
+        });
+    addAmplifierOptions(instantiateCmd, {
+        contractOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+        codeId: true,
+        fetchCodeId: true,
+    });
+
+    const uploadInstantiateCmd = program
+        .command('upload-instantiate')
+        .description('Upload wasm binary and instantiate contract')
+        .action((options) => {
+            mainProcessor(uploadInstantiate, options);
+        });
+    addAmplifierOptions(uploadInstantiateCmd, {
+        contractOptions: true,
+        storeOptions: true,
+        instantiateOptions: true,
+        instantiate2Options: true,
+    });
+
+    const migrateCmd = program
+        .command('migrate')
+        .description('Migrate contract')
+        .action((options) => {
+            mainProcessor(migrate, options);
+        });
+    addAmplifierOptions(migrateCmd, {
+        contractOptions: true,
+        migrateOptions: true,
+        codeId: true,
+        fetchCodeId: true,
     });
 
     program.parse();
