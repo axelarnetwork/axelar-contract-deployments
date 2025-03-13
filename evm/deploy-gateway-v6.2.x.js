@@ -27,8 +27,9 @@ const {
     isContract,
     deployContract,
     getGasOptions,
+    getDeployOptions,
 } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { storeSignedTx, signTransaction, getWallet } = require('./sign-utils.js');
 
 const AxelarGatewayProxy = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/AxelarGatewayProxy.sol/AxelarGatewayProxy.json');
@@ -52,9 +53,7 @@ async function checkKeyRotation(config, chain) {
 async function getAuthParams(config, chain, options) {
     printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
-    if (!options.amplifier) {
-        await checkKeyRotation(config, chain);
-    }
+    await checkKeyRotation(config, chain);
 
     const params = [];
     const keyIDs = [];
@@ -134,9 +133,7 @@ async function deploy(config, chain, options) {
     const authFactory = new ContractFactory(AxelarAuthWeighted.abi, AxelarAuthWeighted.bytecode, wallet);
     const tokenDeployerFactory = new ContractFactory(TokenDeployer.abi, TokenDeployer.bytecode, wallet);
     const gatewayProxyFactory = new ContractFactory(AxelarGatewayProxy.abi, AxelarGatewayProxy.bytecode, wallet);
-
-    const deployerContract =
-        options.deployMethod === 'create3' ? chain.contracts.Create3Deployer?.address : chain.contracts.ConstAddressDeployer?.address;
+    const { deployerContract } = getDeployOptions(options.deployMethod, options.salt || 'AxelarGateway v6.2', chain);
 
     let gateway;
     let auth;
@@ -167,6 +164,10 @@ async function deploy(config, chain, options) {
     }
 
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
+
+    if (await isContract(proxyAddress, wallet.provider)) {
+        printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
+    }
 
     if (predictOnly || prompt(`Does derived address match existing gateway deployments? Proceed with deployment on ${chain.name}?`, yes)) {
         return;
@@ -365,22 +366,14 @@ async function deploy(config, chain, options) {
     contractConfig.tokenDeployer = tokenDeployer.address;
     contractConfig.deployer = wallet.address;
     contractConfig.deploymentMethod = options.deployMethod;
+    contractConfig.connectionType = 'consensus';
+    contractConfig.governance = governance;
+    contractConfig.mintLimiter = mintLimiter;
+    chain.chainType = 'evm';
 
     if (options.deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = governance;
-
-    if (!chain.contracts.Multisig) {
-        chain.contracts.Multisig = {};
-    }
-
-    chain.contracts.Multisig.address = mintLimiter;
 
     printInfo('Deployment status', 'SUCCESS');
 
@@ -415,18 +408,8 @@ async function upgrade(_, chain, options) {
     let governance = options.governance || chain.contracts.InterchainGovernance?.address;
     let mintLimiter = options.mintLimiter || chain.contracts.Multisig?.address;
     let setupParams = '0x';
-
-    if (!chain.contracts.InterchainGovernance) {
-        chain.contracts.InterchainGovernance = {};
-    }
-
-    chain.contracts.InterchainGovernance.address = governance;
-
-    if (!chain.contracts.Multisig) {
-        chain.contracts.Multisig = {};
-    }
-
-    chain.contracts.Multisig.address = mintLimiter;
+    contractConfig.governance = governance;
+    contractConfig.mintLimiter = mintLimiter;
 
     if (!offline) {
         if (governance && !(await isContract(governance, provider))) {
@@ -524,13 +507,10 @@ async function programHandler() {
 
     program.name('deploy-gateway-v6.2.x').description('Deploy gateway v6.2.x');
 
-    addExtendedOptions(program, { salt: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { salt: true, deployMethod: 'create', skipExisting: true, upgrade: true, predictOnly: true });
 
     program.addOption(new Option('-r, --rpc <rpc>', 'chain rpc url').env('URL'));
-    program.addOption(
-        new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create'),
-    );
-    program.addOption(new Option('-r, --reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
+    program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
     program.addOption(
         new Option('--reuseHelpers', 'reuse helper auth and token deployer contract modules for new implementation deployment'),
     );
@@ -538,12 +518,10 @@ async function programHandler() {
     program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--governance <governance>', 'governance address').env('GOVERNANCE'));
     program.addOption(new Option('--mintLimiter <mintLimiter>', 'mint limiter address').env('MINT_LIMITER'));
-    program.addOption(new Option('-k, --keyID <keyID>', 'key ID').env('KEY_ID'));
-    program.addOption(new Option('-a, --amplifier', 'deploy amplifier gateway').env('AMPLIFIER'));
+    program.addOption(new Option('--keyID <keyID>', 'key ID').env('KEY_ID'));
     program.addOption(new Option('--prevKeyIDs <prevKeyIDs>', 'previous key IDs to be used for auth contract'));
     program.addOption(new Option('--offline', 'Run in offline mode'));
     program.addOption(new Option('--nonceOffset <nonceOffset>', 'The value to add in local nonce if it deviates from actual wallet nonce'));
-    program.addOption(new Option('-x, --skipExisting', 'skip existing if contract was already deployed on chain'));
 
     program.action((options) => {
         main(options);
@@ -557,5 +535,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    deployGatewayv5: deploy,
+    deployLegacyGateway: deploy,
 };

@@ -2,14 +2,14 @@ const axelarSchema = {
     id: '/info.axelar',
     type: 'object',
     properties: {
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
-        lcd: { type: 'string' },
+        // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
+        lcd: { type: 'string', pattern: '^$|^(https?:\\/\\/[^\\/\\:]+(:\\d+)?)$' },
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },
-    required: ['id', 'axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
+    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
 };
 
 export const contractValueSchema = {
@@ -25,8 +25,8 @@ export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway', 'InterchainGovernanceExecutor', etc.
-        '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
+        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
+        '(^[a-z]|[A-Z])[a-z]*': {
             $ref: contractValueSchema.id,
         },
     },
@@ -35,7 +35,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway', 'AxelarGasService'],
+    required: [],
 };
 
 export const explorerSchema = {
@@ -65,17 +65,21 @@ export const chainValueSchema = {
     type: 'object',
     properties: {
         name: { type: 'string' },
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         chainId: { type: 'number' },
+        networkType: { type: 'string' },
+        chainType: { type: 'string' },
         rpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
         contracts: { $ref: contractSchema.id },
         explorer: { $ref: explorerSchema.id },
         gasOptions: { $ref: gasOptionSchema.id },
         confirmations: { type: 'number' },
+        finality: { type: 'string' },
+        approxFinalityWaitTime: { type: 'number' },
+        timeout: { type: 'number' },
     },
-    required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType', 'finality', 'approxFinalityWaitTime'],
 };
 
 export const chainsSchema = {
