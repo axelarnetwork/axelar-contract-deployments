@@ -35,7 +35,7 @@ function main() {
     program.name('Generate TypeScript Bindings for Soroban contract').description('Generates TypeScript bindings for a Soroban contract.');
 
     addEnvOption(program);
-    program.addOption(new Option('--artifactPath <artifactPath>', 'path to the WASM file').makeOptionMandatory(true));
+    program.addOption(new Option('--artifact-path <artifactPath>', 'path to the WASM file').makeOptionMandatory(true));
     program.addOption(new Option('--contract-id <contractId>', 'contract ID').makeOptionMandatory(true));
     program.addOption(
         new Option('--output-dir <outputDir>', 'output directory for the generated bindings').default(path.join(__dirname, 'bindings')),

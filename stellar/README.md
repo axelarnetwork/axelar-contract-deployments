@@ -97,10 +97,10 @@ node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 
 ### Example
 
-Note that example contract should use `--artifactPath` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
+Note that example contract should use `--artifact-path` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format X.Y.Z or a commit hash.
 
 
--   `node stellar/deploy-contract.js deploy AxelarExample --artifactPath ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
+-   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
 
 -   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
 
@@ -165,7 +165,7 @@ node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> 
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --artifactPath /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
+node stellar/generate-bindings.js --artifact-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
 ```
 
 ## Contract Interaction

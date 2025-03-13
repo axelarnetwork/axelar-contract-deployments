@@ -378,14 +378,19 @@ const getContractR2Url = (contractName, version) => {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
+    const dirPath = `stellar-${pascalToKebab(contractName)}`;
+    const fileName = dirPath.replace(/-/g, '_');
+
+
     const pathName = contractName.replace(/_/g, '-');
 
     if (VERSION_REGEX.test(contractVersion)) {
-        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/v${version}/wasm/stellar_${contractName}.wasm`;
+        // Extra v for versioned releases in R2
+        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/${dirPath}/v${version}/wasm/${fileName}.wasm`;
     }
     
     if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
-        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/stellar-${pathName}/${version}/wasm/stellar_${contractName}.wasm`;
+        return `${AXELAR_R2_BASE_URL}/releases/axelar-cgp-stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
     }
     
     throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
