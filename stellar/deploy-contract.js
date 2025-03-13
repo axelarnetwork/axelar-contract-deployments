@@ -149,7 +149,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmHash = await uploadContract(contractName, options, wallet, chain);
+    const wasmHash = await uploadWasm(options.contractCodePath, wallet, chain);
     const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),

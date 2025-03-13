@@ -29,14 +29,14 @@ const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
 // TODO Need to be migrated to Pascal Case
 const SUPPORTED_STELLAR_CONTRACTS = new Set([
-    'axelar_gateway',
-    'axelar_operators',
-    'axelar_gas_service',
-    'interchain_token',
-    'token_manager',
-    'interchain_token_service',
-    'upgrader',
-    'example',
+    'AxelarExample',
+    'AxelarGateway',
+    'AxelarOperators',
+    'AxelarGasService',
+    'InterchainToken',
+    'TokenManager',
+    'InterchainTokenService',
+    'Upgrader',
 ]);
 
 function getNetworkPassphrase(networkType) {
