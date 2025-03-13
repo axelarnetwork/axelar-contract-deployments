@@ -161,8 +161,8 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
-- Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
+- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
+- Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register Gateway at the Router
 
@@ -329,12 +329,15 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-Add Rewards:
+    Add Rewards:
+
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
+
 Check reward pool to confirm funding worked:
+
 ```bash
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
@@ -356,6 +359,7 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_
 ```
 
 Query the multisig prover for active verifier set
+
 ```bash
 axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
