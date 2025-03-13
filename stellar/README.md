@@ -90,8 +90,6 @@ node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0
 Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-node stellar/deploy-contract.js deploy InterchainToken --version v1.0.0
-node stellar/deploy-contract.js deploy TokenManager --version v1.0.0
 node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 ```
 
@@ -155,6 +153,26 @@ For migration data of type `bool`, omit the `--migration-data` flag and pass the
 
 ```bash
 node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
+```
+
+### Child Contract upgrades
+
+Some contracts have child contracts that need to be implicitly upgraded.
+
+To upgrade children for supported contracts, use the `--upgrade-children` flag.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --upgrade-children
+```
+
+If you would rather specify a wasm path for the child contracts, run `--help` to see the appropriate child wasm path options.
+
+For example, for `InterchainTokenService`, the child contracts are `InterchainToken` and `TokenManager`.
+
+You may specify:
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --upgrade-children --interchain-token-wasm-path <PATH_TO_INTERCHAIN_TOKEN_WASM> --token-manager-wasm-path <PATH_TO_TOKEN_MANAGER_WASM>
 ```
 
 ## Generate bindings
