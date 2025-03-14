@@ -145,12 +145,10 @@ REWARD_AMOUNT=[reward amount]
 RUN_AS_ACCOUNT=[wasm deployer/governance address]
 ```
 
-> **_NOTE:_** > `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
+- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
+- Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register stellar gateway at the Router
-
-> **_NOTE:_**
-> Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
