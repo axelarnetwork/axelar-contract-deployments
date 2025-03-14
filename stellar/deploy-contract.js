@@ -149,7 +149,7 @@ async function deploy(options, config, chain, contractName) {
         return;
     }
 
-    const wasmHash = await uploadWasm(options.contractCodePath, wallet, chain);
+    const wasmHash = await uploadWasm(wallet, chain, options);
     const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
@@ -181,15 +181,15 @@ async function deploy(options, config, chain, contractName) {
     printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
 }
 
-async function uploadWasm(filePath, wallet, chain) {
-    const bytecode = readFileSync(filePath);
+async function uploadWasm(wallet, chain, options) {
+    const bytecode = readFileSync(options.contractCodePath);
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
     const wasmResponse = await broadcast(operation, wallet, chain, 'Uploaded wasm');
     return wasmResponse.value();
 }
 
 async function upgrade(options, _, chain, contractName) {
-    const { artifactPath, yes } = options;
+    const { yes } = options;
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.Upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -204,7 +204,7 @@ async function upgrade(options, _, chain, contractName) {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const newWasmHash = await uploadWasm(artifactPath, wallet, chain);
+    const newWasmHash = await uploadWasm(wallet, chain, options);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const operation = Operation.invokeContractFunction({

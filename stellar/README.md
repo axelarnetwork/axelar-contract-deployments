@@ -100,7 +100,7 @@ node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 Note that example contract should use `--artifact-path` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format X.Y.Z or a commit hash.
 
 
--   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
+-   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
 
 -   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
 
