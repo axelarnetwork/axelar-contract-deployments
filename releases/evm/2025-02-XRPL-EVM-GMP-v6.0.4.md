@@ -172,15 +172,15 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 
 8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 6)
 
-| Network              | `deployer address`                           |
-| -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `deployer address`                           | `deployMethod` |
+| -------------------- | -------------------------------------------- | -------------- |
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`      |
+| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`      |
+| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` | `create`       |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "$OPERATOR_ADDRESS"}'
+node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
 8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
