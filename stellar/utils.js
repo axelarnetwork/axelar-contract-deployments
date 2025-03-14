@@ -121,7 +121,7 @@ async function sendTransaction(tx, server, action, options = {}) {
         }
 
         if (sendResponse.status !== 'PENDING') {
-            throw Error(sendResponse.errorResultXdr);
+            throw Error(`Response: ${JSON.stringify(sendResponse, null, 2)}`);
         }
 
         let getResponse = await server.getTransaction(sendResponse.hash);
