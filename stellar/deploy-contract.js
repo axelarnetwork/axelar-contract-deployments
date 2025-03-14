@@ -52,6 +52,11 @@ const addDeployOptions = (program) => {
     return program;
 };
 
+async function uploadContract(contractName, options, wallet, chain) {
+    const contractCodePath = await getContractCodePath(options, contractName);
+    return await uploadWasm(contractCodePath, wallet, chain);
+}
+
 async function getInitializeArgs(config, chain, contractName, wallet, options) {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
     const operator = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
