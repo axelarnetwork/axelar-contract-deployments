@@ -1,16 +1,17 @@
 ## XRPL EVM Sidechain ITS v2.1.0
 
-|                | **Owner**                                                                   |
-| -------------- | --------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
+|                | **Owner**                                                                  |
+| -------------- | -------------------------------------------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                     |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
-| **Mainnet**          | -                     | TBD        |
+| **Network**           | **Deployment Status** | **Date**   |
+| --------------------- | --------------------- | ---------- |
+| **Devnet Amplifier**  | -                     | TBD        |
+| **Stagenet**          | -                     | TBD        |
+| **Testnet** (staging) | `xrp-evm-test-1`      | 19-02-2025 |
+| **Testnet**           | `xrp-evm-test-1`      | 19-02-2025 |
+| **Mainnet**           | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
 
@@ -27,7 +28,7 @@ Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed fi
 npm ci
 ```
 
-Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
+Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm`.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -39,7 +40,7 @@ CHAINS=all
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ### Devnet Amplifier
