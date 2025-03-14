@@ -269,29 +269,27 @@ function main() {
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName)
-            .description(`Deploy ${contractName} contract`);
-    
+        const command = new Command(contractName).description(`Deploy ${contractName} contract`);
+
         addStoreOptions(command);
         addDeployOptions(command);
-    
+
         // Attach the preAction hook to this specific command
         command.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
-    
+
             // Pass contractName directly since it's known in this scope
             const contractCodePath = await getContractCodePath(opts, contractName);
             Object.assign(opts, { contractCodePath });
         });
-    
+
         // Main action handler
         command.action((options) => {
             mainProcessor(options, deploy, contractName);
         });
-    
+
         return command;
     });
-
 
     // 3rd level commands for `upgrade`
     const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
