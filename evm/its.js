@@ -24,7 +24,7 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
-    getItsEdgeContract,
+    itsEdgeContract,
     getChainConfigByAxelarId,
     isConsensusChain,
 } = require('./utils');
@@ -570,7 +570,7 @@ async function processCommand(config, chain, options) {
                 const chainConfig = getChainConfigByAxelarId(config, trustedChain);
 
                 if ((isConsensusChain(chain) && isConsensusChain(chainConfig)) || chainConfig.axelarId === config.axelar.axelarId) {
-                    if (trustedAddress !== getItsEdgeContract(chainConfig)) {
+                    if (trustedAddress !== itsEdgeContract(chainConfig)) {
                         printError(
                             `Error: Trusted address on ${chain.name}'s ITS contract for ${trustedChain} is ${trustedAddress} which does not match ITS address from the config ${interchainTokenServiceAddress}`,
                         );
