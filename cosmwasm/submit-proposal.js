@@ -12,7 +12,6 @@ const {
     prepareClient,
     fromHex,
     getSalt,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
@@ -29,7 +28,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, itsEdgeContract } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -92,7 +91,7 @@ const storeCode = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
@@ -114,7 +113,7 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {

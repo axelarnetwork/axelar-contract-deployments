@@ -13,6 +13,7 @@ const {
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
 const { printInfo, sleep, addEnvOption } = require('../common');
+const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
 const { Option } = require('commander');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
@@ -23,6 +24,20 @@ const {
 
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
+
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
+// TODO Need to be migrated to Pascal Case
+const SUPPORTED_STELLAR_CONTRACTS = new Set([
+    'AxelarExample',
+    'AxelarGateway',
+    'AxelarOperators',
+    'AxelarGasService',
+    'InterchainToken',
+    'TokenManager',
+    'InterchainTokenService',
+    'Upgrader',
+]);
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -358,6 +373,39 @@ function stellarAddressToBytes(address) {
     return hexlify(Buffer.from(address, 'ascii'));
 }
 
+const getContractR2Url = (contractName, version) => {
+    if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
+        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
+    }
+
+    const dirPath = `stellar-${pascalToKebab(contractName)}`;
+    const fileName = dirPath.replace(/-/g, '_');
+
+    if (VERSION_REGEX.test(version)) {
+        // Extra v for versioned releases in R2
+        return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/v${version}/wasm/${fileName}.wasm`;
+    }
+
+    if (SHORT_COMMIT_HASH_REGEX.test(version)) {
+        return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
+    }
+
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
+};
+
+const getContractCodePath = async (options, contractName) => {
+    if (options.artifactPath) {
+        return options.artifactPath;
+    }
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
 function isValidAddress(address) {
     try {
         // try conversion
@@ -419,7 +467,9 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     stellarAddressToBytes,
+    getContractCodePath,
     isValidAddress,
+    SUPPORTED_STELLAR_CONTRACTS,
     BytesToScVal,
     pascalToKebab,
 };
