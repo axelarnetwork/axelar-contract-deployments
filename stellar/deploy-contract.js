@@ -25,7 +25,7 @@ const {
 } = ethers;
 require('./cli-utils');
 
-const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/axelar-amplifier-stellar';
+const AXELAR_RELEASE_BASE_URL = 'https://static.axelar.network/releases/stellar';
 
 const SUPPORTED_CONTRACTS = new Set([
     'AxelarExample',
@@ -262,6 +262,11 @@ async function uploadWasm(filePath, wallet, chain) {
 
 async function upgrade(options, _, chain, contractName) {
     const { yes } = options;
+
+    if (!options.version && !options.wasmPath) {
+        throw new Error('--version or --wasm-path required to upgrade');
+    }
+
     let contractAddress = chain.contracts[contractName]?.address;
     const upgraderAddress = chain.contracts.Upgrader?.address;
     const wallet = await getWallet(chain, options);
@@ -271,7 +276,7 @@ async function upgrade(options, _, chain, contractName) {
     }
 
     validateParameters({
-        isValidStellarAddress: { contractAddress, version: options.version, upgraderAddress },
+        isValidStellarAddress: { contractAddress, upgraderAddress },
     });
 
     contractAddress = Address.fromString(contractAddress);
@@ -280,10 +285,12 @@ async function upgrade(options, _, chain, contractName) {
     const newWasmHash = await uploadWasm(wasmFile, wallet, chain);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
+    const version = sanitizeUpgradeVersion(options.version);
+
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.Upgrader.address,
         function: 'upgrade',
-        args: [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        args: [contractAddress, version, newWasmHash, [options.migrationData]].map(nativeToScVal),
         auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
     });
 
@@ -419,6 +426,15 @@ function sanitizeMigrationData(migrationData) {
     }
 
     return parsed;
+}
+
+/* Note: Once R2 uploads for stellar use the cargo version number (does not include 'v' prefix), this will no longer be necessary. */
+function sanitizeUpgradeVersion(version) {
+    if (version.startsWith('v')) {
+        return version.slice(1);
+    }
+
+    return version;
 }
 
 if (require.main === module) {
