@@ -1,15 +1,21 @@
+require('dotenv').config();
+const env = process.env.ENV;
+
 const { ethers } = require('hardhat');
 const { Contract, getDefaultProvider } = ethers;
-const info = require('../axelar-chains-config/info/mainnet.json');
-const tokenManagerInfo = require('../axelar-chains-config/info/tokenManagers.json');
+const info = require(`../axelar-chains-config/info/${env}.json`);
+const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${env}.json`);
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const fs = require('fs');
 const toml = require('toml');
+const { printInfo } = require('../common');
 
 const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
 
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
+// This is after the upgrade.
+const endTimestamp = 1710329513;
 let eventsLength = 2000;
 const queryLimit = {
     ethereum: 500000,
@@ -34,7 +40,8 @@ const queryLimit = {
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if (chain.contracts.InterchainTokenService.skip) return;
+        if (tokenManagerInfo[name] == null || chain.contracts.InterchainTokenService.skip) return;
+        printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
 
         // if (name != 'mantle') { return; }
 
@@ -42,11 +49,11 @@ async function getTokenManagers(name) {
         console.log('processing... ', name);
         console.log(name, eventsLength);
 
-        const rpc = RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name.toLowerCase()).rpc_addr;
+        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === chainName).rpc_addr : chain.rpc;
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
-
+        
         const blockNumber = await provider.getBlockNumber();
 
         if (!tokenManagerInfo[name]) {
@@ -56,14 +63,34 @@ async function getTokenManagers(name) {
         const filter = its.filters.TokenManagerDeployed();
         console.log('current block number: ', blockNumber);
 
-        while (blockNumber > tokenManagerInfo[name].end) {
-            // let end = blockNumber > tokenManagerInfo[name].end + eventsLength ? blockNumber : tokenManagerInfo[name].end + eventsLength;
-            const end = tokenManagerInfo[name].end + eventsLength;
-            console.log(end);
-            const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
-            tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
-            tokenManagerInfo[name].end = end;
-            fs.writeFileSync('./axelar-chains-config/info/tokenManagers.json', JSON.stringify(tokenManagerInfo, null, 2));
+        let min = tokenManagerInfo[name].end;
+        let max = blockNumber;
+
+        if ((await provider.getBlock(tokenManagerInfo[name].end)).timestamp >= endTimestamp) return;
+
+        while (max - min > 1) {
+            const mid = Math.floor((min + max) / 2);
+            const timestamp = (await provider.getBlock(mid)).timestamp;
+            if (timestamp > endTimestamp) {
+                max = mid;
+            } else {
+                min = mid;
+            }
+        }
+        printInfo('Target Block number', min);
+
+        while (tokenManagerInfo[name].end <= min) {
+            try {
+                const end = tokenManagerInfo[name].end + eventsLength;
+                console.log(end, min);
+                const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
+                tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
+                tokenManagerInfo[name].end = end;
+                fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
+            } catch (e) {
+
+            }
+
         }
     } catch (e) {
         console.log(name);
