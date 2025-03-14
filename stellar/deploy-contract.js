@@ -74,7 +74,11 @@ function getWasmUrl(contractName, version) {
     const dirPath = `stellar-${pascalToKebab(contractName)}`;
     const fileName = dirPath.replace(/-/g, '_');
 
-    return `${AXELAR_RELEASE_BASE_URL}/${dirPath}/${version}/wasm/${fileName}.wasm`;
+    const wasmUrl = `${AXELAR_RELEASE_BASE_URL}/${dirPath}/${version}/wasm/${fileName}.wasm`;
+
+    printInfo('Retrieved WASM URL', wasmUrl);
+
+    return wasmUrl;
 }
 
 async function downloadWasmFile(contractName, version) {
