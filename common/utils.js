@@ -602,7 +602,6 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
-    parseTrustedChains,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,

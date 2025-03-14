@@ -381,9 +381,6 @@ const getContractR2Url = (contractName, version) => {
     const dirPath = `stellar-${pascalToKebab(contractName)}`;
     const fileName = dirPath.replace(/-/g, '_');
 
-
-    const pathName = contractName.replace(/_/g, '-');
-
     if (VERSION_REGEX.test(version)) {
         // Extra v for versioned releases in R2
         return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/v${version}/wasm/${fileName}.wasm`;
