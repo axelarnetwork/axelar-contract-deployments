@@ -9,8 +9,8 @@
 | --------------------- | --------------------- | ---------- |
 | **Devnet Amplifier**  | -                     | TBD        |
 | **Stagenet**          | -                     | TBD        |
-| **Testnet** (staging) | `xrp-evm-test-1`      | 2025-02-19 |
-| **Testnet**           | `xrp-evm`             | 2025-03-13 |
+| **Testnet** (staging) | Completed      | 2025-02-19 |
+| **Testnet**           | Completed             | 2025-03-13 |
 | **Mainnet**           | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)

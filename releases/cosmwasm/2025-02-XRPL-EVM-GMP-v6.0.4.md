@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**(staging) | `xrp-evm-test-1`      | 2025-02-19 |
-| **Testnet**          | In Progress           | TBD        |
+| **Testnet**(staging) | Completed             | 2025-02-19 |
+| **Testnet**          | Completed             | 2025-03-13 |
 | **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
