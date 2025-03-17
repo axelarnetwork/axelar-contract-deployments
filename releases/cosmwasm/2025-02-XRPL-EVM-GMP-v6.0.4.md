@@ -1,15 +1,16 @@
 # XRPL EVM Sidechain GMP v6.0.4
 
-|                | **Owner**                                                                   |
-| -------------- | --------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**          | `xrp-evm-test-1`      | 2025-02-19 |
+| **Testnet**(staging) | Completed             | 2025-02-19 |
+| **Testnet**          | Completed             | 2025-03-13 |
 | **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
@@ -29,7 +30,7 @@ Predict the [External Gateway](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) address, a
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -38,7 +39,7 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
+- Create an `.env` config. `CHAIN` should be set to `xrpl-evm`.
 
 ```yaml
 MNEMONIC=xyz
@@ -161,8 +162,8 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` is only required for Devnet-amplifier. Do not use `--runAs` for Stagenet, Testnet, or Mainnet.
-- Add a community post for the Mainnet Proposal. i.e: https://www.mintscan.io/axelar/proposals/274
+- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
+- Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register Gateway at the Router
 
@@ -329,12 +330,15 @@ node cosmwasm/submit-proposal.js execute \
 ```
 
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-Add Rewards:
+    Add Rewards:
+
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
+
 Check reward pool to confirm funding worked:
+
 ```bash
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
 axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
@@ -356,6 +360,7 @@ axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_
 ```
 
 Query the multisig prover for active verifier set
+
 ```bash
 axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```

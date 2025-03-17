@@ -23,6 +23,10 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
+    parseTrustedChains,
+    itsEdgeContract,
+    getChainConfigByAxelarId,
+    isConsensusChain,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -534,7 +538,6 @@ async function processCommand(config, chain, action, options) {
 
         case 'checks': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
-
             const contractConfig = chain.contracts[contractName];
 
             const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
@@ -546,19 +549,27 @@ async function processCommand(config, chain, action, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
+            // TODO: simplify ITS trusted address checks
             const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, interchainTokenService);
 
             printInfo('Trusted chains', trustedChains);
             printInfo('Trusted addresses', trustedAddresses);
 
-            // check if all trusted addresses match ITS address
-            for (const trustedAddress of trustedAddresses) {
-                if (trustedAddress !== interchainTokenServiceAddress) {
-                    printError(
-                        `Error: Trusted address ${trustedAddress} does not match InterchainTokenService address ${interchainTokenServiceAddress}`,
-                    );
+            for (let i = 0; i < trustedAddresses.length; i++) {
+                const trustedAddress = trustedAddresses[i];
+                const trustedChain = trustedChains[i];
+                const chainConfig = getChainConfigByAxelarId(config, trustedChain);
 
-                    break;
+                if ((isConsensusChain(chain) && isConsensusChain(chainConfig)) || chainConfig.axelarId === config.axelar.axelarId) {
+                    if (trustedAddress !== itsEdgeContract(chainConfig)) {
+                        printError(
+                            `Error: Trusted address on ${chain.name}'s ITS contract for ${trustedChain} is ${trustedAddress} which does not match ITS address from the config ${interchainTokenServiceAddress}`,
+                        );
+                    }
+                } else if (trustedAddress !== 'hub') {
+                    printError(
+                        `Error: Trusted address on ${chain.name}'s ITS contract for ${trustedChain} is ${trustedAddress} which does not match "hub"`,
+                    );
                 }
             }
 
@@ -570,7 +581,7 @@ async function processCommand(config, chain, action, options) {
 
             const chainNameHash = await interchainTokenService.chainNameHash();
             const configChainNameHash = keccak256(toUtf8Bytes(chain.axelarId));
-
+            
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
             compare(chainNameHash, configChainNameHash, 'chainNameHash');
