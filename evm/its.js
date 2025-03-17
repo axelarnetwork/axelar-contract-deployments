@@ -23,7 +23,6 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
-    parseTrustedChains,
     itsEdgeContract,
     getChainConfigByAxelarId,
     isConsensusChain,
@@ -581,7 +580,7 @@ async function processCommand(config, chain, action, options) {
 
             const chainNameHash = await interchainTokenService.chainNameHash();
             const configChainNameHash = keccak256(toUtf8Bytes(chain.axelarId));
-            
+
             compare(gateway, configGateway, 'AxelarGateway');
             compare(gasService, configGasService, 'AxelarGasService');
             compare(chainNameHash, configChainNameHash, 'chainNameHash');
