@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 pub use alloy_primitives;
 use alloy_sol_types::{sol, SolValue};
 
@@ -11,9 +13,10 @@ use alloy_sol_types::{sol, SolValue};
 pub enum GMPPayload {
     InterchainTransfer(InterchainTransfer),
     DeployInterchainToken(DeployInterchainToken),
-    DeployTokenManager(DeployTokenManager),
     SendToHub(SendToHub),
     ReceiveFromHub(ReceiveFromHub),
+    LinkToken(LinkToken),
+    RegisterTokenMetadata(RegisterTokenMetadata),
 }
 
 sol! {
@@ -60,22 +63,6 @@ sol! {
         bytes minter;
     }
 
-    /// This message has the following data encoded and should only be sent
-    /// after the proper tokens have been procured by the service. It should
-    /// result in the proper funds being transferred to the user at the
-    /// destination chain.
-    #[derive(Debug, PartialEq)]
-    #[repr(C)]
-    struct DeployTokenManager {
-        uint256 selector;
-        /// The interchainTokenId of the token being deployed
-        bytes32 token_id;
-        /// The type of the token manager, look at the [code](https://github.com/axelarnetwork/interchain-token-service/blob/main/contracts/interfaces/ITokenManagerType.sol) for details on EVM, but it could be different for different architectures
-        uint256 token_manager_type;
-        /// The parameters for the token manager deployments, look [here](https://github.com/axelarnetwork/interchain-token-service/blob/92cbbf16569f5eb31587bc2ea12dd5c4b804efbf/contracts/token-manager/TokenManager.sol#L191) for details on EVM chain parameters.
-        bytes params;
-    }
-
     /// This message is used to route an ITS message via the ITS Hub. The ITS Hub applies certain
     /// security checks, and then routes it to the true destination chain. This mode is enabled if the
     /// trusted address corresponding to the destination chain is set to the ITS Hub identifier.
@@ -106,20 +93,46 @@ sol! {
 
         /// The actual ITS message that's being routed through ITS Hub
         bytes payload;
-
     }
+
+    #[derive(Debug, PartialEq)]
+    #[repr(C)]
+    struct LinkToken {
+        /// Will always have a value of 5
+        uint256 selector;
+        /// The token_id associated with the token being linked
+        bytes32 token_id;
+        /// The type of the token manager to use to send and receive tokens
+        uint256 token_manager_type;
+        /// The token address in the source chain
+        bytes source_token_address;
+        /// The token address in the destination chain
+        bytes destination_token_address;
+        /// Additional parameters to use to link the token. Currently it's just the address of the
+        /// operator
+        bytes link_params;
+    }
+
+    #[derive(Debug, PartialEq)]
+    #[repr(C)]
+    struct RegisterTokenMetadata {
+        /// Will always have a value of 6
+        uint256 selector;
+        /// The token address
+        bytes token_address;
+        /// The number of decimals for the token
+        uint8 decimals;
+    }
+
+
 }
 
 impl InterchainTransfer {
-    const MESSAGE_TYPE_ID: u8 = 0;
+    pub const MESSAGE_TYPE_ID: u8 = 0;
 }
 
 impl DeployInterchainToken {
     pub const MESSAGE_TYPE_ID: u8 = 1;
-}
-
-impl DeployTokenManager {
-    pub const MESSAGE_TYPE_ID: u8 = 2;
 }
 
 impl SendToHub {
@@ -128,6 +141,14 @@ impl SendToHub {
 
 impl ReceiveFromHub {
     pub const MESSAGE_TYPE_ID: u8 = 4;
+}
+
+impl LinkToken {
+    pub const MESSAGE_TYPE_ID: u8 = 5;
+}
+
+impl RegisterTokenMetadata {
+    pub const MESSAGE_TYPE_ID: u8 = 6;
 }
 
 impl GMPPayload {
@@ -141,15 +162,18 @@ impl GMPPayload {
             DeployInterchainToken::MESSAGE_TYPE_ID => Ok(GMPPayload::DeployInterchainToken(
                 DeployInterchainToken::abi_decode_params(bytes, true)?,
             )),
-            DeployTokenManager::MESSAGE_TYPE_ID => Ok(GMPPayload::DeployTokenManager(
-                DeployTokenManager::abi_decode_params(bytes, true)?,
-            )),
             SendToHub::MESSAGE_TYPE_ID => Ok(GMPPayload::SendToHub(SendToHub::abi_decode_params(
                 bytes, true,
             )?)),
             ReceiveFromHub::MESSAGE_TYPE_ID => Ok(GMPPayload::ReceiveFromHub(
                 ReceiveFromHub::abi_decode_params(bytes, true)?,
             )),
+            RegisterTokenMetadata::MESSAGE_TYPE_ID => Ok(GMPPayload::RegisterTokenMetadata(
+                RegisterTokenMetadata::abi_decode_params(bytes, true)?,
+            )),
+            LinkToken::MESSAGE_TYPE_ID => Ok(GMPPayload::LinkToken(LinkToken::abi_decode_params(
+                bytes, true,
+            )?)),
             _ => Err(alloy_sol_types::Error::custom(
                 "Invalid selector for InterchainTokenService message",
             )),
@@ -160,9 +184,10 @@ impl GMPPayload {
         match self {
             GMPPayload::InterchainTransfer(data) => data.abi_encode_params(),
             GMPPayload::DeployInterchainToken(data) => data.abi_encode_params(),
-            GMPPayload::DeployTokenManager(data) => data.abi_encode_params(),
             GMPPayload::SendToHub(data) => data.abi_encode_params(),
             GMPPayload::ReceiveFromHub(data) => data.abi_encode_params(),
+            GMPPayload::LinkToken(data) => data.abi_encode_params(),
+            GMPPayload::RegisterTokenMetadata(data) => data.abi_encode_params(),
         }
     }
 
@@ -170,9 +195,12 @@ impl GMPPayload {
         match self {
             GMPPayload::InterchainTransfer(data) => Ok(*data.token_id),
             GMPPayload::DeployInterchainToken(data) => Ok(*data.token_id),
-            GMPPayload::DeployTokenManager(data) => Ok(*data.token_id),
             GMPPayload::SendToHub(inner) => GMPPayload::decode(&inner.payload)?.token_id(),
             GMPPayload::ReceiveFromHub(inner) => GMPPayload::decode(&inner.payload)?.token_id(),
+            GMPPayload::LinkToken(data) => Ok(*data.token_id),
+            GMPPayload::RegisterTokenMetadata(_) => Err(alloy_sol_types::Error::Other(
+                Cow::Borrowed("RegisterTokenMetadata does not have a token_id"),
+            )),
         }
     }
 }
@@ -186,12 +214,6 @@ impl From<InterchainTransfer> for GMPPayload {
 impl From<DeployInterchainToken> for GMPPayload {
     fn from(data: DeployInterchainToken) -> Self {
         GMPPayload::DeployInterchainToken(data)
-    }
-}
-
-impl From<DeployTokenManager> for GMPPayload {
-    fn from(data: DeployTokenManager) -> Self {
-        GMPPayload::DeployTokenManager(data)
     }
 }
 
@@ -255,50 +277,6 @@ mod tests {
                     .encode()
             ),
             INTERCHAIN_TRANSFER,
-            "encode-decode should be idempotent"
-        );
-    }
-
-    /// fixture from https://github.com/axelarnetwork/interchain-token-service/blob/0977738a1d7df5551cb3bd2e18f13c0e09944ff2/test/InterchainTokenService.js
-    /// [
-    ///   2,
-    ///   '0xc5d28da02863aba312624a3c2c0b163be2292d59121ccfb7f37e666e50f75863',
-    ///   2,
-    ///   '0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000009a676e781a523b5d0c0e43731313a708cb6075080000000000000000000000000000000000000000000000000000000000000014f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000'
-    /// ]
-    const DEPLOY_TOKEN_MANAGER: &str = "0000000000000000000000000000000000000000000000000000000000000002c5d28da02863aba312624a3c2c0b163be2292d59121ccfb7f37e666e50f7586300000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000400000000000000000000000009a676e781a523b5d0c0e43731313a708cb6075080000000000000000000000000000000000000000000000000000000000000014f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000";
-
-    #[test]
-    fn deploy_token_manager_decode() {
-        // Setup
-        let gmp = GMPPayload::decode(&hex::decode(DEPLOY_TOKEN_MANAGER).unwrap()).unwrap();
-
-        // Action
-        let GMPPayload::DeployTokenManager(data) = gmp else {
-            panic!("wrong variant");
-        };
-
-        // Assert
-        assert_eq!(
-            hex::encode(data.token_id.abi_encode()),
-            "c5d28da02863aba312624a3c2c0b163be2292d59121ccfb7f37e666e50f75863"
-        );
-        assert_eq!(data.token_manager_type, U256::from(2));
-        assert_eq!(
-            data.params,
-            hex::decode("00000000000000000000000000000000000000000000000000000000000000400000000000000000000000009a676e781a523b5d0c0e43731313a708cb6075080000000000000000000000000000000000000000000000000000000000000014f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000").unwrap()
-        );
-    }
-
-    #[test]
-    fn deploy_token_manager_encode() {
-        assert_eq!(
-            hex::encode(
-                GMPPayload::decode(&hex::decode(DEPLOY_TOKEN_MANAGER).unwrap())
-                    .unwrap()
-                    .encode()
-            ),
-            DEPLOY_TOKEN_MANAGER,
             "encode-decode should be idempotent"
         );
     }

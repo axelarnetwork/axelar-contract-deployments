@@ -3,7 +3,7 @@
 use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use interchain_token_transfer_gmp::InterchainTransfer;
+use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
 use program_utils::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -20,7 +20,6 @@ use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
 use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
-use crate::instructions::InterchainTransferInputs;
 use crate::processor::token_manager as token_manager_processor;
 use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
@@ -28,6 +27,8 @@ use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
 };
+
+use super::gmp::{self, GmpAccounts};
 
 /// Processes an incoming [`InterchainTransfer`] GMP message.
 ///
@@ -57,7 +58,7 @@ use crate::{
 ///
 /// An error occurred when processing the message. The reason can be derived
 /// from the logs.
-pub fn process_inbound_transfer<'a>(
+pub(crate) fn process_inbound_transfer<'a>(
     message: Message,
     payer: &'a AccountInfo<'a>,
     message_payload_account: &'a AccountInfo<'a>,
@@ -82,7 +83,7 @@ pub fn process_inbound_transfer<'a>(
     give_token(&parsed_accounts, &token_manager, converted_amount)?;
 
     if !payload.data.is_empty() {
-        let program_account = parsed_accounts.destination_wallet;
+        let program_account = parsed_accounts.destination_account;
         if !program_account.executable {
             return Err(ProgramError::InvalidInstructionData);
         }
@@ -199,8 +200,15 @@ fn build_axelar_interchain_token_execute(
 }
 
 pub(crate) fn process_outbound_transfer<'a>(
-    mut inputs: InterchainTransferInputs,
     accounts: &'a [AccountInfo<'a>],
+    token_id: [u8; 32],
+    destination_chain: String,
+    destination_address: Vec<u8>,
+    mut amount: u64,
+    gas_value: u64,
+    signing_pda_bump: u8,
+    data: Option<Vec<u8>>,
+    payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
     let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
@@ -211,33 +219,32 @@ pub(crate) fn process_outbound_transfer<'a>(
         token_manager.bump,
     )?;
 
-    let amount_minus_fees = take_token(&take_token_accounts, &token_manager, inputs.amount)?;
-    inputs.amount = amount_minus_fees;
-    let maybe_payload_hash = inputs.payload_hash.take();
+    let amount_minus_fees = take_token(&take_token_accounts, &token_manager, amount)?;
+    amount = amount_minus_fees;
 
-    let destination_chain = inputs
-        .destination_chain
-        .take()
-        .ok_or(ProgramError::InvalidInstructionData)?;
-    let signing_pda_bump = inputs
-        .signing_pda_bump
-        .take()
-        .ok_or(ProgramError::InvalidInstructionData)?;
-    let gas_value = inputs.gas_value;
-    let payload = inputs
-        .try_into()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
+    let payload = GMPPayload::InterchainTransfer(InterchainTransfer {
+        selector: InterchainTransfer::MESSAGE_TYPE_ID
+            .try_into()
+            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
+        token_id: token_id.into(),
+        source_address: take_token_accounts.token_mint.key.to_bytes().into(),
+        destination_address: destination_address.into(),
+        amount: alloy_primitives::U256::from(amount),
+        data: data.unwrap_or_default().into(),
+    });
 
-    let (_other, outbound_message_accounts) = accounts.split_at(2);
+    let (_other, outbound_message_accounts) = accounts.split_at(8);
+    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
-    crate::processor::process_outbound_its_gmp_payload(
+    gmp::process_outbound(
         take_token_accounts.payer,
-        outbound_message_accounts,
+        &gmp_accounts,
         &payload,
         destination_chain,
         gas_value,
         signing_pda_bump,
-        maybe_payload_hash,
+        payload_hash,
+        true,
     )
 }
 
@@ -266,14 +273,16 @@ fn give_token(
         accounts.token_manager_pda,
     )?;
 
-    crate::create_associated_token_account_idempotent(
-        accounts.payer,
-        accounts.token_mint,
-        accounts.destination_ata,
-        accounts.destination_wallet,
-        accounts.system_account,
-        accounts.token_program,
-    )?;
+    if let Some(program_ata) = accounts.program_ata {
+        crate::create_associated_token_account_idempotent(
+            accounts.payer,
+            accounts.token_mint,
+            program_ata,
+            accounts.destination_account,
+            accounts.system_account,
+            accounts.token_program,
+        )?;
+    }
 
     handle_give_token_transfer(accounts, token_manager, amount)?;
 
@@ -300,7 +309,11 @@ fn track_token_flow(
         )?;
 
         flow_slot.add_flow(flow_limit, amount, direction)?;
-        flow_slot.store(accounts.flow_slot_pda)?;
+        flow_slot.store(
+            accounts.payer,
+            accounts.flow_slot_pda,
+            accounts.system_account,
+        )?;
     } else {
         let (flow_slot_pda, flow_slot_pda_bump) =
             crate::find_flow_slot_pda(accounts.token_manager_pda.key, current_flow_epoch);
@@ -337,6 +350,8 @@ fn handle_give_token_transfer(
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
 
+    let destination = accounts.program_ata.unwrap_or(accounts.destination_account);
+
     track_token_flow(
         &accounts.into(),
         token_manager.flow_limit,
@@ -357,7 +372,7 @@ fn handle_give_token_transfer(
             accounts.its_root_pda,
             accounts.token_program,
             accounts.token_mint,
-            accounts.destination_ata,
+            destination,
             accounts.token_manager_pda,
             token_manager,
             amount,
@@ -492,7 +507,7 @@ const fn create_take_token_transfer_info<'a, 'b>(
     }
 }
 
-const fn create_give_token_transfer_info<'a, 'b>(
+fn create_give_token_transfer_info<'a, 'b>(
     accounts: &GiveTokenAccounts<'a>,
     amount: u64,
     decimals: u8,
@@ -502,7 +517,7 @@ const fn create_give_token_transfer_info<'a, 'b>(
     TransferInfo {
         token_program: accounts.token_program,
         token_mint: accounts.token_mint,
-        destination_ata: accounts.destination_ata,
+        destination_ata: accounts.program_ata.unwrap_or(accounts.destination_account),
         authority: accounts.token_manager_pda,
         source_ata: accounts.token_manager_ata,
         signers_seeds,
@@ -635,18 +650,14 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) authority: &'a AccountInfo<'a>,
-    pub(crate) _gateway_root_pda: &'a AccountInfo<'a>,
-    pub(crate) _gateway: &'a AccountInfo<'a>,
-    pub(crate) _gas_service_config_pda: &'a AccountInfo<'a>,
-    pub(crate) _gas_service: &'a AccountInfo<'a>,
-    pub(crate) system_account: &'a AccountInfo<'a>,
-    pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) source_account: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_ata: &'a AccountInfo<'a>,
     pub(crate) token_program: &'a AccountInfo<'a>,
     pub(crate) flow_slot_pda: &'a AccountInfo<'a>,
+    pub(crate) system_account: &'a AccountInfo<'a>,
+    pub(crate) its_root_pda: &'a AccountInfo<'a>,
 }
 
 impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
@@ -660,23 +671,20 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
         Ok(TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
             authority: next_account_info(accounts_iter)?,
-            _gateway_root_pda: next_account_info(accounts_iter)?,
-            _gateway: next_account_info(accounts_iter)?,
-            _gas_service_config_pda: next_account_info(accounts_iter)?,
-            _gas_service: next_account_info(accounts_iter)?,
-            system_account: next_account_info(accounts_iter)?,
-            its_root_pda: {
-                let keep = next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                next_account_info(accounts_iter)?;
-                keep
-            },
             source_account: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
             token_manager_ata: next_account_info(accounts_iter)?,
             token_program: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
+            system_account: {
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?;
+                next_account_info(accounts_iter)?
+            },
+            its_root_pda: next_account_info(accounts_iter)?,
         })
     }
 }
@@ -694,9 +702,9 @@ struct GiveTokenAccounts<'a> {
     _ata_program: &'a AccountInfo<'a>,
     _its_roles_pda: &'a AccountInfo<'a>,
     _rent_sysvar: &'a AccountInfo<'a>,
-    destination_wallet: &'a AccountInfo<'a>,
-    destination_ata: &'a AccountInfo<'a>,
+    destination_account: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
+    program_ata: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_program: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
 }
@@ -723,9 +731,9 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             _ata_program: next_account_info(accounts_iter)?,
             _its_roles_pda: next_account_info(accounts_iter)?,
             _rent_sysvar: next_account_info(accounts_iter)?,
-            destination_wallet: next_account_info(accounts_iter)?,
-            destination_ata: next_account_info(accounts_iter)?,
+            destination_account: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
+            program_ata: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
         })
@@ -771,7 +779,9 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,
             token_mint: give_token_accounts.token_mint,
-            program_ata: give_token_accounts.destination_ata,
+            program_ata: give_token_accounts
+                .program_ata
+                .ok_or(ProgramError::NotEnoughAccountKeys)?,
             mpl_token_metadata_program: give_token_accounts
                 .mpl_token_metadata_program
                 .ok_or(ProgramError::NotEnoughAccountKeys)?,

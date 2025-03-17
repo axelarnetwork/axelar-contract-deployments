@@ -8,7 +8,9 @@ remappings = [
   "interchain-token-service/=lib/interchain-token-service/",
   "openzeppelin-contracts/=lib/openzeppelin-contracts/",
   "axelar-cgp-solidity/=lib/axelar-cgp-solidity/",
-  "@axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity-its-compat/",
+
+  "lib/axelar-cgp-solidity:@axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity-cgp-compat/",
+  "@axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity",
   "@axelar-network/axelar-cgp-solidity/=lib/axelar-cgp-solidity"
 ]
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

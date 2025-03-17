@@ -1,38 +1,42 @@
 //! State module contains data structures that keep state within the ITS
 //! program.
 
-use core::any::type_name;
-use core::mem::size_of;
+use std::collections::HashSet;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use program_utils::BorshPda;
-use solana_program::msg;
-use solana_program::program_error::ProgramError;
-use solana_program::program_pack::{Pack, Sealed};
 
+pub mod deploy_approval;
 pub mod flow_limit;
 pub mod token_manager;
 
 /// Struct containing state of the ITS program.
 #[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct InterchainTokenService {
+    /// The address of the Axelar ITS Hub contract.
+    pub its_hub_address: String,
+    /// Name of the chain ITS is running on.
+    pub chain_name: String,
+
     /// Whether the ITS is paused.
     pub paused: bool,
+
+    /// Trusted chains
+    pub trusted_chains: HashSet<String>,
 
     /// Bump used to derive the ITS PDA.
     pub bump: u8,
 }
 
 impl InterchainTokenService {
-    /// The approximate length of the `InterchainTokenService` struct in bytes.
-    /// Doesn't take padding into account.
-    pub const LEN: usize = size_of::<bool>() + size_of::<u8>();
-
     /// Create a new `InterchainTokenService` instance.
     #[must_use]
-    pub const fn new(bump: u8) -> Self {
+    pub fn new(bump: u8, chain_name: String, its_hub_address: String) -> Self {
         Self {
+            its_hub_address,
+            chain_name,
             paused: false,
+            trusted_chains: HashSet::new(),
             bump,
         }
     }
@@ -52,28 +56,22 @@ impl InterchainTokenService {
     pub const fn bump(&self) -> u8 {
         self.bump
     }
-}
 
-impl Pack for InterchainTokenService {
-    const LEN: usize = size_of::<bool>() + size_of::<u8>();
-
-    #[allow(clippy::unwrap_used)]
-    fn pack_into_slice(&self, mut dst: &mut [u8]) {
-        self.serialize(&mut dst).unwrap();
+    /// Add a chain as trusted
+    pub fn add_trusted_chain(&mut self, chain_id: String) {
+        self.trusted_chains.insert(chain_id);
     }
 
-    fn unpack_from_slice(src: &[u8]) -> Result<Self, solana_program::program_error::ProgramError> {
-        let mut mut_src: &[u8] = src;
-        Self::deserialize(&mut mut_src).map_err(|err| {
-            msg!(
-                "Error: failed to deserialize account as {}: {}",
-                type_name::<Self>(),
-                err
-            );
-            ProgramError::InvalidAccountData
-        })
+    /// Remove a chain from trusted
+    pub fn remove_trusted_chain(&mut self, chain_id: &str) {
+        self.trusted_chains.remove(chain_id);
+    }
+
+    /// Checks whether or not a given chain is trusted
+    #[must_use]
+    pub fn is_trusted_chain(&self, chain_id: &str) -> bool {
+        self.trusted_chains.contains(chain_id)
     }
 }
 
-impl Sealed for InterchainTokenService {}
 impl BorshPda for InterchainTokenService {}

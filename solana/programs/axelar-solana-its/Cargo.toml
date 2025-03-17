@@ -30,14 +30,15 @@ program-utils.workspace = true
 role-management.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
-spl-token = { workspace = true, features = ["no-entrypoint"] }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"] }
 typed-builder.workspace = true
 
 [dev-dependencies]
+anyhow.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 axelar-solana-memo-program = { workspace = true, features = ["no-entrypoint"] }
 evm-contracts-test-suite.workspace = true
 rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
+test-context.workspace = true

@@ -2,10 +2,11 @@
 
 //! Program utility functions
 
+use core::any::type_name;
 use std::borrow::Borrow;
 use std::io::Write;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use bytemuck::{AnyBitPattern, NoUninit};
 use rkyv::de::deserializers::SharedDeserializeMap;
 use rkyv::ser::serializers::AllocSerializer;
@@ -14,9 +15,8 @@ use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke_signed;
+use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
@@ -414,7 +414,7 @@ pub fn transfer_lamports(
 /// Convenience trait to store and load rkyv serialized data to/from an account.
 pub trait BorshPda
 where
-    Self: Sized + Clone + Pack + BorshSerialize + BorshDeserialize,
+    Self: Sized + Clone + BorshSerialize + BorshDeserialize,
 {
     /// Initializes an account with the current object serialized data.
     fn init<'a>(
@@ -425,28 +425,64 @@ where
         into: &AccountInfo<'a>,
         signer_seeds: &[&[u8]],
     ) -> ProgramResult {
-        init_pda::<Self>(
+        let serialized_data = to_vec(self)?;
+
+        init_pda_raw_bytes(
             payer,
             into,
             program_id,
             system_account,
-            self.clone(),
+            &serialized_data,
             signer_seeds,
-        )
+        )?;
+
+        Ok(())
     }
 
     /// Stores the current object serialized data into the destination account.
     /// The account must have been initialized beforehand.
-    fn store(&self, destination: &AccountInfo<'_>) -> ProgramResult {
+    fn store<'a>(
+        &self,
+        payer: &AccountInfo<'a>,
+        destination: &AccountInfo<'a>,
+        system_program: &AccountInfo<'a>,
+    ) -> ProgramResult {
+        let serialized_data = to_vec(self)?;
+
+        if serialized_data.len() > destination.data_len() {
+            let lamports_needed = Rent::get()?.minimum_balance(serialized_data.len());
+            let lamports_diff = lamports_needed.saturating_sub(destination.lamports());
+
+            invoke(
+                &system_instruction::transfer(payer.key, destination.key, lamports_diff),
+                &[payer.clone(), destination.clone(), system_program.clone()],
+            )?;
+        }
+
+        destination.realloc(serialized_data.len(), false)?;
         let mut account_data = destination.try_borrow_mut_data()?;
-        self.pack_into_slice(&mut account_data);
+        account_data.copy_from_slice(serialized_data.as_slice());
+
         Ok(())
     }
 
     /// Loads the account data and deserializes it.
     fn load(source_account: &AccountInfo<'_>) -> Result<Self, ProgramError> {
         let account_data = source_account.try_borrow_data()?;
-        Self::unpack_from_slice(&account_data)
+        let deserialized = match Self::try_from_slice(&account_data[..]) {
+            Ok(value) => value,
+            Err(err) => {
+                msg!(
+                    "Warning: failed to deserialize account as {}: {}. The account might not have been initialized.",
+                    type_name::<Self>(),
+                    err,
+                );
+
+                return Err(ProgramError::from(err));
+            }
+        };
+
+        Ok(deserialized)
     }
 }
 

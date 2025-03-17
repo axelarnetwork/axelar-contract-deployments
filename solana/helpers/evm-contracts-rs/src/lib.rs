@@ -42,8 +42,8 @@ pub mod contracts {
         include!(concat!(env!("OUT_DIR"), "/InterchainTokenFactory.rs"));
     }
 
-    pub mod test_canonical_token {
-        include!(concat!(env!("OUT_DIR"), "/TestCanonicalToken.rs"));
+    pub mod custom_test_token {
+        include!(concat!(env!("OUT_DIR"), "/CustomTestToken.rs"));
     }
 
     pub mod gateway_caller {

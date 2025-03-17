@@ -5,6 +5,7 @@ use role_management::instructions::{RoleManagementInstruction, RoleManagementIns
 use solana_program::instruction::AccountMeta;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
 use super::{operator, InterchainTokenServiceInstruction};
 use crate::Roles;
@@ -52,6 +53,23 @@ pub enum Instruction {
     /// 1..N [`operator::OperatorInstruction`] accounts, where the resource is
     /// the [`TokenManager`] PDA.
     OperatorInstruction(super::operator::Instruction),
+
+    /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
+    /// minters. The account transferring the authority gains minter role on the [`TokenManager`] and
+    /// thus can then mint tokens through the ITS mitn instruction.
+    ///
+    /// 0. [writable, signer] Payer, current mint authority
+    /// 1. [writable] The mint for which the authority is being handed over
+    /// 2. [] Gateway root account
+    /// 3. [] ITS root account
+    /// 4. [] The [`TokenManager`] account associated with the mint
+    /// 5. [] The account that will hold the roles of the former authority on the [`TokenManager`]
+    /// 6. [] The token program used to create the mint
+    /// 7. [] The system program account
+    HandOverMintAuthority {
+        /// The id of the token registered with ITS for which the authority is being handed over.
+        token_id: [u8; 32],
+    },
 }
 
 impl TryFrom<RoleManagementInstruction<Roles>> for Instruction {
@@ -98,6 +116,7 @@ pub fn set_flow_limit(
         AccountMeta::new(token_manager_pda, false),
         AccountMeta::new_readonly(token_manager_user_roles_pda, false),
         AccountMeta::new_readonly(its_user_roles_pda, false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     Ok(solana_program::instruction::Instruction {
@@ -248,6 +267,45 @@ pub fn accept_operatorship(
         operator::accept_operatorship(payer, token_manager_pda, from, Some(accounts))?;
     let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
         Instruction::OperatorInstruction(operator_instruction),
+    ))?;
+
+    Ok(solana_program::instruction::Instruction {
+        program_id: crate::id(),
+        accounts,
+        data,
+    })
+}
+
+/// Creates an [`Instruction::HandoverMintAuthority`] instruction.
+///
+/// # Errors
+///
+/// If serialization fails.
+pub fn handover_mint_authority(
+    payer: Pubkey,
+    token_id: [u8; 32],
+    mint: Pubkey,
+    token_program: Pubkey,
+) -> Result<solana_program::instruction::Instruction, ProgramError> {
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let (minter_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &payer);
+
+    let accounts = vec![
+        AccountMeta::new(payer, true),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(minter_roles_pda, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
+        Instruction::HandOverMintAuthority { token_id },
     ))?;
 
     Ok(solana_program::instruction::Instruction {

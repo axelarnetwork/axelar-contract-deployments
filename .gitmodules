@@ -11,7 +11,7 @@
 	url = https://github.com/axelarnetwork/interchain-token-service
     shallow = true
 [submodule "evm-contracts/lib/axelar-gmp-sdk-solidity-its-compat"]
-	path = evm-contracts/lib/axelar-gmp-sdk-solidity-its-compat
+	path = evm-contracts/lib/axelar-gmp-sdk-solidity-cgp-compat
 	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
     shallow = true
 [submodule "evm-contracts/lib/axelar-cgp-solidity"]

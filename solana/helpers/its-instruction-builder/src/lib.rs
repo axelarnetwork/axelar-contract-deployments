@@ -100,12 +100,17 @@ where
             Ok((Some(token_mint), token_program))
         }
         GMPPayload::DeployInterchainToken(_) => Ok((None, spl_token_2022::id())),
-        GMPPayload::DeployTokenManager(deploy_payload) => {
-            let token_mint = axelar_solana_its::state::token_manager::decode_params(
-                deploy_payload.params.as_ref(),
-            )
-            .map(|(_, _, token_mint)| Pubkey::try_from(token_mint.as_ref()))?
-            .map_err(|_err| ProgramError::InvalidInstructionData)?;
+        GMPPayload::RegisterTokenMetadata(_) | GMPPayload::SendToHub(_) => {
+            return Err(ProgramError::InvalidArgument)
+        }
+        GMPPayload::ReceiveFromHub(inner) => {
+            let inner_payload =
+                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
+            try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
+        }
+        GMPPayload::LinkToken(link_payload) => {
+            let token_mint = Pubkey::try_from(link_payload.destination_token_address.as_ref())
+                .map_err(|_err| ProgramError::InvalidInstructionData)?;
 
             let token_program = rpc_client
                 .get_account(&token_mint)
@@ -114,12 +119,6 @@ where
                 .owner;
 
             Ok((Some(token_mint), token_program))
-        }
-        GMPPayload::SendToHub(_) => return Err(ProgramError::InvalidArgument),
-        GMPPayload::ReceiveFromHub(inner) => {
-            let inner_payload =
-                GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
-            try_infer_mint_and_program(token_manager_pda, &inner_payload, rpc_client).await
         }
     }
 }
@@ -140,7 +139,9 @@ fn ensure_payer_is_not_forwarded(payer: Pubkey, payload: &GMPPayload) -> Result<
                 GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidArgument)?;
             ensure_payer_is_not_forwarded(payer, &inner_payload)?;
         }
-        GMPPayload::DeployInterchainToken(_) | GMPPayload::DeployTokenManager(_) => {}
+        GMPPayload::LinkToken(_)
+        | GMPPayload::RegisterTokenMetadata(_)
+        | GMPPayload::DeployInterchainToken(_) => {}
     }
 
     Ok(())

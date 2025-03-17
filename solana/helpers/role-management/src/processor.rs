@@ -156,11 +156,19 @@ fn transfer_roles<F: RolesFlags>(
 
     let mut origin_user_roles = UserRoles::load(accounts.origin_roles_account)?;
     origin_user_roles.remove(roles);
-    origin_user_roles.store(accounts.origin_roles_account)?;
+    origin_user_roles.store(
+        accounts.payer,
+        accounts.origin_roles_account,
+        accounts.system_account,
+    )?;
 
     if let Ok(mut destination_user_roles) = UserRoles::load(accounts.destination_roles_account) {
         destination_user_roles.add(roles);
-        destination_user_roles.store(accounts.destination_roles_account)?;
+        destination_user_roles.store(
+            accounts.payer,
+            accounts.destination_roles_account,
+            accounts.system_account,
+        )?;
     } else {
         let signer_seeds = &[
             seed_prefixes::USER_ROLES_SEED,
@@ -235,7 +243,11 @@ pub fn add<F: RolesFlags>(
     if let Ok(mut destination_user_roles) = UserRoles::load(add_accounts.destination_roles_account)
     {
         destination_user_roles.add(inputs.roles);
-        destination_user_roles.store(add_accounts.destination_roles_account)?;
+        destination_user_roles.store(
+            add_accounts.payer,
+            add_accounts.destination_roles_account,
+            add_accounts.system_account,
+        )?;
     } else {
         let signer_seeds = &[
             seed_prefixes::USER_ROLES_SEED,
@@ -280,7 +292,11 @@ pub fn remove<F: RolesFlags>(
         UserRoles::load(remove_accounts.destination_roles_account)
     {
         destination_user_roles.remove(inputs.roles);
-        destination_user_roles.store(remove_accounts.destination_roles_account)?;
+        destination_user_roles.store(
+            remove_accounts.payer,
+            remove_accounts.destination_roles_account,
+            remove_accounts.system_account,
+        )?;
     } else {
         msg!("Trying to remove roles from a user that doesn't have any");
         return Err(ProgramError::InvalidArgument);

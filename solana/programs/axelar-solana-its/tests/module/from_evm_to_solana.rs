@@ -1,31 +1,64 @@
-use axelar_executable::{AxelarMessagePayload, EncodingScheme, SolanaAccountRepr};
-use axelar_solana_its::state::token_manager::TokenManager;
-use axelar_solana_memo_program::state::Counter;
+use alloy_primitives::U256;
+use anyhow::anyhow;
 use borsh::BorshDeserialize;
-use evm_contracts_test_suite::ethers::signers::Signer;
-use evm_contracts_test_suite::ethers::types::{Address, Bytes};
-use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
-use evm_contracts_test_suite::ItsContracts;
-use interchain_token_transfer_gmp::GMPPayload;
 use solana_program_test::tokio;
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::program_pack::Pack as _;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer as _;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::instruction::create_associated_token_account;
+use test_context::test_context;
 
-use crate::{axelar_evm_setup, axelar_solana_setup, relay_to_solana, ItsProgramWrapper};
+use axelar_message_primitives::{DataPayload, EncodingScheme, SolanaAccountRepr};
+use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_its::state::token_manager::{TokenManager, Type as TokenManagerType};
+use axelar_solana_memo_program::state::Counter;
+use evm_contracts_test_suite::ethers::{signers::Signer, types::Bytes};
+use evm_contracts_test_suite::evm_contracts_rs::contracts::axelar_amplifier_gateway::ContractCallFilter;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::custom_test_token::CustomTestToken;
+use evm_contracts_test_suite::evm_contracts_rs::contracts::interchain_token::InterchainToken;
+use evm_contracts_test_suite::ContractMiddleware;
+use interchain_token_transfer_gmp::GMPPayload;
 
-async fn setup_canonical_interchain_token(
-    its_contracts: &ItsContracts,
-    solana_chain_name: String,
-    token_address: Address,
-) -> Result<([u8; 32], Vec<u8>), Box<dyn std::error::Error>> {
-    its_contracts
-        .interchain_token_factory
-        .register_canonical_interchain_token(token_address)
+use crate::{
+    fetch_first_call_contract_event_from_tx, retrieve_evm_log_with_filter, ItsTestContext,
+};
+
+async fn custom_token(
+    ctx: &mut ItsTestContext,
+    token_manager_type: TokenManagerType,
+) -> anyhow::Result<([u8; 32], CustomTestToken<ContractMiddleware>, Pubkey)> {
+    let token_manager_type: U256 = token_manager_type.into();
+    let token_name = "Custom Token";
+    let token_symbol = "CT";
+    let salt = solana_sdk::keccak::hash(b"custom-token-salt").to_bytes();
+    let custom_token = ctx
+        .evm_signer
+        .deploy_axelar_custom_test_token(token_name.to_owned(), token_symbol.to_owned(), 18)
+        .await?;
+
+    ctx.evm_its_contracts
+        .interchain_token_service
+        .register_token_metadata(custom_token.address(), 0.into())
         .send()
         .await?
-        .await?
-        .ok_or("failed to register canonical interchain token")?;
+        .await?;
 
-    let event_filter = its_contracts
+    ctx.evm_its_contracts
+        .interchain_token_factory
+        .register_custom_token(
+            salt,
+            custom_token.address(),
+            token_manager_type.try_into()?,
+            ctx.evm_signer.wallet.address(),
+        )
+        .send()
+        .await?
+        .await?;
+
+    let event_filter = ctx
+        .evm_its_contracts
         .interchain_token_service
         .interchain_token_id_claimed_filter();
 
@@ -33,197 +66,352 @@ async fn setup_canonical_interchain_token(
         .query()
         .await?
         .first()
-        .ok_or("no token id found")?
+        .ok_or_else(|| anyhow!("no token id found"))?
         .token_id;
 
-    its_contracts
+    let custom_solana_token = ctx
+        .solana_chain
+        .fixture
+        .init_new_mint(ctx.solana_wallet, spl_token_2022::id(), 9)
+        .await;
+
+    let register_metadata = axelar_solana_its::instructions::register_token_metadata(
+        ctx.solana_wallet,
+        custom_solana_token,
+        spl_token_2022::id(),
+        0,
+        axelar_solana_gas_service::id(),
+        ctx.solana_gas_utils.config_pda,
+    )?;
+
+    let tx = ctx.send_solana_tx(&[register_metadata]).await.unwrap();
+    let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+
+    let GMPPayload::RegisterTokenMetadata(register_message) =
+        GMPPayload::decode(&call_contract_event.payload)?
+    else {
+        panic!("wrong message");
+    };
+
+    assert_eq!(
+        register_message.token_address.as_ref(),
+        custom_solana_token.as_ref()
+    );
+    assert_eq!(register_message.decimals, 9);
+
+    ctx.evm_its_contracts
         .interchain_token_factory
-        .deploy_remote_canonical_interchain_token(token_address, solana_chain_name, 0_u128.into())
+        .link_token(
+            salt,
+            ctx.solana_chain_name.clone(),
+            custom_solana_token.to_bytes().into(),
+            token_manager_type.try_into()?,
+            ctx.solana_wallet.to_bytes().into(),
+            0_u128.into(),
+        )
         .send()
         .await?
-        .await?
-        .ok_or("failed to deploy remote canonical interchain token")?;
+        .await?;
 
-    let log: ContractCallFilter = its_contracts
+    let log: ContractCallFilter = ctx
+        .evm_its_contracts
         .gateway
         .contract_call_filter()
         .query()
         .await?
         .into_iter()
         .next()
-        .ok_or("no logs found")?;
+        .ok_or_else(|| anyhow!("no logs found"))?;
 
-    Ok((token_id, log.payload.as_ref().to_vec()))
-}
-
-#[tokio::test]
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::non_ascii_literal)]
-#[allow(clippy::little_endian_bytes)]
-async fn test_send_from_evm_to_solana() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_chain_name,
-        counter_pda,
-    } = axelar_solana_setup(true).await;
-    let (_evm_chain, evm_signer, its_contracts, _weighted_signers, _domain_separator) =
-        axelar_evm_setup().await;
-
-    let token_name = "Canonical Token";
-    let token_symbol = "CT";
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
-        .await
-        .unwrap();
-
-    let (token_id, payload) = setup_canonical_interchain_token(
-        &its_contracts,
-        solana_chain_name.clone(),
-        test_its_canonical_token.address(),
+    ctx.relay_to_solana(
+        log.payload.as_ref(),
+        Some(custom_solana_token),
+        spl_token_2022::id(),
     )
-    .await
-    .expect("failed to setup interchain token from canonical token");
-
-    let payload = if let Ok(GMPPayload::SendToHub(inner)) = GMPPayload::decode(&payload) {
-        inner.payload.to_vec()
-    } else {
-        panic!("unexpected payload type")
-    };
-    relay_to_solana(payload, &mut solana_chain, None, spl_token_2022::id()).await;
-
-    let (its_root_pda, _its_root_pda_bump) =
-        axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
-
-    let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
-    let metadata_account = solana_chain
-        .try_get_account_no_checks(&metadata_account_key)
-        .await
-        .unwrap()
-        .unwrap();
-    let token_metadata =
-        mpl_token_metadata::accounts::Metadata::from_bytes(&metadata_account.data).unwrap();
-
-    assert_eq!(token_name, token_metadata.name.trim_end_matches('\0'));
-    assert_eq!(token_symbol, token_metadata.symbol.trim_end_matches('\0'));
-
-    let (token_manager_pda, _bump) =
+    .await;
+    let (its_root_pda, _) =
+        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+    let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
-    let data = solana_chain
+    let data = ctx
+        .solana_chain
         .fixture
         .get_account(&token_manager_pda, &axelar_solana_its::id())
         .await
         .data;
-    let token_manager = TokenManager::try_from_slice(&data).unwrap();
+    let token_manager = TokenManager::try_from_slice(&data)?;
 
     assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
-    assert_eq!(mint.as_ref(), token_manager.token_address.as_ref());
+    assert_eq!(
+        custom_solana_token.as_ref(),
+        token_manager.token_address.as_ref()
+    );
 
-    let _receipt = test_its_canonical_token
-        .mint(evm_signer.wallet.address(), u64::MAX.into())
+    Ok((token_id, custom_token, custom_solana_token))
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_custom_token_lock_unlock_link_transfer(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    let (token_id, evm_token, solana_token) =
+        custom_token(ctx, TokenManagerType::LockUnlock).await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let initial_balance = 300;
+    let mint_ix = spl_token_2022::instruction::mint_to(
+        &spl_token_2022::id(),
+        &solana_token,
+        &token_account,
+        &ctx.solana_wallet,
+        &[],
+        initial_balance,
+    )?;
+
+    ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+
+    // Mint some tokens to the token manager so it can unlock
+    let token_manager = ctx
+        .evm_its_contracts
+        .interchain_token_service
+        .token_manager_address(token_id)
+        .call()
+        .await?;
+
+    evm_token
+        .mint(token_manager, 900.into())
         .send()
-        .await
-        .unwrap()
-        .await
-        .unwrap()
-        .unwrap();
+        .await?
+        .await?;
 
-    test_its_canonical_token
+    evm_token
         .approve(
-            its_contracts.interchain_token_service.address(),
+            ctx.evm_its_contracts.interchain_token_service.address(),
             u64::MAX.into(),
         )
         .send()
-        .await
-        .unwrap()
-        .await
-        .unwrap()
-        .unwrap();
+        .await?
+        .await?;
 
+    ctx.test_interchain_transfer(token_id, solana_token, initial_balance, token_account)
+        .await;
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (token_id, evm_token, solana_token) = custom_token(ctx, TokenManagerType::MintBurn).await?;
+
+    let authority_transfer_ix =
+        axelar_solana_its::instructions::token_manager::handover_mint_authority(
+            ctx.solana_wallet,
+            token_id,
+            solana_token,
+            spl_token_2022::id(),
+        )?;
+
+    let token_manager = ctx
+        .evm_its_contracts
+        .interchain_token_service
+        .token_manager_address(token_id)
+        .call()
+        .await?;
+
+    evm_token
+        .transfer_mintership(token_manager)
+        .send()
+        .await?
+        .await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let initial_balance = 300;
+    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+        token_id,
+        solana_token,
+        token_account,
+        ctx.solana_wallet,
+        spl_token_2022::id(),
+        initial_balance,
+    )?;
+
+    ctx.send_solana_tx(&[
+        ComputeBudgetInstruction::set_compute_unit_limit(250_000),
+        authority_transfer_ix,
+        create_ata_ix,
+        mint_ix,
+    ])
+    .await
+    .unwrap();
+
+    ctx.test_interchain_transfer(token_id, solana_token, initial_balance, token_account)
+        .await;
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
     let memo_instruction =
         axelar_solana_memo_program::instruction::AxelarMemoInstruction::ProcessMemo {
             memo: "🐪🐪🐪🐪".to_owned(),
         };
+
+    let evm_token_address = ctx
+        .evm_its_contracts
+        .interchain_token_service
+        .registered_token_address(ctx.deployed_interchain_token)
+        .call()
+        .await?;
+
+    let evm_token = InterchainToken::new(
+        evm_token_address,
+        ctx.evm_its_contracts.interchain_token_service.client(),
+    );
+
     let transfer_amount = 500_000_u64;
+    evm_token
+        .mint(ctx.evm_signer.wallet.address(), transfer_amount.into())
+        .send()
+        .await?
+        .await?;
+
     let metadata = Bytes::from(
         [
             0_u32.to_le_bytes().as_slice(), // MetadataVersion.CONTRACT_CALL
-            &AxelarMessagePayload::new(
+            &DataPayload::new(
                 &borsh::to_vec(&memo_instruction).unwrap(),
                 &[SolanaAccountRepr {
-                    pubkey: counter_pda.unwrap().to_bytes().into(),
+                    pubkey: ctx.counter_pda.to_bytes().into(),
                     is_signer: false,
                     is_writable: true,
                 }],
                 EncodingScheme::AbiEncoding,
             )
-            .encode()
-            .unwrap(),
+            .encode()?,
         ]
         .concat(),
     );
 
-    its_contracts
+    ctx.evm_its_contracts
         .interchain_token_service
         .interchain_transfer(
-            token_id,
-            solana_chain_name.clone(),
+            ctx.deployed_interchain_token,
+            ctx.solana_chain_name.clone(),
             axelar_solana_memo_program::id().to_bytes().into(),
             transfer_amount.into(),
             metadata,
             0_u128.into(),
         )
         .send()
-        .await
-        .unwrap()
-        .await
-        .unwrap()
+        .await?
+        .await?
         .unwrap();
 
-    let transfer_log: ContractCallFilter = its_contracts
-        .gateway
-        .contract_call_filter()
-        .query()
-        .await
-        .unwrap()
-        .into_iter()
-        .next()
-        .expect("no logs found");
+    let log =
+        retrieve_evm_log_with_filter(ctx.evm_its_contracts.gateway.contract_call_filter()).await;
 
-    let transfer_payload = transfer_log.payload.as_ref().to_vec();
-    let payload = if let Ok(GMPPayload::SendToHub(inner)) = GMPPayload::decode(&transfer_payload) {
-        inner.payload.to_vec()
-    } else {
-        panic!("unexpected payload type");
-    };
-    let tx = relay_to_solana(payload, &mut solana_chain, Some(mint), spl_token_2022::id()).await;
+    let (its_root_pda, _) =
+        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &ctx.deployed_interchain_token);
+
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&token_manager_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data)?;
+
+    let tx = ctx
+        .relay_to_solana(
+            log.payload.as_ref(),
+            Some(token_manager.token_address),
+            spl_token_2022::id(),
+        )
+        .await;
 
     let ata = spl_associated_token_account::get_associated_token_address_with_program_id(
         &axelar_solana_memo_program::id(),
-        &mint,
+        &token_manager.token_address,
         &spl_token_2022::id(),
     );
 
-    let ata_raw_account = solana_chain.try_get_account_no_checks(&ata).await.unwrap();
-    let ata_account =
-        spl_token_2022::state::Account::unpack_from_slice(&ata_raw_account.unwrap().data).unwrap();
+    let ata_raw_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&ata)
+        .await?
+        .unwrap();
 
-    assert_eq!(ata_account.mint, mint);
+    let ata_account = spl_token_2022::state::Account::unpack_from_slice(&ata_raw_account.data)?;
+
+    assert_eq!(ata_account.mint, token_manager.token_address);
     assert_eq!(ata_account.owner, axelar_solana_memo_program::id());
     assert_eq!(ata_account.amount, transfer_amount);
 
-    let log_msgs = tx.metadata.unwrap().log_messages;
     assert!(
-        log_msgs.iter().any(|log| log.as_str().contains("🐪🐪🐪🐪")),
+        tx.find_log("🐪🐪🐪🐪").is_some(),
         "expected memo not found in logs"
     );
-    let counter_raw_account = solana_chain
-        .try_get_account_no_checks(&counter_pda.unwrap())
-        .await
-        .unwrap()
+    let counter_raw_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&ctx.counter_pda)
+        .await?
         .unwrap();
-    let counter = Counter::try_from_slice(&counter_raw_account.data).unwrap();
+    let counter = Counter::try_from_slice(&counter_raw_account.data)?;
 
     assert_eq!(counter.counter, 1);
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[should_panic]
+#[tokio::test]
+async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[axelar_solana_its::instructions::remove_trusted_chain(
+                ctx.solana_chain.upgrade_authority.pubkey(),
+                ctx.evm_chain_name.clone(),
+            )
+            .unwrap()],
+            &[
+                ctx.solana_chain.upgrade_authority.insecure_clone(),
+                ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await;
+
+    let _ = custom_token(ctx, TokenManagerType::MintBurn).await.unwrap();
 }

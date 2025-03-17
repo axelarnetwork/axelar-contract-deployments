@@ -35,8 +35,8 @@ fn main() {
             "../../../evm-contracts/out/AxelarSolanaMultiCall.sol/AxelarSolanaMultiCall.json",
         ),
         (
-            "TestCanonicalToken",
-            "../../../evm-contracts/out/TestCanonicalToken.sol/TestCanonicalToken.json",
+            "CustomTestToken",
+            "../../../evm-contracts/out/CustomTestToken.sol/CustomTestToken.json",
         ),
         (
             "InterchainTokenService",

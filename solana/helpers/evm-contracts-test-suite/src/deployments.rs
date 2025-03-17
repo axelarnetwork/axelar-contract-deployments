@@ -10,8 +10,8 @@ use ethers::utils::keccak256;
 use evm_contracts_rs::contracts::{
     axelar_amplifier_gateway, axelar_amplifier_gateway_proxy, axelar_auth_weighted,
     axelar_create3_deployer, axelar_gas_service, axelar_memo, axelar_solana_multicall,
-    example_encoder, gateway_caller, interchain_proxy, interchain_token, interchain_token_deployer,
-    interchain_token_factory, interchain_token_service, test_canonical_token, token_handler,
+    custom_test_token, example_encoder, gateway_caller, interchain_proxy, interchain_token,
+    interchain_token_deployer, interchain_token_factory, interchain_token_service, token_handler,
     token_manager, token_manager_deployer,
 };
 
@@ -258,14 +258,13 @@ impl crate::EvmSigner {
     /// Deploys the `TokenHandler` contract.
     pub async fn deploy_token_handler(
         &self,
-        gateway: Address,
     ) -> anyhow::Result<token_handler::TokenHandler<ContractMiddleware>> {
         let factory = ContractFactory::new(
             token_handler::TOKENHANDLER_ABI.clone(),
             token_handler::TOKENHANDLER_BYTECODE.clone(),
             self.signer.clone(),
         );
-        let deployer = factory.deploy(gateway)?;
+        let deployer = factory.deploy(())?;
         let contract = self.deploy_custom_poll(deployer.tx).await?;
         Ok(token_handler::TokenHandler::<ContractMiddleware>::new(
             contract,
@@ -410,22 +409,22 @@ impl crate::EvmSigner {
         >::new(factory_address, self.signer.clone()))
     }
 
-    /// Deploys the `TestCanonicalToken` contract.
-    pub async fn deploy_axelar_test_canonical_token(
+    /// Deploys the `CustomTestToken` contract.
+    pub async fn deploy_axelar_custom_test_token(
         &self,
         name: String,
         symbol: String,
         decimals: u8,
-    ) -> anyhow::Result<test_canonical_token::TestCanonicalToken<ContractMiddleware>> {
+    ) -> anyhow::Result<custom_test_token::CustomTestToken<ContractMiddleware>> {
         let factory = ContractFactory::new(
-            test_canonical_token::TESTCANONICALTOKEN_ABI.clone(),
-            test_canonical_token::TESTCANONICALTOKEN_BYTECODE.clone(),
+            custom_test_token::CUSTOMTESTTOKEN_ABI.clone(),
+            custom_test_token::CUSTOMTESTTOKEN_BYTECODE.clone(),
             self.signer.clone(),
         );
         let deployer = factory.deploy((name, symbol, decimals))?;
         let contract = self.deploy_custom_poll(deployer.tx).await?;
         Ok(
-            test_canonical_token::TestCanonicalToken::<ContractMiddleware>::new(
+            custom_test_token::CustomTestToken::<ContractMiddleware>::new(
                 contract,
                 self.signer.clone(),
             ),
@@ -468,7 +467,7 @@ impl crate::EvmSigner {
         let token_manager = self
             .deploy_token_manager(interchain_token_service_address)
             .await?;
-        let token_handler = self.deploy_token_handler(gateway.address()).await?;
+        let token_handler = self.deploy_token_handler().await?;
         let gateway_caller = self
             .deploy_gateway_caller(gateway.address(), gas_service.address())
             .await?;

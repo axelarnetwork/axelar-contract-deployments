@@ -1,44 +1,29 @@
+#![allow(clippy::too_many_arguments)]
 //! Program state processor
-use axelar_executable::{validate_with_gmp_metadata, PROGRAM_ACCOUNTS_START_INDEX};
-use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
-use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
-use itertools::{self, Itertools};
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
-use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
-use solana_program::program::invoke;
-use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
-use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_program};
 
-use self::interchain_transfer::process_inbound_transfer;
 use self::token_manager::SetFlowLimitAccounts;
-use crate::instructions::{
-    self, its_account_indices, InterchainTokenServiceInstruction, OptionalAccountsFlags,
-    OutboundInstructionInputs,
-};
-use crate::state::token_manager::TokenManager;
+use crate::instructions::{self, InterchainTokenServiceInstruction};
 use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
-pub mod interchain_token;
-pub mod interchain_transfer;
-pub mod token_manager;
-
-const ITS_HUB_TRUSTED_CHAIN_NAME: &str = "axelar";
-const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
-    "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4";
+pub(crate) mod gmp;
+pub(crate) mod interchain_token;
+pub(crate) mod interchain_transfer;
+pub(crate) mod link_token;
+pub(crate) mod token_manager;
 
 /// Processes an instruction.
 ///
@@ -46,6 +31,7 @@ const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
 ///
 /// A `ProgramError` containing the error that occurred is returned. Log
 /// messages are also generated with more detailed information.
+#[allow(clippy::too_many_lines)]
 pub fn process_instruction<'a>(
     program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
@@ -61,30 +47,135 @@ pub fn process_instruction<'a>(
     };
 
     match instruction {
-        InterchainTokenServiceInstruction::Initialize => {
-            process_initialize(program_id, accounts)?;
-        }
+        InterchainTokenServiceInstruction::Initialize {
+            chain_name,
+            its_hub_address,
+        } => process_initialize(program_id, accounts, chain_name, its_hub_address),
         InterchainTokenServiceInstruction::SetPauseStatus { paused } => {
-            process_set_pause_status(accounts, paused)?;
+            process_set_pause_status(accounts, paused)
         }
-        InterchainTokenServiceInstruction::ItsGmpPayload {
-            message,
-            optional_accounts_mask,
-        } => {
-            process_inbound_its_gmp_payload(accounts, message, &optional_accounts_mask)?;
+        InterchainTokenServiceInstruction::ItsGmpPayload { message } => {
+            gmp::process_inbound(accounts, message)
         }
-        InterchainTokenServiceInstruction::DeployInterchainToken { params } => {
-            process_its_native_deploy_call(accounts, params, &OptionalAccountsFlags::empty())?;
+        InterchainTokenServiceInstruction::SetTrustedChain { chain_name } => {
+            process_set_trusted_chain(accounts, chain_name)
         }
-        InterchainTokenServiceInstruction::DeployTokenManager {
-            params,
-            optional_accounts_mask,
-        } => {
-            process_its_native_deploy_call(accounts, params, &optional_accounts_mask)?;
+        InterchainTokenServiceInstruction::RemoveTrustedChain { chain_name } => {
+            process_remove_trusted_chain(accounts, &chain_name)
         }
-        InterchainTokenServiceInstruction::InterchainTransfer { params } => {
-            interchain_transfer::process_outbound_transfer(params, accounts)?;
+        InterchainTokenServiceInstruction::ApproveDeployRemoteInterchainToken {
+            deployer,
+            salt,
+            destination_chain,
+            destination_minter,
+        } => interchain_token::approve_deploy_remote_interchain_token(
+            accounts,
+            deployer,
+            salt,
+            &destination_chain,
+            &destination_minter,
+        ),
+        InterchainTokenServiceInstruction::RevokeDeployRemoteInterchainToken {
+            deployer,
+            salt,
+            destination_chain,
+        } => interchain_token::revoke_deploy_remote_interchain_token(
+            accounts,
+            deployer,
+            salt,
+            &destination_chain,
+        ),
+        InterchainTokenServiceInstruction::RegisterCanonicalInterchainToken => {
+            link_token::register_canonical_interchain_token(accounts)
         }
+        InterchainTokenServiceInstruction::DeployRemoteCanonicalInterchainToken {
+            destination_chain,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_token::deploy_remote_canonical_interchain_token(
+            accounts,
+            destination_chain,
+            gas_value,
+            signing_pda_bump,
+        ),
+        InterchainTokenServiceInstruction::DeployInterchainToken {
+            salt,
+            name,
+            symbol,
+            decimals,
+        } => interchain_token::process_deploy(accounts, salt, name, symbol, decimals),
+        InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
+            salt,
+            destination_chain,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_token::deploy_remote_interchain_token(
+            accounts,
+            salt,
+            destination_chain,
+            None,
+            gas_value,
+            signing_pda_bump,
+        ),
+        InterchainTokenServiceInstruction::DeployRemoteInterchainTokenWithMinter {
+            salt,
+            destination_chain,
+            destination_minter,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_token::deploy_remote_interchain_token(
+            accounts,
+            salt,
+            destination_chain,
+            Some(destination_minter),
+            gas_value,
+            signing_pda_bump,
+        ),
+        InterchainTokenServiceInstruction::InterchainTransfer {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_transfer::process_outbound_transfer(
+            accounts,
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            None,
+            None,
+        ),
+        InterchainTokenServiceInstruction::RegisterTokenMetadata {
+            gas_value,
+            signing_pda_bump,
+        } => link_token::register_token_metadata(accounts, gas_value, signing_pda_bump),
+        InterchainTokenServiceInstruction::RegisterCustomToken {
+            salt,
+            token_manager_type,
+            operator,
+        } => link_token::register_custom_token(accounts, salt, token_manager_type, operator),
+        InterchainTokenServiceInstruction::LinkToken {
+            salt,
+            destination_chain,
+            destination_token_address,
+            token_manager_type,
+            link_params,
+            gas_value,
+            signing_pda_bump,
+        } => link_token::process_outbound(
+            accounts,
+            salt,
+            destination_chain,
+            destination_token_address,
+            token_manager_type,
+            link_params,
+            gas_value,
+            signing_pda_bump,
+        ),
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
             let mut instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
 
@@ -97,35 +188,64 @@ pub fn process_instruction<'a>(
             )?;
 
             instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
-            token_manager::set_flow_limit(&instruction_accounts, flow_limit)?;
+            token_manager::set_flow_limit(&instruction_accounts, flow_limit)
         }
         InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
-            process_operator_instruction(accounts, operator_instruction)?;
+            process_operator_instruction(accounts, operator_instruction)
         }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
-            token_manager::process_instruction(accounts, token_manager_instruction)?;
+            token_manager::process_instruction(accounts, token_manager_instruction)
         }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,
-        ) => {
-            interchain_token::process_instruction(accounts, interchain_token_instruction)?;
-        }
-        InterchainTokenServiceInstruction::CallContractWithInterchainToken { params }
-        | InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
-            params,
-        } => {
-            if params.data.is_empty() {
-                return Err(ProgramError::InvalidInstructionData);
-            }
-
-            interchain_transfer::process_outbound_transfer(params, accounts)?;
-        }
+        ) => interchain_token::process_instruction(accounts, interchain_token_instruction),
+        InterchainTokenServiceInstruction::CallContractWithInterchainToken {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            data,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_transfer::process_outbound_transfer(
+            accounts,
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            Some(data),
+            None,
+        ),
+        InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            payload_hash,
+            gas_value,
+            signing_pda_bump,
+        } => interchain_transfer::process_outbound_transfer(
+            accounts,
+            token_id,
+            destination_chain,
+            destination_address,
+            amount,
+            gas_value,
+            signing_pda_bump,
+            None,
+            Some(payload_hash),
+        ),
     }
-
-    Ok(())
 }
 
-fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> ProgramResult {
+fn process_initialize(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo<'_>],
+    chain_name: String,
+    its_hub_address: String,
+) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
     let program_data_account = next_account_info(account_info_iter)?;
@@ -156,7 +276,8 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
     )?;
 
     let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(gateway_root_pda_account.key);
-    let its_root_config = InterchainTokenService::new(its_root_pda_bump);
+    let its_root_config =
+        InterchainTokenService::new(its_root_pda_bump, chain_name, its_hub_address);
     its_root_config.init(
         &crate::id(),
         system_account,
@@ -185,264 +306,6 @@ fn process_initialize(program_id: &Pubkey, accounts: &[AccountInfo<'_>]) -> Prog
         payer,
         user_roles_account,
         signer_seeds,
-    )?;
-
-    Ok(())
-}
-
-fn process_inbound_its_gmp_payload<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    message: Message,
-    optional_accounts_flags: &OptionalAccountsFlags,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-
-    let (gateway_accounts, instruction_accounts) = accounts_iter
-        .as_slice()
-        .split_at(PROGRAM_ACCOUNTS_START_INDEX);
-
-    if message.source_address != ITS_HUB_TRUSTED_CONTRACT_ADDRESS {
-        msg!("Untrusted source address: {}", message.source_address);
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    validate_with_gmp_metadata(gateway_accounts, &message)?;
-
-    let _gateway_approved_message_pda = next_account_info(accounts_iter)?;
-    let payload_account = next_account_info(accounts_iter)?;
-    let _signing_pda = next_account_info(accounts_iter)?;
-    let _gateway_program_id = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
-    let _system_program = next_account_info(accounts_iter)?;
-    let its_root_pda_account = next_account_info(accounts_iter)?;
-
-    let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
-    assert_valid_its_root_pda(
-        its_root_pda_account,
-        gateway_root_pda_account.key,
-        its_root_config.bump,
-    )?;
-
-    if its_root_config.paused {
-        msg!("The Interchain Token Service is currently paused.");
-        return Err(ProgramError::Immutable);
-    }
-
-    let payload_account_data = payload_account.try_borrow_data()?;
-    let message_payload: ImmutMessagePayload<'_> = (**payload_account_data).try_into()?;
-
-    let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
-        .map_err(|_err| ProgramError::InvalidInstructionData)?
-    else {
-        msg!("Unsupported GMP payload");
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    let payload =
-        GMPPayload::decode(&inner.payload).map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-    validate_its_accounts(instruction_accounts, &payload)?;
-
-    match payload {
-        GMPPayload::InterchainTransfer(transfer) => process_inbound_transfer(
-            message,
-            payer,
-            payload_account,
-            instruction_accounts,
-            &transfer,
-        ),
-        GMPPayload::DeployInterchainToken(deploy) => {
-            interchain_token::process_deploy(payer, instruction_accounts, deploy)
-        }
-        GMPPayload::DeployTokenManager(deploy) => token_manager::process_deploy(
-            payer,
-            instruction_accounts,
-            &deploy,
-            optional_accounts_flags,
-        ),
-        GMPPayload::SendToHub(_) | GMPPayload::ReceiveFromHub(_) => {
-            Err(ProgramError::InvalidInstructionData)
-        }
-    }
-}
-
-fn process_its_native_deploy_call<'a, T>(
-    accounts: &'a [AccountInfo<'a>],
-    mut payload: T,
-    optional_accounts_flags: &OptionalAccountsFlags,
-) -> ProgramResult
-where
-    T: TryInto<GMPPayload> + OutboundInstructionInputs,
-{
-    let (payer, other_accounts) = accounts
-        .split_first()
-        .ok_or(ProgramError::InvalidInstructionData)?;
-
-    let gas_value = payload.gas_value();
-    let bump_and_chain = payload
-        .signing_pda_bump()
-        .and_then(|bump| payload.destination_chain().map(|chain| (bump, chain)));
-
-    let payload: GMPPayload = payload
-        .try_into()
-        .map_err(|_err| ProgramError::InvalidInstructionData)?;
-
-    match bump_and_chain {
-        Some((signing_pda_bump, chain)) => {
-            process_outbound_its_gmp_payload(
-                payer,
-                other_accounts,
-                &payload,
-                chain,
-                gas_value,
-                signing_pda_bump,
-                None,
-            )?;
-        }
-        None => match payload {
-            GMPPayload::DeployInterchainToken(deploy) => {
-                interchain_token::process_deploy(payer, other_accounts, deploy)?;
-            }
-            GMPPayload::DeployTokenManager(deploy) => token_manager::process_deploy(
-                payer,
-                other_accounts,
-                &deploy,
-                optional_accounts_flags,
-            )?,
-            GMPPayload::SendToHub(_)
-            | GMPPayload::ReceiveFromHub(_)
-            | GMPPayload::InterchainTransfer(_) => {
-                return Err(ProgramError::InvalidInstructionData)
-            }
-        },
-    };
-
-    Ok(())
-}
-
-/// Processes an outgoing [`InterchainTransfer`], [`DeployInterchainToken`] or
-/// [`DeployTokenManager`].
-///
-/// # Errors
-///
-/// An error occurred when processing the message. The reason can be derived
-/// from the logs.
-fn process_outbound_its_gmp_payload<'a>(
-    payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
-    payload: &GMPPayload,
-    destination_chain: String,
-    gas_value: u64,
-    signing_pda_bump: u8,
-    payload_hash: Option<[u8; 32]>,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let gateway_root_account = next_account_info(accounts_iter)?;
-    let _gateway_program_id = next_account_info(accounts_iter)?;
-    let gas_service_config_account = next_account_info(accounts_iter)?;
-    let gas_service = next_account_info(accounts_iter)?;
-    let system_program = next_account_info(accounts_iter)?;
-    let its_root_account = next_account_info(accounts_iter)?;
-    let call_contract_signing_acc = next_account_info(accounts_iter)?;
-    let program_account = next_account_info(accounts_iter)?;
-
-    let its_root_config = InterchainTokenService::load(its_root_account)?;
-    assert_valid_its_root_pda(
-        its_root_account,
-        gateway_root_account.key,
-        its_root_config.bump,
-    )?;
-    if its_root_config.paused {
-        msg!("The Interchain Token Service is currently paused.");
-        return Err(ProgramError::Immutable);
-    }
-
-    let signing_pda =
-        axelar_solana_gateway::create_call_contract_signing_pda(crate::ID, signing_pda_bump)?;
-
-    if &signing_pda != call_contract_signing_acc.key {
-        msg!("invalid call contract signing account / signing pda bump");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    let (payload_hash, call_contract_ix) = if let Some(payload_hash) = payload_hash {
-        let ix = axelar_solana_gateway::instructions::call_contract_offchain_data(
-            axelar_solana_gateway::id(),
-            *gateway_root_account.key,
-            crate::ID,
-            signing_pda,
-            signing_pda_bump,
-            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-            payload_hash,
-        )?;
-
-        (payload_hash, ix)
-    } else {
-        let hub_payload = GMPPayload::SendToHub(SendToHub {
-            selector: SendToHub::MESSAGE_TYPE_ID
-                .try_into()
-                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-            destination_chain,
-            payload: payload.encode().into(),
-        })
-        .encode();
-        let payload_hash = if gas_value > 0 {
-            solana_program::keccak::hashv(&[&hub_payload]).0
-        } else {
-            [0; 32]
-        };
-
-        let ix = axelar_solana_gateway::instructions::call_contract(
-            axelar_solana_gateway::id(),
-            *gateway_root_account.key,
-            crate::ID,
-            signing_pda,
-            signing_pda_bump,
-            ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-            ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-            hub_payload,
-        )?;
-
-        (payload_hash, ix)
-    };
-
-    if gas_value > 0 {
-        let gas_payment_ix =
-            axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
-                gas_service.key,
-                payer.key,
-                gas_service_config_account.key,
-                ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-                ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-                payload_hash,
-                *payer.key,
-                vec![],
-                gas_value,
-            )?;
-
-        invoke(
-            &gas_payment_ix,
-            &[
-                payer.clone(),
-                gas_service_config_account.clone(),
-                system_program.clone(),
-            ],
-        )?;
-    }
-
-    invoke_signed(
-        &call_contract_ix,
-        &[
-            program_account.clone(),
-            call_contract_signing_acc.clone(),
-            gateway_root_account.clone(),
-        ],
-        &[&[
-            axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
-            &[signing_pda_bump],
-        ]],
     )?;
 
     Ok(())
@@ -509,6 +372,7 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let program_data_account = next_account_info(accounts_iter)?;
     let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
@@ -518,64 +382,51 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
         its_root_config.bump,
     )?;
     its_root_config.paused = paused;
-    its_root_config.store(its_root_pda)?;
+    its_root_config.store(payer, its_root_pda, system_account)?;
 
     Ok(())
 }
 
-fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> ProgramResult {
-    // In this case we cannot derive the mint account, so we just use what we got
-    // and check later against the mint within the `TokenManager` PDA.
-    let maybe_mint = if let GMPPayload::InterchainTransfer(_) = payload {
-        accounts
-            .get(its_account_indices::TOKEN_MINT_INDEX)
-            .map(|account| *account.key)
-    } else {
-        None
-    };
+fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+    let program_data_account = next_account_info(accounts_iter)?;
+    let gateway_root_pda_account = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
 
-    let gateway_root_pda = accounts
-        .get(its_account_indices::GATEWAY_ROOT_PDA_INDEX)
-        .map(|account| *account.key)
-        .ok_or(ProgramError::InvalidAccountData)?;
-    let token_program = accounts
-        .get(its_account_indices::TOKEN_PROGRAM_INDEX)
-        .map(|account| *account.key)
-        .ok_or(ProgramError::InvalidAccountData)?;
-
-    let (derived_its_accounts, _) = instructions::derive_its_accounts(
-        payload,
-        gateway_root_pda,
-        token_program,
-        maybe_mint,
-        Some(Clock::get()?.unix_timestamp),
+    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+    let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
+    assert_valid_its_root_pda(
+        its_root_pda,
+        gateway_root_pda_account.key,
+        its_root_config.bump,
     )?;
 
-    for element in accounts.iter().zip_longest(derived_its_accounts.iter()) {
-        match element {
-            itertools::EitherOrBoth::Both(provided, derived) => {
-                if provided.key != &derived.pubkey {
-                    return Err(ProgramError::InvalidAccountData);
-                }
-            }
-            itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => {
-                return Err(ProgramError::InvalidAccountData);
-            }
-        }
-    }
+    its_root_config.add_trusted_chain(chain_name);
+    its_root_config.store(payer, its_root_pda, system_account)?;
 
-    // Now we validate the mint account passed for `InterchainTransfer`
-    if let Some(mint) = maybe_mint {
-        let token_manager_pda = accounts
-            .get(its_account_indices::TOKEN_MANAGER_PDA_INDEX)
-            .ok_or(ProgramError::InvalidAccountData)?;
+    Ok(())
+}
 
-        let token_manager = TokenManager::load(token_manager_pda)?;
+fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+    let program_data_account = next_account_info(accounts_iter)?;
+    let gateway_root_pda_account = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
 
-        if token_manager.token_address.as_ref() != mint.as_ref() {
-            return Err(ProgramError::InvalidAccountData);
-        }
-    }
+    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+    let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
+    assert_valid_its_root_pda(
+        its_root_pda,
+        gateway_root_pda_account.key,
+        its_root_config.bump,
+    )?;
+
+    its_root_config.remove_trusted_chain(chain_name);
+    its_root_config.store(payer, its_root_pda, system_account)?;
 
     Ok(())
 }

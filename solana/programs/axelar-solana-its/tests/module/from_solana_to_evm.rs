@@ -1,1887 +1,483 @@
-#![allow(clippy::too_many_lines)]
-#![allow(clippy::shadow_unrelated)]
-#![allow(clippy::panic)]
-
-use alloy_primitives::Bytes;
-use alloy_sol_types::SolValue;
-use axelar_solana_gateway::processor::{CallContractOffchainDataEvent, GatewayEvent};
-use axelar_solana_gateway_test_fixtures::gateway::ProgramInvocationState;
-use axelar_solana_its::instructions::{
-    CallContractWithInterchainTokenInputs, DeployInterchainTokenInputs, DeployTokenManagerInputs,
-    InterchainTransferInputs,
-};
-use axelar_solana_its::state::token_manager;
-use evm_contracts_test_suite::ethers::signers::Signer;
-use evm_contracts_test_suite::ethers::types::U256;
-use interchain_token_transfer_gmp::GMPPayload;
-use rstest::rstest;
+use borsh::BorshDeserialize;
+use mpl_token_metadata::accounts::Metadata;
+use mpl_token_metadata::instructions::CreateV1Builder;
+use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
-use solana_sdk::clock::Clock;
-use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::{Keypair, Signer as SolanaSigner};
+use solana_sdk::signer::Signer as _;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
-use spl_token_2022::extension::transfer_fee::TransferFeeConfig;
-use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
-use spl_token_2022::state::Mint;
+use test_context::test_context;
+
+use axelar_solana_its::state::token_manager::{TokenManager, Type as TokenManagerType};
+use evm_contracts_test_suite::evm_contracts_rs::contracts::{
+    custom_test_token::CustomTestToken, interchain_token::InterchainToken,
+};
+use evm_contracts_test_suite::ContractMiddleware;
+use interchain_token_transfer_gmp::GMPPayload;
 
 use crate::{
-    axelar_evm_setup, axelar_solana_setup, call_evm, call_solana_gateway,
-    ensure_evm_gateway_approval, prepare_evm_approve_contract_call, retrieve_evm_log_with_filter,
-    route_its_hub, ItsProgramWrapper, ITS_HUB_TRUSTED_CHAIN_NAME, ITS_HUB_TRUSTED_CONTRACT_ADDRESS,
+    fetch_first_call_contract_event_from_tx, retrieve_evm_log_with_filter, ItsTestContext,
 };
 
-#[tokio::test]
-async fn test_send_deploy_interchain_token_from_solana_to_evm() {
-    // InterchainTokens deployed through ITS are always spl-token-2022 programs,
-    // hence we only test spl-token-2022 here.
+async fn custom_token(
+    ctx: &mut ItsTestContext,
+    token_manager_type: TokenManagerType,
+) -> anyhow::Result<([u8; 32], CustomTestToken<ContractMiddleware>, Pubkey)> {
+    let token_name = "Custom Token";
+    let token_symbol = "CT";
+    let salt = solana_sdk::keccak::hash(b"custom-token-salt").to_bytes();
+    let custom_token = ctx
+        .evm_signer
+        .deploy_axelar_custom_test_token(token_name.to_owned(), token_symbol.to_owned(), 18)
+        .await?;
 
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
+    let custom_solana_token = ctx
+        .solana_chain
         .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let deploy = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .salt(salt)
-        .minter(evm_signer.wallet.address().as_bytes().to_owned())
-        .destination_chain(destination_chain)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-
-    let ix = axelar_solana_its::instructions::deploy_interchain_token(deploy).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_token_deployed_filter(),
-    )
-    .await;
-    let expected_token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        solana_sdk::keccak::hash(b"our cool interchain token")
-            .0
-            .as_slice(),
-    );
-
-    assert_eq!(log.token_id, expected_token_id, "token_id does not match");
-}
-
-#[tokio::test]
-async fn test_send_deploy_token_manager_from_solana_to_evm() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let token_name = "TestToken";
-    let token_symbol = "TT";
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
-        .await
-        .unwrap();
-
-    let token_address =
-        alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
-    let params = (Bytes::new(), token_address).abi_encode_params();
-
-    let destination_chain = "ethereum".to_string();
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let deploy = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .destination_chain(destination_chain)
-        .token_manager_type(token_manager::Type::LockUnlock)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .build();
-
-    let ix = axelar_solana_its::instructions::deploy_token_manager(deploy.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .token_manager_deployed_filter(),
-    )
-    .await;
-
-    assert_eq!(
-        alloy_primitives::U256::from(log.token_manager_type),
-        token_manager::Type::LockUnlock.into(),
-    );
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_send_interchain_transfer_from_solana_to_evm_native() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let deploy_local = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .salt(salt)
-        .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let deploy_remote = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .destination_chain(destination_chain.clone())
-        .salt(salt)
-        .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-    let ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_token_deployed_filter(),
-    )
-    .await;
-
-    let expected_token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        solana_sdk::keccak::hash(b"our cool interchain token")
-            .0
-            .as_slice(),
-    );
-
-    assert_eq!(log.token_id, expected_token_id, "token_id does not match");
-
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &log.token_id);
-
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
+        .init_new_mint(ctx.solana_wallet, spl_token_2022::id(), 9)
         .await;
 
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
-        expected_token_id,
-        interchain_token_pda,
-        associated_account_address,
-        solana_chain.fixture.payer.pubkey(),
+    let (metadata_pda, _) = Metadata::find_pda(&custom_solana_token);
+    let metadata_ix = CreateV1Builder::new()
+        .metadata(metadata_pda)
+        .token_standard(TokenStandard::Fungible)
+        .mint(custom_solana_token, false)
+        .authority(ctx.solana_wallet)
+        .update_authority(ctx.solana_wallet, true)
+        .payer(ctx.solana_wallet)
+        .is_mutable(false)
+        .name(token_name.to_owned())
+        .symbol(token_symbol.to_owned())
+        .uri(String::new())
+        .seller_fee_basis_points(0)
+        .instruction();
+
+    let register_metadata = axelar_solana_its::instructions::register_token_metadata(
+        ctx.solana_wallet,
+        custom_solana_token,
         spl_token_2022::id(),
-        500,
-    )
-    .unwrap();
+        0,
+        axelar_solana_gas_service::id(),
+        ctx.solana_gas_utils.config_pda,
+    )?;
 
-    solana_chain.fixture.send_tx(&[mint_ix]).await;
-
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-
-    let transfer = InterchainTransferInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .authority(solana_chain.fixture.payer.pubkey())
-        .source_account(associated_account_address)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
-        .amount(323)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .data(vec![])
-        .build();
-
-    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    assert_eq!(log.amount, U256::from(323_u64));
-}
-
-#[rstest]
-#[case(spl_token::id())]
-#[case(spl_token_2022::id())]
-#[tokio::test]
-async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn(
-    #[case] token_program_id: Pubkey,
-) {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
+    let tx = ctx
+        .send_solana_tx(&[metadata_ix, register_metadata])
         .await
         .unwrap();
+    let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
 
-    let destination_chain = "ethereum".to_string();
-    let token_name = "TestToken";
-    let token_symbol = "TT";
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        salt.as_slice(),
+    let GMPPayload::RegisterTokenMetadata(register_message) =
+        GMPPayload::decode(&call_contract_event.payload)?
+    else {
+        panic!("wrong message");
+    };
+
+    assert_eq!(
+        register_message.token_address.as_ref(),
+        custom_solana_token.as_ref()
     );
+    assert_eq!(register_message.decimals, 9);
 
-    let mint = solana_chain
-        .fixture
-        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
-        .await;
-    let params = axelar_solana_its::state::token_manager::encode_params(
+    ctx.evm_its_contracts
+        .interchain_token_service
+        .register_token_metadata(custom_token.address(), 0.into())
+        .send()
+        .await?
+        .await?;
+
+    let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
+    let register_custom_token_ix = axelar_solana_its::instructions::register_custom_token(
+        ctx.solana_wallet,
+        salt,
+        custom_solana_token,
+        token_manager_type,
+        spl_token_2022::id(),
         None,
-        Some(solana_chain.fixture.payer.pubkey()),
-        mint,
-    );
-    let deploy_local = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .token_manager_type(token_manager::Type::MintBurn)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .token_program(token_program_id)
-        .build();
+    )?;
 
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
+    ctx.send_solana_tx(&[register_custom_token_ix])
         .await
         .unwrap();
 
-    let token_address =
-        alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
-    let params = (Bytes::new(), token_address).abi_encode_params();
-    let deploy_remote_ix = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .destination_chain(destination_chain.clone())
-        .token_manager_type(token_manager::Type::MintBurn)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .build();
+    let link_token_ix = axelar_solana_its::instructions::link_token(
+        ctx.solana_wallet,
+        salt,
+        ctx.evm_chain_name.clone(),
+        custom_token.address().as_bytes().to_vec(),
+        token_manager_type,
+        vec![],
+        0,
+        axelar_solana_gas_service::id(),
+        ctx.solana_gas_utils.config_pda,
+    )?;
 
-    let ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
+    let tx = ctx.send_solana_tx(&[link_token_ix]).await.unwrap();
+    let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+    let message = if let GMPPayload::SendToHub(inner) =
+        GMPPayload::decode(&call_contract_event.payload)?
+    {
+        let GMPPayload::LinkToken(link_token) = GMPPayload::decode(inner.payload.as_ref())? else {
+            panic!("wrong message");
+        };
+        link_token
+    } else {
+        panic!("wrong message");
     };
 
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
+    assert_eq!(
+        message.source_token_address.as_ref(),
+        custom_solana_token.as_ref()
     );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
+    assert_eq!(
+        message.destination_token_address.as_ref(),
+        custom_token.address().as_bytes()
     );
+    assert_eq!(token_id, message.token_id);
 
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
+    ctx.relay_to_evm(&call_contract_event.payload).await;
     let log = retrieve_evm_log_with_filter(
-        its_contracts
+        ctx.evm_its_contracts
             .interchain_token_service
             .token_manager_deployed_filter(),
     )
     .await;
 
-    assert_eq!(
-        alloy_primitives::U256::from(log.token_manager_type),
-        token_manager::Type::MintBurn.into(),
-    );
+    assert_eq!(log.token_id, token_id);
+    assert_eq!(log.token_manager_type, token_manager_type as u8);
 
-    let evm_token_manager_address = its_contracts
-        .interchain_token_service
-        .token_manager_address(token_id)
-        .await
-        .unwrap();
-
-    call_evm(test_its_canonical_token.add_minter(evm_token_manager_address)).await;
-
-    let ata = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &token_program_id,
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &token_program_id,
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-    let initial_amount = 3000;
-    let transfer_amount = 333;
-
-    let mint_tokens_ix = axelar_solana_its::instructions::interchain_token::mint(
-        token_id,
-        mint,
-        ata,
-        solana_chain.fixture.payer.pubkey(),
-        token_program_id,
-        initial_amount,
-    )
-    .unwrap();
-    solana_chain.fixture.send_tx(&[mint_tokens_ix]).await;
-
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-
-    let transfer = InterchainTransferInputs::builder()
-        .mint(mint)
-        .payer(solana_chain.fixture.payer.pubkey())
-        .authority(solana_chain.fixture.payer.pubkey())
-        .source_account(ata)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
-        .amount(transfer_amount)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .token_program(token_program_id)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .data(vec![])
-        .build();
-
-    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    let raw_account = solana_chain
-        .try_get_account_no_checks(&ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
-
-    assert_eq!(ata.amount, initial_amount - transfer_amount);
-    assert_eq!(log.amount, U256::from(transfer_amount));
-}
-#[rstest]
-#[case(spl_token::id())]
-#[case(spl_token_2022::id())]
-#[tokio::test]
-async fn test_send_interchain_transfer_from_solana_to_evm_mint_burn_from(
-    #[case] token_program_id: Pubkey,
-) {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let token_name = "TestToken";
-    let token_symbol = "TT";
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        salt.as_slice(),
-    );
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
+    let (its_root_pda, _) =
+        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
-    let mint = solana_chain
+    let data = ctx
+        .solana_chain
         .fixture
-        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
+        .get_account(&token_manager_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data)?;
+
+    assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
+    assert_eq!(
+        custom_solana_token.as_ref(),
+        token_manager.token_address.as_ref()
+    );
+
+    Ok((token_id, custom_token, custom_solana_token))
+}
+
+async fn canonical_token(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<([u8; 32], InterchainToken<ContractMiddleware>, Pubkey)> {
+    let token_name = "Canonical Token";
+    let token_symbol = "CT";
+
+    let canonical_solana_token = ctx
+        .solana_chain
+        .fixture
+        .init_new_mint(ctx.solana_wallet, spl_token_2022::id(), 9)
         .await;
-    let params = axelar_solana_its::state::token_manager::encode_params(
-        None,
-        Some(solana_chain.fixture.payer.pubkey()),
-        mint,
-    );
-    let deploy_local = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .token_manager_type(token_manager::Type::MintBurnFrom)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .token_program(token_program_id)
-        .build();
 
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
+    let (metadata_pda, _) = Metadata::find_pda(&canonical_solana_token);
+    let metadata_ix = CreateV1Builder::new()
+        .metadata(metadata_pda)
+        .token_standard(TokenStandard::Fungible)
+        .mint(canonical_solana_token, false)
+        .authority(ctx.solana_wallet)
+        .update_authority(ctx.solana_wallet, true)
+        .payer(ctx.solana_wallet)
+        .is_mutable(false)
+        .name(token_name.to_owned())
+        .symbol(token_symbol.to_owned())
+        .uri(String::new())
+        .seller_fee_basis_points(0)
+        .instruction();
 
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
+    ctx.send_solana_tx(&[metadata_ix]).await.unwrap();
+
+    let register_token = axelar_solana_its::instructions::register_canonical_interchain_token(
+        ctx.solana_wallet,
+        canonical_solana_token,
+        spl_token_2022::id(),
+    )?;
+
+    let tx = ctx.send_solana_tx(&[register_token]).await.unwrap();
+
+    let token_id: [u8; 32] = tx
+        .metadata
+        .as_ref()
+        .unwrap()
+        .return_data
+        .as_ref()
+        .unwrap()
+        .data
+        .as_slice()
+        .try_into()
+        .unwrap();
+
+    let expected_token_id =
+        axelar_solana_its::canonical_interchain_token_id(&canonical_solana_token);
+
+    assert_eq!(expected_token_id, token_id,);
+
+    let deploy_remote_canonical_token_ix =
+        axelar_solana_its::instructions::deploy_remote_canonical_interchain_token(
+            ctx.solana_wallet,
+            canonical_solana_token,
+            ctx.evm_chain_name.clone(),
+            0,
+            axelar_solana_gas_service::id(),
+            ctx.solana_gas_utils.config_pda,
+        )?;
+
+    let tx = ctx
+        .send_solana_tx(&[deploy_remote_canonical_token_ix])
         .await
         .unwrap();
 
-    let token_address =
-        alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
-    let params = (Bytes::new(), token_address).abi_encode_params();
-    let deploy_remote_ix = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .destination_chain(destination_chain.clone())
-        .token_manager_type(token_manager::Type::MintBurnFrom)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .build();
+    let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+    let message =
+        if let GMPPayload::SendToHub(inner) = GMPPayload::decode(&call_contract_event.payload)? {
+            let GMPPayload::DeployInterchainToken(deploy_token) =
+                GMPPayload::decode(inner.payload.as_ref())?
+            else {
+                panic!("wrong message");
+            };
+            deploy_token
+        } else {
+            panic!("wrong message");
+        };
 
-    let ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
+    assert_eq!(message.token_id, expected_token_id);
+    assert_eq!(message.name.trim_end_matches('\0'), token_name);
+    assert_eq!(message.symbol.trim_end_matches('\0'), token_symbol);
+    assert_eq!(message.decimals, 9);
 
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
+    ctx.relay_to_evm(&call_contract_event.payload).await;
     let log = retrieve_evm_log_with_filter(
-        its_contracts
+        ctx.evm_its_contracts
             .interchain_token_service
-            .token_manager_deployed_filter(),
+            .interchain_token_deployed_filter(),
     )
     .await;
 
-    assert_eq!(
-        alloy_primitives::U256::from(log.token_manager_type),
-        token_manager::Type::MintBurnFrom.into(),
+    assert_eq!(log.token_id, token_id);
+    assert_eq!(log.symbol, token_symbol);
+    assert_eq!(log.name, token_name);
+    assert_eq!(log.decimals, 9);
+
+    let (its_root_pda, _) =
+        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+
+    let evm_token_address = ctx
+        .evm_its_contracts
+        .interchain_token_service
+        .registered_token_address(token_id)
+        .call()
+        .await?;
+
+    let evm_token = InterchainToken::new(
+        evm_token_address,
+        ctx.evm_its_contracts.interchain_token_service.client(),
     );
 
-    let evm_token_manager_address = its_contracts
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&token_manager_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let token_manager = TokenManager::try_from_slice(&data)?;
+
+    assert_eq!(token_manager.token_id.as_ref(), token_id.as_ref());
+    assert_eq!(
+        canonical_solana_token.as_ref(),
+        token_manager.token_address.as_ref()
+    );
+
+    Ok((token_id, evm_token, canonical_solana_token))
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_custom_token_lock_unlock_link_transfer(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    let (token_id, evm_token, solana_token) =
+        custom_token(ctx, TokenManagerType::LockUnlock).await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let initial_balance = 300;
+    let mint_ix = spl_token_2022::instruction::mint_to(
+        &spl_token_2022::id(),
+        &solana_token,
+        &token_account,
+        &ctx.solana_wallet,
+        &[],
+        initial_balance,
+    )?;
+
+    ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+
+    // Mint some tokens to the token manager so it can unlock
+    let token_manager = ctx
+        .evm_its_contracts
         .interchain_token_service
         .token_manager_address(token_id)
+        .call()
+        .await?;
+
+    evm_token
+        .mint(token_manager, 900.into())
+        .send()
+        .await?
+        .await?;
+
+    evm_token
+        .approve(
+            ctx.evm_its_contracts.interchain_token_service.address(),
+            u64::MAX.into(),
+        )
+        .send()
+        .await?
+        .await?;
+
+    ctx.test_interchain_transfer(token_id, solana_token, initial_balance, token_account)
+        .await;
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (token_id, evm_token, solana_token) = custom_token(ctx, TokenManagerType::MintBurn).await?;
+
+    let authority_transfer_ix =
+        axelar_solana_its::instructions::token_manager::handover_mint_authority(
+            ctx.solana_wallet,
+            token_id,
+            solana_token,
+            spl_token_2022::id(),
+        )?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let initial_balance = 300;
+    // As the mint authority was handed over, we need to mint through ITS.
+    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+        token_id,
+        solana_token,
+        token_account,
+        ctx.solana_wallet,
+        spl_token_2022::id(),
+        initial_balance,
+    )?;
+
+    ctx.send_solana_tx(&[authority_transfer_ix, create_ata_ix, mint_ix])
         .await
         .unwrap();
 
-    call_evm(test_its_canonical_token.add_minter(evm_token_manager_address)).await;
+    let token_manager = ctx
+        .evm_its_contracts
+        .interchain_token_service
+        .token_manager_address(token_id)
+        .call()
+        .await?;
 
-    let bob = Keypair::new();
+    evm_token
+        .transfer_mintership(token_manager)
+        .send()
+        .await?
+        .await?;
 
-    let bob_ata =
-        get_associated_token_address_with_program_id(&bob.pubkey(), &mint, &token_program_id);
+    ctx.test_interchain_transfer(token_id, solana_token, initial_balance, token_account)
+        .await;
 
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &bob.pubkey(),
-        &mint,
-        &token_program_id,
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_canonical_token_lock_unlock_transfer(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (token_id, _evm_token, solana_token) = canonical_token(ctx).await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
     );
 
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-    let initial_amount = 3000;
-    let delegated_amount = 800;
-    let transfer_amount = 333;
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
 
-    let mint_tokens_ix = axelar_solana_its::instructions::interchain_token::mint(
-        token_id,
-        mint,
-        bob_ata,
-        solana_chain.fixture.payer.pubkey(),
-        token_program_id,
-        initial_amount,
-    )
-    .unwrap();
-    solana_chain.fixture.send_tx(&[mint_tokens_ix]).await;
-
-    let approve_ix = spl_token_2022::instruction::approve(
-        &token_program_id,
-        &bob_ata,
-        &token_manager_pda,
-        &bob.pubkey(),
+    let initial_balance = 300;
+    let mint_ix = spl_token_2022::instruction::mint_to(
+        &spl_token_2022::id(),
+        &solana_token,
+        &token_account,
+        &ctx.solana_wallet,
         &[],
-        delegated_amount,
-    )
-    .unwrap();
+        initial_balance,
+    )?;
 
-    solana_chain
+    ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+    ctx.test_interchain_transfer(token_id, solana_token, initial_balance, token_account)
+        .await;
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[should_panic]
+#[tokio::test]
+async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
+    ctx.solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[approve_ix],
+            &[axelar_solana_its::instructions::remove_trusted_chain(
+                ctx.solana_chain.upgrade_authority.pubkey(),
+                ctx.evm_chain_name.clone(),
+            )
+            .unwrap()],
             &[
-                &bob.insecure_clone(),
-                &solana_chain.fixture.payer.insecure_clone(),
+                ctx.solana_chain.upgrade_authority.insecure_clone(),
+                ctx.solana_chain.fixture.payer.insecure_clone(),
             ],
         )
         .await;
 
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-
-    let transfer = InterchainTransferInputs::builder()
-        .mint(mint)
-        .payer(solana_chain.fixture.payer.pubkey())
-        .source_account(bob_ata)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
-        .amount(transfer_amount)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .token_program(token_program_id)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .data(vec![])
-        .build();
-
-    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    let bob_raw_account = solana_chain
-        .try_get_account_no_checks(&bob_ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let bob_ata = spl_token_2022::state::Account::unpack_from_slice(&bob_raw_account.data).unwrap();
-
-    assert_eq!(bob_ata.amount, initial_amount - transfer_amount);
-    assert_eq!(bob_ata.delegated_amount, delegated_amount - transfer_amount);
-    assert_eq!(log.amount, U256::from(transfer_amount));
-}
-
-#[rstest]
-#[case(spl_token::id())]
-#[case(spl_token_2022::id())]
-#[tokio::test]
-async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock(
-    #[case] token_program_id: Pubkey,
-) {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let token_name = "TestToken";
-    let token_symbol = "TT";
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        salt.as_slice(),
-    );
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (token_manager_pda, _) =
-        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
-
-    let mint = solana_chain
-        .fixture
-        .init_new_mint(solana_chain.fixture.payer.pubkey(), token_program_id, 18)
-        .await;
-
-    let params = axelar_solana_its::state::token_manager::encode_params(
-        None,
-        Some(solana_chain.fixture.payer.pubkey()),
-        mint,
-    );
-    let deploy_local = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .token_manager_type(token_manager::Type::LockUnlock)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .token_program(token_program_id)
-        .build();
-
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
-        .await
-        .unwrap();
-
-    let token_address =
-        alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
-    let params = (Bytes::new(), token_address).abi_encode_params();
-    let deploy_remote_ix = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .destination_chain(destination_chain.clone())
-        .token_manager_type(token_manager::Type::MintBurn)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .build();
-
-    let ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .token_manager_deployed_filter(),
-    )
-    .await;
-
-    assert_eq!(
-        alloy_primitives::U256::from(log.token_manager_type),
-        token_manager::Type::MintBurn.into(),
-    );
-
-    let evm_token_manager_address = its_contracts
-        .interchain_token_service
-        .token_manager_address(token_id)
-        .await
-        .unwrap();
-
-    call_evm(test_its_canonical_token.add_minter(evm_token_manager_address)).await;
-
-    let ata = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &token_program_id,
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &token_program_id,
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-
-    let initial_amount = 3000;
-    let transfer_amount = 333;
-
-    solana_chain
-        .fixture
-        .mint_tokens_to(
-            &mint,
-            &ata,
-            &solana_chain.fixture.payer.insecure_clone(),
-            initial_amount,
-            &token_program_id,
-        )
-        .await;
-
-    let clock_sysvar: Clock = solana_chain.get_sysvar().await;
-
-    let transfer = InterchainTransferInputs::builder()
-        .authority(solana_chain.fixture.payer.pubkey())
-        .payer(solana_chain.fixture.payer.pubkey())
-        .mint(mint)
-        .source_account(ata)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
-        .amount(transfer_amount)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .token_program(token_program_id)
-        .data(vec![])
-        .build();
-
-    let ix = axelar_solana_its::instructions::interchain_transfer(transfer.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    let raw_account = solana_chain
-        .try_get_account_no_checks(&ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
-
-    let token_manager_ata =
-        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program_id);
-    let token_manager_raw_account = solana_chain
-        .try_get_account_no_checks(&token_manager_ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let token_manager_ata =
-        spl_token_2022::state::Account::unpack_from_slice(&token_manager_raw_account.data).unwrap();
-
-    assert_eq!(ata.amount, initial_amount - transfer_amount);
-    assert_eq!(log.amount, U256::from(transfer_amount));
-    assert_eq!(token_manager_ata.amount, transfer_amount);
-}
-
-#[tokio::test]
-async fn test_send_interchain_transfer_from_solana_to_evm_lock_unlock_fee() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let token_name = "TestToken";
-    let token_symbol = "TT";
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        salt.as_slice(),
-    );
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (token_manager_pda, _) =
-        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
-
-    let fee_basis_points = 50_u16;
-    let maximum_fee = u64::MAX;
-    let mint = solana_chain
-        .fixture
-        .init_new_mint_with_fee(
-            &solana_chain.fixture.payer.pubkey(),
-            &spl_token_2022::id(),
-            fee_basis_points,
-            maximum_fee,
-            18,
-            None,
-            None,
-        )
-        .await;
-
-    let params = axelar_solana_its::state::token_manager::encode_params(
-        None,
-        Some(solana_chain.fixture.payer.pubkey()),
-        mint,
-    );
-    let deploy_local = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .token_manager_type(token_manager::Type::LockUnlockFee)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .token_program(spl_token_2022::id())
-        .build();
-
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let test_its_canonical_token = evm_signer
-        .deploy_axelar_test_canonical_token(token_name.to_owned(), token_symbol.to_owned(), 18)
-        .await
-        .unwrap();
-
-    let token_address =
-        alloy_primitives::Address::from(test_its_canonical_token.address().to_fixed_bytes());
-    let params = (Bytes::new(), token_address).abi_encode_params();
-    let deploy_remote_ix = DeployTokenManagerInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .salt(salt)
-        .destination_chain(destination_chain.clone())
-        .token_manager_type(token_manager::Type::MintBurn)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .params(params)
-        .build();
-
-    let ix =
-        axelar_solana_its::instructions::deploy_token_manager(deploy_remote_ix.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .token_manager_deployed_filter(),
-    )
-    .await;
-
-    assert_eq!(
-        alloy_primitives::U256::from(log.token_manager_type),
-        token_manager::Type::MintBurn.into(),
-    );
-
-    let evm_token_manager_address = its_contracts
-        .interchain_token_service
-        .token_manager_address(token_id)
-        .await
-        .unwrap();
-
-    call_evm(test_its_canonical_token.add_minter(evm_token_manager_address)).await;
-
-    let ata = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &mint,
-        &spl_token_2022::id(),
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-
-    let initial_amount = 3000;
-    let transfer_amount = 333;
-
-    solana_chain
-        .fixture
-        .mint_tokens_to(
-            &mint,
-            &ata,
-            &solana_chain.fixture.payer.insecure_clone(),
-            initial_amount,
-            &spl_token_2022::id(),
-        )
-        .await;
-
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-    let transfer = InterchainTransferInputs::builder()
-        .authority(solana_chain.fixture.payer.pubkey())
-        .payer(solana_chain.fixture.payer.pubkey())
-        .mint(mint)
-        .source_account(ata)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(evm_signer.wallet.address().as_bytes().to_vec())
-        .amount(transfer_amount)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .data(vec![])
-        .build();
-
-    let ix = axelar_solana_its::instructions::interchain_transfer(transfer).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    let raw_account = solana_chain
-        .try_get_account_no_checks(&ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let ata = spl_token_2022::state::Account::unpack_from_slice(&raw_account.data).unwrap();
-
-    let token_manager_ata = get_associated_token_address_with_program_id(
-        &token_manager_pda,
-        &mint,
-        &spl_token_2022::id(),
-    );
-    let token_manager_raw_account = solana_chain
-        .try_get_account_no_checks(&token_manager_ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let token_manager_ata =
-        spl_token_2022::state::Account::unpack_from_slice(&token_manager_raw_account.data).unwrap();
-
-    assert_eq!(ata.amount, initial_amount - transfer_amount);
-
-    let mint_data = solana_chain
-        .try_get_account_no_checks(&mint)
-        .await
-        .unwrap()
-        .unwrap();
-
-    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data.data).unwrap();
-    let fee_config = mint_state.get_extension::<TransferFeeConfig>().unwrap();
-    let epoch = solana_chain.get_sysvar::<Clock>().await.epoch;
-    let fee = fee_config
-        .calculate_epoch_fee(epoch, transfer_amount)
-        .unwrap();
-
-    assert_eq!(
-        log.amount,
-        U256::from(transfer_amount.checked_sub(fee).unwrap())
-    );
-    assert_eq!(
-        token_manager_ata.amount,
-        transfer_amount.checked_sub(fee).unwrap()
-    );
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_call_contract_with_interchain_token_from_solana_to_evm() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let memo = evm_signer
-        .deploy_axelar_memo(
-            its_contracts.gateway.clone(),
-            Some(its_contracts.interchain_token_service.clone()),
-        )
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let deploy_local = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .salt(salt)
-        .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let deploy_remote = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .destination_chain(destination_chain.clone())
-        .salt(salt)
-        .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-    let ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_token_deployed_filter(),
-    )
-    .await;
-
-    let expected_token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        solana_sdk::keccak::hash(b"our cool interchain token")
-            .0
-            .as_slice(),
-    );
-
-    assert_eq!(log.token_id, expected_token_id, "token_id does not match");
-
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &log.token_id);
-
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
-        expected_token_id,
-        interchain_token_pda,
-        associated_account_address,
-        solana_chain.fixture.payer.pubkey(),
-        spl_token_2022::id(),
-        500,
-    )
-    .unwrap();
-
-    solana_chain.fixture.send_tx(&[mint_ix]).await;
-
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-
-    let memo_message = "Memo with token".to_string();
-    let call_data = Bytes::from(memo_message.clone());
-    let transfer = CallContractWithInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .authority(solana_chain.fixture.payer.pubkey())
-        .source_account(associated_account_address)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(memo.address().as_bytes().to_vec())
-        .amount(323)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .data(call_data.to_vec())
-        .build();
-
-    let ix = axelar_solana_its::instructions::call_contract_with_interchain_token(transfer.clone())
-        .unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id,
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_transfer_received_filter(),
-    )
-    .await;
-
-    assert_eq!(log.amount, U256::from(323_u64));
-
-    let log = retrieve_evm_log_with_filter(memo.received_memo_with_token_filter()).await;
-
-    assert_eq!(log.amount, U256::from(323_u64));
-    assert_eq!(log.memo_message, memo_message);
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_call_contract_with_interchain_token_offchain_data() {
-    let ItsProgramWrapper {
-        mut solana_chain,
-        chain_name: solana_id,
-        ..
-    } = axelar_solana_setup(false).await;
-    let (_evm_chain, evm_signer, its_contracts, mut weighted_signers, domain_separator) =
-        axelar_evm_setup().await;
-    let gas_utils = solana_chain.fixture.deploy_gas_service().await;
-    solana_chain
-        .fixture
-        .init_gas_config(&gas_utils)
-        .await
-        .unwrap();
-
-    let memo = evm_signer
-        .deploy_axelar_memo(
-            its_contracts.gateway.clone(),
-            Some(its_contracts.interchain_token_service.clone()),
-        )
-        .await
-        .unwrap();
-
-    let destination_chain = "ethereum".to_string();
-    let salt = solana_sdk::keccak::hash(b"our cool interchain token").0;
-    let deploy_local = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .salt(salt)
-        .minter(solana_chain.fixture.payer.pubkey().as_ref().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-
-    let deploy_local_ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_local).unwrap();
-    solana_chain.fixture.send_tx(&[deploy_local_ix]).await;
-
-    let deploy_remote = DeployInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .name("Test Token".to_owned())
-        .symbol("TT".to_owned())
-        .decimals(18)
-        .destination_chain(destination_chain.clone())
-        .salt(salt)
-        .minter(evm_signer.wallet.address().as_bytes().to_vec())
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .build();
-    let ix =
-        axelar_solana_its::instructions::deploy_interchain_token(deploy_remote.clone()).unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-
-    let [(_, GatewayEvent::CallContract(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    let payload = route_its_hub(
-        GMPPayload::decode(&emitted_event.payload).unwrap(),
-        solana_id.clone(),
-    );
-    let encoded_payload = payload.encode();
-
-    let (messages, proof) = prepare_evm_approve_contract_call(
-        solana_sdk::keccak::hash(&encoded_payload).0,
-        its_contracts.interchain_token_service.address(),
-        &mut weighted_signers,
-        domain_separator,
-    );
-
-    let mut message = messages[0].clone();
-    ITS_HUB_TRUSTED_CHAIN_NAME.clone_into(&mut message.source_chain);
-
-    let command_id =
-        ensure_evm_gateway_approval(message.clone(), proof, &its_contracts.gateway).await;
-
-    call_evm(its_contracts.interchain_token_service.execute(
-        command_id,
-        message.source_chain,
-        message.source_address,
-        encoded_payload.into(),
-    ))
-    .await;
-
-    let log = retrieve_evm_log_with_filter(
-        its_contracts
-            .interchain_token_service
-            .interchain_token_deployed_filter(),
-    )
-    .await;
-
-    let expected_token_id = axelar_solana_its::interchain_token_id(
-        &solana_chain.fixture.payer.pubkey(),
-        solana_sdk::keccak::hash(b"our cool interchain token")
-            .0
-            .as_slice(),
-    );
-
-    assert_eq!(log.token_id, expected_token_id, "token_id does not match");
-
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&solana_chain.gateway_root_pda);
-    let (interchain_token_pda, _) =
-        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &log.token_id);
-
-    let associated_account_address = get_associated_token_address_with_program_id(
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    let create_token_account_ix = create_associated_token_account(
-        &solana_chain.fixture.payer.pubkey(),
-        &solana_chain.fixture.payer.pubkey(),
-        &interchain_token_pda,
-        &spl_token_2022::id(),
-    );
-
-    solana_chain
-        .fixture
-        .send_tx(&[create_token_account_ix])
-        .await;
-
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
-        expected_token_id,
-        interchain_token_pda,
-        associated_account_address,
-        solana_chain.fixture.payer.pubkey(),
-        spl_token_2022::id(),
-        500,
-    )
-    .unwrap();
-
-    solana_chain.fixture.send_tx(&[mint_ix]).await;
-
-    let clock_sysvar = solana_chain.get_sysvar::<Clock>().await;
-
-    let memo_message = "Memo with token".to_string();
-    let call_data = Bytes::from(memo_message.clone());
-    let transfer = CallContractWithInterchainTokenInputs::builder()
-        .payer(solana_chain.fixture.payer.pubkey())
-        .authority(solana_chain.fixture.payer.pubkey())
-        .source_account(associated_account_address)
-        .token_id(log.token_id)
-        .destination_chain(destination_chain)
-        .destination_address(memo.address().as_bytes().to_vec())
-        .amount(323)
-        .gas_service(axelar_solana_gas_service::id())
-        .gas_config_pda(gas_utils.config_pda)
-        .gas_value(0)
-        .timestamp(clock_sysvar.unix_timestamp)
-        .data(call_data.to_vec())
-        .build();
-
-    let (ix, offchain_data) =
-        axelar_solana_its::instructions::call_contract_with_interchain_token_offchain_data(
-            transfer.clone(),
-        )
-        .unwrap();
-    let emitted_events = call_solana_gateway(&mut solana_chain.fixture, ix)
-        .await
-        .pop()
-        .unwrap();
-    let ProgramInvocationState::Succeeded(vec_events) = emitted_events else {
-        panic!("unexpected event")
-    };
-    let [(_, GatewayEvent::CallContractOffchainData(emitted_event))] = vec_events.as_slice() else {
-        panic!("unexpected event")
-    };
-
-    assert_eq!(
-        emitted_event,
-        &CallContractOffchainDataEvent {
-            sender_key: axelar_solana_its::ID,
-            destination_chain: ITS_HUB_TRUSTED_CHAIN_NAME.to_owned(),
-            destination_contract_address: ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
-            payload_hash: solana_sdk::keccak::hashv(&[&offchain_data]).0
-        },
-        "Mismatched gateway event"
-    );
+    let _ = custom_token(ctx, TokenManagerType::MintBurn).await.unwrap();
 }

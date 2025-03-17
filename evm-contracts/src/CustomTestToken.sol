@@ -24,7 +24,7 @@ import {IERC20MintableBurnable} from "interchain-token-service/contracts/interfa
  * @notice This contract implements an interchain token which extends InterchainToken functionality.
  * @dev This contract also inherits Minter and Implementation logic.
  */
-contract TestCanonicalToken is ERC20, Minter, IERC20MintableBurnable {
+contract CustomTestToken is ERC20, Minter, IERC20MintableBurnable {
     uint8 internal immutable _decimals;
 
     uint256 internal constant UINT256_MAX = 2 ** 256 - 1;

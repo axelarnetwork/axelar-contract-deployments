@@ -7,6 +7,7 @@ use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+use state::InterchainTokenService;
 
 mod entrypoint;
 pub mod executable;
@@ -15,6 +16,8 @@ pub mod processor;
 pub mod state;
 
 solana_program::declare_id!("its2RSrgfKfQDkuxFhov4nPRw4Wy9i6e757beHvUXZQ");
+
+pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
 pub(crate) trait FromAccountInfoSlice<'a> {
     type Context;
@@ -38,8 +41,23 @@ pub mod seed_prefixes {
     /// The seed prefix for deriving the interchain token PDA
     pub const INTERCHAIN_TOKEN_SEED: &[u8] = b"interchain-token";
 
+    /// The seed prefix for deriving an interchain token id
+    pub const PREFIX_INTERCHAIN_TOKEN_ID: &[u8] = b"interchain-token-id";
+
+    /// The seed prefix for deriving an interchain token salt
+    pub const PREFIX_INTERCHAIN_TOKEN_SALT: &[u8] = b"interchain-token-salt";
+
+    /// The seed prefix for deriving an interchain token id for a canonical token
+    pub const PREFIX_CANONICAL_TOKEN_SALT: &[u8] = b"canonical-token-salt";
+
+    /// The seed prefix for deriving an interchain token id for a canonical token
+    pub const PREFIX_CUSTOM_TOKEN_SALT: &[u8] = b"solana-custom-token-salt";
+
     /// The seed prefix for deriving the flow slot PDA
     pub const FLOW_SLOT_SEED: &[u8] = b"flow-slot";
+
+    /// The seed prefix for deriving the deployment approval PDA
+    pub const DEPLOYMENT_APPROVAL_SEED: &[u8] = b"deployment-approval";
 }
 
 bitflags! {
@@ -151,6 +169,15 @@ pub(crate) fn assert_valid_its_root_pda(
     Ok(())
 }
 
+pub(crate) fn assert_its_not_paused(its_config: &InterchainTokenService) -> ProgramResult {
+    if its_config.paused {
+        msg!("The Interchain Token Service is currently paused.");
+        return Err(ProgramError::Immutable);
+    }
+
+    Ok(())
+}
+
 /// Tries to create the PDA for a [`Tokenmanager`] using the provided bump,
 /// falling back to `find_program_address` if the bump is `None` or invalid.
 ///
@@ -215,6 +242,24 @@ pub(crate) fn assert_valid_token_manager_pda(
         create_token_manager_pda(its_root_pda, token_id, canonical_bump)?;
     if expected_token_manager_pda.ne(token_manager_pda_account.key) {
         msg!("Invalid TokenManager PDA provided");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    Ok(())
+}
+
+pub(crate) fn assert_valid_deploy_approval_pda(
+    deploy_approval_pda_account: &AccountInfo<'_>,
+    minter: &Pubkey,
+    token_id: &[u8; 32],
+    destination_chain: &str,
+    canonical_bump: u8,
+) -> ProgramResult {
+    let expected_deploy_approval_pda =
+        create_deployment_approval_pda(minter, token_id, destination_chain, canonical_bump)?;
+
+    if expected_deploy_approval_pda.ne(deploy_approval_pda_account.key) {
+        msg!("Invalid DeploymentApproval PDA provided");
         return Err(ProgramError::InvalidArgument);
     }
 
@@ -354,6 +399,74 @@ pub(crate) fn assert_valid_flow_slot_pda(
     Ok(())
 }
 
+/// Tries to create the PDA for a `DeploymentApproval` using the provided bump,
+/// falling back to `find_program_address` if the bump is invalid.
+///
+/// # Errors
+///
+/// If the bump is invalid.
+#[inline]
+pub fn create_deployment_approval_pda(
+    minter: &Pubkey,
+    token_id: &[u8],
+    destination_chain: &str,
+    bump: u8,
+) -> Result<Pubkey, ProgramError> {
+    Ok(Pubkey::create_program_address(
+        &[
+            seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
+            minter.as_ref(),
+            token_id,
+            destination_chain.as_bytes(),
+            &[bump],
+        ],
+        &crate::id(),
+    )?)
+}
+
+/// Derives the PDA for a `DeploymentApproval`.
+#[inline]
+#[must_use]
+pub fn find_deployment_approval_pda(
+    minter: &Pubkey,
+    token_id: &[u8],
+    destination_chain: &str,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            seed_prefixes::DEPLOYMENT_APPROVAL_SEED,
+            minter.as_ref(),
+            token_id,
+            destination_chain.as_bytes(),
+        ],
+        &crate::id(),
+    )
+}
+
+/// Tries to create the PDA for a `DeploymentApproval` using the provided bump,
+/// falling back to `find_program_address` if the bump is `None` or invalid.
+///
+/// # Errors
+///
+/// If the bump is invalid.
+pub fn deployment_approval_pda(
+    minter: &Pubkey,
+    token_id: &[u8],
+    destination_chain: &str,
+    maybe_bump: Option<u8>,
+) -> Result<(Pubkey, u8), ProgramError> {
+    if let Some(bump) = maybe_bump {
+        create_deployment_approval_pda(minter, token_id, destination_chain, bump)
+            .map(|pubkey| (pubkey, bump))
+    } else {
+        Ok(find_deployment_approval_pda(
+            minter,
+            token_id,
+            destination_chain,
+        ))
+    }
+}
+
 /// Creates an associated token account for the given wallet address and token
 /// mint.
 ///
@@ -390,7 +503,7 @@ pub(crate) fn create_associated_token_account<'a>(
     Ok(())
 }
 
-/// Creates an associated token account for the given wallet address and token
+/// Creates an associated token account for the given program address and token
 /// mint, if it doesn't already exist.
 ///
 /// # Errors
@@ -400,14 +513,14 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
     payer: &AccountInfo<'a>,
     token_mint_account: &AccountInfo<'a>,
     associated_token_account: &AccountInfo<'a>,
-    wallet: &AccountInfo<'a>,
+    program: &AccountInfo<'a>,
     system_account: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
 ) -> ProgramResult {
     let create_ata_ix =
         spl_associated_token_account::instruction::create_associated_token_account_idempotent(
             payer.key,
-            wallet.key,
+            program.key,
             token_mint_account.key,
             token_program.key,
         );
@@ -417,7 +530,7 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
         &[
             payer.clone(),
             associated_token_account.clone(),
-            wallet.clone(),
+            program.clone(),
             token_mint_account.clone(),
             system_account.clone(),
             token_program.clone(),
@@ -427,9 +540,55 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
     Ok(())
 }
 
+#[must_use]
+pub(crate) fn canonical_interchain_token_deploy_salt(mint: &Pubkey) -> [u8; 32] {
+    solana_program::keccak::hashv(&[seed_prefixes::PREFIX_CANONICAL_TOKEN_SALT, mint.as_ref()])
+        .to_bytes()
+}
+
+pub(crate) fn interchain_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    solana_program::keccak::hashv(&[
+        seed_prefixes::PREFIX_INTERCHAIN_TOKEN_SALT,
+        deployer.as_ref(),
+        salt,
+    ])
+    .to_bytes()
+}
+
+pub(crate) fn linked_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    solana_program::keccak::hashv(&[
+        seed_prefixes::PREFIX_CUSTOM_TOKEN_SALT,
+        deployer.as_ref(),
+        salt,
+    ])
+    .to_bytes()
+}
+
+pub(crate) fn interchain_token_id_internal(salt: &[u8; 32]) -> [u8; 32] {
+    solana_program::keccak::hashv(&[seed_prefixes::PREFIX_INTERCHAIN_TOKEN_ID, salt]).to_bytes()
+}
+
 /// Calculates the tokenId that would correspond to a link for a given deployer
 /// with a specified salt
 #[must_use]
-pub fn interchain_token_id(deployer: &Pubkey, salt: &[u8]) -> [u8; 32] {
-    solana_program::keccak::hashv(&[deployer.as_ref(), salt]).to_bytes()
+pub fn interchain_token_id(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    let deploy_salt = interchain_token_deployer_salt(deployer, salt);
+
+    interchain_token_id_internal(&deploy_salt)
+}
+
+/// Computes the ID for a canonical interchain token based on its address
+#[must_use]
+pub fn canonical_interchain_token_id(mint: &Pubkey) -> [u8; 32] {
+    let salt = canonical_interchain_token_deploy_salt(mint);
+
+    interchain_token_id_internal(&salt)
+}
+
+/// Computes the ID for a linked custom token based on its deployer and salt
+#[must_use]
+pub fn linked_token_id(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
+    let salt = linked_token_deployer_salt(deployer, salt);
+
+    interchain_token_id_internal(&salt)
 }
