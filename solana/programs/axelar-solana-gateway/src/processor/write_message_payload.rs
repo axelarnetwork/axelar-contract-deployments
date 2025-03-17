@@ -24,7 +24,7 @@ impl Processor {
     pub fn process_write_message_payload(
         program_id: &Pubkey,
         accounts: &[AccountInfo<'_>],
-        offset: usize,
+        offset: u64,
         bytes_to_write: &[u8],
         command_id: [u8; 32],
     ) -> ProgramResult {
@@ -64,6 +64,13 @@ impl Processor {
 
         // Check: Message payload PDA must not be committed
         message_payload.assert_uncommitted()?;
+
+        let offset: usize = if let Ok(val) = offset.try_into() {
+            val
+        } else {
+            solana_program::msg!("Error: offset conversion to usize failed");
+            return Err(ProgramError::InvalidArgument);
+        };
 
         // Write the bytes
         message_payload.write(bytes_to_write, offset)

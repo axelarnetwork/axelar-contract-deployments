@@ -150,7 +150,7 @@ pub enum GatewayInstruction {
     /// 2. [WRITE] Message Payload PDA account
     WriteMessagePayload {
         /// Offset at which to write the given bytes.
-        offset: usize,
+        offset: u64,
         /// Serialized `execute_data` data.
         bytes: Vec<u8>,
         /// Message's command id
@@ -246,7 +246,7 @@ pub struct InitializeConfig {
 ///
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 #[allow(clippy::too_many_arguments)]
-pub fn approve_messages(
+pub fn approve_message(
     message: MerkleisedMessage,
     payload_merkle_root: [u8; 32],
     gateway_root_pda: Pubkey,
@@ -568,7 +568,7 @@ pub fn write_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
     bytes: &[u8],
-    offset: usize,
+    offset: u64,
 ) -> Result<Instruction, ProgramError> {
     let (message_payload_pda, _) =
         crate::find_message_payload_pda(gateway_root_pda, command_id, authority);

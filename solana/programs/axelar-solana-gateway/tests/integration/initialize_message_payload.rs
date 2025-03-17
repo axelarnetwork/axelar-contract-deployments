@@ -3,7 +3,7 @@ use axelar_solana_encoding::types::execute_data::MerkleisedPayload;
 use axelar_solana_encoding::types::messages::{Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::LeafHash;
-use axelar_solana_gateway::instructions::approve_messages;
+use axelar_solana_gateway::instructions;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
@@ -63,7 +63,7 @@ pub async fn approve_message(runner: &mut SolanaAxelarIntegrationMetadata, messa
         messages.into_iter().next().unwrap()
     };
 
-    let ix = approve_messages(
+    let ix = instructions::approve_message(
         message_info,
         execute_data.payload_merkle_root,
         runner.gateway_root_pda,

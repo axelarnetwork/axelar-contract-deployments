@@ -1,0 +1,164 @@
+{
+  "version": "0.1.0",
+  "name": "axelar_solana_memo_program",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "counterPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "counterPdaBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "processMemo",
+      "accounts": [
+        {
+          "name": "counterPda",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "memo",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "sendToGateway",
+      "accounts": [
+        {
+          "name": "id",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "memoCounterPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signingPda0",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "memo",
+          "type": "string"
+        },
+        {
+          "name": "destinationChain",
+          "type": "string"
+        },
+        {
+          "name": "destinationAddress",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "sendToGatewayOffchainMemo",
+      "accounts": [
+        {
+          "name": "id",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "memoCounterPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signingPda0",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "memoHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "destinationChain",
+          "type": "string"
+        },
+        {
+          "name": "destinationAddress",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Counter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "counter",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

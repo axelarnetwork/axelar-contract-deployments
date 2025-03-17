@@ -4,7 +4,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use solana_program::program_error::ProgramError;
 
-const IRRECOVERABLE_ERROR: u32 = 500;
+const IRRECOVERABLE_ERROR: u32 = 12;
 
 /// Errors that may be returned by the Gateway program.
 ///
@@ -13,8 +13,8 @@ const IRRECOVERABLE_ERROR: u32 = 500;
 /// some other errors can be interpreted as "this action has already been executed".
 ///
 /// Because of this the errors are following the error numbers as follows:
-/// Range: 0..500  | Action has already been completed by another actor. Relayer can interpret as "assume that this action completed successfully".
-/// Range: 500..xx | Action cannot be completed with the provided arguments
+/// Range: 0..12  | Action has already been completed by another actor. Relayer can interpret as "assume that this action completed successfully".
+/// Range: 13..xx | Action cannot be completed with the provided arguments
 #[repr(u32)]
 #[derive(Clone, Debug, Eq, thiserror::Error, FromPrimitive, ToPrimitive, PartialEq)]
 pub enum GatewayError {
@@ -71,7 +71,7 @@ pub enum GatewayError {
     // --- NOTICE ---
     // this bumps the error representation to start at 500
     // Any error after this point is deemed irrecoverable
-    EpochCalculationOverflow = IRRECOVERABLE_ERROR,
+    EpochCalculationOverflow,
 
     /// Error indicating the provided verifier set is too old.
     #[error("Verifier set too old")]

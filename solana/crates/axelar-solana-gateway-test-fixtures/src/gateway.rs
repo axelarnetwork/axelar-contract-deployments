@@ -257,7 +257,7 @@ impl SolanaAxelarIntegrationMetadata {
         let (incoming_message_pda, _incoming_message_pda_bump) =
             get_incoming_message_pda(&command_id);
 
-        let ix = axelar_solana_gateway::instructions::approve_messages(
+        let ix = axelar_solana_gateway::instructions::approve_message(
             message,
             payload_merkle_root,
             self.gateway_root_pda,
@@ -444,7 +444,7 @@ impl SolanaAxelarIntegrationMetadata {
                 self.payer.pubkey(),
                 command_id,
                 bytes,
-                offset,
+                offset.try_into().unwrap(),
             )
             .unwrap();
 

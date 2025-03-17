@@ -27,6 +27,12 @@ enum Commands {
     UnusedDeps,
     Typos,
     Docs,
+    CreateBindings {
+        program: String,
+        /// Copies them from temp folder to corresponding
+        #[clap(short, long, default_value_t = false)]
+        update: bool,
+    },
 }
 
 fn main() -> eyre::Result<()> {
@@ -110,6 +116,45 @@ fn main() -> eyre::Result<()> {
 
                 #[cfg(target_os = "linux")]
                 cmd!(sh, "xdg-open target/doc/relayer/index.html").run()?;
+            }
+        }
+        Commands::CreateBindings { program, update } => {
+            println!("Creating bindings for: {}", program);
+            let program = "axelar-solana-".to_owned() + &program;
+            let temp_folder = "bindings/generated/temp/".to_owned();
+            let temp_folder_program = temp_folder.clone() + &program;
+
+            if std::fs::metadata(&temp_folder).is_err() {
+                cmd!(sh, "mkdir {temp_folder}").run()?;
+            }
+            if std::fs::metadata(&temp_folder_program).is_err() {
+                cmd!(sh, "mkdir {temp_folder_program}").run()?;
+            }
+            cmd!(
+                sh,
+                "../../native-to-anchor/generator/target/debug/native-to-anchor package
+                programs/{program}
+                -o bindings/generated/temp
+                -d bindings/anchor_lib/{program}.rs
+                -k"
+            )
+            .run()?;
+            if update {
+                cmd!(
+                    sh,
+                    "rm -rf bindings/generated/{program}/src bindings/generated/{program}/idl.json"
+                )
+                .run()?;
+                cmd!(
+                    sh,
+                    "cp -r bindings/generated/temp/{program}/src bindings/generated/{program}/"
+                )
+                .run()?;
+                cmd!(
+                    sh,
+                    "cp bindings/generated/temp/{program}/idl.json bindings/generated/{program}/"
+                )
+                .run()?;
             }
         }
     }

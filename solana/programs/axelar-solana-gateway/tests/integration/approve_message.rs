@@ -6,7 +6,7 @@ use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::LeafHash;
 use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::instructions::approve_messages;
+use axelar_solana_gateway::instructions::approve_message;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use axelar_solana_gateway::{get_incoming_message_pda, get_validate_message_signing_pda};
@@ -50,7 +50,7 @@ async fn successfully_approves_messages() {
             get_incoming_message_pda(&command_id);
 
         let message = message_info.leaf.clone().message;
-        let ix = approve_messages(
+        let ix = approve_message(
             message_info,
             execute_data.payload_merkle_root,
             metadata.gateway_root_pda,
