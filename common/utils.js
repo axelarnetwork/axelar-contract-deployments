@@ -529,6 +529,31 @@ const parseTrustedChains = (config, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
+function stellarAddressToBytes(address) {
+    return hexlify(Buffer.from(address, 'ascii'));
+}
+
+function encodeDestinationAddress(destinationChain, destinationAddress) {
+    if (!destinationChain || !destinationAddress) {
+        throw new Error('Both destinationChain and destinationAddress are required');
+    }
+
+    const chain = destinationChain.toLowerCase();
+
+    if (chain.includes('stellar')) {
+        validateParameters({
+            isValidStellarAddress: { destinationAddress },
+        });
+
+        return stellarAddressToBytes(destinationAddress);
+    } else if (chain.includes('sui')) {
+        // TODO: add sui specific address encoding function
+        return destinationAddress;
+    } else {
+        return destinationAddress;
+    }
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -574,4 +599,6 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    stellarAddressToBytes,
+    encodeDestinationAddress,
 };
