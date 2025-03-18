@@ -549,9 +549,10 @@ function encodeDestinationAddress(destinationChain, destinationAddress) {
     } else if (chain.includes('sui')) {
         // TODO: add sui specific address encoding function
         return destinationAddress;
-    } else {
-        return destinationAddress;
     }
+ 
+        return destinationAddress;
+    
 }
 
 module.exports = {

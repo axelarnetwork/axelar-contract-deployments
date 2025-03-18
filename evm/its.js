@@ -350,6 +350,7 @@ async function processCommand(config, chain, options) {
             }
 
             const destinationAddressEncoded = encodeDestinationAddress(destinationChain, destinationAddress);
+
             if (destinationAddressEncoded !== destinationAddress) {
                 printInfo(
                     `The destination address "${destinationAddress}" was encoded as "${destinationAddressEncoded}" for "${destinationChain}".`,
