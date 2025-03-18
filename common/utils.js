@@ -550,9 +550,8 @@ function encodeDestinationAddress(destinationChain, destinationAddress) {
         // TODO: add sui specific address encoding function
         return destinationAddress;
     }
- 
-        return destinationAddress;
-    
+
+    return destinationAddress;
 }
 
 module.exports = {
