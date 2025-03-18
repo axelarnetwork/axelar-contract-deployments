@@ -12,9 +12,8 @@ const {
     xdr,
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
-const { printInfo, sleep, addEnvOption } = require('../common');
+const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
     utils: { arrayify, hexlify, hexZeroPad, isHexString, keccak256 },
@@ -246,13 +245,8 @@ async function estimateCost(tx, server) {
     };
 }
 
-const getAmplifierVerifiers = async (config, chainAxelarId) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chainAxelarId].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers

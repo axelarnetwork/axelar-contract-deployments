@@ -35,6 +35,7 @@ const {
     findProjectRoot,
     timeout,
     getSaltFromKey,
+    getCurrentVerifierSet,
 } = require('../common');
 const {
     create3DeployContract,
@@ -43,7 +44,6 @@ const {
     getCreate3Address,
     printObj,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
@@ -501,12 +501,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
 };
 
 const getAmplifierKeyAddresses = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({

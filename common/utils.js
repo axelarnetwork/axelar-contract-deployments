@@ -498,6 +498,20 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
     return value;
 };
 
+const getCurrentVerifierSet = async (config, chain) => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chain].address,
+        'current_verifier_set',
+    );
+
+    return {
+        verifierSetId,
+        verifierSet,
+        signers: Object.values(verifierSet.signers),
+    };
+};
+
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const itsEdgeContract = (chainConfig) => {
@@ -574,4 +588,5 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    getCurrentVerifierSet,
 };
