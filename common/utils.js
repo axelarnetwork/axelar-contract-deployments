@@ -541,7 +541,7 @@ function asciiToBytes(string) {
  *       - Additional encoding logic can be added for new chain types.
  */
 function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const { chainType } = config.chains[destinationChain] || config[destinationChain];
+    const chainType = config.chains[destinationChain]?.chainType || config[destinationChain]?.chainType;
 
     switch (chainType) {
         case 'stellar':
