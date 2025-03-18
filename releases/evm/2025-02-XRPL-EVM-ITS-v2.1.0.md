@@ -9,8 +9,8 @@
 | --------------------- | --------------------- | ---------- |
 | **Devnet Amplifier**  | -                     | TBD        |
 | **Stagenet**          | -                     | TBD        |
-| **Testnet** (staging) | `xrp-evm-test-1`      | 19-02-2025 |
-| **Testnet**           | `xrp-evm-test-1`      | 19-02-2025 |
+| **Testnet** (staging) | Completed      | 2025-02-19 |
+| **Testnet**           | Completed             | 2025-03-13 |
 | **Mainnet**           | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
@@ -33,7 +33,7 @@ Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM cha
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAINS=all
+CHAINS=xrpl-evm
 ```
 
 | Network              | `deployer address`                           |
@@ -45,17 +45,13 @@ CHAINS=all
 
 ### Devnet Amplifier
 
-Amplifier ITS
-
 ```bash
-# Deploy new implementation
 node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-# Deploy new implementation
 node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
@@ -65,7 +61,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register xrpl-evm ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v1.0.0.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \
@@ -76,19 +72,11 @@ node cosmwasm/submit-proposal.js \
     --runAs $RUN_AS_ACCOUNT
 ```
 
-## Set trusted chains on XRPL EVM
-
-```bash
-# Add all trusted chains to xrplevm ITS
-node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --trustedAddress hub
-```
-
 ## Set XRPL EVM as trusted chain on remote ITS contracts
 
 Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-# Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
 node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
 ```
 
