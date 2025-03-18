@@ -27,7 +27,7 @@ const {
     itsEdgeContract,
     getChainConfigByAxelarId,
     isConsensusChain,
-    encodeDestinationAddress,
+    encodeITSDestination,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -349,7 +349,7 @@ async function processCommand(config, chain, options) {
                 await token.approve(interchainTokenService.address, amount, gasOptions).then((tx) => tx.wait());
             }
 
-            const destinationAddressEncoded = encodeDestinationAddress(destinationChain, destinationAddress);
+            const destinationAddressEncoded = encodeITSDestination(config, destinationChain, destinationAddress);
 
             if (destinationAddressEncoded !== destinationAddress) {
                 printInfo(
