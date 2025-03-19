@@ -28,7 +28,7 @@ const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
 const moveDir = `${__dirname}/../move`;
 
-const getAmplifierSigners = async (config, chain) => {
+const getAmplifierVerifiers = async (config, chain) => {
     const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedSigners = signers
@@ -159,7 +159,7 @@ const getSigners = async (keypair, config, chain, options) => {
         };
     }
 
-    return getAmplifierSigners(config, chain);
+    return getAmplifierVerifiers(config, chain);
 };
 
 const isGasToken = (coinType) => {
@@ -353,7 +353,7 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
 
 module.exports = {
     suiCoinId,
-    getAmplifierSigners,
+    getAmplifierVerifiers,
     isGasToken,
     paginateAll,
     suiPackageAddress,
