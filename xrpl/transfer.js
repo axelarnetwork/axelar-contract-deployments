@@ -4,7 +4,7 @@ const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function transfer(_config, wallet, client, chain, options, args) {
     await client.sendPayment(wallet, {
-        destination: chain.contracts.AxelarGateway.address,
+        destination: chain.contracts.InterchainTokenService.address,
         amount: parseTokenAmount(args.token, args.amount), // token is either "XRP" or "<currency>.<issuer-address>"
         memos: [
             { memoType: hex('type'), memoData: hex('interchain_transfer') },
