@@ -24,7 +24,7 @@ if (require.main === module) {
         .description('Initiate an interchain token transfer from XRPL.')
         .arguments('<token> <amount> <destinationChain> <destinationAddress>')
         .addOption(new Option('--payload <payload>', 'payload to call contract at destination address with'))
-        .addOption(new Option('--gasFeeAmount <gasFeeAmount>', 'gas fee amount').default('0'))
+        .addOption(new Option('--gasFeeAmount <gasFeeAmount>', 'gas fee amount').makeOptionMandatory(true))
         .action((token, amount, destinationChain, destinationAddress, options) => {
             mainProcessor(interchainTransfer, options, { token, amount, destinationChain, destinationAddress });
         });
