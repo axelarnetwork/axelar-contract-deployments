@@ -77,7 +77,7 @@ node cosmwasm/submit-proposal.js \
 Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
+node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
 ## Link XRP token
@@ -85,7 +85,7 @@ node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --truste
 - Register XRP token metadata with ITS Hub.
 
 ```bash
-node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
 ```
 
 - Submit `linkToken` msg from XRPL to XRPL EVM with the XRP token address as the destination token address.
@@ -93,7 +93,7 @@ node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEe
 - Query the linked token manager address for the XRP token.
 
 ```bash
-node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
+node evm/its.js token-manager-address [tokenId]
 ```
 
 - The XRP token mint permission should then be transferred to the token manager.
@@ -105,20 +105,21 @@ The following checks should be performed after the rollout.
 - Run post-deployment checks.
 
 ```bash
-node evm/its.js --action checks -n $CHAIN -y
+node evm/its.js checks -n $CHAIN -y
 ```
 
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
 # Create a token on chain. Substitute the `wallet` below with the deployer key
-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wallet] --name "test" --symbol "TST" --decimals [decimals] --initialSupply 10000 --salt "salt12345"
+node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination chain] --salt "salt12345" -y
+ node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
 
-#Transfer token
-node evm/its.js --action interchainTransfer --destinationChain [destination chain] --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 0
+# Transfer token to remote chain
+node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
 
-# Ensure GMP call is executed on destination chain, where required
+# Transfer token back from remote chain
+node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain] 
 ```
