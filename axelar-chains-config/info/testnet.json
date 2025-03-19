@@ -127,7 +127,7 @@
       "name": "Avalanche",
       "axelarId": "Avalanche",
       "chainId": 43113,
-      "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
+      "rpc": "https://avax-fuji.g.alchemy.com/v2/q1wPlfK_NeEGpIvt3XDTc98sVFFSdOGU",
       "tokenSymbol": "AVAX",
       "chainType": "evm",
       "contracts": {
@@ -2808,6 +2808,18 @@
       "explorer": {
         "name": "Stellar Expert",
         "url": "https://stellar.expert/explorer/testnet"
+      }
+    },
+    "berachain": {
+      "name": "berachain",
+      "id": "80069",
+      "axelarId": "berachain",
+      "chainId": 80094,
+      "rpc": "https://berachain-mainnet.g.alchemy.com/v2/q1wPlfK_NeEGpIvt3XDTc98sVFFSdOGU",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
       }
     }
   },
