@@ -488,7 +488,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierKeyAddresses(config, chain)
+        ? await getAmplifierVerifiers(config, chain)
         : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
@@ -500,7 +500,7 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
-const getAmplifierKeyAddresses = async (config, chain) => {
+const getAmplifierVerifiers = async (config, chain) => {
     const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedAddresses = signers
@@ -1021,7 +1021,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -1077,7 +1077,7 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    getAmplifierKeyAddresses,
+    getAmplifierVerifiers,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
