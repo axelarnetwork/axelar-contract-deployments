@@ -23,9 +23,11 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
+    parseTrustedChains,
     itsEdgeContract,
     getChainConfigByAxelarId,
     isConsensusChain,
+    encodeITSDestination,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -35,7 +37,7 @@ const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const ITokenManager = getContractJSON('ITokenManager');
 const IOwnable = getContractJSON('IOwnable');
-const { addOptionsToCommands, parseTrustedChains } = require('../common');
+const { addOptionsToCommands } = require('../common');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
 const tokenManagerImplementations = {
@@ -345,10 +347,18 @@ async function processCommand(config, chain, action, options) {
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
+            const destinationAddressEncoded = encodeITSDestination(config, destinationChain, destinationAddress);
+
+            if (destinationAddressEncoded !== destinationAddress) {
+                printInfo(
+                    `The destination address "${destinationAddress}" was encoded as "${destinationAddressEncoded}" for "${destinationChain}".`,
+                );
+            }
+
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
                 destinationChain,
-                destinationAddress,
+                destinationAddressEncoded,
                 amountInUnits,
                 metadata,
                 gasValue,
