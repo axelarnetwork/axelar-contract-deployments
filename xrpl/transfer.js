@@ -7,7 +7,7 @@ async function transfer(_config, wallet, client, chain, options, args) {
         destination: chain.contracts.AxelarGateway.address,
         amount: parseTokenAmount(args.token, args.amount), // token is either "XRP" or "<currency>.<issuer-address>"
         memos: [
-            { memoType: hex('destination_address'), memoData: args.destinationAddress.replace('0x', '') },
+            { memoType: hex('destination_address'), memoData: hex(args.destinationAddress.replace('0x', '')) },
             { memoType: hex('destination_chain'), memoData: hex(args.destinationChain) },
             { memoType: hex('gas_fee_amount'), memoData: Number(options.gasFeeAmount).toString(16) },
             ...(options.payload ? [{ memoType: hex('payload'), memoData: options.payload }] : []),
