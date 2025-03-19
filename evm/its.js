@@ -24,6 +24,7 @@ const {
     isNonEmptyString,
     isValidChain,
     getChainConfig,
+    parseTrustedChains,
     itsEdgeContract,
     getChainConfigByAxelarId,
     isConsensusChain,
@@ -449,9 +450,8 @@ async function processCommand(config, chain, options) {
             let trustedChains, trustedAddresses;
 
             if (options.trustedChain === 'all') {
-                const itsChains = Object.values(config.chains).filter((chain) => chain.contracts?.InterchainTokenService?.skip !== true);
-                trustedChains = itsChains.map((chain) => chain.axelarId);
-                trustedAddresses = itsChains.map((_) => options.trustedAddress || chain.contracts?.InterchainTokenService?.address);
+                trustedChains = parseTrustedChains(config, options.trustedChain);
+                trustedAddresses = trustedChains.map((_) => options.trustedAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain =
                     getChainConfig(config, options.trustedChain.toLowerCase(), { skipCheck: true })?.axelarId ||
