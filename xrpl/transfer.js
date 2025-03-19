@@ -9,7 +9,7 @@ async function transfer(_config, wallet, client, chain, options, args) {
         memos: [
             { memoType: hex('destination_address'), memoData: hex(args.destinationAddress.replace('0x', '')) },
             { memoType: hex('destination_chain'), memoData: hex(args.destinationChain) },
-            { memoType: hex('gas_fee_amount'), memoData: Number(options.gasFeeAmount).toString(16) },
+            { memoType: hex('gas_fee_amount'), memoData: hex(options.gasFeeAmount) },
             ...(options.payload ? [{ memoType: hex('payload'), memoData: options.payload }] : []),
         ],
     }, options);
