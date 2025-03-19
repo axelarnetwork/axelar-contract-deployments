@@ -28,3 +28,4 @@ rustc-ice-*
 solana/bindings/generated/.anchor
 solana/bindings/generated/pnpm-lock.yaml
 solana/bindings/generated/temp
+solana/bindings/generated/dist
