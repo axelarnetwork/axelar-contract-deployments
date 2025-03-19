@@ -529,6 +529,32 @@ const parseTrustedChains = (config, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
+function asciiToBytes(string) {
+    return hexlify(Buffer.from(string, 'ascii'));
+}
+
+/**
+ * Encodes the destination address for Interchain Token Service (ITS) transfers.
+ * This function ensures proper encoding of the destination address based on the destination chain type.
+ * Note: - Stellar addresses are converted to ASCII byte arrays.
+ *       - EVM and Sui addresses are returned as-is (default behavior).
+ *       - Additional encoding logic can be added for new chain types.
+ */
+function encodeITSDestination(config, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'stellar':
+            validateParameters({ isValidStellarAddress: { destinationAddress } });
+            return asciiToBytes(destinationAddress);
+
+        case 'evm':
+        case 'sui':
+        default: // EVM, Sui, and other chains (return as-is)
+            return destinationAddress;
+    }
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -574,4 +600,6 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    asciiToBytes,
+    encodeITSDestination,
 };
