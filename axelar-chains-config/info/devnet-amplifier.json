@@ -942,6 +942,18 @@
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
       }
+    },
+    "berachain": {
+      "name": "berachain",
+      "id": "80069",
+      "axelarId": "berachain",
+      "chainId": 80094,
+      "rpc": "https://berachain-mainnet.g.alchemy.com/v2/q1wPlfK_NeEGpIvt3XDTc98sVFFSdOGU",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      }
     }
   },
   "axelar": {
