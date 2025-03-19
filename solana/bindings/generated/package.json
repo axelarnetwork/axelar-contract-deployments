@@ -1,5 +1,5 @@
 {
-  "name": "@native-to-anchor/axelar-solana-memo-program",
+  "name": "@native-to-anchor/axelar-solana",
   "description": "Utility program to test Axelar Gateway and other integrations",
   "version": "0.1.0",
   "author": "",
@@ -7,6 +7,10 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
     "@native-to-anchor/buffer-layout": "=0.1.0"
+  },
+  "exports": {
+    "./gateway": "./dist/axelar-solana-gateway/src/index.js",
+    "./memo-program": "./dist/axelar-solana-memo-program/src/index.js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "=21.0.2",
@@ -29,5 +33,8 @@
     "@solana/web3.js": "^1.98.0",
     "@solana-developers/node-helpers": "^1.2.2"
   },
-  "type": "module"
+  "scripts": {
+    "prepare": "npm run build-ts",
+    "build-ts": "tsc"
+  }
 }
