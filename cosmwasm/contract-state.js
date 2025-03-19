@@ -13,10 +13,11 @@ const CONTRACT_MAP = {
 };
 
 const rewards = async (client, config, options) => {
-    const getContractAddress = CONTRACT_MAP[options.contract];
+    const { contract, chainName } = options;
+    const getContractAddress = CONTRACT_MAP[contract];
 
     if (!getContractAddress) {
-        printWarn(`Query to ${options.contract} is not supported.`);
+        printWarn(`Query to ${contract} is not supported.`);
         return;
     }
 
@@ -24,15 +25,15 @@ const rewards = async (client, config, options) => {
         const result = await client.queryContractSmart(config.axelar.contracts.Rewards.address, {
             rewards_pool: {
                 pool_id: {
-                    chain_name: options.chainName,
-                    contract: getContractAddress(config, options.chainName),
+                    chain_name: chainName,
+                    contract: getContractAddress(config, chainName),
                 },
             },
         });
 
-        printInfo(`Rewards pool for ${options.contract} on ${options.chainName}`, JSON.stringify(result, null, 2));
+        printInfo(`Rewards pool for ${contract} on ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to fetch rewards pool for ${options.contract} on ${options.chainName}`, `${error.message}`);
+        printWarn(`Failed to fetch rewards pool for ${contract} on ${chainName}`, `${error.message}`);
     }
 };
 
