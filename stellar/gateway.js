@@ -6,26 +6,9 @@ const {
 } = ethers;
 
 const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
-const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers, addressToScVal, hexToScVal } = require('./utils');
+const { addBaseOptions, getWallet, broadcast, getNewSigners, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
 const { validateParameters } = require('../common/utils');
-
-const getNewSigners = async (wallet, config, chain, options) => {
-    if (options.signers === 'wallet') {
-        return {
-            nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
-            signers: [
-                {
-                    signer: wallet.publicKey(),
-                    weight: 1,
-                },
-            ],
-            threshold: 1,
-        };
-    }
-
-    return await getAmplifierVerifiers(config, chain.axelarId);
-};
 
 function encodeDataHash(commandType, command) {
     const data = nativeToScVal([commandTypeToScVal(commandType), command]);

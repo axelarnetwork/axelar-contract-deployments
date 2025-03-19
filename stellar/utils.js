@@ -12,15 +12,13 @@ const {
     xdr,
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
-const { printInfo, sleep, addEnvOption } = require('../common');
+const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
+    utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
 } = ethers;
-
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
 
@@ -246,13 +244,8 @@ async function estimateCost(tx, server) {
     };
 }
 
-const getAmplifierVerifiers = async (config, chainAxelarId) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chainAxelarId].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
@@ -270,6 +263,23 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
         nonce: arrayify(ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32)),
         verifierSetId,
     };
+};
+
+const getNewSigners = async (wallet, config, chain, options) => {
+    if (options.signers === 'wallet') {
+        return {
+            nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
+            signers: [
+                {
+                    signer: wallet.publicKey(),
+                    weight: 1,
+                },
+            ],
+            threshold: 1,
+        };
+    }
+
+    return await getAmplifierVerifiers(config, chain.axelarId);
 };
 
 function serializeValue(value) {
@@ -405,7 +415,7 @@ module.exports = {
     estimateCost,
     getNetworkPassphrase,
     addBaseOptions,
-    getAmplifierVerifiers,
+    getNewSigners,
     serializeValue,
     getBalances,
     createAuthorizedFunc,
