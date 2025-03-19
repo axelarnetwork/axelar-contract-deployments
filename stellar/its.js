@@ -21,10 +21,9 @@ const {
     addressToScVal,
     hexToScVal,
     saltToBytes32,
-    stellarAddressToBytes,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains } = require('../common/utils');
+const { prompt, parseTrustedChains, asciiToBytes } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -182,7 +181,7 @@ async function execute(wallet, _, chain, contract, args, options) {
 
 async function encodeRecipient(wallet, _, chain, contract, args, options) {
     const [recipient] = args;
-    printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
+    printInfo('Encoded Recipient', asciiToBytes(recipient));
 }
 
 async function mainProcessor(processor, args, options) {

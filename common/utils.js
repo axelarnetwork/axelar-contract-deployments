@@ -498,6 +498,20 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
     return value;
 };
 
+const getCurrentVerifierSet = async (config, chain) => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chain].address,
+        'current_verifier_set',
+    );
+
+    return {
+        verifierSetId,
+        verifierSet,
+        signers: Object.values(verifierSet.signers),
+    };
+};
+
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const itsEdgeContract = (chainConfig) => {
@@ -528,6 +542,32 @@ const itsEdgeChains = (config) =>
 const parseTrustedChains = (config, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
+
+function asciiToBytes(string) {
+    return hexlify(Buffer.from(string, 'ascii'));
+}
+
+/**
+ * Encodes the destination address for Interchain Token Service (ITS) transfers.
+ * This function ensures proper encoding of the destination address based on the destination chain type.
+ * Note: - Stellar addresses are converted to ASCII byte arrays.
+ *       - EVM and Sui addresses are returned as-is (default behavior).
+ *       - Additional encoding logic can be added for new chain types.
+ */
+function encodeITSDestination(config, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case 'stellar':
+            validateParameters({ isValidStellarAddress: { destinationAddress } });
+            return asciiToBytes(destinationAddress);
+
+        case 'evm':
+        case 'sui':
+        default: // EVM, Sui, and other chains (return as-is)
+            return destinationAddress;
+    }
+}
 
 module.exports = {
     loadConfig,
@@ -574,4 +614,7 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    getCurrentVerifierSet,
+    asciiToBytes,
+    encodeITSDestination,
 };
