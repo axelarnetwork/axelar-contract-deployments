@@ -480,6 +480,19 @@ const getEVMBatch = async (config, chain, batchID = '') => {
     return batch;
 };
 
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+
+    const weightedAddresses = signers
+        .map((signer) => ({
+            address: computeAddress(`0x${signer.pub_key.ecdsa}`),
+            weight: signer.weight,
+        }))
+        .sort((a, b) => a.address.localeCompare(b.address));
+
+    return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
+};
+
 const getEVMAddresses = async (config, chain, options = {}) => {
     const keyID = options.keyID || '';
 
@@ -498,19 +511,6 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     const threshold = Number(evmAddresses.threshold);
 
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
-};
-
-const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
-
-    const weightedAddresses = signers
-        .map((signer) => ({
-            address: computeAddress(`0x${signer.pub_key.ecdsa}`),
-            weight: signer.weight,
-        }))
-        .sort((a, b) => a.address.localeCompare(b.address));
-
-    return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
 function loadParallelExecutionConfig(env, chain) {
@@ -1077,7 +1077,6 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    getAmplifierVerifiers,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,

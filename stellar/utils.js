@@ -16,10 +16,9 @@ const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../co
 const { Option } = require('commander');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify, hexZeroPad, isHexString, keccak256 },
+    utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
 } = ethers;
-
 const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
 
@@ -266,6 +265,23 @@ const getAmplifierVerifiers = async (config, chain) => {
     };
 };
 
+const getNewSigners = async (wallet, config, chain, options) => {
+    if (options.signers === 'wallet') {
+        return {
+            nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
+            signers: [
+                {
+                    signer: wallet.publicKey(),
+                    weight: 1,
+                },
+            ],
+            threshold: 1,
+        };
+    }
+
+    return await getAmplifierVerifiers(config, chain.axelarId);
+};
+
 function serializeValue(value) {
     if (value instanceof xdr.ScAddress) {
         return Address.fromScAddress(value).toString();
@@ -399,7 +415,7 @@ module.exports = {
     estimateCost,
     getNetworkPassphrase,
     addBaseOptions,
-    getAmplifierVerifiers,
+    getNewSigners,
     serializeValue,
     getBalances,
     createAuthorizedFunc,

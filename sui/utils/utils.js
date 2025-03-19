@@ -353,7 +353,6 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
 
 module.exports = {
     suiCoinId,
-    getAmplifierVerifiers,
     isGasToken,
     paginateAll,
     suiPackageAddress,
