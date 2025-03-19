@@ -49,18 +49,18 @@ Here's an example signer set rotation:
 node xrpl/rotate-signers.js -e testnet -n xrpl-test-1 --signerPublicKeys 028E425D6F75EC61C8568B7E1C29D3085E210A90A0CE6491E7A249747D34431F6C 02D904B083B855A5AE1DAB39ACE60227E110E0490AAA74DE18F5806121369DBB48 02F77F629E38433F6D2CE5EE46B7E8E1724444163FB08B99CF2C1B117A0E8578F1 0285737FE8BA5D8E8F2A10CB39E814D5E72DADF8FF05BDFABCCF1EF20C51279EC8 --signerWeights 1 1 1 1 --quorum 3
 ```
 
-## GMP/ITS Transfers
+## ITS Interchain Transfers
 
-GMP and/or ITS transfers can be performed via the `transfer.js` script:
+Interchain token transfers can be performed via the `interchain-transfer.js` script:
 
 ```bash
-node xrpl/transfer.js -e <env> -n <source-chain> [token] [amount] [destination-chain] [destination-address] --gas-fee-amount [gas-fee-amount] --payload [payload]
+node xrpl/interchain-transfer.js -e <env> -n <source-chain> [token] [amount] [destination-chain] [destination-address] --gas-fee-amount [gas-fee-amount] --payload [payload]
 ```
 
-Here's an example of a token transfer that also performs GMP:
+Here's an example of an interchain transfer that also performs GMP:
 
 ```bash
-node xrpl/transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
+node xrpl/interchain-transfer.js -e devnet-amplifier -n xrpl-test-1 XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
 ```
 
 ## Broadcast Raw Transaction Blob
