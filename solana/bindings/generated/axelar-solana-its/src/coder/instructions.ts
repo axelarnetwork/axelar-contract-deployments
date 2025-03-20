@@ -31,6 +31,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "deployRemoteCanonicalInterchainToken": {
         return encodeDeployRemoteCanonicalInterchainToken(ix);
       }
+      case "interchainTransfer": {
+        return encodeInterchainTransfer(ix);
+      }
       case "deployInterchainToken": {
         return encodeDeployInterchainToken(ix);
       }
@@ -48,6 +51,12 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       }
       case "linkToken": {
         return encodeLinkToken(ix);
+      }
+      case "callContractWithInterchainToken": {
+        return encodeCallContractWithInterchainToken(ix);
+      }
+      case "callContractWithInterchainTokenOffchainData": {
+        return encodeCallContractWithInterchainTokenOffchainData(ix);
       }
       case "setFlowLimit": {
         return encodeSetFlowLimit(ix);
@@ -137,6 +146,37 @@ function encodeDeployRemoteCanonicalInterchainToken({
       },
     },
     1 + 4 + destinationChain.length + 8 + 1
+  );
+}
+
+function encodeInterchainTransfer({
+  tokenId,
+  destinationChain,
+  destinationAddress,
+  amount,
+  gasValue,
+  signingPdaBump,
+}: any): Buffer {
+  return encodeData(
+    {
+      interchainTransfer: {
+        tokenId,
+        destinationChain,
+        destinationAddress,
+        amount,
+        gasValue,
+        signingPdaBump,
+      },
+    },
+    1 +
+      1 * 32 +
+      4 +
+      destinationChain.length +
+      4 +
+      destinationAddress.length +
+      8 +
+      8 +
+      1
   );
 }
 
@@ -285,6 +325,75 @@ function encodeLinkToken({
   );
 }
 
+function encodeCallContractWithInterchainToken({
+  tokenId,
+  destinationChain,
+  destinationAddress,
+  amount,
+  data,
+  gasValue,
+  signingPdaBump,
+}: any): Buffer {
+  return encodeData(
+    {
+      callContractWithInterchainToken: {
+        tokenId,
+        destinationChain,
+        destinationAddress,
+        amount,
+        data,
+        gasValue,
+        signingPdaBump,
+      },
+    },
+    1 +
+      1 * 32 +
+      4 +
+      destinationChain.length +
+      4 +
+      destinationAddress.length +
+      8 +
+      4 +
+      data.length +
+      8 +
+      1
+  );
+}
+
+function encodeCallContractWithInterchainTokenOffchainData({
+  tokenId,
+  destinationChain,
+  destinationAddress,
+  amount,
+  payloadHash,
+  gasValue,
+  signingPdaBump,
+}: any): Buffer {
+  return encodeData(
+    {
+      callContractWithInterchainTokenOffchainData: {
+        tokenId,
+        destinationChain,
+        destinationAddress,
+        amount,
+        payloadHash,
+        gasValue,
+        signingPdaBump,
+      },
+    },
+    1 +
+      1 * 32 +
+      4 +
+      destinationChain.length +
+      4 +
+      destinationAddress.length +
+      8 +
+      1 * 32 +
+      8 +
+      1
+  );
+}
+
 function encodeSetFlowLimit({ flowLimit }: any): Buffer {
   return encodeData({ setFlowLimit: { flowLimit } }, 1 + 8);
 }
@@ -330,6 +439,18 @@ LAYOUT.addVariant(
 LAYOUT.addVariant(
   8,
   B.struct([
+    B.seq(B.u8(), 32, "tokenId"),
+    B.utf8Str("destinationChain"),
+    B.bytes("destinationAddress"),
+    B.u64("amount"),
+    B.u64("gasValue"),
+    B.u8("signingPdaBump"),
+  ]),
+  "interchainTransfer"
+);
+LAYOUT.addVariant(
+  9,
+  B.struct([
     B.seq(B.u8(), 32, "salt"),
     B.utf8Str("name"),
     B.utf8Str("symbol"),
@@ -338,7 +459,7 @@ LAYOUT.addVariant(
   "deployInterchainToken"
 );
 LAYOUT.addVariant(
-  9,
+  10,
   B.struct([
     B.seq(B.u8(), 32, "salt"),
     B.utf8Str("destinationChain"),
@@ -348,7 +469,7 @@ LAYOUT.addVariant(
   "deployRemoteInterchainToken"
 );
 LAYOUT.addVariant(
-  10,
+  11,
   B.struct([
     B.seq(B.u8(), 32, "salt"),
     B.utf8Str("destinationChain"),
@@ -359,12 +480,12 @@ LAYOUT.addVariant(
   "deployRemoteInterchainTokenWithMinter"
 );
 LAYOUT.addVariant(
-  11,
+  12,
   B.struct([B.u64("gasValue"), B.u8("signingPdaBump")]),
   "registerTokenMetadata"
 );
 LAYOUT.addVariant(
-  12,
+  13,
   B.struct([
     B.seq(B.u8(), 32, "salt"),
     ((p: string) => {
@@ -381,7 +502,7 @@ LAYOUT.addVariant(
   "registerCustomToken"
 );
 LAYOUT.addVariant(
-  13,
+  14,
   B.struct([
     B.seq(B.u8(), 32, "salt"),
     B.utf8Str("destinationChain"),
@@ -401,7 +522,33 @@ LAYOUT.addVariant(
   ]),
   "linkToken"
 );
-LAYOUT.addVariant(14, B.struct([B.u64("flowLimit")]), "setFlowLimit");
+LAYOUT.addVariant(
+  15,
+  B.struct([
+    B.seq(B.u8(), 32, "tokenId"),
+    B.utf8Str("destinationChain"),
+    B.bytes("destinationAddress"),
+    B.u64("amount"),
+    B.bytes("data"),
+    B.u64("gasValue"),
+    B.u8("signingPdaBump"),
+  ]),
+  "callContractWithInterchainToken"
+);
+LAYOUT.addVariant(
+  16,
+  B.struct([
+    B.seq(B.u8(), 32, "tokenId"),
+    B.utf8Str("destinationChain"),
+    B.bytes("destinationAddress"),
+    B.u64("amount"),
+    B.seq(B.u8(), 32, "payloadHash"),
+    B.u64("gasValue"),
+    B.u8("signingPdaBump"),
+  ]),
+  "callContractWithInterchainTokenOffchainData"
+);
+LAYOUT.addVariant(17, B.struct([B.u64("flowLimit")]), "setFlowLimit");
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);

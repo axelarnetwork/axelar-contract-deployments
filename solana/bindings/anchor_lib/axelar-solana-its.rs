@@ -65,6 +65,18 @@ pub mod axelar_solana_its {
         Ok(())
     }
 
+    pub fn interchain_transfer(
+        ctx: Context<InterchainTransfer>,
+        token_id: [u8; 32],
+        destination_chain: String,
+        destination_address: Vec<u8>,
+        amount: u64,
+        gas_value: u64,
+        signing_pda_bump: u8,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     pub fn deploy_interchain_token(
         ctx: Context<DeployInterchainToken>,
         salt: [u8; 32],
@@ -120,6 +132,32 @@ pub mod axelar_solana_its {
         destination_token_address: Vec<u8>,
         token_manager_type: Type,
         link_params: Vec<u8>,
+        gas_value: u64,
+        signing_pda_bump: u8,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn call_contract_with_interchain_token(
+        ctx: Context<CallContractWithInterchainToken>,
+        token_id: [u8; 32],
+        destination_chain: String,
+        destination_address: Vec<u8>,
+        amount: u64,
+        data: Vec<u8>,
+        gas_value: u64,
+        signing_pda_bump: u8,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn call_contract_with_interchain_token_offchain_data(
+        ctx: Context<CallContractWithInterchainTokenOffchainData>,
+        token_id: [u8; 32],
+        destination_chain: String,
+        destination_address: Vec<u8>,
+        amount: u64,
+        payload_hash: [u8; 32],
         gas_value: u64,
         signing_pda_bump: u8,
     ) -> Result<()> {
@@ -229,6 +267,31 @@ pub struct DeployRemoteCanonicalInterchainToken<'info> {
     metadata_account: AccountInfo<'info>,
     sysvar_instructions: AccountInfo<'info>,
     mpl_token_metadata: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    axelar_solana_gateway: AccountInfo<'info>,
+    #[account(mut)]
+    gas_config_pda: AccountInfo<'info>,
+    gas_service: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    its_root_pda: AccountInfo<'info>,
+    call_contract_signing_pda: AccountInfo<'info>,
+    ID: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct InterchainTransfer<'info> {
+    payer: Signer<'info>,
+    authority: Signer<'info>,
+    #[account(mut)]
+    source_account: AccountInfo<'info>,
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    #[account(mut)]
+    token_manager_ata: AccountInfo<'info>,
+    token_program: Program<'info, Token>,
+    #[account(mut)]
+    flow_slot_pda: AccountInfo<'info>,
     gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
@@ -357,6 +420,56 @@ pub struct LinkToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     token_manager_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    axelar_solana_gateway: AccountInfo<'info>,
+    #[account(mut)]
+    gas_config_pda: AccountInfo<'info>,
+    gas_service: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    its_root_pda: AccountInfo<'info>,
+    call_contract_signing_pda: AccountInfo<'info>,
+    ID: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CallContractWithInterchainToken<'info> {
+    payer: Signer<'info>,
+    authority: Signer<'info>,
+    #[account(mut)]
+    source_account: AccountInfo<'info>,
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    #[account(mut)]
+    token_manager_ata: AccountInfo<'info>,
+    token_program: Program<'info, Token>,
+    #[account(mut)]
+    flow_slot_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    axelar_solana_gateway: AccountInfo<'info>,
+    #[account(mut)]
+    gas_config_pda: AccountInfo<'info>,
+    gas_service: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    its_root_pda: AccountInfo<'info>,
+    call_contract_signing_pda: AccountInfo<'info>,
+    ID: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CallContractWithInterchainTokenOffchainData<'info> {
+    payer: Signer<'info>,
+    authority: Signer<'info>,
+    #[account(mut)]
+    source_account: AccountInfo<'info>,
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    #[account(mut)]
+    token_manager_ata: AccountInfo<'info>,
+    token_program: Program<'info, Token>,
+    #[account(mut)]
+    flow_slot_pda: AccountInfo<'info>,
     gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
