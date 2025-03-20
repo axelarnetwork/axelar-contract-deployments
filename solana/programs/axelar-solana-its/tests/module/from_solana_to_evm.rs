@@ -53,7 +53,7 @@ async fn custom_token(
         .seller_fee_basis_points(0)
         .instruction();
 
-    let register_metadata = axelar_solana_its::instructions::register_token_metadata(
+    let register_metadata = axelar_solana_its::instruction::register_token_metadata(
         ctx.solana_wallet,
         custom_solana_token,
         spl_token_2022::id(),
@@ -88,7 +88,7 @@ async fn custom_token(
         .await?;
 
     let token_id = axelar_solana_its::linked_token_id(&ctx.solana_wallet, &salt);
-    let register_custom_token_ix = axelar_solana_its::instructions::register_custom_token(
+    let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
         ctx.solana_wallet,
         salt,
         custom_solana_token,
@@ -101,7 +101,7 @@ async fn custom_token(
         .await
         .unwrap();
 
-    let link_token_ix = axelar_solana_its::instructions::link_token(
+    let link_token_ix = axelar_solana_its::instruction::link_token(
         ctx.solana_wallet,
         salt,
         ctx.evm_chain_name.clone(),
@@ -198,7 +198,7 @@ async fn canonical_token(
 
     ctx.send_solana_tx(&[metadata_ix]).await.unwrap();
 
-    let register_token = axelar_solana_its::instructions::register_canonical_interchain_token(
+    let register_token = axelar_solana_its::instruction::register_canonical_interchain_token(
         ctx.solana_wallet,
         canonical_solana_token,
         spl_token_2022::id(),
@@ -224,7 +224,7 @@ async fn canonical_token(
     assert_eq!(expected_token_id, token_id,);
 
     let deploy_remote_canonical_token_ix =
-        axelar_solana_its::instructions::deploy_remote_canonical_interchain_token(
+        axelar_solana_its::instruction::deploy_remote_canonical_interchain_token(
             ctx.solana_wallet,
             canonical_solana_token,
             ctx.evm_chain_name.clone(),
@@ -371,7 +371,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
     let (token_id, evm_token, solana_token) = custom_token(ctx, TokenManagerType::MintBurn).await?;
 
     let authority_transfer_ix =
-        axelar_solana_its::instructions::token_manager::handover_mint_authority(
+        axelar_solana_its::instruction::token_manager::handover_mint_authority(
             ctx.solana_wallet,
             token_id,
             solana_token,
@@ -393,7 +393,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
 
     let initial_balance = 300;
     // As the mint authority was handed over, we need to mint through ITS.
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         token_id,
         solana_token,
         token_account,
@@ -467,7 +467,7 @@ async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
     ctx.solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[axelar_solana_its::instructions::remove_trusted_chain(
+            &[axelar_solana_its::instruction::remove_trusted_chain(
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 ctx.evm_chain_name.clone(),
             )

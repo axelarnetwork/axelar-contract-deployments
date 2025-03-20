@@ -18,7 +18,7 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use typed_builder::TypedBuilder;
 
 use crate::state::{self, flow_limit};
-use crate::Roles;
+use crate::{Roles, ID};
 
 pub mod interchain_token;
 pub mod minter;
@@ -874,7 +874,7 @@ pub fn deploy_remote_canonical_interchain_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
     ];
 
     let data = to_vec(
@@ -990,7 +990,7 @@ pub fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
     ];
 
     let data = to_vec(
@@ -1055,7 +1055,7 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
     ];
 
     let data = to_vec(
@@ -1104,7 +1104,7 @@ pub fn register_token_metadata(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
     ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::RegisterTokenMetadata {
@@ -1211,7 +1211,7 @@ pub fn link_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
+        AccountMeta::new_readonly(ID, false),
     ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::LinkToken {

@@ -29,7 +29,7 @@ async fn test_incoming_interchain_transfer_within_limit(
     let token_program_id = spl_token_2022::id();
     let flow_limit = 800;
 
-    let flow_limit_ix = axelar_solana_its::instructions::set_flow_limit(
+    let flow_limit_ix = axelar_solana_its::instruction::set_flow_limit(
         ctx.solana_wallet,
         ctx.deployed_interchain_token,
         flow_limit,
@@ -108,7 +108,7 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
     let token_program_id = spl_token_2022::id();
     let flow_limit = 800;
 
-    let flow_limit_ix = axelar_solana_its::instructions::set_flow_limit(
+    let flow_limit_ix = axelar_solana_its::instruction::set_flow_limit(
         ctx.solana_wallet,
         ctx.deployed_interchain_token,
         flow_limit,
@@ -185,7 +185,7 @@ async fn test_outgoing_interchain_transfer_within_limit(
     let flow_limit = 800;
 
     let flow_limit_ix =
-        axelar_solana_its::instructions::set_flow_limit(ctx.solana_wallet, token_id, flow_limit)?;
+        axelar_solana_its::instruction::set_flow_limit(ctx.solana_wallet, token_id, flow_limit)?;
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
@@ -208,7 +208,7 @@ async fn test_outgoing_interchain_transfer_within_limit(
 
     ctx.send_solana_tx(&[create_token_account_ix]).await;
 
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         token_id,
         interchain_token_pda,
         associated_account_address,
@@ -221,7 +221,7 @@ async fn test_outgoing_interchain_transfer_within_limit(
 
     let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(
+    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
         Some(ctx.solana_wallet),
@@ -271,7 +271,7 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
     let token_id = ctx.deployed_interchain_token;
     let flow_limit = 800;
     let flow_limit_ix =
-        axelar_solana_its::instructions::set_flow_limit(ctx.solana_wallet, token_id, flow_limit)
+        axelar_solana_its::instruction::set_flow_limit(ctx.solana_wallet, token_id, flow_limit)
             .unwrap();
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
@@ -295,7 +295,7 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
 
     ctx.send_solana_tx(&[create_token_account_ix]).await;
 
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         token_id,
         interchain_token_pda,
         associated_account_address,
@@ -309,7 +309,7 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
 
     let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
 
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(
+    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
         Some(ctx.solana_wallet),

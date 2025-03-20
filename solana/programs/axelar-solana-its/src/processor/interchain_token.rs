@@ -24,7 +24,7 @@ use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInterna
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, instructions};
+use crate::{assert_valid_deploy_approval_pda, instruction};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -33,13 +33,13 @@ use crate::{
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instructions::interchain_token::Instruction,
+    instruction: instruction::interchain_token::Instruction,
 ) -> ProgramResult {
     match instruction {
-        instructions::interchain_token::Instruction::Mint { amount } => {
+        instruction::interchain_token::Instruction::Mint { amount } => {
             process_mint(accounts, amount)
         }
-        instructions::interchain_token::Instruction::MinterInstruction(minter_instruction) => {
+        instruction::interchain_token::Instruction::MinterInstruction(minter_instruction) => {
             process_minter_instruction(accounts, minter_instruction)
         }
     }
@@ -456,7 +456,7 @@ fn setup_metadata<'a>(
 
 fn process_minter_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instructions::minter::Instruction,
+    instruction: instruction::minter::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
@@ -470,7 +470,7 @@ fn process_minter_instruction<'a>(
     )?;
 
     match instruction {
-        instructions::minter::Instruction::TransferMintership(inputs) => {
+        instruction::minter::Instruction::TransferMintership(inputs) => {
             role_management::processor::transfer(
                 &crate::id(),
                 role_management_accounts,
@@ -478,7 +478,7 @@ fn process_minter_instruction<'a>(
                 Roles::MINTER,
             )?;
         }
-        instructions::minter::Instruction::ProposeMintership(inputs) => {
+        instruction::minter::Instruction::ProposeMintership(inputs) => {
             role_management::processor::propose(
                 &crate::id(),
                 role_management_accounts,
@@ -486,7 +486,7 @@ fn process_minter_instruction<'a>(
                 Roles::MINTER,
             )?;
         }
-        instructions::minter::Instruction::AcceptMintership(inputs) => {
+        instruction::minter::Instruction::AcceptMintership(inputs) => {
             role_management::processor::accept(
                 &crate::id(),
                 role_management_accounts,

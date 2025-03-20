@@ -4,7 +4,7 @@ use core::ops::Deref;
 
 use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+use axelar_solana_its::instruction::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::GMPPayload;
@@ -64,7 +64,7 @@ where
         .timestamp(timestamp)
         .build();
 
-    axelar_solana_its::instructions::its_gmp_payload(inputs)
+    axelar_solana_its::instruction::its_gmp_payload(inputs)
 }
 
 #[async_recursion::async_recursion]

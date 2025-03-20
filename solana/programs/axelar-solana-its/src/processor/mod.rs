@@ -15,7 +15,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
 use self::token_manager::SetFlowLimitAccounts;
-use crate::instructions::{self, InterchainTokenServiceInstruction};
+use crate::instruction::{self, InterchainTokenServiceInstruction};
 use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
@@ -313,7 +313,7 @@ fn process_initialize(
 
 fn process_operator_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instructions::operator::Instruction,
+    instruction: instruction::operator::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let gateway_root_pda = next_account_info(accounts_iter)?;
@@ -327,7 +327,7 @@ fn process_operator_instruction<'a>(
     )?;
 
     match instruction {
-        instructions::operator::Instruction::TransferOperatorship(inputs) => {
+        instruction::operator::Instruction::TransferOperatorship(inputs) => {
             if inputs.roles.ne(&Roles::OPERATOR) {
                 return Err(ProgramError::InvalidArgument);
             }
@@ -339,7 +339,7 @@ fn process_operator_instruction<'a>(
                 Roles::OPERATOR,
             )?;
         }
-        instructions::operator::Instruction::ProposeOperatorship(inputs) => {
+        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
             if inputs.roles.ne(&Roles::OPERATOR) {
                 return Err(ProgramError::InvalidArgument);
             }
@@ -350,7 +350,7 @@ fn process_operator_instruction<'a>(
                 Roles::OPERATOR,
             )?;
         }
-        instructions::operator::Instruction::AcceptOperatorship(inputs) => {
+        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
             if inputs.roles.ne(&Roles::OPERATOR) {
                 return Err(ProgramError::InvalidArgument);
             }
