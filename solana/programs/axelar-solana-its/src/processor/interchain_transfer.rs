@@ -211,6 +211,10 @@ pub(crate) fn process_outbound_transfer<'a>(
     payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
+    let (_other, outbound_message_accounts) = accounts.split_at(8);
+    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
+    
+    msg!("Instruction: OutboundTransfer");
     let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
     assert_valid_token_manager_pda(
         take_token_accounts.token_manager_pda,
@@ -232,9 +236,6 @@ pub(crate) fn process_outbound_transfer<'a>(
         amount: alloy_primitives::U256::from(amount),
         data: data.unwrap_or_default().into(),
     });
-
-    let (_other, outbound_message_accounts) = accounts.split_at(8);
-    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
     gmp::process_outbound(
         take_token_accounts.payer,

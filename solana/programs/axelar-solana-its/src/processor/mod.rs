@@ -178,7 +178,8 @@ pub fn process_instruction<'a>(
         ),
         InterchainTokenServiceInstruction::SetFlowLimit { flow_limit } => {
             let mut instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
-
+            
+            msg!("Instruction: SetFlowLimit");
             ensure_signer_roles(
                 &crate::id(),
                 instruction_accounts.its_root_pda,
@@ -255,6 +256,7 @@ fn process_initialize(
     let operator = next_account_info(account_info_iter)?;
     let user_roles_account = next_account_info(account_info_iter)?;
 
+    msg!("Instruction: Initialize");
     // Check: System Program Account
     if !system_program::check_id(system_account.key) {
         return Err(ProgramError::IncorrectProgramId);
@@ -374,6 +376,7 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: SetPauseStatus");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
@@ -395,6 +398,7 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: SetTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(
@@ -417,6 +421,7 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: RemoveTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(

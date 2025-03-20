@@ -89,6 +89,8 @@ pub(crate) fn process_outbound<'a>(
     let accounts_iter = &mut link_token_accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
+
+    msg!("Instruction: ProcessOutbound");
     let token_id = crate::linked_token_id(payer.key, &salt);
     let token_manager = TokenManager::load(token_manager_account)?;
 
@@ -138,6 +140,10 @@ pub(crate) fn register_token_metadata<'a>(
     let mint_account = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
 
+    let (_other, outbound_message_accounts) = accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
+    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
+    msg!("Instruction: RegisterTokenMetadata");
+
     let mint = Mint::unpack(&mint_account.data.borrow())?;
     let payload = GMPPayload::RegisterTokenMetadata(RegisterTokenMetadata {
         selector: RegisterTokenMetadata::MESSAGE_TYPE_ID
@@ -146,10 +152,7 @@ pub(crate) fn register_token_metadata<'a>(
         token_address: mint_account.key.to_bytes().into(),
         decimals: mint.decimals,
     });
-
-    let (_other, outbound_message_accounts) = accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
-    let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
-
+    
     gmp::process_outbound(
         payer,
         &gmp_accounts,
@@ -181,6 +184,7 @@ pub(crate) fn register_custom_token<'a>(
 pub(crate) fn register_canonical_interchain_token<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> ProgramResult {
+    msg!("Instruction: RegisterCanonicalInterchainToken");
     register_token(accounts, &TokenRegistration::Canonical)
 }
 
@@ -209,7 +213,8 @@ fn register_token<'a>(
     let metadata_account = metadata_account
         .first()
         .ok_or(ProgramError::NotEnoughAccountKeys)?;
-
+    
+    msg!("Instruction: RegisterToken");
     match Metadata::from_bytes(&metadata_account.try_borrow_data()?) {
         Ok(metadata) => {
             if metadata.mint.ne(parsed_accounts.token_mint.key) {
