@@ -1252,17 +1252,35 @@ pub fn interchain_transfer(
     gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<Instruction, ProgramError> {
-    let (accounts, signing_pda_bump) = interchain_transfer_accounts(
-        payer,
-        source_account,
-        authority,
-        token_id,
-        mint,
-        token_program,
-        gas_service,
-        gas_config_pda,
-        timestamp,
-    )?;
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
+    let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
+    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
+    let token_manager_ata =
+        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let (call_contract_signing_pda, signing_pda_bump) =
+        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+    
+    let accounts = vec![
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(authority, signer),
+        AccountMeta::new(source_account, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new(flow_slot_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
+        AccountMeta::new(gas_config_pda, false),
+        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(call_contract_signing_pda, false),
+        AccountMeta::new_readonly(ID, false),
+    ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer {
         token_id,
@@ -1302,17 +1320,35 @@ pub fn call_contract_with_interchain_token(
     gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<Instruction, ProgramError> {
-    let (accounts, signing_pda_bump) = interchain_transfer_accounts(
-        payer,
-        source_account,
-        authority,
-        token_id,
-        mint,
-        token_program,
-        gas_service,
-        gas_config_pda,
-        timestamp,
-    )?;
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
+    let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
+    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
+    let token_manager_ata =
+        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let (call_contract_signing_pda, signing_pda_bump) =
+        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+    
+    let accounts = vec![
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(authority, signer),
+        AccountMeta::new(source_account, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new(flow_slot_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
+        AccountMeta::new(gas_config_pda, false),
+        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(call_contract_signing_pda, false),
+        AccountMeta::new_readonly(ID, false),
+    ];
 
     let data = to_vec(
         &InterchainTokenServiceInstruction::CallContractWithInterchainToken {
@@ -1355,17 +1391,35 @@ pub fn call_contract_with_interchain_token_offchain_data(
     gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<(Instruction, Vec<u8>), ProgramError> {
-    let (accounts, signing_pda_bump) = interchain_transfer_accounts(
-        payer,
-        source_account,
-        authority,
-        token_id,
-        mint,
-        token_program,
-        gas_service,
-        gas_config_pda,
-        timestamp,
-    )?;
+    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
+    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
+    let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
+    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
+    let token_manager_ata =
+        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
+    let (call_contract_signing_pda, signing_pda_bump) =
+        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+    
+    let accounts = vec![
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(authority, signer),
+        AccountMeta::new(source_account, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new(token_manager_ata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new(flow_slot_pda, false),
+        AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
+        AccountMeta::new(gas_config_pda, false),
+        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(call_contract_signing_pda, false),
+        AccountMeta::new_readonly(ID, false),
+    ];
 
     let payload = GMPPayload::SendToHub(SendToHub {
         payload: GMPPayload::InterchainTransfer(InterchainTransfer {
@@ -1406,51 +1460,6 @@ pub fn call_contract_with_interchain_token_offchain_data(
             data,
         },
         payload,
-    ))
-}
-
-fn interchain_transfer_accounts(
-    payer: Pubkey,
-    source_account: Pubkey,
-    authority: Option<Pubkey>,
-    token_id: [u8; 32],
-    mint: Pubkey,
-    token_program: Pubkey,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
-    timestamp: i64,
-) -> Result<(Vec<AccountMeta>, u8), ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
-    let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
-    let token_manager_ata =
-        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
-    let (call_contract_signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-
-    Ok((
-        vec![
-            AccountMeta::new_readonly(payer, true),
-            AccountMeta::new_readonly(authority, signer),
-            AccountMeta::new(source_account, false),
-            AccountMeta::new(mint, false),
-            AccountMeta::new_readonly(token_manager_pda, false),
-            AccountMeta::new(token_manager_ata, false),
-            AccountMeta::new_readonly(token_program, false),
-            AccountMeta::new(flow_slot_pda, false),
-            AccountMeta::new_readonly(gateway_root_pda, false),
-            AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
-            AccountMeta::new(gas_config_pda, false),
-            AccountMeta::new_readonly(gas_service, false),
-            AccountMeta::new_readonly(system_program::ID, false),
-            AccountMeta::new_readonly(its_root_pda, false),
-            AccountMeta::new_readonly(call_contract_signing_pda, false),
-            AccountMeta::new_readonly(crate::ID, false),
-        ],
-        signing_pda_bump,
     ))
 }
 
