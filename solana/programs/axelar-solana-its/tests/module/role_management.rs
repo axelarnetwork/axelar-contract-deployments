@@ -21,7 +21,7 @@ async fn test_successful_operator_transfer(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
 
     let transfer_role_ix =
-        axelar_solana_its::instructions::transfer_operatorship(ctx.solana_wallet, bob.pubkey())
+        axelar_solana_its::instruction::transfer_operatorship(ctx.solana_wallet, bob.pubkey())
             .unwrap();
 
     ctx.send_solana_tx(&[transfer_role_ix]).await.unwrap();
@@ -66,7 +66,7 @@ async fn test_fail_transfer_when_not_holder(ctx: &mut ItsTestContext) {
 
     // We don't have the role, so this should fail
     let transfer_role_ix =
-        axelar_solana_its::instructions::transfer_operatorship(bob.pubkey(), alice.pubkey())
+        axelar_solana_its::instruction::transfer_operatorship(bob.pubkey(), alice.pubkey())
             .unwrap();
 
     let payer = ctx.solana_chain.fixture.payer.insecure_clone();
@@ -97,7 +97,7 @@ async fn test_successful_proposal_acceptance(ctx: &mut ItsTestContext) {
     let roles_to_transfer = Roles::OPERATOR;
 
     let proposal_ix =
-        axelar_solana_its::instructions::propose_operatorship(ctx.solana_wallet, bob.pubkey())
+        axelar_solana_its::instruction::propose_operatorship(ctx.solana_wallet, bob.pubkey())
             .unwrap();
 
     ctx.send_solana_tx(&[proposal_ix]).await.unwrap();
@@ -119,7 +119,7 @@ async fn test_successful_proposal_acceptance(ctx: &mut ItsTestContext) {
     assert!(alice_roles.contains(roles_to_transfer));
 
     let accept_ix =
-        axelar_solana_its::instructions::accept_operatorship(bob.pubkey(), ctx.solana_wallet)
+        axelar_solana_its::instruction::accept_operatorship(bob.pubkey(), ctx.solana_wallet)
             .unwrap();
 
     ctx.solana_chain
@@ -184,7 +184,7 @@ async fn test_successful_add_and_remove_flow_limiter(ctx: &mut ItsTestContext) {
         &bob.pubkey(),
     );
 
-    let add_flow_limiter_ix = axelar_solana_its::instructions::token_manager::add_flow_limiter(
+    let add_flow_limiter_ix = axelar_solana_its::instruction::token_manager::add_flow_limiter(
         ctx.solana_chain.fixture.payer.pubkey(),
         token_id,
         bob.pubkey(),
@@ -206,7 +206,7 @@ async fn test_successful_add_and_remove_flow_limiter(ctx: &mut ItsTestContext) {
     assert!(bob_roles.contains(Roles::FLOW_LIMITER));
 
     let remove_flow_limiter_ix =
-        axelar_solana_its::instructions::token_manager::remove_flow_limiter(
+        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             ctx.solana_chain.fixture.payer.pubkey(),
             token_id,
             bob.pubkey(),
@@ -264,7 +264,7 @@ async fn test_successful_token_manager_operator_transfer(ctx: &mut ItsTestContex
     assert!(payer_roles.contains(Roles::OPERATOR));
 
     let transfer_operatorship_ix =
-        axelar_solana_its::instructions::token_manager::transfer_operatorship(
+        axelar_solana_its::instruction::token_manager::transfer_operatorship(
             ctx.solana_chain.fixture.payer.pubkey(),
             token_id,
             bob.pubkey(),
@@ -333,7 +333,7 @@ async fn test_successful_token_manager_operator_proposal_acceptance(ctx: &mut It
     assert!(payer_roles.contains(Roles::OPERATOR));
 
     let propose_operatorship_ix =
-        axelar_solana_its::instructions::token_manager::propose_operatorship(
+        axelar_solana_its::instruction::token_manager::propose_operatorship(
             ctx.solana_chain.fixture.payer.pubkey(),
             token_id,
             bob.pubkey(),
@@ -355,7 +355,7 @@ async fn test_successful_token_manager_operator_proposal_acceptance(ctx: &mut It
     assert!(payer_roles.contains(Roles::OPERATOR));
 
     let accept_operatorship_ix =
-        axelar_solana_its::instructions::token_manager::accept_operatorship(
+        axelar_solana_its::instruction::token_manager::accept_operatorship(
             bob.pubkey(),
             token_id,
             ctx.solana_chain.fixture.payer.pubkey(),
@@ -423,7 +423,7 @@ async fn test_successful_token_manager_minter_transfer(ctx: &mut ItsTestContext)
     assert!(payer_roles.contains(Roles::MINTER));
 
     let transfer_mintership_ix =
-        axelar_solana_its::instructions::interchain_token::transfer_mintership(
+        axelar_solana_its::instruction::interchain_token::transfer_mintership(
             ctx.solana_chain.fixture.payer.pubkey(),
             token_id,
             bob.pubkey(),
@@ -490,7 +490,7 @@ async fn test_successful_token_manager_minter_proposal_acceptance(ctx: &mut ItsT
     assert!(payer_roles.contains(Roles::MINTER));
 
     let propose_mintership_ix =
-        axelar_solana_its::instructions::interchain_token::propose_mintership(
+        axelar_solana_its::instruction::interchain_token::propose_mintership(
             ctx.solana_chain.fixture.payer.pubkey(),
             token_id,
             bob.pubkey(),
@@ -509,13 +509,12 @@ async fn test_successful_token_manager_minter_proposal_acceptance(ctx: &mut ItsT
 
     assert!(payer_roles.contains(Roles::MINTER));
 
-    let accept_mintership_ix =
-        axelar_solana_its::instructions::interchain_token::accept_mintership(
-            bob.pubkey(),
-            token_id,
-            ctx.solana_chain.fixture.payer.pubkey(),
-        )
-        .unwrap();
+    let accept_mintership_ix = axelar_solana_its::instruction::interchain_token::accept_mintership(
+        bob.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(),
+    )
+    .unwrap();
 
     let payer_keys = ctx.solana_chain.fixture.payer.insecure_clone();
     ctx.solana_chain
@@ -582,13 +581,12 @@ async fn test_fail_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestCon
     assert!(payer_roles.contains(Roles::MINTER));
 
     // Trying to accept role that wasn't proposed should fail
-    let accept_mintership_ix =
-        axelar_solana_its::instructions::interchain_token::accept_mintership(
-            bob.pubkey(),
-            token_id,
-            ctx.solana_chain.fixture.payer.pubkey(),
-        )
-        .unwrap();
+    let accept_mintership_ix = axelar_solana_its::instruction::interchain_token::accept_mintership(
+        bob.pubkey(),
+        token_id,
+        ctx.solana_chain.fixture.payer.pubkey(),
+    )
+    .unwrap();
 
     let payer_keys = ctx.solana_chain.fixture.payer.insecure_clone();
     let tx_metadata = ctx
@@ -648,7 +646,7 @@ async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
 
     // Transfer minter role to bob so we don't have it anymore
     let transfer_mintership_ix =
-        axelar_solana_its::instructions::interchain_token::transfer_mintership(
+        axelar_solana_its::instruction::interchain_token::transfer_mintership(
             ctx.solana_wallet,
             token_id,
             bob.pubkey(),
@@ -659,7 +657,7 @@ async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
         .await
         .unwrap();
 
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         token_id,
         token_address,
         ata,

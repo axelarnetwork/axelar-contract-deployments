@@ -20,7 +20,7 @@ use crate::processor::link_token;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 use crate::{assert_its_not_paused, assert_valid_its_root_pda, ITS_HUB_CHAIN_NAME};
-use crate::{instructions, FromAccountInfoSlice};
+use crate::{instruction, FromAccountInfoSlice};
 
 pub(crate) fn process_inbound<'a>(
     accounts: &'a [AccountInfo<'a>],
@@ -294,7 +294,7 @@ fn validate_its_accounts(accounts: &[AccountInfo<'_>], payload: &GMPPayload) -> 
         .map(|account| *account.key)
         .ok_or(ProgramError::InvalidAccountData)?;
 
-    let derived_its_accounts = instructions::derive_its_accounts(
+    let derived_its_accounts = instruction::derive_its_accounts(
         payload,
         gateway_root_pda,
         token_program,

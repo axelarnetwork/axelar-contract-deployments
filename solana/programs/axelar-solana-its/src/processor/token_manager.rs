@@ -16,15 +16,15 @@ use spl_token_2022::state::Mint;
 
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, instructions};
+use crate::{assert_valid_its_root_pda, instruction};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub(crate) fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instructions::token_manager::Instruction,
+    instruction: instruction::token_manager::Instruction,
 ) -> ProgramResult {
     match instruction {
-        instructions::token_manager::Instruction::SetFlowLimit { flow_limit } => {
+        instruction::token_manager::Instruction::SetFlowLimit { flow_limit } => {
             let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
             if !instruction_accounts.flow_limiter.is_signer {
                 return Err(ProgramError::MissingRequiredSignature);
@@ -32,7 +32,7 @@ pub(crate) fn process_instruction<'a>(
 
             set_flow_limit(&instruction_accounts, flow_limit)
         }
-        instructions::token_manager::Instruction::AddFlowLimiter(inputs) => {
+        instruction::token_manager::Instruction::AddFlowLimiter(inputs) => {
             if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
                 return Err(ProgramError::InvalidInstructionData);
             }
@@ -45,7 +45,7 @@ pub(crate) fn process_instruction<'a>(
                 Roles::OPERATOR,
             )
         }
-        instructions::token_manager::Instruction::RemoveFlowLimiter(inputs) => {
+        instruction::token_manager::Instruction::RemoveFlowLimiter(inputs) => {
             if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
                 return Err(ProgramError::InvalidInstructionData);
             }
@@ -58,10 +58,10 @@ pub(crate) fn process_instruction<'a>(
                 Roles::OPERATOR,
             )
         }
-        instructions::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
+        instruction::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
             process_operator_instruction(accounts, operator_instruction)
         }
-        instructions::token_manager::Instruction::HandOverMintAuthority { token_id } => {
+        instruction::token_manager::Instruction::HandOverMintAuthority { token_id } => {
             handover_mint_authority(accounts, token_id)
         }
     }
@@ -246,7 +246,7 @@ fn setup_roles<'a>(
 
 fn process_operator_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instructions::operator::Instruction,
+    instruction: instruction::operator::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
@@ -260,7 +260,7 @@ fn process_operator_instruction<'a>(
     )?;
 
     match instruction {
-        instructions::operator::Instruction::TransferOperatorship(inputs) => {
+        instruction::operator::Instruction::TransferOperatorship(inputs) => {
             role_management::processor::transfer(
                 &crate::id(),
                 role_management_accounts,
@@ -268,7 +268,7 @@ fn process_operator_instruction<'a>(
                 Roles::OPERATOR,
             )?;
         }
-        instructions::operator::Instruction::ProposeOperatorship(inputs) => {
+        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
             role_management::processor::propose(
                 &crate::id(),
                 role_management_accounts,
@@ -276,7 +276,7 @@ fn process_operator_instruction<'a>(
                 Roles::OPERATOR,
             )?;
         }
-        instructions::operator::Instruction::AcceptOperatorship(inputs) => {
+        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
             role_management::processor::accept(
                 &crate::id(),
                 role_management_accounts,

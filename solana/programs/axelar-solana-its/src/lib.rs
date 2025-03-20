@@ -11,7 +11,7 @@ use state::InterchainTokenService;
 
 mod entrypoint;
 pub mod executable;
-pub mod instructions;
+pub mod instruction;
 pub mod processor;
 pub mod state;
 

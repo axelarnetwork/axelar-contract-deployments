@@ -49,7 +49,7 @@ use axelar_solana_gateway_test_fixtures::gateway::{
 use axelar_solana_gateway_test_fixtures::{
     SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata,
 };
-use axelar_solana_its::instructions::ItsGmpInstructionInputs;
+use axelar_solana_its::instruction::ItsGmpInstructionInputs;
 use evm_contracts_test_suite::chain::TestBlockchain;
 use evm_contracts_test_suite::ethers::abi::Detokenize;
 use evm_contracts_test_suite::ethers::contract::{ContractCall, EthLogDecode, Event as EvmEvent};
@@ -185,7 +185,7 @@ impl ItsTestContext {
             .mint_opt(maybe_mint)
             .build();
 
-        let instruction = axelar_solana_its::instructions::its_gmp_payload(its_ix_inputs)
+        let instruction = axelar_solana_its::instruction::its_gmp_payload(its_ix_inputs)
             .expect("failed to create instruction");
 
         match self.solana_chain.fixture.send_tx(&[instruction]).await {
@@ -268,7 +268,7 @@ impl ItsTestContext {
 
     async fn deploy_interchain_token(&mut self) {
         let salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
-        let deploy_local_ix = axelar_solana_its::instructions::deploy_interchain_token(
+        let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
             self.solana_wallet,
             salt,
             "Test Token".to_owned(),
@@ -280,7 +280,7 @@ impl ItsTestContext {
         self.send_solana_tx(&[deploy_local_ix]).await.unwrap();
 
         let approve_remote_deployment =
-            axelar_solana_its::instructions::approve_deploy_remote_interchain_token(
+            axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
                 self.solana_wallet,
                 self.solana_wallet,
                 salt,
@@ -294,7 +294,7 @@ impl ItsTestContext {
             .unwrap();
 
         let deploy_remote_ix =
-            axelar_solana_its::instructions::deploy_remote_interchain_token_with_minter(
+            axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
                 self.solana_wallet,
                 salt,
                 self.solana_wallet,
@@ -335,7 +335,7 @@ impl ItsTestContext {
         let amount = 100;
 
         let clock_sysvar = self.solana_chain.get_sysvar::<Clock>().await;
-        let transfer_ix = axelar_solana_its::instructions::interchain_transfer(
+        let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
             self.solana_wallet,
             token_account,
             Some(self.solana_wallet),
@@ -476,7 +476,7 @@ async fn axelar_solana_setup() -> (SolanaAxelarIntegrationMetadata, Pubkey) {
                     &solana_chain.upgrade_authority.pubkey(),
                     u32::MAX.into(),
                 ),
-                axelar_solana_its::instructions::initialize(
+                axelar_solana_its::instruction::initialize(
                     solana_chain.upgrade_authority.pubkey(),
                     solana_chain.gateway_root_pda,
                     solana_chain.fixture.payer.pubkey(),
@@ -484,7 +484,7 @@ async fn axelar_solana_setup() -> (SolanaAxelarIntegrationMetadata, Pubkey) {
                     ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),
                 )
                 .unwrap(),
-                axelar_solana_its::instructions::set_trusted_chain(
+                axelar_solana_its::instruction::set_trusted_chain(
                     solana_chain.upgrade_authority.pubkey(),
                     EVM_CHAIN_NAME.to_owned(),
                 )

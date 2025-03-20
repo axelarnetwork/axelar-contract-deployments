@@ -75,7 +75,7 @@ async fn custom_token(
         .init_new_mint(ctx.solana_wallet, spl_token_2022::id(), 9)
         .await;
 
-    let register_metadata = axelar_solana_its::instructions::register_token_metadata(
+    let register_metadata = axelar_solana_its::instruction::register_token_metadata(
         ctx.solana_wallet,
         custom_solana_token,
         spl_token_2022::id(),
@@ -219,7 +219,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
     let (token_id, evm_token, solana_token) = custom_token(ctx, TokenManagerType::MintBurn).await?;
 
     let authority_transfer_ix =
-        axelar_solana_its::instructions::token_manager::handover_mint_authority(
+        axelar_solana_its::instruction::token_manager::handover_mint_authority(
             ctx.solana_wallet,
             token_id,
             solana_token,
@@ -253,7 +253,7 @@ async fn test_custom_token_mint_burn_link_transfer(ctx: &mut ItsTestContext) -> 
     );
 
     let initial_balance = 300;
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         token_id,
         solana_token,
         token_account,
@@ -401,7 +401,7 @@ async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
     ctx.solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[axelar_solana_its::instructions::remove_trusted_chain(
+            &[axelar_solana_its::instruction::remove_trusted_chain(
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 ctx.evm_chain_name.clone(),
             )

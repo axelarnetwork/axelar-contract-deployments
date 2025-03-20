@@ -21,7 +21,7 @@ async fn test_its_gmp_payload_fail_when_paused(ctx: &mut ItsTestContext) {
     ctx.solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[axelar_solana_its::instructions::set_pause_status(
+            &[axelar_solana_its::instruction::set_pause_status(
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 true,
             )
@@ -73,7 +73,7 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
     ctx.solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[axelar_solana_its::instructions::set_pause_status(
+            &[axelar_solana_its::instruction::set_pause_status(
                 ctx.solana_chain.upgrade_authority.pubkey(),
                 true,
             )
@@ -114,7 +114,7 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         &spl_token_2022::id(),
     );
     let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-    let mint_ix = axelar_solana_its::instructions::interchain_token::mint(
+    let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         ctx.deployed_interchain_token,
         token_address,
         token_account,
@@ -123,7 +123,7 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         900,
     )
     .unwrap();
-    let transfer_ix = axelar_solana_its::instructions::interchain_transfer(
+    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account,
         Some(ctx.solana_wallet),
@@ -157,7 +157,7 @@ async fn test_fail_to_pause_not_being_owner(ctx: &mut ItsTestContext) {
         .solana_chain
         .fixture
         .send_tx_with_custom_signers(
-            &[axelar_solana_its::instructions::set_pause_status(
+            &[axelar_solana_its::instruction::set_pause_status(
                 ctx.solana_chain.fixture.payer.pubkey(),
                 true,
             )

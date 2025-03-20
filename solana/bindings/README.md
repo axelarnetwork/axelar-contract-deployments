@@ -100,6 +100,23 @@ cd ../../../ && solana program deploy solana/target/deploy/axelar_solana_gateway
 
 CAUTION: Different Program Id could be provided when deployed. In that case, it is necessary to update this newly created Id in `solana/programs/axelar-solana-gateway/src/lib.rs`, rebuild it and redeploy it. Additionally in `bindings/generated/axelar-solana-gateway/program.ts`, value `AXELAR_SOLANA_GATEWAY_PROGRAM_ID` has to be updated with the same value.
 
+## Run ITS on local node
+
+From the `root` of the repository build `its`:
+
+```bash
+cd solana/programs/axelar-solana-its && cargo build-sbf 
+```
+
+And deploy it:
+
+
+```bash
+cd ../../../ && solana program deploy solana/target/deploy/axelar_solana_its.so --program-id solana/target/deploy/axelar_solana_its-keypair.json
+```
+
+CAUTION: Different Program Id could be provided when deployed. In that case, it is necessary to update this newly created Id in `solana/programs/axelar-solana-its/src/lib.rs`, rebuild it and redeploy it. Additionally in `bindings/generated/axelar-solana-its/program.ts`, value `AXELAR_SOLANA_ITS_PROGRAM_ID` has to be updated with the same value.
+
 ## Invoke the test
 
 Before starting the test, change folder to `bindings/generated/`:
@@ -120,7 +137,7 @@ And run the test:
 anchor test --skip-local-validator
 ```
 
-Following messages should appear:
+Following similar messages should appear:
 
 ```bash
 Ping Gateway
