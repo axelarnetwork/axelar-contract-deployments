@@ -2543,6 +2543,16 @@
             "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
             "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
           }
+        },
+        "FLT": {
+          "address": "0x11ca0b72bca5c9977d79aa86ed8dec79ad100c9e1ffbfc51000943c39bed94d3",
+          "typeArgument": "0x11ca0b72bca5c9977d79aa86ed8dec79ad100c9e1ffbfc51000943c39bed94d3::flt::FLT",
+          "decimals": "9",
+          "objects": {
+            "TreasuryCap": "0x28f098621efc918b4c51075f11026bfc046e916ff3eac57161a74bf47d6c0790",
+            "Metadata": "0x1a40a74073b2cb6547aa8b7f59c4b680b014bfae0309597301905a3082aaad86",
+            "TokenId": "0xde77494b700da29a0d5aab36a3bd0d13e4e3f2efba7d9fdd61de6c8f2a14f045"
+          }
         }
       }
     },

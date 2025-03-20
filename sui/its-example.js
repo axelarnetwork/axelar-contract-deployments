@@ -1,5 +1,5 @@
 const { Command, Option } = require('commander');
-const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage } = require('@axelar-network/axelar-cgp-sui');
+const { ITSMessageType, SUI_PACKAGE_ID, CLOCK_PACKAGE_ID, TxBuilder, copyMovePackage, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, printInfo, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
@@ -82,7 +82,74 @@ async function sendToken(keypair, client, contracts, args, options) {
         typeArguments: [ItsToken.typeArgument],
     });
 
+    txBuilder.tx.setGasBudget(50000000);
     await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`, options);
+}
+
+async function registerTokenWithFlowLimit(keypair, client, contracts, args, options) {
+    const [symbol, flowLimit] = args;
+
+    const { InterchainTokenService, AxelarGateway } = contracts;
+    const ItsToken = contracts[symbol.toUpperCase()];
+
+    if (!ItsToken) {
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+    }
+
+    const objectIds = {
+        its: InterchainTokenService.objects.InterhainTokenService,
+    };
+
+    const txBuilder = new TxBuilder(client);
+
+    const channel = "0x6962a876aa0ae67a3d86cb750ea0192e13ab08f5f7ff43a3970efeda897196c6";
+
+    const coinManagement = await txBuilder.moveCall({
+        target: `${InterchainTokenService.address}::coin_management::new_locked`,
+        arguments: [],
+        typeArguments: [ItsToken.typeArgument],
+    });
+
+    await txBuilder.moveCall({
+        target: `${InterchainTokenService.address}::coin_management::add_operator`,
+        arguments: [coinManagement, channel],
+        typeArguments: [ItsToken.typeArgument],
+    });
+
+    const coinInfo = await txBuilder.moveCall({
+        target: `${InterchainTokenService.address}::coin_info::from_info`,
+        arguments: ['name', symbol, ItsToken.decimals],
+        typeArguments: [ItsToken.typeArgument],
+    });
+
+    const tokenId = await txBuilder.moveCall({
+        target: `${InterchainTokenService.address}::interchain_token_service::register_coin`,
+        arguments: [
+            objectIds.its,
+            coinInfo,
+            coinManagement,
+        ],
+        typeArguments: [ItsToken.typeArgument],
+    });
+
+    const flowLimitObject = await txBuilder.moveCall({
+        target: `${STD_PACKAGE_ID}::option::some`,
+        arguments: [txBuilder.tx.pure.u64(Number(flowLimit))],
+        typeArguments: ['u64'],
+    });
+
+    await txBuilder.moveCall({
+        target: `${InterchainTokenService.address}::interchain_token_service::set_flow_limit_as_token_operator`,
+        arguments: [
+            objectIds.its,
+            channel,
+            tokenId,
+            flowLimitObject,
+        ],
+        typeArguments: [ItsToken.typeArgument],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `token registered`, options, {});
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -188,7 +255,7 @@ async function deployToken(keypair, client, contracts, args, options) {
     let tokenId;
 
     const postDeployTxBuilder = new TxBuilder(client);
-
+    
     if (options.origin) {
         if (options.tokenManagerMode === 'lock_unlock') {
             await postDeployTxBuilder.moveCall({
@@ -351,6 +418,14 @@ if (require.main === module) {
             mainProcessor(sendToken, options, [symbol, destChain, destContractAddress, feeAmount, amount], processCommand);
         });
 
+    const registerTokenWithFlowLimitProgram = new Command()
+        .name('register-token-flow-limit')
+        .description('Reigster a token and set a flow limit.')
+        .command('register-token <symbol>')
+        .action((symbol, flowLimit, options) => {
+            mainProcessor(registerTokenWithOperator, options, [symbol, flowLimit], processCommand);
+        });
+
     const receiveTokenTransferProgram = new Command()
         .name('receive-token')
         .description('Receive token from other chain to Sui.')
@@ -434,6 +509,7 @@ if (require.main === module) {
     program.addCommand(mintTokenProgram);
     program.addCommand(printDeploymentInfoProgram);
     program.addCommand(printReceiveTransferInfoProgram);
+    program.addCommand(registerTokenWithOperatorProgram);
 
     addOptionsToCommands(program, addBaseOptions);
 
