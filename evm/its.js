@@ -868,7 +868,7 @@ if (require.main === module) {
         .command('set-trusted-chains')
         .description('Set trusted address')
         .argument('<its-chain>', 'ITS chain')
-        .argument('<its-address>', 'ITS address')
+        .argument('[its-address]', 'ITS address')
         .action((itsChain, itsAddress, options, cmd) => {
             main(cmd.name(), [itsChain, itsAddress], options);
         });
