@@ -469,18 +469,6 @@ pub enum InterchainTokenServiceInstruction {
         signing_pda_bump: u8,
     },
 
-    /// A GMP Interchain Token Service instruction.
-    ///
-    /// 0. [writable,signer] The address of payer / sender
-    /// 1. [] gateway root pda
-    /// 2. [] ITS root pda
-    ///
-    /// 3..N Accounts depend on the inner ITS instruction.
-    ItsGmpPayload {
-        /// The GMP metadata
-        message: Message,
-    },
-
     /// Sets the flow limit for an interchain token.
     ///
     /// 0. [writable,signer] The address of the payer
@@ -505,6 +493,18 @@ pub enum InterchainTokenServiceInstruction {
 
     /// Instructions operating in Interchain Tokens.
     InterchainTokenInstruction(interchain_token::Instruction),
+
+    /// A GMP Interchain Token Service instruction.
+    ///
+    /// 0. [writable,signer] The address of payer / sender
+    /// 1. [] gateway root pda
+    /// 2. [] ITS root pda
+    ///
+    /// 3..N Accounts depend on the inner ITS instruction.
+    ItsGmpPayload {
+        /// The GMP metadata
+        message: Message,
+    },
 }
 
 /// Inputs for the [`its_gmp_payload`] function.
