@@ -152,7 +152,7 @@ pub(crate) fn register_token_metadata<'a>(
         token_address: mint_account.key.to_bytes().into(),
         decimals: mint.decimals,
     });
-    
+
     gmp::process_outbound(
         payer,
         &gmp_accounts,
@@ -213,7 +213,7 @@ fn register_token<'a>(
     let metadata_account = metadata_account
         .first()
         .ok_or(ProgramError::NotEnoughAccountKeys)?;
-    
+
     msg!("Instruction: RegisterToken");
     match Metadata::from_bytes(&metadata_account.try_borrow_data()?) {
         Ok(metadata) => {

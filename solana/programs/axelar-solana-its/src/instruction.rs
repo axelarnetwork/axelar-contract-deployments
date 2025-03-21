@@ -1255,7 +1255,7 @@ pub fn interchain_transfer(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(ID);
-    
+
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
@@ -1323,7 +1323,7 @@ pub fn call_contract_with_interchain_token(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(ID);
-    
+
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
@@ -1394,7 +1394,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(ID);
-    
+
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(authority, signer),
