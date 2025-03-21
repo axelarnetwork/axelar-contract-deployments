@@ -104,8 +104,6 @@ describe("Ping ITS", () => {
         payer.publicKey, [1, 2], "chain"
       ).accounts({
         payer: payer.publicKey,
-        tokenManagerPda: payer.publicKey,
-        rolesPda: payer.publicKey,
         deployApprovalPda: payer.publicKey,
       }).rpc();
     } catch (error) {

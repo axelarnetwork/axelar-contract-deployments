@@ -764,19 +764,12 @@ pub fn revoke_deploy_remote_interchain_token(
     salt: [u8; 32],
     destination_chain: String,
 ) -> Result<Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
     let token_id = crate::interchain_token_id(&deployer, &salt);
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &payer);
     let (deploy_approval_pda, _) =
         crate::find_deployment_approval_pda(&payer, &token_id, &destination_chain);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new_readonly(roles_pda, false),
         AccountMeta::new(deploy_approval_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];

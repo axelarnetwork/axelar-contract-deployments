@@ -244,16 +244,6 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "tokenManagerPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "rolesPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "deployApprovalPda";
           isMut: true;
           isSigner: false;
@@ -1633,16 +1623,6 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: true,
           isSigner: true,
-        },
-        {
-          name: "tokenManagerPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "rolesPda",
-          isMut: false,
-          isSigner: false,
         },
         {
           name: "deployApprovalPda",

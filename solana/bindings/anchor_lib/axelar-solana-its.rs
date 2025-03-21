@@ -231,8 +231,6 @@ pub struct ApproveDeployRemoteInterchainToken<'info> {
 pub struct RevokeDeployRemoteInterchainToken<'info> {
     #[account(mut)]
     payer: Signer<'info>,
-    token_manager_pda: AccountInfo<'info>,
-    roles_pda: AccountInfo<'info>,
     #[account(mut)]
     deploy_approval_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
