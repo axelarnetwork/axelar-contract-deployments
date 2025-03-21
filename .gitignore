@@ -125,3 +125,5 @@ sui/move
 
 # Jetbrains
 .idea
+
+.stellar/

@@ -20,6 +20,10 @@ Changelog: _Link to the changelog_
 
 _Add the background for the release._
 
+## Setup
+
+_Include steps for version control setup._
+
 ## Deployment
 
 _Include the cmds that should be run for the deployment._
