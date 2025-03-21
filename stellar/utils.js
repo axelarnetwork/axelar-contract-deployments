@@ -379,10 +379,6 @@ function saltToBytes32(salt) {
     return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
 }
 
-function stellarAddressToBytes(address) {
-    return hexlify(Buffer.from(address, 'ascii'));
-}
-
 const getContractR2Url = (contractName, version) => {
     if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
@@ -476,7 +472,6 @@ module.exports = {
     tokenToScVal,
     tokenMetadataToScVal,
     saltToBytes32,
-    stellarAddressToBytes,
     getContractCodePath,
     isValidAddress,
     SUPPORTED_STELLAR_CONTRACTS,
