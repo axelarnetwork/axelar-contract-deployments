@@ -7,8 +7,5 @@
     "target": "es6",
     "esModuleInterop": true,
     "outDir": "dist"
-  },
-  "exclude": [
-    "tests"
-  ]
+  }
 }

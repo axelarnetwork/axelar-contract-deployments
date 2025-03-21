@@ -294,7 +294,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.registerCustomToken(
-        [1, 2], {nativeInterchainToken: 1}, payer.publicKey
+        [1, 2], { mintBurn: {} }, payer.publicKey
       ).accounts({
         payer: payer.publicKey,
         tokenMetadataAccount: payer.publicKey,
@@ -320,7 +320,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.linkToken(
-          [1, 2], "chain", Buffer.from(new Uint8Array(2)), { mintBurn: 1 }, Buffer.from(new Uint8Array(3)), new BN(1), 2
+          [1, 2], "chain", Buffer.from(new Uint8Array(2)), { nativeInterchainToken: {} }, Buffer.from(new Uint8Array(3)), new BN(1), 2
       ).accounts({
         payer: payer.publicKey,
         tokenManagerPda: payer.publicKey,
