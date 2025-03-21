@@ -57,7 +57,7 @@ const instantiate = async (client, wallet, config, options) => {
 
     contractConfig.codeId = codeId;
 
-    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
+    const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
     contractConfig.address = contractAddress;
