@@ -86,10 +86,34 @@ async function sendToken(keypair, client, contracts, args, options) {
     await broadcastFromTxBuilder(txBuilder, keypair, `${amount} ${symbol} Token Sent`, options);
 }
 
-async function registerTokenWithFlowLimit(keypair, client, contracts, args, options) {
-    const [symbol, flowLimit] = args;
+async function createChannel(keypair, client, contracts, args, options) {
 
-    const { InterchainTokenService, AxelarGateway } = contracts;
+    const { AxelarGateway } = contracts;
+
+    const txBuilder = new TxBuilder(client);
+
+    const channel = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::channel::new`,
+        arguments: [],
+    });
+
+    await txBuilder.moveCall({
+        target: `${SUI_PACKAGE_ID}::transfer::public_transfer`,
+        arguments: [channel, keypair.toSuiAddress()],
+        typeArguments: [`${AxelarGateway.address}::channel::Channel`],
+    });
+
+    const response = await broadcastFromTxBuilder(txBuilder, keypair, `token registered`, options, {});
+
+    const [channelId] = getObjectIdsByObjectTypes(response, [`${AxelarGateway.address}::channel::Channel`]);
+
+    printInfo('Channel Id', channelId);
+}
+
+async function registerTokenWithFlowLimit(keypair, client, contracts, args, options) {
+    const [symbol, flowLimit, channelId] = args;
+
+    const { InterchainTokenService } = contracts;
     const ItsToken = contracts[symbol.toUpperCase()];
 
     if (!ItsToken) {
@@ -97,12 +121,10 @@ async function registerTokenWithFlowLimit(keypair, client, contracts, args, opti
     }
 
     const objectIds = {
-        its: InterchainTokenService.objects.InterhainTokenService,
+        its: InterchainTokenService.objects.InterchainTokenService,
     };
 
     const txBuilder = new TxBuilder(client);
-
-    const channel = "0x6962a876aa0ae67a3d86cb750ea0192e13ab08f5f7ff43a3970efeda897196c6";
 
     const coinManagement = await txBuilder.moveCall({
         target: `${InterchainTokenService.address}::coin_management::new_locked`,
@@ -112,13 +134,13 @@ async function registerTokenWithFlowLimit(keypair, client, contracts, args, opti
 
     await txBuilder.moveCall({
         target: `${InterchainTokenService.address}::coin_management::add_operator`,
-        arguments: [coinManagement, channel],
+        arguments: [coinManagement, channelId],
         typeArguments: [ItsToken.typeArgument],
     });
 
     const coinInfo = await txBuilder.moveCall({
         target: `${InterchainTokenService.address}::coin_info::from_info`,
-        arguments: ['name', symbol, ItsToken.decimals],
+        arguments: ['if you rerun this for the same token change this', symbol, ItsToken.decimals],
         typeArguments: [ItsToken.typeArgument],
     });
 
@@ -142,7 +164,7 @@ async function registerTokenWithFlowLimit(keypair, client, contracts, args, opti
         target: `${InterchainTokenService.address}::interchain_token_service::set_flow_limit_as_token_operator`,
         arguments: [
             objectIds.its,
-            channel,
+            channelId,
             tokenId,
             flowLimitObject,
         ],
@@ -421,9 +443,17 @@ if (require.main === module) {
     const registerTokenWithFlowLimitProgram = new Command()
         .name('register-token-flow-limit')
         .description('Reigster a token and set a flow limit.')
-        .command('register-token <symbol>')
-        .action((symbol, flowLimit, options) => {
-            mainProcessor(registerTokenWithOperator, options, [symbol, flowLimit], processCommand);
+        .command('register-token <symbol> <flow-limit> <channel-id>')
+        .action((symbol, flowLimit, channelId, options) => {
+            mainProcessor(registerTokenWithFlowLimit, options, [symbol, flowLimit, channelId], processCommand);
+        });
+
+    const createChannelProgramm = new Command()
+        .name('create-channel')
+        .description('Create a new Channel')
+        .command('create-channel')
+        .action((options) => {
+            mainProcessor(createChannel, options, [], processCommand);
         });
 
     const receiveTokenTransferProgram = new Command()
@@ -509,7 +539,8 @@ if (require.main === module) {
     program.addCommand(mintTokenProgram);
     program.addCommand(printDeploymentInfoProgram);
     program.addCommand(printReceiveTransferInfoProgram);
-    program.addCommand(registerTokenWithOperatorProgram);
+    program.addCommand(registerTokenWithFlowLimitProgram);
+    program.addCommand(createChannelProgramm);
 
     addOptionsToCommands(program, addBaseOptions);
 
