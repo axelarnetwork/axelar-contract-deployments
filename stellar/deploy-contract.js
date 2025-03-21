@@ -368,6 +368,8 @@ function sanitizeMigrationData(migrationData) {
         return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
     }
 
+    printInfo('Sanitized migration data', parsed);
+
     return parsed;
 }
 
