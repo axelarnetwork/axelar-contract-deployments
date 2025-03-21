@@ -170,7 +170,7 @@ node cosmwasm/submit-proposal.js execute \
 - Verify Approval:
 
 ```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"stellar-2025-q1\"}" --output json --node http://devnet-amplifier.axelar.dev:26657 | jq .
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node http://devnet-amplifier.axelar.dev:26657 | jq .
 ```
 
 ```bash
