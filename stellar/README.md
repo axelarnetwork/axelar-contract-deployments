@@ -236,26 +236,20 @@ node stellar/gateway.js execute [source-chain] [message-id] [source-address] [de
 
 _Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
 
-#### Set Trusted Chain
-
-```bash
-node stellar/its.js set-trusted-chain [chain-name]
-```
-
-#### Remove Trusted Address
-
-```bash
-node stellar/its.js remove-trusted-chain [chain-name]
-```
-
 #### Add Trusted Chains
 
 ```bash
-node stellar/its.js add-trusted-chains [chain-names]
+node stellar/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 
 # Example
 node stellar/its.js add-trusted-chains all
-node stellar/its.js add-trusted-chains "avalanche, sui"
+node stellar/its.js add-trusted-chains avalanche sui
+```
+
+#### Remove Trusted Chains
+
+```bash
+node stellar/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 #### Deploy Interchain Token
