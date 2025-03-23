@@ -140,6 +140,7 @@ pub(crate) fn process_inbound_deploy<'a>(
     decimals: u8,
 ) -> ProgramResult {
     let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &())?;
+    msg!("Instruction: InboundDeploy");
     let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
     assert_valid_its_root_pda(
         parsed_accounts.its_root_pda,
@@ -216,6 +217,7 @@ pub(crate) fn process_outbound_deploy<'a>(
     let token_id = crate::interchain_token_id_internal(&salt);
     let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
 
+    msg!("Instruction: OutboundDeploy");
     let destination_minter = if let Some(destination_minter) = maybe_destination_minter {
         let minter = next_account_info(accounts_iter)?;
         let deploy_approval = next_account_info(accounts_iter)?;
@@ -223,6 +225,7 @@ pub(crate) fn process_outbound_deploy<'a>(
         let token_manager_account = next_account_info(accounts_iter)?;
         outbound_message_accounts_index = outbound_message_accounts_index.saturating_add(4);
 
+        msg!("Instruction: OutboundDeployMinter");
         ensure_roles(
             &crate::id(),
             token_manager_account,
@@ -514,6 +517,7 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     let deploy_approval_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: ApproveDeployRemoteInterchainToken");
     ensure_signer_roles(
         &crate::id(),
         token_manager_account,
@@ -557,6 +561,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     let payer = next_account_info(accounts_iter)?;
     let deploy_approval_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: RevokeDeployRemoteInterchainToken");
     if !payer.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }

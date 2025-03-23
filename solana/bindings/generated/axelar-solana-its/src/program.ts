@@ -244,16 +244,6 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "tokenManagerPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "rolesPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "deployApprovalPda";
           isMut: true;
           isSigner: false;
@@ -420,6 +410,119 @@ type AxelarSolanaIts = {
         {
           name: "destinationChain";
           type: "string";
+        },
+        {
+          name: "gasValue";
+          type: "u64";
+        },
+        {
+          name: "signingPdaBump";
+          type: "u8";
+        }
+      ];
+    },
+    {
+      name: "interchainTransfer";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "authority";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "sourceAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerAta";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "flowSlotPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "axelarSolanaGateway";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "gasConfigPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gasService";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "callContractSigningPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "id";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "tokenId";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "destinationChain";
+          type: "string";
+        },
+        {
+          name: "destinationAddress";
+          type: "bytes";
+        },
+        {
+          name: "amount";
+          type: "u64";
         },
         {
           name: "gasValue";
@@ -997,6 +1100,242 @@ type AxelarSolanaIts = {
       ];
     },
     {
+      name: "callContractWithInterchainToken";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "authority";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "sourceAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerAta";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "flowSlotPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "axelarSolanaGateway";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "gasConfigPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gasService";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "callContractSigningPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "id";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "tokenId";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "destinationChain";
+          type: "string";
+        },
+        {
+          name: "destinationAddress";
+          type: "bytes";
+        },
+        {
+          name: "amount";
+          type: "u64";
+        },
+        {
+          name: "data";
+          type: "bytes";
+        },
+        {
+          name: "gasValue";
+          type: "u64";
+        },
+        {
+          name: "signingPdaBump";
+          type: "u8";
+        }
+      ];
+    },
+    {
+      name: "callContractWithInterchainTokenOffchainData";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "authority";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "sourceAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerAta";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "flowSlotPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "axelarSolanaGateway";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "gasConfigPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gasService";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "callContractSigningPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "id";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "tokenId";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "destinationChain";
+          type: "string";
+        },
+        {
+          name: "destinationAddress";
+          type: "bytes";
+        },
+        {
+          name: "amount";
+          type: "u64";
+        },
+        {
+          name: "payloadHash";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "gasValue";
+          type: "u64";
+        },
+        {
+          name: "signingPdaBump";
+          type: "u8";
+        }
+      ];
+    },
+    {
       name: "setFlowLimit";
       accounts: [
         {
@@ -1286,16 +1625,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "tokenManagerPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "rolesPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "deployApprovalPda",
           isMut: true,
           isSigner: false,
@@ -1462,6 +1791,119 @@ const IDL: AxelarSolanaIts = {
         {
           name: "destinationChain",
           type: "string",
+        },
+        {
+          name: "gasValue",
+          type: "u64",
+        },
+        {
+          name: "signingPdaBump",
+          type: "u8",
+        },
+      ],
+    },
+    {
+      name: "interchainTransfer",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "sourceAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerAta",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "flowSlotPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "axelarSolanaGateway",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "gasConfigPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gasService",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "callContractSigningPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "id",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "tokenId",
+          type: {
+            array: ["u8", 32],
+          },
+        },
+        {
+          name: "destinationChain",
+          type: "string",
+        },
+        {
+          name: "destinationAddress",
+          type: "bytes",
+        },
+        {
+          name: "amount",
+          type: "u64",
         },
         {
           name: "gasValue",
@@ -2027,6 +2469,242 @@ const IDL: AxelarSolanaIts = {
         {
           name: "linkParams",
           type: "bytes",
+        },
+        {
+          name: "gasValue",
+          type: "u64",
+        },
+        {
+          name: "signingPdaBump",
+          type: "u8",
+        },
+      ],
+    },
+    {
+      name: "callContractWithInterchainToken",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "sourceAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerAta",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "flowSlotPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "axelarSolanaGateway",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "gasConfigPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gasService",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "callContractSigningPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "id",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "tokenId",
+          type: {
+            array: ["u8", 32],
+          },
+        },
+        {
+          name: "destinationChain",
+          type: "string",
+        },
+        {
+          name: "destinationAddress",
+          type: "bytes",
+        },
+        {
+          name: "amount",
+          type: "u64",
+        },
+        {
+          name: "data",
+          type: "bytes",
+        },
+        {
+          name: "gasValue",
+          type: "u64",
+        },
+        {
+          name: "signingPdaBump",
+          type: "u8",
+        },
+      ],
+    },
+    {
+      name: "callContractWithInterchainTokenOffchainData",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "sourceAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerAta",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "flowSlotPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "axelarSolanaGateway",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "gasConfigPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gasService",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "callContractSigningPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "id",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "tokenId",
+          type: {
+            array: ["u8", 32],
+          },
+        },
+        {
+          name: "destinationChain",
+          type: "string",
+        },
+        {
+          name: "destinationAddress",
+          type: "bytes",
+        },
+        {
+          name: "amount",
+          type: "u64",
+        },
+        {
+          name: "payloadHash",
+          type: {
+            array: ["u8", 32],
+          },
         },
         {
           name: "gasValue",
