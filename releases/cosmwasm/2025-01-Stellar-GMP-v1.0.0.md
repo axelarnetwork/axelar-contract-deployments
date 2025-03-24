@@ -5,12 +5,12 @@
 | **Created By** | @ahramy <ahram@interoplabs.io>       |
 | **Deployment** | @RiceAndMeet <steven@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-03-20 |
+| **Stagenet**         | Completed             | 2025-03-20 |
+| **Testnet**          | Completed             | 2025-03-20 |
+| **Mainnet**          | Completed             | 2025-03-21 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -113,7 +113,6 @@ node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instan
 
 ```bash
 node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
-
 ```
 
 4. Set environment variables
@@ -121,12 +120,12 @@ node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId -
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
-REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
-ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
+VOTING_VERIFIER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+GATEWAY=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
+REWARDS=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
+ROUTER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Router.address" | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
@@ -166,9 +165,15 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+- Approve Proposal (must be done within 5 minutes on devnet-amplifier/stagenet and 1 hour on testnet/mainnet)
 
+- Verify Gateway Registration:
+
+```bash
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc address] | jq .
+```
+
+```bash
 # You should see something like this:
 {
   "data": {
@@ -182,36 +187,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
 }
 ```
 
-6. Update ampd with the Stellar chain configuration. Verifiers should use their own Stellar RPC node for the `http_url` in production.
-
-| Network              | `http_url`                             |
-| -------------------- | -------------------------------------- |
-| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
-| **Stagenet**         | `https://horizon-testnet.stellar.org/` |
-| **Testnet**          | `https://horizon-testnet.stellar.org/` |
-| **Mainnet**          | `https://horizon.stellar.org`          |
-
-```bash
-[[handlers]]
-type="StellarMsgVerifier"
-http_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-
-[[handlers]]
-type="StellarVerifierSetVerifier"
-http_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-```
-
-7. Update ampd with the Stellar chain configuration.
-
-```bash
-ampd register-public-key ed25519
-
-ampd register-chain-support "[service name]" $CHAIN
-```
-
-8. Register prover contract on coordinator
+6. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -228,7 +204,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Authorize Stellar Multisig prover on Multisig
+7. Authorize Stellar Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -255,16 +231,16 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 }
 ```
 
-10. Create reward pool for voting verifier
+8. Create reward pool for voting verifier
 
 #### Rewards
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
-| **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
-| **Testnet**          | `14845`          | `["7", "10"]`             | `100`               |
-| **Mainnet**          | `14845`          | `["8", "10"]`             | `920000000`         |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `920000000`         |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -276,9 +252,9 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"epoch_duration\": \"<epoch_duration>\",
+        \"participation_threshold\": [<participation_threshold>],
+        \"rewards_per_epoch\": \"<rewards_per_epoch>\"
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -288,7 +264,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-11. Create reward pool for multisig
+9. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -300,9 +276,9 @@ node cosmwasm/submit-proposal.js execute \
   --msg "{
     \"create_pool\": {
       \"params\": {
-        \"epoch_duration\": [epoch duration],
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": [rewards per epoch]
+        \"epoch_duration\": \"<epoch_duration>\",
+        \"participation_threshold\": [<participation_threshold>],
+        \"rewards_per_epoch\": \"<rewards_per_epoch>\"
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -310,6 +286,35 @@ node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
+```
+
+10. Update ampd with the Stellar chain configuration. Verifiers should use their own Stellar RPC node for the `http_url` in production.
+
+| Network              | `http_url`                             |
+| -------------------- | -------------------------------------- |
+| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
+| **Stagenet**         | `https://horizon-testnet.stellar.org/` |
+| **Testnet**          | `https://horizon-testnet.stellar.org/` |
+| **Mainnet**          | `https://horizon.stellar.org`          |
+
+```bash
+[[handlers]]
+type="StellarMsgVerifier"
+http_url=[http_url]
+cosmwasm_contract="$VOTING_VERIFIER"
+
+[[handlers]]
+type="StellarVerifierSetVerifier"
+http_url=[http_url]
+cosmwasm_contract="$VOTING_VERIFIER"
+```
+
+11. Update ampd with the Stellar chain configuration.
+
+```bash
+ampd register-public-key ed25519
+
+ampd register-chain-support "[service name]" $CHAIN
 ```
 
 12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
