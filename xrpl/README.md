@@ -134,7 +134,7 @@ node xrpl/trust-set.js -e devnet-amplifier -n xrpl-test-1 XYZ r4DVHyEisbgQRAXCiM
 Modify an account's properties (via an AccountSet transaction).
 
 ```bash
-node xrpl/account-set.js -e <env> -n <source-chain> --multisign --account <account> --transferRate <transferRate> --tickSize <tickSize> --domain <domain> --flag <flag>
+node xrpl/account-set.js -e <env> -n <source-chain> --multisign --account <account> --transferRate <transfer-rate> --tickSize <tick-size> --domain <domain> --flag <flag>
 ```
 
 Here's an example:
