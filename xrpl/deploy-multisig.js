@@ -20,7 +20,6 @@ const DEFAULTS = {
 };
 
 const MAX_TICKET_COUNT = 250;
-const MAX_SIGNERS = 32;
 
 const INITIAL_QUORUM = 1;
 const INITIAL_SIGNER_WEIGHT = 1;
@@ -28,7 +27,7 @@ const INITIAL_SIGNER_WEIGHT = 1;
 async function deployMultisig(_config, wallet, client, chain, options) {
     const { balance } = await client.accountInfo(wallet.address);
     const { baseReserve, ownerReserve } = await client.reserveRequirements();
-    const multisigReserve = Math.ceil(baseReserve + (MAX_TICKET_COUNT + MAX_SIGNERS) * ownerReserve);
+    const multisigReserve = Math.ceil(baseReserve + (MAX_TICKET_COUNT + 1) * ownerReserve);
 
     if (balance < Number(multisigReserve)) {
         printWarn(`Wallet XRP balance (${balance} XRP) is less than required multisig account reserve (${multisigReserve} XRP)`);
