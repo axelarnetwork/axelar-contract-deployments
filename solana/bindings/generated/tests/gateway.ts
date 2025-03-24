@@ -16,7 +16,6 @@ describe("Ping Gateway", () => {
   it("ApproveMessage", async () => {
     const payer = await getKeypairFromFile();
     try {
-        // VSCode might underline complex types, but this structure works
         const tx = await program.methods.approveMessage({
             leaf: {
                     message: {
@@ -34,7 +33,7 @@ describe("Ping Gateway", () => {
                     domainSeparator: [4],
                     signingVerifierSet: [6],
                 },
-                proof: new Uint8Array(1),
+                proof: Buffer.from(new Uint8Array(1)),
             }, [1]).accounts({
             gatewayRootPda: payer.publicKey,
             payer: payer.publicKey,
@@ -81,7 +80,7 @@ describe("Ping Gateway", () => {
   it("CallContract", async () => {
     const payer = await getKeypairFromFile();
     try {
-        const tx = await program.methods.callContract("1", "2", new Uint8Array(2), 1).accounts({
+        const tx = await program.methods.callContract("1", "2", Buffer.from(new Uint8Array(2)), 1).accounts({
             senderProgram: payer.publicKey,
             senderCallContractPda: payer.publicKey,
             gatewayRootPda: payer.publicKey,
@@ -138,24 +137,26 @@ describe("Ping Gateway", () => {
   it("VerifySignature", async () => {
     const payer = await getKeypairFromFile();
     try {
-        // VSCode might underline complex types, but this structure works
-        // Using BN from u64 and bigger numbers
         const tx = await program.methods.verifySignature([1], {
             signature: {
-                ecdsaRecoverable: [1],
+                ecdsaRecoverable: {
+                    0: [1]
+                },
             },
             leaf: {
                 nonce: new BN(1),
                 quorum: new BN(2),
                 signerPubkey: {
-                    secp256k1: [2],
+                    secp256k1: {
+                        0: [2]
+                    },
                 },
                 signerWeight: new BN(3),
                 position: 2,
                 setSize: 3,
                 domainSeparator: [3],
             },
-            merkleProof: new Uint8Array(3),
+            merkleProof: Buffer.from(new Uint8Array(3)),
         }).accounts({
             gatewayConfigPda: payer.publicKey,
             verificationSessionPda: payer.publicKey,
@@ -185,7 +186,7 @@ describe("Ping Gateway", () => {
     const payer = await getKeypairFromFile();
     try {
         const tx = await program.methods.writeMessagePayload(
-            new BN(1), new Uint8Array(2), [1, 2]
+            new BN(1), Buffer.from(new Uint8Array(2)), [1, 2]
         ).accounts({
             authority: payer.publicKey,
             gatewayRootPda: payer.publicKey,
