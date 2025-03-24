@@ -165,9 +165,9 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-- Approve Proposal (must be done within 5 minutes on devnet-amplifier)
+- Approve Proposal (must be done within 5 minutes on devnet-amplifier/stagenet and 1 hour on testnet/mainnet)
 
-- Verify Approval:
+- Verify Gateway Registration:
 
 ```bash
 axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node http://devnet-amplifier.axelar.dev:26657 | jq .
@@ -204,8 +204,6 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-- Approve Proposal (must be done within 5 minutes on devnet-amplifier)
-
 7. Authorize Stellar Multisig prover on Multisig
 
 ```bash
@@ -239,10 +237,10 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`             | `100`               |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`             | `100`               |
-| **Testnet**          | `14845`          | `[\"7\", \"10\"]`             | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`             | `920000000`         |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `920000000`         |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
