@@ -170,7 +170,7 @@ node cosmwasm/submit-proposal.js execute \
 - Verify Gateway Registration:
 
 ```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node http://devnet-amplifier.axelar.dev:26657 | jq .
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json --node [axelar rpc address] | jq .
 ```
 
 ```bash
