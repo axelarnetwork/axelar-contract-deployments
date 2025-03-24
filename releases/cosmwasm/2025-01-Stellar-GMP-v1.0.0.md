@@ -5,12 +5,12 @@
 | **Created By** | @ahramy <ahram@interoplabs.io>       |
 | **Deployment** | @RiceAndMeet <steven@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-03-20 |
+| **Stagenet**         | Completed             | 2025-03-20 |
+| **Testnet**          | Completed             | 2025-03-20 |
+| **Mainnet**          | Completed             | 2025-03-21 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
