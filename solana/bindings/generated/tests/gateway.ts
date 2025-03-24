@@ -16,7 +16,6 @@ describe("Ping Gateway", () => {
   it("ApproveMessage", async () => {
     const payer = await getKeypairFromFile();
     try {
-        // VSCode might underline complex types, but this structure works
         const tx = await program.methods.approveMessage({
             leaf: {
                     message: {
@@ -138,8 +137,6 @@ describe("Ping Gateway", () => {
   it("VerifySignature", async () => {
     const payer = await getKeypairFromFile();
     try {
-        // VSCode might underline complex types, but this structure works
-        // Using BN from u64 and bigger numbers
         const tx = await program.methods.verifySignature([1], {
             signature: {
                 ecdsaRecoverable: {
