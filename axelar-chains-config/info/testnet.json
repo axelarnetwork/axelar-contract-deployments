@@ -2896,7 +2896,7 @@
           ],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 1,
-          "xrplFee": 5000,
+          "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
           "codeId": 30,
           "address": "axelar18wq8qjlq6vfg2jw2fmvgyphjxrndc7529wq07pvlpnk0j2uvv5fqqqr4gv"
