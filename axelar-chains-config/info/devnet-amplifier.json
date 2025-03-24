@@ -1047,7 +1047,7 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "address": "axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl",
-          "xrplFee": 300,
+          "xrplTransactionFee": 300,
           "ticketCountThreshold": 5
         }
       },
