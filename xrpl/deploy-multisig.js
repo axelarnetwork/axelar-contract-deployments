@@ -14,6 +14,8 @@ const DEFAULTS = {
         xrpl.AccountSetAsfFlags.asfDisallowIncomingNFTokenOffer,
         xrpl.AccountSetAsfFlags.asfDisallowIncomingCheck,
         xrpl.AccountSetAsfFlags.asfDisallowIncomingPayChan,
+        xrpl.AccountSetAsfFlags.asfDefaultRipple,
+        xrpl.AccountSetAsfFlags.asfNoFreeze,
     ],
 };
 
