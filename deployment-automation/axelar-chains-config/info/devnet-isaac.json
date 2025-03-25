@@ -1,0 +1,66 @@
+{
+  "chains": {},
+  "axelar": {
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "lastUploadedCodeId": 3,
+        "address": "axelar109nhczmg5lwj2ya490dp6lrpyxqgdk5fldtx7nhp7nmf9m6jyauqw7nyvt",
+        "codeId": 3
+      },
+      "Router": {
+        "adminAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "governanceAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "lastUploadedCodeId": 1,
+        "address": "axelar137mvvjgh0e4jpdc2nf0qlu3d9lfv27j4htrdm3mppxe6wfmsttfsg3kcva",
+        "codeId": 1
+      },
+      "Multisig": {
+        "adminAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "governanceAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "blockExpiry": 10,
+        "lastUploadedCodeId": 6,
+        "address": "axelar16t9nak7g6demcnfw94ejfssg9n6nxqu7yc3rvcaavs0ue5zcxsassukz2g",
+        "codeId": 6
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "lastUploadedCodeId": 5,
+        "address": "axelar1lj3rva5srrzfcn6m8jn2yj47sut7cggjtxgk45w35wcq8k8a38hqfdpe62",
+        "codeId": 5
+      },
+      "Rewards": {
+        "governanceAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "rewardsDenom": "uisaac",
+        "lastUploadedCodeId": 4,
+        "address": "axelar1qxxqa8wqtxmsrarztmcda92v7ue5rxvlyu8tewqzkc7lpgj92n5sk5nxnd",
+        "codeId": 4
+      },
+      "AxelarnetGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "lastUploadedCodeId": 2,
+        "address": "axelar1juex3nwljepv5ygarwwdn5gc073tx4dhkafxc6z0pgswlsg2u48svsj6ff",
+        "codeId": 2
+      },
+      "InterchainTokenService": {
+        "adminAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "governanceAddress": "axelar1jkm0040yvnmghyrna9fh7fa4p5zcmvm7c50mtr",
+        "lastUploadedCodeId": 7,
+        "address": "axelar1yjmz4weu55pt6fawe90tsmwlsv7jryugrqv0sc6dux20laew2zpq2ed0hn",
+        "codeId": 7
+      },
+      "VotingVerifier": {},
+      "Gateway": {},
+      "MultisigProver": {}
+    },
+    "id": "axelar",
+    "axelarId": "axelar",
+    "chainId": "devnet-isaac",
+    "rpc": "http://k8s-devnetis-coresent-166f4fd81b-05efe9e824bdfbd6.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-devnetis-coresent-166f4fd81b-05efe9e824bdfbd6.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-devnetis-coresent-166f4fd81b-05efe9e824bdfbd6.elb.us-east-2.amazonaws.com:9090",
+    "tokenSymbol": "ISAAC",
+    "gasPrice": "0.00005uisaac",
+    "gasLimit": "auto"
+  }
+}
