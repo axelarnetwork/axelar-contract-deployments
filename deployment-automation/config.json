@@ -1,0 +1,14 @@
+{
+    "asdasd": {
+        "name": "asdasd",
+        "id": "43113",
+        "axelarId": "asdasd",
+        "chainId": 43113,
+        "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "tokenSymbol": "AVAX",
+        "confirmations": 1,
+        "gasOptions": {
+            "gasLimit": 15000000
+        }
+    }
+}

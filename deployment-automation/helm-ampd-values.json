@@ -1,0 +1,69 @@
+{
+  "replicaCount": 3,
+  "ampd": {
+    "image": {
+      "repository": "499786161782.dkr.ecr.us-east-2.amazonaws.com/axelar-amplifier",
+      "tag": "6daa8f4f421dbf03af0792839c5998c203781287"
+    }
+  },
+  "config_toml": {
+    "tm_jsonrpc": "http://core-genesis.devnet-markus:26657",
+    "tm_grpc": "tcp://core-genesis.devnet-markus:9090",
+    "broadcast": {
+      "chain_id": "devnet-markus",
+      "gas_price": "0.00005umarkus",
+      "batch_gas_limit": "20000000"
+    },
+    "service_registry": {
+      "cosmwasm_contract": "axelar1qvs5737zszf07mwrpdzgt7pll2k5nphpky2rv5jq6tcq79gr5r8qdcvxa0"
+    },
+    "handlers": [
+      {
+        "type": "MultisigSigner",
+        "cosmwasm_contract": "axelar1lakqhgjtqetklj0vpeam7c5zte9jnwdsc2h4mdwwauh7uykd75kqea65dv"
+      },
+      {
+        "type": "EvmMsgVerifier",
+        "cosmwasm_contract": "axelar1qeyjez6a9dwlghf9d6cy44fxmsajztw257586akk6xn6k88x0gusrnnz4h",
+        "chain_name": "avalanche",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmVerifierSetVerifier",
+        "cosmwasm_contract": "axelar1qeyjez6a9dwlghf9d6cy44fxmsajztw257586akk6xn6k88x0gusrnnz4h",
+        "chain_name": "avalanche",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmMsgVerifier",
+        "cosmwasm_contract": "axelar1xxx3ps3gm3wceg4g300hvggdv7ga0hmsk64srccffmfy4wvcrugqq6l4mu",
+        "chain_name": "avatest",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmVerifierSetVerifier",
+        "cosmwasm_contract": "axelar1xxx3ps3gm3wceg4g300hvggdv7ga0hmsk64srccffmfy4wvcrugqq6l4mu",
+        "chain_name": "avatest",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmMsgVerifier",
+        "cosmwasm_contract": "axelar1kgn0k6aqakdp52at7ypdc9cpl0megm9gw3pkcmdpl6g5jyl45m5qtqmp2v",
+        "chain_name": "berachain",
+        "chain_rpc_url": "https://bepolia.rpc.berachain.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmVerifierSetVerifier",
+        "cosmwasm_contract": "axelar1kgn0k6aqakdp52at7ypdc9cpl0megm9gw3pkcmdpl6g5jyl45m5qtqmp2v",
+        "chain_name": "berachain",
+        "chain_rpc_url": "https://bepolia.rpc.berachain.com",
+        "chain_finalization": "ConfirmationHeight"
+      }
+    ]
+  }
+}
