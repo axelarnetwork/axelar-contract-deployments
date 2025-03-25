@@ -88,7 +88,7 @@
       "name": "Ethereum Sepolia",
       "axelarId": "core-ethereum",
       "chainId": 11155111,
-      "rpc": "https://eth-sepolia-public.unifra.io",
+      "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
       "confirmations": 1,
       "chainType": "evm",
