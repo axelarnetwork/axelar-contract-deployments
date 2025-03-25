@@ -63,6 +63,20 @@
         "chain_name": "berachain",
         "chain_rpc_url": "https://bepolia.rpc.berachain.com",
         "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmMsgVerifier",
+        "cosmwasm_contract": "axelar1v3qgfl0f57erknuaft4g3379pnd5f9ywhde8gddyruqw34m3c9lspg58tw",
+        "chain_name": "asakldfhdsfkj",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
+      },
+      {
+        "type": "EvmVerifierSetVerifier",
+        "cosmwasm_contract": "axelar1v3qgfl0f57erknuaft4g3379pnd5f9ywhde8gddyruqw34m3c9lspg58tw",
+        "chain_name": "asakldfhdsfkj",
+        "chain_rpc_url": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        "chain_finalization": "ConfirmationHeight"
       }
     ]
   }

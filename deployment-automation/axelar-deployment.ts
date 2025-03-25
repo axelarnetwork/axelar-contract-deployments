@@ -1,9 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import { execSync, exec } from 'child_process';
+import { execSync, exec, spawn } from 'child_process';
 import * as util from 'util';
 import * as os from 'os';
+
+// Constants
+const BASE_URL = 'https://static.axelar.network/releases/cosmwasm';
+const WASM_DIR = '../wasm';
 
 // Promisified version of exec
 const execAsync = util.promisify(exec);
@@ -59,6 +63,14 @@ interface EnvironmentConfig {
   EPOCH_DURATION?: string;
   RUN_AS_ACCOUNT?: string;
   [key: string]: string | undefined;
+}
+
+// Contract file information interface
+interface ContractFile {
+  name: string;          // Contract name (e.g., "gateway")
+  fileName: string;      // File name with underscores (e.g., "gateway" or "voting_verifier")
+  filePath: string;      // Full path to the .wasm file
+  checksumPath: string;  // Full path to the checksums file
 }
 
 // Initialize config object
@@ -233,7 +245,7 @@ async function validateAxelarRpcUrl(): Promise<void> {
 /**
  * Function to use an existing wallet or create a new one if needed
  */
-async function createWallet(): Promise<void> {
+async function setupWallet(): Promise<void> {
   const walletName = "amplifier";
 
   console.log(`⚡ Setting up wallet '${walletName}'...`);
@@ -257,7 +269,6 @@ async function createWallet(): Promise<void> {
     const cleanMnemonic = config.MNEMONIC!.replace(/^["'](.*)["']$/, '$1');
     
     // Create the wallet using spawn
-    const { spawn } = require('child_process');
     const axelardProcess = spawn('axelard', [
       'keys',
       'add',
@@ -475,7 +486,7 @@ function updateMultisigProver(): void {
  * Function to extract SALT value from the correct checksums file
  */
 function extractSalt(contractName: string): void {
-  const checkSumFile = `../wasm/${contractName}_checksums.txt`;
+  const checkSumFile = `${WASM_DIR}/${contractName}_checksums.txt`;
 
   if (!fs.existsSync(checkSumFile)) {
     console.log(`❌ Checksum file not found: ${checkSumFile}`);
@@ -572,15 +583,16 @@ async function verifyExecution(): Promise<void> {
     console.log("🔍 Verification Output:");
     console.log(stdout);
 
-    // Extract Gateway Address - this regex might need adjusting based on actual output
-    const gatewayMatch = stdout.match(/gateway:\s+(\S+)/m);
+    // Extract Gateway Address - updated regex to match the actual output format
+    // Looking for the "address:" field under the "gateway:" section
+    const gatewayMatch = stdout.match(/gateway:[\s\S]*?address:\s+(\S+)/m);
     const verifiedGatewayAddress = gatewayMatch ? gatewayMatch[1] : null;
 
     // Ensure the gateway address matches expected value
     if (verifiedGatewayAddress && verifiedGatewayAddress === config.GATEWAY_ADDRESS) {
       console.log(`✅ Verification successful! Gateway address matches: ${verifiedGatewayAddress}`);
     } else {
-      console.log(`❌ Verification failed! Expected: ${config.GATEWAY_ADDRESS}, Got: ${verifiedGatewayAddress}`);
+      console.log(`❌ Verification failed! Expected: ${config.GATEWAY_ADDRESS}, Got: ${verifiedGatewayAddress || "address not found"}`);
       process.exit(1);
     }
   } catch (error) {
@@ -771,26 +783,6 @@ async function deployGatewayContract(): Promise<string> {
     console.error(`Error deploying gateway contract: ${error}`);
     process.exit(1);
     return "";
-  }
-}
-
-/**
- * Function to get wallet address
- */
-async function getWalletAddress(): Promise<void> {
-  try {
-    const walletAddress = execSync(`axelard keys show amplifier --keyring-backend test | awk '/address:/ {print $2}'`, { stdio: 'pipe' }).toString().trim();
-    
-    if (!walletAddress) {
-      console.log("❌ Could not retrieve wallet address!");
-      process.exit(1);
-    }
-
-    config.WALLET_ADDRESS = walletAddress;
-    console.log(`✅ Retrieved wallet address: ${walletAddress}`);
-  } catch (error) {
-    console.error(`Error retrieving wallet address: ${error}`);
-    process.exit(1);
   }
 }
 
@@ -993,7 +985,7 @@ async function gotoAfterMultisigProposals(): Promise<void> {
  */
 async function getLatestVersion(contractDir: string): Promise<void> {
   try {
-    const baseUrl = `https://static.axelar.network/releases/cosmwasm/${contractDir}/`;
+    const baseUrl = `${BASE_URL}/${contractDir}/`;
     
     // This would need to be implemented with a HTTP request to fetch versions
     // For now, we'll just log that this needs to be implemented with a proper HTTP client
@@ -1001,6 +993,192 @@ async function getLatestVersion(contractDir: string): Promise<void> {
     console.log(`⚠️ For now, please provide a specific version number when prompted.`);
   } catch (error) {
     console.error(`Error getting latest version: ${error}`);
+  }
+}
+
+/**
+ * Function to download contract files from remote source
+ */
+async function downloadContractFiles(userVersion: string): Promise<Map<string, ContractFile>> {
+  console.log("⚡ Downloading contract files...");
+  
+  // First ensure axios is installed
+  try {
+    require.resolve('axios');
+  } catch (e) {
+    console.error("❌ axios is not installed. Please run 'npm install axios' first.");
+    process.exit(1);
+  }
+  
+  const axios = require('axios');
+  
+  // Ensure the directory for downloads exists
+  fs.mkdirSync(WASM_DIR, { recursive: true });
+
+  // List of contract directories to check
+  const contractDirectories = [
+    "gateway",
+    "multisig-prover",
+    "voting-verifier"
+  ];
+
+  // Map to store contract file information
+  const contractFiles = new Map<string, ContractFile>();
+
+  // Loop through each contract directory and get the files
+  for (const dir of contractDirectories) {
+    const fileName = dir.replace(/-/g, "_");  // Convert hyphens to underscores
+    const contractKey = dir.replace(/-/g, "_");  // Use as key for the map
+    
+    const wasmFilePath = path.join(WASM_DIR, `${fileName}.wasm`);
+    const checksumFilePath = path.join(WASM_DIR, `${fileName}_checksums.txt`);
+    
+    if (!userVersion) {
+      await getLatestVersion(dir);
+      console.error("❌ No version specified and getLatestVersion is not fully implemented.");
+      process.exit(1);
+    } else {
+      const fileUrl = `${BASE_URL}/${dir}/${userVersion}/${fileName}.wasm`;
+      const checksumUrl = `${BASE_URL}/${dir}/${userVersion}/checksums.txt`;
+
+      console.log(`⬇️ Downloading ${fileUrl}...`);
+      
+      try {
+        // Download the WASM file
+        const wasmResponse = await axios({
+          method: 'GET',
+          url: fileUrl,
+          responseType: 'arraybuffer'
+        });
+        
+        // Write the WASM file to disk
+        fs.writeFileSync(wasmFilePath, Buffer.from(wasmResponse.data));
+        
+        console.log(`✅ Downloaded ${fileName}.wasm successfully!`);
+        
+        // Download checksum file
+        console.log(`⬇️ Downloading ${checksumUrl}...`);
+        const checksumResponse = await axios({
+          method: 'GET',
+          url: checksumUrl,
+          responseType: 'text'
+        });
+        
+        // Write the checksum file to disk
+        fs.writeFileSync(checksumFilePath, checksumResponse.data);
+        
+        console.log(`✅ Downloaded checksums.txt successfully!`);
+        
+        // Store the contract file information
+        contractFiles.set(contractKey, {
+          name: dir,
+          fileName: fileName,
+          filePath: wasmFilePath,
+          checksumPath: checksumFilePath
+        });
+      } catch (error) {
+        console.error(`❌ Error downloading files: ${error}`);
+        console.error("Please ensure the version and URLs are correct.");
+        process.exit(1);
+      }
+    }
+  }
+
+  return contractFiles;
+}
+
+/**
+ * Function to deploy contracts
+ */
+async function deployContracts(contractFiles: Map<string, ContractFile>): Promise<void> {
+  if (isCustomDevnet()) {
+    // Extract SALT for "VotingVerifier"
+    const votingVerifier = contractFiles.get("voting_verifier");
+    if (!votingVerifier) {
+      console.error("Missing voting_verifier contract files!");
+      process.exit(1);
+    }
+    
+    extractSalt("voting_verifier");
+
+    // Run the deployment command with explicit file path
+    console.log("⚡ Deploying VotingVerifier Contract...");
+    try {
+      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
+        -m "${config.MNEMONIC}" \
+        -a "${votingVerifier.filePath}" \
+        -c "VotingVerifier" \
+        -e "${config.NAMESPACE}" \
+        -n "${config.CHAIN_NAME}" \
+        --admin "${config.CONTRACT_ADMIN}" \
+        -y \
+        --salt "${config.SALT}"`);
+    } catch (error) {
+      console.error(`Error deploying VotingVerifier: ${error}`);
+      process.exit(1);
+    }
+
+    // Extract SALT for "Gateway"
+    const gateway = contractFiles.get("gateway");
+    if (!gateway) {
+      console.error("Missing gateway contract files!");
+      process.exit(1);
+    }
+    
+    extractSalt("gateway");
+
+    // Run the deployment command for Gateway contract with explicit file path
+    console.log("⚡ Deploying Gateway Contract...");
+    try {
+      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
+        -m "${config.MNEMONIC}" \
+        -a "${gateway.filePath}" \
+        -c "Gateway" \
+        -e "${config.NAMESPACE}" \
+        -n "${config.CHAIN_NAME}" \
+        --admin "${config.CONTRACT_ADMIN}" \
+        -y \
+        --salt "${config.SALT}"`);
+    } catch (error) {
+      console.error(`Error deploying Gateway: ${error}`);
+      process.exit(1);
+    }
+
+    // Extract SALT for "MultisigProver"
+    const multisigProver = contractFiles.get("multisig_prover");
+    if (!multisigProver) {
+      console.error("Missing multisig_prover contract files!");
+      process.exit(1);
+    }
+    
+    extractSalt("multisig_prover");
+
+    // Run the deployment command for MultisigProver contract with explicit file path
+    console.log("⚡ Deploying MultisigProver Contract...");
+    try {
+      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
+        -m "${config.MNEMONIC}" \
+        -a "${multisigProver.filePath}" \
+        -c "MultisigProver" \
+        -e "${config.NAMESPACE}" \
+        -n "${config.CHAIN_NAME}" \
+        --admin "${config.CONTRACT_ADMIN}" \
+        -y \
+        --salt "${config.SALT}"`);
+    } catch (error) {
+      console.error(`Error deploying MultisigProver: ${error}`);
+      process.exit(1);
+    }
+  } else {
+    // Non-custom devnet logic
+    try {
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
+    } catch (error) {
+      console.error(`Error instantiating contracts: ${error}`);
+      process.exit(1);
+    }
   }
 }
 
@@ -1079,48 +1257,10 @@ async function main(): Promise<void> {
   if (isCustomDevnet()) {
     console.log("🔧 Custom devnet detected. Proceeding with full deployment flow...");
     // Proceed with contract deployment as usual
-    await createWallet();
+    await setupWallet();
    
-    // Ensure the directory for downloads exists
-    fs.mkdirSync("../wasm", { recursive: true });
-
-    // List of contract directories to check
-    const contractDirectories = [
-      "gateway",
-      "multisig-prover",
-      "voting-verifier"
-    ];
-
-    // Loop through each contract directory and get the latest available version
-    for (const dir of contractDirectories) {
-      const fileName = dir.replace(/-/g, "_");  // Convert hyphens to underscores
-
-      if (!userVersion) {
-        await getLatestVersion(dir);
-      } else {
-        const fileUrl = `https://static.axelar.network/releases/cosmwasm/${dir}/${userVersion}/${fileName}.wasm`;
-        const checksumUrl = `https://static.axelar.network/releases/cosmwasm/${dir}/${userVersion}/checksums.txt`;
-
-        console.log(`⬇️ Downloading ${fileUrl}...`);
-        
-        // Ensure the directory exists before downloading
-        fs.mkdirSync("../wasm", { recursive: true });
-
-        try {
-          // In a real implementation, you would use a proper HTTP client to download these files
-          console.log(`⚠️ Note: You'll need to implement file downloads using a proper HTTP client like axios or node-fetch`);
-          console.log(`⚠️ For this example, we're just creating placeholder files`);
-          
-          fs.writeFileSync(`../wasm/${fileName}.wasm`, "Placeholder WASM content");
-          fs.writeFileSync(`../wasm/${fileName}_checksums.txt`, `placeholder-checksum ${fileName}.wasm`);
-          
-          console.log(`✅ Downloaded ${fileName}.wasm and ${fileName}_checksums.txt successfully (simulated)!`);
-        } catch (error) {
-          console.error(`Error downloading files: ${error}`);
-          process.exit(1);
-        }
-      }
-    }
+    // Download contract files and get the paths
+    const contractFiles = await downloadContractFiles(userVersion);
 
     // Run the command to get the governance address
     try {
@@ -1180,68 +1320,11 @@ async function main(): Promise<void> {
   updateMultisigProver();
 
   if (isCustomDevnet()) {
-    // Extract SALT for "VotingVerifier"
-    extractSalt("voting_verifier");
-
-    // Run the deployment command
-    console.log("⚡ Deploying VotingVerifier Contract...");
-    try {
-      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
-        -m "${config.MNEMONIC}" \
-        -a "../wasm" \
-        -c "VotingVerifier" \
-        -e "${config.NAMESPACE}" \
-        -n "${config.CHAIN_NAME}" \
-        --admin "${config.CONTRACT_ADMIN}" \
-        -y \
-        --salt "${config.SALT}"`);
-    } catch (error) {
-      console.error(`Error deploying VotingVerifier: ${error}`);
-      process.exit(1);
-    }
-
-    // Extract SALT for "Gateway"
-    extractSalt("gateway");
-
-    // Run the deployment command for Gateway contract
-    console.log("⚡ Deploying Gateway Contract...");
-    try {
-      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
-        -m "${config.MNEMONIC}" \
-        -a "../wasm" \
-        -c "Gateway" \
-        -e "${config.NAMESPACE}" \
-        -n "${config.CHAIN_NAME}" \
-        --admin "${config.CONTRACT_ADMIN}" \
-        -y \
-        --salt "${config.SALT}"`);
-    } catch (error) {
-      console.error(`Error deploying Gateway: ${error}`);
-      process.exit(1);
-    }
-
-    // Extract SALT for "MultisigProver"
-    extractSalt("multisig_prover");
-
-    // Run the deployment command for MultisigProver contract
-    console.log("⚡ Deploying MultisigProver Contract...");
-    try {
-      await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
-        -m "${config.MNEMONIC}" \
-        -a "../wasm" \
-        -c "MultisigProver" \
-        -e "${config.NAMESPACE}" \
-        -n "${config.CHAIN_NAME}" \
-        --admin "${config.CONTRACT_ADMIN}" \
-        -y \
-        --salt "${config.SALT}"`);
-    } catch (error) {
-      console.error(`Error deploying MultisigProver: ${error}`);
-      process.exit(1);
-    }
+    // Deploy contracts using full file paths
+    const contractFiles = await downloadContractFiles(userVersion || "latest");
+    await deployContracts(contractFiles);
 
     // Get wallet address and token denomination
-    await getWalletAddress();
     await getTokenDenomination();
   } else {
     try {
