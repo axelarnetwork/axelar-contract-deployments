@@ -180,6 +180,37 @@ node sui/deploy-contract.js deploy Squid
 node sui/deploy-contract.js deploy Example
 ```
 
+## Sync Packages
+
+This command synchronizes local Move packages with their deployed addresses. This is useful when you don't have all published packages locally but need to deploy a package that depends on others.
+
+**Functionality:**
+
+1.  **Copies Move Packages:** Copies all Move packages from `node_modules/@axelar-network/axelar-cgp-sui/move` to the local `sui/move` directory.
+2.  **Updates `Move.toml`:** Updates the `Move.toml` file for each package, replacing the package name with the corresponding package ID from the `axelar-chain-configs/info/<env>.json` configuration file.
+
+**Use Case:**
+
+This is useful when:
+
+- You want to deploy or upgrade a specific package.
+- This package has dependencies on other packages.
+- You do _not_ have all the published packages (and their `Move.toml` files with correct addresses) locally.
+
+**Example:**
+
+To deploy `InterchainTokenService`, which depends on other packages, and you don't have the up-to-date `Move.toml` files for all dependencies:
+
+```bash
+node sui/deploy-contract.js sync
+```
+
+This command copies all packages and updates their `Move.toml` files with correct package IDs. Then, you can deploy `InterchainTokenService`:
+
+```bash
+node sui/deploy-contract.js deploy InterchainTokenService
+```
+
 ## Contract Upgrades
 
 ### Upgrade Procedures
@@ -381,24 +412,24 @@ Note:
 -   If coin type is not provided, it will split all the coins.
 -   If transfer address is not provided, it will split the coins in the same wallet. Otherwise, it will transfer the splitted coins to the provided address.
 
-## Setup Trusted Addresses
+## Setup Trusted Chains
 
-Add trusted address
+Add trusted chains
 
 ```bash
-node sui/its.js setup-trusted-address <sourceChain>,<sourceChain2>,... <sourceAddress>
+node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
-or Add all evm chains that have ITS contract deployed
+or Add all chains that have ITS contract deployed
 
 ```bash
-node sui/its.js setup-trusted-address all-evm <sourceAddress>
+node sui/its.js add-trusted-chains all
 ```
 
-Remove trusted address
+Remove trusted chains
 
 ```bash
-node sui/its.js remove-trusted-address <sourceChain>,<sourceChain2>,...
+node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 ## Examples
