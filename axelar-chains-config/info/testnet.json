@@ -2944,7 +2944,9 @@
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 1,
           "xrplTransactionFee": 5000,
-          "ticketCountThreshold": 5
+          "ticketCountThreshold": 5,
+          "codeId": 33,
+          "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
         },
         "xrpl-test-1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -2962,7 +2964,7 @@
         },
         "storeCodeProposalId": "247",
         "storeCodeProposalCodeHash": "5bfc4d78765c25c85b1e93fb9d693b7ff2805620db8987d8181cc9600caec912",
-        "lastUploadedCodeId": 30
+        "lastUploadedCodeId": 33
       },
       "XrplVotingVerifier": {
         "xrpl": {
@@ -2973,7 +2975,9 @@
             "100"
           ],
           "blockExpiry": 10,
-          "confirmationHeight": 1
+          "confirmationHeight": 1,
+          "codeId": 31,
+          "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy"
         },
         "xrpl-test-1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -2989,13 +2993,15 @@
           "address": "axelar1nwv2cmp4lmwujpaq9t8t4w2xvcewv49jfzxy7apz4lz60h5ycd6qkjt4fr"
         },
         "storeCodeProposalCodeHash": "bd408b0d152ab460e53f2ca4107153df7a169cec9e501fc058f242abaaf0e23e",
-        "lastUploadedCodeId": 28,
+        "lastUploadedCodeId": 31,
         "storeCodeProposalId": "245"
       },
       "XrplGateway": {
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35"
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "codeId": 32,
+          "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
         },
         "xrpl-test-1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3005,7 +3011,7 @@
         },
         "storeCodeProposalId": "246",
         "storeCodeProposalCodeHash": "2de0624fa2ba2fbd9e97da61a832a471f3cfd0a4d333286fe248e36938ecb5f2",
-        "lastUploadedCodeId": 29
+        "lastUploadedCodeId": 32
       }
     },
     "axelarId": "axelar",
