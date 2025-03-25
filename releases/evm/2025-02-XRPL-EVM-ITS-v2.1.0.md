@@ -1,16 +1,17 @@
 ## XRPL EVM Sidechain ITS v2.1.0
 
-|                | **Owner**                                                                   |
-| -------------- | --------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @talalashraf <talal@interoplabs.io> |
+|                | **Owner**                                                                  |
+| -------------- | -------------------------------------------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                     |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | `xrp-evm-test-1`      | 19-02-2025 |
-| **Mainnet**          | -                     | TBD        |
+| **Network**           | **Deployment Status** | **Date**   |
+| --------------------- | --------------------- | ---------- |
+| **Devnet Amplifier**  | -                     | TBD        |
+| **Stagenet**          | -                     | TBD        |
+| **Testnet** (staging) | Completed      | 2025-02-19 |
+| **Testnet**           | Completed             | 2025-03-13 |
+| **Mainnet**           | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
 
@@ -27,34 +28,30 @@ Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed fi
 npm ci
 ```
 
-Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm` for mainnet, and `xrpl-evm-test-1` for all other networks.
+Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm`.
 
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAINS=all
+CHAINS=xrpl-evm
 ```
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ### Devnet Amplifier
 
-Amplifier ITS
-
 ```bash
-# Deploy new implementation
 node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-# Deploy new implementation
 node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
@@ -64,7 +61,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register xrpl-evm ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v1.0.0.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \
@@ -75,48 +72,54 @@ node cosmwasm/submit-proposal.js \
     --runAs $RUN_AS_ACCOUNT
 ```
 
-## Setting up trusted chains on xrplevm
+## Set XRPL EVM as trusted chain on remote ITS contracts
+
+Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-# Add all trusted chains to xrplevm ITS
-node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --trustedAddress hub
+node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
-## Set xrplevm as trusted chain on EVM ITS. Similarly, set xrplevm as a trusted chain for every other non EVM ITS contract
+## Link XRP token
+
+- Register XRP token metadata with ITS Hub.
 
 ```bash
-# Change `PRIVATE_KEY and `ENV` in `.env` from xrplevm to EVM
-node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
+node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
 ```
 
-## Setting up trusted chains on xrplevm
+- Submit `linkToken` msg from XRPL to XRPL EVM with the XRP token address as the destination token address.
+
+- Query the linked token manager address for the XRP token.
 
 ```bash
-# Register token metadata
-node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-
-# Fetch token manager address
-node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
-
-# tranfer mintership to token manager
-node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
+node evm/its.js token-manager-address [tokenId]
 ```
+
+- The XRP token mint permission should then be transferred to the token manager.
 
 ## Checklist
 
-The following checks should be performed after the rollout
+The following checks should be performed after the rollout.
 
-- [ ] Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
+- Run post-deployment checks.
+
+```bash
+node evm/its.js checks -n $CHAIN -y
+```
+
+- Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
 # Create a token on chain. Substitute the `wallet` below with the deployer key
-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wallet] --name "test" --symbol "TST" --decimals [decimals] --initialSupply 10000 --salt "salt12345"
+node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination chain] --salt "salt12345" -y
+ node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
 
-#Transfer token
-node evm/its.js --action interchainTransfer --destinationChain [destination chain] --tokenId [tokenId] --destinationAddress [recipient] --amount 1 --gasValue 0
+# Transfer token to remote chain
+node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
 
-# Ensure GMP call is executed on destination chain, where required
+# Transfer token back from remote chain
+node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain] 
 ```

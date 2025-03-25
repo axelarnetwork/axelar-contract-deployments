@@ -2,7 +2,7 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError, printWarn, validateParameters, writeJSON } = require('../../common/utils');
+const { printInfo, printError, printWarn, validateParameters, writeJSON, getCurrentVerifierSet } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
@@ -10,7 +10,6 @@ const {
 } = ethers;
 const fs = require('fs');
 const { fromB64, toB64 } = require('@mysten/bcs');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const {
     updateMoveToml,
     copyMovePackage,
@@ -29,13 +28,8 @@ const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
 const moveDir = `${__dirname}/../move`;
 
-const getAmplifierSigners = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedSigners = signers
         .map((signer) => ({
@@ -165,7 +159,7 @@ const getSigners = async (keypair, config, chain, options) => {
         };
     }
 
-    return getAmplifierSigners(config, chain);
+    return getAmplifierVerifiers(config, chain);
 };
 
 const isGasToken = (coinType) => {
@@ -359,7 +353,6 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
 
 module.exports = {
     suiCoinId,
-    getAmplifierSigners,
     isGasToken,
     paginateAll,
     suiPackageAddress,
