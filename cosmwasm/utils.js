@@ -612,7 +612,10 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
     const lastAssignedTicketNumber = Math.min(...availableTickets) - 1;
     const accountInfo = await client.accountInfo(xrplMultisigAddress);
     const nextSequenceNumber = accountInfo.sequence + 1; // 1 sequence number reserved for the genesis signer set rotation
-    const { baseReserve, ownerReserve } = await client.reserveRequirements();
+    const initialFeeReserve = Number(accountInfo.balance);
+    const reserveRequirements = await client.reserveRequirements();
+    const baseReserve = reserveRequirements.baseReserve * 1e6;
+    const ownerReserve = reserveRequirements.ownerReserve * 1e6;
     await client.disconnect();
 
     return {
@@ -631,7 +634,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
         xrpl_transaction_fee: xrplTransactionFee,
         xrpl_base_reserve: baseReserve,
         xrpl_owner_reserve: ownerReserve,
-        initial_fee_reserve: accountInfo.balance,
+        initial_fee_reserve: initialFeeReserve,
         ticket_count_threshold: ticketCountThreshold,
         available_tickets: availableTickets,
         next_sequence_number: nextSequenceNumber,
