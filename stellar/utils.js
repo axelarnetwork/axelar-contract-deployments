@@ -399,8 +399,18 @@ const getContractR2Url = (contractName, version) => {
     throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
 };
 
+function getContractArtifactPath(artifactPath, contractName) {
+    const basePath = artifactPath.slice(0, artifactPath.lastIndexOf('/') + 1);
+    const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.optimized.wasm`;
+    return basePath + fileName;
+}
+
 const getContractCodePath = async (options, contractName) => {
     if (options.artifactPath) {
+        if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
+            return getContractArtifactPath(options.artifactPath, contractName);
+        }
+
         return options.artifactPath;
     }
 
