@@ -40,5 +40,5 @@ Proposal id will be in the output, but can also be seen on the explorer.
 Post in the appropriate validator announcement channel about the proposal. Vote with internal validators on `testnet`, `stagenet` and `devnet-amplifier`
 
 ```jsx
-axelard tx gov vote <proposal_id> "Yes" --from validator
+axelard tx gov vote <proposal_id> yes --from validator
 ```
