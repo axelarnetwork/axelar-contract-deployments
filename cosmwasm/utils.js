@@ -2,8 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-
-const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -31,6 +29,14 @@ const {
     calculateDomainSeparator,
     validateParameters,
 } = require('../common');
+const {
+    pascalToSnake,
+    pascalToKebab,
+    downloadContractCode,
+    readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
+} = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
@@ -41,12 +47,12 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
-
-const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -63,8 +69,6 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
-
-const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
     if (!contractName) {
@@ -132,7 +136,7 @@ const uploadContract = async (client, wallet, config, options) => {
     } = config;
 
     const [account] = await wallet.getAccounts();
-    const wasm = readWasmFile(options);
+    const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
@@ -639,7 +643,7 @@ const getSubmitProposalParams = (options) => {
 const getStoreCodeParams = (options) => {
     const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readWasmFile(options);
+    const wasm = readContractCode(options);
 
     let codeHash;
 
@@ -838,6 +842,34 @@ const submitProposal = async (client, wallet, config, options, content) => {
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
+const getContractR2Url = (contractName, contractVersion) => {
+    const pathName = pascalToKebab(contractName);
+    const fileName = pascalToSnake(contractName);
+
+    if (VERSION_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${contractVersion}/${fileName}.wasm`;
+    }
+
+    if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
+    }
+
+    throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+};
+
+const getContractCodePath = async (options, contractName) => {
+    if (options.artifactPath) {
+        return options.artifactPath;
+    }
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -891,7 +923,6 @@ module.exports = {
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
@@ -913,4 +944,5 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
+    getContractCodePath,
 };

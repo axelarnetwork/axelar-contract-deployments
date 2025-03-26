@@ -2590,27 +2590,6 @@
             "OwnerCap": "0x7d371a39e25394a89d0d7362e0fff3975d049011efff0af1cbd1ff99cfc47ff9"
           }
         },
-        "GasService": {
-          "address": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
-          "versions": {
-            "0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3"
-          },
-          "structs": {
-            "GasPaid": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasPaid",
-            "GasAdded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasAdded",
-            "Refunded": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::Refunded",
-            "GasCollected": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::events::GasCollected",
-            "GasService_v0": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service_v0::GasService_v0",
-            "GasService": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasService",
-            "GasCollectorCap": "0xc10dd54f42a2f3ebdb8f113bd0a0627934c90e608d1e32e5fd0c7ae4d03d93b3::gas_service::GasCollectorCap"
-          },
-          "objects": {
-            "GasCollectorCap": "0x51b52346a545c4514816a783050251b042c390b449dd1f771bc648e928922b96",
-            "GasService": "0x8abc5f5c1e811e6bc6736eb8d0fd60dc916139507af3d9015beeb131bb66a219",
-            "GasServicev0": "0x06b3e80aa5df5b9bbbb589c2c0d32ddd8c6a3cdd8c971f5a98dfc323312ccd41"
-          }
-        },
         "Operators": {
           "address": "0x013d0f9713b4b615f7234c470d8dfa851b7fecb11528319fbd5e618849dd064f",
           "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
@@ -2632,39 +2611,200 @@
             "OwnerCap": "0x6a3565b574e1d7a7b18959719190785a9a3f2c54bf2291ec82d3c59620ef7338"
           }
         },
-        "Abi": {
-          "address": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+        "GasService": {
+          "address": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63",
           "versions": {
-            "0": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1"
+            "0": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63"
           },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
           "structs": {
-            "AbiReader": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiReader",
-            "AbiWriter": "0x451b9e382d50aff0b2f5582482ae28ebbffbf1ff2d7bcce3220637a862649be1::abi::AbiWriter"
+            "GasPaid": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasPaid",
+            "GasAdded": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasAdded",
+            "Refunded": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::Refunded",
+            "GasCollected": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::events::GasCollected",
+            "OwnerCap": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::owner_cap::OwnerCap",
+            "OperatorCap": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::operator_cap::OperatorCap",
+            "GasService_v0": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::gas_service_v0::GasService_v0",
+            "GasService": "0x695f612a1ee9268d25ca5c03e705819a285ff0c5b4f7720fc75a00cb8c6f3b63::gas_service::GasService"
+          },
+          "objects": {
+            "OperatorCap": "0x640dd897f312bd5628bfb5230f63c20afd0494be1c28dcd2edb0a3cb7c55785f",
+            "OwnerCap": "0x8be36a47832d041e318483f602232a8603245a779111b5f95a2eba348e9d32cd",
+            "GasService": "0x0a3a8e08d156595e5a097964d5d294fcfc9ff75f736b55f44470a93e48bdeb8f",
+            "GasServicev0": "0x1987e5f87158df4e915a57e285f6081d6bf19d1aa033fd1dea18dc428d50b577",
+            "UpgradeCap": "0xd475ca903bc13e125ed0b6742cd88ceffad1361f01b7bed50bd1108797abd5c0"
+          }
+        },
+        "Abi": {
+          "address": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a",
+          "versions": {
+            "0": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a"
+          },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
+          "structs": {
+            "AbiReader": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a::abi::AbiReader",
+            "AbiWriter": "0x53106e8a23ea2b83b0f1cc18861d287e08757525e0e47d3712130080af8cf49a::abi::AbiWriter"
+          },
+          "objects": {
+            "UpgradeCap": "0x1cbb460e5ef7ce003942a850ce9d9d235f451fbc1a56f2aca124bb843c8c3ba0"
+          }
+        },
+        "InterchainTokenService": {
+          "address": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca",
+          "versions": {
+            "0": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca"
+          },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
+          "structs": {
+            "FlowLimit": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::flow_limit::FlowLimit",
+            "CoinManagement": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::coin_management::CoinManagement",
+            "CoinInfo": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::coin_info::CoinInfo",
+            "CoinData": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::coin_data::CoinData",
+            "CreatorCap": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::creator_cap::CreatorCap",
+            "TokenId": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::token_id::TokenId",
+            "UnregisteredTokenId": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::token_id::UnregisteredTokenId",
+            "UnregisteredCoinData": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::unregistered_coin_data::UnregisteredCoinData",
+            "CoinRegistered": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::CoinRegistered",
+            "InterchainTransfer": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::InterchainTransfer",
+            "InterchainTokenDeploymentStarted": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::InterchainTokenDeploymentStarted",
+            "InterchainTransferReceived": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::InterchainTransferReceived",
+            "UnregisteredCoinReceived": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::UnregisteredCoinReceived",
+            "TrustedChainAdded": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::TrustedChainAdded",
+            "TrustedChainRemoved": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::TrustedChainRemoved",
+            "FlowLimitSet": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::FlowLimitSet",
+            "DistributorshipTransfered": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::DistributorshipTransfered",
+            "OperatorshipTransfered": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::events::OperatorshipTransfered",
+            "TrustedChain": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::trusted_chains::TrustedChain",
+            "TrustedChains": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::trusted_chains::TrustedChains",
+            "InterchainTransferTicket": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::interchain_transfer_ticket::InterchainTransferTicket",
+            "InterchainTokenService_v0": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::interchain_token_service_v0::InterchainTokenService_v0",
+            "OwnerCap": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::owner_cap::OwnerCap",
+            "OperatorCap": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::operator_cap::OperatorCap",
+            "InterchainTokenService": "0xc3c0222e59c9d3b34ab804840e271ef9a0e6f0adcc280133c9db9b9e060887ca::interchain_token_service::InterchainTokenService"
+          },
+          "objects": {
+            "InterchainTokenService": "0xef0d515e2f6be9199150e63758035bca7b1e016dcc1a93cec123abb35880b379",
+            "InterchainTokenServicev0": "0x47e83ca3244d3456729f909f62511f8ed9f28b0f4c302c782bf6585ba5dfa938",
+            "ChannelId": "0x43f65158c85e1bc1e27a4a1ecc49a0089283051c04b4bb21a69bbbe06078c2f8",
+            "OwnerCap": "0x18165d4b91e128d2d0076d3eb569facfd9603c288c14e2d6b2216baff738c5d0",
+            "OperatorCap": "0x89317f6bf7f134df64015232cfdb7ee55115e8c64f7f6f6e4fa1358c361f0544",
+            "UpgradeCap": "0x32c23055d49d04c34f48456eaff3bea01b9ccd27415f4a8412ded09f15b345bb"
           }
         },
         "Example": {
-          "address": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a",
-          "deployer": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
+          "address": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6",
           "versions": {
-            "0": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a"
+            "0": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6"
           },
+          "deployer": "0x2d55266c416ce633f46edf33c45c8c45f65fdac64a48d82715c2f304ed498634",
           "structs": {
-            "Singleton": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::its::Singleton",
-            "Executed": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::gmp::Executed",
-            "ExecutedWithToken": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::its::ExecutedWithToken",
-            "TOKEN": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token::TOKEN",
-            "TOKEN_A": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_a::TOKEN_A",
-            "TOKEN_B": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_b::TOKEN_B",
-            "TOKEN_C": "0x0e7b3b82168fd366b810305e097ce1df8d5b58ed516b1238e4dd756df18af22a::token_c::TOKEN_C"
+            "Singleton": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::its::Singleton",
+            "Executed": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::gmp::Executed",
+            "ExecutedWithToken": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::its::ExecutedWithToken",
+            "TOKEN": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token::TOKEN",
+            "TOKEN_A": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_a::TOKEN_A",
+            "TOKEN_B": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_b::TOKEN_B",
+            "TOKEN_C": "0x30d8f7a7d1220654348877fba9eaa8002013d6ac4d4a2c828a1fec88d01c09f6::token_c::TOKEN_C"
           },
           "objects": {
-            "GmpSingleton": "0x8518e55d97287cd83189c5b871669d71add4170ea985f4e680dd1eea50cf5e9b",
-            "GmpChannelId": "0x90b2a5c34cbc17177e01dd3181a30bee98ad2284ef6e724d83d242e330e3f457",
-            "ItsSingleton": "0x87802a933e2a10416bae1ba4c56a6908524882170bc1b5cbc23aa74a660c5781",
-            "ItsChannelId": "0x165c917c2d3441af29775da034f1b536f670511ed6cfd6cbdc320dcceba152e5"
+            "GmpSingleton": "0x38dd67b410841bf774f4a77b9263cad1635944b2b74fc6c958930cdf83fdb437",
+            "GmpChannelId": "0x65ed524e2eb0641154cf15bf5e8978717d60d90297d8550d82cc5b13b4ad0696",
+            "ItsSingleton": "0x195f0f30d9db38a1885d276b59cb1b784b9d1827b4a425fa0cd9e0951eb24f7b",
+            "ItsChannelId": "0x4792c09a603efe058c778bd0c63ef6a6d69b1f89107b861d64dc9497be6ccb1e"
           }
         }
+      }
+    },
+    "stellar": {
+      "name": "Stellar",
+      "axelarId": "stellar",
+      "rpc": "https://mainnet.sorobanrpc.com",
+      "horizonRpc": "https://horizon.stellar.org",
+      "networkType": "mainnet",
+      "chainType": "stellar",
+      "decimals": 7,
+      "finality": "1",
+      "tokenSymbol": "XLM",
+      "tokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
+      "contracts": {
+        "AxelarGateway": {
+          "address": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
+          "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+          "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+          "initializeArgs": {
+            "owner": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+            "operator": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+            "domainSeparator": "d2937eba76cea053386484dae0e3d497548237ecb777dfdd5401e12cfc97ec78",
+            "minimumRotationDelay": "86400",
+            "previousSignersRetention": "15",
+            "initialSigners": [
+              {
+                "nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+                "signers": [
+                  {
+                    "signer": "b524f317131fa5e2ecb85a962bd26ab97a47f3326f8e181ba804d60b35143d52",
+                    "weight": "1"
+                  }
+                ],
+                "threshold": "1"
+              }
+            ]
+          }
+        },
+        "AxelarOperators": {
+          "address": "CCO23C66LAPU5YO66VNXB75T7SDVZ5UZ2GHAU3M7T2YGRKHJI3B2LZPQ",
+          "deployer": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S",
+          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "initializeArgs": {
+            "owner": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S"
+          }
+        },
+        "AxelarGasService": {
+          "address": "CDZNIEA5FLJY2L4BWFW3P6WPFYWQNZTNP6ED2K5UHD5PNYTIMNFZDD3W",
+          "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+          "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
+          "initializeArgs": {
+            "owner": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+            "operator": "CCO23C66LAPU5YO66VNXB75T7SDVZ5UZ2GHAU3M7T2YGRKHJI3B2LZPQ"
+          }
+        },
+        "Upgrader": {
+          "address": "CCIAE4D3SBAKHYGWN6FMY74ILYKNQXE7FQNYZESFUFAPS2JYZRNYED4F",
+          "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+          "wasmHash": "a29f0384e948343a4bdc11c8c640c56345cbf91acf770828219766fc6c829382",
+          "initializeArgs": {}
+        },
+        "AxelarExample": {
+          "address": "CDEKXENLFI5A4XF5X2NQRDX5BK6MS2G47MU52N66Z6GAU4WUQ3RCH24M",
+          "deployer": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S",
+          "wasmHash": "a4dbe77402308e9152dfd31777519b2ff19167db81c5a15f3032a15ee3ea3bc9",
+          "initializeArgs": {
+            "gatewayAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
+            "gasServiceAddress": "CDZNIEA5FLJY2L4BWFW3P6WPFYWQNZTNP6ED2K5UHD5PNYTIMNFZDD3W",
+            "itsAddress": "CBDBMIOFHGWUFRYH3D3STI2DHBOWGDDBCRKQEUB4RGQEBVG74SEED6C6"
+          }
+        },
+        "InterchainTokenService": {
+          "address": "CBDBMIOFHGWUFRYH3D3STI2DHBOWGDDBCRKQEUB4RGQEBVG74SEED6C6",
+          "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+          "wasmHash": "7ebdf38b7df81ad0deaae0d09b3123b6f1617ffae9618382c5d11acb7b991191",
+          "initializeArgs": {
+            "owner": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+            "operator": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+            "gatewayAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
+            "gasServiceAddress": "CDZNIEA5FLJY2L4BWFW3P6WPFYWQNZTNP6ED2K5UHD5PNYTIMNFZDD3W",
+            "itsHubAddress": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+            "chainName": "stellar",
+            "nativeTokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
+            "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
+            "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
+          }
+        }
+      },
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Stellar Expert",
+        "url": "https://stellar.expert/explorer/public"
       }
     }
   },
@@ -2769,6 +2909,21 @@
           "domainSeparator": "0xb92c62ca5a6860211b2cf0340641e8d6dffa3207c78c3055d7f708f2bfba3171",
           "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6"
         },
+        "stellar": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "stellar_xdr",
+          "keyType": "ed25519",
+          "codeId": 16,
+          "domainSeparator": "0xd2937eba76cea053386484dae0e3d497548237ecb777dfdd5401e12cfc97ec78",
+          "address": "axelar1wdgp5xyqjyv5zsq86n6pah2lsmd46mn0gt4055mvvk6mezn9skqs6p93dg"
+        },
         "storeCodeProposalId": "263",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "codeId": 16,
@@ -2785,7 +2940,11 @@
         "storeCodeProposalId": "264",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
         "codeId": 17,
-        "lastUploadedCodeId": 17
+        "lastUploadedCodeId": 17,
+        "stellar": {
+          "codeId": 17,
+          "address": "axelar1t46envzujl4kmhst6myg364v00f8jcyjespw6tr00r3ycd0pehxqetqrpm"
+        }
       },
       "VotingVerifier": {
         "flow": {
@@ -2817,6 +2976,21 @@
           "codeId": 20,
           "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh"
         },
+        "stellar": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "CD6VSKXB4HY2DWU7EP2PUIYTBJBJ36LDJXEZN4NSXFYF5YP37DDFX6NF",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stellar",
+          "codeId": 20,
+          "address": "axelar1dalnx2yvmu3g3aau8m7fj426fk9u8dnzlr5azvqmr4x82rtclats8lhjmu"
+        },
         "storeCodeProposalId": "267",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
         "codeId": 20,
@@ -2829,7 +3003,11 @@
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "lastUploadedCodeId": 15,
         "codeId": 25,
-        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
+        "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
+        "stellar": {
+          "maxUintBits": 127,
+          "maxDecimalsWhenTruncating": 255
+        }
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "269",
