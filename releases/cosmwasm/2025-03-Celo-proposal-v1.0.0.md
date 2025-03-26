@@ -19,12 +19,12 @@ Create a `proposal.json` file as follows:
 ```json
 {
     "title": "Update Celo confirmation height",
-    "description": "Celo supports finalized tag now, therefore updating confirmation height to 3000",
+    "description": "Celo supports finalized tag now, therefore updating confirmation height to 2500",
     "changes": [
         {
             "subspace": "evm_celo",
             "key": "confirmationHeight",
-            "value": "3000"
+            "value": "2500"
         }
     ],
     "deposit": "2000000000uaxl"
