@@ -120,7 +120,7 @@ node xrpl/decode-tx-blob.js 120000220000000024000000002029004c6ce7614[...]738623
 Create a trust line between your account and a token issuer (via a TrustSet transaction).
 
 ```bash
-node xrpl/trust-set.js -e <env> -n <chain-name> [token-currency] [token-issuer-address]
+node xrpl/trust-set.js -e <env> -n <chain-name> --multisign --account <account> [token-currency] [token-issuer-address]
 ```
 
 Here's an example:
