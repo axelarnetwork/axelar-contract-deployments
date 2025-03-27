@@ -160,6 +160,20 @@ node xrpl/decode-tx-blob.js 120000220000000024000000002029004c6ce7614[...]738623
 # }
 ```
 
+## Make a Payment
+
+Perform a token transfer (via a Payment transaction).
+
+```bash
+node xrpl/payment.js -e <env> -n <chain-name> --multisign --from <from> --to <to> --amount <amount> --token <token>
+```
+
+Here's an example:
+
+```bash
+node xrpl/payment.js -e devnet-amplifier -n xrpl-dev --to rNY3vQMxmrKWnAboNtKdthPmqL4TD7ak3m --amount 1 --token "ABC.r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1"
+```
+
 ## Create a Trust Line
 
 Create a trust line between your account and a token issuer (via a TrustSet transaction).
