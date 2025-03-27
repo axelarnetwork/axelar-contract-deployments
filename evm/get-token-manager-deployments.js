@@ -40,7 +40,7 @@ const queryLimit = {
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if (tokenManagerInfo[name] == null || chain.contracts.InterchainTokenService.skip) return;
+        if (tokenManagerInfo[name] == null || chain.contracts.InterchainTokenService.skip) return false;
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
 
         // if (name != 'mantle') { return; }
@@ -49,7 +49,7 @@ async function getTokenManagers(name) {
         console.log('processing... ', name);
         console.log(name, eventsLength);
 
-        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === chainName).rpc_addr : chain.rpc;
+        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -61,14 +61,14 @@ async function getTokenManagers(name) {
         }
 
         const filter = its.filters.TokenManagerDeployed();
-        console.log('current block number: ', blockNumber);
+        console.log(name, 'current block number: ', blockNumber);
 
         let min = tokenManagerInfo[name].end;
         let max = blockNumber;
 
-        if ((await provider.getBlock(tokenManagerInfo[name].end)).timestamp >= endTimestamp) return;
+        //if ((await provider.getBlock(tokenManagerInfo[name].end)).timestamp >= endTimestamp) return;
 
-        while (max - min > 1) {
+        /*while (max - min > 1) {
             const mid = Math.floor((min + max) / 2);
             const timestamp = (await provider.getBlock(mid)).timestamp;
             if (timestamp > endTimestamp) {
@@ -77,21 +77,28 @@ async function getTokenManagers(name) {
                 min = mid;
             }
         }
-        printInfo('Target Block number', min);
-
-        while (tokenManagerInfo[name].end <= min) {
+        printInfo('Target Block number', min);*/
+        min = blockNumber;
+        let tries = 0;
+        while (tokenManagerInfo[name].end < min) {
             try {
-                const end = tokenManagerInfo[name].end + eventsLength;
-                console.log(end, min);
+                const end = min < tokenManagerInfo[name].end + eventsLength ? min : tokenManagerInfo[name].end + eventsLength;
+                console.log(name, end, min, eventsLength);
                 const events = await its.queryFilter(filter, tokenManagerInfo[name].end + 1, end);
                 tokenManagerInfo[name].tokenManagers = tokenManagerInfo[name].tokenManagers.concat(events.map((event) => event.args));
                 tokenManagerInfo[name].end = end;
                 fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
+                tries = 0;
+                console.log(name, end, min);
             } catch (e) {
-
+                tries++;
+                if (tries >= 10) {
+                    console.log(e);
+                    return false;
+                }
             }
-
         }
+        return true;
     } catch (e) {
         console.log(name);
         console.log(e);
@@ -99,8 +106,9 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
-    for (const name of Object.keys(info.chains)) {
+    /*for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
-        getTokenManagers(name);
-    }
+        getTokenManagers(name).then((success) => console.log(name, 'returned', success));
+        
+    }*/
 })();
