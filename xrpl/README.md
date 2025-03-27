@@ -23,11 +23,7 @@ node xrpl/generate-wallet.js
 
 Set `PRIVATE_KEY` in `.env` to the generated wallet's `seed` value.
 
-Devnet and testnet funds can be obtained via the `faucet.js` script:
-
-```bash
-node xrpl/faucet.js -e devnet-amplifier -n xrpl
-```
+Devnet and testnet funds can be obtained via the [`faucet.js` script](#claim-funds-from-faucet).
 
 ## Deployment
 
@@ -123,6 +119,20 @@ node xrpl/add-reserves.js -e devnet-amplifier -n xrpl-dev --amount 10
 ## Helpers
 
 These scripts are intended to help with interactions with the XRPL.
+
+### Claim Funds from Faucet
+
+Claim funds using the XRPL faucet:
+
+```bash
+node xrpl/faucet.js -e <env> -n <chain-name> --minBalance <min-balance> --amount <amount> --recipient <recipient>
+```
+
+Here's an example:
+
+```bash
+node xrpl/faucet.js --minBalance 100 --amount 100
+```
 
 ### Broadcast Raw Transaction Blob
 
