@@ -2,8 +2,16 @@
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, validateParameters } = require('../common');
+const {
+    saveConfig,
+    loadConfig,
+    addOptionsToCommands,
+    getChainConfig,
+    printInfo,
+    printWarn,
+    printError,
+    validateParameters,
+} = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -13,25 +21,47 @@ const {
     addressToScVal,
     hexToScVal,
     saltToBytes32,
-    stellarAddressToBytes,
     serializeValue,
 } = require('./utils');
-const { prompt } = require('../common/utils');
+const { prompt, parseTrustedChains, asciiToBytes } = require('../common/utils');
 
-async function setTrustedChain(wallet, _, chain, contract, arg, options) {
-    const callArg = nativeToScVal(arg, { type: 'string' });
+async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
+    const trustedChains = parseTrustedChains(config, args);
 
-    const operation = contract.call('set_trusted_chain', callArg);
+    for (const trustedChain of trustedChains) {
+        printInfo(action, trustedChain);
 
-    await broadcast(operation, wallet, chain, 'Trusted Chain Set', options);
+        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+
+        try {
+            const isTrusted = (
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
+            ).value();
+
+            if (isTrusted && action === 'set_trusted_chain') {
+                printWarn('The chain is already trusted', trustedChain);
+                continue;
+            }
+
+            if (!isTrusted && action === 'remove_trusted_chain') {
+                printWarn('The chain is not trusted', trustedChain);
+                continue;
+            }
+
+            await broadcast(contract.call(action, trustedChainScVal), wallet, chain, action, options);
+            printInfo(`Successfully ${action === 'set_trusted_chain' ? 'added' : 'removed'} trusted chain`, trustedChain);
+        } catch (error) {
+            printError(`Failed to process ${action}`, trustedChain, error);
+        }
+    }
 }
 
-async function removeTrustedChain(wallet, _, chain, contract, arg, options) {
-    const callArg = nativeToScVal(arg, { type: 'string' });
+async function addTrustedChains(wallet, config, chain, contract, args, options) {
+    await manageTrustedChains('set_trusted_chain', wallet, config, chain, contract, args, options);
+}
 
-    const operation = contract.call('remove_trusted_chain', callArg);
-
-    await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
+async function removeTrustedChains(wallet, config, chain, contract, args, options) {
+    await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
 }
 
 async function deployInterchainToken(wallet, _, chain, contract, args, options) {
@@ -61,7 +91,7 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -93,7 +123,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -117,7 +147,7 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
     const gasAmount = options.gasAmount;
 
     validateParameters({
-        isNonEmptyString: { gasTokenAddress },
+        isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
 
@@ -151,7 +181,7 @@ async function execute(wallet, _, chain, contract, args, options) {
 
 async function encodeRecipient(wallet, _, chain, contract, args, options) {
     const [recipient] = args;
-    printInfo('Encoded Recipient', stellarAddressToBytes(recipient));
+    printInfo('Encoded Recipient', asciiToBytes(recipient));
 }
 
 async function mainProcessor(processor, args, options) {
@@ -164,11 +194,17 @@ async function mainProcessor(processor, args, options) {
         return;
     }
 
-    if (!chain.contracts?.interchain_token_service) {
+    if (!chain.contracts?.InterchainTokenService) {
         throw new Error('Interchain Token Service package not found.');
     }
 
-    const contract = new Contract(chain.contracts.interchain_token_service.address);
+    const contractId = chain.contracts.InterchainTokenService.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
+    const contract = new Contract(chain.contracts.InterchainTokenService.address);
 
     await processor(wallet, config, chain, contract, args, options);
 
@@ -181,17 +217,17 @@ if (require.main === module) {
     program.name('its').description('Interchain Token Service contract operations.');
 
     program
-        .command('set-trusted-chain <chainName>')
-        .description('set a trusted InterchainTokenService chain')
-        .action((chainName, options) => {
-            mainProcessor(setTrustedChain, chainName, options);
+        .command('add-trusted-chains <trusted-chains...>')
+        .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
+        .action((trustedChains, options) => {
+            mainProcessor(addTrustedChains, trustedChains, options);
         });
 
     program
-        .command('remove-trusted-chain <chainName>')
-        .description('remove a trusted InterchainTokenService chain')
-        .action((chainName, options) => {
-            mainProcessor(removeTrustedChain, chainName, options);
+        .command('remove-trusted-chains <trusted-chains...>')
+        .description(`Remove trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
+        .action((trustedChains, options) => {
+            mainProcessor(removeTrustedChains, trustedChains, options);
         });
 
     program

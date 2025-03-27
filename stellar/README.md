@@ -49,7 +49,7 @@ node stellar/faucet.js --recipient <address>
 
 Setup
 
-1. Checkout the axelar-cgp-stellar repo.
+1. Checkout the axelar-amplifier-stellar repo.
 2. Compile the Stellar wasm contracts
 
 ```bash
@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gateway --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,13 +76,13 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_operators --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0
 ```
 
 ### Interchain Token Service
@@ -90,41 +90,82 @@ node stellar/deploy-contract.js deploy axelar_gas_service --version v1.0.0
 Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-node stellar/deploy-contract.js deploy interchain_token --version v1.0.0
-node stellar/deploy-contract.js deploy token_manager --version v1.0.0
-node stellar/deploy-contract.js deploy interchain_token_service --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainToken --version v1.0.0
+node stellar/deploy-contract.js deploy TokenManager --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 ```
 
 ### Example
 
-Note that example contract should use `--wasm-path` option to deploy contract
+Note that example contract should use `--artifact-path` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format X.Y.Z or a commit hash.
 
-```bash
-node stellar/deploy-contract.js deploy example --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm
-```
+
+-   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
+
+-   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
 
 ### Contract upgrades
 
-To facilitate contract upgrades, the `upgrader` contract needs to be deployed first.
+To facilitate contract upgrades, the `Upgrader` contract needs to be deployed first.
 
 ```bash
-node stellar/deploy-contract.js deploy upgrader --version v1.0.0
+node stellar/deploy-contract.js deploy Upgrader --version v1.0.0
 ```
 
-After the `upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
+After the `Upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --wasm-path ../axelar-cgp-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --new-version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
-where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--wasm-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
+where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifact-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
+
+Note: The `--artifact-path` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
+
+#### Example `MIGRATION_DATA` Type Input
+
+For no migration data, omit the `--migration-data` flag, or pass `'()'` for the data.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION>
+```
+
+or
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '()'
+```
+
+For migration data of type `String`, omit the `--migration-data` flag and pass the string directly.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 'my string'
+```
+
+For migration data of type `Vec<Address>`, omit the `--migration-data` flag and pass the array as such:
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '["GAA...", "GAB..."]'
+```
+
+For migration data of type `u64`, omit the `--migration-data` flag and pass the number directly.
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 1234567890
+```
+
+For migration data of type `bool`, omit the `--migration-data` flag and pass the boolean directly:
+
+```bash
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
+```
 
 ## Generate bindings
 
 Generate TypeScript bindings for the contract
 
 ```bash
-node stellar/generate-bindings.js --wasm-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
+node stellar/generate-bindings.js --artifact-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
 ```
 
 ## Contract Interaction
@@ -195,16 +236,20 @@ node stellar/gateway.js execute [source-chain] [message-id] [source-address] [de
 
 _Note_: Stellar ITS runs only in Hub mode. P2P connections are not supported. Therefore, rather than setting trusted ITS addresses, we set trusted chains (chains which are also registered with ITS Hub). The ITS Hub chain (axelar) itself is not a valid source/destination for direct ITS messages and so shouldn't be set as a trusted chain. All ITS messages must be sent to and received from the ITS Hub.
 
-#### Set Trusted Chain
+#### Add Trusted Chains
 
 ```bash
-node stellar/its.js set-trusted-chain [chain-name]
+node stellar/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
+
+# Example
+node stellar/its.js add-trusted-chains all
+node stellar/its.js add-trusted-chains avalanche sui
 ```
 
-#### Remove Trusted Address
+#### Remove Trusted Chains
 
 ```bash
-node stellar/its.js remove-trusted-chain [chain-name]
+node stellar/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 #### Deploy Interchain Token
@@ -294,4 +339,62 @@ node stellar/gmp.js [source-chain] [message-id] [source-address] [payload]
 
 # Example
 node stellar/gmp.js execute avalanche '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+```
+
+## Pausable Contract Functionality
+
+Here is how to manage the pausable state of a Stellar contract. You can check if the contract is paused, pause the contract, or unpause the contract.
+
+#### Usage
+
+To use this script, run the following command with the appropriate options:
+
+```bash
+node stellar/contract.js [action] [contract-name]
+```
+
+#### Options
+
+- `[action]` can be one of the following:
+
+    - `pause`: Pause the contract
+    - `paused`: Check if the contract is paused
+    - `unpause`: Unpause the contract
+
+- `[contract-name]`: The name of the contract to interact with. This option is mandatory.
+
+#### Examples
+
+Check if the contract is paused:
+
+```bash
+node stellar/contract.js paused AxelarGateway
+```
+
+Pause the contract:
+
+```bash
+node stellar/contract.js pause AxelarGateway
+```
+
+Unpause the contract:
+
+```bash
+node stellar/contract.js unpause AxelarGateway
+```
+
+## Transfer Ownership or Operatorship of the Contract
+
+#### Usage
+
+Transfer the ownership of the contract:
+
+```bash
+node stellar/contract.js transfer-ownership [contract-name] [new-owner]
+```
+
+Transfer the operatorship of the contract:
+
+```bash
+node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```

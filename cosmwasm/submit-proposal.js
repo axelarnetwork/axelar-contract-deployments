@@ -12,7 +12,6 @@ const {
     prepareClient,
     fromHex,
     getSalt,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
@@ -29,7 +28,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, getItsEdgeContract } = require('../common');
+const { saveConfig, loadConfig, printInfo, prompt, getChainConfig, itsEdgeContract, readContractCode } = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -92,7 +91,7 @@ const storeCode = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractBaseConfig.storeCodeProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const storeInstantiate = async (client, wallet, config, options) => {
@@ -114,7 +113,7 @@ const storeInstantiate = async (client, wallet, config, options) => {
     const proposalId = await callSubmitProposal(client, wallet, config, options, proposal);
 
     contractConfig.storeInstantiateProposalId = proposalId;
-    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readWasmFile(options)).digest().toString('hex');
+    contractBaseConfig.storeCodeProposalCodeHash = createHash('sha256').update(readContractCode(options)).digest().toString('hex');
 };
 
 const instantiate = async (client, wallet, config, options) => {
@@ -176,11 +175,9 @@ const registerItsChain = async (client, wallet, config, options) => {
         const chainConfig = getChainConfig(config, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
-        const itsEdgeContract = getItsEdgeContract(chainConfig);
-
         return {
             chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContract,
+            its_edge_contract: itsEdgeContract(chainConfig),
             truncation: {
                 max_uint_bits: maxUintBits,
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
