@@ -57,9 +57,65 @@ node xrpl/rotate-signers.js -e testnet -n xrpl --signerPublicKeys 028E425D6F75EC
 
 ## Contract Interactions
 
-Since there's no smart contracts on XRPL, all interactions happen with the XRPL multisig account.
+Since there's no smart contracts on XRPL, all interactions happen as `Payment` transactions towards the XRPL multisig account.
+The XRPL multisig account is used in place of both AxelarGateway and InterchainTokenService.
 
 ### ITS Interchain Transfers
+
+Interchain token transfers from XRPL are initiated via a `Payment` transaction that respects the following format:
+
+```js
+{
+    TransactionType: "Payment",
+    Account: user.address, // sender's account address
+    Amount: "1000000", // amount of XRP to send, in drops (in this case, 1 XRP), *including* gas fee amount
+    // Amount: { // alternatively, an IOU token amount can be specified, when transferring some IOU rather than XRP
+    //     currency: "ABC", // IOU's currency code
+    //     issuer: "r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1", // IOU issuer's account address
+    //     value: "1" // IOU amount to bridge (in this case, 1 ABC.r4DVH), *including* gas fee amount
+    // },
+    Destination: multisig.address, // Axelar multisig's account address
+    Memos: [
+        {
+            Memo: {
+                MemoType: "74797065", // hex("type")
+                MemoData: "696e746572636861696e5f7472616e73666572" // hex("interchain_transfer")
+            },
+        },
+        {
+            Memo: {
+                MemoType: "64657374696e6174696f6e5f61646472657373", // hex("destination_address")
+                // recipient's address, without the 0x prefix (in the EVM case), hex-encoded - hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E"), in this case:
+                MemoData: "30413930633041663142303766364143333466333532303334384462666165373342446133353845"
+            },
+        },
+        {
+            Memo: {
+                MemoType: "64657374696E6174696F6E5F636861696E", // hex("destination_chain")
+                MemoData: "7872706c2d65766d2d6465766e6574", // destination chain, hex encoded - hex("xrpl-evm-devnet"), in this case
+            },
+        },
+        {
+            Memo: {
+                MemoType: "6761735f6665655f616d6f756e74", // hex("gas_fee_amount")
+                // the amount to be deducted from the total payment amount to cover gas fee -
+                // this amount is denominated in the same token that's being transferred
+                // (i.e., if you're bridging XRP, this value corresponds to the amount of XRP drops that will be used to cover gas fees,
+                // while if you're bridging some IOU, it's the amount of IOU tokens that will be allocated to gas fees)
+                MemoData: "30", // amount of tokens to allocate to gas fees, out of the amount being sent to the multisig, hex encoded - hex("0"), in this case
+            },
+        },
+        { // Only include this Memo object when performing a GMP call:
+            Memo: {
+                MemoType: "7061796c6f6164", // hex("payload")
+                // abi-encoded payload/data with which to call the Executable destination contract address:
+                MemoData: "0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000",
+            },
+        },
+    ],
+    ...
+}
+```
 
 Interchain token transfers can be performed via the `interchain-transfer.js` script:
 
@@ -75,6 +131,52 @@ node xrpl/interchain-transfer.js -e devnet-amplifier -n xrpl XRP 1 xrpl-evm-side
 
 ### General Message Passing
 
+GMP contract calls from XRPL are initiated via a `Payment` transaction that respects the following format:
+
+```js
+{
+    TransactionType: "Payment",
+    Account: user.address, // sender's account address
+    Amount: "1000000", // amount of XRP used to cover gas fees, in drops (in this case, 1 XRP)
+    // Amount: { // alternatively, an IOU token amount can be used to cover gas fees
+    //     currency: "ABC", // IOU's currency code
+    //     issuer: "r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1", // IOU issuer's account address
+    //     value: "1" // IOU amount to allocated to gas fees (in this case, 1 ABC.r4DVH)
+    // },
+    Destination: multisig.address, // Axelar multisig's account address
+    Memos: [
+        {
+            Memo: {
+                MemoType: "74797065", // hex("type")
+                MemoData: "63616c6c5f636f6e7472616374" // hex("call_contract")
+            },
+        },
+        {
+            Memo: {
+                MemoType: "64657374696e6174696f6e5f61646472657373", // hex("destination_address")
+                // // destination smart contract address, without the 0x prefix (in the EVM case), hex-encoded -
+                // hex("0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E"), in this case:
+                MemoData: "30413930633041663142303766364143333466333532303334384462666165373342446133353845"
+            },
+        },
+        {
+            Memo: {
+                MemoType: "64657374696E6174696F6E5F636861696E", // hex("destination_chain")
+                MemoData: "7872706c2d65766d2d6465766e6574", // destination chain, hex encoded - hex("xrpl-evm-devnet"), in this case
+            },
+        },
+        {
+            Memo: {
+                MemoType: "7061796c6f6164", // hex("payload")
+                // abi-encoded payload/data with which to call the Executable destination contract address:
+                MemoData: "0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000",
+            },
+        },
+    ],
+    ...
+}
+```
+
 Pure GMP (without token transfers) can be performed via the `call-contract.js` script:
 
 ```bash
@@ -88,6 +190,38 @@ node xrpl/call-contract.js -e devnet-amplifier -n xrpl-dev xrpl-evm-devnet 0x0A9
 ```
 
 ### Add Gas
+
+A pending GMP/ITS message can be topped up from XRPL via a `Payment` transaction that respects the following format:
+
+```js
+{
+    TransactionType: "Payment",
+    Account: user.address, // sender's account address
+    Amount: "1000000", // amount of XRP, in drops (in this case, 1 XRP), to top-up gas fees with
+    // Amount: { // alternatively, an IOU token amount can be used to top up gas fees
+    //     currency: "ABC", // IOU's currency code
+    //     issuer: "r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1", // IOU issuer's account address
+    //     value: "1" // IOU amount to top up gas fees with (in this case, 1 ABC.r4DVH)
+    // },
+    Destination: multisig.address, // Axelar multisig's account address
+    Memos: [
+        {
+            Memo: {
+                MemoType: "74797065", // hex("type")
+                MemoData: "6164645f676173" // hex("add_gas")
+            },
+        },
+        {
+            Memo: {
+                MemoType: "6d73675f6964", // hex("msg_id")
+                // message ID of the pending GMP or ITS transaction whose gas to top up, hex encoded - hex("c7c653d2df83622c277da55df7fe6466098f5bc2e466e1251f42772d07016c8c"), in this case:
+                MemoData: "63376336353364326466383336323263323737646135356466376665363436363039386635626332653436366531323531663432373732643037303136633863"
+            },
+        },
+    ],
+    ...
+}
+```
 
 You can use the `add-gas.js` script to top-up an ITS or GMP message's gas amount:
 
@@ -106,6 +240,27 @@ node xrpl/add-gas.js -e devnet-amplifier -n xrpl-dev --amount 0.1 --token XRP --
 A fee reserve is used to cover the XRPL multisig account's reserve requirements as well as
 Proof transaction fees (i.e., gas fees of transactions generated by the XRPL Multisig Prover).
 These fee reserve top-ups are intended to be performed by the XRPL relayer.
+
+XRP fee reserve top-ups are initiated from XRPL via a `Payment` transaction that respects the following format:
+
+```js
+{
+    TransactionType: "Payment",
+    Account: user.address, // sender's account address
+    Amount: "1000000", // amount of XRP, in drops (in this case, 1 XRP), to top-up the fee reserve with
+    Destination: multisig.address, // Axelar multisig's account address
+    Memos: [
+        {
+            Memo: {
+                MemoType: "74797065", // hex("type")
+                MemoData: "6164645f7265736572766573" // hex("add_reserves")
+            },
+        },
+    ],
+    ...
+}
+```
+
 You can use the `add-reserves.js` script to top up the XRP fee reserve:
 
 ```bash
