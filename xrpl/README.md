@@ -9,23 +9,19 @@
 
 ## Installation
 
-Install npm dependencies.
+1. Install npm dependencies.
 
 ```sh
 npm ci
 ```
 
-Create a new XRPL keypair.
+2. Create a new XRPL keypair via the [`generate-wallet.js` script](#generate-wallet).
 
-```bash
-node xrpl/generate-wallet.js
-```
+3. Set `PRIVATE_KEY` in `.env` to the generated wallet's `seed` value.
 
-Set `PRIVATE_KEY` in `.env` to the generated wallet's `seed` value.
+4. Claim devnet and testnet funds via the [`faucet.js` script](#claim-funds-from-faucet), if applicable.
 
-Devnet and testnet funds can be obtained via the [`faucet.js` script](#claim-funds-from-faucet).
-
-You can avoid having to specify the environment and chain name on every command by setting those in `.env` as `ENV` and `CHAIN`, respectively.
+5. Set `ENV` and `CHAIN` in `.env` to the environment ("devnet-amplifier", "stagenet", "testnet", or "mainnet") and chain name (`xrpl`), respectively, to avoid having to specify these on every command.
 
 ## Deployment
 
@@ -276,6 +272,16 @@ node xrpl/add-reserves.js -e devnet-amplifier -n xrpl-dev --amount 10
 ## Helpers
 
 These scripts are intended to help with interactions with the XRPL.
+
+### Generate Wallet
+
+Generate a new XRPL wallet:
+
+```bash
+node xrpl/generate-wallet.js
+```
+
+Set `SEED` in `.env` to the generated `seed` to use this wallet for performing other actions.
 
 ### Claim Funds from Faucet
 
