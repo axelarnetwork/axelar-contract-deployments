@@ -25,6 +25,8 @@ Set `PRIVATE_KEY` in `.env` to the generated wallet's `seed` value.
 
 Devnet and testnet funds can be obtained via the [`faucet.js` script](#claim-funds-from-faucet).
 
+You can avoid having to specify the environment and chain name on every command by setting those in `.env` as `ENV` and `CHAIN`, respectively.
+
 ## Deployment
 
 ### XRPL Multisig Account Deployment
