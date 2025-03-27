@@ -193,8 +193,10 @@ class XRPLClient {
 
     async signAndSubmitTx(signer, txType, fields = {}, args = {}, options = { multisign: false, yes: false }) {
         const tx = await this.buildTx(txType, fields, {
-            account: args.account ?? signer.address,
             ...args,
+            account: args.account ?? signer.classicAddress,
+            // when multisigning, fee = (N + 1) * normal fee, where N is the number of signatures
+            fee: args.fee ?? (options.multisign ? String(Number(await client.fee()) * 2) : undefined),
         });
 
         printInfo(`${options.multisign ? 'Multi-' : ''}Signing transaction`, JSON.stringify(tx, null, 2));

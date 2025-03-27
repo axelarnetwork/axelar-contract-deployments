@@ -15,7 +15,6 @@ async function rotateSigners(_config, wallet, client, chain, options) {
     printInfo('Updating multisig signer set');
     await client.sendSignerListSet(wallet, {
         account: multisig,
-        fee: String(Number(await client.fee()) * 2), // fee = (N+1) * normal fee, where N is the number of signatures
         quorum: Number(options.quorum),
         signers: options.signerPublicKeys.map((signedPubKey, i) => ({
             address: deriveAddress(signedPubKey),

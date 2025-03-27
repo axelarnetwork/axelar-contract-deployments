@@ -7,7 +7,6 @@ async function accountSet(_config, wallet, client, _chain, options) {
     printInfo('Updating account properties');
     await client.sendAccountSet(wallet, {
         account: options.account,
-        fee: String(Number(await client.fee()) * 2), // fee = (N+1) * normal fee, where N is the number of signatures
         transferRate: options.transferRate ? Number(options.transferRate) : undefined,
         tickSize: options.tickSize ? Number(options.tickSize) : undefined,
         domain: options.domain ? hex(options.domain) : undefined,
