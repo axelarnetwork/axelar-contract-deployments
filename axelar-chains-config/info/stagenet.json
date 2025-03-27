@@ -1893,6 +1893,53 @@
       "finality": "1",
       "approxFinalityWaitTime": 1
     },
+    "xrpl": {
+      "name": "XRPL",
+      "axelarId": "xrpl",
+      "rpc": "https://s.altnet.rippletest.net:51234",
+      "wssRpc": "wss://s.altnet.rippletest.net:51233",
+      "tokenSymbol": "XRP",
+      "networkType": "testnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://testnet.xrpl.org"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR",
+          "initialSigner": "r4sGKptWj2nEjgYUh2pccVrPmfzZvNfANu",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        },
+        "AxelarGateway": {
+          "address": "rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR",
+          "initialSigner": "r4sGKptWj2nEjgYUh2pccVrPmfzZvNfANu",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        }
+      }
+    },
     "xrpl-evm": {
       "name": "XRPL EVM",
       "axelarId": "xrpl-evm",
