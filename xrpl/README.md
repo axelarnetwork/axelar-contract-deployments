@@ -63,6 +63,20 @@ Here's an example of an interchain transfer that also performs GMP:
 node xrpl/interchain-transfer.js -e devnet-amplifier -n xrpl XRP 1 xrpl-evm-sidechain 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --gasFeeAmount 0 --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e474d5020776f726b7320746f6f3f000000000000000000000000000000000000
 ```
 
+## General Message Passing
+
+Pure GMP (without token transfers) can be performed via the `call-contract.js` script:
+
+```bash
+node xrpl/call-contract.js -e <env> -n <source-chain> [destination-chain] [destination-address] --gasFeeAmount <gas-fee-amount> --gasFeeToken <gas-fee-token> --payload <payload>
+```
+
+Here's an example:
+
+```bash
+node xrpl/call-contract.js -e devnet-amplifier -n xrpl-dev xrpl-evm-devnet 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --gasFeeAmount 1 --gasFeeToken XRP --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000B48656C6C6F20576F726C64000000000000000000000000000000000000000000 -y
+```
+
 ## Broadcast Raw Transaction Blob
 
 Broadcast a raw, signed transaction blob (e.g., a completed Multisig Prover proof) to XRPL:
