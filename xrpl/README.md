@@ -188,6 +188,20 @@ Here's an example:
 node xrpl/trust-set.js -e devnet-amplifier -n xrpl XYZ r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1
 ```
 
+## Create Tickets
+
+Create tickets (via a TicketCreate transaction).
+
+```bash
+node xrpl/ticket-create.js -e <env> -n <chain-name> --multisign --account <account> --ticketCount <ticket-count>
+```
+
+Here's an example:
+
+```bash
+node xrpl/ticket-create.js -e devnet-amplifier -n xrpl-dev --multisign --account rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC --ticketCount 250
+```
+
 ## Modify Account Properties
 
 Modify an account's properties (via an AccountSet transaction).
