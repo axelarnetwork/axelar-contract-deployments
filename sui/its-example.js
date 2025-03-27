@@ -50,7 +50,7 @@ async function sendToken(keypair, client, contracts, args, options) {
 
     const tx = txBuilder.tx;
     const gas = tx.splitCoins(tx.gas, [unitFeeAmount]);
-
+    console.log(ItsToken);
     const TokenId = await txBuilder.moveCall({
         target: `${InterchainTokenService.address}::token_id::from_u256`,
         arguments: [ItsToken.objects.TokenId],
@@ -140,7 +140,7 @@ async function registerTokenWithFlowLimit(keypair, client, contracts, args, opti
 
     const coinInfo = await txBuilder.moveCall({
         target: `${InterchainTokenService.address}::coin_info::from_info`,
-        arguments: ['if you rerun this for the same token change this', symbol, ItsToken.decimals],
+        arguments: ['Weird', 'ITS_SYMBOL', ItsToken.decimals],
         typeArguments: [ItsToken.typeArgument],
     });
 
@@ -171,7 +171,10 @@ async function registerTokenWithFlowLimit(keypair, client, contracts, args, opti
         typeArguments: [ItsToken.typeArgument],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `token registered`, options, {});
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `token registered`, options, {});
+    tokenId = result.events[0].parsedJson.token_id.id;
+
+    contracts[symbol.toUpperCase()].objects.TokenId = tokenId;
 }
 
 async function sendDeployment(keypair, client, contracts, args, options) {
@@ -303,10 +306,25 @@ async function deployToken(keypair, client, contracts, args, options) {
             },
         );
         tokenId = result.events[0].parsedJson.token_id.id;
-    } else {
+    } else if (!options.skipRegister) {
         await postDeployTxBuilder.moveCall({
             target: `${InterchainTokenService.address}::interchain_token_service::give_unregistered_coin`,
             arguments: [InterchainTokenService.objects.InterchainTokenService, TreasuryCap, Metadata],
+            typeArguments: [tokenType],
+        });
+        await broadcastFromTxBuilder(
+            postDeployTxBuilder,
+            keypair,
+            `Setup ${symbol} as a non-origin in InterchainTokenService successfully`,
+            options,
+            {
+                showEvents: true,
+            },
+        );
+    } else {
+        await postDeployTxBuilder.moveCall({
+            target: `${SUI_PACKAGE_ID}::coin::update_symbol`,
+            arguments: [TreasuryCap, Metadata, `METADATA_SYMBOL`],
             typeArguments: [tokenType],
         });
         await broadcastFromTxBuilder(
@@ -475,6 +493,7 @@ if (require.main === module) {
                 .choices(['lock_unlock', 'mint_burn']),
         )
         .addOption(new Option('--origin', 'Deploy as a origin token or receive deployment from another chain', false))
+        .addOption(new Option('--skipRegister', 'Skip token registration all together', false))
         .action((symbol, name, decimals, options) => {
             mainProcessor(deployToken, options, [symbol, name, decimals], processCommand);
         });
