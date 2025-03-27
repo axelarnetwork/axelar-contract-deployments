@@ -77,6 +77,20 @@ Here's an example:
 node xrpl/call-contract.js -e devnet-amplifier -n xrpl-dev xrpl-evm-devnet 0x0A90c0Af1B07f6AC34f3520348Dbfae73BDa358E --gasFeeAmount 1 --gasFeeToken XRP --payload 0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000B48656C6C6F20576F726C64000000000000000000000000000000000000000000 -y
 ```
 
+## Add Gas
+
+You can use the `add-gas.js` script to top-up an ITS or GMP message's gas amount:
+
+```bash
+node xrpl/add-gas.js -e <env> -n <source-chain> --token <token> --amount <amount> --msgId <msg-id>
+```
+
+Here's an example:
+
+```bash
+node xrpl/add-gas.js -e devnet-amplifier -n xrpl-dev --amount 0.1 --token XRP --msgId C7C653D2DF83622C277DA55DF7FE6466098F5BC2E466E1251F42772D07016C8C
+```
+
 ## Broadcast Raw Transaction Blob
 
 Broadcast a raw, signed transaction blob (e.g., a completed Multisig Prover proof) to XRPL:
