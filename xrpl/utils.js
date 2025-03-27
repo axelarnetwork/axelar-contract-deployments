@@ -196,7 +196,7 @@ class XRPLClient {
             ...args,
             account: args.account ?? signer.classicAddress,
             // when multisigning, fee = (N + 1) * normal fee, where N is the number of signatures
-            fee: args.fee ?? (options.multisign ? String(Number(await client.fee()) * 2) : undefined),
+            fee: args.fee ?? (options.multisign ? String(Number(await this.fee()) * 2) : undefined),
         });
 
         printInfo(`${options.multisign ? 'Multi-' : ''}Signing transaction`, JSON.stringify(tx, null, 2));
