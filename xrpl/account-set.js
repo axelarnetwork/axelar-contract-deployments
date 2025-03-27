@@ -22,7 +22,7 @@ if (require.main === module) {
     program
         .name('account-set')
         .description('Configure an XRPL account\'s properties')
-        .addOption(new Option('-m, --multisign', 'target account is an XRPL multisig').default(false))
+        .addOption(new Option('-m, --multisign', 'active wallet is a signer of the XRPL multisig account being configured').default(false))
         .addOption(new Option('--account <account>', 'XRPL account to configure (default: active wallet)'))
         .addOption(new Option('--transferRate <transferRate>', 'account transfer rate'))
         .addOption(new Option('--tickSize <tickSize>', 'account tick size'))
