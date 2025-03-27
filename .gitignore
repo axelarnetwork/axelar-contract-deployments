@@ -112,6 +112,9 @@ local.json
 keys.json
 
 temp-arguments.js
+*Untitled*
+*.wasm
+checksums.txt
 
 # Sui Move Packages
 sui/move
@@ -122,3 +125,5 @@ sui/move
 
 # Jetbrains
 .idea
+
+.stellar/
