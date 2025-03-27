@@ -2553,6 +2553,16 @@
             "Metadata": "0x1a40a74073b2cb6547aa8b7f59c4b680b014bfae0309597301905a3082aaad86",
             "TokenId": "0xde77494b700da29a0d5aab36a3bd0d13e4e3f2efba7d9fdd61de6c8f2a14f045"
           }
+        },
+        "MODULE_NAME": {
+          "address": "0xaeab62c6fb2415e03840f53817972b2d3b274d485dc5315d6647bea985149e87",
+          "typeArgument": "0xaeab62c6fb2415e03840f53817972b2d3b274d485dc5315d6647bea985149e87::module_name::MODULE_NAME",
+          "decimals": "9",
+          "objects": {
+            "TreasuryCap": "0x7bf5ed9b6f05343ea6358bc576b6f890ca52b509416516d910b1294e75a8c579",
+            "Metadata": "0x9567b539d87c0e1f79d40351dac5036b7c20db531a2cdd28ded2fa5d76af2320",
+            "TokenId": "0x93d24a97b5adc4efe20d6f4f6832acea84a32b84549f03314747f22828cd2bbd"
+          }
         }
       }
     },
