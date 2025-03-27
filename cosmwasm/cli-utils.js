@@ -87,6 +87,13 @@ const addAmplifierOptions = (program, options) => {
     }
 };
 
+const addAmplifierQueryOptions = (program) => {
+    addEnvOption(program);
+
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'));
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
+};
+
 const addContractOptions = (program) => {
     program.addOption(new Option('-c, --contractName <contractName>', 'contract name').makeOptionMandatory(true));
     program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
@@ -172,4 +179,5 @@ const addProposalOptions = (program) => {
 
 module.exports = {
     addAmplifierOptions,
+    addAmplifierQueryOptions,
 };
