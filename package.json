@@ -36,7 +36,8 @@
     "axios": "^1.7.2",
     "csv-parser": "^3.0.0",
     "path": "^0.12.7",
-    "toml": "^3.0.0"
+    "toml": "^3.0.0",
+    "xrpl": "^4.2.0"
   },
   "devDependencies": {
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
