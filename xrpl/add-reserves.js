@@ -4,13 +4,15 @@ const { mainProcessor, hex } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function addReserves(_config, wallet, client, chain, options, _args) {
-    await client.sendPayment(wallet, {
-        destination: chain.contracts.AxelarGateway.address,
-        amount: xrpl.xrpToDrops(options.amount),
-        memos: [
-            { memoType: hex('type'), memoData: hex('add_reserves') },
-        ],
-    }, options);
+    await client.sendPayment(
+        wallet,
+        {
+            destination: chain.contracts.AxelarGateway.address,
+            amount: xrpl.xrpToDrops(options.amount),
+            memos: [{ memoType: hex('type'), memoData: hex('add_reserves') }],
+        },
+        options,
+    );
 }
 
 if (require.main === module) {

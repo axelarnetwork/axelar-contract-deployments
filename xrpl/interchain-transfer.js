@@ -3,17 +3,21 @@ const { mainProcessor, hex, parseTokenAmount } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function interchainTransfer(_config, wallet, client, chain, options, args) {
-    await client.sendPayment(wallet, {
-        destination: chain.contracts.InterchainTokenService.address,
-        amount: parseTokenAmount(args.token, args.amount), // token is either "XRP" or "<currency>.<issuer-address>"
-        memos: [
-            { memoType: hex('type'), memoData: hex('interchain_transfer') },
-            { memoType: hex('destination_address'), memoData: hex(args.destinationAddress.replace('0x', '')) },
-            { memoType: hex('destination_chain'), memoData: hex(args.destinationChain) },
-            { memoType: hex('gas_fee_amount'), memoData: hex(options.gasFeeAmount) },
-            ...(options.payload ? [{ memoType: hex('payload'), memoData: options.payload }] : []),
-        ],
-    }, options);
+    await client.sendPayment(
+        wallet,
+        {
+            destination: chain.contracts.InterchainTokenService.address,
+            amount: parseTokenAmount(args.token, args.amount), // token is either "XRP" or "<currency>.<issuer-address>"
+            memos: [
+                { memoType: hex('type'), memoData: hex('interchain_transfer') },
+                { memoType: hex('destination_address'), memoData: hex(args.destinationAddress.replace('0x', '')) },
+                { memoType: hex('destination_chain'), memoData: hex(args.destinationChain) },
+                { memoType: hex('gas_fee_amount'), memoData: hex(options.gasFeeAmount) },
+                ...(options.payload ? [{ memoType: hex('payload'), memoData: options.payload }] : []),
+            ],
+        },
+        options,
+    );
 }
 
 if (require.main === module) {

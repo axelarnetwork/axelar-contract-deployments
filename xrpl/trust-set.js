@@ -3,12 +3,16 @@ const { mainProcessor } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function trustSet(_config, wallet, client, _chain, options, args) {
-    await client.sendTrustSet(wallet, {
-        account: options.account,
-        value: options.limit,
-        currency: args.currency,
-        issuer: args.issuer,
-    }, options);
+    await client.sendTrustSet(
+        wallet,
+        {
+            account: options.account,
+            value: options.limit,
+            currency: args.currency,
+            issuer: args.issuer,
+        },
+        options,
+    );
 }
 
 if (require.main === module) {

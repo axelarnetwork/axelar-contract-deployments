@@ -8,7 +8,7 @@ const DISABLE_MASTER_FLAG = xrpl.AccountSetAsfFlags.asfDisableMaster;
 
 const DEFAULTS = {
     TRANSFER_RATE: 0, // Don't charge a fee for transferring currencies issued by the multisig
-    TICK_SIZE: 6,     // Determines truncation for order book entries, not payments
+    TICK_SIZE: 6, // Determines truncation for order book entries, not payments
     DOMAIN: 'axelar.foundation',
     FLAGS: [
         xrpl.AccountSetAsfFlags.asfDisallowIncomingNFTokenOffer,
@@ -51,10 +51,14 @@ async function deployMultisig(_config, wallet, client, chain, options) {
     }
 
     printInfo('Setting initial multisig signer', options.initialSigner);
-    await client.sendSignerListSet(multisig, {
-        quorum: INITIAL_QUORUM,
-        signers: [{ address: options.initialSigner, weight: INITIAL_SIGNER_WEIGHT }],
-    }, options);
+    await client.sendSignerListSet(
+        multisig,
+        {
+            quorum: INITIAL_QUORUM,
+            signers: [{ address: options.initialSigner, weight: INITIAL_SIGNER_WEIGHT }],
+        },
+        options,
+    );
 
     printInfo('Creating tickets');
     await client.sendTicketCreate(multisig, { ticketCount: MAX_TICKET_COUNT }, options);
@@ -65,12 +69,16 @@ async function deployMultisig(_config, wallet, client, chain, options) {
     }
 
     printInfo('Configuring remaining account settings');
-    await client.sendAccountSet(multisig, {
-        transferRate: options.transferRate,
-        tickSize: options.tickSize,
-        domain: hex(options.domain),
-        flag: DISABLE_MASTER_FLAG,
-    }, options);
+    await client.sendAccountSet(
+        multisig,
+        {
+            transferRate: options.transferRate,
+            tickSize: options.tickSize,
+            domain: hex(options.domain),
+            flag: DISABLE_MASTER_FLAG,
+        },
+        options,
+    );
 
     chain.contracts.AxelarGateway = chain.contracts.InterchainTokenService = {
         address: multisig.address,
@@ -90,17 +98,16 @@ if (require.main === module) {
     program
         .name('deploy-multisig')
         .description('Converts a wallet into an XRPL multisig account.')
-        .addOption(new Option('--generateWallet', 'convert a new wallet (instead of the active wallet) into an XRPL multisig account').default(false))
+        .addOption(
+            new Option('--generateWallet', 'convert a new wallet (instead of the active wallet) into an XRPL multisig account').default(
+                false,
+            ),
+        )
         .addOption(new Option('--transferRate <transferRate>', 'account transfer rate').default(DEFAULTS.TRANSFER_RATE))
         .addOption(new Option('--tickSize <tickSize>', 'account tick size').default(DEFAULTS.TICK_SIZE))
         .addOption(new Option('--domain <domain>', 'account domain').default(DEFAULTS.DOMAIN))
         .addOption(new Option('--flags <flags...>', 'extra account flags (beyond asfDisableMaster)').default(DEFAULTS.FLAGS))
-        .addOption(
-            new Option(
-                '--initialSigner <signer>',
-                'XRPL address of the multisig\'s initial signer',
-            ).makeOptionMandatory(true),
-        );
+        .addOption(new Option('--initialSigner <signer>', "XRPL address of the multisig's initial signer").makeOptionMandatory(true));
 
     addBaseOptions(program);
     addSkipPromptOption(program);

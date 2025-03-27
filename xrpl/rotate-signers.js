@@ -13,14 +13,18 @@ async function rotateSigners(_config, wallet, client, chain, options) {
     }
 
     printInfo('Updating multisig signer set');
-    await client.sendSignerListSet(wallet, {
-        account: multisig,
-        quorum: Number(options.quorum),
-        signers: options.signerPublicKeys.map((signedPubKey, i) => ({
-            address: deriveAddress(signedPubKey),
-            weight: Number(options.signerWeights[i]),
-        })),
-    }, { multisign: true, ...options });
+    await client.sendSignerListSet(
+        wallet,
+        {
+            account: multisig,
+            quorum: Number(options.quorum),
+            signers: options.signerPublicKeys.map((signedPubKey, i) => ({
+                address: deriveAddress(signedPubKey),
+                weight: Number(options.signerWeights[i]),
+            })),
+        },
+        { multisign: true, ...options },
+    );
 
     printInfo('Successfully rotated signers');
 }
@@ -31,24 +35,9 @@ if (require.main === module) {
     program
         .name('rotate-signers')
         .description('Rotate signers of the XRPL multisig account.')
-        .addOption(
-            new Option(
-                '--signerPublicKeys <signerPublicKeys...>',
-                'public keys of the new signers',
-            ).makeOptionMandatory(true),
-        )
-        .addOption(
-            new Option(
-                '--signerWeights <signerWeights...>',
-                'weights of the new signers',
-            ).makeOptionMandatory(true),
-        )
-        .addOption(
-            new Option(
-                '--quorum <quorum>',
-                'new quorum for the multisig account',
-            ).makeOptionMandatory(true),
-        )
+        .addOption(new Option('--signerPublicKeys <signerPublicKeys...>', 'public keys of the new signers').makeOptionMandatory(true))
+        .addOption(new Option('--signerWeights <signerWeights...>', 'weights of the new signers').makeOptionMandatory(true))
+        .addOption(new Option('--quorum <quorum>', 'new quorum for the multisig account').makeOptionMandatory(true));
 
     addBaseOptions(program);
     addSkipPromptOption(program);

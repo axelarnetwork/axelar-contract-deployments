@@ -15,10 +15,7 @@ function processCommand(address) {
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('decode-address')
-        .description('Decode XRPL account ID to raw bytes.')
-        .argument('<address>', 'XRPL account ID to decode');
+    program.name('decode-address').description('Decode XRPL account ID to raw bytes.').argument('<address>', 'XRPL account ID to decode');
 
     program.action((address) => {
         processCommand(address);

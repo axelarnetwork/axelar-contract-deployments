@@ -5,10 +5,14 @@ const { printInfo } = require('../common');
 
 async function ticketCreate(_config, wallet, client, _chain, options) {
     printInfo(`Creating ${options.ticketCount} tickets`);
-    await client.sendTicketCreate(wallet, {
-        account: options.account,
-        ticketCount: Number(options.ticketCount),
-    }, options);
+    await client.sendTicketCreate(
+        wallet,
+        {
+            account: options.account,
+            ticketCount: Number(options.ticketCount),
+        },
+        options,
+    );
 
     printInfo('Successfully created tickets');
 }

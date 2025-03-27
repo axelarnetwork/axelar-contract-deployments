@@ -4,15 +4,7 @@ const xrpl = require('xrpl');
 const { decodeAccountID } = require('ripple-address-codec');
 const { decode: decodeTxBlob } = require('ripple-binary-codec');
 const chalk = require('chalk');
-const {
-    loadConfig,
-    saveConfig,
-    printInfo,
-    printWarn,
-    printError,
-    prompt,
-    getChainConfig,
-} = require('../common');
+const { loadConfig, saveConfig, printInfo, printWarn, printError, prompt, getChainConfig } = require('../common');
 
 function hex(str) {
     return Buffer.from(str).toString('hex');
@@ -33,7 +25,7 @@ function getWallet(options) {
 }
 
 function deriveAddress(publicKey) {
-    return (new xrpl.Wallet(publicKey)).address;
+    return new xrpl.Wallet(publicKey).address;
 }
 
 function decodeAccountIDToHex(accountId) {
@@ -93,13 +85,13 @@ class XRPLClient {
             return {
                 balance: accountInfo.Balance,
                 sequence: accountInfo.Sequence,
-            }
+            };
         } catch (error) {
             if (error.data?.error === 'actNotFound') {
                 return {
                     balance: '0',
                     sequence: '-1',
-                }
+                };
             }
 
             throw error;
@@ -137,7 +129,7 @@ class XRPLClient {
         return {
             baseReserve: validatedLedger.reserve_base_xrp,
             ownerReserve: validatedLedger.reserve_inc_xrp,
-        }
+        };
     }
 
     async fee(feeType = 'open_ledger_fee') {
@@ -167,7 +159,6 @@ class XRPLClient {
         });
         this.handleReceipt(result);
         return result;
-
     }
 
     async buildTx(txType, fields = {}, args = {}) {
@@ -219,16 +210,25 @@ class XRPLClient {
     async sendPayment(signer, { destination, amount, memos = [], ...restArgs }, options = { multisign: false, yes: false }) {
         this.checkRequiredField(destination, 'destination');
         this.checkRequiredField(amount, 'amount');
-        return await this.signAndSubmitTx(signer, 'Payment', {
-            Destination: destination,
-            Amount: amount,
-            Memos: memos.length > 0 ? memos.map((memo) => ({
-                Memo: {
-                    MemoType: memo.memoType,
-                    MemoData: memo.memoData,
-                },
-            })) : undefined,
-        }, restArgs, options);
+        return await this.signAndSubmitTx(
+            signer,
+            'Payment',
+            {
+                Destination: destination,
+                Amount: amount,
+                Memos:
+                    memos.length > 0
+                        ? memos.map((memo) => ({
+                              Memo: {
+                                  MemoType: memo.memoType,
+                                  MemoData: memo.memoData,
+                              },
+                          }))
+                        : undefined,
+            },
+            restArgs,
+            options,
+        );
     }
 
     async sendSignerListSet(signer, { quorum, signers, ...restArgs }, options = { multisign: false, yes: false }) {
@@ -239,15 +239,21 @@ class XRPLClient {
             throw new Error('Signers list cannot be empty');
         }
 
-        return await this.signAndSubmitTx(signer, 'SignerListSet', {
-            SignerQuorum: quorum,
-            SignerEntries: signers.map((signer) => ({
-                SignerEntry: {
-                    Account: signer.address,
-                    SignerWeight: signer.weight,
-                },
-            })),
-        }, restArgs, options);
+        return await this.signAndSubmitTx(
+            signer,
+            'SignerListSet',
+            {
+                SignerQuorum: quorum,
+                SignerEntries: signers.map((signer) => ({
+                    SignerEntry: {
+                        Account: signer.address,
+                        SignerWeight: signer.weight,
+                    },
+                })),
+            },
+            restArgs,
+            options,
+        );
     }
 
     async sendTicketCreate(signer, { ticketCount, ...restArgs }, options = { multisign: false, yes: false }) {
@@ -256,25 +262,37 @@ class XRPLClient {
     }
 
     async sendAccountSet(signer, { transferRate, tickSize, domain, flag, ...restArgs }, options = { multisign: false, yes: false }) {
-        return await this.signAndSubmitTx(signer, 'AccountSet', {
-            TransferRate: transferRate,
-            TickSize: tickSize,
-            Domain: domain,
-            SetFlag: flag,
-        }, restArgs, options);
+        return await this.signAndSubmitTx(
+            signer,
+            'AccountSet',
+            {
+                TransferRate: transferRate,
+                TickSize: tickSize,
+                Domain: domain,
+                SetFlag: flag,
+            },
+            restArgs,
+            options,
+        );
     }
 
     async sendTrustSet(signer, { currency, issuer, value, ...restArgs }, options = { multisign: false, yes: false }) {
         this.checkRequiredField(currency, 'currency');
         this.checkRequiredField(issuer, 'issuer');
         this.checkRequiredField(value, 'value');
-        return await this.signAndSubmitTx(signer, 'TrustSet', {
-            LimitAmount: {
-                currency,
-                issuer,
-                value,
+        return await this.signAndSubmitTx(
+            signer,
+            'TrustSet',
+            {
+                LimitAmount: {
+                    currency,
+                    issuer,
+                    value,
+                },
             },
-        }, restArgs, options);
+            restArgs,
+            options,
+        );
     }
 }
 
@@ -283,13 +301,13 @@ async function printWalletInfo(client, wallet, chain) {
     const { balance, sequence } = await client.accountInfo(address);
     printInfo('Wallet address', address);
 
-    if (balance === "0") {
+    if (balance === '0') {
         printError('Wallet balance', '0');
     } else {
         printInfo('Wallet balance', `${xrpl.dropsToXrp(balance)} ${chain.tokenSymbol || ''}`);
     }
 
-    if (sequence === "-1") {
+    if (sequence === '-1') {
         printWarn('Wallet is not active because it does not meet the base reserve requirement');
         return;
     }

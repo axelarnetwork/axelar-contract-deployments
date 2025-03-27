@@ -3,14 +3,18 @@ const { mainProcessor, hex, parseTokenAmount } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function addGas(_config, wallet, client, chain, options, _args) {
-    await client.sendPayment(wallet, {
-        destination: chain.contracts.AxelarGateway.address,
-        amount: parseTokenAmount(options.token, options.amount),
-        memos: [
-            { memoType: hex('type'), memoData: hex('add_gas') },
-            { memoType: hex('msg_id'), memoData: hex(options.msgId.toLowerCase().replace('0x', '')) },
-        ],
-    }, options);
+    await client.sendPayment(
+        wallet,
+        {
+            destination: chain.contracts.AxelarGateway.address,
+            amount: parseTokenAmount(options.token, options.amount),
+            memos: [
+                { memoType: hex('type'), memoData: hex('add_gas') },
+                { memoType: hex('msg_id'), memoData: hex(options.msgId.toLowerCase().replace('0x', '')) },
+            ],
+        },
+        options,
+    );
 }
 
 if (require.main === module) {

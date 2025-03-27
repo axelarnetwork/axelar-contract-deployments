@@ -37,11 +37,15 @@ async function faucet(_config, wallet, client, _chain, options) {
 
     if (isDifferentRecipient) {
         printInfo(`Transferring ${options.amount} XRP from active wallet to recipient`, recipient);
-        await client.sendPayment(wallet, {
-            destination: recipient,
-            amount: amountInDrops,
-            fee,
-        }, options);
+        await client.sendPayment(
+            wallet,
+            {
+                destination: recipient,
+                amount: amountInDrops,
+                fee,
+            },
+            options,
+        );
     }
 
     printInfo('Funds sent', recipient);
@@ -53,12 +57,7 @@ if (require.main === module) {
     program
         .name('faucet')
         .addOption(new Option('--recipient <recipient>', 'recipient to request funds for (default: wallet address)'))
-        .addOption(
-            new Option(
-                '--amount <amount>',
-                'amount of XRP tokens to request from the faucet',
-            ).default('100'),
-        )
+        .addOption(new Option('--amount <amount>', 'amount of XRP tokens to request from the faucet').default('100'))
         .addOption(
             new Option(
                 '--minBalance <amount>',
