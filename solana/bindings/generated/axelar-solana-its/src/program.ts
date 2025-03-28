@@ -1375,9 +1375,94 @@ type AxelarSolanaIts = {
           type: "u64";
         }
       ];
+    },
+    {
+      name: "operatorTransferOperatorship";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
     }
   ];
   types: [
+    {
+      name: "RoleManagementInstructionInputs";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "roles";
+            type: "u8";
+          },
+          {
+            name: "destinationRolesPdaBump";
+            type: "u8";
+          },
+          {
+            name: "proposalPdaBump";
+            type: {
+              option: "u8";
+            };
+          }
+        ];
+      };
+    },
     {
       name: "Type";
       type: {
@@ -2757,8 +2842,93 @@ const IDL: AxelarSolanaIts = {
         },
       ],
     },
+    {
+      name: "operatorTransferOperatorship",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
   ],
   types: [
+    {
+      name: "RoleManagementInstructionInputs",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "roles",
+            type: "u8",
+          },
+          {
+            name: "destinationRolesPdaBump",
+            type: "u8",
+          },
+          {
+            name: "proposalPdaBump",
+            type: {
+              option: "u8",
+            },
+          },
+        ],
+      },
+    },
     {
       name: "Type",
       type: {

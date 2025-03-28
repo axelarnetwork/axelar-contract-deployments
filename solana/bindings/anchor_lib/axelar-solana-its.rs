@@ -167,6 +167,13 @@ pub mod axelar_solana_its {
     pub fn set_flow_limit(ctx: Context<SetFlowLimit>, flow_limit: u64) -> Result<()> {
         Ok(())
     }
+
+    pub fn operator_transfer_operatorship(
+        ctx: Context<OperatorTransferOperatorship>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -490,6 +497,23 @@ pub struct SetFlowLimit<'info> {
     system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct OperatorTransferOperatorship<'info> {
+    gateway_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_account: AccountInfo<'info>,
+    resource: AccountInfo<'info>,
+    destination_user_account: AccountInfo<'info>,
+    destination_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    origin_user_account: AccountInfo<'info>,
+    origin_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_account: AccountInfo<'info>,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub enum Type {
     NativeInterchainToken,
@@ -497,4 +521,11 @@ pub enum Type {
     LockUnlock,
     LockUnlockFee,
     MintBurn,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct RoleManagementInstructionInputs {
+    pub roles: u8,
+    pub destination_roles_pda_bump: u8,
+    pub proposal_pda_bump: Option<u8>,
 }

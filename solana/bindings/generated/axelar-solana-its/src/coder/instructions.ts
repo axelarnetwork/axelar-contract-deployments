@@ -61,6 +61,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "setFlowLimit": {
         return encodeSetFlowLimit(ix);
       }
+      case "operatorTransferOperatorship": {
+        return encodeOperatorTransferOperatorship(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -398,6 +401,13 @@ function encodeSetFlowLimit({ flowLimit }: any): Buffer {
   return encodeData({ setFlowLimit: { flowLimit } }, 1 + 8);
 }
 
+function encodeOperatorTransferOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { operatorTransferOperatorship: { inputs } },
+    1 + 1 + 1 + 1 + (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -549,6 +559,20 @@ LAYOUT.addVariant(
   "callContractWithInterchainTokenOffchainData"
 );
 LAYOUT.addVariant(17, B.struct([B.u64("flowLimit")]), "setFlowLimit");
+LAYOUT.addVariant(
+  18,
+  B.struct([
+    B.struct(
+      [
+        B.u8("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "operatorTransferOperatorship"
+);
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);

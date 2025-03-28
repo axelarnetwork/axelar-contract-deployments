@@ -8,7 +8,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer, SendToHub};
-use role_management::instructions::RoleManagementInstruction;
+use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -479,6 +479,23 @@ pub enum InterchainTokenServiceInstruction {
     SetFlowLimit {
         /// The new flow limit.
         flow_limit: u64,
+    },
+
+    /// Transfers operatorship to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    OperatorTransferOperatorship {
+        /// Inputs for transferring operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
     },
 
     /// ITS operator role management instructions.
@@ -1551,9 +1568,11 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::TransferOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,

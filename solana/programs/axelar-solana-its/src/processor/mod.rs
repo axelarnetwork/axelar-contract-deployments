@@ -4,6 +4,7 @@ use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
+use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
@@ -191,6 +192,9 @@ pub fn process_instruction<'a>(
             instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)
         }
+        InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs } => {
+            process_operator_transfer_operatorship(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
             process_operator_instruction(accounts, operator_instruction)
         }
@@ -313,6 +317,35 @@ fn process_initialize(
     Ok(())
 }
 
+fn process_operator_transfer_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    msg!("Instruction: TransferOperatorship");
+    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
+    assert_valid_its_root_pda(
+        role_management_accounts.resource,
+        gateway_root_pda.key,
+        its_config.bump,
+    )?;
+
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )?;
+    Ok(())
+}
+
 fn process_operator_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
     instruction: instruction::operator::Instruction,
@@ -329,17 +362,8 @@ fn process_operator_instruction<'a>(
     )?;
 
     match instruction {
-        instruction::operator::Instruction::TransferOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-
-            role_management::processor::transfer(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
+        instruction::operator::Instruction::TransferOperatorship(_) => {
+            msg!("It should not be hit, this function is going to be deleted.");
         }
         instruction::operator::Instruction::ProposeOperatorship(inputs) => {
             if inputs.roles.ne(&Roles::OPERATOR) {
