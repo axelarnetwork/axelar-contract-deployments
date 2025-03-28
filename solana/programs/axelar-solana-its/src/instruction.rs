@@ -516,12 +516,23 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>,
     },
 
-    /// ITS operator role management instructions.
+    /// Accepts operatorship transfer from another account.
     ///
-    /// 0. [] Gateway root pda
-    /// 1..N [`operator::OperatorInstruction`] accounts, where the resource is
-    /// the ITS root PDA.
-    OperatorInstruction(operator::Instruction),
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    OperatorAcceptOperatorship {
+        /// Inputs for accepting operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
 
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
@@ -1636,9 +1647,11 @@ pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, its_root_pda, from, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::AcceptOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1929,10 +1942,14 @@ impl TryFrom<RoleManagementInstruction<Roles>> for InterchainTokenServiceInstruc
             RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {
                 Err(ProgramError::InvalidInstructionData)
             }
-            RoleManagementInstruction::TransferRoles(_)
-            | RoleManagementInstruction::ProposeRoles(_)
-            | RoleManagementInstruction::AcceptRoles(_) => {
-                Ok(Self::OperatorInstruction(value.try_into()?))
+            RoleManagementInstruction::TransferRoles(inputs) => {
+                Ok(Self::OperatorTransferOperatorship { inputs })
+            }
+            RoleManagementInstruction::ProposeRoles(inputs) => {
+                Ok(Self::OperatorProposeOperatorship { inputs })
+            }
+            RoleManagementInstruction::AcceptRoles(inputs) => {
+                Ok(Self::OperatorAcceptOperatorship { inputs })
             }
         }
     }

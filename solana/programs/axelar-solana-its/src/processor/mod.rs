@@ -16,7 +16,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
 use self::token_manager::SetFlowLimitAccounts;
-use crate::instruction::{self, InterchainTokenServiceInstruction};
+use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
@@ -198,8 +198,8 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs } => {
             process_operator_propose_operatorship(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
-            process_operator_instruction(accounts, operator_instruction)
+        InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
+            process_operator_accept_operatorship(accounts, &inputs)
         }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
@@ -355,6 +355,23 @@ fn process_operator_propose_operatorship<'a>(
     Ok(())
 }
 
+fn process_operator_accept_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_operator_accounts(accounts)?;
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
+    )?;
+    Ok(())
+}
+
 fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<RoleManagementAccounts<'_>, ProgramError> {
@@ -371,42 +388,6 @@ fn process_operator_accounts<'a>(
     )?;
 
     Ok(role_management_accounts)
-}
-
-fn process_operator_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::operator::Instruction,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-
-    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
-    assert_valid_its_root_pda(
-        role_management_accounts.resource,
-        gateway_root_pda.key,
-        its_config.bump,
-    )?;
-
-    match instruction {
-        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-            role_management::processor::accept(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::empty(),
-            )?;
-        }
-        instruction::operator::Instruction::TransferOperatorship(_)
-        | instruction::operator::Instruction::ProposeOperatorship(_) => {
-            msg!("It should not be hit, this function is going to be deleted.");
-        }
-    }
-
-    Ok(())
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

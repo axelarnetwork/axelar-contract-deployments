@@ -67,6 +67,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "operatorProposeOperatorship": {
         return encodeOperatorProposeOperatorship(ix);
       }
+      case "operatorAcceptOperatorship": {
+        return encodeOperatorAcceptOperatorship(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -418,6 +421,13 @@ function encodeOperatorProposeOperatorship({ inputs }: any): Buffer {
   );
 }
 
+function encodeOperatorAcceptOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { operatorAcceptOperatorship: { inputs } },
+    1 + 1 + 1 + 1 + (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -596,6 +606,20 @@ LAYOUT.addVariant(
     ),
   ]),
   "operatorProposeOperatorship"
+);
+LAYOUT.addVariant(
+  20,
+  B.struct([
+    B.struct(
+      [
+        B.u8("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "operatorAcceptOperatorship"
 );
 
 function encodeData(ix: any, span: number): Buffer {
