@@ -1582,7 +1582,9 @@
         "fields": [
           {
             "name": "roles",
-            "type": "u8"
+            "type": {
+              "defined": "Roles"
+            }
           },
           {
             "name": "destinationRolesPdaBump",
@@ -1616,6 +1618,23 @@
           },
           {
             "name": "MintBurn"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Roles",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Minter"
+          },
+          {
+            "name": "Operator"
+          },
+          {
+            "name": "FlowLimiter"
           }
         ]
       }

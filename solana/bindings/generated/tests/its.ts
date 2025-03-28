@@ -417,7 +417,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.operatorTransferOperatorship({
-        roles: 2,
+        roles: { minter: {}},
         destinationRolesPdaBump: 2,
         proposalPdaBump: null
       }).accounts({
@@ -441,7 +441,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.operatorProposeOperatorship({
-        roles: 2,
+        roles: { operator: {}},
         destinationRolesPdaBump: 2,
         proposalPdaBump: null
       }).accounts({
@@ -465,7 +465,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.operatorAcceptOperatorship({
-        roles: 2,
+        roles: { flowLimiter: {}},
         destinationRolesPdaBump: 2,
         proposalPdaBump: null
       }).accounts({

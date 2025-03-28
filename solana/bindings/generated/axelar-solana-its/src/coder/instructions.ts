@@ -410,21 +410,60 @@ function encodeSetFlowLimit({ flowLimit }: any): Buffer {
 function encodeOperatorTransferOperatorship({ inputs }: any): Buffer {
   return encodeData(
     { operatorTransferOperatorship: { inputs } },
-    1 + 1 + 1 + 1 + (inputs.proposalPdaBump === null ? 0 : 1)
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
   );
 }
 
 function encodeOperatorProposeOperatorship({ inputs }: any): Buffer {
   return encodeData(
     { operatorProposeOperatorship: { inputs } },
-    1 + 1 + 1 + 1 + (inputs.proposalPdaBump === null ? 0 : 1)
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
   );
 }
 
 function encodeOperatorAcceptOperatorship({ inputs }: any): Buffer {
   return encodeData(
     { operatorAcceptOperatorship: { inputs } },
-    1 + 1 + 1 + 1 + (inputs.proposalPdaBump === null ? 0 : 1)
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
   );
 }
 
@@ -584,7 +623,13 @@ LAYOUT.addVariant(
   B.struct([
     B.struct(
       [
-        B.u8("roles"),
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
         B.u8("destinationRolesPdaBump"),
         B.option(B.u8(), "proposalPdaBump"),
       ],
@@ -598,7 +643,13 @@ LAYOUT.addVariant(
   B.struct([
     B.struct(
       [
-        B.u8("roles"),
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
         B.u8("destinationRolesPdaBump"),
         B.option(B.u8(), "proposalPdaBump"),
       ],
@@ -612,7 +663,13 @@ LAYOUT.addVariant(
   B.struct([
     B.struct(
       [
-        B.u8("roles"),
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
         B.u8("destinationRolesPdaBump"),
         B.option(B.u8(), "proposalPdaBump"),
       ],

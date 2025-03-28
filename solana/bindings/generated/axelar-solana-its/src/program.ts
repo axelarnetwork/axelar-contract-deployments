@@ -1574,7 +1574,9 @@ type AxelarSolanaIts = {
         fields: [
           {
             name: "roles";
-            type: "u8";
+            type: {
+              defined: "Roles";
+            };
           },
           {
             name: "destinationRolesPdaBump";
@@ -1608,6 +1610,23 @@ type AxelarSolanaIts = {
           },
           {
             name: "MintBurn";
+          }
+        ];
+      };
+    },
+    {
+      name: "Roles";
+      type: {
+        kind: "enum";
+        variants: [
+          {
+            name: "Minter";
+          },
+          {
+            name: "Operator";
+          },
+          {
+            name: "FlowLimiter";
           }
         ];
       };
@@ -3166,7 +3185,9 @@ const IDL: AxelarSolanaIts = {
         fields: [
           {
             name: "roles",
-            type: "u8",
+            type: {
+              defined: "Roles",
+            },
           },
           {
             name: "destinationRolesPdaBump",
@@ -3200,6 +3221,23 @@ const IDL: AxelarSolanaIts = {
           },
           {
             name: "MintBurn",
+          },
+        ],
+      },
+    },
+    {
+      name: "Roles",
+      type: {
+        kind: "enum",
+        variants: [
+          {
+            name: "Minter",
+          },
+          {
+            name: "Operator",
+          },
+          {
+            name: "FlowLimiter",
           },
         ],
       },

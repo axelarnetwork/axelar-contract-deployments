@@ -539,7 +539,14 @@ pub enum Type {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct RoleManagementInstructionInputs {
-    pub roles: u8,
+    pub roles: Roles,
     pub destination_roles_pda_bump: u8,
     pub proposal_pda_bump: Option<u8>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub enum Roles {
+    Minter = 1,
+    Operator = 2,
+    FlowLimiter = 4,
 }
