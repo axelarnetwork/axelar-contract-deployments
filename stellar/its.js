@@ -179,6 +179,8 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+// test
+
 async function encodeRecipient(wallet, _, chain, contract, args, options) {
     const [recipient] = args;
     printInfo('Encoded Recipient', asciiToBytes(recipient));
