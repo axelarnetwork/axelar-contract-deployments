@@ -4,7 +4,7 @@ import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { AxelarSolanaItsCoder } from "./coder";
 
 export const AXELAR_SOLANA_ITS_PROGRAM_ID = new PublicKey(
-  "its2RSrgfKfQDkuxFhov4nPRw4Wy9i6e757beHvUXZQ"
+  "itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd"
 );
 
 interface GetProgramParams {
