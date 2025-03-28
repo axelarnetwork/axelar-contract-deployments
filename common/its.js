@@ -8,7 +8,7 @@ async function encodeRecipient(config, args, _) {
 
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
 
-    printInfo('Human-readable Destination address', destinationAddress);
+    printInfo('Human-readable destination address', destinationAddress);
     printInfo('Encoded ITS destination address', itsDestinationAddress);
 }
 
