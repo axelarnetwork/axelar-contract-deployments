@@ -201,6 +201,9 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
             process_operator_accept_operatorship(accounts, &inputs)
         }
+        InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter{ inputs } => {
+            process_tm_add_flow_limiter(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
         }
@@ -388,6 +391,23 @@ fn process_operator_accounts<'a>(
     )?;
 
     Ok(role_management_accounts)
+}
+
+fn process_tm_add_flow_limiter<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+    msg!("Instruction: TM AddFlowLimiter");
+    role_management::processor::add(
+        &crate::id(),
+        instruction_accounts,
+        &inputs,
+        Roles::OPERATOR,
+    )
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

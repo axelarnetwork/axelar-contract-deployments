@@ -32,18 +32,8 @@ pub(crate) fn process_instruction<'a>(
 
             set_flow_limit(&instruction_accounts, flow_limit)
         }
-        instruction::token_manager::Instruction::AddFlowLimiter(inputs) => {
-            if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
-                return Err(ProgramError::InvalidInstructionData);
-            }
-
-            let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
-            role_management::processor::add(
-                &crate::id(),
-                instruction_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )
+        instruction::token_manager::Instruction::AddFlowLimiter(_) => {
+            return Err(ProgramError::InvalidInstructionData)
         }
         instruction::token_manager::Instruction::RemoveFlowLimiter(inputs) => {
             if !inputs.roles.eq(&Roles::FLOW_LIMITER) {

@@ -188,6 +188,13 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn token_manager_add_flow_limiter(
+        ctx: Context<TokenManagerAddFlowLimiter>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -514,6 +521,22 @@ pub struct SetFlowLimit<'info> {
 #[derive(Accounts)]
 pub struct Operator<'info> {
     gateway_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_account: AccountInfo<'info>,
+    resource: AccountInfo<'info>,
+    destination_user_account: AccountInfo<'info>,
+    destination_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    origin_user_account: AccountInfo<'info>,
+    origin_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct TokenManagerAddFlowLimiter<'info> {
     system_program: Program<'info, System>,
     #[account(mut)]
     payer: Signer<'info>,
