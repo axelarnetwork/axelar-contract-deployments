@@ -152,7 +152,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
     });
 
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
-    printInfo('Human-readable Destination address', destinationAddress);
+    printInfo('Human-readable destination address', destinationAddress);
     printInfo('Encoded ITS destination address', itsDestinationAddress);
 
     const operation = contract.call(
