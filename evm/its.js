@@ -348,7 +348,7 @@ async function processCommand(config, chain, action, options) {
             }
 
             const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
-            printInfo('Human-readable Destination address', destinationAddress);
+            printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
 
             const tx = await interchainTokenService.interchainTransfer(
