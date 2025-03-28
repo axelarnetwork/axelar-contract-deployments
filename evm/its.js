@@ -347,18 +347,14 @@ async function processCommand(config, chain, action, options) {
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
-            const destinationAddressEncoded = encodeITSDestination(config, destinationChain, destinationAddress);
-
-            if (destinationAddressEncoded !== destinationAddress) {
-                printInfo(
-                    `The destination address "${destinationAddress}" was encoded as "${destinationAddressEncoded}" for "${destinationChain}".`,
-                );
-            }
+            const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+            printInfo('Human-readable Destination address', destinationAddress);
+            printInfo('Encoded ITS destination address', itsDestinationAddress);
 
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
                 destinationChain,
-                destinationAddressEncoded,
+                itsDestinationAddress,
                 amountInUnits,
                 metadata,
                 gasValue,
