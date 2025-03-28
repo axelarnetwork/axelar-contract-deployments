@@ -498,6 +498,24 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>,
     },
 
+    /// Proposes operatorship transfer to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    OperatorProposeOperatorship {
+        /// Inputs for proposing operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
     /// ITS operator role management instructions.
     ///
     /// 0. [] Gateway root pda
@@ -1593,9 +1611,11 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::ProposeOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,

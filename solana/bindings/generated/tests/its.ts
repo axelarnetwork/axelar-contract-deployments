@@ -417,7 +417,7 @@ describe("Ping ITS", () => {
     const payer = await getKeypairFromFile();
     try {
       const tx = await program.methods.operatorTransferOperatorship({
-        roles: 1,
+        roles: 2,
         destinationRolesPdaBump: 2,
         proposalPdaBump: null
       }).accounts({
@@ -433,7 +433,31 @@ describe("Ping ITS", () => {
         proposalAccount: payer.publicKey,
       }).rpc();
     } catch (error) {
-      processError(error, "TransferOperatorship");
+      processError(error, "Operator");
+    }
+  })
+
+  it("ProposeOperatorship", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.operatorProposeOperatorship({
+        roles: 2,
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "Operator");
     }
   })
 });

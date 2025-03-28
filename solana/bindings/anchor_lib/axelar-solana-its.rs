@@ -169,7 +169,14 @@ pub mod axelar_solana_its {
     }
 
     pub fn operator_transfer_operatorship(
-        ctx: Context<OperatorTransferOperatorship>,
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn operator_propose_operatorship(
+        ctx: Context<Operator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
@@ -498,7 +505,7 @@ pub struct SetFlowLimit<'info> {
 }
 
 #[derive(Accounts)]
-pub struct OperatorTransferOperatorship<'info> {
+pub struct Operator<'info> {
     gateway_root_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
     #[account(mut)]

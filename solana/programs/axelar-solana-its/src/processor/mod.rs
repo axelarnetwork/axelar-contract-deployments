@@ -195,6 +195,9 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs } => {
             process_operator_transfer_operatorship(accounts, &inputs)
         }
+        InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs } => {
+            process_operator_propose_operatorship(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
             process_operator_instruction(accounts, operator_instruction)
         }
@@ -321,18 +324,7 @@ fn process_operator_transfer_operatorship<'a>(
     accounts: &'a [AccountInfo<'a>],
     inputs: &RoleManagementInstructionInputs<Roles>,
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
-
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    msg!("Instruction: TransferOperatorship");
-    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
-    assert_valid_its_root_pda(
-        role_management_accounts.resource,
-        gateway_root_pda.key,
-        its_config.bump,
-    )?;
-
+    let role_management_accounts = process_operator_accounts(accounts)?;
     if inputs.roles.ne(&Roles::OPERATOR) {
         return Err(ProgramError::InvalidArgument);
     }
@@ -344,6 +336,41 @@ fn process_operator_transfer_operatorship<'a>(
         Roles::OPERATOR,
     )?;
     Ok(())
+}
+
+fn process_operator_propose_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_operator_accounts(accounts)?;
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )?;
+    Ok(())
+}
+
+fn process_operator_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<RoleManagementAccounts<'_>, ProgramError> {
+    let accounts_iter = &mut accounts.iter();
+    let gateway_root_pda = next_account_info(accounts_iter)?;
+
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    msg!("Instruction: Operator");
+    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
+    assert_valid_its_root_pda(
+        role_management_accounts.resource,
+        gateway_root_pda.key,
+        its_config.bump,
+    )?;
+
+    Ok(role_management_accounts)
 }
 
 fn process_operator_instruction<'a>(
@@ -362,20 +389,6 @@ fn process_operator_instruction<'a>(
     )?;
 
     match instruction {
-        instruction::operator::Instruction::TransferOperatorship(_) => {
-            msg!("It should not be hit, this function is going to be deleted.");
-        }
-        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-            role_management::processor::propose(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
         instruction::operator::Instruction::AcceptOperatorship(inputs) => {
             if inputs.roles.ne(&Roles::OPERATOR) {
                 return Err(ProgramError::InvalidArgument);
@@ -386,6 +399,10 @@ fn process_operator_instruction<'a>(
                 &inputs,
                 Roles::empty(),
             )?;
+        }
+        instruction::operator::Instruction::TransferOperatorship(_)
+        | instruction::operator::Instruction::ProposeOperatorship(_) => {
+            msg!("It should not be hit, this function is going to be deleted.");
         }
     }
 
