@@ -2423,9 +2423,9 @@
           "codeId": 31,
           "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
         },
-        "storeCodeProposalId": "125",
-        "storeCodeProposalCodeHash": "2de0624fa2ba2fbd9e97da61a832a471f3cfd0a4d333286fe248e36938ecb5f2",
-        "lastUploadedCodeId": 31
+        "storeCodeProposalId": "135",
+        "storeCodeProposalCodeHash": "695eac10df3b5e5c571047ddab1bc64b92e80938d424907d7e2039c86883fd51",
+        "lastUploadedCodeId": 33
       },
       "XrplVotingVerifier": {
         "xrpl": {
