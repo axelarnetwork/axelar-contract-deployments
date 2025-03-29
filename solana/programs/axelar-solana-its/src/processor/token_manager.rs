@@ -24,14 +24,10 @@ pub(crate) fn process_instruction<'a>(
     instruction: instruction::token_manager::Instruction,
 ) -> ProgramResult {
     match instruction {
-        instruction::token_manager::Instruction::SetFlowLimit { flow_limit: _ } => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-        instruction::token_manager::Instruction::AddFlowLimiter(_) => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-        instruction::token_manager::Instruction::RemoveFlowLimiter(_) => {
-            return Err(ProgramError::InvalidInstructionData)
+        instruction::token_manager::Instruction::SetFlowLimit { .. }
+        | instruction::token_manager::Instruction::AddFlowLimiter(_)
+        | instruction::token_manager::Instruction::RemoveFlowLimiter(_) => {
+            Err(ProgramError::InvalidInstructionData)
         }
         instruction::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
             process_operator_instruction(accounts, operator_instruction)

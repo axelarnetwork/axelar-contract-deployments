@@ -202,10 +202,10 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
             process_operator_accept_operatorship(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter{ inputs } => {
+        InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter { inputs } => {
             process_tm_add_flow_limiter(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter{ inputs } => {
+        InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter { inputs } => {
             process_tm_remove_flow_limiter(accounts, &inputs)
         }
         InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit } => {
@@ -409,12 +409,7 @@ fn process_tm_add_flow_limiter<'a>(
     }
     let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
     msg!("Instruction: TM AddFlowLimiter");
-    role_management::processor::add(
-        &crate::id(),
-        instruction_accounts,
-        &inputs,
-        Roles::OPERATOR,
-    )
+    role_management::processor::add(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
 }
 
 fn process_tm_remove_flow_limiter<'a>(
@@ -426,12 +421,7 @@ fn process_tm_remove_flow_limiter<'a>(
     }
     let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
     msg!("Instruction: TM RemoveFlowLimiter");
-    role_management::processor::remove(
-        &crate::id(),
-        instruction_accounts,
-        &inputs,
-        Roles::OPERATOR,
-    )
+    role_management::processor::remove(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
 }
 
 fn process_tm_set_flow_limit<'a>(

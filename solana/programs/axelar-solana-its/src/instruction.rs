@@ -547,9 +547,9 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    TokenManagerAddFlowLimiter{ 
+    TokenManagerAddFlowLimiter {
         /// Inputs for adding flow limiter.
-        inputs: RoleManagementInstructionInputs<Roles>
+        inputs: RoleManagementInstructionInputs<Roles>,
     },
 
     /// Adds a flow limiter to a [`TokenManager`].
@@ -565,9 +565,9 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    TokenManagerRemoveFlowLimiter{ 
+    TokenManagerRemoveFlowLimiter {
         /// Inputs for removing flow limiter.
-        inputs: RoleManagementInstructionInputs<Roles>
+        inputs: RoleManagementInstructionInputs<Roles>,
     },
 
     /// Sets the flow limit for an interchain token.
