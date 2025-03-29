@@ -241,9 +241,16 @@ pub fn propose_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, token_manager_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        Instruction::OperatorInstruction(operator_instruction),
-    ))?;
+
+    let inputs = match operator_instruction {
+        operator::Instruction::ProposeOperatorship(val) => val,
+        operator::Instruction::TransferOperatorship(_)
+        | operator::Instruction::AcceptOperatorship(_) => {
+            return Err(ProgramError::InvalidInstructionData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -269,9 +276,16 @@ pub fn accept_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, token_manager_pda, from, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        Instruction::OperatorInstruction(operator_instruction),
-    ))?;
+
+    let inputs = match operator_instruction {
+        operator::Instruction::AcceptOperatorship(val) => val,
+        operator::Instruction::TransferOperatorship(_)
+        | operator::Instruction::ProposeOperatorship(_) => {
+            return Err(ProgramError::InvalidInstructionData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

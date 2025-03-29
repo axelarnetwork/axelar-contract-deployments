@@ -1,7 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
 use program_utils::{BorshPda, ValidPDA};
-use role_management::processor::{ensure_roles, RoleManagementAccounts};
+use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -21,19 +21,17 @@ use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
 
 pub(crate) fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::token_manager::Instruction,
+    instruction: &instruction::token_manager::Instruction,
 ) -> ProgramResult {
     match instruction {
         instruction::token_manager::Instruction::SetFlowLimit { .. }
         | instruction::token_manager::Instruction::AddFlowLimiter(_)
-        | instruction::token_manager::Instruction::RemoveFlowLimiter(_) => {
+        | instruction::token_manager::Instruction::RemoveFlowLimiter(_)
+        | instruction::token_manager::Instruction::OperatorInstruction(_) => {
             Err(ProgramError::InvalidInstructionData)
         }
-        instruction::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
-            process_operator_instruction(accounts, operator_instruction)
-        }
         instruction::token_manager::Instruction::HandOverMintAuthority { token_id } => {
-            handover_mint_authority(accounts, token_id)
+            handover_mint_authority(accounts, *token_id)
         }
     }
 }
@@ -210,46 +208,6 @@ fn setup_roles<'a>(
                 &[user_roles_pda_bump],
             ],
         )?;
-    }
-
-    Ok(())
-}
-
-fn process_operator_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::operator::Instruction,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager = TokenManager::load(role_management_accounts.resource)?;
-    assert_valid_token_manager_pda(
-        role_management_accounts.resource,
-        its_root_pda.key,
-        &token_manager.token_id,
-        token_manager.bump,
-    )?;
-
-    match instruction {
-        instruction::operator::Instruction::TransferOperatorship(_) => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
-            role_management::processor::propose(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
-        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
-            role_management::processor::accept(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::empty(),
-            )?;
-        }
     }
 
     Ok(())

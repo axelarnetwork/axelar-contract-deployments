@@ -85,6 +85,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "tokenManagerProposeOperatorship": {
         return encodeTokenManagerProposeOperatorship(ix);
       }
+      case "tokenManagerAcceptOperatorship": {
+        return encodeTokenManagerAcceptOperatorship(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -566,6 +569,26 @@ function encodeTokenManagerProposeOperatorship({ inputs }: any): Buffer {
   );
 }
 
+function encodeTokenManagerAcceptOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerAcceptOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -861,6 +884,26 @@ LAYOUT.addVariant(
     ),
   ]),
   "tokenManagerProposeOperatorship"
+);
+LAYOUT.addVariant(
+  26,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerAcceptOperatorship"
 );
 
 function encodeData(ix: any, span: number): Buffer {

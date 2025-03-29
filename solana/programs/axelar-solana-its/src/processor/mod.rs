@@ -220,8 +220,11 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs } => {
             process_tm_propose_operatorship(accounts, &inputs)
         }
+        InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs } => {
+            process_tm_accept_operatorship(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
-            token_manager::process_instruction(accounts, token_manager_instruction)
+            token_manager::process_instruction(accounts, &token_manager_instruction)
         }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,
@@ -465,6 +468,19 @@ fn process_tm_propose_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::OPERATOR,
+    )
+}
+
+fn process_tm_accept_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
     )
 }
 

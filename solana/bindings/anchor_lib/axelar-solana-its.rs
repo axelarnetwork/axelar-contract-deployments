@@ -223,6 +223,13 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn token_manager_accept_operatorship(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
