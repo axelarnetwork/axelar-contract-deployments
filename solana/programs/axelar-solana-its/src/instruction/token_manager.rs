@@ -139,7 +139,7 @@ pub fn add_flow_limiter(
     let (its_root_pda, _) =
         crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (accounts, role_management_instruction) = role_management::instructions::add_roles(
+    let (accounts, inputs) = role_management::instructions::add_roles(
         crate::id(),
         payer,
         token_manager_pda,
@@ -148,9 +148,7 @@ pub fn add_flow_limiter(
         None,
     );
 
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        role_management_instruction.try_into()?,
-    ))?;
+    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -172,7 +170,7 @@ pub fn remove_flow_limiter(
     let (its_root_pda, _) =
         crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (accounts, role_management_instruction) = role_management::instructions::remove_roles(
+    let (accounts, inputs) = role_management::instructions::remove_roles(
         crate::id(),
         payer,
         token_manager_pda,
@@ -180,9 +178,8 @@ pub fn remove_flow_limiter(
         Roles::FLOW_LIMITER,
         None,
     );
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        role_management_instruction.try_into()?,
-    ))?;
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
