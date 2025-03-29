@@ -507,4 +507,27 @@ describe("Ping ITS", () => {
       processError(error, "TM AddFlowLimiter");
     }
   })
+
+  it("TM Remove Flow Limiter", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerRemoveFlowLimiter({
+        roles: { flowLimiter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM RemoveFlowLimiter");
+    }
+  })
 });

@@ -190,7 +190,14 @@ pub mod axelar_solana_its {
     }
 
     pub fn token_manager_add_flow_limiter(
-        ctx: Context<TokenManagerAddFlowLimiter>,
+        ctx: Context<TokenManagerFlowLimiter>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_remove_flow_limiter(
+        ctx: Context<TokenManagerFlowLimiter>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
@@ -536,7 +543,7 @@ pub struct Operator<'info> {
 }
 
 #[derive(Accounts)]
-pub struct TokenManagerAddFlowLimiter<'info> {
+pub struct TokenManagerFlowLimiter<'info> {
     system_program: Program<'info, System>,
     #[account(mut)]
     payer: Signer<'info>,
