@@ -1910,6 +1910,59 @@ type AxelarSolanaIts = {
           };
         }
       ];
+    },
+    {
+      name: "tokenManagerHandOverMintAuthority";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minterRolesPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "tokenId";
+          type: {
+            array: ["u8", 32];
+          };
+        }
+      ];
     }
   ];
   types: [
@@ -3864,6 +3917,59 @@ const IDL: AxelarSolanaIts = {
           name: "inputs",
           type: {
             defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerHandOverMintAuthority",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minterRolesPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "tokenId",
+          type: {
+            array: ["u8", 32],
           },
         },
       ],

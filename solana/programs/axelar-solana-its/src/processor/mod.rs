@@ -14,7 +14,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
-use token_manager::set_flow_limit;
+use token_manager::{handover_mint_authority, set_flow_limit};
 
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instruction::InterchainTokenServiceInstruction;
@@ -223,8 +223,11 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs } => {
             process_tm_accept_operatorship(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
-            token_manager::process_instruction(accounts, &token_manager_instruction)
+        InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
+            handover_mint_authority(accounts, token_id)
+        }
+        InterchainTokenServiceInstruction::TokenManagerInstruction(_) => {
+            Err(ProgramError::InvalidArgument)
         }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,

@@ -620,4 +620,24 @@ describe("Ping ITS", () => {
       processError(error, "TM Operator");
     }
   })
+
+  it("TM Flow Limiter", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerHandOverMintAuthority(
+        [1, 2]
+      ).accounts({
+        payer: payer.publicKey,
+        mint: payer.publicKey,
+        gatewayRootPda: payer.publicKey,
+        itsRootPda: payer.publicKey,
+        tokenManagerPda: payer.publicKey,
+        minterRolesPda: payer.publicKey,
+        tokenProgram: payer.publicKey,
+        systemProgram: payer.publicKey
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Hand Over Mint Authority");
+    }
+  })
 });

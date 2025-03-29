@@ -88,6 +88,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "tokenManagerAcceptOperatorship": {
         return encodeTokenManagerAcceptOperatorship(ix);
       }
+      case "tokenManagerHandOverMintAuthority": {
+        return encodeTokenManagerHandOverMintAuthority(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -589,6 +592,13 @@ function encodeTokenManagerAcceptOperatorship({ inputs }: any): Buffer {
   );
 }
 
+function encodeTokenManagerHandOverMintAuthority({ tokenId }: any): Buffer {
+  return encodeData(
+    { tokenManagerHandOverMintAuthority: { tokenId } },
+    1 + 1 * 32
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -904,6 +914,11 @@ LAYOUT.addVariant(
     ),
   ]),
   "tokenManagerAcceptOperatorship"
+);
+LAYOUT.addVariant(
+  27,
+  B.struct([B.seq(B.u8(), 32, "tokenId")]),
+  "tokenManagerHandOverMintAuthority"
 );
 
 function encodeData(ix: any, span: number): Buffer {

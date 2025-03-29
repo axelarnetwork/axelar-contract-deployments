@@ -322,9 +322,8 @@ pub fn handover_mint_authority(
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        Instruction::HandOverMintAuthority { token_id },
-    ))?;
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

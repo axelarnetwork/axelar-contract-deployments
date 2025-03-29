@@ -230,6 +230,13 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn token_manager_hand_over_mint_authority(
+        ctx: Context<TokenManagerHandOverMintAuthority>,
+        token_id: [u8; 32],
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -594,6 +601,20 @@ pub struct TokenManagerSetFlowLimit<'info> {
     token_manager_pda: AccountInfo<'info>,
     token_manager_user_roles_pda: AccountInfo<'info>,
     its_user_roles_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct TokenManagerHandOverMintAuthority<'info> {
+    payer: Signer<'info>,
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    its_root_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    #[account(mut)]
+    minter_roles_pda: AccountInfo<'info>,
+    token_program: AccountInfo<'info>,
     system_program: Program<'info, System>,
 }
 

@@ -635,6 +635,23 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>,
     },
 
+    /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
+    /// minters. The account transferring the authority gains minter role on the [`TokenManager`] and
+    /// thus can then mint tokens through the ITS mitn instruction.
+    ///
+    /// 0. [writable, signer] Payer, current mint authority
+    /// 1. [writable] The mint for which the authority is being handed over
+    /// 2. [] Gateway root account
+    /// 3. [] ITS root account
+    /// 4. [] The [`TokenManager`] account associated with the mint
+    /// 5. [] The account that will hold the roles of the former authority on the [`TokenManager`]
+    /// 6. [] The token program used to create the mint
+    /// 7. [] The system program account
+    TokenManagerHandOverMintAuthority {
+        /// The id of the token registered with ITS for which the authority is being handed over.
+        token_id: [u8; 32],
+    },
+
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
 

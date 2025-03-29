@@ -14,27 +14,10 @@ use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWit
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
+use crate::assert_valid_its_root_pda;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, instruction};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
-
-pub(crate) fn process_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: &instruction::token_manager::Instruction,
-) -> ProgramResult {
-    match instruction {
-        instruction::token_manager::Instruction::SetFlowLimit { .. }
-        | instruction::token_manager::Instruction::AddFlowLimiter(_)
-        | instruction::token_manager::Instruction::RemoveFlowLimiter(_)
-        | instruction::token_manager::Instruction::OperatorInstruction(_) => {
-            Err(ProgramError::InvalidInstructionData)
-        }
-        instruction::token_manager::Instruction::HandOverMintAuthority { token_id } => {
-            handover_mint_authority(accounts, *token_id)
-        }
-    }
-}
 
 pub(crate) fn set_flow_limit(
     accounts: &SetFlowLimitAccounts<'_>,
@@ -277,7 +260,10 @@ pub(crate) fn validate_token_manager_type(
     }
 }
 
-fn handover_mint_authority(accounts: &[AccountInfo<'_>], token_id: [u8; 32]) -> ProgramResult {
+pub(crate) fn handover_mint_authority(
+    accounts: &[AccountInfo<'_>],
+    token_id: [u8; 32],
+) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
@@ -288,6 +274,7 @@ fn handover_mint_authority(accounts: &[AccountInfo<'_>], token_id: [u8; 32]) -> 
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: TM Hand Over Mint Authority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 
