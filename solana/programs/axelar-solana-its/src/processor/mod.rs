@@ -14,6 +14,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
+use token_manager::set_flow_limit;
 
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instruction::InterchainTokenServiceInstruction;
@@ -206,6 +207,9 @@ pub fn process_instruction<'a>(
         }
         InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter{ inputs } => {
             process_tm_remove_flow_limiter(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit } => {
+            process_tm_set_flow_limit(accounts, flow_limit)
         }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
@@ -428,6 +432,18 @@ fn process_tm_remove_flow_limiter<'a>(
         &inputs,
         Roles::OPERATOR,
     )
+}
+
+fn process_tm_set_flow_limit<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    flow_limit: u64,
+) -> ProgramResult {
+    let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+    if !instruction_accounts.flow_limiter.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+    msg!("Instruction: TM SetFlowLimit");
+    set_flow_limit(&instruction_accounts, flow_limit)
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

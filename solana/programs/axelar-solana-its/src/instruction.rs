@@ -570,6 +570,18 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>
     },
 
+    /// Sets the flow limit for an interchain token.
+    ///
+    /// 0. [signer] Payer account.
+    /// 1. [] ITS root PDA account.
+    /// 2. [writable] The [`TokenManager`] PDA account.
+    /// 3. [] The PDA account with the user roles on the [`TokenManager`].
+    /// 4. [] The PDA account with the user roles on ITS.
+    TokenManagerSetFlowLimit {
+        /// The new flow limit.
+        flow_limit: u64,
+    },
+
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
 

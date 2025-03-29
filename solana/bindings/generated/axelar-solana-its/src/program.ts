@@ -1680,6 +1680,47 @@ type AxelarSolanaIts = {
           };
         }
       ];
+    },
+    {
+      name: "tokenManagerSetFlowLimit";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerUserRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsUserRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "flowLimit";
+          type: "u64";
+        }
+      ];
     }
   ];
   types: [
@@ -3405,6 +3446,47 @@ const IDL: AxelarSolanaIts = {
           type: {
             defined: "RoleManagementInstructionInputs",
           },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerSetFlowLimit",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerUserRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsUserRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "flowLimit",
+          type: "u64",
         },
       ],
     },

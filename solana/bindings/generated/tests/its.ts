@@ -530,4 +530,22 @@ describe("Ping ITS", () => {
       processError(error, "TM RemoveFlowLimiter");
     }
   })
+
+  it("TM Set Flow Limit", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerSetFlowLimit(
+        new BN(1)
+      ).accounts({
+        payer: payer.publicKey,
+        itsRootPda: payer.publicKey,
+        tokenManagerPda: payer.publicKey,
+        tokenManagerUserRolesPda: payer.publicKey,
+        itsUserRolesPda: payer.publicKey,
+        systemProgram: payer.publicKey
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM SetFlowLimit");
+    }
+  })
 });

@@ -76,6 +76,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "tokenManagerRemoveFlowLimiter": {
         return encodeTokenManagerRemoveFlowLimiter(ix);
       }
+      case "tokenManagerSetFlowLimit": {
+        return encodeTokenManagerSetFlowLimit(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -513,6 +516,10 @@ function encodeTokenManagerRemoveFlowLimiter({ inputs }: any): Buffer {
   );
 }
 
+function encodeTokenManagerSetFlowLimit({ flowLimit }: any): Buffer {
+  return encodeData({ tokenManagerSetFlowLimit: { flowLimit } }, 1 + 8);
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -763,6 +770,11 @@ LAYOUT.addVariant(
     ),
   ]),
   "tokenManagerRemoveFlowLimiter"
+);
+LAYOUT.addVariant(
+  23,
+  B.struct([B.u64("flowLimit")]),
+  "tokenManagerSetFlowLimit"
 );
 
 function encodeData(ix: any, span: number): Buffer {

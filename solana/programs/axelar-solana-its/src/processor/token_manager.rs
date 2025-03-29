@@ -24,13 +24,8 @@ pub(crate) fn process_instruction<'a>(
     instruction: instruction::token_manager::Instruction,
 ) -> ProgramResult {
     match instruction {
-        instruction::token_manager::Instruction::SetFlowLimit { flow_limit } => {
-            let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
-            if !instruction_accounts.flow_limiter.is_signer {
-                return Err(ProgramError::MissingRequiredSignature);
-            }
-
-            set_flow_limit(&instruction_accounts, flow_limit)
+        instruction::token_manager::Instruction::SetFlowLimit { flow_limit: _ } => {
+            return Err(ProgramError::InvalidInstructionData)
         }
         instruction::token_manager::Instruction::AddFlowLimiter(_) => {
             return Err(ProgramError::InvalidInstructionData)
