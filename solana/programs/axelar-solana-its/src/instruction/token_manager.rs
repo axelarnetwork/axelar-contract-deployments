@@ -206,9 +206,16 @@ pub fn transfer_operatorship(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, token_manager_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerInstruction(
-        Instruction::OperatorInstruction(operator_instruction),
-    ))?;
+
+    let inputs = match operator_instruction {
+        operator::Instruction::TransferOperatorship(val) => val,
+        operator::Instruction::ProposeOperatorship(_)
+        | operator::Instruction::AcceptOperatorship(_) => {
+            return Err(ProgramError::InvalidInstructionData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

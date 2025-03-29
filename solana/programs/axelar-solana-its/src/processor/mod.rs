@@ -18,8 +18,11 @@ use token_manager::set_flow_limit;
 
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instruction::InterchainTokenServiceInstruction;
+use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, Roles};
+use crate::{
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, Roles,
+};
 
 pub(crate) mod gmp;
 pub(crate) mod interchain_token;
@@ -211,6 +214,9 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit } => {
             process_tm_set_flow_limit(accounts, flow_limit)
         }
+        InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs } => {
+            process_tm_transfer_operatorship(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
         }
@@ -344,8 +350,7 @@ fn process_operator_transfer_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::OPERATOR,
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_propose_operatorship<'a>(
@@ -361,8 +366,7 @@ fn process_operator_propose_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::OPERATOR,
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_accept_operatorship<'a>(
@@ -378,8 +382,7 @@ fn process_operator_accept_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::empty(),
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_accounts<'a>(
@@ -434,6 +437,30 @@ fn process_tm_set_flow_limit<'a>(
     }
     msg!("Instruction: TM SetFlowLimit");
     set_flow_limit(&instruction_accounts, flow_limit)
+}
+
+fn process_tm_transfer_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    msg!("Instruction: TM Operator");
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

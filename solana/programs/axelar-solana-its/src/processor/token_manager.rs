@@ -231,13 +231,8 @@ fn process_operator_instruction<'a>(
     )?;
 
     match instruction {
-        instruction::operator::Instruction::TransferOperatorship(inputs) => {
-            role_management::processor::transfer(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
+        instruction::operator::Instruction::TransferOperatorship(_) => {
+            return Err(ProgramError::InvalidInstructionData)
         }
         instruction::operator::Instruction::ProposeOperatorship(inputs) => {
             role_management::processor::propose(
