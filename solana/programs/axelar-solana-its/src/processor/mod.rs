@@ -217,6 +217,9 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs } => {
             process_tm_transfer_operatorship(accounts, &inputs)
         }
+        InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs } => {
+            process_tm_propose_operatorship(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
         }
@@ -443,6 +446,31 @@ fn process_tm_transfer_operatorship<'a>(
     accounts: &'a [AccountInfo<'a>],
     inputs: &RoleManagementInstructionInputs<Roles>,
 ) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
+}
+
+fn process_tm_propose_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
+}
+
+fn process_tm_operator_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<RoleManagementAccounts<'_>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
@@ -455,12 +483,7 @@ fn process_tm_transfer_operatorship<'a>(
         token_manager.bump,
     )?;
 
-    role_management::processor::transfer(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
+    Ok(role_management_accounts)
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {
