@@ -652,9 +652,6 @@ pub enum InterchainTokenServiceInstruction {
         token_id: [u8; 32],
     },
 
-    /// Instructions operating on deployed [`TokenManager`] instances.
-    TokenManagerInstruction(token_manager::Instruction),
-
     /// Instructions operating in Interchain Tokens.
     InterchainTokenInstruction(interchain_token::Instruction),
 

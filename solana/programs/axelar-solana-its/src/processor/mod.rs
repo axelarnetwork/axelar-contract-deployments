@@ -226,9 +226,6 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
             handover_mint_authority(accounts, token_id)
         }
-        InterchainTokenServiceInstruction::TokenManagerInstruction(_) => {
-            Err(ProgramError::InvalidArgument)
-        }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,
         ) => interchain_token::process_instruction(accounts, interchain_token_instruction),
