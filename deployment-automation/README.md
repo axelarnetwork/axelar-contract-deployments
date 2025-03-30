@@ -2,33 +2,96 @@
 
 ## Overview
 
-This script facilitates the deployment of Axelar network components by automating configurations, wallet setup, contract deployments, and governance integrations. It supports multiple environments, including `mainnet`, `testnet`, `stagenet`, `devnet-amplifier`, and custom `devnet` deployments.
-The automation script reduces the need of an operator to take printed output from the deployment scripts to set as ENV values or inputs to other scripts to complete end to end flow.
+This tool facilitates the deployment of Axelar network components by automating configurations, wallet setup, contract deployments, and governance integrations. It supports multiple environments, including `mainnet`, `testnet`, `stagenet`, `devnet-amplifier`, and custom `devnet` deployments.
+
+The automation tool reduces the need for an operator to manually coordinate between deployment scripts, significantly streamlining the end-to-end deployment flow.
 
 ## Features
 
 - Selectable network environments
+- Environment-based configuration
 - Automatic wallet creation
 - Configuration file generation
 - Contract deployment
 - Governance and admin configurations
 - Verifier and multisig setup
 
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourorg/axelar-deployment.git
+   cd axelar-deployment
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Build the project:
+   ```bash
+   npm run build
+   ```
+
+## Environment Configuration
+
+The tool uses a `.env` file for configuration. Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file with your specific values:
+
+```properties
+# Chain Configuration
+CHAIN_NAME=mychainnew
+CHAIN_ID=43113
+TOKEN_SYMBOL=AVAX
+GAS_LIMIT=15000000
+
+# Network RPC URLs
+RPC_URL=https://avalanche-fuji-c-chain-rpc.publicnode.com
+AXELAR_RPC_URL=http://k8s-devnetma-coresent-f604372d89-fc213dff8d4139da.elb.us-east-2.amazonaws.com:26657
+
+# Network Selection
+NAMESPACE=devnet-markus
+
+# Sensitive Data (KEEP SECURE!)
+TARGET_CHAIN_PRIVATE_KEY=0xYourPrivateKeyHere
+MNEMONIC="your twelve to twenty four word mnemonic phrase here"
+
+# Optional Configuration
+SERVICE_NAME=validators
+VOTING_THRESHOLD=["6", "10"]
+SIGNING_THRESHOLD=["6", "10"]
+CONFIRMATION_HEIGHT=1
+MINIMUM_ROTATION_DELAY=0
+DEPLOYMENT_TYPE=create
+```
+
+**Important**: If you have environment variables already set in your shell that might conflict with those in your `.env` file, run the tool using:
+
+```bash
+env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
+```
+
 ## Usage
 
-### Running the Script
+### Running the Tool
 
 To start the deployment process, run:
 
 ```bash
-./deployment.sh
+npm start
 ```
 
-Follow the interactive prompts to configure the deployment.
+Follow the interactive prompts to guide the deployment.
 
 ### Network Selection
 
-Upon execution, you will be prompted to select a network:
+If `NAMESPACE` is not set in your `.env` file, you will be prompted to select a network:
 
 - `mainnet`
 - `testnet`
@@ -38,7 +101,7 @@ Upon execution, you will be prompted to select a network:
 
 ### Required Inputs
 
-The script will request the following details:
+The tool requires the following details in your `.env` file:
 
 - **Chain Name**: The name of the blockchain.
 - **Chain ID**: The numerical ID for the chain.
@@ -47,7 +110,7 @@ The script will request the following details:
 - **Private Key**: Private key for transaction signing. This key needs to be properly funded to deploy and interact with smart contracts on the target chain.
 - **RPC URL**: Endpoint for blockchain interactions.
 - **Axelar RPC URL**: Endpoint for Axelar node interactions.
-- **Mnemonic**: Wallet mnemonic for key management. The deployer will need to have a properly funded Axelar wallet to perform deployments and proposals on the target Axelar network. The deploying wallet will be responsible for funding the validator reward pools that will support the chain.
+- **Mnemonic**: Wallet mnemonic for key management. The deployer will need to have a properly funded Axelar wallet to perform deployments and proposals on the target Axelar network.
 
 ### Custom Network Requirements
 
@@ -58,98 +121,59 @@ For custom devnets, the corresponding config JSON is required and should be copi
 Deployments are broken into three steps:
 
 1. **Initial Deployment**: This step sets up the necessary configurations, deploys contracts, and generates the required environment files.
+
 2. **Verifier Registration & Multisig Proposals**: After the initial deployment, external actions must take place:
    - Verifiers must register the chain with Axelar.
    - Once verifiers have registered the chain, multisig proposals must be created and submitted.
    - The proposals then require validation and approval before moving forward.
-3. **Completing Deployment**: Once the verifiers have registered the chain and multisig proposals have been verified, the script can proceed with finalizing the deployment steps. This includes confirming multisig contract interactions and ensuring the system is fully integrated.
 
-## Configuration and Deployment Steps
+3. **Completing Deployment**: Once the verifiers have registered the chain and multisig proposals have been verified, the tool can proceed with finalizing the deployment steps. This includes confirming multisig contract interactions and ensuring the system is fully integrated.
 
-### Environment Variable Setup
+## Deployment Configuration Storage
 
-The script sets up and exports essential environment variables to be used in subsequent steps.
+The tool uses a structured approach to store deployment configurations:
 
-### JSON Configuration Generation
+- All configurations are stored within the network's JSON file (e.g., `mainnet.json`, `testnet.json`)
+- Each network file contains a `deployments` section with:
+  - A `default` entry that stores network-wide configuration defaults
+  - Individual chain entries stored under their respective chain names
+- When starting a new deployment, the tool uses values from the `default` entry when not explicitly provided
+- When resuming a deployment, it first loads the default values and then applies chain-specific overrides
+- Sensitive data (private keys, mnemonics) is excluded from the stored configurations
 
-Creates `config.json` with the network and contract details. This is used to update the Axelar-chains-config file for the target network.
-
-### Wallet Management
-
-- Validates or creates a wallet using the provided mnemonic.
-- Extracts wallet addresses and governance addresses.
-
-### Contract Deployment
-
-- Deploys `VotingVerifier`, `Gateway`, and `MultisigProver` contracts.
-- Updates configuration files to include deployed contract addresses.
-
-### Chain Registration
-
-- Registers the deployed chain on Axelar’s governance structure.
-- Configures voting verifier and multisig setups.
-
-### Reward Pool Creation
-
-For networks that support it, the script:
-
-- Creates reward pools.
-- Adds funds to reward pools.
-
-### Verification Steps
-
-- Verifies execution of the deployed contracts.
-- Checks the registration of multisig contracts.
+This structure ensures consistent deployments while allowing for chain-specific customizations.
 
 ## Resuming Deployment
 
-If deployment is interrupted, it can be resumed by selecting `no` at the prompt:
+If deployment is interrupted, it can be resumed:
 
-```bash
-Is this a new deployment? (yes/no): no
-```
+1. Run the tool:
+   ```bash
+   npm start
+   ```
 
-This loads `deployment_config.json` to restore environment variables and continue from the last successful step.
+2. When prompted, select `no` to indicate this is not a new deployment:
+   ```
+   Is this a new deployment? (yes/no): no
+   ```
 
-After resuming, the script will ask additional questions to determine where the deployment left off:
+3. The tool will prompt for the chain name and network if not already provided.
 
-1. **Have verifiers registered support for the chain?** If `no`, the script will exit, and verifiers must complete their process before resuming.
-2. **Have multisig proposals been approved?** If `no`, the script will guide users through rechecking proposal status.
-3. If both verifiers and multisig proposals are confirmed, the script will automatically proceed to the **Completing Deployment** stage.
+4. If multiple chain deployments exist for the selected network, you can choose which one to resume.
 
-If any step encounters a failure, the script will prompt for retry options, allowing users to:
+5. The tool will ask additional questions to determine where to resume:
+   - Have verifiers registered support for the chain?
+   - Have multisig proposals been approved?
 
-- Retry failed steps immediately.
-- Exit and manually resolve any issues before resuming.
-- Re-run the verification process to confirm state consistency before proceeding.
-
-## Custom Devnet Considerations
-
-For custom devnets, the script handles:
-
-- Dynamic governance setups
-- Contract uploads using pre-defined WASM files
-- Automatic retrieval of necessary parameters
-
-## Error Handling
-
-Common failure points include:
-
-- **Invalid Private Key**: Ensure the private key starts with `0x`.
-- **Invalid RPC URLs**: Must start with `http://` or `https://`.
-- **Chain Already Exists in Config**: Prevents accidental overwrites.
-
-## Conclusion
-
-This script automates the complex deployment process for Axelar network integrations, handling configurations, deployments, and verifications efficiently. Users should ensure valid inputs and a stable internet connection during execution.
+Based on your answers, the tool will continue from the appropriate stage in the deployment process.
 
 ## Stopping Points
 
-The entire deployment process is broken into multiple steps that account for asynchronous actions that must be coordinated to ensure the necessary deployments and configuration updates have occurred.
+The entire deployment process is broken into multiple steps that account for asynchronous actions that must be coordinated.
 
 ### Verifier Updates
 
-The first stopping point is after the Gateway registration proposal has been submitted and presumably approved. The necessary actions that would need to be coordinated are the `config.toml` updates that verifiers need to perform by updating `ampd` with the `$CHAIN` chain name and the `http_url` (RPC node URL) they will utilize.
+The first stopping point is after the Gateway registration proposal has been submitted and approved. Verifiers need to update their `config.toml` files and register chain support:
 
 ```bash
 [[handlers]]
@@ -173,16 +197,38 @@ ampd register-chain-support validators $CHAIN
 
 ### Multisig Proposals
 
-After the gateway is registered and verifiers have been approved, the deployment script will perform a verification that the gateway has been properly registered and proceed to submit two proposals for registering in the multisig address: the `register_prover_contract` and the `authorize_callers`. Since these proposals need to be approved, the script will again stop to let voting proceed.
+After verifiers have registered support, the tool will verify and proceed to submit proposals for the multisig address. Since these proposals need to be approved, the tool will pause to let voting proceed.
 
 ### Reward Pools and Final Contract Execution
 
-Once the multisig proposals are approved, the script can continue, and the reward pools can be created directly along with the genesis verifier set. The last step is to deploy the gateway on the target chain.
+Once the multisig proposals are approved, the tool will create reward pools, set up the genesis verifier set, and deploy the gateway on the target chain.
 
-## Major Pain Points
+## Security Considerations
 
-For each asynchronous step, there is coordination overhead. For the first stop, the verifier set needs to be arranged. Although this process does not need to be changed in `mainnet`, we can certainly automate further the `stagenet`, `testnet`, and `devnet-amplifier` deployments if we are able to register chains more directly. A more ambitious goal would be to allow the chain integrators to define the subset of validators that would serve the chain. Further discussion on security implications and technical challenges of such a refactor is needed.
+- The `.env` file contains sensitive information and should never be committed to version control
+- Private keys and mnemonics are only loaded from the `.env` file and are not written to deployment configuration files
+- Always use a dedicated wallet/key for deployment operations
+- Consider using remote signing solutions for production deployments
 
-The second aspect relevant for all stops is that the proposal flow has a time window where it can succeed or fail. We should be able to monitor if and when a proposal passes to proceed with the deployment steps automatically. Effectively, having some mechanism to poll a given proposal that can then continue deployment would further streamline the deployment.
+## Troubleshooting
 
-Private key management is not going to pass audits for this script as we handle private key data too publicly. In general, the underlying usage of `MNEMONIC` and `PRIVATE_KEY` would need to be extended to support remote signing operations. Key sharing is not recommended in most cases, so having the ability to remotely sign transactions can be desirable for more security-oriented teams.
+If you encounter issues with environment variables not being loaded from your `.env` file:
+
+1. Check for conflicting environment variables in your shell:
+   ```bash
+   env | grep MNEMONIC
+   ```
+
+2. Run the tool with explicitly unset variables:
+   ```bash
+   env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
+   ```
+
+## Error Handling
+
+Common failure points include:
+
+- **Invalid Private Key**: Ensure the private key starts with `0x`.
+- **Invalid RPC URLs**: Must start with `http://` or `https://`.
+- **Chain Already Exists in Config**: Prevents accidental overwrites.
+- **Missing Environment Variables**: Check your `.env` file for completeness.
