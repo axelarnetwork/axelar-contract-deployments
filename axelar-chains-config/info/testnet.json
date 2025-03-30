@@ -3167,6 +3167,10 @@
         "stellar-2025-q1": {
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
+        },
+        "xrpl": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
         }
       },
       "AxelarnetGateway": {
