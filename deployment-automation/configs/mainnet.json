@@ -1,0 +1,17 @@
+{
+  "default": {
+  "GOVERNANCE_ADDRESS": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+  "ADMIN_ADDRESS": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+  "SERVICE_NAME": "amplifier",
+  "VOTING_THRESHOLD": ["2", "3"],
+  "SIGNING_THRESHOLD": ["2", "3"],
+  "CONFIRMATION_HEIGHT": "1",
+  "MINIMUM_ROTATION_DELAY": "86400",
+  "DEPLOYMENT_TYPE": "create",
+  "DEPLOYER": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+  "CONTRACT_ADMIN": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
+  "PROVER_ADMIN": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+  "DEPOSIT_VALUE": "2000000000",
+  "REWARD_AMOUNT": "1000000uaxl"
+  }
+}

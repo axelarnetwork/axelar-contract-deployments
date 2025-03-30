@@ -1,0 +1,17 @@
+{
+  "default":{
+  "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+  "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+  "SERVICE_NAME": "validators",
+  "VOTING_THRESHOLD": ["6", "10"],
+  "SIGNING_THRESHOLD": ["6", "10"],
+  "CONFIRMATION_HEIGHT": "1",
+  "MINIMUM_ROTATION_DELAY": "0",
+  "DEPLOYMENT_TYPE": "create3",
+  "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+  "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+  "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+  "DEPOSIT_VALUE": "100000000",
+  "REWARD_AMOUNT": "1000000uamplifier"
+}
+}
