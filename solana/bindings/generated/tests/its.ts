@@ -640,4 +640,23 @@ describe("Ping ITS", () => {
       processError(error, "TM Hand Over Mint Authority");
     }
   })
+
+  it("IT Mint", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.interchainTokenMint(
+        new BN(1)
+      ).accounts({
+        mint: payer.publicKey,
+        destinationAccount: payer.publicKey,
+        itsRootPda: payer.publicKey,
+        tokenManagerPda: payer.publicKey,
+        minter: payer.publicKey,
+        minterRolesPda: payer.publicKey,
+        systemProgram: payer.publicKey
+      }).rpc();
+    } catch (error) {
+      processError(error, "IT Mint");
+    }
+  })
 });

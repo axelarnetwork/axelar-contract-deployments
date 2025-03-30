@@ -652,6 +652,21 @@ pub enum InterchainTokenServiceInstruction {
         token_id: [u8; 32],
     },
 
+    /// A proxy instruction to mint tokens whose mint authority is a
+    /// `TokenManager`. Only users with the `minter` role on the mint account
+    /// can mint tokens.
+    ///
+    /// 0. [writable] The mint account
+    /// 1. [writable] The account to mint tokens to
+    /// 2. [] The interchain token PDA associated with the mint
+    /// 3. [] The token manager PDA
+    /// 4. [signer] The minter account
+    /// 5. [] The token program id
+    InterchainTokenMint {
+        /// The amount of tokens to mint.
+        amount: u64,
+    },
+
     /// Instructions operating in Interchain Tokens.
     InterchainTokenInstruction(interchain_token::Instruction),
 

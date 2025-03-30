@@ -1963,6 +1963,52 @@ type AxelarSolanaIts = {
           };
         }
       ];
+    },
+    {
+      name: "interchainTokenMint";
+      accounts: [
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "destinationAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minter";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minterRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "amount";
+          type: "u64";
+        }
+      ];
     }
   ];
   types: [
@@ -3971,6 +4017,52 @@ const IDL: AxelarSolanaIts = {
           type: {
             array: ["u8", 32],
           },
+        },
+      ],
+    },
+    {
+      name: "interchainTokenMint",
+      accounts: [
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "destinationAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minter",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minterRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "amount",
+          type: "u64",
         },
       ],
     },

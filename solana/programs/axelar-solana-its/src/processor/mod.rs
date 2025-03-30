@@ -3,6 +3,7 @@
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
+use interchain_token::process_mint;
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
@@ -225,6 +226,9 @@ pub fn process_instruction<'a>(
         }
         InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
             handover_mint_authority(accounts, token_id)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenMint { amount } => {
+            process_mint(accounts, amount)
         }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,

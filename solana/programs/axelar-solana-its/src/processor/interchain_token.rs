@@ -36,8 +36,8 @@ pub(crate) fn process_instruction<'a>(
     instruction: instruction::interchain_token::Instruction,
 ) -> ProgramResult {
     match instruction {
-        instruction::interchain_token::Instruction::Mint { amount } => {
-            process_mint(accounts, amount)
+        instruction::interchain_token::Instruction::Mint { .. } => {
+            Err(ProgramError::InvalidInstructionData)
         }
         instruction::interchain_token::Instruction::MinterInstruction(minter_instruction) => {
             process_minter_instruction(accounts, minter_instruction)
@@ -313,7 +313,7 @@ pub(crate) fn deploy_remote_canonical_interchain_token<'a>(
     )
 }
 
-fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResult {
+pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let mint = next_account_info(accounts_iter)?;
     let destination_account = next_account_info(accounts_iter)?;
@@ -323,6 +323,7 @@ fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> ProgramResu
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: IT Mint");
     let token_manager = TokenManager::load(token_manager_pda)?;
     assert_valid_token_manager_pda(
         token_manager_pda,

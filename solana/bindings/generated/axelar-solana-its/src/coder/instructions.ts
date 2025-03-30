@@ -91,6 +91,9 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "tokenManagerHandOverMintAuthority": {
         return encodeTokenManagerHandOverMintAuthority(ix);
       }
+      case "interchainTokenMint": {
+        return encodeInterchainTokenMint(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -599,6 +602,10 @@ function encodeTokenManagerHandOverMintAuthority({ tokenId }: any): Buffer {
   );
 }
 
+function encodeInterchainTokenMint({ amount }: any): Buffer {
+  return encodeData({ interchainTokenMint: { amount } }, 1 + 8);
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -920,6 +927,7 @@ LAYOUT.addVariant(
   B.struct([B.seq(B.u8(), 32, "tokenId")]),
   "tokenManagerHandOverMintAuthority"
 );
+LAYOUT.addVariant(28, B.struct([B.u64("amount")]), "interchainTokenMint");
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);
