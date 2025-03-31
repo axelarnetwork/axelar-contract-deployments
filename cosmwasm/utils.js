@@ -43,6 +43,11 @@ const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
+const prepareDummyWallet = async () => {
+    const mnemonic = 'test test test test test test test test test test test junk';
+    return await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+};
+
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
 
@@ -887,6 +892,7 @@ module.exports = {
     CONTRACTS,
     governanceAddress,
     prepareWallet,
+    prepareDummyWallet,
     prepareClient,
     fromHex,
     getSalt,
