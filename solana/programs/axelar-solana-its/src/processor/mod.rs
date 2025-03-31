@@ -4,6 +4,7 @@ use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
+use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
 };
@@ -15,7 +16,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 
 use self::token_manager::SetFlowLimitAccounts;
-use crate::instruction::{self, InterchainTokenServiceInstruction};
+use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::InterchainTokenService;
 use crate::{assert_valid_its_root_pda, check_program_account, Roles};
 
@@ -191,8 +192,14 @@ pub fn process_instruction<'a>(
             instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)
         }
-        InterchainTokenServiceInstruction::OperatorInstruction(operator_instruction) => {
-            process_operator_instruction(accounts, operator_instruction)
+        InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs } => {
+            process_operator_transfer_operatorship(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs } => {
+            process_operator_propose_operatorship(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
+            process_operator_accept_operatorship(accounts, &inputs)
         }
         InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
             token_manager::process_instruction(accounts, token_manager_instruction)
@@ -313,14 +320,66 @@ fn process_initialize(
     Ok(())
 }
 
-fn process_operator_instruction<'a>(
+fn process_operator_transfer_operatorship<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::operator::Instruction,
+    inputs: &RoleManagementInstructionInputs<Roles>,
 ) -> ProgramResult {
+    let role_management_accounts = process_operator_accounts(accounts)?;
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )?;
+    Ok(())
+}
+
+fn process_operator_propose_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_operator_accounts(accounts)?;
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )?;
+    Ok(())
+}
+
+fn process_operator_accept_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_operator_accounts(accounts)?;
+    if inputs.roles.ne(&Roles::OPERATOR) {
+        return Err(ProgramError::InvalidArgument);
+    }
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
+    )?;
+    Ok(())
+}
+
+fn process_operator_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<RoleManagementAccounts<'_>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let gateway_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
 
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    msg!("Instruction: Operator");
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
     assert_valid_its_root_pda(
         role_management_accounts.resource,
@@ -328,44 +387,7 @@ fn process_operator_instruction<'a>(
         its_config.bump,
     )?;
 
-    match instruction {
-        instruction::operator::Instruction::TransferOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-
-            role_management::processor::transfer(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
-        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-            role_management::processor::propose(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
-        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
-            if inputs.roles.ne(&Roles::OPERATOR) {
-                return Err(ProgramError::InvalidArgument);
-            }
-            role_management::processor::accept(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::empty(),
-            )?;
-        }
-    }
-
-    Ok(())
+    Ok(role_management_accounts)
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

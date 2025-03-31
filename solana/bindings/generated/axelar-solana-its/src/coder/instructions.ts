@@ -61,6 +61,15 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "setFlowLimit": {
         return encodeSetFlowLimit(ix);
       }
+      case "operatorTransferOperatorship": {
+        return encodeOperatorTransferOperatorship(ix);
+      }
+      case "operatorProposeOperatorship": {
+        return encodeOperatorProposeOperatorship(ix);
+      }
+      case "operatorAcceptOperatorship": {
+        return encodeOperatorAcceptOperatorship(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -398,6 +407,66 @@ function encodeSetFlowLimit({ flowLimit }: any): Buffer {
   return encodeData({ setFlowLimit: { flowLimit } }, 1 + 8);
 }
 
+function encodeOperatorTransferOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { operatorTransferOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeOperatorProposeOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { operatorProposeOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeOperatorAcceptOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { operatorAcceptOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -549,6 +618,66 @@ LAYOUT.addVariant(
   "callContractWithInterchainTokenOffchainData"
 );
 LAYOUT.addVariant(17, B.struct([B.u64("flowLimit")]), "setFlowLimit");
+LAYOUT.addVariant(
+  18,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "operatorTransferOperatorship"
+);
+LAYOUT.addVariant(
+  19,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "operatorProposeOperatorship"
+);
+LAYOUT.addVariant(
+  20,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "operatorAcceptOperatorship"
+);
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);

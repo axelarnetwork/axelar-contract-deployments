@@ -8,7 +8,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer, SendToHub};
-use role_management::instructions::RoleManagementInstruction;
+use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -481,12 +481,58 @@ pub enum InterchainTokenServiceInstruction {
         flow_limit: u64,
     },
 
-    /// ITS operator role management instructions.
+    /// Transfers operatorship to another account.
     ///
-    /// 0. [] Gateway root pda
-    /// 1..N [`operator::OperatorInstruction`] accounts, where the resource is
-    /// the ITS root PDA.
-    OperatorInstruction(operator::Instruction),
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    OperatorTransferOperatorship {
+        /// Inputs for transferring operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Proposes operatorship transfer to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    OperatorProposeOperatorship {
+        /// Inputs for proposing operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Accepts operatorship transfer from another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    OperatorAcceptOperatorship {
+        /// Inputs for accepting operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
 
     /// Instructions operating on deployed [`TokenManager`] instances.
     TokenManagerInstruction(token_manager::Instruction),
@@ -1551,9 +1597,11 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::transfer_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::TransferOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1574,9 +1622,11 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::propose_operatorship(payer, its_root_pda, to, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::ProposeOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1597,9 +1647,11 @@ pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, P
     let accounts = vec![AccountMeta::new_readonly(gateway_root_pda, false)];
     let (accounts, operator_instruction) =
         operator::accept_operatorship(payer, its_root_pda, from, Some(accounts))?;
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorInstruction(
-        operator_instruction,
-    ))?;
+
+    let operator::Instruction::AcceptOperatorship(inputs) = operator_instruction else {
+        return Err(ProgramError::InvalidInstructionData);
+    };
+    let data = to_vec(&InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs })?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1890,10 +1942,14 @@ impl TryFrom<RoleManagementInstruction<Roles>> for InterchainTokenServiceInstruc
             RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {
                 Err(ProgramError::InvalidInstructionData)
             }
-            RoleManagementInstruction::TransferRoles(_)
-            | RoleManagementInstruction::ProposeRoles(_)
-            | RoleManagementInstruction::AcceptRoles(_) => {
-                Ok(Self::OperatorInstruction(value.try_into()?))
+            RoleManagementInstruction::TransferRoles(inputs) => {
+                Ok(Self::OperatorTransferOperatorship { inputs })
+            }
+            RoleManagementInstruction::ProposeRoles(inputs) => {
+                Ok(Self::OperatorProposeOperatorship { inputs })
+            }
+            RoleManagementInstruction::AcceptRoles(inputs) => {
+                Ok(Self::OperatorAcceptOperatorship { inputs })
             }
         }
     }
