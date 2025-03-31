@@ -51,11 +51,7 @@ pub fn mint(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &minter);
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::InterchainTokenInstruction(Instruction::Mint {
-            amount,
-        }),
-    )?;
+    let data = to_vec(&InterchainTokenServiceInstruction::InterchainTokenMint { amount })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -90,11 +86,15 @@ pub fn transfer_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::transfer_mintership(payer, token_manager_pda, to, Some(accounts))?;
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
-            Instruction::MinterInstruction(minter_instruction),
-        ),
-    )?;
+
+    let inputs = match minter_instruction {
+        minter::Instruction::TransferMintership(val) => val,
+        minter::Instruction::ProposeMintership(_) | minter::Instruction::AcceptMintership(_) => {
+            return Err(ProgramError::InvalidAccountData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -120,11 +120,15 @@ pub fn propose_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::propose_mintership(payer, token_manager_pda, to, Some(accounts))?;
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
-            Instruction::MinterInstruction(minter_instruction),
-        ),
-    )?;
+
+    let inputs = match minter_instruction {
+        minter::Instruction::ProposeMintership(val) => val,
+        minter::Instruction::TransferMintership(_) | minter::Instruction::AcceptMintership(_) => {
+            return Err(ProgramError::InvalidAccountData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::InterchainTokenProposeMintership { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -150,11 +154,15 @@ pub fn accept_mintership(
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
         minter::accept_mintership(payer, token_manager_pda, from, Some(accounts))?;
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::InterchainTokenInstruction(
-            Instruction::MinterInstruction(minter_instruction),
-        ),
-    )?;
+
+    let inputs = match minter_instruction {
+        minter::Instruction::AcceptMintership(val) => val,
+        minter::Instruction::ProposeMintership(_) | minter::Instruction::TransferMintership(_) => {
+            return Err(ProgramError::InvalidAccountData)
+        }
+    };
+    let data =
+        to_vec(&InterchainTokenServiceInstruction::InterchainTokenAcceptMintership { inputs })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
