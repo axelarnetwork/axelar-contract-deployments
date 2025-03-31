@@ -6,7 +6,7 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
 use program_utils::BorshPda;
-use role_management::processor::{ensure_roles, ensure_signer_roles, RoleManagementAccounts};
+use role_management::processor::{ensure_roles, ensure_signer_roles};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::{invoke, invoke_signed, set_return_data};
@@ -21,29 +21,14 @@ use spl_token_2022::state::Mint;
 
 use super::gmp::{self, GmpAccounts};
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
+use crate::assert_valid_deploy_approval_pda;
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_deploy_approval_pda, instruction};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
 };
-
-#[allow(clippy::needless_pass_by_value)]
-pub(crate) fn process_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::interchain_token::Instruction,
-) -> ProgramResult {
-    match instruction {
-        instruction::interchain_token::Instruction::Mint { .. } => {
-            Err(ProgramError::InvalidInstructionData)
-        }
-        instruction::interchain_token::Instruction::MinterInstruction(minter_instruction) => {
-            process_minter_instruction(accounts, &minter_instruction)
-        }
-    }
-}
 
 pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) gateway_root_pda: &'a AccountInfo<'a>,
@@ -456,24 +441,6 @@ fn setup_metadata<'a>(
         ]])?;
 
     Ok(())
-}
-
-fn process_minter_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    _instruction: &instruction::minter::Instruction,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager = TokenManager::load(role_management_accounts.resource)?;
-    assert_valid_token_manager_pda(
-        role_management_accounts.resource,
-        its_root_pda.key,
-        &token_manager.token_id,
-        token_manager.bump,
-    )?;
-
-    Err(ProgramError::InvalidAccountData)
 }
 
 pub(crate) fn approve_deploy_remote_interchain_token(

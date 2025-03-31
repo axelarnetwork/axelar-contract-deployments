@@ -720,9 +720,6 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>,
     },
 
-    /// Instructions operating in Interchain Tokens.
-    InterchainTokenInstruction(interchain_token::Instruction),
-
     /// A GMP Interchain Token Service instruction.
     ///
     /// 0. [writable,signer] The address of payer / sender

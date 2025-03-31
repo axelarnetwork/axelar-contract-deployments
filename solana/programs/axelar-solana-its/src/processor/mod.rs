@@ -239,9 +239,6 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::InterchainTokenAcceptMintership { inputs } => {
             process_it_accept_mintership(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::InterchainTokenInstruction(
-            interchain_token_instruction,
-        ) => interchain_token::process_instruction(accounts, interchain_token_instruction),
         InterchainTokenServiceInstruction::CallContractWithInterchainToken {
             token_id,
             destination_chain,
