@@ -51,11 +51,12 @@ const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
 const prepareDummyWallet = async () => {
-    const mnemonic = 'test test test test test test test test test test test junk';
-    return await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
 };
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
