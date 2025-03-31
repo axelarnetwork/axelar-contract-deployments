@@ -230,6 +230,15 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::InterchainTokenMint { amount } => {
             process_mint(accounts, amount)
         }
+        InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs } => {
+            process_it_transfer_mintership(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenProposeMintership { inputs } => {
+            process_it_propose_mintership(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenAcceptMintership { inputs } => {
+            process_it_accept_mintership(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,
         ) => interchain_token::process_instruction(accounts, interchain_token_instruction),
@@ -504,6 +513,45 @@ fn process_tm_operator_accounts<'a>(
     )?;
 
     Ok(role_management_accounts)
+}
+
+fn process_it_transfer_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::MINTER,
+    )
+}
+
+fn process_it_propose_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::MINTER,
+    )
+}
+
+fn process_it_accept_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
+    )
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

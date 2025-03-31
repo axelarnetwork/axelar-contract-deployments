@@ -244,6 +244,27 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn interchain_token_transfer_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn interchain_token_propose_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn interchain_token_accept_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]

@@ -659,4 +659,76 @@ describe("Ping ITS", () => {
       processError(error, "IT Mint");
     }
   })
+
+  it("IT Transfer Mintership", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.interchainTokenTransferMintership({
+        roles: { minter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
+
+  it("IT Propose Mintership", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.interchainTokenProposeMintership({
+        roles: { minter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
+
+  it("IT Accept Mintership", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.interchainTokenAcceptMintership({
+        roles: { minter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
 });

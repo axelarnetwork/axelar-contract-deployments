@@ -40,7 +40,7 @@ pub(crate) fn process_instruction<'a>(
             Err(ProgramError::InvalidInstructionData)
         }
         instruction::interchain_token::Instruction::MinterInstruction(minter_instruction) => {
-            process_minter_instruction(accounts, minter_instruction)
+            process_minter_instruction(accounts, &minter_instruction)
         }
     }
 }
@@ -460,7 +460,7 @@ fn setup_metadata<'a>(
 
 fn process_minter_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::minter::Instruction,
+    _instruction: &instruction::minter::Instruction,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
@@ -473,34 +473,7 @@ fn process_minter_instruction<'a>(
         token_manager.bump,
     )?;
 
-    match instruction {
-        instruction::minter::Instruction::TransferMintership(inputs) => {
-            role_management::processor::transfer(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::MINTER,
-            )?;
-        }
-        instruction::minter::Instruction::ProposeMintership(inputs) => {
-            role_management::processor::propose(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::MINTER,
-            )?;
-        }
-        instruction::minter::Instruction::AcceptMintership(inputs) => {
-            role_management::processor::accept(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::empty(),
-            )?;
-        }
-    }
-
-    Ok(())
+    Err(ProgramError::InvalidAccountData)
 }
 
 pub(crate) fn approve_deploy_remote_interchain_token(
