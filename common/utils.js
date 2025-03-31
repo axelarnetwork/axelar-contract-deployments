@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const chalk = require('chalk');
@@ -13,7 +13,15 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
+
+const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
+
+const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
+
+const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
+const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -377,7 +385,7 @@ function findProjectRoot(startDir) {
     while (currentDir !== path.parse(currentDir).root) {
         const potentialPackageJson = path.join(currentDir, 'package.json');
 
-        if (fs.existsSync(potentialPackageJson)) {
+        if (existsSync(potentialPackageJson)) {
             return currentDir;
         }
 
@@ -526,6 +534,27 @@ const itsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+const downloadContractCode = async (url, contractName, version) => {
+    const tempDir = path.join(process.cwd(), 'artifacts');
+
+    if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+    }
+
+    const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Failed to download WASM file: ${response.statusText}`);
+    }
+
+    const buffer = await response.buffer();
+    writeFileSync(outputPath, buffer);
+
+    return outputPath;
+};
+
 const tryItsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
@@ -543,6 +572,10 @@ const parseTrustedChains = (config, trustedChains) => {
     return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
 };
 
+const readContractCode = (options) => {
+    return readFileSync(options.contractCodePath);
+};
+
 function asciiToBytes(string) {
     return hexlify(Buffer.from(string, 'ascii'));
 }
@@ -558,6 +591,10 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
     const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
+        case undefined:
+            printWarn(`destinationChain ${destinationChain} not found in config`);
+            return destinationAddress;
+
         case 'stellar':
             validateParameters({ isValidStellarAddress: { destinationAddress } });
             return asciiToBytes(destinationAddress);
@@ -608,6 +645,12 @@ module.exports = {
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
+    downloadContractCode,
+    pascalToKebab,
+    pascalToSnake,
+    readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
     itsEdgeContract,
     tryItsEdgeContract,
     parseTrustedChains,

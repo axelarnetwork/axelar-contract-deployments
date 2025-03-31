@@ -3,7 +3,8 @@
 require('dotenv').config();
 
 const { isNumber, addEnvOption } = require('../common');
-const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress } = require('./utils');
+const { addStoreOptions } = require('../common/cli-utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getContractCodePath } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -19,6 +20,12 @@ const addAmplifierOptions = (program, options) => {
 
     if (options.storeOptions) {
         addStoreOptions(program);
+
+        program.hook('preAction', async (thisCommand) => {
+            const opts = thisCommand.opts();
+            const contractCodePath = await getContractCodePath(opts, opts.contractName);
+            Object.assign(opts, { contractCodePath });
+        });
     }
 
     if (options.storeProposalOptions) {
@@ -115,10 +122,6 @@ const addContractOptions = (program) => {
             throw new Error(`${contractName} does not support chainName option`);
         }
     });
-};
-
-const addStoreOptions = (program) => {
-    program.addOption(new Option('-a, --artifactPath <artifactPath>', 'artifact path').env('ARTIFACT_PATH'));
 };
 
 const addStoreProposalOptions = (program) => {
