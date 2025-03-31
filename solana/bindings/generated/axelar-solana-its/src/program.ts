@@ -1564,6 +1564,405 @@ type AxelarSolanaIts = {
           };
         }
       ];
+    },
+    {
+      name: "tokenManagerAddFlowLimiter";
+      accounts: [
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerRemoveFlowLimiter";
+      accounts: [
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerSetFlowLimit";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerUserRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsUserRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "flowLimit";
+          type: "u64";
+        }
+      ];
+    },
+    {
+      name: "tokenManagerTransferOperatorship";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerProposeOperatorship";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerAcceptOperatorship";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "tokenManagerHandOverMintAuthority";
+      accounts: [
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minterRolesPda";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "tokenId";
+          type: {
+            array: ["u8", 32];
+          };
+        }
+      ];
     }
   ];
   types: [
@@ -3172,6 +3571,405 @@ const IDL: AxelarSolanaIts = {
           name: "inputs",
           type: {
             defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerAddFlowLimiter",
+      accounts: [
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerRemoveFlowLimiter",
+      accounts: [
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerSetFlowLimit",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerUserRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsUserRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "flowLimit",
+          type: "u64",
+        },
+      ],
+    },
+    {
+      name: "tokenManagerTransferOperatorship",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerProposeOperatorship",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerAcceptOperatorship",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "tokenManagerHandOverMintAuthority",
+      accounts: [
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minterRolesPda",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "tokenId",
+          type: {
+            array: ["u8", 32],
           },
         },
       ],

@@ -1,7 +1,7 @@
 //! Processor for [`TokenManager`] related requests.
 
 use program_utils::{BorshPda, ValidPDA};
-use role_management::processor::{ensure_roles, RoleManagementAccounts};
+use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -14,58 +14,10 @@ use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWit
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
+use crate::assert_valid_its_root_pda;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, instruction};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
-
-pub(crate) fn process_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::token_manager::Instruction,
-) -> ProgramResult {
-    match instruction {
-        instruction::token_manager::Instruction::SetFlowLimit { flow_limit } => {
-            let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
-            if !instruction_accounts.flow_limiter.is_signer {
-                return Err(ProgramError::MissingRequiredSignature);
-            }
-
-            set_flow_limit(&instruction_accounts, flow_limit)
-        }
-        instruction::token_manager::Instruction::AddFlowLimiter(inputs) => {
-            if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
-                return Err(ProgramError::InvalidInstructionData);
-            }
-
-            let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
-            role_management::processor::add(
-                &crate::id(),
-                instruction_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )
-        }
-        instruction::token_manager::Instruction::RemoveFlowLimiter(inputs) => {
-            if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
-                return Err(ProgramError::InvalidInstructionData);
-            }
-
-            let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
-            role_management::processor::remove(
-                &crate::id(),
-                instruction_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )
-        }
-        instruction::token_manager::Instruction::OperatorInstruction(operator_instruction) => {
-            process_operator_instruction(accounts, operator_instruction)
-        }
-        instruction::token_manager::Instruction::HandOverMintAuthority { token_id } => {
-            handover_mint_authority(accounts, token_id)
-        }
-    }
-}
 
 pub(crate) fn set_flow_limit(
     accounts: &SetFlowLimitAccounts<'_>,
@@ -244,51 +196,6 @@ fn setup_roles<'a>(
     Ok(())
 }
 
-fn process_operator_instruction<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    instruction: instruction::operator::Instruction,
-) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    let token_manager = TokenManager::load(role_management_accounts.resource)?;
-    assert_valid_token_manager_pda(
-        role_management_accounts.resource,
-        its_root_pda.key,
-        &token_manager.token_id,
-        token_manager.bump,
-    )?;
-
-    match instruction {
-        instruction::operator::Instruction::TransferOperatorship(inputs) => {
-            role_management::processor::transfer(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
-        instruction::operator::Instruction::ProposeOperatorship(inputs) => {
-            role_management::processor::propose(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::OPERATOR,
-            )?;
-        }
-        instruction::operator::Instruction::AcceptOperatorship(inputs) => {
-            role_management::processor::accept(
-                &crate::id(),
-                role_management_accounts,
-                &inputs,
-                Roles::empty(),
-            )?;
-        }
-    }
-
-    Ok(())
-}
-
 fn check_accounts(accounts: &DeployTokenManagerAccounts<'_>) -> ProgramResult {
     if !system_program::check_id(accounts.system_account.key) {
         msg!("Invalid system account provided");
@@ -353,7 +260,10 @@ pub(crate) fn validate_token_manager_type(
     }
 }
 
-fn handover_mint_authority(accounts: &[AccountInfo<'_>], token_id: [u8; 32]) -> ProgramResult {
+pub(crate) fn handover_mint_authority(
+    accounts: &[AccountInfo<'_>],
+    token_id: [u8; 32],
+) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
@@ -364,6 +274,7 @@ fn handover_mint_authority(accounts: &[AccountInfo<'_>], token_id: [u8; 32]) -> 
     let token_program = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
+    msg!("Instruction: TM Hand Over Mint Authority");
     let its_root_config = InterchainTokenService::load(its_root)?;
     let token_manager_config = TokenManager::load(token_manager)?;
 

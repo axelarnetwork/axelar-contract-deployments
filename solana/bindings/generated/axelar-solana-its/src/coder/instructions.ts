@@ -70,6 +70,27 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "operatorAcceptOperatorship": {
         return encodeOperatorAcceptOperatorship(ix);
       }
+      case "tokenManagerAddFlowLimiter": {
+        return encodeTokenManagerAddFlowLimiter(ix);
+      }
+      case "tokenManagerRemoveFlowLimiter": {
+        return encodeTokenManagerRemoveFlowLimiter(ix);
+      }
+      case "tokenManagerSetFlowLimit": {
+        return encodeTokenManagerSetFlowLimit(ix);
+      }
+      case "tokenManagerTransferOperatorship": {
+        return encodeTokenManagerTransferOperatorship(ix);
+      }
+      case "tokenManagerProposeOperatorship": {
+        return encodeTokenManagerProposeOperatorship(ix);
+      }
+      case "tokenManagerAcceptOperatorship": {
+        return encodeTokenManagerAcceptOperatorship(ix);
+      }
+      case "tokenManagerHandOverMintAuthority": {
+        return encodeTokenManagerHandOverMintAuthority(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -467,6 +488,117 @@ function encodeOperatorAcceptOperatorship({ inputs }: any): Buffer {
   );
 }
 
+function encodeTokenManagerAddFlowLimiter({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerAddFlowLimiter: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeTokenManagerRemoveFlowLimiter({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerRemoveFlowLimiter: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeTokenManagerSetFlowLimit({ flowLimit }: any): Buffer {
+  return encodeData({ tokenManagerSetFlowLimit: { flowLimit } }, 1 + 8);
+}
+
+function encodeTokenManagerTransferOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerTransferOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeTokenManagerProposeOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerProposeOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeTokenManagerAcceptOperatorship({ inputs }: any): Buffer {
+  return encodeData(
+    { tokenManagerAcceptOperatorship: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeTokenManagerHandOverMintAuthority({ tokenId }: any): Buffer {
+  return encodeData(
+    { tokenManagerHandOverMintAuthority: { tokenId } },
+    1 + 1 * 32
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -677,6 +809,116 @@ LAYOUT.addVariant(
     ),
   ]),
   "operatorAcceptOperatorship"
+);
+LAYOUT.addVariant(
+  21,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerAddFlowLimiter"
+);
+LAYOUT.addVariant(
+  22,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerRemoveFlowLimiter"
+);
+LAYOUT.addVariant(
+  23,
+  B.struct([B.u64("flowLimit")]),
+  "tokenManagerSetFlowLimit"
+);
+LAYOUT.addVariant(
+  24,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerTransferOperatorship"
+);
+LAYOUT.addVariant(
+  25,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerProposeOperatorship"
+);
+LAYOUT.addVariant(
+  26,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "tokenManagerAcceptOperatorship"
+);
+LAYOUT.addVariant(
+  27,
+  B.struct([B.seq(B.u8(), 32, "tokenId")]),
+  "tokenManagerHandOverMintAuthority"
 );
 
 function encodeData(ix: any, span: number): Buffer {

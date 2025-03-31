@@ -484,4 +484,160 @@ describe("Ping ITS", () => {
       processError(error, "Operator");
     }
   })
+
+  it("TM Add Flow Limiter", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerAddFlowLimiter({
+        roles: { flowLimiter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM AddFlowLimiter");
+    }
+  })
+
+  it("TM Remove Flow Limiter", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerRemoveFlowLimiter({
+        roles: { flowLimiter: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM RemoveFlowLimiter");
+    }
+  })
+
+  it("TM Set Flow Limit", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerSetFlowLimit(
+        new BN(1)
+      ).accounts({
+        payer: payer.publicKey,
+        itsRootPda: payer.publicKey,
+        tokenManagerPda: payer.publicKey,
+        tokenManagerUserRolesPda: payer.publicKey,
+        itsUserRolesPda: payer.publicKey,
+        systemProgram: payer.publicKey
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM SetFlowLimit");
+    }
+  })
+
+  it("TM Transfer Operatorship", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerTransferOperatorship({
+        roles: { operator: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
+
+  it("TM Propose Operatorship", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerProposeOperatorship({
+        roles: { operator: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
+
+  it("TM Accept Operatorship", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerAcceptOperatorship({
+        roles: { operator: {}},
+        destinationRolesPdaBump: 2,
+        proposalPdaBump: null
+      }).accounts({
+        gatewayRootPda: payer.publicKey,
+        systemProgram: payer.publicKey,
+        payer: payer.publicKey,
+        payerRolesAccount: payer.publicKey,
+        resource: payer.publicKey,
+        destinationUserAccount: payer.publicKey,
+        destinationRolesAccount: payer.publicKey,
+        originUserAccount: payer.publicKey,
+        originRolesAccount: payer.publicKey,
+        proposalAccount: payer.publicKey,
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Operator");
+    }
+  })
+
+  it("TM Flow Limiter", async () => {
+    const payer = await getKeypairFromFile();
+    try {
+      const tx = await program.methods.tokenManagerHandOverMintAuthority(
+        [1, 2]
+      ).accounts({
+        payer: payer.publicKey,
+        mint: payer.publicKey,
+        gatewayRootPda: payer.publicKey,
+        itsRootPda: payer.publicKey,
+        tokenManagerPda: payer.publicKey,
+        minterRolesPda: payer.publicKey,
+        tokenProgram: payer.publicKey,
+        systemProgram: payer.publicKey
+      }).rpc();
+    } catch (error) {
+      processError(error, "TM Hand Over Mint Authority");
+    }
+  })
 });

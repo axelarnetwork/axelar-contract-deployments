@@ -188,6 +188,55 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn token_manager_add_flow_limiter(
+        ctx: Context<TokenManagerFlowLimiter>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_remove_flow_limiter(
+        ctx: Context<TokenManagerFlowLimiter>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_set_flow_limit(
+        ctx: Context<TokenManagerSetFlowLimit>,
+        flow_limit: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_transfer_operatorship(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_propose_operatorship(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_accept_operatorship(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn token_manager_hand_over_mint_authority(
+        ctx: Context<TokenManagerHandOverMintAuthority>,
+        token_id: [u8; 32],
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -526,6 +575,47 @@ pub struct Operator<'info> {
     origin_roles_account: AccountInfo<'info>,
     #[account(mut)]
     proposal_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct TokenManagerFlowLimiter<'info> {
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_account: AccountInfo<'info>,
+    resource: AccountInfo<'info>,
+    destination_user_account: AccountInfo<'info>,
+    destination_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    origin_user_account: AccountInfo<'info>,
+    origin_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct TokenManagerSetFlowLimit<'info> {
+    payer: Signer<'info>,
+    its_root_pda: AccountInfo<'info>,
+    #[account(mut)]
+    token_manager_pda: AccountInfo<'info>,
+    token_manager_user_roles_pda: AccountInfo<'info>,
+    its_user_roles_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct TokenManagerHandOverMintAuthority<'info> {
+    payer: Signer<'info>,
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
+    its_root_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    #[account(mut)]
+    minter_roles_pda: AccountInfo<'info>,
+    token_program: AccountInfo<'info>,
+    system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

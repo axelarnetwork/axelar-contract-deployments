@@ -104,7 +104,7 @@ pub fn add_roles<F: RolesFlags>(
     to: Pubkey,
     roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
+) -> (Vec<AccountMeta>, RoleManagementInstructionInputs<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &to);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -113,8 +113,6 @@ pub fn add_roles<F: RolesFlags>(
         destination_roles_pda_bump,
         proposal_pda_bump: None,
     };
-
-    let instruction = RoleManagementInstruction::AddRoles(inputs);
 
     let mut accounts = accounts_to_prepend.unwrap_or_default();
 
@@ -127,7 +125,7 @@ pub fn add_roles<F: RolesFlags>(
         AccountMeta::new(destination_roles_pda, false),
     ]);
 
-    (accounts, instruction)
+    (accounts, inputs)
 }
 
 /// Creates an instruction to remove roles from a user.
@@ -139,7 +137,7 @@ pub fn remove_roles<F: RolesFlags>(
     from: Pubkey,
     roles: F,
     accounts_to_prepend: Option<Vec<AccountMeta>>,
-) -> (Vec<AccountMeta>, RoleManagementInstruction<F>) {
+) -> (Vec<AccountMeta>, RoleManagementInstructionInputs<F>) {
     let (destination_roles_pda, destination_roles_pda_bump) =
         crate::find_user_roles_pda(&program_id, &on, &from);
     let (payer_roles_pda, _) = crate::find_user_roles_pda(&program_id, &on, &payer);
@@ -148,8 +146,6 @@ pub fn remove_roles<F: RolesFlags>(
         destination_roles_pda_bump,
         proposal_pda_bump: None,
     };
-
-    let instruction = RoleManagementInstruction::RemoveRoles(inputs);
 
     let mut accounts = accounts_to_prepend.unwrap_or_default();
     accounts.append(&mut vec![
@@ -161,7 +157,7 @@ pub fn remove_roles<F: RolesFlags>(
         AccountMeta::new(destination_roles_pda, false),
     ]);
 
-    (accounts, instruction)
+    (accounts, inputs)
 }
 
 /// Creates an instruction to transfer roles between users.

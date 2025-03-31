@@ -14,11 +14,15 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
+use token_manager::{handover_mint_authority, set_flow_limit};
 
 use self::token_manager::SetFlowLimitAccounts;
 use crate::instruction::InterchainTokenServiceInstruction;
+use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_valid_its_root_pda, check_program_account, Roles};
+use crate::{
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, Roles,
+};
 
 pub(crate) mod gmp;
 pub(crate) mod interchain_token;
@@ -201,8 +205,26 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
             process_operator_accept_operatorship(accounts, &inputs)
         }
-        InterchainTokenServiceInstruction::TokenManagerInstruction(token_manager_instruction) => {
-            token_manager::process_instruction(accounts, token_manager_instruction)
+        InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter { inputs } => {
+            process_tm_add_flow_limiter(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter { inputs } => {
+            process_tm_remove_flow_limiter(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit } => {
+            process_tm_set_flow_limit(accounts, flow_limit)
+        }
+        InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs } => {
+            process_tm_transfer_operatorship(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs } => {
+            process_tm_propose_operatorship(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs } => {
+            process_tm_accept_operatorship(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
+            handover_mint_authority(accounts, token_id)
         }
         InterchainTokenServiceInstruction::InterchainTokenInstruction(
             interchain_token_instruction,
@@ -334,8 +356,7 @@ fn process_operator_transfer_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::OPERATOR,
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_propose_operatorship<'a>(
@@ -351,8 +372,7 @@ fn process_operator_propose_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::OPERATOR,
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_accept_operatorship<'a>(
@@ -368,8 +388,7 @@ fn process_operator_accept_operatorship<'a>(
         role_management_accounts,
         inputs,
         Roles::empty(),
-    )?;
-    Ok(())
+    )
 }
 
 fn process_operator_accounts<'a>(
@@ -385,6 +404,99 @@ fn process_operator_accounts<'a>(
         role_management_accounts.resource,
         gateway_root_pda.key,
         its_config.bump,
+    )?;
+
+    Ok(role_management_accounts)
+}
+
+fn process_tm_add_flow_limiter<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+    msg!("Instruction: TM AddFlowLimiter");
+    role_management::processor::add(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
+}
+
+fn process_tm_remove_flow_limiter<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
+    msg!("Instruction: TM RemoveFlowLimiter");
+    role_management::processor::remove(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
+}
+
+fn process_tm_set_flow_limit<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    flow_limit: u64,
+) -> ProgramResult {
+    let instruction_accounts = SetFlowLimitAccounts::try_from(accounts)?;
+    if !instruction_accounts.flow_limiter.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+    msg!("Instruction: TM SetFlowLimit");
+    set_flow_limit(&instruction_accounts, flow_limit)
+}
+
+fn process_tm_transfer_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
+}
+
+fn process_tm_propose_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::OPERATOR,
+    )
+}
+
+fn process_tm_accept_operatorship<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
+    )
+}
+
+fn process_tm_operator_accounts<'a>(
+    accounts: &'a [AccountInfo<'a>],
+) -> Result<RoleManagementAccounts<'_>, ProgramError> {
+    let accounts_iter = &mut accounts.iter();
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
+    msg!("Instruction: TM Operator");
+    let token_manager = TokenManager::load(role_management_accounts.resource)?;
+    assert_valid_token_manager_pda(
+        role_management_accounts.resource,
+        its_root_pda.key,
+        &token_manager.token_id,
+        token_manager.bump,
     )?;
 
     Ok(role_management_accounts)

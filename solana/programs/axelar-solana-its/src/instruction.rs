@@ -534,8 +534,123 @@ pub enum InterchainTokenServiceInstruction {
         inputs: RoleManagementInstructionInputs<Roles>,
     },
 
-    /// Instructions operating on deployed [`TokenManager`] instances.
-    TokenManagerInstruction(token_manager::Instruction),
+    /// Adds a flow limiter to a [`TokenManager`].
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    TokenManagerAddFlowLimiter {
+        /// Inputs for adding flow limiter.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Adds a flow limiter to a [`TokenManager`].
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    TokenManagerRemoveFlowLimiter {
+        /// Inputs for removing flow limiter.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Sets the flow limit for an interchain token.
+    ///
+    /// 0. [signer] Payer account.
+    /// 1. [] ITS root PDA account.
+    /// 2. [writable] The [`TokenManager`] PDA account.
+    /// 3. [] The PDA account with the user roles on the [`TokenManager`].
+    /// 4. [] The PDA account with the user roles on ITS.
+    TokenManagerSetFlowLimit {
+        /// The new flow limit.
+        flow_limit: u64,
+    },
+
+    /// Transfers operatorship to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    TokenManagerTransferOperatorship {
+        /// Inputs for transferring operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Proposes operatorship transfer to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    TokenManagerProposeOperatorship {
+        /// Inputs for proposing operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Accepts operatorship transfer from another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    TokenManagerAcceptOperatorship {
+        /// Inputs for accepting operatorship.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
+    /// minters. The account transferring the authority gains minter role on the [`TokenManager`] and
+    /// thus can then mint tokens through the ITS mitn instruction.
+    ///
+    /// 0. [writable, signer] Payer, current mint authority
+    /// 1. [writable] The mint for which the authority is being handed over
+    /// 2. [] Gateway root account
+    /// 3. [] ITS root account
+    /// 4. [] The [`TokenManager`] account associated with the mint
+    /// 5. [] The account that will hold the roles of the former authority on the [`TokenManager`]
+    /// 6. [] The token program used to create the mint
+    /// 7. [] The system program account
+    TokenManagerHandOverMintAuthority {
+        /// The id of the token registered with ITS for which the authority is being handed over.
+        token_id: [u8; 32],
+    },
 
     /// Instructions operating in Interchain Tokens.
     InterchainTokenInstruction(interchain_token::Instruction),
