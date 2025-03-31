@@ -38,15 +38,9 @@ const CONTRACT_DEPLOY_CONFIGS = {
 };
 
 const CONTRACT_UPGRADE_CONFIGS = {
-    AxelarGateway: () => [
-        new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
-    ],
-    AxelarOperators: () => [
-        new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
-    ],
-    InterchainTokenService: () => [
-        new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
-    ],
+    AxelarGateway: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+    AxelarOperators: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+    InterchainTokenService: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
 };
 
 const addDeployOptions = (program) => {
@@ -324,11 +318,9 @@ function main() {
 
     // 3rd level commands for `upgrade`
     const upgradeContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName)
-            .description(`Upgrade ${contractName} contract`)
-            .addHelpText(
-                'after',
-                `
+        const command = new Command(contractName).description(`Upgrade ${contractName} contract`).addHelpText(
+            'after',
+            `
 Examples:
   # using Vec<Address> as migration data:
   $ deploy-contract upgrade axelar-operators deploy --artifact-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
@@ -339,7 +331,7 @@ Examples:
   # equivalent explicit void migration data:
   $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
 `,
-            );
+        );
 
         addStoreOptions(command);
         addUpgradeOptions(command);

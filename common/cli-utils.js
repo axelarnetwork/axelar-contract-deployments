@@ -65,16 +65,17 @@ const addOptionsToCommands = (program, optionMethod, options) => {
 
 const addStoreOptions = (program) => {
     program.addOption(
-        new Option('-a, --artifact-path <artifactPath>', 'Path to the contract artifact file to upload (required if --version is not used)')
-            .env('ARTIFACT_PATH'),
+        new Option(
+            '-a, --artifact-path <artifactPath>',
+            'Path to the contract artifact file to upload (required if --version is not used)',
+        ).env('ARTIFACT_PATH'),
     );
 
     program.addOption(
         new Option(
             '-v, --version <contractVersion>',
             'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-path is not used)',
-        )
-            .env('CONTRACT_VERSION'),
+        ).env('CONTRACT_VERSION'),
     );
 
     program.hook('preAction', async (thisCommand) => {
