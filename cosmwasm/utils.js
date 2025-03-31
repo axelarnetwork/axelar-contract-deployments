@@ -2,8 +2,6 @@
 
 const zlib = require('zlib');
 const { createHash } = require('crypto');
-
-const { readFileSync } = require('fs');
 const { calculateFee, GasPrice } = require('@cosmjs/stargate');
 const { SigningCosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { DirectSecp256k1HdWallet } = require('@cosmjs/proto-signing');
@@ -31,7 +29,17 @@ const {
     calculateDomainSeparator,
     validateParameters,
 } = require('../common');
+const {
+    pascalToSnake,
+    pascalToKebab,
+    downloadContractCode,
+    readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
+} = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
+
+const { XRPLClient } = require('../xrpl/utils');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
@@ -41,12 +49,12 @@ const CONTRACT_SCOPE_CHAIN = 'chain';
 
 const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
-
-const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const isValidCosmosAddress = (str) => {
     try {
@@ -63,8 +71,6 @@ const fromHex = (str) => new Uint8Array(Buffer.from(str.replace('0x', ''), 'hex'
 const getSalt = (salt, contractName, chainName) => fromHex(getSaltFromKey(salt || contractName.concat(chainName)));
 
 const getLabel = ({ contractName, label }) => label || contractName;
-
-const readWasmFile = ({ artifactPath, contractName }) => readFileSync(`${artifactPath}/${pascalToSnake(contractName)}.wasm`);
 
 const initContractConfig = (config, { contractName, chainName }) => {
     if (!contractName) {
@@ -132,7 +138,7 @@ const uploadContract = async (client, wallet, config, options) => {
     } = config;
 
     const [account] = await wallet.getAccounts();
-    const wasm = readWasmFile(options);
+    const wasm = readContractCode(options);
 
     const uploadFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
@@ -287,6 +293,69 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
 };
 
+const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: { contracts },
+        chains: {
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: sourceGatewayAddress },
+                },
+            },
+        },
+    } = config;
+    const {
+        ServiceRegistry: { address: serviceRegistryAddress },
+        Rewards: { address: rewardsAddress },
+    } = contracts;
+    const { governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(rewardsAddress)) {
+        throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isString(sourceGatewayAddress)) {
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
+    }
+
+    if (!isStringArray(votingThreshold)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].votingThreshold in axelar info`);
+    }
+
+    if (!isNumber(blockExpiry)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].blockExpiry in axelar info`);
+    }
+
+    if (!isNumber(confirmationHeight)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].confirmationHeight in axelar info`);
+    }
+
+    return {
+        service_registry_address: serviceRegistryAddress,
+        rewards_address: rewardsAddress,
+        governance_address: governanceAddress,
+        service_name: serviceName,
+        source_gateway_address: sourceGatewayAddress,
+        voting_threshold: votingThreshold,
+        block_expiry: toBigNumberString(blockExpiry),
+        confirmation_height: confirmationHeight,
+        source_chain: chainName,
+    };
+};
+
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
@@ -362,6 +431,65 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
+const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        chains: {
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: xrplMultisigAddress },
+                },
+            },
+        },
+        axelar: {
+            contracts: {
+                Router: { address: routerAddress },
+                InterchainTokenService: { address: itsHubAddress },
+                XrplVotingVerifier: {
+                    [chainName]: { address: verifierAddress },
+                },
+            },
+            axelarId: itsHubChainName,
+        },
+    } = config;
+    const { governanceAddress, adminAddress } = contractConfig;
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!validateAddress(itsHubAddress)) {
+        throw new Error('Missing or invalid InterchainTokenService.address in axelar info');
+    }
+
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].address in axelar info`);
+    }
+
+    if (!isString(xrplMultisigAddress)) {
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
+    }
+
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        its_hub_address: itsHubAddress,
+        its_hub_chain_name: itsHubChainName,
+        router_address: routerAddress,
+        verifier_address: verifierAddress,
+        chain_name: chainName,
+        xrpl_multisig_address: xrplMultisigAddress,
+    };
+};
+
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
     const {
@@ -384,6 +512,129 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
+};
+
+const makeXrplMultisigProverInstantiateMsg = async (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: { contracts, chainId: axelarChainId },
+        chains: {
+            [chainName]: {
+                wssRpc,
+                contracts: {
+                    AxelarGateway: { address: xrplMultisigAddress },
+                },
+            },
+        },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+        Coordinator: { address: coordinatorAddress },
+        Multisig: { address: multisigAddress },
+        ServiceRegistry: { address: serviceRegistryAddress },
+        XrplVotingVerifier: {
+            [chainName]: { address: verifierAddress },
+        },
+        XrplGateway: {
+            [chainName]: { address: gatewayAddress },
+        },
+    } = contracts;
+    const {
+        adminAddress,
+        governanceAddress,
+        signingThreshold,
+        serviceName,
+        verifierSetDiffThreshold,
+        xrplTransactionFee,
+        ticketCountThreshold,
+    } = contractConfig;
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid XrplMultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid XrplMultisigProver[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(gatewayAddress)) {
+        throw new Error(`Missing or invalid XrplGateway[${chainName}].address in axelar info`);
+    }
+
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    if (!validateAddress(multisigAddress)) {
+        throw new Error('Missing or invalid Multisig.address in axelar info');
+    }
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].address in axelar info`);
+    }
+
+    if (!isStringArray(signingThreshold)) {
+        throw new Error(`Missing or invalid XrplMultisigProver[${chainName}].signingThreshold in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid XrplMultisigProver[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid XrplMultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
+    }
+
+    if (!isString(xrplMultisigAddress)) {
+        throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address in axelar info`);
+    }
+
+    const client = new XRPLClient(wssRpc);
+    await client.connect();
+    const availableTickets = (await client.tickets(xrplMultisigAddress)).sort();
+    const lastAssignedTicketNumber = Math.min(...availableTickets) - 1;
+    const accountInfo = await client.accountInfo(xrplMultisigAddress);
+    const nextSequenceNumber = accountInfo.sequence + 1; // 1 sequence number reserved for the genesis signer set rotation
+    const initialFeeReserve = Number(accountInfo.balance);
+    const reserveRequirements = await client.reserveRequirements();
+    const baseReserve = reserveRequirements.baseReserve * 1e6;
+    const ownerReserve = reserveRequirements.ownerReserve * 1e6;
+    await client.disconnect();
+
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        gateway_address: gatewayAddress,
+        coordinator_address: coordinatorAddress,
+        multisig_address: multisigAddress,
+        service_registry_address: serviceRegistryAddress,
+        voting_verifier_address: verifierAddress,
+        signing_threshold: signingThreshold,
+        service_name: serviceName,
+        chain_name: chainName,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
+        xrpl_multisig_address: xrplMultisigAddress,
+        xrpl_transaction_fee: xrplTransactionFee,
+        xrpl_base_reserve: baseReserve,
+        xrpl_owner_reserve: ownerReserve,
+        initial_fee_reserve: initialFeeReserve,
+        ticket_count_threshold: ticketCountThreshold,
+        available_tickets: availableTickets,
+        next_sequence_number: nextSequenceNumber,
+        last_assigned_ticket_number: lastAssignedTicketNumber,
+    };
 };
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
@@ -639,7 +890,7 @@ const getSubmitProposalParams = (options) => {
 const getStoreCodeParams = (options) => {
     const { source, builder, instantiateAddresses } = options;
 
-    const wasm = readWasmFile(options);
+    const wasm = readContractCode(options);
 
     let codeHash;
 
@@ -838,6 +1089,34 @@ const submitProposal = async (client, wallet, config, options, content) => {
     return events.find(({ type }) => type === 'submit_proposal').attributes.find(({ key }) => key === 'proposal_id').value;
 };
 
+const getContractR2Url = (contractName, contractVersion) => {
+    const pathName = pascalToKebab(contractName);
+    const fileName = pascalToSnake(contractName);
+
+    if (VERSION_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/releases/cosmwasm/${pathName}/${contractVersion}/${fileName}.wasm`;
+    }
+
+    if (SHORT_COMMIT_HASH_REGEX.test(contractVersion)) {
+        return `${AXELAR_R2_BASE_URL}/pre-releases/cosmwasm/${contractVersion}/${fileName}.wasm`;
+    }
+
+    throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
+};
+
+const getContractCodePath = async (options, contractName) => {
+    if (options.artifactPath) {
+        return options.artifactPath;
+    }
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -863,13 +1142,25 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
     },
+    XrplVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
     },
+    XrplGateway: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
+    },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
+    XrplMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -891,7 +1182,6 @@ module.exports = {
     fromHex,
     getSalt,
     calculateDomainSeparator,
-    readWasmFile,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
@@ -913,4 +1203,5 @@ module.exports = {
     encodeMigrateContractProposal,
     submitProposal,
     isValidCosmosAddress,
+    getContractCodePath,
 };

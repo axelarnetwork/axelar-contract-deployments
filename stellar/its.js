@@ -2,7 +2,16 @@
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { saveConfig, loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError, validateParameters } = require('../common');
+const {
+    saveConfig,
+    loadConfig,
+    addOptionsToCommands,
+    getChainConfig,
+    printInfo,
+    printWarn,
+    printError,
+    validateParameters,
+} = require('../common');
 const {
     addBaseOptions,
     getWallet,
@@ -14,31 +23,13 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains, asciiToBytes } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
-async function setTrustedChain(wallet, _, chain, contract, arg, options) {
-    const callArg = nativeToScVal(arg, { type: 'string' });
+async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
+    const trustedChains = parseTrustedChains(config, args);
 
-    const operation = contract.call('set_trusted_chain', callArg);
-
-    await broadcast(operation, wallet, chain, 'Trusted Chain Set', options);
-}
-
-async function removeTrustedChain(wallet, _, chain, contract, arg, options) {
-    const callArg = nativeToScVal(arg, { type: 'string' });
-
-    const operation = contract.call('remove_trusted_chain', callArg);
-
-    await broadcast(operation, wallet, chain, 'Trusted Chain Removed', options);
-}
-
-async function addTrustedChains(wallet, config, chain, contract, args, options) {
-    const trustedChains = args;
-
-    const parsedTrustedChains = parseTrustedChains(config, trustedChains.toString(), options.chainName);
-
-    for (const trustedChain of parsedTrustedChains) {
-        printInfo('Set Trusted Chain', trustedChain);
+    for (const trustedChain of trustedChains) {
+        printInfo(action, trustedChain);
 
         const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
 
@@ -47,18 +38,30 @@ async function addTrustedChains(wallet, config, chain, contract, args, options) 
                 await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
             ).value();
 
-            if (isTrusted) {
-                printInfo('The chain is already trusted', trustedChain);
+            if (isTrusted && action === 'set_trusted_chain') {
+                printWarn('The chain is already trusted', trustedChain);
                 continue;
             }
 
-            await broadcast(contract.call('set_trusted_chain', trustedChainScVal), wallet, chain, 'Trusted Chain Set', options);
+            if (!isTrusted && action === 'remove_trusted_chain') {
+                printWarn('The chain is not trusted', trustedChain);
+                continue;
+            }
 
-            printInfo('Successfully added as a trusted chain', trustedChain);
+            await broadcast(contract.call(action, trustedChainScVal), wallet, chain, action, options);
+            printInfo(`Successfully ${action === 'set_trusted_chain' ? 'added' : 'removed'} trusted chain`, trustedChain);
         } catch (error) {
-            printError('Failed to process trusted chain:', trustedChain, error);
+            printError(`Failed to process ${action}`, trustedChain, error);
         }
     }
+}
+
+async function addTrustedChains(wallet, config, chain, contract, args, options) {
+    await manageTrustedChains('set_trusted_chain', wallet, config, chain, contract, args, options);
+}
+
+async function removeTrustedChains(wallet, config, chain, contract, args, options) {
+    await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
 }
 
 async function deployInterchainToken(wallet, _, chain, contract, args, options) {
@@ -136,7 +139,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function interchainTransfer(wallet, _, chain, contract, args, options) {
+async function interchainTransfer(wallet, config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
@@ -148,12 +151,16 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         isValidNumber: { gasAmount },
     });
 
+    const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+    printInfo('Human-readable destination address', destinationAddress);
+    printInfo('Encoded ITS destination address', itsDestinationAddress);
+
     const operation = contract.call(
         'interchain_transfer',
         caller,
         hexToScVal(tokenId),
         nativeToScVal(destinationChain, { type: 'string' }),
-        hexToScVal(destinationAddress),
+        hexToScVal(itsDestinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
         data,
         tokenToScVal(gasTokenAddress, gasAmount),
@@ -174,11 +181,6 @@ async function execute(wallet, _, chain, contract, args, options) {
     );
 
     await broadcast(operation, wallet, chain, 'Executed', options);
-}
-
-async function encodeRecipient(wallet, _, chain, contract, args, options) {
-    const [recipient] = args;
-    printInfo('Encoded Recipient', asciiToBytes(recipient));
 }
 
 async function mainProcessor(processor, args, options) {
@@ -214,24 +216,17 @@ if (require.main === module) {
     program.name('its').description('Interchain Token Service contract operations.');
 
     program
-        .command('set-trusted-chain <chainName>')
-        .description('set a trusted InterchainTokenService chain')
-        .action((chainName, options) => {
-            mainProcessor(setTrustedChain, chainName, options);
-        });
-
-    program
-        .command('remove-trusted-chain <chainName>')
-        .description('remove a trusted InterchainTokenService chain')
-        .action((chainName, options) => {
-            mainProcessor(removeTrustedChain, chainName, options);
-        });
-
-    program
-        .command('add-trusted-chains <trustedChains>')
-        .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by commas or special tag 'all'`)
+        .command('add-trusted-chains <trusted-chains...>')
+        .description(`Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
         .action((trustedChains, options) => {
             mainProcessor(addTrustedChains, trustedChains, options);
+        });
+
+    program
+        .command('remove-trusted-chains <trusted-chains...>')
+        .description(`Remove trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
+        .action((trustedChains, options) => {
+            mainProcessor(removeTrustedChains, trustedChains, options);
         });
 
     program
@@ -281,13 +276,6 @@ if (require.main === module) {
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
-        });
-
-    program
-        .command('encode-recipient <recipient>')
-        .description('Encode stellar address as bytes for ITS recipient')
-        .action((recipient, options) => {
-            mainProcessor(encodeRecipient, [recipient], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
