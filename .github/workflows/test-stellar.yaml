@@ -77,6 +77,7 @@ jobs:
 
       - name: Setup Wasm Directory
         run: |
+          cargo install --locked stellar-cli --version 22.2.0 --features opt
           WASM_DIR=./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
