@@ -159,6 +159,10 @@ async function getInitializeArgs(config, chain, contractName, wallet, options) {
             return { gatewayAddress, gasServiceAddress, itsAddress };
         }
 
+        case 'Multicall': {
+            return {};
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
