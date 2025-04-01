@@ -133,9 +133,9 @@ jobs:
       - name: Setup Stellar wallet
         run: |
           stellar keys generate test \
-              --fund
               --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
+              --network-passphrase "$NETWORK_PASSPHRASE" \
+              --fund
 
           STELLAR_PRIVATE_KEY=$(stellar keys show test)
           STELLAR_ADDRESS=$(stellar keys address test)
