@@ -5,7 +5,7 @@ on: pull_request
 jobs:
   check-relevant-changes:
     name: Check for Relevant Changes
-    runs-on: blacksmith-2vcpu-ubuntu-2204
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     outputs:
       run_tests: ${{ steps.filter.outputs.stellar == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
     steps:
@@ -69,7 +69,7 @@ jobs:
           cd axelar-amplifier-stellar;
 
           # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
-          cargo install --locked stellar-cli --version 22.6.0 --features opt
+          cargo install --locked stellar-cli --version 22.2.0 --features opt
 
           # Build all contracts
           stellar contract build
