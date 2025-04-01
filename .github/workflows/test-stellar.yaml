@@ -158,14 +158,24 @@ jobs:
       - name: Deploy AxelarOperators
         run: |
           CONTRACT=AxelarOperators
-          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
 
       - name: Deploy AxelarGasService
         run: |
           CONTRACT=AxelarGasService
-          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
 
       - name: Deploy AxelarGateway
         run: |
           CONTRACT=AxelarGateway
-          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
+
+      ###### Command: Operators ######
+      - name: Execute is operator
+        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
+
+      - name: Execute add operator
+        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
+
+      - name: Execute remove operator
+        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
