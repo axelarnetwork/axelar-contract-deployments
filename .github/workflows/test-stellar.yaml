@@ -75,18 +75,6 @@ jobs:
           stellar contract build
           ./optimize.sh
 
-          # Process in the release directory
-          cd target/wasm32-unknown-unknown/release
-
-          # Remove unoptimized files and rename optimized ones
-          # This ensures we only keep the optimized versions
-          find . -type f -name "*.wasm" ! -name "*.optimized.wasm" -maxdepth 1 -delete
-          find . -name "*.optimized.wasm" -maxdepth 1 -exec sh -c 'mv "$0" "${0%.optimized.wasm}.wasm"' {} \;
-          find . -type f ! -name "*.wasm" -delete
-
-          # Change directory to the top level
-          cd ../../../../
-
       - name: Setup Wasm Directory
         run: |
           WASM_DIR=./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
@@ -157,18 +145,15 @@ jobs:
       ###### Command: Deploy Contract ######
       - name: Deploy AxelarOperators
         run: |
-          CONTRACT=AxelarOperators
-          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy AxelarOperators --artifact-path $WASM_DIR/stellar_axelar_operators.optimized.wasm
 
       - name: Deploy AxelarGasService
         run: |
-          CONTRACT=AxelarGasService
-          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy AxelarGasService --artifact-path $WASM_DIR/stellar_axelar_gas_service.optimized.wasm
 
       - name: Deploy AxelarGateway
         run: |
-          CONTRACT=AxelarGateway
-          node stellar/deploy-contract deploy $CONTRACT --artifact-path $WASM_DIR/$CONTRACT.optimized.wasm
+          node stellar/deploy-contract deploy AxelarGateway --artifact-path $WASM_DIR/stellar_axelar_gateway.optimized.wasm
 
       ###### Command: Operators ######
       - name: Execute is operator
