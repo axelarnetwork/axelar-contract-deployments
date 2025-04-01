@@ -1,0 +1,15 @@
+{
+              "chains": {
+                  "stellar": {
+                      "name": "Stellar",
+                      "axelarId": "stellar",
+                      "networkType": "local",
+                      "chainType": "stellar",
+                      "tokenSymbol": "XLM",
+                      "tokenAddress": "TOKEN_ADDRESS",
+                      "rpc": "http://127.0.0.1:8000/soroban/rpc",
+                      "horizonRpc": "http://127.0.0.1:8000",
+                      "contracts": {}
+                  }
+              }
+          }
