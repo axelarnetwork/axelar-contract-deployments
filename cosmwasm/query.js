@@ -50,7 +50,7 @@ const programHandler = () => {
 
     const rewardCmd = program
         .command('rewards')
-        .description('Query rewards state')
+        .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
             mainProcessor(rewards, options);
         });
