@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: axelarnetwork/axelar-amplifier-stellar
-          path: ./stellar/axelar-amplifier-stellar
+          path: axelar-amplifier-stellar
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,6 +66,8 @@ jobs:
 
       - name: Build all contracts
         run: |
+          cd axelar-amplifier-stellar;
+
           # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
           cargo install --locked stellar-cli --version 22.2.0 --features opt
 
@@ -82,15 +84,12 @@ jobs:
           find . -name "*.optimized.wasm" -maxdepth 1 -exec sh -c 'mv "$0" "${0%.optimized.wasm}.wasm"' {} \;
           find . -type f ! -name "*.wasm" -delete
 
-      - name: Checkout axelar-contract-deployments repo
-        uses: actions/checkout@v4
-        with:
-          repository: axelarnetwork/axelar-contract-deployments
-          path: ./stellar/axelar-contract-deployments
+          # Change directory to the top level
+          cd ../../../../
 
       - name: Setup Wasm Directory
         run: |
-          WASM_DIR=../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
+          WASM_DIR=./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
       - name: Setup Stellar local network
@@ -170,40 +169,3 @@ jobs:
         run: |
           CONTRACT=AxelarGateway
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
-
-      ###### Command: Gateway ######
-      # FIXME:
-      # - name: Gateway Approve
-      #   run: |
-      #     node stellar/gateway approve avalanche 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 wallet 0x1234
-
-      # - name: Gateway Call Contract
-      #   run: node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
-
-      # - name: Gateway Rotate Signers
-      #   run: |
-      #     node stellar/gateway rotate --new-nonce test --signers wallet
-      #     node stellar/gateway rotate --new-nonce test2 --current-nonce test --signers wallet
-
-      ###### Command: Operators ######
-
-      - name: Execute is operator
-        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
-
-      - name: Execute add operator
-        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
-
-      - name: Execute remove operator
-        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
-
-      # TODO: needs gas-service contract
-      # - name: Execute refund action
-      #   run: node stellar/operators.js --action refund
-
-      # FIXME: find proper way to execute this
-      # - name: Execute execute action
-      #   run: node stellar/operators.js --action execute --target $STELLAR_ADDRESS --method "is_operator"
-
-      # TODO: currently fails
-      # - name: is_operator with estimate_cost
-      #   run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS --estimate-cost
