@@ -282,12 +282,6 @@ node stellar/its.js deploy-remote-canonical-token [token-address] [destination-c
 node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-amount [amount]
 ```
 
-#### Encode stellar recipient address to bytes
-
-```bash
-node stellar/its.js encode-recipient 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF'
-```
-
 #### Execute
 
 ```bash
