@@ -35,17 +35,17 @@ jobs:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
       #
       # axelar-contract-deployments
-      #   - axelar-cgp-soroban
+      #   - axelar-amplifier-stellar
       #
       # future steps depend on this directory structure
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Checkout axelar-cgp-soroban repo
+      - name: Checkout axelar-amplifier-stellar repo
         uses: actions/checkout@v4
         with:
-          repository: axelarnetwork/axelar-cgp-soroban
-          path: axelar-cgp-soroban
+          repository: axelarnetwork/axelar-amplifier-stellar
+          path: axelar-amplifier-stellar
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -142,10 +142,10 @@ jobs:
           CF_BUCKET_ROOT_KEY: ${{ vars.CF_BUCKET_ROOT_KEY }}
         run: |
           PACKAGE_VERSION=$(cat stellar/version)
-          CONTRACTS=("axelar_gateway" "axelar_operators" "axelar_gas_service" "interchain_token" "interchain_token_service" "example")
+          CONTRACTS=("AxelarExample" "AxelarGasService" "AxelarGateway" "AxelarOperators" "InterchainToken "InterchainTokenService" "TokenManager" "Upgrader")
           for name in CONTRACTS; do
             CF_WASM_BUCKET_ROOT_KEY="${CF_BUCKET_ROOT_KEY}/$name/$PACKAGE_VERSION/wasm"
-            FILE_KEY=axelar-cgp-soroban-wasm-$name-$PACKAGE_VERSION
+            FILE_KEY=axelar-amplifier-stellar-wasm-$name-$PACKAGE_VERSION
             aws s3api get-object --bucket $S3_BUCKET_NAME --key "$CF_WASM_BUCKET_ROOT_KEY/$FILE_KEY" --acl public-read --endpoint-url $ENDPOINT_URL
           done
 
@@ -175,14 +175,19 @@ jobs:
           echo "YES = 'true'" >> .env
 
       ###### Command: Deploy Contract ######
-      - name: Deploy axelar_gateway
+      - name: Deploy AxelarOperators
         run: |
-          CONTRACT=axelar_gateway
+          CONTRACT=AxelarOperators
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
 
-      - name: Deploy axelar_operators
+      - name: Deploy AxelarGasService
         run: |
-          CONTRACT=axelar_operators
+          CONTRACT=AxelarGasService
+          node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
+
+      - name: Deploy AxelarGateway
+        run: |
+          CONTRACT=AxelarGateway
           node stellar/deploy-contract deploy $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
 
       ###### Command: Gateway ######
@@ -199,21 +204,16 @@ jobs:
           node stellar/gateway rotate --new-nonce test --signers wallet
           node stellar/gateway rotate --new-nonce test2 --current-nonce test --signers wallet
 
-      - name: Upgrade gateway contract
-        run: |
-          CONTRACT=axelar_gateway
-          node stellar/deploy-contract.js upgrade $CONTRACT --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm
-
       ###### Command: Operators ######
 
-      - name: Execute is_operator action
-        run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS
+      - name: Execute is operator
+        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
 
-      - name: Execute add_operator action
-        run: node stellar/operators.js --action add_operator --args $STELLAR_ADDRESS
+      - name: Execute add operator
+        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
 
-      - name: Execute remove_operator action
-        run: node stellar/operators.js --action remove_operator --args $STELLAR_ADDRESS
+      - name: Execute remove operator
+        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
 
       # TODO: needs gas-service contract
       # - name: Execute refund action
@@ -226,14 +226,3 @@ jobs:
       # TODO: currently fails
       # - name: is_operator with estimate_cost
       #   run: node stellar/operators.js --action is_operator --args $STELLAR_ADDRESS --estimate-cost
-
-      ###### Command: Generate Bindings #####
-      - name: generate operators bindings
-        run: |
-          CONTRACT=axelar_operators
-          node stellar/generate-bindings.js --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --contract-id  $(jq .chains.stellar.contracts.$CONTRACT.address axelar-chains-config/info/local.json) --output-dir ./stellar/bindings/$CONTRACT
-
-      - name: generate gateway bindings
-        run: |
-          CONTRACT=axelar_gateway
-          node stellar/generate-bindings.js --wasm-path $WASM_DIR/$CONTRACT.optimized.wasm --contract-id  $(jq .chains.stellar.contracts.$CONTRACT.address axelar-chains-config/info/local.json) --output-dir ./stellar/bindings/$CONTRACT
