@@ -1,9 +1,9 @@
+const fs = require('fs');
 const { Command, Option } = require('commander');
-const { getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
-const { toB64 } = require('@mysten/sui/utils');
+const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, validateParameters, writeJSON, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -11,7 +11,6 @@ const {
     printWalletInfo,
     broadcast,
     upgradePackage,
-    UPGRADE_POLICIES,
     getSigners,
     deployPackage,
     getObjectIdsByObjectTypes,
@@ -23,6 +22,9 @@ const {
     getSquidChannelId,
     checkSuiVersionMatch,
     moveDir,
+    getStructs,
+    restrictUpgradePolicy,
+    broadcastRestrictedUpgradePolicy,
 } = require('./utils');
 
 /**
@@ -48,7 +50,7 @@ const PACKAGE_DIRS = [
     'operators',
     'abi',
     'governance',
-    'its',
+    'interchain_token_service',
     'squid',
     'interchain_token',
 ];
@@ -66,8 +68,11 @@ const PACKAGE_CONFIGS = {
         GasService: postDeployGasService,
         Example: postDeployExample,
         Operators: postDeployOperators,
-        ITS: postDeployIts,
+        InterchainTokenService: postDeployIts,
         Squid: postDeploySquid,
+        Utils: postDeployUtils,
+        Abi: postDeployAbi,
+        VersionControl: postDeployVersionControl,
     },
 };
 
@@ -96,38 +101,91 @@ const supportedPackages = PACKAGE_DIRS.map((dir) => ({
  */
 
 async function postDeployRelayerDiscovery(published, keypair, client, config, chain, options) {
-    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [relayerDiscoveryObjectId, relayerDiscoveryObjectIdv0, ownerCap, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::discovery::RelayerDiscovery`,
         `${published.packageId}::relayer_discovery_v0::RelayerDiscovery_v0`,
+        `${published.packageId}::owner_cap::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
 
     chain.contracts.RelayerDiscovery.objects = {
         RelayerDiscovery: relayerDiscoveryObjectId,
         RelayerDiscoveryv0: relayerDiscoveryObjectIdv0,
+        OwnerCap: ownerCap,
+        UpgradeCap: upgradeCap,
     };
 }
 
+async function postDeployUtils(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.Utils.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
+}
+
+async function postDeployVersionControl(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.VersionControl.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
+}
+
+async function postDeployAbi(published, keypair, client, config, chain, options) {
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
+    if (options.policy !== 'immutable') {
+        chain.contracts.Abi.objects = {
+            UpgradeCap: upgradeCap,
+        };
+    }
+}
+
 async function postDeployGasService(published, keypair, client, config, chain, options) {
-    const [gasCollectorCapObjectId, gasServiceObjectId, gasServicev0ObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::gas_service::GasCollectorCap`,
-        `${published.packageId}::gas_service::GasService`,
-        `${published.packageId}::gas_service_v0::GasService_v0`,
-    ]);
+    const [OperatorCapObjectId, OwnerCapObjectId, gasServiceObjectId, gasServicev0ObjectId, upgradeCap] = getObjectIdsByObjectTypes(
+        published.publishTxn,
+        [
+            `${published.packageId}::operator_cap::OperatorCap`,
+            `${published.packageId}::owner_cap::OwnerCap`,
+            `${published.packageId}::gas_service::GasService`,
+            `${published.packageId}::gas_service_v0::GasService_v0`,
+            `${suiPackageAddress}::package::UpgradeCap`,
+        ],
+    );
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
     chain.contracts.GasService.objects = {
-        GasCollectorCap: gasCollectorCapObjectId,
+        OperatorCap: OperatorCapObjectId,
+        OwnerCap: OwnerCapObjectId,
         GasService: gasServiceObjectId,
         GasServicev0: gasServicev0ObjectId,
+        UpgradeCap: upgradeCap,
     };
 }
 
 async function postDeployExample(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
+    const { policy } = options;
 
     // GMP Example Params
     const [gmpSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::gmp::Singleton`]);
 
-    // ITS Example Params
-    const itsObjectId = chain.contracts.ITS?.objects?.ITS;
+    // InterchainTokenService Example Params
+    const itsObjectId = chain.contracts.InterchainTokenService?.objects?.InterchainTokenService;
     const [itsSingletonObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::its::Singleton`]);
 
     const tx = new Transaction();
@@ -142,7 +200,10 @@ async function postDeployExample(published, keypair, client, config, chain, opti
         arguments: [tx.object(relayerDiscovery), tx.object(itsSingletonObjectId), tx.object(itsObjectId), tx.object(suiClockAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    const [upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [`${suiPackageAddress}::package::UpgradeCap`]);
+    restrictUpgradePolicy(tx, policy, upgradeCap);
+
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 
     const gmpChannelId = await getSingletonChannelId(client, gmpSingletonObjectId);
     const itsChannelId = await getSingletonChannelId(client, itsSingletonObjectId);
@@ -156,13 +217,18 @@ async function postDeployExample(published, keypair, client, config, chain, opti
 }
 
 async function postDeployOperators(published, keypair, client, config, chain, options) {
-    const [operatorsObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
+    const [operatorsObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::operators::Operators`,
         `${published.packageId}::operators::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
+
+    await broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options);
+
     chain.contracts.Operators.objects = {
         Operators: operatorsObjectId,
         OwnerCap: ownerCapObjectId,
+        UpgradeCap: upgradeCap,
     };
 }
 
@@ -178,8 +244,8 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         isValidNumber: { minimumRotationDelay },
     });
 
-    const [creatorCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
-        `${packageId}::gateway::CreatorCap`,
+    const [ownerCap, upgradeCap] = getObjectIdsByObjectTypes(publishTxn, [
+        `${packageId}::owner_cap::OwnerCap`,
         `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
@@ -193,7 +259,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     tx.moveCall({
         target: `${packageId}::gateway::setup`,
         arguments: [
-            tx.object(creatorCap),
+            tx.object(ownerCap),
             tx.pure.address(operator),
             tx.pure.address(domainSeparator),
             tx.pure.u64(minimumRotationDelay),
@@ -203,15 +269,9 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
         ],
     });
 
-    if (policy !== 'any_upgrade') {
-        const upgradeType = UPGRADE_POLICIES[policy];
-        tx.moveCall({
-            target: `${suiPackageAddress}::package::${upgradeType}`,
-            arguments: [tx.object(upgradeCap)],
-        });
-    }
+    restrictUpgradePolicy(tx, policy, upgradeCap);
 
-    const result = await broadcast(client, keypair, tx, 'Setup Gateway');
+    const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
 
     const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
         `${packageId}::gateway::Gateway`,
@@ -225,49 +285,90 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
             Gateway: gateway,
             UpgradeCap: upgradeCap,
             Gatewayv0: gatewayv0,
+            OwnerCap: ownerCap,
         },
         domainSeparator,
         operator,
-        minimumRotationDelay,
+        minimumRotationDelay: minimumRotationDelay / 1000, // convert from milliseconds to seconds
     };
 }
 
 async function postDeployIts(published, keypair, client, config, chain, options) {
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [itsObjectId, itsv0ObjectId, ownerCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
-        `${published.packageId}::its::ITS`,
-        `${published.packageId}::its_v0::ITS_v0`,
+    const { chainName, policy } = options;
+
+    const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
+
+    const [ownerCapObjectId, creatorCapObjectId, operatorCapId, upgradeCapObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [
         `${published.packageId}::owner_cap::OwnerCap`,
+        `${published.packageId}::creator_cap::CreatorCap`,
+        `${published.packageId}::operator_cap::OperatorCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
     ]);
 
-    const channelId = await getItsChannelId(client, itsv0ObjectId);
+    let tx = new Transaction();
 
-    chain.contracts.ITS.objects = { ITS: itsObjectId, ITSv0: itsv0ObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
+    restrictUpgradePolicy(tx, policy, upgradeCapObjectId);
 
-    const tx = new Transaction();
     tx.moveCall({
-        target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [tx.object(itsObjectId), tx.object(relayerDiscovery)],
+        target: `${published.packageId}::interchain_token_service::setup`,
+        arguments: [tx.object(creatorCapObjectId), tx.pure.string(chainName), tx.pure.string(itsHubAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    const setupReceipt = await broadcast(client, keypair, tx, 'Setup', options);
+
+    const [InterchainTokenServiceObjectId, InterchainTokenServiceV0ObjectId] = getObjectIdsByObjectTypes(setupReceipt, [
+        `${published.packageId}::interchain_token_service::InterchainTokenService`,
+        `${published.packageId}::interchain_token_service_v0::InterchainTokenService_v0`,
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const channelId = await getItsChannelId(client, InterchainTokenServiceV0ObjectId);
+
+    chain.contracts.InterchainTokenService.objects = {
+        InterchainTokenService: InterchainTokenServiceObjectId,
+        InterchainTokenServicev0: InterchainTokenServiceV0ObjectId,
+        ChannelId: channelId,
+        OwnerCap: ownerCapObjectId,
+        OperatorCap: operatorCapId,
+        UpgradeCap: upgradeCapObjectId,
+    };
+
+    tx = new Transaction();
+    tx.moveCall({
+        target: `${published.packageId}::discovery::register_transaction`,
+        arguments: [tx.object(InterchainTokenServiceObjectId), tx.object(relayerDiscovery)],
+    });
+
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function postDeploySquid(published, keypair, client, config, chain, options) {
+    const { policy } = options;
     const relayerDiscovery = chain.contracts.RelayerDiscovery?.objects?.RelayerDiscovery;
 
-    const [squidObjectId] = getObjectIdsByObjectTypes(published.publishTxn, [`${published.packageId}::squid::Squid`]);
+    const [squidObjectId, ownerCapObjectId, upgradeCap] = getObjectIdsByObjectTypes(published.publishTxn, [
+        `${published.packageId}::squid::Squid`,
+        `${published.packageId}::owner_cap::OwnerCap`,
+        `${suiPackageAddress}::package::UpgradeCap`,
+    ]);
     const channelId = await getSquidChannelId(client, squidObjectId);
-    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId };
+    chain.contracts.Squid.objects = { Squid: squidObjectId, ChannelId: channelId, OwnerCap: ownerCapObjectId };
 
     const tx = new Transaction();
+
+    restrictUpgradePolicy(tx, policy, upgradeCap);
+
     tx.moveCall({
         target: `${published.packageId}::discovery::register_transaction`,
-        arguments: [tx.object(squidObjectId), tx.object(chain.contracts.ITS.objects.ITS), tx.object(relayerDiscovery)],
+        arguments: [
+            tx.object(squidObjectId),
+            tx.object(chain.contracts.InterchainTokenService.objects.InterchainTokenService),
+            tx.object(relayerDiscovery),
+        ],
     });
 
-    await broadcast(client, keypair, tx, 'Registered Transaction');
+    await broadcast(client, keypair, tx, 'Registered Transaction', options);
 }
 
 async function deploy(keypair, client, supportedContract, config, chain, options) {
@@ -288,13 +389,18 @@ async function deploy(keypair, client, supportedContract, config, chain, options
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
 
-    printInfo(`Deployed ${packageName} Package`, published.packageId);
-    printInfo(`Deployed ${packageName} Tx`, published.publishTxn.digest);
+    printInfo(`${packageName} Package ID`, published.packageId);
 
     // Update chain configuration with deployed contract address
     chain.contracts[packageName] = {
         address: published.packageId,
+        versions: {
+            0: published.packageId,
+        },
+        deployer: keypair.toSuiAddress(),
     };
+
+    chain.contracts[packageName].structs = await getStructs(client, published.packageId);
 
     // Execute post-deployment function
     const executePostDeploymentFn = PACKAGE_CONFIGS.postDeployFunctions[packageName];
@@ -327,7 +433,32 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
     }
 
     const builder = new TxBuilder(client);
-    await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+    const result = await upgradePackage(client, keypair, supportedPackage, contractConfig, builder, options);
+
+    if (!options.offline) {
+        // The new upgraded package takes a bit of time to register, so we wait.
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        chain.contracts[packageName].structs = await getStructs(client, result.packageId);
+    }
+}
+
+async function syncPackages(keypair, client, config, chain, options) {
+    // Remove the move directory and its contents if it exists
+    fs.rmSync(moveDir, { recursive: true, force: true });
+
+    for (const packageDir of PACKAGE_DIRS) {
+        copyMovePackage(packageDir, null, moveDir);
+        const packageName = readMovePackageName(packageDir);
+        const packageId = chain.contracts[packageName]?.address;
+
+        if (!packageId) {
+            printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
+            continue;
+        }
+
+        updateMoveToml(packageDir, packageId, moveDir);
+        printInfo(`Synced ${packageName} with package ID`, packageId);
+    }
 }
 
 async function mainProcessor(args, options, processor) {
@@ -342,16 +473,6 @@ async function mainProcessor(args, options, processor) {
     await processor(keypair, client, ...args, config, sui, options);
 
     saveConfig(config, options.env);
-
-    if (options.offline) {
-        const { txFilePath } = options;
-        validateParameters({ isNonEmptyString: { txFilePath } });
-
-        const txB64Bytes = toB64(options.txBytes);
-
-        writeJSON({ message: options.offlineMessage, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
-        printInfo(`Unsigned transaction`, txFilePath);
-    }
 }
 
 /**
@@ -363,7 +484,7 @@ async function mainProcessor(args, options, processor) {
 // Common deploy command options for all packages
 const DEPLOY_CMD_OPTIONS = [
     new Option('--policy <policy>', 'upgrade policy for upgrade cap: For example, use "any_upgrade" to allow all types of upgrades')
-        .choices(['any_upgrade', 'code_upgrade', 'dep_upgrade'])
+        .choices(['immutable', 'any_upgrade', 'code_upgrade', 'dep_upgrade'])
         .default('any_upgrade'),
 ];
 
@@ -436,16 +557,22 @@ if (require.main === module) {
             });
     });
 
+    const syncCmd = new Command('sync').description('Sync local Move packages with deployed addresses').action((options) => {
+        mainProcessor([], options, syncPackages);
+    });
+
     // Add 3rd level commands to 2nd level command `upgrade`
     upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
 
     // Add base options to all 2nd and 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
     addOptionsToCommands(upgradeCmd, addBaseOptions);
+    addBaseOptions(syncCmd);
 
     // Add 2nd level commands to 1st level command
     program.addCommand(deployCmd);
     program.addCommand(upgradeCmd);
+    program.addCommand(syncCmd);
 
     program.parse();
 }

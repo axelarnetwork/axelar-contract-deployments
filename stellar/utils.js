@@ -9,18 +9,33 @@ const {
     BASE_FEE,
     xdr: { DiagnosticEvent, SorobanTransactionData },
     Address,
+    xdr,
+    nativeToScVal,
 } = require('@stellar/stellar-sdk');
-const { printInfo, sleep, addEnvOption } = require('../common');
+const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
+const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { arrayify },
+    utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
 } = ethers;
-
-const stellarCmd = 'soroban';
+const stellarCmd = 'stellar';
 const ASSET_TYPE_NATIVE = 'native';
+
+const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
+
+// TODO: Need to be migrated to Pascal Case
+const SUPPORTED_CONTRACTS = new Set([
+    'AxelarExample',
+    'AxelarGateway',
+    'AxelarOperators',
+    'AxelarGasService',
+    'InterchainToken',
+    'TokenManager',
+    'InterchainTokenService',
+    'Upgrader',
+]);
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -97,14 +112,14 @@ async function sendTransaction(tx, server, action, options = {}) {
     // wait, polling `getTransaction` until the transaction completes.
     try {
         const sendResponse = await server.sendTransaction(tx);
-        printInfo(`${action} Tx`, sendResponse.hash);
+        printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
         }
 
         if (sendResponse.status !== 'PENDING') {
-            throw Error(sendResponse.errorResultXdr);
+            throw Error(`Response: ${JSON.stringify(sendResponse, null, 2)}`);
         }
 
         let getResponse = await server.getTransaction(sendResponse.hash);
@@ -147,7 +162,7 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}) {
+async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc, { allowHttp: true });
 
     if (options.estimateCost) {
@@ -155,6 +170,18 @@ async function broadcast(operation, wallet, chain, action, options = {}) {
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
+    }
+
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        const response = await server.simulateTransaction(tx);
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
+        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
@@ -234,20 +261,18 @@ async function estimateCost(tx, server) {
     };
 }
 
-const getAmplifierVerifiers = async (config, chainAxelarId) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chainAxelarId].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
+    // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
         .map((signer) => ({
             signer: Address.account(Buffer.from(arrayify(`0x${signer.pub_key.ed25519}`))).toString(),
             weight: Number(signer.weight),
+            pubKey: signer.pub_key.ed25519,
         }))
-        .sort((a, b) => a.signer.localeCompare(b.signer));
+        .sort((a, b) => a.pubKey.localeCompare(b.pubKey))
+        .map(({ signer, weight }) => ({ signer, weight }));
 
     return {
         signers: weightedSigners,
@@ -257,7 +282,28 @@ const getAmplifierVerifiers = async (config, chainAxelarId) => {
     };
 };
 
+const getNewSigners = async (wallet, config, chain, options) => {
+    if (options.signers === 'wallet') {
+        return {
+            nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
+            signers: [
+                {
+                    signer: wallet.publicKey(),
+                    weight: 1,
+                },
+            ],
+            threshold: 1,
+        };
+    }
+
+    return await getAmplifierVerifiers(config, chain.axelarId);
+};
+
 function serializeValue(value) {
+    if (value instanceof xdr.ScAddress) {
+        return Address.fromScAddress(value).toString();
+    }
+
     if (value instanceof Uint8Array) {
         return Buffer.from(value).toString('hex');
     }
@@ -280,6 +326,144 @@ function serializeValue(value) {
     return value;
 }
 
+const createAuthorizedFunc = (contractAddress, functionName, args) =>
+    xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+        new xdr.InvokeContractArgs({
+            contractAddress: contractAddress.toScAddress(),
+            functionName,
+            args,
+        }),
+    );
+
+function addressToScVal(addressString) {
+    return nativeToScVal(Address.fromString(addressString), { type: 'address' });
+}
+
+function hexToScVal(hexString) {
+    return nativeToScVal(Buffer.from(arrayify(hexString)), { type: 'bytes' });
+}
+
+function tokenToScVal(tokenAddress, tokenAmount) {
+    return tokenAmount === 0
+        ? nativeToScVal(null, { type: 'null' })
+        : nativeToScVal(
+              {
+                  address: Address.fromString(tokenAddress),
+                  amount: tokenAmount,
+              },
+              {
+                  type: {
+                      address: ['symbol', 'address'],
+                      amount: ['symbol', 'i128'],
+                  },
+              },
+          );
+}
+
+function tokenMetadataToScVal(decimal, name, symbol) {
+    return nativeToScVal(
+        {
+            decimal,
+            name,
+            symbol,
+        },
+        {
+            type: {
+                decimal: ['symbol', 'u32'],
+                name: ['symbol', 'string'],
+                symbol: ['symbol', 'string'],
+            },
+        },
+    );
+}
+
+function saltToBytes32(salt) {
+    return isHexString(salt) ? hexZeroPad(salt, 32) : keccak256(salt);
+}
+
+const getContractR2Url = (contractName, version) => {
+    if (!SUPPORTED_CONTRACTS.has(contractName)) {
+        throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
+    }
+
+    const dirPath = `stellar-${pascalToKebab(contractName)}`;
+    const fileName = dirPath.replace(/-/g, '_');
+
+    if (VERSION_REGEX.test(version)) {
+        // Extra v for versioned releases in R2
+        return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/v${version}/wasm/${fileName}.wasm`;
+    }
+
+    if (SHORT_COMMIT_HASH_REGEX.test(version)) {
+        return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
+    }
+
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
+};
+
+function getContractArtifactPath(artifactPath, contractName) {
+    const basePath = artifactPath.slice(0, artifactPath.lastIndexOf('/') + 1);
+    const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.optimized.wasm`;
+    return basePath + fileName;
+}
+
+const getContractCodePath = async (options, contractName) => {
+    if (options.artifactPath) {
+        if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
+            return getContractArtifactPath(options.artifactPath, contractName);
+        }
+
+        return options.artifactPath;
+    }
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return await downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
+function isValidAddress(address) {
+    try {
+        // try conversion
+        Address.fromString(address);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function BytesToScVal(wasmHash) {
+    return nativeToScVal(Buffer.from(wasmHash, 'hex'), {
+        type: 'bytes',
+    });
+}
+
+/**
+ * Converts a PascalCase or camelCase string to kebab-case.
+ *
+ * - Inserts a hyphen (`-`) before each uppercase letter (except the first letter).
+ * - Converts all letters to lowercase.
+ * - Works for PascalCase, camelCase, and mixed-case strings.
+ *
+ * @param {string} str - The input string in PascalCase or camelCase.
+ * @returns {string} - The converted string in kebab-case.
+ *
+ * @example
+ * pascalToKebab("PascalCase");        // "pascal-case"
+ * pascalToKebab("camelCase");         // "camel-case"
+ * pascalToKebab("XMLHttpRequest");    // "xml-http-request"
+ * pascalToKebab("exampleString");     // "example-string"
+ * pascalToKebab("already-kebab");     // "already-kebab" (unchanged)
+ * pascalToKebab("noChange");          // "no-change"
+ * pascalToKebab("single");            // "single" (unchanged)
+ * pascalToKebab("");                  // "" (empty string case)
+ */
+function pascalToKebab(str) {
+    return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -291,7 +475,18 @@ module.exports = {
     estimateCost,
     getNetworkPassphrase,
     addBaseOptions,
-    getAmplifierVerifiers,
+    getNewSigners,
     serializeValue,
     getBalances,
+    createAuthorizedFunc,
+    addressToScVal,
+    hexToScVal,
+    tokenToScVal,
+    tokenMetadataToScVal,
+    saltToBytes32,
+    getContractCodePath,
+    isValidAddress,
+    SUPPORTED_CONTRACTS,
+    BytesToScVal,
+    pascalToKebab,
 };

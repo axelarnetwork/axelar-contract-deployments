@@ -9,8 +9,10 @@ const { Secp256r1Keypair, Secp256r1PublicKey } = require('@mysten/sui/keypairs/s
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui/client');
 const { fromB64, fromHEX } = require('@mysten/bcs');
 const { execute } = require('@axelar-network/axelar-cgp-sui');
+const { prompt } = require('../../common/utils');
 const { printInfo } = require('../../common/utils');
 const { ethers } = require('hardhat');
+const { LedgerSigner } = require('./LedgerSigner');
 const {
     utils: { hexlify },
 } = ethers;
@@ -40,9 +42,16 @@ function getWallet(chain, options) {
         }
     }
 
+    const client = getSuiClient(chain, options.rpc);
+
+    if (options.privateKey === 'ledger') {
+        keypair = new LedgerSigner();
+        return [keypair, client];
+    }
+
     switch (options.privateKeyType) {
         case 'bech32': {
-            const decodedKey = decodeSuiPrivateKey(options.privateKey);
+            const decodedKey = decodePrivateKey(options.privateKey);
             const secretKey = decodedKey.secretKey;
             keypair = scheme.fromSecretKey(secretKey);
             break;
@@ -64,21 +73,33 @@ function getWallet(chain, options) {
         }
     }
 
-    const url = chain.rpc || getFullnodeUrl(chain.networkType);
-    const client = new SuiClient({ url });
-
     return [keypair, client];
 }
 
-async function printWalletInfo(wallet, client, chain, options) {
-    const owner =
-        wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
-            ? wallet.toSuiAddress()
-            : wallet;
+function getSuiClient(chain, rpc) {
+    const url = rpc || chain.rpc || getFullnodeUrl(chain.networkType);
+    return new SuiClient({ url });
+}
+
+async function printWalletInfo(wallet, client, chain, options = {}) {
+    let owner;
+
+    if (options.privateKey !== 'ledger') {
+        owner =
+            wallet instanceof Ed25519Keypair || wallet instanceof Secp256k1Keypair || wallet instanceof Secp256r1Keypair
+                ? wallet.toSuiAddress()
+                : wallet;
+    } else {
+        owner = await wallet.toSuiAddress();
+        printInfo('PublicKey', (await wallet.getPublicKey()).address.toString('base64'));
+    }
+
     printInfo('Wallet address', owner);
 
-    const coins = await client.getBalance({ owner });
-    printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    if (!options.offline) {
+        const coins = await client.getBalance({ owner });
+        printInfo('Wallet balance', `${coins.totalBalance / 1e9} ${chain.tokenSymbol || coins.coinType}`);
+    }
 }
 
 async function generateKeypair(options) {
@@ -96,11 +117,41 @@ async function generateKeypair(options) {
     }
 }
 
-function getRawPrivateKey(keypair) {
-    return decodeSuiPrivateKey(keypair.getSecretKey()).secretKey;
+// Decodes a Sui private key without exposing the secret key when failing
+function decodePrivateKey(privateKey) {
+    if (typeof privateKey !== 'string' || !privateKey) {
+        throw new Error('Private key must be a non-empty string');
+    }
+
+    try {
+        return decodeSuiPrivateKey(privateKey);
+    } catch (e) {
+        throw new Error('Invalid Sui private key - please verify the format');
+    }
 }
 
-async function broadcast(client, keypair, tx, actionName) {
+function getRawPrivateKey(keypair) {
+    return decodePrivateKey(keypair.getSecretKey()).secretKey;
+}
+
+// Prompt the user for confirmation before executing a transaction
+async function askForConfirmation(actionName, commandOptions = {}) {
+    const { yes } = commandOptions;
+
+    if (!yes) {
+        const promptTitle = actionName ? `Confirm ${actionName} Tx?` : 'Confirm Tx?';
+        const aborted = prompt(promptTitle);
+
+        if (aborted) {
+            printInfo('Aborted');
+            process.exit(0);
+        }
+    }
+}
+
+async function broadcast(client, keypair, tx, actionName, commandOptions = {}) {
+    await askForConfirmation(actionName, commandOptions);
+
     const receipt = await client.signAndExecuteTransaction({
         transaction: tx,
         signer: keypair,
@@ -110,13 +161,14 @@ async function broadcast(client, keypair, tx, actionName) {
             showContent: true,
         },
     });
-
     printInfo(actionName || 'Tx', receipt.digest);
 
     return receipt;
 }
 
-async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiResponseOptions) {
+async function broadcastFromTxBuilder(txBuilder, keypair, actionName, commandOptions = {}, suiResponseOptions) {
+    await askForConfirmation(actionName, commandOptions);
+
     const receipt = await txBuilder.signAndExecute(keypair, suiResponseOptions);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -124,7 +176,16 @@ async function broadcastFromTxBuilder(txBuilder, keypair, actionName, suiRespons
     return receipt;
 }
 
-const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, gatewayInfo, messageInfo, actionName) => {
+const broadcastExecuteApprovedMessage = async (
+    client,
+    keypair,
+    discoveryInfo,
+    gatewayInfo,
+    messageInfo,
+    actionName,
+    commandOptions = {},
+) => {
+    await askForConfirmation(actionName, commandOptions);
     const receipt = await execute(client, keypair, discoveryInfo, gatewayInfo, messageInfo);
 
     printInfo(actionName || 'Tx', receipt.digest);
@@ -132,7 +193,9 @@ const broadcastExecuteApprovedMessage = async (client, keypair, discoveryInfo, g
     return receipt;
 };
 
-async function broadcastSignature(client, txBytes, signature, actionName) {
+async function broadcastSignature(client, txBytes, signature, actionName, commandOptions = {}) {
+    await askForConfirmation(actionName, commandOptions);
+
     const receipt = await client.executeTransactionBlock({
         transactionBlock: txBytes,
         signature,
@@ -152,15 +215,10 @@ async function broadcastSignature(client, txBytes, signature, actionName) {
 
 async function signTransactionBlockBytes(keypair, client, txBytes, options) {
     const serializedSignature = (await keypair.signTransaction(txBytes)).signature;
-    let publicKey;
 
-    try {
-        publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
-    } catch {
-        throw new Error(`Cannot verify tx signature`);
-    }
+    const publicKey = await verifyTransactionSignature(txBytes, serializedSignature);
 
-    if (publicKey.toSuiAddress() !== keypair.toSuiAddress()) {
+    if (publicKey.toSuiAddress() !== (await keypair.toSuiAddress())) {
         throw new Error(`Verification failed for address ${keypair.toSuiAddress()}`);
     }
 
@@ -268,4 +326,5 @@ module.exports = {
     signTransactionBlockBytes,
     broadcastFromTxBuilder,
     broadcastExecuteApprovedMessage,
+    getSuiClient,
 };

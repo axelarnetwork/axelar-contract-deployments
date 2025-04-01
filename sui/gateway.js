@@ -2,7 +2,7 @@ const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { bcsStructs, CLOCK_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify, keccak256, toUtf8Bytes },
     constants: { HashZero },
@@ -18,8 +18,11 @@ const {
     getRawPrivateKey,
     broadcast,
     suiClockAddress,
+    saveGeneratedTx,
+    isAllowed,
 } = require('./utils');
 const secp256k1 = require('secp256k1');
+const chalk = require('chalk');
 
 const COMMAND_TYPE_APPROVE_MESSAGES = 0;
 const COMMAND_TYPE_ROTATE_SIGNERS = 1;
@@ -140,13 +143,17 @@ async function callContract(keypair, client, config, chain, contractConfig, args
         });
     }
 
-    await broadcast(client, keypair, tx, 'Message sent');
+    return {
+        tx,
+        message: 'Message sent',
+    };
 }
 
 async function approve(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [sourceChain, messageId, sourceAddress, destinationId, payloadHash] = args;
 
+    console.log([sourceChain, messageId, sourceAddress, destinationId, payloadHash]);
     const encodedMessages = bcs
         .vector(bcsStructs.gateway.Message)
         .serialize([
@@ -173,7 +180,30 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Approved Messages');
+    return {
+        tx,
+        message: 'Approved Messages',
+    };
+}
+
+async function migrate(keypair, client, config, chain, contractConfig, args, options) {
+    const packageId = contractConfig.address;
+    const data = new Uint8Array(arrayify(options.migrateData || '0x'));
+    const tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::migrate`,
+        arguments: [
+            tx.object(contractConfig.objects.Gateway),
+            tx.object(contractConfig.objects.OwnerCap),
+            tx.pure(bcs.vector(bcs.u8()).serialize(data).toBytes()),
+        ],
+    });
+
+    return {
+        tx,
+        message: 'Migrate',
+    };
 }
 
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
@@ -216,7 +246,10 @@ async function submitProof(keypair, client, config, chain, contractConfig, args,
         throw new Error(`Unknown payload type: ${payload}`);
     }
 
-    await broadcast(client, keypair, tx, 'Submitted Amplifier Proof');
+    return {
+        tx,
+        message: 'Submitted Amplifier Proof',
+    };
 }
 
 async function rotate(keypair, client, config, chain, contractConfig, args, options) {
@@ -243,7 +276,176 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
         ],
     });
 
-    await broadcast(client, keypair, tx, 'Rotated Signers');
+    return {
+        tx,
+        message: 'Rotated Signers',
+    };
+}
+
+async function checkVersionControl(version, options) {
+    const config = loadConfig(options.env);
+
+    const chain = getChainConfig(config, options.chainName);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+
+    if (!chain.contracts?.AxelarGateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    const contractConfig = chain.contracts.AxelarGateway;
+    const packageId = contractConfig.versions[version];
+
+    const functions = {};
+    functions.approve_messages = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::approve_messages`,
+            arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.vector('u8', []), tx.pure.vector('u8', [])],
+        });
+    functions.rotate_signers = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::rotate_signers`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.object(CLOCK_PACKAGE_ID),
+                tx.pure.vector('u8', []),
+                tx.pure.vector('u8', []),
+            ],
+        });
+    functions.is_message_approved = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::is_message_approved`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.pure.string(''),
+                tx.pure.string(''),
+                tx.pure.string(''),
+                tx.pure.address('0x0'),
+                tx.moveCall({
+                    target: `${packageId}::bytes32::from_address`,
+                    arguments: [tx.pure.address('0x0')],
+                }),
+            ],
+        });
+    functions.is_message_executed = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::is_message_executed`,
+            arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.string(''), tx.pure.string('')],
+        });
+    functions.take_approved_message = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::take_approved_message`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.pure.string(''),
+                tx.pure.string(''),
+                tx.pure.string(''),
+                tx.pure.address('0x0'),
+                tx.pure.vector('u8', []),
+            ],
+        });
+
+    functions.send_message = (tx) => {
+        const channel = tx.moveCall({
+            target: `${packageId}::channel::new`,
+            arguments: [],
+        });
+
+        const message = tx.moveCall({
+            target: `${packageId}::gateway::prepare_message`,
+            arguments: [channel, tx.pure.string(''), tx.pure.string(''), tx.pure.vector('u8', [])],
+        });
+
+        tx.moveCall({
+            target: `${packageId}::gateway::send_message`,
+            arguments: [tx.object(contractConfig.objects.Gateway), message],
+        });
+
+        tx.moveCall({
+            target: `${packageId}::channel::destroy`,
+            arguments: [channel],
+        });
+    };
+
+    functions.allow_function = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::allow_function`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.object(contractConfig.objects.OwnerCap),
+                tx.pure.u64(0),
+                tx.pure.string(''),
+            ],
+        });
+    functions.disallow_function = (tx) =>
+        tx.moveCall({
+            target: `${packageId}::gateway::disallow_function`,
+            arguments: [
+                tx.object(contractConfig.objects.Gateway),
+                tx.object(contractConfig.objects.OwnerCap),
+                tx.pure.u64(0),
+                tx.pure.string(''),
+            ],
+        });
+
+    if (options.allowedFunctions) {
+        const allowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.allowedFunctions.split(',');
+
+        for (const allowedFunction of allowedFunctions) {
+            const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction], options);
+            const color = allowed ? chalk.green : chalk.red;
+            console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+        }
+    }
+
+    if (options.disallowedFunctions) {
+        const disallowedFunctions = options.allowedFunctions === 'all' ? Object.keys(functions) : options.disallowedFunctions.split(',');
+
+        for (const disallowedFunction of disallowedFunctions) {
+            const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction], options);
+            const color = allowed ? chalk.red : chalk.green;
+            console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+        }
+    }
+}
+
+async function testNewField(value, options) {
+    const config = loadConfig(options.env);
+
+    const chain = getChainConfig(config, options.chainName);
+    const [keypair, client] = getWallet(chain, options);
+    await printWalletInfo(keypair, client, chain, options);
+
+    if (!chain.contracts?.AxelarGateway) {
+        throw new Error('Axelar Gateway package not found.');
+    }
+
+    const contractConfig = chain.contracts.AxelarGateway;
+    const packageId = contractConfig.address;
+
+    let tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::set_new_field`,
+        arguments: [tx.object(contractConfig.objects.Gateway), tx.pure.u64(value)],
+    });
+
+    await broadcast(client, keypair, tx, 'Set new_field', options);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    tx = new Transaction();
+
+    tx.moveCall({
+        target: `${packageId}::gateway::new_field`,
+        arguments: [tx.object(contractConfig.objects.Gateway)],
+    });
+
+    const response = await client.devInspectTransactionBlock({
+        transactionBlock: tx,
+        sender: keypair.toSuiAddress(),
+    });
+    const returnedValue = bcs.U64.parse(new Uint8Array(response.results[0].returnValues[0][0]));
+    console.log(`Set the value to ${value} and it was set to ${returnedValue}.`);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -257,9 +459,17 @@ async function mainProcessor(processor, args, options) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(keypair, client, config, chain, chain.contracts.AxelarGateway, args, options);
+    const { tx, message } = await processor(keypair, client, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
+
+    if (options.offline) {
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, message, client, options);
+    } else {
+        await broadcast(client, keypair, tx, message, options);
+    }
 }
 
 if (require.main === module) {
@@ -288,6 +498,14 @@ if (require.main === module) {
         });
 
     program
+        .command('migrate')
+        .description('Migrate the gateway after upgrade')
+        .addOption(new Option('--migrate-data <migrateData>', 'bcs encoded data to pass to the migrate function'))
+        .action((options) => {
+            mainProcessor(migrate, null, options);
+        });
+
+    program
         .command('submitProof <multisigSessionId>')
         .description('Submit proof for the provided amplifier multisig session id')
         .action((multisigSessionId, options) => {
@@ -302,7 +520,23 @@ if (require.main === module) {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
         });
 
-    addOptionsToCommands(program, addBaseOptions);
+    program
+        .command('check-version-control <version>')
+        .description('Check if version control works on a certain version')
+        .addOption(new Option('--allowed-functions <allowed-functions>', 'Functions that should be allowed on this version'))
+        .addOption(new Option('--disallowed-functions <disallowed-functions>', 'Functions that should be disallowed on this version'))
+        .action((version, options) => {
+            checkVersionControl(version, options);
+        });
+
+    program
+        .command('test-new-field <value>')
+        .description('Test the new field added for upgrade-versioned')
+        .action((value, options) => {
+            testNewField(value, options);
+        });
+
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

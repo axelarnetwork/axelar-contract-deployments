@@ -56,7 +56,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
     verifyContractByName(
         env,
         chain.name,
-        'AxelarGateway',
+        'AxelarAmplifierGateway',
         implementation,
         [previousSignersRetention, domainSeparator, minimumRotationDelay],
         verifyOptions,
@@ -240,7 +240,7 @@ async function processCommand(config, chain, options) {
             await verifyContract(env, chain.axelarId, interchainToken, [contractAddress], verifyOptions);
             await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenManager, [contractAddress], verifyOptions);
-            await verifyContract(env, chain.axelarId, tokenHandler, [chain.contracts.AxelarGateway.address], verifyOptions);
+            await verifyContract(env, chain.axelarId, tokenHandler, [], verifyOptions);
             await verifyContract(
                 env,
                 chain.axelarId,

@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { bcs } = require('@mysten/sui/bcs');
 const { ethers } = require('hardhat');
-const { bcsStructs } = require('@axelar-network/axelar-cgp-sui');
+const { SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const {
     utils: { arrayify },
 } = ethers;
@@ -11,42 +11,73 @@ const {
     getWallet,
     printWalletInfo,
     broadcast,
-    getBcsBytesByObjectId,
     getFormattedAmount,
     addOptionsToCommands,
     addBaseOptions,
     parseSuiUnitAmount,
 } = require('./utils');
 
-async function payGas(keypair, client, gasServiceConfig, args, options) {
+async function payGas(keypair, client, gasServiceConfig, args, options, contracts) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
+    const axelarGatewayPackageId = contracts.AxelarGateway.address;
 
     const { params } = options;
     const refundAddress = options.refundAddress || walletAddress;
 
-    const [destinationChain, destinationAddress, channelId, payload] = args;
+    const [destinationChain, destinationAddress, payload] = args;
     const unitAmount = options.amount;
 
+    let channel = options.channel;
+
     const tx = new Transaction();
+
+    // Create a temporary channel if one wasn't provided
+    if (!options.channel) {
+        [channel] = tx.moveCall({
+            target: `${axelarGatewayPackageId}::channel::new`,
+            arguments: [],
+        });
+    }
+
     const [coin] = tx.splitCoins(tx.gas, [unitAmount]);
+
+    const [messageTicket] = tx.moveCall({
+        target: `${axelarGatewayPackageId}::gateway::prepare_message`,
+        arguments: [
+            channel,
+            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
+            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
+            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
+        ],
+    });
 
     tx.moveCall({
         target: `${gasServicePackageId}::gas_service::pay_gas`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
+            messageTicket,
             coin, // Coin<SUI>
-            tx.pure.address(channelId), // Channel address
-            tx.pure(bcs.string().serialize(destinationChain).toBytes()), // Destination chain
-            tx.pure(bcs.string().serialize(destinationAddress).toBytes()), // Destination address
-            tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(payload)).toBytes()), // Payload
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Paid');
+    tx.moveCall({
+        target: `${axelarGatewayPackageId}::gateway::send_message`,
+        arguments: [tx.object(contracts.AxelarGateway.objects.Gateway), messageTicket],
+    });
+
+    if (!options.channel) {
+        tx.moveCall({
+            target: `${axelarGatewayPackageId}::channel::destroy`,
+            arguments: [channel],
+        });
+    }
+
+    await broadcast(client, keypair, tx, 'Gas Paid', options);
 }
 
 async function addGas(keypair, client, gasServiceConfig, args, options) {
@@ -72,23 +103,28 @@ async function addGas(keypair, client, gasServiceConfig, args, options) {
             tx.pure.address(refundAddress), // Refund address
             tx.pure(bcs.vector(bcs.u8()).serialize(arrayify(params)).toBytes()), // Params
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Added');
+    await broadcast(client, keypair, tx, 'Gas Added', options);
 }
 
 async function collectGas(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServiceObjectId = gasServiceConfig.objects.GasServicev0;
 
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
-    const bytes = await getBcsBytesByObjectId(client, gasServiceObjectId);
-    const result = bcsStructs.gasService.GasService.parse(bytes);
-    const gasServiceBalance = result.value.balance;
+    const balanceQuery = new TxBuilder(client);
+    await balanceQuery.moveCall({
+        target: `${gasServicePackageId}::gas_service::balance`,
+        arguments: [gasServiceConfig.objects.GasService],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
+    });
+    const result = await balanceQuery.devInspect(walletAddress);
+    const gasServiceBalance = bcs.U64.parse(new Uint8Array(result.results[0].returnValues[0][0]));
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -102,28 +138,33 @@ async function collectGas(keypair, client, gasServiceConfig, args, options) {
         target: `${gasServicePackageId}::gas_service::collect_gas`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
-            tx.object(gasServiceConfig.objects.GasCollectorCap),
+            tx.object(gasServiceConfig.objects.OperatorCap),
             tx.pure.address(receiver), // Receiver address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Collected');
+    await broadcast(client, keypair, tx, 'Gas Collected', options);
 }
 
 async function refund(keypair, client, gasServiceConfig, args, options) {
     const walletAddress = keypair.toSuiAddress();
 
     const gasServicePackageId = gasServiceConfig.address;
-    const gasServicev0ObjectId = gasServiceConfig.objects.GasServicev0;
 
     const [messageId] = args;
     const unitAmount = options.amount;
     const receiver = options.receiver || walletAddress;
 
-    const bytes = await getBcsBytesByObjectId(client, gasServicev0ObjectId);
-    const result = bcsStructs.gasService.GasService.parse(bytes);
-    const gasServiceBalance = result.value.balance;
+    const balanceQuery = new TxBuilder(client);
+    await balanceQuery.moveCall({
+        target: `${gasServicePackageId}::gas_service::balance`,
+        arguments: [gasServiceConfig.objects.GasService],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
+    });
+    const result = await balanceQuery.devInspect(walletAddress);
+    const gasServiceBalance = bcs.U64.parse(new Uint8Array(result.results[0].returnValues[0][0]));
 
     // Check if the gas service balance is sufficient
     if (gasServiceBalance < unitAmount) {
@@ -136,14 +177,15 @@ async function refund(keypair, client, gasServiceConfig, args, options) {
         target: `${gasServicePackageId}::gas_service::refund`,
         arguments: [
             tx.object(gasServiceConfig.objects.GasService),
-            tx.object(gasServiceConfig.objects.GasCollectorCap),
+            tx.object(gasServiceConfig.objects.OperatorCap),
             tx.pure(bcs.string().serialize(messageId).toBytes()), // Message ID for the contract call
             tx.pure.address(receiver), // Refund address
             tx.pure.u64(unitAmount), // Amount
         ],
+        typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
     });
 
-    await broadcast(client, keypair, tx, 'Gas Refunded');
+    await broadcast(client, keypair, tx, 'Gas Refunded', options);
 }
 
 async function processCommand(command, chain, args, options) {
@@ -155,7 +197,7 @@ async function processCommand(command, chain, args, options) {
         throw new Error('GasService contract not found');
     }
 
-    await command(keypair, client, chain.contracts.GasService, args, options);
+    await command(keypair, client, chain.contracts.GasService, args, options, chain.contracts);
 }
 
 async function mainProcessor(options, args, processor, command) {
@@ -171,13 +213,14 @@ if (require.main === module) {
     program.name('gas-service').description('Interact with the gas service contract.');
 
     const payGasCmd = new Command()
-        .command('payGas <destinationChain> <destinationAddress> <channelId> <payload>')
-        .description('Pay gas for the new contract call.')
+        .command('payGas <destinationChain> <destinationAddress> <payload>')
+        .description('Send a contract call with gas for it payed.')
         .option('--refundAddress <refundAddress>', 'Refund address. Default is the sender address.')
         .requiredOption('--amount <amount>', 'Amount to pay gas', parseSuiUnitAmount)
+        .option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over')
         .option('--params <params>', 'Params. Default is empty.', '0x')
-        .action((destinationChain, destinationAddress, channelId, payload, options) => {
-            mainProcessor(options, [destinationChain, destinationAddress, channelId, payload], processCommand, payGas);
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(options, [destinationChain, destinationAddress, payload], processCommand, payGas);
         });
 
     const addGasCmd = new Command()

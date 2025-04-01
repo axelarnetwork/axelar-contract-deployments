@@ -10,7 +10,12 @@ const addBaseOptions = (program, options = {}) => {
     addEnvOption(program);
     program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
     program.addOption(new Option('--gasOptions <gasOptions>', 'gas options cli override'));
-    program.addOption(new Option('--chainName <chainName>', 'chainName').default('sui'));
+    program.addOption(
+        new Option('-n, --chainName <chainName>', 'chain name')
+            .env('CHAIN')
+            .default('sui')
+            .argParser((value) => value.toLowerCase()),
+    );
 
     if (!options.ignorePrivateKey) {
         program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
@@ -33,6 +38,12 @@ const addBaseOptions = (program, options = {}) => {
 
     if (options.address) {
         program.addOption(new Option('--address <address>', 'override contract address'));
+    }
+
+    if (options.offline) {
+        program.addOption(new Option('--sender <sender>', 'transaction sender'));
+        program.addOption(new Option('--offline', 'store tx block for sign'));
+        program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
     }
 
     return program;

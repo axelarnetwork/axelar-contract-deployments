@@ -1,8 +1,13 @@
 const { bcs } = require('@mysten/bcs');
 const { fromB64 } = require('@mysten/bcs');
+const { Transaction } = require('@mysten/sui/transactions');
 const { printInfo, validateParameters } = require('../../common/utils');
-const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir } = require('./utils');
+const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
+const { getObjectIdsByObjectTypes, suiPackageAddress, moveDir, saveGeneratedTx } = require('./utils');
+const { broadcast } = require('./sign-utils');
+
 const UPGRADE_POLICIES = {
+    immutable: 'make_immutable',
     code_upgrade: 'only_additive_upgrades',
     dependency_upgrade: 'only_dep_upgrades',
 };
@@ -20,11 +25,44 @@ function getUpgradePolicyId(policy) {
     }
 }
 
+function restrictUpgradePolicy(tx, policy, upgradeCap) {
+    const upgradeType = UPGRADE_POLICIES[policy];
+
+    if (upgradeType) {
+        tx.moveCall({
+            target: `${suiPackageAddress}::package::${upgradeType}`,
+            arguments: [tx.object(upgradeCap)],
+        });
+    }
+
+    return tx;
+}
+
+function broadcastRestrictedUpgradePolicy(client, keypair, upgradeCap, options) {
+    const upgradeType = UPGRADE_POLICIES[options.policy];
+
+    if (!upgradeType) {
+        return;
+    }
+
+    if (!upgradeCap) {
+        throw new Error(`Cannot find upgrade cap to restrict upgrade policy`);
+    }
+
+    return broadcast(
+        client,
+        keypair,
+        restrictUpgradePolicy(new Transaction(), options.policy, upgradeCap),
+        `Restricted Upgrade Policy (${options.policy})`,
+        options,
+    );
+}
+
 async function upgradePackage(client, keypair, packageToUpgrade, contractConfig, builder, options) {
+    copyMovePackage(packageToUpgrade.packageDir, null, moveDir);
     const { packageDir, packageName } = packageToUpgrade;
     const { modules, dependencies, digest } = await builder.getContractBuild(packageDir, moveDir);
     const { offline } = options;
-    const sender = options.sender || keypair.toSuiAddress();
     const upgradeCap = contractConfig.objects?.UpgradeCap;
     const digestHash = options.digest ? fromB64(options.digest) : digest;
     const policy = getUpgradePolicyId(options.policy);
@@ -33,6 +71,7 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
 
     const tx = builder.tx;
     const cap = tx.object(upgradeCap);
+
     const ticket = tx.moveCall({
         target: `${suiPackageAddress}::package::authorize_upgrade`,
         arguments: [cap, tx.pure.u8(policy), tx.pure(bcs.vector(bcs.u8()).serialize(digestHash).toBytes())],
@@ -50,13 +89,13 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
         arguments: [cap, receipt],
     });
 
+    const sender = options.sender || keypair.toSuiAddress();
     tx.setSender(sender);
-    const txBytes = await tx.build({ client });
 
     if (offline) {
-        options.txBytes = txBytes;
-        options.offlineMessage = `Transaction to upgrade ${packageDir}`;
+        await saveGeneratedTx(tx, `Transaction to upgrade ${packageDir}`, client, options);
     } else {
+        const txBytes = await tx.build({ client });
         const signature = (await keypair.signTransaction(txBytes)).signature;
         const result = await client.executeTransactionBlock({
             transactionBlock: txBytes,
@@ -68,17 +107,27 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
             },
         });
 
-        const packageId = (result.objectChanges?.filter((a) => a.type === 'published') ?? [])[0].packageId;
-        contractConfig.address = packageId;
+        printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
+
+        const publishedObject = result.objectChanges.find((change) => change.type === 'published');
+        const packageId = publishedObject.packageId;
+        const versionNumber = parseInt(publishedObject.version) - 1;
         const [upgradeCap] = getObjectIdsByObjectTypes(result, [`${suiPackageAddress}::package::UpgradeCap`]);
+
+        contractConfig.address = packageId;
+        contractConfig.versions[versionNumber] = publishedObject.packageId;
         contractConfig.objects.UpgradeCap = upgradeCap;
 
-        printInfo('Transaction Digest', JSON.stringify(result.digest, null, 2));
         printInfo(`${packageName} Upgraded Address`, packageId);
+        updateMoveToml(packageToUpgrade.packageDir, packageId, moveDir);
+
+        return { upgraded: result, packageId };
     }
 }
 
 module.exports = {
     UPGRADE_POLICIES,
     upgradePackage,
+    restrictUpgradePolicy,
+    broadcastRestrictedUpgradePolicy,
 };

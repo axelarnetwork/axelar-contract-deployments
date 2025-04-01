@@ -1,6 +1,6 @@
 const { Command, Option } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
-const { printError, loadConfig, getChainConfig } = require('../common/utils');
+const { loadConfig, getChainConfig } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -9,16 +9,18 @@ const {
     printWalletInfo,
     broadcast,
     findOwnedObjectIdByType,
+    saveGeneratedTx,
 } = require('./utils');
+const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 
 function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, moveCall) {
     const operatorId = contractConfig.objects.Operators;
-    const gasCollectorCapId = gasServiceConfig.objects.GasCollectorCap;
+    const gasCollectorCapId = gasServiceConfig.objects.OperatorCap;
 
     const [cap, borrowObj] = tx.moveCall({
         target: `${contractConfig.address}::operators::loan_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
     moveCall(cap);
@@ -26,7 +28,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), cap, borrowObj],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
     return tx;
@@ -47,10 +49,14 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
         tx.moveCall({
             target: `${gasServiceConfig.address}::gas_service::collect_gas`,
             arguments: [tx.object(gasServiceConfig.objects.GasService), cap, tx.pure.address(receiver), tx.pure.u64(amount)],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
-    await broadcast(client, keypair, tx, 'Gas Collected');
+    return {
+        tx,
+        message: 'Gas Collected',
+    };
 }
 
 async function refund(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -75,15 +81,19 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
                 tx.pure.address(receiver),
                 tx.pure.u64(amount),
             ],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
-    await broadcast(client, keypair, tx, 'Refunded Gas');
+    return {
+        tx,
+        message: 'Refunded Gas',
+    };
 }
 
 async function storeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [capId] = args;
-    const gasCollectorCapId = capId || gasServiceConfig.objects.GasCollectorCap;
+    const operatorCapId = capId || gasServiceConfig.objects.OperatorCap;
     const ownerCapId = contractConfig.objects.OwnerCap;
     const operatorId = contractConfig.objects.Operators;
 
@@ -91,11 +101,14 @@ async function storeCap(keypair, client, gasServiceConfig, contractConfig, args,
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::store_cap`,
-        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(gasCollectorCapId)],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(operatorCapId)],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
-    await broadcast(client, keypair, tx, 'Stored Capability');
+    return {
+        tx,
+        message: 'Stored Capability',
+    };
 }
 
 async function addOperator(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -111,7 +124,10 @@ async function addOperator(keypair, client, gasServiceConfig, contractConfig, ar
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.pure.address(newOperatorAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Added Operator');
+    return {
+        tx,
+        message: 'Added Operator',
+    };
 }
 
 async function removeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -127,16 +143,15 @@ async function removeCap(keypair, client, gasServiceConfig, contractConfig, args
     const cap = tx.moveCall({
         target: `${contractConfig.address}::operators::remove_cap`,
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.object(capId)],
-        typeArguments: [`${gasServiceAddress}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceAddress}::operator_cap::OperatorCap`],
     });
 
     tx.transferObjects([cap], capReceiver);
 
-    try {
-        await broadcast(client, keypair, tx, 'Removed Capability');
-    } catch (e) {
-        printError('RemoveCap Error', e.message);
-    }
+    return {
+        tx,
+        message: 'Removed Capability',
+    };
 }
 
 async function removeOperator(keypair, client, gasServiceConfig, contractConfig, args, options) {
@@ -152,7 +167,10 @@ async function removeOperator(keypair, client, gasServiceConfig, contractConfig,
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.pure.address(operatorAddress)],
     });
 
-    await broadcast(client, keypair, tx, 'Removed Operator');
+    return {
+        tx,
+        message: 'Removed Operator',
+    };
 }
 
 async function mainProcessor(processor, args, options) {
@@ -172,7 +190,16 @@ async function mainProcessor(processor, args, options) {
 
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
-    await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
+
+    const { tx, message } = await processor(keypair, client, gasServiceConfig, contractConfig, args, options);
+
+    if (options.offline) {
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, message, client, options);
+    } else {
+        await broadcast(client, keypair, tx, message, options);
+    }
 }
 
 if (require.main === module) {
@@ -231,7 +258,7 @@ if (require.main === module) {
             .action((messageId, options) => mainProcessor(refund, [messageId], options)),
     );
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
 
     program.parse();
 }

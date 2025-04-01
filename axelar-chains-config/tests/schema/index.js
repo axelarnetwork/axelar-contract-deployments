@@ -26,7 +26,7 @@ export const contractSchema = {
     type: 'object',
     patternProperties: {
         // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
+        '(^[a-z]|[A-Z])[a-z]*': {
             $ref: contractValueSchema.id,
         },
     },
@@ -35,7 +35,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway'],
+    required: [],
 };
 
 export const explorerSchema = {
@@ -67,6 +67,8 @@ export const chainValueSchema = {
         name: { type: 'string' },
         axelarId: { type: 'string' },
         chainId: { type: 'number' },
+        networkType: { type: 'string' },
+        chainType: { type: 'string' },
         rpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
         contracts: { $ref: contractSchema.id },
@@ -77,7 +79,7 @@ export const chainValueSchema = {
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
     },
-    required: ['name', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType', 'finality', 'approxFinalityWaitTime'],
 };
 
 export const chainsSchema = {

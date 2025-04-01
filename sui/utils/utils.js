@@ -2,15 +2,14 @@
 
 const { ethers } = require('hardhat');
 const toml = require('toml');
-const { printInfo, printError, printWarn } = require('../../common/utils');
+const { printInfo, printError, printWarn, validateParameters, writeJSON, getCurrentVerifierSet } = require('../../common/utils');
 const {
     BigNumber,
     utils: { arrayify, hexlify, toUtf8Bytes, keccak256 },
     constants: { HashZero },
 } = ethers;
 const fs = require('fs');
-const { fromB64 } = require('@mysten/bcs');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+const { fromB64, toB64 } = require('@mysten/bcs');
 const {
     updateMoveToml,
     copyMovePackage,
@@ -18,20 +17,19 @@ const {
     bcsStructs,
     getDefinedSuiVersion,
     getInstalledSuiVersion,
+    STD_PACKAGE_ID,
+    SUI_PACKAGE_ID,
 } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { broadcast, broadcastFromTxBuilder } = require('./sign-utils');
 
 const suiPackageAddress = '0x2';
 const suiClockAddress = '0x6';
 const suiCoinId = '0x2::sui::SUI';
 const moveDir = `${__dirname}/../move`;
 
-const getAmplifierSigners = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedSigners = signers
         .map((signer) => ({
@@ -56,7 +54,6 @@ const getBcsBytesByObjectId = async (client, objectId) => {
             showBcs: true,
         },
     });
-
     return fromB64(response.data.bcs.bcsBytes);
 };
 
@@ -65,7 +62,7 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
-    const publishTxn = await builder.signAndExecute(keypair);
+    const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
 
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
@@ -85,17 +82,17 @@ const checkSuiVersionMatch = () => {
         printWarn('Version mismatch detected:');
         printWarn(`- Installed SUI version: ${installedVersion}`);
         printWarn(`- Version used for tests: ${definedVersion}`);
+        printWarn(`Please download the correct version (${definedVersion}) from https://github.com/MystenLabs/sui/releases`);
     }
+};
+
+const readMoveToml = (moveDir) => {
+    return fs.readFileSync(`${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`, 'utf8');
 };
 
 const readMovePackageName = (moveDir) => {
     try {
-        const moveToml = fs.readFileSync(
-            `${__dirname}/../../node_modules/@axelar-network/axelar-cgp-sui/move/${moveDir}/Move.toml`,
-            'utf8',
-        );
-
-        const { package: movePackage } = toml.parse(moveToml);
+        const { package: movePackage } = toml.parse(readMoveToml(moveDir));
 
         return movePackage.name;
     } catch (err) {
@@ -124,7 +121,7 @@ const getSingletonChannelId = async (client, singletonObjectId) => {
 
 const getItsChannelId = async (client, itsObjectId) => {
     const bcsBytes = await getBcsBytesByObjectId(client, itsObjectId);
-    const data = bcsStructs.its.ITS.parse(bcsBytes);
+    const data = bcsStructs.its.InterchainTokenService.parse(bcsBytes);
     const channelId = data.value.channel.id;
     return '0x' + channelId;
 };
@@ -162,7 +159,7 @@ const getSigners = async (keypair, config, chain, options) => {
         };
     }
 
-    return getAmplifierSigners(config, chain);
+    return getAmplifierVerifiers(config, chain);
 };
 
 const isGasToken = (coinType) => {
@@ -262,17 +259,100 @@ const parseGatewayInfo = (chain) => {
     };
 };
 
-const checkTrustedAddresses = (trustedAddresses, destinationChain) => {
-    if (!trustedAddresses[destinationChain]) {
-        throw new Error(
-            `${destinationChain} is not trusted. Run 'node sui/its-example.js setup-trusted-address <destination-chain> <destination-address>' to setup trusted address`,
-        );
+const checkTrustedAddresses = async (destinationChain) => {
+    // TODO: another PR adds functionality that will enable this
+};
+
+const getStructs = async (client, packageId) => {
+    const packageData = await client.getObject({ id: packageId, options: { showBcs: true } });
+    const structs = {};
+
+    for (const type of packageData.data.bcs.typeOriginTable) {
+        structs[type.datatype_name] = `${type.package}::${type.module_name}::${type.datatype_name}`;
     }
+
+    return structs;
+};
+
+const saveGeneratedTx = async (tx, message, client, options) => {
+    const { txFilePath } = options;
+    validateParameters({ isNonEmptyString: { txFilePath } });
+
+    const txBytes = await tx.build({ client });
+    const txB64Bytes = toB64(txBytes);
+
+    writeJSON({ message, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
+    printInfo(`Unsigned transaction`, txFilePath);
+};
+
+const isAllowed = async (client, keypair, chain, exec, options) => {
+    const addError = (tx) => {
+        tx.moveCall({
+            target: `${STD_PACKAGE_ID}::ascii::char`,
+            arguments: [tx.pure.u8(128)],
+        });
+    };
+
+    const tx = new Transaction();
+    exec(tx);
+    addError(tx);
+
+    try {
+        await broadcast(client, keypair, tx, undefined, options);
+    } catch (e) {
+        const errorMessage = e.cause.effects.status.error;
+        let regexp = /address: (.*?),/;
+        const packageId = `0x${regexp.exec(errorMessage)[1]}`;
+
+        regexp = /Identifier\("(.*?)"\)/;
+        const module = regexp.exec(errorMessage)[1];
+
+        regexp = /Some\("(.*?)"\)/;
+        const functionName = regexp.exec(errorMessage)[1];
+
+        if (packageId === chain.contracts.VersionControl.address && module === 'version_control' && functionName === 'check') {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 9223372539365950000) {
+                return false;
+            }
+        }
+
+        let suiPackageAddress = SUI_PACKAGE_ID;
+
+        while (suiPackageAddress.length < 66) {
+            suiPackageAddress = suiPackageAddress.substring(0, suiPackageAddress.length - 1) + '02';
+        }
+
+        if (
+            packageId === suiPackageAddress &&
+            module === 'dynamic_field' &&
+            (functionName === 'borrow_child_object_mut' || functionName === 'borrow_child_object')
+        ) {
+            regexp = /Some\(".*?"\) \}, (.*?)\)/;
+
+            if (parseInt(regexp.exec(errorMessage)[1]) === 2) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
+const getAllowedFunctions = async (client, versionedObjectId) => {
+    const response = await client.getObject({
+        id: versionedObjectId,
+        options: {
+            showContent: true,
+        },
+    });
+    const allowedFunctionsArray = response.data.content.fields.value.fields.version_control.fields.allowed_functions;
+    return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
 };
 
 module.exports = {
     suiCoinId,
-    getAmplifierSigners,
     isGasToken,
     paginateAll,
     suiPackageAddress,
@@ -291,7 +371,11 @@ module.exports = {
     getBagContentId,
     moveDir,
     getTransactionList,
-    checkTrustedAddresses,
     parseDiscoveryInfo,
     parseGatewayInfo,
+    checkTrustedAddresses,
+    getStructs,
+    saveGeneratedTx,
+    isAllowed,
+    getAllowedFunctions,
 };

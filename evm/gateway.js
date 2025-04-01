@@ -17,6 +17,7 @@ const {
     getEVMBatch,
     getEVMAddresses,
     isValidAddress,
+    validateParameters,
     wasEventEmitted,
     mainProcessor,
     printError,
@@ -286,13 +287,13 @@ async function processCommand(config, chain, options) {
             const payloadHash = keccak256(arrayify(payload));
             const { sourceChain, sourceAddress } = options;
 
-            let commandId;
+            let commandID;
 
             if (options.messageId) {
-                // Derive commandId for Amplifier gateway
-                commandId = id(`${sourceChain}_${options.messageId}`);
+                // Derive commandID for Amplifier gateway
+                commandID = id(`${sourceChain}_${options.messageId}`);
             } else {
-                commandId = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
+                commandID = options.commandID.startsWith('0x') ? options.commandID : id(parseInt(options.commandID).toString());
             }
 
             if (!options.destination) {
@@ -302,16 +303,55 @@ async function processCommand(config, chain, options) {
             printInfo('Destination app contract', options.destination);
             printInfo('Payload Hash', payloadHash);
 
-            if (!(await gateway.isContractCallApproved(commandId, sourceChain, sourceAddress, options.destination, payloadHash))) {
+            if (!(await gateway.isContractCallApproved(commandID, sourceChain, sourceAddress, options.destination, payloadHash))) {
                 printWarn('Contract call not approved at the gateway');
                 return;
             }
 
             const appContract = new Contract(options.destination, IAxelarExecutable.abi, wallet);
 
-            const tx = await appContract.execute(commandId, sourceChain, sourceAddress, payload);
+            const tx = await appContract.execute(commandID, sourceChain, sourceAddress, payload, gasOptions);
             printInfo('Execute tx', tx.hash);
             await tx.wait(chain.confirmations);
+
+            break;
+        }
+
+        case 'isContractCallApproved': {
+            const { commandID, destination, payloadHash, sourceChain, sourceAddress } = options;
+
+            validateParameters({
+                isNonEmptyString: { commandID, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
+
+            const isApproved = await gateway.isContractCallApproved(commandID, sourceChain, sourceAddress, destination, payloadHash);
+
+            if (isApproved) {
+                printInfo('Contract call was approved at the gateway');
+            } else {
+                printWarn('Contract call was not approved at the gateway');
+            }
+
+            break;
+        }
+
+        case 'isMessageApproved': {
+            const { messageId, destination, payloadHash, sourceChain, sourceAddress } = options;
+            const commandID = id(`${sourceChain}_${messageId}`);
+
+            validateParameters({
+                isNonEmptyString: { commandID, payloadHash, sourceChain, sourceAddress },
+                isAddress: { destination },
+            });
+
+            const isApproved = await gateway.isContractCallApproved(commandID, sourceChain, sourceAddress, destination, payloadHash);
+
+            if (isApproved) {
+                printInfo('Message was approved at the gateway');
+            } else {
+                printWarn('Message was not approved at the gateway');
+            }
 
             break;
         }
@@ -491,6 +531,8 @@ if (require.main === module) {
                 'approve',
                 'execute',
                 'approveAndExecute',
+                'isContractCallApproved',
+                'isMessageApproved',
                 'transferGovernance',
                 'governance',
                 'mintLimiter',
@@ -504,7 +546,8 @@ if (require.main === module) {
             .makeOptionMandatory(true),
     );
 
-    program.addOption(new Option('--payload <payload>', 'gmp payload'));
+    program.addOption(new Option('--payload <payload>', 'GMP payload'));
+    program.addOption(new Option('--payloadHash <payloadHash>', 'GMP payload hash'));
     program.addOption(new Option('--commandID <commandID>', 'execute command ID'));
     program.addOption(new Option('--messageId <messageId>', 'GMP call message ID'));
     program.addOption(new Option('--sourceChain <sourceChain>', 'GMP source chain'));

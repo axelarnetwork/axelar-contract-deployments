@@ -9,3 +9,5 @@ Install dependencies via
 - [Cosmwasm](./cosmwasm/README.md)
 - [Sui](./sui/README.md)
 - [Stellar](./stellar/README.md)
+- [XRPL](./xrpl/README.md)
+

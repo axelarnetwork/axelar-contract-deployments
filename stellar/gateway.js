@@ -5,26 +5,10 @@ const {
     utils: { arrayify, keccak256, id },
 } = ethers;
 
-const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, getChainConfig } = require('../common');
-const { addBaseOptions, getWallet, broadcast, getAmplifierVerifiers } = require('./utils');
+const { saveConfig, loadConfig, addOptionsToCommands, getMultisigProof, printInfo, printWarn, getChainConfig } = require('../common');
+const { addBaseOptions, getWallet, broadcast, getNewSigners, addressToScVal, hexToScVal } = require('./utils');
 const { messagesToScVal, commandTypeToScVal, proofToScVal, weightedSignersToScVal } = require('./type-utils');
-
-const getNewSigners = async (wallet, config, chain, options) => {
-    if (options.signers === 'wallet') {
-        return {
-            nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
-            signers: [
-                {
-                    signer: wallet.publicKey(),
-                    weight: 1,
-                },
-            ],
-            threshold: 1,
-        };
-    }
-
-    return await getAmplifierVerifiers(config, chain.axelarId);
-};
+const { validateParameters } = require('../common/utils');
 
 function encodeDataHash(commandType, command) {
     const data = nativeToScVal([commandTypeToScVal(commandType), command]);
@@ -45,7 +29,7 @@ function getProof(dataHash, wallet, chain, options) {
     });
     const signersHash = keccak256(signers.toXDR());
 
-    const domainSeparator = chain.contracts.axelar_gateway?.initializeArgs?.domainSeparator;
+    const domainSeparator = chain.contracts.AxelarGateway?.initializeArgs?.domainSeparator;
 
     if (!domainSeparator) {
         throw new Error('Domain separator not found');
@@ -72,7 +56,7 @@ function getProof(dataHash, wallet, chain, options) {
 
 async function callContract(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
-    const caller = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
+    const caller = addressToScVal(wallet.publicKey());
 
     const [destinationChain, destinationAddress, payload] = args;
 
@@ -81,7 +65,7 @@ async function callContract(wallet, _, chain, contractConfig, args, options) {
         caller,
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
-        nativeToScVal(Buffer.from(arrayify(payload)), { type: 'bytes' }),
+        hexToScVal(payload),
     );
 
     await broadcast(operation, wallet, chain, 'Contract Called', options);
@@ -163,17 +147,59 @@ async function submitProof(wallet, config, chain, contractConfig, args, options)
     await broadcast(operation, wallet, chain, 'Amplifier Proof Submitted', options);
 }
 
+async function execute(wallet, _, chain, contractConfig, args, options) {
+    const contract = new Contract(contractConfig.address);
+    const [sourceChain, messageId, sourceAddress, destinationAddress, payload] = args;
+    const payloadHash = arrayify(keccak256(payload));
+
+    printInfo('Destination app contract', destinationAddress);
+
+    const isMessageApprovedOperation = contract.call(
+        'is_message_approved',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        addressToScVal(destinationAddress),
+        nativeToScVal(Buffer.from(payloadHash, 'hex')),
+    );
+
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options, true);
+
+    if (!messageApproved.result.retval._value) {
+        printWarn('Contract call not approved at the gateway');
+        return;
+    }
+
+    const appContract = new Contract(destinationAddress);
+
+    const appOperation = appContract.call(
+        'execute',
+        nativeToScVal(sourceChain, { type: 'string' }),
+        nativeToScVal(messageId, { type: 'string' }),
+        nativeToScVal(sourceAddress, { type: 'string' }),
+        hexToScVal(payload),
+    );
+
+    await broadcast(appOperation, wallet, chain, 'Executed', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
 
     const wallet = await getWallet(chain, options);
 
-    if (!chain.contracts?.axelar_gateway) {
+    if (!chain.contracts?.AxelarGateway) {
         throw new Error('Axelar Gateway package not found.');
     }
 
-    await processor(wallet, config, chain, chain.contracts.axelar_gateway, args, options);
+    const contractId = chain.contracts.AxelarGateway.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
+    await processor(wallet, config, chain, chain.contracts.AxelarGateway, args, options);
 
     saveConfig(config, options.env);
 }
@@ -221,6 +247,13 @@ if (require.main === module) {
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((destinationChain, destinationAddress, payload, options) => {
             mainProcessor(callContract, [destinationChain, destinationAddress, payload], options);
+        });
+
+    program
+        .command('execute <sourceChain> <messageId> <sourceAddress> <destinationAddress> <payload>')
+        .description('gateway execute')
+        .action((sourceChain, messageId, sourceAddress, destinationAddress, payload, options) => {
+            mainProcessor(execute, [sourceChain, messageId, sourceAddress, destinationAddress, payload], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
