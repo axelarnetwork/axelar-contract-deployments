@@ -133,6 +133,7 @@ jobs:
       - name: Setup Stellar wallet
         run: |
           stellar keys generate test \
+              --fund
               --rpc-url "$RPC_URL" \
               --network-passphrase "$NETWORK_PASSPHRASE"
 
@@ -140,9 +141,6 @@ jobs:
           STELLAR_ADDRESS=$(stellar keys address test)
           echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
           echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
-
-      - name: Fund Stellar wallet
-        run: node stellar/faucet --recipient $STELLAR_ADDRESS
 
       - name: Prepare .env
         run: |
