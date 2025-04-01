@@ -3,15 +3,7 @@
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const {
-    getWallet,
-    broadcast,
-    serializeValue,
-    addBaseOptions,
-    getContractCodePath,
-    SUPPORTED_CONTRACTS,
-    BytesToScVal,
-} = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getContractCodePath, SUPPORTED_CONTRACTS, BytesToScVal } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { addStoreOptions } = require('../common/cli-utils');
