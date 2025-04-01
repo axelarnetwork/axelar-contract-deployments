@@ -13,6 +13,10 @@ const {
     getContractCodePath,
     SUPPORTED_CONTRACTS,
     BytesToScVal,
+    getContractSpec,
+    MIGRATION_DATA_TYPENAME,
+    pascalToKebab,
+    pascalToCamel,
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
@@ -58,7 +62,7 @@ const addDeployOptions = (program) => {
     return program;
 };
 
-const addUpgradeOptions = (program) => {
+const addDefaultUpgradeOptions = (program) => {
     const contractName = program.name();
     const cmdOptions = CONTRACT_UPGRADE_CONFIGS[contractName];
 
@@ -66,6 +70,18 @@ const addUpgradeOptions = (program) => {
         const options = cmdOptions();
         options.forEach((option) => program.addOption(option));
     }
+
+    return program;
+};
+
+const addCustomUpgradeOptions = (program, customMigrationDataTypeFields) => {
+    customMigrationDataTypeFields.forEach((field) => {
+        const fieldNameKebab = pascalToKebab(field.name);
+        const fieldNameCamel = pascalToCamel(fieldNameKebab);
+        const fieldTypeJson = JSON.stringify(field.type_);
+
+        program.addOption(new Option(`--${fieldNameKebab} <${fieldNameCamel}>`, `${field.doc || ''} (Type: ${fieldTypeJson})`));
+    });
 
     return program;
 };
@@ -205,10 +221,14 @@ async function deploy(options, config, chain, contractName) {
 }
 
 async function uploadWasm(wallet, chain, filePath) {
-    const bytecode = readFileSync(filePath);
+    const bytecode = getWasm(filePath);
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
     const wasmResponse = await broadcast(operation, wallet, chain, 'Uploaded wasm');
     return wasmResponse.value();
+}
+
+function getWasm(filePath) {
+    return readFileSync(filePath);
 }
 
 async function upgrade(options, _, chain, contractName) {
@@ -284,13 +304,29 @@ async function mainProcessor(options, processor, contractName) {
     saveConfig(config, options.env);
 }
 
-function main() {
+async function main() {
     // 1st level command
     const program = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
     // 2nd level commands
     const deployCmd = new Command('deploy').description('Deploy a Stellar contract');
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
+
+    const contractsMetadata = {};
+
+    for (const contractName of SUPPORTED_CONTRACTS) {
+        try {
+            const contractCodePath = await getContractCodePath({ artifactPath: process.env.ARTIFACT_PATH, version: process.env.VERSION }, contractName);
+            const customMigrationDataTypeFields = await getCustomMigrationDataTypeFields(contractCodePath);
+
+            contractsMetadata[contractName] = {
+                contractCodePath,
+                customMigrationDataTypeFields,
+            };
+        } catch (error) {
+            console.warn(`Could not pre-process contract ${contractName}:`, error.message);
+        }
+    }
 
     // 3rd level commands for `deploy`
     const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
@@ -334,7 +370,14 @@ Examples:
         );
 
         addStoreOptions(command);
-        addUpgradeOptions(command);
+
+        addDefaultUpgradeOptions(command);
+
+        const metadata = contractsMetadata[contractName];
+
+        if (metadata && metadata.customMigrationDataTypeFields) {
+            addCustomUpgradeOptions(command, metadata.customMigrationDataTypeFields);
+        }
 
         command.hook('preAction', async (thisCommand) => {
             const opts = thisCommand.opts();
@@ -343,8 +386,15 @@ Examples:
             Object.assign(opts, { contractCodePath });
         });
 
-        command.action((options) => {
-            options.migrationData = sanitizeMigrationData(options.migrationData);
+        command.action(async (options) => {
+            const customMigrationDataTypeFields = await getCustomMigrationDataTypeFields(options.contractCodePath);
+
+            if (customMigrationDataTypeFields) {
+                options.migrationData = buildCustomMigrationData(options, customMigrationDataTypeFields);
+            } else {
+                options.migrationData = sanitizeDefaultMigrationData(options.migrationData);
+            }
+
             mainProcessor(options, upgrade, contractName);
         });
 
@@ -355,7 +405,9 @@ Examples:
     deployContractCmds.forEach((cmd) => deployCmd.addCommand(cmd));
 
     // Add 3rd level commands to 2nd level command `upgrade`
-    upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+    await Promise.all(upgradeContractCmds).then(upgradeContractCmds => {
+        upgradeContractCmds.forEach((cmd) => upgradeCmd.addCommand(cmd));
+    });
 
     // Add base options to all 3rd level commands
     addOptionsToCommands(deployCmd, addBaseOptions);
@@ -368,7 +420,7 @@ Examples:
     program.parse();
 }
 
-function sanitizeMigrationData(migrationData) {
+function sanitizeDefaultMigrationData(migrationData) {
     if (migrationData === null || migrationData === '()') return null;
 
     try {
@@ -387,16 +439,49 @@ function sanitizeMigrationData(migrationData) {
     }
 
     if (Array.isArray(parsed)) {
-        return parsed.map(sanitizeMigrationData);
+        return parsed.map(sanitizeDefaultMigrationData);
     }
 
     if (parsed !== null && typeof parsed === 'object') {
-        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeDefaultMigrationData(value)]));
     }
 
     printInfo('Sanitized migration data', parsed);
 
     return parsed;
+}
+
+function buildCustomMigrationData(options, customMigrationDataTypeFields) {
+    const migrationData = {};
+
+    customMigrationDataTypeFields.forEach(field => {
+        const fieldNameKebab = pascalToKebab(field.name);
+
+        if (options[fieldNameKebab] !== undefined) {
+            migrationData[field.name] = options[fieldNameKebab];
+        }
+    });
+
+    return migrationData;
+}
+
+async function getCustomMigrationDataTypeFields(contractCodePath) {
+    try {
+        const contractSpec = await getContractSpec(contractCodePath);
+
+        if (!Array.isArray(contractSpec)) return null;
+
+        for (const item of contractSpec) {
+            if (item.udt_struct_v0 && item.udt_struct_v0.name === MIGRATION_DATA_TYPENAME) {
+                return item.udt_struct_v0.fields;
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error(`Error getting ${MIGRATION_DATA_TYPENAME} type`, error);
+        throw error;
+    }
 }
 
 /* Note: Once R2 uploads for stellar use the cargo version number (does not include 'v' prefix), this will no longer be necessary. */
