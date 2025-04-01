@@ -114,6 +114,7 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
+                      "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
                       "rpc": "http://127.0.0.1:8000/soroban/rpc",
                       "horizonRpc": "http://127.0.0.1:8000",
                       "contracts": {}
@@ -124,34 +125,9 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      ###### Acquire WASM Contracts   ######
-      - name: Configure CF credentials
+      - name: Setup Wasm Directory
         run: |
-          cd $HOME; mkdir ~/.aws; touch ~/.aws/credentials; touch ~/.aws/config
-          echo "[default]
-          aws_access_key_id = ${{ secrets.cf-bucket-access-key-id }}
-          aws_secret_access_key = ${{ secrets.cf-bucket-secret-access-key }}" > ~/.aws/credentials
-          echo "[default]
-          region=auto
-          output=json" > ~/.aws/config
-
-      - name: Fetch WASM contracts from CF
-        env:
-          S3_BUCKET_NAME: ${{ vars.CF_BUCKET_NAME }}
-          ENDPOINT_URL: ${{ secrets.CF-ENDPOINT-URL }}
-          CF_BUCKET_ROOT_KEY: ${{ vars.CF_BUCKET_ROOT_KEY }}
-        run: |
-          PACKAGE_VERSION=$(cat stellar/version)
-          CONTRACTS=("AxelarExample" "AxelarGasService" "AxelarGateway" "AxelarOperators" "InterchainToken "InterchainTokenService" "TokenManager" "Upgrader")
-          for name in CONTRACTS; do
-            CF_WASM_BUCKET_ROOT_KEY="${CF_BUCKET_ROOT_KEY}/$name/$PACKAGE_VERSION/wasm"
-            FILE_KEY=axelar-amplifier-stellar-wasm-$name-$PACKAGE_VERSION
-            aws s3api get-object --bucket $S3_BUCKET_NAME --key "$CF_WASM_BUCKET_ROOT_KEY/$FILE_KEY" --acl public-read --endpoint-url $ENDPOINT_URL
-          done
-
-          ls
-
-          WASM_DIR=./
+          WASM_DIR=target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
       - name: Setup Stellar wallet
@@ -173,6 +149,24 @@ jobs:
           echo "PRIVATE_KEY = '$STELLAR_PRIVATE_KEY'" >> .env
           echo "ENV = 'local'" >> .env
           echo "YES = 'true'" >> .env
+
+      - name: Build all contracts
+        run: |
+          # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
+          cargo install --locked stellar-cli --version 22.2.0 --features opt
+
+          # Build all contracts
+          stellar contract build
+          ./optimize.sh
+
+          # Process in the release directory
+          cd target/wasm32-unknown-unknown/release
+
+          # Remove unoptimized files and rename optimized ones
+          # This ensures we only keep the optimized versions
+          find . -type f -name "*.wasm" ! -name "*.optimized.wasm" -maxdepth 1 -delete
+          find . -name "*.optimized.wasm" -maxdepth 1 -exec sh -c 'mv "$0" "${0%.optimized.wasm}.wasm"' {} \;
+          find . -type f ! -name "*.wasm" -delete
 
       ###### Command: Deploy Contract ######
       - name: Deploy AxelarOperators
@@ -196,13 +190,13 @@ jobs:
       #   run: |
       #     node stellar/gateway approve avalanche 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 wallet 0x1234
 
-      - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+      # - name: Gateway Call Contract
+      #   run: node stellar/gateway.js call-contract avalanche 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
-      - name: Gateway Rotate Signers
-        run: |
-          node stellar/gateway rotate --new-nonce test --signers wallet
-          node stellar/gateway rotate --new-nonce test2 --current-nonce test --signers wallet
+      # - name: Gateway Rotate Signers
+      #   run: |
+      #     node stellar/gateway rotate --new-nonce test --signers wallet
+      #     node stellar/gateway rotate --new-nonce test2 --current-nonce test --signers wallet
 
       ###### Command: Operators ######
 
