@@ -140,11 +140,14 @@ jobs:
         run: |
           echo "PRIVATE_KEY = '$STELLAR_PRIVATE_KEY'" >> .env
           echo "ENV = 'local'" >> .env
+          echo "CHAIN = 'stellar'" >> .env
           echo "YES = 'true'" >> .env
 
       ###### Command: Deploy Contract ######
       - name: Deploy AxelarOperators
         run: |
+          echo $WASM_DIR;
+          ls -al $WASM_DIR/stellar_axelar_operators.optimized.wasm;
           node stellar/deploy-contract deploy AxelarOperators --artifact-path $WASM_DIR/stellar_axelar_operators.optimized.wasm
 
       - name: Deploy AxelarGasService
