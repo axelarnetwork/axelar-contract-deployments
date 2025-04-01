@@ -25,8 +25,8 @@ const ASSET_TYPE_NATIVE = 'native';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-// TODO Need to be migrated to Pascal Case
-const SUPPORTED_STELLAR_CONTRACTS = new Set([
+// TODO: Need to be migrated to Pascal Case
+const SUPPORTED_CONTRACTS = new Set([
     'AxelarExample',
     'AxelarGateway',
     'AxelarOperators',
@@ -380,7 +380,7 @@ function saltToBytes32(salt) {
 }
 
 const getContractR2Url = (contractName, version) => {
-    if (!SUPPORTED_STELLAR_CONTRACTS.has(contractName)) {
+    if (!SUPPORTED_CONTRACTS.has(contractName)) {
         throw new Error(`Unsupported contract ${contractName} for versioned deployment`);
     }
 
@@ -484,7 +484,7 @@ module.exports = {
     saltToBytes32,
     getContractCodePath,
     isValidAddress,
-    SUPPORTED_STELLAR_CONTRACTS,
+    SUPPORTED_CONTRACTS,
     BytesToScVal,
     pascalToKebab,
 };
