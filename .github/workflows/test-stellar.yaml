@@ -30,7 +30,7 @@ jobs:
     name: Test Stellar
     needs: check-relevant-changes
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
-    runs-on: blacksmith-2vcpu-ubuntu-2204
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
       #
@@ -84,7 +84,7 @@ jobs:
         run: |
           docker pull stellar/quickstart
           docker run -d --rm -it \
-              -p "8000:8000" \
+              -p 8000:8000 \
               --name stellar \
               stellar/quickstart:testing \
               --local \
@@ -140,9 +140,14 @@ jobs:
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
 
+      - name: Display local.json
+        run: |
+          cat ./axelar-chains-config/info/local.json
+          cat .env
+
       - name: Deploy Native Asset (XLM) and replace tokenAddress with XLM_ADDRESS
         run: |
-          stellar contract asset deploy --source-account test --network local --asset native
+          ## stellar contract asset deploy --source-account test --network local --asset native
           XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
           sed -i'' -e "s/TOKEN_ADDRESS/${XLM_ADDRESS}/g" ./axelar-chains-config/info/local.json
           echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
