@@ -1963,6 +1963,241 @@ type AxelarSolanaIts = {
           };
         }
       ];
+    },
+    {
+      name: "interchainTokenMint";
+      accounts: [
+        {
+          name: "mint";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "destinationAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "itsRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenManagerPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minter";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "minterRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "amount";
+          type: "u64";
+        }
+      ];
+    },
+    {
+      name: "interchainTokenTransferMintership";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "interchainTokenProposeMintership";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
+    },
+    {
+      name: "interchainTokenAcceptMintership";
+      accounts: [
+        {
+          name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "payerRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "resource";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationUserAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "destinationRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "originUserAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "originRolesAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "proposalAccount";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "inputs";
+          type: {
+            defined: "RoleManagementInstructionInputs";
+          };
+        }
+      ];
     }
   ];
   types: [
@@ -3970,6 +4205,241 @@ const IDL: AxelarSolanaIts = {
           name: "tokenId",
           type: {
             array: ["u8", 32],
+          },
+        },
+      ],
+    },
+    {
+      name: "interchainTokenMint",
+      accounts: [
+        {
+          name: "mint",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "destinationAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "itsRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenManagerPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minter",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "minterRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "amount",
+          type: "u64",
+        },
+      ],
+    },
+    {
+      name: "interchainTokenTransferMintership",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "interchainTokenProposeMintership",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
+          },
+        },
+      ],
+    },
+    {
+      name: "interchainTokenAcceptMintership",
+      accounts: [
+        {
+          name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "payerRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "resource",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationUserAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "destinationRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "originUserAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "originRolesAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "proposalAccount",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "inputs",
+          type: {
+            defined: "RoleManagementInstructionInputs",
           },
         },
       ],

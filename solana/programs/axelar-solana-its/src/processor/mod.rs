@@ -3,6 +3,7 @@
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
+use interchain_token::process_mint;
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
@@ -226,9 +227,18 @@ pub fn process_instruction<'a>(
         InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
             handover_mint_authority(accounts, token_id)
         }
-        InterchainTokenServiceInstruction::InterchainTokenInstruction(
-            interchain_token_instruction,
-        ) => interchain_token::process_instruction(accounts, interchain_token_instruction),
+        InterchainTokenServiceInstruction::InterchainTokenMint { amount } => {
+            process_mint(accounts, amount)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs } => {
+            process_it_transfer_mintership(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenProposeMintership { inputs } => {
+            process_it_propose_mintership(accounts, &inputs)
+        }
+        InterchainTokenServiceInstruction::InterchainTokenAcceptMintership { inputs } => {
+            process_it_accept_mintership(accounts, &inputs)
+        }
         InterchainTokenServiceInstruction::CallContractWithInterchainToken {
             token_id,
             destination_chain,
@@ -500,6 +510,45 @@ fn process_tm_operator_accounts<'a>(
     )?;
 
     Ok(role_management_accounts)
+}
+
+fn process_it_transfer_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::transfer(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::MINTER,
+    )
+}
+
+fn process_it_propose_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::MINTER,
+    )
+}
+
+fn process_it_accept_mintership<'a>(
+    accounts: &'a [AccountInfo<'a>],
+    inputs: &RoleManagementInstructionInputs<Roles>,
+) -> ProgramResult {
+    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        inputs,
+        Roles::empty(),
+    )
 }
 
 fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> ProgramResult {

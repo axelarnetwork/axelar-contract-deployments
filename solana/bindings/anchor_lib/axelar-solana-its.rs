@@ -237,6 +237,34 @@ pub mod axelar_solana_its {
     ) -> Result<()> {
         Ok(())
     }
+
+    pub fn interchain_token_mint(
+        ctx: Context<InterchainTokenMint>,
+        amount: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn interchain_token_transfer_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn interchain_token_propose_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn interchain_token_accept_mintership(
+        ctx: Context<Operator>,
+        inputs: RoleManagementInstructionInputs,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -615,6 +643,19 @@ pub struct TokenManagerHandOverMintAuthority<'info> {
     #[account(mut)]
     minter_roles_pda: AccountInfo<'info>,
     token_program: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InterchainTokenMint<'info> {
+    #[account(mut)]
+    mint: AccountInfo<'info>,
+    #[account(mut)]
+    destination_account: AccountInfo<'info>,
+    its_root_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    minter: AccountInfo<'info>,
+    minter_roles_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
 }
 

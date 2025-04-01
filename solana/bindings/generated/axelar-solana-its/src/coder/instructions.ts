@@ -91,6 +91,18 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "tokenManagerHandOverMintAuthority": {
         return encodeTokenManagerHandOverMintAuthority(ix);
       }
+      case "interchainTokenMint": {
+        return encodeInterchainTokenMint(ix);
+      }
+      case "interchainTokenTransferMintership": {
+        return encodeInterchainTokenTransferMintership(ix);
+      }
+      case "interchainTokenProposeMintership": {
+        return encodeInterchainTokenProposeMintership(ix);
+      }
+      case "interchainTokenAcceptMintership": {
+        return encodeInterchainTokenAcceptMintership(ix);
+      }
 
       default: {
         throw new Error(`Invalid instruction: ${ixName}`);
@@ -599,6 +611,70 @@ function encodeTokenManagerHandOverMintAuthority({ tokenId }: any): Buffer {
   );
 }
 
+function encodeInterchainTokenMint({ amount }: any): Buffer {
+  return encodeData({ interchainTokenMint: { amount } }, 1 + 8);
+}
+
+function encodeInterchainTokenTransferMintership({ inputs }: any): Buffer {
+  return encodeData(
+    { interchainTokenTransferMintership: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeInterchainTokenProposeMintership({ inputs }: any): Buffer {
+  return encodeData(
+    { interchainTokenProposeMintership: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
+function encodeInterchainTokenAcceptMintership({ inputs }: any): Buffer {
+  return encodeData(
+    { interchainTokenAcceptMintership: { inputs } },
+    1 +
+      (() => {
+        switch (Object.keys(inputs.roles)[0]) {
+          case "minter":
+            return 1;
+          case "operator":
+            return 1;
+          case "flowLimiter":
+            return 1;
+        }
+      })() +
+      1 +
+      1 +
+      (inputs.proposalPdaBump === null ? 0 : 1)
+  );
+}
+
 const LAYOUT = B.union(B.u8("instruction"));
 LAYOUT.addVariant(
   0,
@@ -919,6 +995,67 @@ LAYOUT.addVariant(
   27,
   B.struct([B.seq(B.u8(), 32, "tokenId")]),
   "tokenManagerHandOverMintAuthority"
+);
+LAYOUT.addVariant(28, B.struct([B.u64("amount")]), "interchainTokenMint");
+LAYOUT.addVariant(
+  29,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "interchainTokenTransferMintership"
+);
+LAYOUT.addVariant(
+  30,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "interchainTokenProposeMintership"
+);
+LAYOUT.addVariant(
+  31,
+  B.struct([
+    B.struct(
+      [
+        ((p: string) => {
+          const U = B.union(B.u8("discriminator"), null, p);
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
+          return U;
+        })("roles"),
+        B.u8("destinationRolesPdaBump"),
+        B.option(B.u8(), "proposalPdaBump"),
+      ],
+      "inputs"
+    ),
+  ]),
+  "interchainTokenAcceptMintership"
 );
 
 function encodeData(ix: any, span: number): Buffer {

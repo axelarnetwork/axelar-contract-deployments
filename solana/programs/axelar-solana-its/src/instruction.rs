@@ -652,8 +652,73 @@ pub enum InterchainTokenServiceInstruction {
         token_id: [u8; 32],
     },
 
-    /// Instructions operating in Interchain Tokens.
-    InterchainTokenInstruction(interchain_token::Instruction),
+    /// A proxy instruction to mint tokens whose mint authority is a
+    /// `TokenManager`. Only users with the `minter` role on the mint account
+    /// can mint tokens.
+    ///
+    /// 0. [writable] The mint account
+    /// 1. [writable] The account to mint tokens to
+    /// 2. [] The interchain token PDA associated with the mint
+    /// 3. [] The token manager PDA
+    /// 4. [signer] The minter account
+    /// 5. [] The token program id
+    InterchainTokenMint {
+        /// The amount of tokens to mint.
+        amount: u64,
+    },
+
+    /// Transfers mintership to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    InterchainTokenTransferMintership {
+        /// Inputs for transferring mintership.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Proposes mintership transfer to another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    InterchainTokenProposeMintership {
+        /// Inputs for proposing mintership.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
+
+    /// Accepts mintership transfer from another account.
+    ///
+    /// 0. [] System program account.
+    /// 1. [writable, signer] Payer account.
+    /// 2. [] PDA for the payer roles on the resource.
+    /// 3. [] PDA for the resource.
+    /// 4. [] Account to transfer operatorship to.
+    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    ///    operatorship is being transferred to.
+    /// 6. [] Account which the operatorship is being transferred from.
+    /// 7. [writable] PDA with the roles on the resource for the account the
+    ///    operatorship is being transferred from.
+    /// 8. [writable] PDA for the proposal
+    InterchainTokenAcceptMintership {
+        /// Inputs for accepting mintership.
+        inputs: RoleManagementInstructionInputs<Roles>,
+    },
 
     /// A GMP Interchain Token Service instruction.
     ///
