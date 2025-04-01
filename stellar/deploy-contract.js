@@ -11,7 +11,7 @@ const {
     getNetworkPassphrase,
     createAuthorizedFunc,
     getContractCodePath,
-    SUPPORTED_STELLAR_CONTRACTS,
+    SUPPORTED_CONTRACTS,
     BytesToScVal,
 } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
@@ -25,7 +25,7 @@ const {
 } = ethers;
 require('./cli-utils');
 
-const CONTRACT_CONFIGS = {
+const CONTRACT_DEPLOY_CONFIGS = {
     AxelarGateway: () => [
         new Option('--nonce <nonce>', 'optional nonce for the signer set'),
         new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
@@ -37,15 +37,33 @@ const CONTRACT_CONFIGS = {
     ],
 };
 
+const CONTRACT_UPGRADE_CONFIGS = {
+    AxelarGateway: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+    AxelarOperators: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+    InterchainTokenService: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+};
+
 const addDeployOptions = (program) => {
     // Get the package name from the program name
     const contractName = program.name();
     // Find the corresponding options for the package
-    const cmdOptions = CONTRACT_CONFIGS[contractName];
+    const cmdOptions = CONTRACT_DEPLOY_CONFIGS[contractName];
 
     if (cmdOptions) {
         const options = cmdOptions();
         // Add the options to the program
+        options.forEach((option) => program.addOption(option));
+    }
+
+    return program;
+};
+
+const addUpgradeOptions = (program) => {
+    const contractName = program.name();
+    const cmdOptions = CONTRACT_UPGRADE_CONFIGS[contractName];
+
+    if (cmdOptions) {
+        const options = cmdOptions();
         options.forEach((option) => program.addOption(option));
     }
 
@@ -196,8 +214,8 @@ async function uploadWasm(wallet, chain, filePath) {
 async function upgrade(options, _, chain, contractName) {
     const { yes } = options;
 
-    if (!options.version && !options.wasmPath) {
-        throw new Error('--version or --wasm-path required to upgrade');
+    if (!options.version && !options.artifactPath) {
+        throw new Error('--version or --artifact-path required to upgrade');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -275,7 +293,7 @@ function main() {
     const upgradeCmd = new Command('upgrade').description('Upgrade a Stellar contract');
 
     // 3rd level commands for `deploy`
-    const deployContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
+    const deployContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
         addStoreOptions(command);
@@ -299,15 +317,10 @@ function main() {
     });
 
     // 3rd level commands for `upgrade`
-    const upgradeContractCmds = Array.from(SUPPORTED_STELLAR_CONTRACTS).map((contractName) => {
-        return new Command(contractName)
-            .description(`Upgrade ${contractName} contract`)
-            .addOption(new Option('--artifact-path <artifactPath>', 'path to the WASM file'))
-            .addOption(new Option('--version <version>', 'new version of the contract to upgrade to (e.g., v1.1.0)'))
-            .addOption(new Option('--migration-data <migrationData>', 'migration data').default(null, '()'))
-            .addHelpText(
-                'after',
-                `
+    const upgradeContractCmds = Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
+        const command = new Command(contractName).description(`Upgrade ${contractName} contract`).addHelpText(
+            'after',
+            `
 Examples:
   # using Vec<Address> as migration data:
   $ deploy-contract upgrade axelar-operators deploy --artifact-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
@@ -318,11 +331,24 @@ Examples:
   # equivalent explicit void migration data:
   $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
 `,
-            )
-            .action((options) => {
-                options.migrationData = sanitizeMigrationData(options.migrationData);
-                mainProcessor(options, upgrade, contractName);
-            });
+        );
+
+        addStoreOptions(command);
+        addUpgradeOptions(command);
+
+        command.hook('preAction', async (thisCommand) => {
+            const opts = thisCommand.opts();
+
+            const contractCodePath = await getContractCodePath(opts, contractName);
+            Object.assign(opts, { contractCodePath });
+        });
+
+        command.action((options) => {
+            options.migrationData = sanitizeMigrationData(options.migrationData);
+            mainProcessor(options, upgrade, contractName);
+        });
+
+        return command;
     });
 
     // Add 3rd level commands to 2nd level command `deploy`
