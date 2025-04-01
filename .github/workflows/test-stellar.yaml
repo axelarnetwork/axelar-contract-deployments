@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: axelarnetwork/axelar-amplifier-stellar
-          path: axelar-amplifier-stellar
+          path: ./stellar/axelar-amplifier-stellar
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,22 +64,34 @@ jobs:
           toolchain: 1.81.0
           targets: wasm32-unknown-unknown
 
-      # install binary to avoid lengthy compilation process
-      - name: Install Stellar CLI
-        shell: bash
+      - name: Build all contracts
         run: |
-          # setup bin/ directory
-          mkdir bin
-          cd bin
+          # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
+          cargo install --locked stellar-cli --version 22.2.0 --features opt
 
-          # Query latest release from official Stellar repo
-          URL=$(curl -s https://api.github.com/repos/stellar/stellar-cli/releases/latest | jq -r .assets[].browser_download_url | grep 'stellar.*x86_64-unknown-linux')
+          # Build all contracts
+          stellar contract build
+          ./optimize.sh
 
-          # download + extract binary
-          wget -q $URL
-          tar -xzf $(basename $URL)
+          # Process in the release directory
+          cd target/wasm32-unknown-unknown/release
 
-          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          # Remove unoptimized files and rename optimized ones
+          # This ensures we only keep the optimized versions
+          find . -type f -name "*.wasm" ! -name "*.optimized.wasm" -maxdepth 1 -delete
+          find . -name "*.optimized.wasm" -maxdepth 1 -exec sh -c 'mv "$0" "${0%.optimized.wasm}.wasm"' {} \;
+          find . -type f ! -name "*.wasm" -delete
+
+      - name: Checkout axelar-contract-deployments repo
+        uses: actions/checkout@v4
+        with:
+          repository: axelarnetwork/axelar-contract-deployments
+          path: ./stellar/axelar-contract-deployments
+
+      - name: Setup Wasm Directory
+        run: |
+          WASM_DIR=../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
+          echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
       - name: Setup Stellar local network
         run: |
@@ -125,11 +137,6 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      - name: Setup Wasm Directory
-        run: |
-          WASM_DIR=target/wasm32-unknown-unknown/release
-          echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
-
       - name: Setup Stellar wallet
         run: |
           stellar keys generate test \
@@ -147,24 +154,6 @@ jobs:
           echo "PRIVATE_KEY = '$STELLAR_PRIVATE_KEY'" >> .env
           echo "ENV = 'local'" >> .env
           echo "YES = 'true'" >> .env
-
-      - name: Build all contracts
-        run: |
-          # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
-          cargo install --locked stellar-cli --version 22.2.0 --features opt
-
-          # Build all contracts
-          stellar contract build
-          ./optimize.sh
-
-          # Process in the release directory
-          cd target/wasm32-unknown-unknown/release
-
-          # Remove unoptimized files and rename optimized ones
-          # This ensures we only keep the optimized versions
-          find . -type f -name "*.wasm" ! -name "*.optimized.wasm" -maxdepth 1 -delete
-          find . -name "*.optimized.wasm" -maxdepth 1 -exec sh -c 'mv "$0" "${0%.optimized.wasm}.wasm"' {} \;
-          find . -type f ! -name "*.wasm" -delete
 
       ###### Command: Deploy Contract ######
       - name: Deploy AxelarOperators
