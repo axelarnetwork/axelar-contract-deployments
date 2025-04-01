@@ -96,9 +96,26 @@ function proofToScVal(proof) {
     );
 }
 
+// TODO: Remove
+function itsCustomMigrationDataToScVal(migrationData) {
+    return nativeToScVal(
+        {
+            new_token_manager_wasm_hash: Buffer.from(migrationData.newTokenManagerWasmHash),
+            new_interchain_token_wasm_hash: Buffer.from(migrationData.newInterchainTokenWasmHash),
+        },
+        {
+            type: {
+                new_token_manager_wasm_hash: ['symbol', 'bytes'],
+                new_interchain_token_wasm_hash: ['symbol', 'bytes'],
+            },
+        },
+    );
+}
+
 module.exports = {
     commandTypeToScVal,
     messagesToScVal,
     weightedSignersToScVal,
     proofToScVal,
+    itsCustomMigrationDataToScVal,
 };

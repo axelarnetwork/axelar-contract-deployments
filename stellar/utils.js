@@ -1,5 +1,6 @@
 'use strict';
 
+const { execSync } = require('child_process');
 const {
     Keypair,
     rpc,
@@ -36,6 +37,8 @@ const SUPPORTED_CONTRACTS = new Set([
     'InterchainTokenService',
     'Upgrader',
 ]);
+
+const MIGRATION_DATA_TYPENAME = 'CustomMigrationData';
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -422,6 +425,13 @@ const getContractCodePath = async (options, contractName) => {
     throw new Error('Either --artifact-path or --version must be provided');
 };
 
+async function getContractSpec(contractCodePath) {
+    const cmd = `${stellarCmd} contract info interface --wasm ${contractCodePath} --output json`;
+    const output = execSync(cmd, { encoding: 'utf8' });
+
+    return JSON.parse(output);
+}
+
 function isValidAddress(address) {
     try {
         // try conversion
@@ -462,6 +472,10 @@ function pascalToKebab(str) {
     return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
 }
 
+function pascalToCamel(str) {
+    return str.replace(/^[A-Z]/, (match) => match.toLowerCase());
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -483,8 +497,11 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     getContractCodePath,
+    getContractSpec,
     isValidAddress,
     SUPPORTED_CONTRACTS,
+    MIGRATION_DATA_TYPENAME,
     BytesToScVal,
     pascalToKebab,
+    pascalToCamel,
 };
