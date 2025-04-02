@@ -91,7 +91,7 @@ jobs:
               --enable-soroban-rpc \
               --protocol-version 22
 
-          RPC_URL="http://127.0.0.1:8000/soroban/rpc"
+          RPC_URL="http://127.0.0.1:8000/rpc"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
@@ -114,7 +114,7 @@ jobs:
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
                       "tokenAddress": "TOKEN_ADDRESS",
-                      "rpc": "http://127.0.0.1:8000/soroban/rpc",
+                      "rpc": "http://127.0.0.1:8000/rpc",
                       "horizonRpc": "http://127.0.0.1:8000",
                       "contracts": {}
                   }
@@ -147,7 +147,6 @@ jobs:
 
       - name: Deploy Native Asset (XLM) and replace tokenAddress with XLM_ADDRESS
         run: |
-          ## stellar contract asset deploy --source-account test --network local --asset native
           XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
           sed -i'' -e "s/TOKEN_ADDRESS/${XLM_ADDRESS}/g" ./axelar-chains-config/info/local.json
           echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
