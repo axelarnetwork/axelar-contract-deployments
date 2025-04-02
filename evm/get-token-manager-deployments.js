@@ -16,7 +16,6 @@ const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml',
 // const startTimestamp = 1702800000;
 // This is after the upgrade.
 const endTimestamp = 1710329513;
-let eventsLength = 2000;
 const queryLimit = {
     ethereum: 500000,
     avalanche: 2048,
@@ -40,14 +39,13 @@ const queryLimit = {
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if (tokenManagerInfo[name] == null || chain.contracts.InterchainTokenService.skip) return false;
+        if (chain.contracts.InterchainTokenService.skip) return false;
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
 
         // if (name != 'mantle') { return; }
 
-        eventsLength = queryLimit[name.toLowerCase()];
+        const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         console.log('processing... ', name);
-        console.log(name, eventsLength);
 
         const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
         const provider = getDefaultProvider(rpc);
@@ -57,7 +55,7 @@ async function getTokenManagers(name) {
         const blockNumber = await provider.getBlockNumber();
 
         if (!tokenManagerInfo[name]) {
-            tokenManagerInfo[name] = { start: blockNumber, end: blockNumber, tokenManagers: [] };
+            tokenManagerInfo[name] = { start: 1, end: 1, tokenManagers: [] };
         }
 
         const filter = its.filters.TokenManagerDeployed();
@@ -106,9 +104,9 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
-    /*for (const name of Object.keys(info.chains)) {
+    for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokenManagers(name).then((success) => console.log(name, 'returned', success));
         
-    }*/
+    }
 })();
