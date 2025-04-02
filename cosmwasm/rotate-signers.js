@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { loadConfig, getCurrentVerifierSet, printInfo, sleep } = require('../common');
+const { loadConfig, getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { prepareWallet, prepareClient } = require('./utils');
 
 const { Command } = require('commander');
@@ -66,12 +66,16 @@ const confirmVerifierRotation = async (config, options, [chain, txHash], wallet,
     );
     printInfo('Initiate verifier set verification', transactionHash);
 
-    await sleep(10000); // wait for verifier set rotation poll to pass
+    let rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
 
-    const rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
+    while(rotationPollStatus === 'in_progress'){
+        await sleep(1000);
+        rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
+    }
 
     if (rotationPollStatus !== 'succeeded_on_source_chain') {
-        printInfo('Poll failed for verifier set rotation with message', rotationPollStatus);
+        printError('Poll failed for verifier set rotation with message', rotationPollStatus);
+        process.exit(0);
     }
 
     printInfo('Poll passed for verifier set rotation');
