@@ -313,7 +313,7 @@ node cosmwasm/submit-proposal.js migrate \
 1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:
 ```
 MNEMONIC="<mnemonic for multisig prover admin>"
-ENV="environment"
+ENV="<environment>"
 ```
 
 2. Register/Deregister verifiers for the chain in scope:
@@ -328,7 +328,7 @@ ampd deregister-chain-support amplifier <chain-name>
 node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
 ```
 
-4. Using multisig session id output in last command, submit proof on destination chain. For example on Sui it would be:
+4. Using multisig session id output in last command, submit proof on destination chain. For example, on Sui it would be:
 ```bash
 node sui/gateway.js submitProof <multisig-session-id>
 ```
