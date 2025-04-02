@@ -35,6 +35,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'TokenManager',
     'InterchainTokenService',
     'Upgrader',
+    'Multicall',
 ]);
 
 function getNetworkPassphrase(networkType) {
