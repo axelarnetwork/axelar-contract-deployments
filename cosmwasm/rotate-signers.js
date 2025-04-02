@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const { loadConfig, getCurrentVerifierSet, printInfo } = require('../common');
+const { loadConfig, getCurrentVerifierSet, printInfo, sleep } = require('../common');
 const { prepareWallet, prepareClient } = require('./utils');
 
 const { Command } = require('commander');
@@ -12,7 +12,7 @@ const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const executeTransaction = async (client, account, contractAddress, message, fee) => {
     const tx = await client.execute(account.address, contractAddress, message, fee, '');
-    return tx.transactionHash;
+    return tx;
 };
 
 const getNextVerifierSet = async (config, chain) => {
@@ -25,54 +25,96 @@ const getVerifierSetStatus = async (config, chain, verifierStatus) => {
     return await client.queryContractSmart(config.axelar.contracts.VotingVerifier[chain].address, { verifier_set_status: verifierStatus });
 };
 
-const processVerifierRotation = async (config, options, chain) => {
+const updateVerifierSet = async (config, options, chain, wallet, client, fee) => {
+    const [account] = await wallet.getAccounts();
+
+    const currentVerifierSet = await getCurrentVerifierSet(config, chain);
+    printInfo('Current verifier set', currentVerifierSet);
+
+    const { transactionHash, events } = await executeTransaction(
+        client,
+        account,
+        config.axelar.contracts.MultisigProver[chain].address,
+        'update_verifier_set',
+        fee,
+    );
+    printInfo('Update Verifier set', transactionHash);
+    const multisigSessionId = events
+        .find((e) => e.type === 'wasm-proof_under_construction')
+        .attributes.find((a) => a.key === 'multisig_session_id').value;
+    printInfo('Mutisig session ID', multisigSessionId);
+};
+
+const confirmVerifierRotation = async (config, options, [chain, txHash], wallet, client, fee) => {
+    const [account] = await wallet.getAccounts();
+
+    const nextVerifierSet = (await getNextVerifierSet(config, chain)).verifier_set;
+    printInfo('Next verifier set', nextVerifierSet);
+
+    const verificationSet = {
+        verify_verifier_set: {
+            message_id: `${txHash}-0`,
+            new_verifier_set: nextVerifierSet,
+        },
+    };
+    let { transactionHash } = await executeTransaction(
+        client,
+        account,
+        config.axelar.contracts.VotingVerifier[chain].address,
+        verificationSet,
+        fee,
+    );
+    printInfo('Initiate verifier set verification', transactionHash);
+
+    await sleep(10000); // wait for verifier set rotation poll to pass
+
+    const rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
+
+    if (rotationPollStatus !== 'succeeded_on_source_chain') {
+        printInfo('Poll failed for verifier set rotation with message', rotationPollStatus);
+    }
+
+    printInfo('Poll passed for verifier set rotation');
+
+    transactionHash = (
+        await executeTransaction(client, account, config.axelar.contracts.MultisigProver[chain].address, 'confirm_verifier_set', fee)
+    ).transactionHash;
+    printInfo('Confirm verifier set rotation', transactionHash);
+};
+
+const processCommand = async (processCmd, options, args) => {
+    const config = loadConfig(options.env);
     const wallet = await prepareWallet(options);
     const client = await prepareClient(config, wallet);
-    const [account] = await wallet.getAccounts();
     const {
         axelar: { gasPrice, gasLimit },
     } = config;
 
-    const currentVerifierSet = await getCurrentVerifierSet(config, chain);
-    printInfo('Current verifier set:', currentVerifierSet);
-
     const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-    let tx = await executeTransaction(client, account, config.axelar.contracts.MultisigProver[chain].address, 'update_verifier_set', fee);
-    printInfo('Update Verifier set tx:', tx);
-
-    const nextVerifierSet = (await getNextVerifierSet(config, chain)).verifier_set;
-    printInfo('Next verifier set:', nextVerifierSet);
-
-    const verificationSet = {
-        verify_verifier_set: {
-            message_id: 'DJxPt5YpU3q46ZoRyRTRcNdbzbQu7ANFAjpLgVFReXke-0', // TODO: break script into 2 subcommands to avoid taking inputs, this is an example message id
-            new_verifier_set: nextVerifierSet,
-        },
-    };
-    tx = await executeTransaction(client, account, config.axelar.contracts.VotingVerifier[chain].address, verificationSet, fee);
-    printInfo('Initiate verifier set verification tx', tx);
-
-    await getVerifierSetStatus(config, chain, nextVerifierSet);
-    tx = await executeTransaction(client, account, config.axelar.contracts.MultisigProver[chain].address, 'confirm_verifier_set', fee);
-    printInfo('Initiate verifier set verification tx', tx);
-};
-
-const processCommand = async (options, chain) => {
-    const config = loadConfig(options.env);
-    await processVerifierRotation(config, options, chain);
+    await processCmd(config, options, args, wallet, client, fee);
 };
 
 const programHandler = () => {
     const program = new Command();
 
-    program.name('rotate-signers').description('Rotate signers').argument('<chain>', 'Chain to rotate signers for');
+    program.name('rotate-signers').description('Rotate signers');
 
-    addAmplifierOptions(program, {});
+    const updateVerifiersCmd = program
+        .command('update-verifier-set <chain>')
+        .description('Update Verifier set')
+        .action((chain, options) => {
+            processCommand(updateVerifierSet, options, [chain]);
+        });
+    addAmplifierOptions(updateVerifiersCmd, {});
 
-    program.action((chain, options) => {
-        processCommand(options, chain);
-    });
+    const confirmVerifiersCmd = program
+        .command('confirm-verifier-rotation <chain> <txHash>')
+        .description('Confirm verifier rotation')
+        .action((chain, txHash, options) => {
+            processCommand(confirmVerifierRotation, options, [chain, txHash]);
+        });
+    addAmplifierOptions(confirmVerifiersCmd, {});
 
     program.parse();
 };
