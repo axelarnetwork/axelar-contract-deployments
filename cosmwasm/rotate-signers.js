@@ -2,13 +2,13 @@
 
 require('dotenv').config();
 
-const { loadConfig, getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
-const { prepareWallet, prepareClient } = require('./utils');
-
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { GasPrice, calculateFee } = require('@cosmjs/stargate');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+
+const { loadConfig, getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
+const { prepareWallet, prepareClient } = require('./utils');
 
 const executeTransaction = async (client, account, contractAddress, message, fee) => {
     const tx = await client.execute(account.address, contractAddress, message, fee, '');
@@ -68,7 +68,7 @@ const confirmVerifierRotation = async (config, options, [chain, txHash], wallet,
 
     let rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
 
-    while(rotationPollStatus === 'in_progress'){
+    while (rotationPollStatus === 'in_progress') {
         await sleep(1000);
         rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
     }
