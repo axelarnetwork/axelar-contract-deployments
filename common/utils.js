@@ -591,6 +591,10 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
     const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
+        case undefined:
+            printWarn(`destinationChain ${destinationChain} not found in config`);
+            return destinationAddress;
+
         case 'stellar':
             validateParameters({ isValidStellarAddress: { destinationAddress } });
             return asciiToBytes(destinationAddress);

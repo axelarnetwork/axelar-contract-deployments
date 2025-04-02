@@ -2546,6 +2546,53 @@
         }
       }
     },
+    "xrpl": {
+      "name": "XRPL",
+      "axelarId": "xrpl",
+      "rpc": "https://s.altnet.rippletest.net:51234",
+      "wssRpc": "wss://s.altnet.rippletest.net:51233",
+      "tokenSymbol": "XRP",
+      "networkType": "testnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://testnet.xrpl.org"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "rNrjh1KGZk2jBR3wPfAQnoidtFFYQKbQn2",
+          "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        },
+        "AxelarGateway": {
+          "address": "rNrjh1KGZk2jBR3wPfAQnoidtFFYQKbQn2",
+          "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        }
+      }
+    },
     "xrpl-evm-test-1": {
       "name": "XRPL EVM",
       "axelarId": "xrpl-evm-test-1",
@@ -3133,6 +3180,53 @@
           "address": "axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl"
         },
         "lastUploadedCodeId": 17
+      },
+      "XrplMultisigProver": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 1,
+          "xrplTransactionFee": 5000,
+          "ticketCountThreshold": 5,
+          "codeId": 33,
+          "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
+        },
+        "storeCodeProposalId": "247",
+        "storeCodeProposalCodeHash": "5bfc4d78765c25c85b1e93fb9d693b7ff2805620db8987d8181cc9600caec912",
+        "lastUploadedCodeId": 33
+      },
+      "XrplVotingVerifier": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "codeId": 31,
+          "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy"
+        },
+        "storeCodeProposalCodeHash": "bd408b0d152ab460e53f2ca4107153df7a169cec9e501fc058f242abaaf0e23e",
+        "lastUploadedCodeId": 31,
+        "storeCodeProposalId": "245"
+      },
+      "XrplGateway": {
+        "xrpl": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "codeId": 32,
+          "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
+        },
+        "storeCodeProposalId": "255",
+        "storeCodeProposalCodeHash": "695eac10df3b5e5c571047ddab1bc64b92e80938d424907d7e2039c86883fd51",
+        "lastUploadedCodeId": 34
       }
     },
     "axelarId": "axelar",
