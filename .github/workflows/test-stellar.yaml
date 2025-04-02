@@ -101,6 +101,7 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
+                      "tokenAddress": "NATIVE_TOKEN_ADDRESS",
                       "rpc": "http://127.0.0.1:8000/soroban/rpc",
                       "horizonRpc": "http://127.0.0.1:8000",
                       "contracts": {}
@@ -126,13 +127,22 @@ jobs:
         run: |
           stellar keys generate test \
               --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
+              --network-passphrase "$NETWORK_PASSPHRASE" \
+              --fund
+
           STELLAR_PRIVATE_KEY=$(stellar keys show test)
           STELLAR_ADDRESS=$(stellar keys address test)
           echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
           echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
+
+      - name: Retrieve native token (XLM) address and replace in the config
+        run: |
           XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
+          sed -i'' -e "s/NATIVE_TOKEN_ADDRESS/${XLM_ADDRESS}/g" ./axelar-chains-config/info/local.json
           echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
+
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
 
       - name: Prepare .env
         run: |
@@ -147,3 +157,13 @@ jobs:
           echo $WASM_DIR;
           ls -al $WASM_DIR/stellar_axelar_operators.optimized.wasm;
           node stellar/deploy-contract deploy AxelarOperators --artifact-path $WASM_DIR/stellar_axelar_operators.optimized.wasm
+
+      ###### Command: Operators ######
+      - name: Execute is operator
+        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
+
+      - name: Execute add operator
+        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
+
+      - name: Execute remove operator
+        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
