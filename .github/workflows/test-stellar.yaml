@@ -25,7 +25,6 @@ jobs:
           echo "Changes in stellar: ${{ steps.filter.outputs.stellar }}"
           echo "Changes in common: ${{ steps.filter.outputs.common }}"
           echo "Changes in github: ${{ steps.filter.outputs.github }}"
-
   test-stellar:
     name: Test Stellar
     needs: check-relevant-changes
@@ -33,7 +32,6 @@ jobs:
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
-      #
       # axelar-contract-deployments
       #   - axelar-amplifier-stellar
       #
@@ -64,25 +62,23 @@ jobs:
           toolchain: 1.81.0
           targets: wasm32-unknown-unknown
 
-      - name: Build all contracts
+      # install binary to avoid lengthy compilation process
+      - name: Install Stellar CLI
+        shell: bash
         run: |
-          cd axelar-amplifier-stellar;
-
           # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
           cargo install --locked stellar-cli --version 22.2.0 --features opt
 
-          # Build all contracts
-          stellar contract build
-          ./optimize.sh
-
-      - name: Setup Wasm Directory
+      - name: Setup Stellar local network
         run: |
-          WASM_DIR=./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
-          echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
-
-      - name: Start Stellar network
-        run: |
-          stellar network container start local;
+          docker pull stellar/quickstart
+          docker run -d --rm -it \
+              -p 8000:8000 \
+              --name stellar \
+              stellar/quickstart:testing \
+              --local \
+              --enable-soroban-rpc \
+              --protocol-version 22
           RPC_URL="http://localhost:8000/soroban/rpc"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
@@ -105,26 +101,38 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
-                      "tokenAddress": "TOKEN_ADDRESS",
-                      "rpc": "http://localhost:8000/soroban/rpc",
-                      "horizonRpc": "http://localhost:8000",
+                      "rpc": "http://127.0.0.1:8000/soroban/rpc",
+                      "horizonRpc": "http://127.0.0.1:8000",
                       "contracts": {}
                   }
               }
           }' > ./axelar-chains-config/info/local.json
 
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
+
+      ###### Compile Wasm Contracts   ######
+
+      - name: Compile WASM contracts
+        run: |
+          cd axelar-amplifier-stellar
+          stellar contract build
+          ./optimize.sh
+          cd ..
+          WASM_DIR=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
+          echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
+
       - name: Setup Stellar wallet
         run: |
           stellar keys generate test \
-              --rpc-url "${RPC_URL}" \
-              --network-passphrase "${NETWORK_PASSPHRASE}"
-
+              --rpc-url "$RPC_URL" \
+              --network-passphrase "$NETWORK_PASSPHRASE"
           STELLAR_PRIVATE_KEY=$(stellar keys show test)
           STELLAR_ADDRESS=$(stellar keys address test)
           echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
           echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
-
-          curl http://localhost:8000/friendbot\?addr=${STELLAR_ADDRESS}
+          XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
+          echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
 
       - name: Prepare .env
         run: |
@@ -133,43 +141,9 @@ jobs:
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
 
-      - name: Display local.json
-        run: |
-          cat ./axelar-chains-config/info/local.json
-          cat .env
-
-      - name: Deploy Native Asset (XLM) and replace tokenAddress with XLM_ADDRESS
-        run: |
-          XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
-          sed -i'' -e "s/TOKEN_ADDRESS/${XLM_ADDRESS}/g" ./axelar-chains-config/info/local.json
-          echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
-
-      - name: Display local.json
-        run: cat ./axelar-chains-config/info/local.json
-
-      - name: Deploy AxelarOperators
+      ###### Command: Deploy Contract ######
+      - name: Deploy axelar_gateway
         run: |
           echo $WASM_DIR;
           ls -al $WASM_DIR/stellar_axelar_operators.optimized.wasm;
           node stellar/deploy-contract deploy AxelarOperators --artifact-path $WASM_DIR/stellar_axelar_operators.optimized.wasm
-
-      - name: Deploy AxelarGasService
-        run: |
-          node stellar/deploy-contract deploy AxelarGasService --artifact-path $WASM_DIR/stellar_axelar_gas_service.optimized.wasm
-
-      - name: Deploy AxelarGateway
-        run: |
-          node stellar/deploy-contract deploy AxelarGateway --artifact-path $WASM_DIR/stellar_axelar_gateway.optimized.wasm
-
-      ###### Command: Operators ######
-      - name: Execute is operator
-        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
-
-      - name: Execute add operator
-        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
-
-      - name: Execute remove operator
-        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
-
-      - name: Display local.json
-        run: cat ./axelar-chains-config/info/local.json
