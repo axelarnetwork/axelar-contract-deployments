@@ -80,21 +80,21 @@ jobs:
           WASM_DIR=./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
           echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
 
-      - name: Setup Stellar local network
+      - name: Start Stellar network
         run: |
-          docker pull stellar/quickstart
-          docker run -d --rm -it \
-              -p 8000:8000 \
-              --name stellar \
-              stellar/quickstart:testing \
-              --local \
-              --enable-soroban-rpc \
-              --protocol-version 22
-
+          stellar network container start local
           RPC_URL="http://localhost:8000"
           NETWORK_PASSPHRASE="Standalone Network ; February 2017"
           echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
           echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
+
+      - name: Wait for Stellar network
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: 'http://localhost:8000'
+          responseCode: 200
+          timeout: 60000
+          interval: 1000
 
       - name: Add as configured network
         shell: bash
@@ -120,18 +120,6 @@ jobs:
                   }
               }
           }' > ./axelar-chains-config/info/local.json
-
-      - name: Start Stellar network
-        run: |
-          stellar network container start local
-
-      - name: Wait for Stellar network
-        uses: nev7n/wait_for_response@v1
-        with:
-          url: 'http://localhost:8000'
-          responseCode: 200
-          timeout: 60000
-          interval: 1000
 
       - name: Setup Stellar wallet
         run: |
