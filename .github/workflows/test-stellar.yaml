@@ -137,13 +137,30 @@ jobs:
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
 
-      ###### Command: Deploy Contract ######
-      - name: Deploy axelar_gateway
+      ###### Command: Deploy Contracts ######
+      - name: Deploy Contracts
         run: |
-          CONTRACT_NAME=stellar_axelar_operators
-          ARTIFACT_PATH="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_NAME}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
-          echo $ARTIFACT_PATH;
-          node stellar/deploy-contract deploy AxelarOperators --artifact-path $ARTIFACT_PATH
+          # List of contracts to deploy
+          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarExample")
+
+          for CONTRACT in "${CONTRACTS[@]}"; do
+            # Derive CONTRACT_DIR by:
+            # - Converting the CONTRACT name to lowercase.
+            # - Replacing any non-alphanumeric characters with a hyphen (-).
+            # - Prefixing with "stellar-".
+            CONTRACT_DIR="stellar-$(echo $CONTRACT | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')"
+
+            # Derive CONTRACT_NAME by:
+            # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
+            CONTRACT_NAME=$(echo "${CONTRACT_DIR}" | sed 's/-/_/g')
+
+            # Define ARTIFACT_PATH using the contract-specific details
+            ARTIFACT_PATH="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
+            echo "Deploying $CONTRACT from $ARTIFACT_PATH"
+
+            # Deploy the contract
+            node stellar/deploy-contract deploy $CONTRACT --artifact-path $ARTIFACT_PATH
+          done
 
       ###### Command: Operators ######
       - name: Execute is operator
