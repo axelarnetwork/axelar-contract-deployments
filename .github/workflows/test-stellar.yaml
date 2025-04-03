@@ -68,7 +68,8 @@ jobs:
       - name: Setup Stellar local network
         id: setup_network
         run: |
-          stellar container start --protocol-version 22
+          # stellar container start --protocol-version <PROTOCOL_VERSION> <NETWORK>
+          stellar container start --protocol-version 22 local
           echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
           echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
