@@ -29,7 +29,7 @@ async function multicall(wallet, _, chain, contract, args, options) {
     printInfo('Multicall results:');
     const results = result.value();
     results.forEach((result, i) => {
-        printInfo(`Result ${i + 1}:`, result._value ? result._value : 'Call executed successfully');
+        printInfo(`Result ${i + 1}:`, '_value' in result ? result._value : 'Call executed successfully');
     });
 
     return results;
