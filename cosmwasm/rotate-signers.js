@@ -106,7 +106,7 @@ const programHandler = () => {
 
     const updateVerifiersCmd = program
         .command('update-verifier-set <chain>')
-        .description('Update Verifier set')
+        .description('Update verifier set')
         .action((chain, options) => {
             processCommand(updateVerifierSet, options, [chain]);
         });
