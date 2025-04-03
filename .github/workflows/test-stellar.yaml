@@ -30,7 +30,7 @@ jobs:
     name: Test Stellar
     needs: check-relevant-changes
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     steps:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
       # axelar-contract-deployments
@@ -54,23 +54,19 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        shell: bash
         run: npm ci
 
-      - name: Install stable toolchain
+      - name: Install stable Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.81.0
           targets: wasm32-unknown-unknown
 
-      # install binary to avoid lengthy compilation process
       - name: Install Stellar CLI
-        shell: bash
-        run: |
-          # Install Stellar CLI compatible with the soroban-sdk version in Cargo.toml
-          cargo install --locked stellar-cli --version 22.2.0 --features opt
+        run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
       - name: Setup Stellar local network
+        id: setup_network
         run: |
           docker pull stellar/quickstart
           docker run -d --rm -it \
@@ -80,18 +76,19 @@ jobs:
               --local \
               --enable-soroban-rpc \
               --protocol-version 22
-
-          RPC_URL="http://localhost:8000/soroban/rpc"
-          NETWORK_PASSPHRASE="Standalone Network ; February 2017"
-          echo "RPC_URL=${RPC_URL}" >> $GITHUB_ENV
-          echo "NETWORK_PASSPHRASE=${NETWORK_PASSPHRASE}" >> $GITHUB_ENV
+          echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
+          echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
 
       - name: Add as configured network
-        shell: bash
         run: |
           stellar network add local \
-              --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE"
+              --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
+              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
+
+      - name: Retrieve native token address
+        id: get_xlm_address
+        run: |
+          echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_OUTPUT
 
       - name: Prepare local.json
         run: |
@@ -103,7 +100,7 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
-                      "tokenAddress": "NATIVE_TOKEN_ADDRESS",
+                      "tokenAddress": "${{ steps.get_xlm_address.outputs.xlm_address }}",
                       "rpc": "http://127.0.0.1:8000/soroban/rpc",
                       "horizonRpc": "http://127.0.0.1:8000",
                       "contracts": {}
@@ -111,39 +108,31 @@ jobs:
               }
           }' > ./axelar-chains-config/info/local.json
 
+      - name: Display local.json
+        run: cat ./axelar-chains-config/info/local.json
+
       - name: Compile WASM contracts
+        id: compile_wasm
         run: |
           cd axelar-amplifier-stellar
           stellar contract build
           ./optimize.sh
           cd ..
-          WASM_DIR=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
-          echo "WASM_DIR=${WASM_DIR}" >> $GITHUB_ENV
+          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
 
       - name: Setup Stellar wallet
+        id: setup_wallet
         run: |
           stellar keys generate test \
-              --rpc-url "$RPC_URL" \
-              --network-passphrase "$NETWORK_PASSPHRASE" \
+              --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
+              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}" \
               --fund
-
-          STELLAR_PRIVATE_KEY=$(stellar keys show test)
-          STELLAR_ADDRESS=$(stellar keys address test)
-          echo "STELLAR_PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> $GITHUB_ENV
-          echo "STELLAR_ADDRESS=${STELLAR_ADDRESS}" >> $GITHUB_ENV
-
-      - name: Retrieve native token address and replace in the config
-        run: |
-          XLM_ADDRESS=$(stellar contract id asset --asset native --network local)
-          sed -i'' -e "s/NATIVE_TOKEN_ADDRESS/${XLM_ADDRESS}/g" ./axelar-chains-config/info/local.json
-          echo "XLM_ADDRESS=${XLM_ADDRESS}" >> $GITHUB_ENV
-
-      - name: Display local.json
-        run: cat ./axelar-chains-config/info/local.json
+          echo "private_key=$(stellar keys show test)" >> $GITHUB_OUTPUT
+          echo "stellar_address=$(stellar keys address test)" >> $GITHUB_OUTPUT
 
       - name: Prepare .env
         run: |
-          echo "PRIVATE_KEY=${STELLAR_PRIVATE_KEY}" >> .env
+          echo "PRIVATE_KEY=${{ steps.setup_wallet.outputs.private_key }}" >> .env
           echo "ENV=local" >> .env
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
@@ -151,14 +140,14 @@ jobs:
       ###### Command: Deploy Contract ######
       - name: Deploy axelar_gateway
         run: |
-          node stellar/deploy-contract deploy AxelarOperators --artifact-path $WASM_DIR/stellar_axelar_operators.optimized.wasm
+          node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
 
       ###### Command: Operators ######
       - name: Execute is operator
-        run: node stellar/operators.js is-operator $STELLAR_ADDRESS
+        run: node stellar/operators.js is-operator ${{ steps.setup_wallet.outputs.stellar_address }}
 
       - name: Execute add operator
-        run: node stellar/operators.js add-operator $STELLAR_ADDRESS
+        run: node stellar/operators.js add-operator ${{ steps.setup_wallet.outputs.stellar_address }}
 
       - name: Execute remove operator
-        run: node stellar/operators.js remove-operator $STELLAR_ADDRESS
+        run: node stellar/operators.js remove-operator ${{ steps.setup_wallet.outputs.stellar_address }}

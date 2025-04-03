@@ -164,7 +164,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: true });
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -197,7 +197,7 @@ async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
     const provider = new rpc.Server(chain.rpc, {
-        allowHttp: true,
+        allowHttp: chain.networkType === 'local',
     });
     const horizonServer = new Horizon.Server(chain.horizonRpc, { allowHttp: true });
     const balances = await getBalances(horizonServer, address);
