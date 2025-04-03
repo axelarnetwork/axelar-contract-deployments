@@ -66,6 +66,8 @@ class TokenIterator {
 
 async function registerToken(token) {
     // TODO: register token here
+    // If registration is successfull skip this token in the future without needing to query.
+    token.registered = true;
 }
 
 if (require.main === module) {
