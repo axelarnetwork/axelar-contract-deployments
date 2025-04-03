@@ -5,7 +5,6 @@ require('dotenv').config();
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 const { GasPrice, calculateFee } = require('@cosmjs/stargate');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 const { loadConfig, getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
 const { prepareWallet, prepareClient } = require('./utils');
@@ -15,20 +14,18 @@ const executeTransaction = async (client, account, contractAddress, message, fee
     return tx;
 };
 
-const getNextVerifierSet = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getNextVerifierSet = async (config, chain, client) => {
     return await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
 };
 
-const getVerifierSetStatus = async (config, chain, verifierStatus) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
     return await client.queryContractSmart(config.axelar.contracts.VotingVerifier[chain].address, { verifier_set_status: verifierStatus });
 };
 
-const updateVerifierSet = async (config, options, chain, wallet, client, fee) => {
+const updateVerifierSet = async (config, [chain], wallet, client, fee) => {
     const [account] = await wallet.getAccounts();
 
-    const currentVerifierSet = await getCurrentVerifierSet(config, chain);
+    const currentVerifierSet = await getCurrentVerifierSet(config, chain, client);
     printInfo('Current verifier set', currentVerifierSet);
 
     const { transactionHash, events } = await executeTransaction(
@@ -45,10 +42,10 @@ const updateVerifierSet = async (config, options, chain, wallet, client, fee) =>
     printInfo('Mutisig session ID', multisigSessionId);
 };
 
-const confirmVerifierRotation = async (config, options, [chain, txHash], wallet, client, fee) => {
+const confirmVerifierRotation = async (config, [chain, txHash], wallet, client, fee) => {
     const [account] = await wallet.getAccounts();
 
-    const nextVerifierSet = (await getNextVerifierSet(config, chain)).verifier_set;
+    const nextVerifierSet = (await getNextVerifierSet(config, chain, client)).verifier_set;
     printInfo('Next verifier set', nextVerifierSet);
 
     const verificationSet = {
@@ -66,11 +63,11 @@ const confirmVerifierRotation = async (config, options, [chain, txHash], wallet,
     );
     printInfo('Initiate verifier set verification', transactionHash);
 
-    let rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
+    let rotationPollStatus = await getVerifierSetStatus(config, chain, client, nextVerifierSet);
 
     while (rotationPollStatus === 'in_progress') {
         await sleep(1000);
-        rotationPollStatus = await getVerifierSetStatus(config, chain, nextVerifierSet);
+        rotationPollStatus = await getVerifierSetStatus(config, chain, client, nextVerifierSet);
     }
 
     if (rotationPollStatus !== 'succeeded_on_source_chain') {
@@ -96,7 +93,7 @@ const processCommand = async (processCmd, options, args) => {
 
     const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
 
-    await processCmd(config, options, args, wallet, client, fee);
+    await processCmd(config, args, wallet, client, fee);
 };
 
 const programHandler = () => {
