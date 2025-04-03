@@ -46,6 +46,15 @@ jobs:
           repository: axelarnetwork/axelar-amplifier-stellar
           path: axelar-amplifier-stellar
 
+      # Get the short commit hash from axelar-amplifier-stellar repo
+      - name: Get Latest Short Commit Hash from axelar-amplifier-stellar
+        id: get_short_commit_hash
+        run: |
+          cd axelar-amplifier-stellar
+          git fetch --all
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -105,17 +114,11 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      - name: Get Latest Short Commit Hash
-        id: get_commit_hash
-        run: |
-          COMMIT_HASH=$(git rev-parse --short origin/main)
-          echo "commit_hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
-
-      - name: Set Artifact URL Base
+      - name: Set Artifact Base URL
         id: set_artifact_base_url
         run: |
           ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar/"
-          echo "artifact_base_url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
+          echo "url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
 
       - name: Setup Stellar wallet
         id: setup_wallet
@@ -138,7 +141,7 @@ jobs:
       - name: Deploy axelar_gateway
         run: |
           CONTRACT_NAME=stellar_axelar_operators
-          ARTIFACT_PATH="${{ steps.set_artifact_url.outputs.artifact_url }}/${CONTRACT_NAME}/${{ steps.get_commit_hash.outputs.commit_hash }}/wasm/${CONTRACT_NAME}.wasm"
+          ARTIFACT_PATH="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_NAME}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
           echo $ARTIFACT_PATH;
           node stellar/deploy-contract deploy AxelarOperators --artifact-path $ARTIFACT_PATH
 
