@@ -96,9 +96,33 @@ function proofToScVal(proof) {
     );
 }
 
+function functionCallsToScVal(functionCalls) {
+    return nativeToScVal(
+        functionCalls.map((call) => {
+            return nativeToScVal(
+                {
+                    contract: Address.fromString(call.contract),
+                    approver: Address.fromString(call.approver),
+                    function: nativeToScVal(call.function, { type: 'symbol' }),
+                    args: nativeToScVal(call.args, { type: 'string' } || []),
+                },
+                {
+                    type: {
+                        contract: ['symbol'],
+                        approver: ['symbol'],
+                        function: ['symbol'],
+                        args: ['symbol'],
+                    },
+                },
+            );
+        }),
+    );
+}
+
 module.exports = {
     commandTypeToScVal,
     messagesToScVal,
     weightedSignersToScVal,
     proofToScVal,
+    functionCallsToScVal,
 };
