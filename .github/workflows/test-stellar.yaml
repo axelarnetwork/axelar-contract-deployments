@@ -105,14 +105,17 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      - name: Compile WASM contracts
-        id: compile_wasm
+      - name: Get Latest Short Commit Hash
+        id: get_commit_hash
         run: |
-          cd axelar-amplifier-stellar
-          stellar contract build
-          ./optimize.sh
-          cd ..
-          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
+          COMMIT_HASH=$(git rev-parse --short origin/main)
+          echo "commit_hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+
+      - name: Set Artifact URL Base
+        id: set_artifact_base_url
+        run: |
+          ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar/"
+          echo "artifact_base_url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
 
       - name: Setup Stellar wallet
         id: setup_wallet
@@ -134,7 +137,10 @@ jobs:
       ###### Command: Deploy Contract ######
       - name: Deploy axelar_gateway
         run: |
-          node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
+          CONTRACT_NAME=stellar_axelar_operators
+          ARTIFACT_PATH="${{ steps.set_artifact_url.outputs.artifact_url }}/${CONTRACT_NAME}/${{ steps.get_commit_hash.outputs.commit_hash }}/wasm/${CONTRACT_NAME}.wasm"
+          echo $ARTIFACT_PATH;
+          node stellar/deploy-contract deploy AxelarOperators --artifact-path $ARTIFACT_PATH
 
       ###### Command: Operators ######
       - name: Execute is operator
