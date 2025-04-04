@@ -99,12 +99,25 @@ function proofToScVal(proof) {
 function functionCallsToScVal(functionCalls) {
     return nativeToScVal(
         functionCalls.map((call) => {
+            // Process arguments to convert strings to bytes if needed
+            const processedArgs = call.args
+                ? call.args.map((arg) => {
+                      if (typeof arg === 'string' && /^0x[0-9a-fA-F]+$/.test(arg)) {
+                          const hexValue = arg.slice(2);
+                          const buf = Buffer.from(hexValue.padStart(64, '0'), 'hex');
+                          return buf;
+                      }
+
+                      return arg;
+                  })
+                : [];
+
             return nativeToScVal(
                 {
                     contract: Address.fromString(call.contract),
                     approver: Address.fromString(call.approver),
                     function: nativeToScVal(call.function, { type: 'symbol' }),
-                    args: nativeToScVal(call.args, { type: 'string' } || []),
+                    args: processedArgs,
                 },
                 {
                     type: {
