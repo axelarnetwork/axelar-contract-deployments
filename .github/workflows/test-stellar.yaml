@@ -117,7 +117,7 @@ jobs:
       - name: Set Artifact Base URL
         id: set_artifact_base_url
         run: |
-          ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar/"
+          ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar"
           echo "url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
 
       - name: Setup Stellar wallet
@@ -148,7 +148,7 @@ jobs:
             # - Converting the CONTRACT name to lowercase.
             # - Replacing any non-alphanumeric characters with a hyphen (-).
             # - Prefixing with "stellar-".
-            CONTRACT_DIR="stellar-$(echo $CONTRACT | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g')"
+            CONTRACT_DIR="stellar-$(echo $CONTRACT | sed 's/\([^A-Z]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]')"
 
             # Derive CONTRACT_NAME by:
             # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
