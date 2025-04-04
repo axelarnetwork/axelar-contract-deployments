@@ -112,6 +112,12 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
+      - name: Set Artifact Base URL
+        id: set_artifact_base_url
+        run: |
+          ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar"
+          echo "url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
+
       - name: Setup Stellar wallet
         id: setup_wallet
         run: |
