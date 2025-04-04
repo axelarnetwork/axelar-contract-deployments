@@ -3,7 +3,7 @@
  */
 
 import { config } from './environment';
-import { question, displayMessage, MessageType } from '../utils/cli';
+import { question, displayMessage, MessageType } from '../utils/cli-utils';
 import { getEnvVar, getRequiredEnvVar, createEnvTemplate } from '../utils/env';
 
 /**

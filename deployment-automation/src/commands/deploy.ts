@@ -32,7 +32,7 @@ import {
   retrieveRewardsAddress 
 } from '../axelar/rewards';
 import { saveJsonToFile, loadJsonFromFile } from '../utils/fs';
-import { displayMessage, MessageType } from '../utils/cli';
+import { displayMessage, MessageType } from '../utils/cli-utils';
 import { filterSensitiveData } from '../utils/env';
 import { CONFIG_DIR } from '../../constants';
 
@@ -108,7 +108,7 @@ export async function runNewDeployment(userVersion?: string): Promise<void> {
 
     // Save deployment config for future use
     saveDeploymentConfig();
-
+    process.exit(0);
   } catch (error) {
     displayMessage(MessageType.ERROR, `Deployment failed: ${error}`);
     throw error;
@@ -133,9 +133,11 @@ export function saveDeploymentConfig(): void {
     const configData: Record<string, string> = {};
     
     for (const key of configKeys) {
-      if (config[key]) {
-        configData[key] = config[key]!;
-      }
+        if (typeof config[key] === 'boolean') {
+            configData[key] = String(config[key]);
+        } else {
+            configData[key] = config[key] as string;
+        }
     }
     
     // Filter out sensitive data
@@ -187,8 +189,11 @@ export function saveDeploymentConfig(): void {
       displayMessage(MessageType.SUCCESS, 
         `Deployment config for ${config.CHAIN_NAME} saved to ${networkConfigPath}. Sensitive data has been excluded.`);
       displayMessage(MessageType.INFO, 
+        "Once amplifiers are registered, rerun with --resume-deployment --verifiers-registered --proposals-not-approved");
+      displayMessage(MessageType.INFO, 
         `Use your original .env file when resuming deployment.`);
     } else {
       displayMessage(MessageType.ERROR, `Cannot save config: CHAIN_NAME is not set.`);
+      process.exit(1);
     }
   }

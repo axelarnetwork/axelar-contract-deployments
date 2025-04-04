@@ -16,33 +16,36 @@ import {
 } from '../axelar/rewards';
 import { deployGatewayContract } from '../axelar/gateway';
 import { saveDeploymentConfig } from './deploy';
-import { displayMessage, MessageType } from '../utils/cli';
+import { displayMessage, MessageType } from '../utils/cli-utils';
 
-/**
- * This is the continuation point if the script is resumed from JSON
- */
 export async function gotoAfterChainRegistration(): Promise<void> {
-  console.log("✅ Continuing deployment from saved state...");
-
-  try {
-    // Run the verification step that gateway router was registered
-    await verifyExecution();
-
-    // Retrieve contract addresses
-    retrieveMultisigAddresses();
-
-    // Register and authorize MultisigProver
-    await authorizeMultisigProver();
-    
-    // Save updated deployment config
-    saveDeploymentConfig();
-    
-    console.log("🔍 Wait for multisig proposals to be approved...");
-  } catch (error) {
-    displayMessage(MessageType.ERROR, `Chain registration resume failed: ${error}`);
-    throw error;
+    displayMessage(MessageType.INFO, "Continuing deployment after chain registration...");
+  
+    try {
+      // Run the verification step that gateway router was registered
+      await verifyExecution();
+  
+      // Retrieve contract addresses
+      retrieveMultisigAddresses();
+  
+      // Register and authorize MultisigProver
+      await authorizeMultisigProver();
+      
+      // Save updated deployment config
+      saveDeploymentConfig();
+      
++      displayMessage(MessageType.INFO, "Chain registration and MultisigProver authorization complete.");
+      displayMessage(MessageType.INFO, "The multisig proposals now need to be approved.");
+      displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
+                     config.CHAIN_NAME + " --verifiers-registered --proposals-approved");
+      
+      // Explicitly exit the process
+      process.exit(0);
+    } catch (error) {
+      displayMessage(MessageType.ERROR, `Chain registration resume failed: ${error}`);
+      process.exit(1);
+    }
   }
-}
 
 /**
  * Function to handle the state after multisig proposals have been approved
@@ -51,17 +54,78 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
   try {
     await verifyMultisig();
 
-    await createRewardPools();
-    await addFundsToRewardPools();
+    // Try to create reward pools, but continue on failure
+    try {
+      await createRewardPools();
+    } catch (error) {
+      // Check if the error is because the pool already exists
+      const errorStr = String(error);
+      if (errorStr.includes("rewards pool already exists")) {
+        displayMessage(MessageType.WARNING, "Reward pools already exist. Continuing...");
+      } else {
+        displayMessage(MessageType.WARNING, `Reward pool creation encountered an issue: ${error}`);
+        displayMessage(MessageType.INFO, "Continuing with deployment...");
+      }
+    }
 
-    await createGenesisVerifierSet();
+    // Try to add funds to reward pools, but continue on failure
+    try {
+      await addFundsToRewardPools();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `Adding funds to reward pools encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
 
-    await deployGatewayContract();
+    // Try to create genesis verifier set, but continue on failure
+    try {
+      await createGenesisVerifierSet();
+    } catch (error) {
+      // Check if the error is because the verifier set hasn't changed
+      const errorStr = String(error);
+      if (errorStr.includes("verifier set has not changed sufficiently since last update")) {
+        displayMessage(MessageType.WARNING, "Verifier set has not changed sufficiently. This is normal if it was recently updated.");
+      } else {
+        displayMessage(MessageType.WARNING, `Creating genesis verifier set encountered an issue: ${error}`);
+        displayMessage(MessageType.INFO, "Continuing with deployment...");
+      }
+    }
 
-    console.log("🎉 Deployment complete!");
+    // Deploy gateway contract (this is the critical step)
+    try {
+      const gatewayOutput = await deployGatewayContract();
+      console.log(gatewayOutput);
+      displayMessage(MessageType.SUCCESS, "Gateway deployed successfully!");
+    } catch (error) {
+      displayMessage(MessageType.ERROR, `Gateway deployment failed: ${error}`);
+      
+      // If the --continue-on-error flag is set, exit with a special code
+      if (process.argv.includes('--continue-on-error')) {
+        displayMessage(MessageType.WARNING, "Continuing despite gateway deployment failure due to --continue-on-error flag");
+        process.exit(2); // Special exit code for this case
+      } else {
+        throw error;
+      }
+    }
+
+    displayMessage(MessageType.SUCCESS, "🎉 Deployment complete!");
+    process.exit(0);
   } catch (error) {
     displayMessage(MessageType.ERROR, `Post-multisig proposals execution failed: ${error}`);
-    throw error;
+    
+    // If the --force-gateway-deployment flag is set, try gateway deployment anyway
+    if (process.argv.includes('--force-gateway-deployment')) {
+      displayMessage(MessageType.WARNING, "Attempting gateway deployment despite errors due to --force-gateway-deployment flag");
+      try {
+        const gatewayOutput = await deployGatewayContract();
+        console.log(gatewayOutput);
+        displayMessage(MessageType.SUCCESS, "Gateway deployment completed!");
+      } catch (finalError) {
+        displayMessage(MessageType.ERROR, `Final gateway deployment failed: ${finalError}`);
+        throw finalError;
+      }
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -69,8 +133,13 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
  * Function to print environment variables as JSON and exit
  */
 export function printEnvJsonAndExit(): void {
-  console.log("🎉 Chain registration complete! Need to Update the Verifiers!");
+  displayMessage(MessageType.SUCCESS, "Chain registration complete! Need to Update the Verifiers!");
   
   // Save deployment config
   saveDeploymentConfig();
+  
+  displayMessage(MessageType.INFO, "To continue once verifiers have registered support, run:");
+  console.log(`npm start -- --resume-deployment --chain-name ${config.CHAIN_NAME} --verifiers-registered --no-proposals-approved`);
+  
+  process.exit(0);
 }
