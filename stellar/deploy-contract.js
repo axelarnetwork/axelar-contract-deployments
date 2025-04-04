@@ -31,7 +31,6 @@ function main() {
     command.parse();
 }
 
-
 if (require.main === module) {
     main();
 }

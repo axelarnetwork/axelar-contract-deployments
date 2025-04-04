@@ -88,9 +88,7 @@ const upgrade = async (options, _, chain, contractName) => {
     printInfo('Contract upgraded successfully!', contractAddress);
 };
 
-const upload = async (options, _, chain, contractName) => {
-
-};
+const upload = async (options, _, chain, contractName) => {};
 
 const getInitializeArgs = async (config, chain, contractName, wallet, options) => {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
