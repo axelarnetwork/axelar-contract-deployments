@@ -154,11 +154,14 @@ jobs:
             # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
             CONTRACT_NAME=$(echo "${CONTRACT_DIR}" | sed 's/-/_/g')
 
-            # Define ARTIFACT_PATH using the contract-specific details
             ARTIFACT_PATH="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
-            echo "Deploying $CONTRACT from $ARTIFACT_PATH"
+            LOCAL_PATH="./artifacts/${CONTRACT_NAME}.wasm"
 
-            # Deploy the contract
+            mkdir -p ./artifacts
+            echo "Downloading $CONTRACT from $ARTIFACT_URL"
+            curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
+
+            echo "Deploying $CONTRACT from $ARTIFACT_PATH"
             node stellar/deploy-contract deploy $CONTRACT --artifact-path $ARTIFACT_PATH
           done
 
