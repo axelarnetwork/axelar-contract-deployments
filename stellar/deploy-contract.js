@@ -385,9 +385,9 @@ function sanitizeMigrationData(migrationData, version, contractName) {
 }
 
 function customMigrationData(migrationDataObj, version, contractName) {
-    if (!version) return null;
-    if (!VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version]) return null;
-    if (!VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName]) return null;
+    if (!version || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version] || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName]) {
+        return null;
+    }
 
     const customMigrationDataTypeToScVal = VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName];
 
