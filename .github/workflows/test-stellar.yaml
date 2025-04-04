@@ -77,8 +77,7 @@ jobs:
       - name: Setup Stellar local network
         id: setup_network
         run: |
-          # stellar container start --protocol-version <PROTOCOL_VERSION> <NETWORK>
-          stellar container start --protocol-version 22 local
+          stellar container start local -v --name stellar --protocol-version 22
           echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
           echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
@@ -161,8 +160,10 @@ jobs:
             echo "Downloading $CONTRACT from $ARTIFACT_URL"
             curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
 
+            ls -al "$LOCAL_PATH";
+
             echo "Deploying $CONTRACT from $LOCAL_PATH"
-            node stellar/deploy-contract deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
+            node stellar/deploy-contract.js deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
           done
 
       ###### Command: Operators ######
