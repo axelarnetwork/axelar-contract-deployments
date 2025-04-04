@@ -46,6 +46,14 @@ jobs:
           repository: axelarnetwork/axelar-amplifier-stellar
           path: axelar-amplifier-stellar
 
+      - name: Get Latest Short Commit Hash from axelar-amplifier-stellar
+        id: get_short_commit_hash
+        run: |
+          cd axelar-amplifier-stellar
+          git fetch --all
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -68,8 +76,7 @@ jobs:
       - name: Setup Stellar local network
         id: setup_network
         run: |
-          # stellar container start --protocol-version <PROTOCOL_VERSION> <NETWORK>
-          stellar container start --protocol-version 22 local
+          stellar container start local --protocol-version 22
           echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
           echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
@@ -105,15 +112,6 @@ jobs:
       - name: Display local.json
         run: cat ./axelar-chains-config/info/local.json
 
-      - name: Compile WASM contracts
-        id: compile_wasm
-        run: |
-          cd axelar-amplifier-stellar
-          stellar contract build
-          ./optimize.sh
-          cd ..
-          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
-
       - name: Setup Stellar wallet
         id: setup_wallet
         run: |
@@ -132,6 +130,40 @@ jobs:
           echo "YES=true" >> .env
 
       ###### Command: Deploy Contract ######
-      - name: Deploy axelar_gateway
+      #- name: Deploy axelar_gateway
+      #  run: |
+      #    node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
+
+      ###### Command: Deploy Contracts ######
+      - name: Deploy Contracts
         run: |
-          node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
+          # List of contracts to deploy
+          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarExample")
+
+          for CONTRACT in "${CONTRACTS[@]}"; do
+            # Derive CONTRACT_DIR by:
+            # - Converting the CONTRACT name to lowercase.
+            # - Replacing any non-alphanumeric characters with a hyphen (-).
+            # - Prefixing with "stellar-".
+            CONTRACT_DIR="stellar-$(echo $CONTRACT | sed 's/\([^A-Z]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]')"
+
+            # Derive CONTRACT_NAME by:
+            # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
+            CONTRACT_NAME=$(echo "${CONTRACT_DIR}" | sed 's/-/_/g')
+
+            ARTIFACT_URL="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
+            LOCAL_PATH="./artifacts/${CONTRACT_NAME}.wasm"
+
+            mkdir -p ./artifacts
+            echo "Downloading $CONTRACT from $ARTIFACT_URL"
+            curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
+
+            ls -al "$LOCAL_PATH";
+
+            echo "Deploying $CONTRACT from $LOCAL_PATH"
+            echo "$CONTRACT_DIR"
+            echo "$CONTRACT_NAME"
+            echo "$CONTRACT"
+            echo "$LOCAL_PATH"
+            node stellar/deploy-contract deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
+          done
