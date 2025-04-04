@@ -119,10 +119,26 @@ function functionCallsToScVal(functionCalls) {
     );
 }
 
+function itsCustomMigrationDataToScValV110(migrationData) {
+    return nativeToScVal(
+        {
+            new_token_manager_wasm_hash: Buffer.from(migrationData.newTokenManagerWasmHash, 'hex'),
+            new_interchain_token_wasm_hash: Buffer.from(migrationData.newInterchainTokenWasmHash, 'hex'),
+        },
+        {
+            type: {
+                new_token_manager_wasm_hash: ['symbol', 'bytes'],
+                new_interchain_token_wasm_hash: ['symbol', 'bytes'],
+            },
+        },
+    );
+}
+
 module.exports = {
     commandTypeToScVal,
     messagesToScVal,
     weightedSignersToScVal,
     proofToScVal,
     functionCallsToScVal,
+    itsCustomMigrationDataToScValV110,
 };

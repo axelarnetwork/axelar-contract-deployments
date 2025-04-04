@@ -308,3 +308,37 @@ node cosmwasm/submit-proposal.js migrate \
   --fetchCodeId \
   --deposit 100000000
 ```
+
+### Rotating verifier set
+1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:
+```
+MNEMONIC="<mnemonic for multisig prover admin>"
+ENV="<environment>"
+```
+
+2. Register/Deregister verifiers for the chain in scope:
+```bash
+ampd register-chain-support <service-name> <chain-name>
+or
+ampd deregister-chain-support <service-name> <chain-name>
+```
+
+3. Update verifier set
+```bash
+node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
+```
+
+4. Using multisig session id output in last command, submit proof on destination chain. For example:
+- Sui:
+```bash
+node sui/gateway.js submitProof <multisig-session-id>
+```
+- EVM:
+```bash
+node evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
+```
+
+4. Confirm verifier rotation
+```bash
+node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
+```

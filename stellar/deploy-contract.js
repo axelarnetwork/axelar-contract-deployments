@@ -7,7 +7,7 @@ const { getWallet, broadcast, serializeValue, addBaseOptions, getContractCodePat
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { addStoreOptions } = require('../common/cli-utils');
-const { weightedSignersToScVal } = require('./type-utils');
+const { weightedSignersToScVal, itsCustomMigrationDataToScValV110 } = require('./type-utils');
 const { ethers } = require('hardhat');
 const { readFileSync } = require('fs');
 const {
@@ -15,7 +15,7 @@ const {
 } = ethers;
 require('./cli-utils');
 
-const CONTRACT_DEPLOY_CONFIGS = {
+const CONTRACT_DEPLOY_OPTIONS = {
     AxelarGateway: () => [
         new Option('--nonce <nonce>', 'optional nonce for the signer set'),
         new Option('--domain-separator <domainSeparator>', 'domain separator (keccak256 hash or "offline")').default('offline'),
@@ -27,20 +27,28 @@ const CONTRACT_DEPLOY_CONFIGS = {
     ],
 };
 
-const CONTRACT_UPGRADE_CONFIGS = {
+const CONTRACT_UPGRADE_OPTIONS = {
     AxelarGateway: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
     AxelarOperators: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
     InterchainTokenService: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+};
+
+const CustomMigrationDataTypeToScValV110 = {
+    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV110(migrationData),
+};
+
+const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
+    '1.1.0': CustomMigrationDataTypeToScValV110,
 };
 
 const addDeployOptions = (program) => {
     // Get the package name from the program name
     const contractName = program.name();
     // Find the corresponding options for the package
-    const cmdOptions = CONTRACT_DEPLOY_CONFIGS[contractName];
+    const contractDeployOptions = CONTRACT_DEPLOY_OPTIONS[contractName];
 
-    if (cmdOptions) {
-        const options = cmdOptions();
+    if (contractDeployOptions) {
+        const options = contractDeployOptions();
         // Add the options to the program
         options.forEach((option) => program.addOption(option));
     }
@@ -50,10 +58,10 @@ const addDeployOptions = (program) => {
 
 const addUpgradeOptions = (program) => {
     const contractName = program.name();
-    const cmdOptions = CONTRACT_UPGRADE_CONFIGS[contractName];
+    const contractUpgradeOptions = CONTRACT_UPGRADE_OPTIONS[contractName];
 
-    if (cmdOptions) {
-        const options = cmdOptions();
+    if (contractUpgradeOptions) {
+        const options = contractUpgradeOptions();
         options.forEach((option) => program.addOption(option));
     }
 
@@ -305,7 +313,7 @@ Examples:
         });
 
         command.action((options) => {
-            options.migrationData = sanitizeMigrationData(options.migrationData);
+            options.migrationData = sanitizeMigrationData(options.migrationData, options.version, contractName);
             mainProcessor(options, upgrade, contractName);
         });
 
@@ -339,7 +347,7 @@ function preActionHook(contractName) {
     };
 }
 
-function sanitizeMigrationData(migrationData) {
+function sanitizeMigrationData(migrationData, version, contractName) {
     if (migrationData === null || migrationData === '()') return null;
 
     try {
@@ -358,16 +366,37 @@ function sanitizeMigrationData(migrationData) {
     }
 
     if (Array.isArray(parsed)) {
-        return parsed.map(sanitizeMigrationData);
+        return parsed.map((value) => sanitizeMigrationData(value, version, contractName));
+    }
+
+    const custom = customMigrationData(parsed, version, contractName);
+
+    if (custom) {
+        return custom;
     }
 
     if (parsed !== null && typeof parsed === 'object') {
-        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value)]));
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value, version, contractName)]));
     }
 
     printInfo('Sanitized migration data', parsed);
 
     return parsed;
+}
+
+function customMigrationData(migrationDataObj, version, contractName) {
+    if (!version || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version] || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName]) {
+        return null;
+    }
+
+    const customMigrationDataTypeToScVal = VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName];
+
+    try {
+        printInfo(`Retrieving custom migration data for ${contractName}`);
+        return customMigrationDataTypeToScVal(migrationDataObj);
+    } catch (error) {
+        throw new Error(`Failed to convert custom migration data for ${contractName}: ${error}`);
+    }
 }
 
 if (require.main === module) {
