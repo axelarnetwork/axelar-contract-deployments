@@ -293,12 +293,16 @@ if (require.main === module) {
     program
         .command('migrate-token <tokenId> <version>')
         .description("Migrates a token's TokenManager and InterchainToken to a new version")
-        .addOption(new Option('--tokenId <tokenId>', 'The tokenId to migrate in base64 format (example: "Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="'))
+        .addOption(
+            new Option(
+                '--tokenId <tokenId>',
+                'The tokenId to migrate in base64 format (example: "Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="',
+            ),
+        )
         .addOption(new Option('--version <version>', 'The version to migrate to'))
         .action((tokenId, version, options) => {
             mainProcessor(migrateToken, [tokenId, version], options);
         });
-
 
     addOptionsToCommands(program, addBaseOptions);
 
