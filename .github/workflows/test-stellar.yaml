@@ -81,12 +81,7 @@ jobs:
           echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
       - name: Wait for Stellar network
-        uses: nev7n/wait_for_response@v1
-        with:
-          url: 'http://localhost:8000'
-          responseCode: 200
-          timeout: 500000
-          interval: 1000
+        run: sleep 60
 
       - name: Add as configured network
         run: |
