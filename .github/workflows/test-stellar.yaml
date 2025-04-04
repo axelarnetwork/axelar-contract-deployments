@@ -135,10 +135,19 @@ jobs:
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
 
+      - name: Compile WASM contracts
+        id: compile_wasm
+        run: |
+          cd axelar-amplifier-stellar
+          stellar contract build
+          ./optimize.sh
+          cd ..
+          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
+
       ###### Command: Deploy Contract ######
-      #- name: Deploy axelar_gateway
-      #  run: |
-      #    node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
+      - name: Deploy axelar_gateway
+        run: |
+          node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
 
       ###### Command: Deploy Contracts ######
       - name: Deploy Contracts
