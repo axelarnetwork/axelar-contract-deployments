@@ -161,8 +161,8 @@ jobs:
             echo "Downloading $CONTRACT from $ARTIFACT_URL"
             curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
 
-            echo "Deploying $CONTRACT from $ARTIFACT_PATH"
-            node stellar/deploy-contract deploy $CONTRACT --artifact-path $ARTIFACT_PATH
+            echo "Deploying $CONTRACT from $LOCAL_PATH"
+            node stellar/deploy-contract deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
           done
 
       ###### Command: Operators ######
