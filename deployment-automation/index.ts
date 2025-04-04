@@ -14,20 +14,21 @@ import {
   validateChainInfo
 } from './src/config/validation';
 import { 
-  question, 
-  closeReadline, 
   displayHeader, 
   displayMessage,
   MessageType 
-} from './src/utils/cli';
+} from './src/utils/cli-utils';
 import { loadJsonFromFile } from './src/utils/fs';
 import { 
   loadEnvVarsIntoConfig,
   createEnvTemplate
 } from './src/utils/env';
 import { 
+  parseCommandLineArgs,
+  printHelp
+} from './src/utils/cli-args';
+import { 
   runNewDeployment, 
-  saveDeploymentConfig 
 } from './src/commands/deploy';
 import { 
   gotoAfterChainRegistration, 
@@ -40,43 +41,69 @@ import { CONFIG_DIR } from './constants';
  * Main function to drive the deployment process
  */
 async function main(): Promise<void> {
-  displayHeader("Welcome to Axelar Deployment Setup");
+  displayHeader("Axelar Deployment Setup");
 
   try {
     // Load environment variables into config
     loadEnvVarsIntoConfig(config);
+    
+    // Parse command-line arguments
+    parseCommandLineArgs();
     
     // Check if the .env file exists, if not create a template
     if (!fs.existsSync('.env')) {
       displayMessage(MessageType.WARNING, "No .env file found. Creating a template...");
       createEnvTemplate();
       displayMessage(MessageType.INFO, "Please fill in the required values in the .env file and run the program again.");
-      return;
+      process.exit(0);
     }
 
-    // Ask user if this is a new deployment or continuation
-    const deploymentType = await question("Is this a new deployment? (yes/no): ");
+    // Check if help was requested
+    if (process.argv.includes('--help')) {
+      printHelp();
+      process.exit(0);
+    }
+
+    // Determine if this is a new deployment or continuation
+    const isNewDeployment = process.argv.includes('--new-deployment');
+    const isResumingDeployment = process.argv.includes('--resume-deployment');
+
+    // Validate that either new or resume flag is provided
+    if (!isNewDeployment && !isResumingDeployment) {
+      displayMessage(MessageType.ERROR, "Must specify either --new-deployment or --resume-deployment");
+      printHelp();
+      process.exit(1);
+    }
+
+    // Validate that not both flags are provided
+    if (isNewDeployment && isResumingDeployment) {
+      displayMessage(MessageType.ERROR, "Cannot specify both --new-deployment and --resume-deployment");
+      printHelp();
+      process.exit(1);
+    }
 
     // Check if deployment is a continuation
-    if (deploymentType.toLowerCase() === "no") {
-      // Ask for chain name to find the correct config file
-      let chainName = config.CHAIN_NAME;
+    if (isResumingDeployment) {
+      // Get chain name from config, error if not provided
+      const chainName = config.CHAIN_NAME;
       if (!chainName) {
-        chainName = await question("Enter Chain Name for the deployment you want to continue: ");
+        displayMessage(MessageType.ERROR, "Chain name must be specified with --chain-name when resuming a deployment");
+        process.exit(1);
       }
       
-      // Determine the network name
-      let namespace = config.NAMESPACE;
+      // Get network name from config, error if not provided
+      const namespace = config.NAMESPACE;
       if (!namespace) {
-        namespace = await question("Enter the Network namespace (e.g., mainnet, testnet, devnet-myname): ");
+        displayMessage(MessageType.ERROR, "Namespace must be specified with --namespace when resuming a deployment");
+        process.exit(1);
       }
       
       const networkConfigPath = path.join(CONFIG_DIR, `${namespace}.json`);
       
-      console.log(`✅ Loading configuration from ${networkConfigPath}...`);
+      displayMessage(MessageType.INFO, `Loading configuration from ${networkConfigPath}...`);
       
       if (!fs.existsSync(networkConfigPath)) {
-        console.log(`❌ Error: ${networkConfigPath} not found. Cannot resume deployment.`);
+        displayMessage(MessageType.ERROR, `Network config file not found: ${networkConfigPath}`);
         process.exit(1);
       }
 
@@ -86,33 +113,24 @@ async function main(): Promise<void> {
         
         // Check if deployments section exists
         if (!networkConfig.deployments) {
-          console.log(`❌ No deployments found in ${networkConfigPath}.`);
+          displayMessage(MessageType.ERROR, `No deployments found in ${networkConfigPath}`);
           process.exit(1);
         }
         
-        // Ensure we have a valid chain name
-        if (!chainName || !networkConfig.deployments[chainName]) {
-          console.log(`❌ No deployment found for chain '${chainName}' in ${networkConfigPath}.`);
+        // Ensure the chain name exists in deployments
+        if (!networkConfig.deployments[chainName]) {
+          displayMessage(MessageType.ERROR, `No deployment found for chain '${chainName}' in ${networkConfigPath}`);
           
           // List available deployments
           const availableChains = Object.keys(networkConfig.deployments)
             .filter(key => key !== 'default');
           
           if (availableChains.length > 0) {
-            console.log("Available chains:");
+            displayMessage(MessageType.INFO, "Available chains:");
             availableChains.forEach(chain => console.log(`- ${chain}`));
-            
-            // Ask user to select a chain
-            chainName = await question("Enter one of the available chain names: ");
-            
-            if (!networkConfig.deployments[chainName]) {
-              console.log(`❌ Invalid chain selection. Exiting.`);
-              process.exit(1);
-            }
-          } else {
-            console.log(`❌ No deployments available in ${networkConfigPath}. Exiting.`);
-            process.exit(1);
           }
+          
+          process.exit(1);
         }
         
         // If there's a default config, use it as a base and override with chain-specific values
@@ -129,13 +147,42 @@ async function main(): Promise<void> {
         config.NAMESPACE = namespace;
         config.CHAIN_NAME = chainName;
 
-        console.log("✅ Environment restored! Resuming deployment...");
+        displayMessage(MessageType.SUCCESS, "Environment restored! Resuming deployment...");
 
-        const verifiersRegistered = await question("Have verifiers registered support for the chain? (yes/no): ");
+        // Check verifier registration status from CLI args
+        const verifiersRegistered = process.argv.includes('--verifiers-registered');
+        const verifiersNotRegistered = process.argv.includes('--no-verifiers-registered');
 
-        if (verifiersRegistered.toLowerCase() === "yes") {
-          const multisigProposalsApproved = await question("Have multisig proposals been approved? (yes/no): ");
-          if (multisigProposalsApproved.toLowerCase() === "yes") {
+        // Validate that either verifiers-registered or no-verifiers-registered is provided
+        if (!verifiersRegistered && !verifiersNotRegistered) {
+          displayMessage(MessageType.ERROR, "Must specify either --verifiers-registered or --no-verifiers-registered when resuming");
+          process.exit(1);
+        }
+
+        // Validate that not both flags are provided
+        if (verifiersRegistered && verifiersNotRegistered) {
+          displayMessage(MessageType.ERROR, "Cannot specify both --verifiers-registered and --no-verifiers-registered");
+          process.exit(1);
+        }
+
+        if (verifiersRegistered) {
+          // Check proposal approval status from CLI args
+          const proposalsApproved = process.argv.includes('--proposals-approved');
+          const proposalsNotApproved = process.argv.includes('--no-proposals-approved');
+
+          // Validate that either proposals-approved or no-proposals-approved is provided
+          if (!proposalsApproved && !proposalsNotApproved) {
+            displayMessage(MessageType.ERROR, "When --verifiers-registered is specified, must also specify either --proposals-approved or --no-proposals-approved");
+            process.exit(1);
+          }
+
+          // Validate that not both flags are provided
+          if (proposalsApproved && proposalsNotApproved) {
+            displayMessage(MessageType.ERROR, "Cannot specify both --proposals-approved and --no-proposals-approved");
+            process.exit(1);
+          }
+            
+          if (proposalsApproved) {
             await gotoAfterMultisigProposals();
           } else {
             await gotoAfterChainRegistration();
@@ -144,23 +191,23 @@ async function main(): Promise<void> {
           printEnvJsonAndExit();
         }
       } catch (error) {
-        console.error(`Error loading network configuration: ${error}`);
+        displayMessage(MessageType.ERROR, `Error loading network configuration: ${error}`);
         process.exit(1);
       }
 
-      closeReadline();
       return;
     }
 
     // New deployment flow
     displayMessage(MessageType.INFO, "Starting new deployment using values from .env file");
     
-    // Get network from prompt or env
+    // Get network from env, error if not provided
     if (!config.NAMESPACE) {
-      await getNetworkName();
-    } else {
-      displayMessage(MessageType.INFO, `Using network: ${config.NAMESPACE}`);
+      displayMessage(MessageType.ERROR, "Namespace must be specified with --namespace or in .env for new deployments");
+      process.exit(1);
     }
+    
+    displayMessage(MessageType.INFO, `Using network: ${config.NAMESPACE}`);
     
     // Check if default configuration exists in network config and load it
     const networkConfigPath = path.join(CONFIG_DIR, `${config.NAMESPACE}.json`);
@@ -194,8 +241,13 @@ async function main(): Promise<void> {
     // Set default values for custom devnets
     handleCustomDevnet();
     
-    // Ask for contract version
-    const userVersion = await question("Enter version to retrieve: ");
+    // Get contract version from command line arguments or environment variables
+    const userVersion = config.CONTRACT_VERSION || '';
+    if (userVersion) {
+      displayMessage(MessageType.INFO, `Using contract version: ${userVersion}`);
+    } else {
+      displayMessage(MessageType.INFO, "Using latest contract version");
+    }
 
     displayMessage(MessageType.INFO, "Environment Variables Set:");
     console.log(`   NETWORK=${config.NAMESPACE}`);
@@ -212,8 +264,6 @@ async function main(): Promise<void> {
   } catch (error) {
     displayMessage(MessageType.ERROR, `Deployment failed: ${error}`);
     process.exit(1);
-  } finally {
-    closeReadline();
   }
 }
 

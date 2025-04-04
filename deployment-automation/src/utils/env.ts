@@ -5,7 +5,7 @@
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
-import { displayMessage, MessageType } from './cli';
+import { displayMessage, MessageType } from './cli-utils';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -131,7 +131,8 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'DEPLOYMENT_TYPE',
     'DEPLOYER',
     'CONTRACT_ADMIN',
-    'PROVER_ADMIN'
+    'PROVER_ADMIN',
+    'CONTRACT_VERSION'
   ];
   
   for (const key of envVarKeys) {
