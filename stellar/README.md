@@ -165,11 +165,11 @@ node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> 
 In order to upload contracts directly to the Stellar network, use the following commands:
 
 ```bash
-npm run stellar:upload -- <CONTRACT_NAME> --version <NEW_VERSION>
+node stellar/deploy-contract.js upload <CONTRACT_NAME> --version <NEW_VERSION>
 ```
 
 ```bash
-npm run stellar:upload -- <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
+node stellar/deploy-contract.js upload <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
 ```
 
 ---
