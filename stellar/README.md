@@ -68,7 +68,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-npm run stellar:deploy -- AxelarGateway --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,13 +76,13 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-npm run stellar:deploy -- AxelarOperators --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0
 ```
 
 ### Gas Service
 
 ```bash
-npm run stellar:deploy -- AxelarGasService --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0
 ```
 
 ### Interchain Token Service
@@ -90,9 +90,9 @@ npm run stellar:deploy -- AxelarGasService --version v1.0.0
 Deploy Interchain Token and Token Manager wasm first.
 
 ```bash
-npm run stellar:deploy -- InterchainToken --version v1.0.0
-npm run stellar:deploy -- TokenManager --version v1.0.0
-npm run stellar:deploy -- InterchainTokenService --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainToken --version v1.0.0
+node stellar/deploy-contract.js deploy TokenManager --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
 ```
 
 ### Example
@@ -100,22 +100,22 @@ npm run stellar:deploy -- InterchainTokenService --version v1.0.0
 Note that example contract should use `--artifact-path` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format X.Y.Z or a commit hash.
 
 
--   `npm run stellar:deploy -- AxelarExample --artifact-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
+-   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
 
--   `npm run stellar:deploy -- AxelarExample --version 1.0.0`
+-   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
 
 ## Upgrades
 
 To facilitate contract upgrades, the `Upgrader` contract needs to be deployed first.
 
 ```bash
-npm run stellar:deploy -- Upgrader --version v1.0.0
+node stellar/deploy-contract.js deploy Upgrader --version v1.0.0
 ```
 
 After the `Upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
 where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifact-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
@@ -127,37 +127,37 @@ Note: The `--artifact-path` flag is optional, so long as the `--version` flag is
 For no migration data, omit the `--migration-data` flag, or pass `'()'` for the data.
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION>
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION>
 ```
 
 or
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '()'
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '()'
 ```
 
 For migration data of type `String`, omit the `--migration-data` flag and pass the string directly.
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 'my string'
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 'my string'
 ```
 
 For migration data of type `Vec<Address>`, omit the `--migration-data` flag and pass the array as such:
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '["GAA...", "GAB..."]'
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data '["GAA...", "GAB..."]'
 ```
 
 For migration data of type `u64`, omit the `--migration-data` flag and pass the number directly.
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 1234567890
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data 1234567890
 ```
 
 For migration data of type `bool`, omit the `--migration-data` flag and pass the boolean directly:
 
 ```bash
-npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
+node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
 ```
 
 ## Uploads
@@ -165,11 +165,11 @@ npm run stellar:upgrade -- <CONTRACT_NAME> --version <NEW_VERSION> --migration-d
 In order to upload contracts directly to the Stellar network, use the following commands:
 
 ```bash
-npm run stellar:upload -- <CONTRACT_NAME> --version <NEW_VERSION>
+node stellar/deploy-contract.js upload <CONTRACT_NAME> --version <NEW_VERSION>
 ```
 
 ```bash
-npm run stellar:upload -- <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
+node stellar/deploy-contract.js upload <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
 ```
 
 ---
