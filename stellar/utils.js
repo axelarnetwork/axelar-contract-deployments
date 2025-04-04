@@ -16,6 +16,7 @@ const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require
 const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
 const { ethers } = require('hardhat');
+const { itsCustomMigrationDataToScValV110 } = require('./type-utils');
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -37,6 +38,14 @@ const SUPPORTED_CONTRACTS = new Set([
     'Upgrader',
     'Multicall',
 ]);
+
+const CustomMigrationDataTypeToScValV110 = {
+    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV110(migrationData),
+};
+
+const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
+    '1.1.0': CustomMigrationDataTypeToScValV110,
+};
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
@@ -463,6 +472,58 @@ function pascalToKebab(str) {
     return str.replace(/([A-Z])/g, (match, _, offset) => (offset > 0 ? `-${match.toLowerCase()}` : match.toLowerCase()));
 }
 
+function sanitizeMigrationData(migrationData, version, contractName) {
+    if (migrationData === null || migrationData === '()') return null;
+
+    try {
+        return Address.fromString(migrationData);
+    } catch (_) {
+        // not an address, continue to next parsing attempt
+    }
+
+    let parsed;
+
+    try {
+        parsed = JSON.parse(migrationData);
+    } catch (_) {
+        // not json, keep as string
+        return migrationData;
+    }
+
+    if (Array.isArray(parsed)) {
+        return parsed.map((value) => sanitizeMigrationData(value, version, contractName));
+    }
+
+    const custom = customMigrationData(parsed, version, contractName);
+
+    if (custom) {
+        return custom;
+    }
+
+    if (parsed !== null && typeof parsed === 'object') {
+        return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, sanitizeMigrationData(value, version, contractName)]));
+    }
+
+    printInfo('Sanitized migration data', parsed);
+
+    return parsed;
+}
+
+function customMigrationData(migrationDataObj, version, contractName) {
+    if (!version || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version] || !VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName]) {
+        return null;
+    }
+
+    const customMigrationDataTypeToScVal = VERSIONED_CUSTOM_MIGRATION_DATA_TYPES[version][contractName];
+
+    try {
+        printInfo(`Retrieving custom migration data for ${contractName}`);
+        return customMigrationDataTypeToScVal(migrationDataObj);
+    } catch (error) {
+        throw new Error(`Failed to convert custom migration data for ${contractName}: ${error}`);
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -488,4 +549,5 @@ module.exports = {
     SUPPORTED_CONTRACTS,
     BytesToScVal,
     pascalToKebab,
+    sanitizeMigrationData,
 };
