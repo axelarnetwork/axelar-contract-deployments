@@ -2,7 +2,7 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('../utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -96,7 +96,8 @@ const upgrade = async (options, _, chain, contractName) => {
 
 const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
-    const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath);
+    const contractCodePath = await getUploadContractCodePath(options, contractName);
+    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath);
     printInfo('✅ Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
@@ -195,7 +196,7 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
 
 const uploadContract = async (contractName, options, wallet, chain) => {
     const contractCodePath = await getContractCodePath(options, contractName);
-    return await uploadWasm(wallet, chain, contractCodePath);
+    return uploadWasm(wallet, chain, contractCodePath);
 };
 
 const uploadWasm = async (wallet, chain, filePath) => {

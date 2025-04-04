@@ -150,7 +150,7 @@ async function pause(keypair, client, chain, args, options) {
     contract.disallowedFunctions.versions = contract.disallowedFunctions.versions.concat(versionsArg);
     contract.disallowedFunctions.functionNames = contract.disallowedFunctions.functionNames.concat(allowedFunctionsArg);
 
-    return await disallowFunctions(
+    return disallowFunctions(
         keypair,
         client,
         packageId,
@@ -199,7 +199,7 @@ async function unpause(keypair, client, chain, args, options) {
         }
     }
 
-    return await allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg, options);
+    return allowFunctions(keypair, client, packageId, moduleName, singletonId, ownerCapId, versionsArg, allowedFunctionsArg, options);
 }
 
 async function processCommand(command, chain, args, options) {
