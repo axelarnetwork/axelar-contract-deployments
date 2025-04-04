@@ -86,6 +86,15 @@ jobs:
               --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
               --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
 
+      - name: Compile WASM contracts
+        id: compile_wasm
+        run: |
+          cd axelar-amplifier-stellar
+          stellar contract build
+          ./optimize.sh
+          cd ..
+          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
+
       - name: Retrieve native token address
         id: get_xlm_address
         run: |
@@ -134,15 +143,6 @@ jobs:
           echo "ENV=local" >> .env
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
-
-      - name: Compile WASM contracts
-        id: compile_wasm
-        run: |
-          cd axelar-amplifier-stellar
-          stellar contract build
-          ./optimize.sh
-          cd ..
-          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
 
       ###### Command: Deploy Contract ######
       - name: Deploy axelar_gateway
