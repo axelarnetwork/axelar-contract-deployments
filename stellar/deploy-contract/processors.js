@@ -2,7 +2,7 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('../utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -51,7 +51,13 @@ const deploy = async (options, config, chain, contractName) => {
         initializeArgs: serializedArgs,
     };
 
-    printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
+    printInfo('Contract deployed successfully', {
+        contractName,
+        contractAddress,
+        deployer: wallet.publicKey(),
+        wasmHash: serializeValue(wasmHash),
+        initializeArgs: serializedArgs,
+    });
 };
 
 const upgrade = async (options, _, chain, contractName) => {
@@ -85,10 +91,15 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('Contract upgraded successfully!', contractAddress);
+    printInfo('Contract upgraded successfully', { contractName, contractAddress, wasmHash: serializeValue(newWasmHash) });
 };
 
-const upload = async (options, _, chain, contractName) => {};
+const upload = async (options, _, chain, contractName) => {
+    const wallet = await getWallet(chain, options);
+    const contractCodePath = await getUploadContractCodePath(options, contractName);
+    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath);
+    printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
+};
 
 const getInitializeArgs = async (config, chain, contractName, wallet, options) => {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });
@@ -185,7 +196,7 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
 
 const uploadContract = async (contractName, options, wallet, chain) => {
     const contractCodePath = await getContractCodePath(options, contractName);
-    return await uploadWasm(wallet, chain, contractCodePath);
+    return uploadWasm(wallet, chain, contractCodePath);
 };
 
 const uploadWasm = async (wallet, chain, filePath) => {

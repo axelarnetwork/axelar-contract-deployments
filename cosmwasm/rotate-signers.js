@@ -15,11 +15,11 @@ const executeTransaction = async (client, account, contractAddress, message, fee
 };
 
 const getNextVerifierSet = async (config, chain, client) => {
-    return await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
+    return client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
 };
 
 const getVerifierSetStatus = async (config, chain, client, verifierStatus) => {
-    return await client.queryContractSmart(config.axelar.contracts.VotingVerifier[chain].address, { verifier_set_status: verifierStatus });
+    return client.queryContractSmart(config.axelar.contracts.VotingVerifier[chain].address, { verifier_set_status: verifierStatus });
 };
 
 const updateVerifierSet = async (config, [chain], wallet, client, fee) => {

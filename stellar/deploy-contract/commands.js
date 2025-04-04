@@ -28,6 +28,8 @@ const CONTRACT_UPGRADE_OPTIONS = {
 const CONTRACT_UPLOAD_OPTIONS = {};
 
 const addDeployOptions = (command) => {
+    addStoreOptions(command);
+
     const contractName = command.name();
     const contractDeployOptions = CONTRACT_DEPLOY_OPTIONS[contractName];
 
@@ -41,6 +43,8 @@ const addDeployOptions = (command) => {
 };
 
 const addUpgradeOptions = (command) => {
+    addStoreOptions(command);
+
     const contractName = command.name();
     const contractUpgradeOptions = CONTRACT_UPGRADE_OPTIONS[contractName];
 
@@ -53,6 +57,8 @@ const addUpgradeOptions = (command) => {
 };
 
 const addUploadOptions = (command) => {
+    addStoreOptions(command);
+
     const contractName = command.name();
     const contractUploadOptions = CONTRACT_UPLOAD_OPTIONS[contractName];
 
@@ -77,7 +83,6 @@ const getDeployContractCommands = () => {
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Deploy ${contractName} contract`);
 
-        addStoreOptions(command);
         addDeployOptions(command);
 
         command.hook('preAction', preActionHook(contractName));
@@ -106,7 +111,6 @@ Examples:
 `,
         );
 
-        addStoreOptions(command);
         addUpgradeOptions(command);
 
         command.hook('preAction', preActionHook(contractName));
@@ -123,7 +127,6 @@ const getUploadContractCommands = () => {
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
         const command = new Command(contractName).description(`Upload ${contractName} contract`);
 
-        addStoreOptions(command);
         addUploadOptions(command);
 
         command.hook('preAction', preActionHook(contractName));

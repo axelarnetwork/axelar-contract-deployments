@@ -104,7 +104,7 @@ Note that example contract should use `--artifact-path` or `--version` option to
 
 -   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
 
-### Contract upgrades
+## Upgrades
 
 To facilitate contract upgrades, the `Upgrader` contract needs to be deployed first.
 
@@ -159,6 +159,20 @@ For migration data of type `bool`, omit the `--migration-data` flag and pass the
 ```bash
 node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --version <NEW_VERSION> --migration-data true
 ```
+
+## Uploads
+
+In order to upload contracts directly to the Stellar network, use the following commands:
+
+```bash
+npm run stellar:upload -- <CONTRACT_NAME> --version <NEW_VERSION>
+```
+
+```bash
+npm run stellar:upload -- <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
+```
+
+---
 
 ## Generate bindings
 

@@ -29,11 +29,11 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
 }
 
 async function transferOwnership(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_ownership');
+    return submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_ownership');
 }
 
 async function transferOperatorship(wallet, chain, _contractName, contract, args, options) {
-    return await submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_operatorship');
+    return submitOperation(wallet, chain, _contractName, contract, [addressToScVal(args)], options, 'transfer_operatorship');
 }
 
 async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
@@ -46,7 +46,7 @@ async function getTtl(_wallet, chain, contractName, contract, _args, _options) {
 async function getLedgerEntry(chain, contract) {
     const instance = contract.getFootprint();
     const server = new SorobanRpc.Server(chain.rpc);
-    return await server.getLedgerEntries(...[instance]);
+    return server.getLedgerEntries(...[instance]);
 }
 
 async function extendInstance(_wallet, chain, contractName, _contract, _args, options) {
