@@ -51,7 +51,7 @@ const deploy = async (options, config, chain, contractName) => {
         initializeArgs: serializedArgs,
     };
 
-    printInfo('✅ Contract deployed successfully', {
+    printInfo('Contract deployed successfully', {
         contractName,
         contractAddress,
         deployer: wallet.publicKey(),
@@ -91,14 +91,14 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('✅ Contract upgraded successfully', { contractName, contractAddress, wasmHash: serializeValue(newWasmHash) });
+    printInfo('Contract upgraded successfully', { contractName, contractAddress, wasmHash: serializeValue(newWasmHash) });
 };
 
 const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
     const contractCodePath = await getUploadContractCodePath(options, contractName);
     const newWasmHash = await uploadWasm(wallet, chain, contractCodePath);
-    printInfo('✅ Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
+    printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
 const getInitializeArgs = async (config, chain, contractName, wallet, options) => {
