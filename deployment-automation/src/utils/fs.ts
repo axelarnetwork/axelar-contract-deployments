@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { displayMessage, MessageType } from './cli';
+import { displayMessage, MessageType } from './cli-utils';
 
 /**
  * Ensure a directory exists, create it if it doesn't

@@ -94,32 +94,143 @@ export async function verifyMultisig(): Promise<void> {
   }
 }
 
-/**
- * Function to create genesis verifier set
- */
 export async function createGenesisVerifierSet(): Promise<void> {
-  try {
-    await execAsync(`axelard tx wasm execute ${config.MULTISIG_PROVER_ADDRESS} '"update_verifier_set"' \
-      --from ${config.PROVER_ADMIN} \
-      --gas auto \
-      --gas-adjustment 2 \
-      --node "${config.AXELAR_RPC_URL}" \
-      --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
-      --keyring-backend test \
-      --chain-id "${config.NAMESPACE}"`);
-    
-    console.log("🔍 Querying multisig prover for active verifier set...");
-    
-    const { stdout } = await execAsync(`axelard q wasm contract-state smart ${config.MULTISIG_PROVER_ADDRESS} '"current_verifier_set"' \
-      --node "${config.AXELAR_RPC_URL}" \
-      --chain-id "${config.NAMESPACE}"`);
-    
-    console.log(stdout);
-  } catch (error) {
-    console.error(`Error creating genesis verifier set: ${error}`);
-    throw error;
+    try {
+      await execAsync(`axelard tx wasm execute ${config.MULTISIG_PROVER_ADDRESS} '"update_verifier_set"' \
+        --from ${config.PROVER_ADMIN} \
+        --gas auto \
+        --gas-adjustment 2 \
+        --node "${config.AXELAR_RPC_URL}" \
+        --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
+        --keyring-backend test \
+        --chain-id "${config.NAMESPACE}"`);
+      
+      console.log("✅ Successfully updated verifier set");
+      
+    } catch (error) {
+      // Check for specific error about verifier set not changing
+      const errorStr = String(error);
+      if (errorStr.includes("verifier set has not changed sufficiently since last update")) {
+        console.log("⚠️ Verifier set has not changed sufficiently. This is normal if it was recently updated.");
+        // We can continue as this is not a fatal error
+      } else {
+        console.error(`Error creating genesis verifier set: ${error}`);
+        throw error;
+      }
+    }
+  
+    // Query the current verifier set regardless of whether update succeeded
+    try {
+      console.log("🔍 Querying multisig prover for active verifier set...");
+      
+      const { stdout } = await execAsync(`axelard q wasm contract-state smart ${config.MULTISIG_PROVER_ADDRESS} '"current_verifier_set"' \
+        --node "${config.AXELAR_RPC_URL}" \
+        --chain-id "${config.NAMESPACE}"`);
+      
+      console.log(stdout);
+      
+      // Validate the verifier set
+      const signerAddressRegex = /address: axelar[a-z0-9]+/g;
+      const matches = stdout.match(signerAddressRegex) || [];
+      const numSigners = matches.length;
+      
+      // Extract signer weights if available
+      const weightRegex = /weight: "(\d+)"/g;
+      const weightMatches = [...stdout.matchAll(weightRegex)];
+      let totalWeight = 0;
+      
+      if (weightMatches.length > 0) {
+        totalWeight = weightMatches.reduce((sum, match) => sum + parseInt(match[1]), 0);
+        console.log(`✅ Total signer weight: ${totalWeight}`);
+      }
+      
+      if (numSigners === 0) {
+        console.error("❌ No signers found in verifier set!");
+        throw new Error("Verifier set validation failed: No signers found");
+      } else if (numSigners < 2) {
+        console.warn("⚠️ Only one signer found in verifier set. This may be insufficient for secure operation.");
+      } else {
+        console.log(`✅ Found ${numSigners} signers in verifier set.`);
+      }
+      
+      // Try to extract threshold
+      const thresholdMatch = stdout.match(/threshold: "(\d+)"/);
+      if (thresholdMatch) {
+        const threshold = parseInt(thresholdMatch[1]);
+        console.log(`✅ Threshold set to ${threshold} of ${numSigners} signers.`);
+        
+        if (threshold > numSigners) {
+          console.error(`❌ Threshold (${threshold}) is greater than the number of signers (${numSigners})!`);
+          throw new Error("Invalid threshold configuration: Threshold greater than signer count");
+        }
+        
+        if (weightMatches.length > 0 && threshold > totalWeight) {
+          console.error(`❌ Threshold (${threshold}) is greater than the total signer weight (${totalWeight})!`);
+          throw new Error("Invalid threshold configuration: Threshold greater than total weight");
+        }
+      } else {
+        console.warn("⚠️ Could not extract threshold from verifier set output.");
+      }
+      
+      // Check if there are sufficient signers to ever meet the threshold
+      if (thresholdMatch) {
+        const threshold = parseInt(thresholdMatch[1]);
+        
+        // In a simple case where each signer has weight 1
+        if (numSigners < threshold) {
+          console.error(`❌ Not enough signers (${numSigners}) to meet the threshold (${threshold})!`);
+          throw new Error("Insufficient signers to meet threshold");
+        }
+        
+        // If we have weight information, use it for a more accurate check
+        if (weightMatches.length > 0) {
+          // Sort signer weights in descending order to calculate best-case scenario
+          const weights = weightMatches.map(match => parseInt(match[1])).sort((a, b) => b - a);
+          
+          // Calculate how many of the highest-weight signers are needed to meet threshold
+          let weightSum = 0;
+          let signersNeeded = 0;
+          
+          for (const weight of weights) {
+            weightSum += weight;
+            signersNeeded++;
+            
+            if (weightSum >= threshold) {
+              break;
+            }
+          }
+          
+          console.log(`✅ Minimum signers needed to meet threshold: ${signersNeeded}`);
+          
+          // Check if it's impossible to meet the threshold even with all signers
+          if (weightSum < threshold) {
+            console.error(`❌ Even with all signers, the total weight (${totalWeight}) is less than the threshold (${threshold})!`);
+            throw new Error("Total signer weight insufficient to meet threshold");
+          }
+        }
+      }
+      
+    } catch (error: unknown) {
+        // Properly type the error
+        const queryError = error as Error;
+        
+        if (typeof queryError === 'object' && 
+            queryError !== null && 
+            'message' in queryError && 
+            typeof queryError.message === 'string') {
+          
+          if (queryError.message.includes("Insufficient signers") || 
+              queryError.message.includes("Invalid threshold") ||
+              queryError.message.includes("No signers found")) {
+            // Rethrow validation errors
+            throw queryError;
+          }
+        }
+        
+        console.warn(`Warning: Could not query or validate current verifier set: ${error}`);
+        // We don't throw here for generic query errors because querying the verifier set is informational
+      }
   }
-}
 
 /**
  * Function to retrieve contract addresses

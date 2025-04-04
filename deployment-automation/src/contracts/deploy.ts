@@ -53,7 +53,6 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
-        -a "${votingVerifier.filePath}" \
         -c "VotingVerifier" \
         -e "${config.NAMESPACE}" \
         -n "${config.CHAIN_NAME}" \
@@ -79,7 +78,6 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
-        -a "${gateway.filePath}" \
         -c "Gateway" \
         -e "${config.NAMESPACE}" \
         -n "${config.CHAIN_NAME}" \
@@ -105,7 +103,6 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
-        -a "${multisigProver.filePath}" \
         -c "MultisigProver" \
         -e "${config.NAMESPACE}" \
         -n "${config.CHAIN_NAME}" \

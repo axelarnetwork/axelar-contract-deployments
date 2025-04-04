@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CONFIG_DIR } from '../../constants';
 import { config, EnvironmentConfig } from './environment';
-import { question } from '../utils/cli';
+import { question } from '../utils/cli-utils';
 
 /**
  * Function to load network configuration from JSON file

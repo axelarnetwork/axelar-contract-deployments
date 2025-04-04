@@ -7,23 +7,59 @@ import { execSync } from 'child_process';
 import { config } from '../config/environment';
 import { execAsync } from '../utils/exec';
 import { buildJsonCmdRegister } from '../utils/json';
+import { isCustomDevnet } from '../config/network';
+
 
 /**
  * Function to deploy gateway contract
  */
 export async function deployGatewayContract(): Promise<string> {
-  try {
-    const setupOutput = execSync(`node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -p "${config.TARGET_CHAIN_PRIVATE_KEY}"`, { stdio: 'pipe' }).toString();
-
-    // Print output for debugging
-    console.log(setupOutput);
-    
-    return setupOutput;
-  } catch (error) {
-    console.error(`Error deploying gateway contract: ${error}`);
-    throw error;
+    try {
+      // First run in predictOnly mode to get the predicted address
+      if (!isCustomDevnet()) {
+        const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -p "${config.TARGET_CHAIN_PRIVATE_KEY}" --predictOnly`;
+      
+        console.log("Running prediction command:", predictCmd);
+        const predictOutput = execSync(predictCmd, { stdio: 'pipe' }).toString();
+        console.log("Prediction output:", predictOutput);
+        
+        // Specifically check for the address mismatch warning
+        const addressMismatchRegex = /Predicted address\s+(0x[a-fA-F0-9]+)\s+does not match existing deployment\s+(0x[a-fA-F0-9]+)/;
+        const mismatchMatch = predictOutput.match(addressMismatchRegex);
+        
+        if (mismatchMatch) {
+            const predictedAddress = mismatchMatch[1];
+            const existingAddress = mismatchMatch[2];
+            
+            console.error(`❌ Address mismatch detected!`);
+            console.error(`   Predicted: ${predictedAddress}`);
+            console.error(`   Existing:  ${existingAddress}`);
+            console.error("For non-custom devnets, this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
+            throw new Error("Gateway address mismatch detected. Deploy aborted.");
+        }
+      }
+      
+      // For custom devnets or if no warnings, proceed with actual deployment
+      // Add -y flag to auto-confirm the deployment
+      const deployCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -p "${config.TARGET_CHAIN_PRIVATE_KEY}" -y`;
+      
+      console.log("Running deployment command:", deployCmd);
+      const deployOutput = execSync(deployCmd, { stdio: 'pipe' }).toString();
+      console.log("Deployment output:", deployOutput);
+      
+      // Check if deployment was successful
+      if (deployOutput.includes("Deployment status: SUCCESS")) {
+        console.log("✅ Gateway deployed successfully!");
+      } else if (deployOutput.includes("Deployment status: FAILED")) {
+        throw new Error("Gateway deployment failed, check the output for details.");
+      }
+      
+      return deployOutput;
+    } catch (error) {
+      console.error(`Error deploying gateway contract: ${error}`);
+      throw error;
+    }
   }
-}
 
 /**
  * Function to extract the Predicted Gateway Proxy Address

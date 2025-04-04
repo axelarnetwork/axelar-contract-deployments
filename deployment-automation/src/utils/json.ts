@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { config } from '../config/environment';
 import { saveJsonToFile } from './fs';
-import { displayMessage, MessageType } from './cli';
+import { displayMessage, MessageType } from './cli-utils';
 import { CONFIG_DIR } from '../../constants';
 
 /**
