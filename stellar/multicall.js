@@ -13,17 +13,19 @@ async function multicall(wallet, _, chain, contract, args, options) {
     if (!Array.isArray(functionCalls)) {
         throw new Error('Function calls must be an array');
     }
+    if (functionCalls.length === 0) {
+        throw new Error('Function calls array cannot be empty');
+    }
 
-    // Validate function calls
-    functionCalls.forEach((call) => {
+    functionCalls.forEach((functionCall) => {
         validateParameters({
-            isValidStellarAddress: { contract: call.contract, approver: call.approver },
-            isNonEmptyString: { function: call.function },
+            isValidStellarAddress: { contract: functionCall.contract, approver: functionCall.approver },
+            isNonEmptyString: { function: functionCall.function },
         });
     });
 
-    const scvalFunctionCalls = functionCallsToScVal(functionCalls);
-    const operation = contract.call('multicall', scvalFunctionCalls);
+    const functionCallsScVal = functionCallsToScVal(functionCalls);
+    const operation = contract.call('multicall', functionCallsScVal);
     const result = await broadcast(operation, wallet, chain, 'Multicall executed', options);
 
     printInfo('Multicall results:');
@@ -59,18 +61,18 @@ async function mainProcessor(processor, args, options) {
 }
 
 if (require.main === module) {
-    const program = new Command();
+    const command = new Command();
 
-    program.name('multicall').description('Multicall contract management');
+    command.name('multicall').description('Multicall contract management');
 
-    program
+    command
         .command('multicall <functionCallsJson>')
         .description('Execute multiple function calls in a single transaction. Provide function calls as JSON array')
         .action((functionCallsJson, options) => {
             mainProcessor(multicall, [functionCallsJson], options);
         });
 
-    addOptionsToCommands(program, addBaseOptions);
+    addOptionsToCommands(command, addBaseOptions);
 
-    program.parse();
+    command.parse();
 }
