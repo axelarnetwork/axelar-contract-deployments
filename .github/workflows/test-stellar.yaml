@@ -154,7 +154,7 @@ jobs:
             # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
             CONTRACT_NAME=$(echo "${CONTRACT_DIR}" | sed 's/-/_/g')
 
-            ARTIFACT_PATH="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
+            ARTIFACT_URL="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
             LOCAL_PATH="./artifacts/${CONTRACT_NAME}.wasm"
 
             mkdir -p ./artifacts
