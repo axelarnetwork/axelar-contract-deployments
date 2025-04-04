@@ -13,6 +13,7 @@ async function multicall(wallet, _, chain, contract, args, options) {
     if (!Array.isArray(functionCalls)) {
         throw new Error('Function calls must be an array');
     }
+
     if (functionCalls.length === 0) {
         throw new Error('Function calls array cannot be empty');
     }
