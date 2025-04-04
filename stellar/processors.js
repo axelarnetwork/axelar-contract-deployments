@@ -51,7 +51,13 @@ const deploy = async (options, config, chain, contractName) => {
         initializeArgs: serializedArgs,
     };
 
-    printInfo(contractName, JSON.stringify(chain.contracts[contractName], null, 2));
+    printInfo('✅ Contract deployed successfully', {
+        contractName,
+        contractAddress,
+        deployer: wallet.publicKey(),
+        wasmHash: serializeValue(wasmHash),
+        initializeArgs: serializedArgs,
+    });
 };
 
 const upgrade = async (options, _, chain, contractName) => {
@@ -85,10 +91,14 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('Contract upgraded successfully!', contractAddress);
+    printInfo('✅ Contract upgraded successfully', { contractName, contractAddress, wasmHash: serializeValue(newWasmHash) });
 };
 
-const upload = async (options, _, chain, contractName) => {};
+const upload = async (options, _, chain, contractName) => {
+    const wallet = await getWallet(chain, options);
+    const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath);
+    printInfo('✅ Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
+};
 
 const getInitializeArgs = async (config, chain, contractName, wallet, options) => {
     const owner = nativeToScVal(Address.fromString(wallet.publicKey()), { type: 'address' });

@@ -24,9 +24,11 @@ function main() {
 
     addOptionsToCommands(deployCommand, addBaseOptions);
     addOptionsToCommands(upgradeCommand, addBaseOptions);
+    addOptionsToCommands(uploadCommand, addBaseOptions);
 
     command.addCommand(deployCommand);
     command.addCommand(upgradeCommand);
+    command.addCommand(uploadCommand);
 
     command.parse();
 }
