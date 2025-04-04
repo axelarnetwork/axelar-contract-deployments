@@ -392,3 +392,40 @@ Transfer the operatorship of the contract:
 ```bash
 node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
+
+## Multicall Contract Functionality
+
+The Multicall contract allows executing multiple function calls in a single transaction, which can be useful for batch operations.
+
+#### Usage
+
+```bash
+node stellar/multicall.js multicall <functionCallsJson>
+```
+
+Where `<functionCallsJson>` is a JSON array of function calls, each containing:
+- `contract`: The contract address
+- `approver`: The approver address
+- `function`: The function name to call
+- `args`: Array of arguments to pass to the function
+
+#### Example Usage
+
+Multicall to add multiple trusted chains
+
+```
+node stellar/multicall.js multicall '[
+  {
+    "contract": "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB",
+    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
+    "function": "add_trusted_chain",
+    "args": ["avalanche"]
+  },
+  {
+    "contract": "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB",
+    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
+    "function": "add_trusted_chain",
+    "args": ["sui"]
+  }
+]'
+```
