@@ -126,10 +126,12 @@ where
 fn ensure_payer_is_not_forwarded(payer: Pubkey, payload: &GMPPayload) -> Result<(), ProgramError> {
     match payload {
         GMPPayload::InterchainTransfer(transfer) => {
-            let destination_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
-            for account in destination_payload.account_meta() {
-                if account.pubkey == payer {
-                    return Err(ProgramError::InvalidArgument);
+            if !transfer.data.is_empty() {
+                let destination_payload = AxelarMessagePayload::decode(transfer.data.as_ref())?;
+                for account in destination_payload.account_meta() {
+                    if account.pubkey == payer {
+                        return Err(ProgramError::InvalidArgument);
+                    }
                 }
             }
         }
