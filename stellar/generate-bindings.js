@@ -43,7 +43,7 @@ function main() {
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config, config.stellar);
+        processCommand(options, config, config.chains.stellar);
     });
 
     program.parse();
