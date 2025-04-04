@@ -80,20 +80,19 @@ jobs:
           echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
           echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
+      - name: Wait for Stellar network
+        uses: nev7n/wait_for_response@v1
+        with:
+          url: 'http://localhost:8000'
+          responseCode: 200
+          timeout: 300000
+          interval: 2000
+
       - name: Add as configured network
         run: |
           stellar network add local \
               --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
               --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
-
-      - name: Compile WASM contracts
-        id: compile_wasm
-        run: |
-          cd axelar-amplifier-stellar
-          stellar contract build
-          ./optimize.sh
-          cd ..
-          echo "wasm_dir=axelar-amplifier-stellar/target/wasm32-unknown-unknown/release" >> $GITHUB_OUTPUT
 
       - name: Retrieve native token address
         id: get_xlm_address
@@ -144,16 +143,11 @@ jobs:
           echo "CHAIN=stellar" >> .env
           echo "YES=true" >> .env
 
-      ###### Command: Deploy Contract ######
-      - name: Deploy axelar_gateway
-        run: |
-          node stellar/deploy-contract deploy AxelarOperators --artifact-path ${{ steps.compile_wasm.outputs.wasm_dir }}/stellar_axelar_operators.optimized.wasm
-
       ###### Command: Deploy Contracts ######
       - name: Deploy Contracts
         run: |
           # List of contracts to deploy
-          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarExample")
+          CONTRACTS=("AxelarOperators" "AxelarGasService")
 
           for CONTRACT in "${CONTRACTS[@]}"; do
             # Derive CONTRACT_DIR by:
@@ -173,12 +167,6 @@ jobs:
             echo "Downloading $CONTRACT from $ARTIFACT_URL"
             curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
 
-            ls -al "$LOCAL_PATH";
-
             echo "Deploying $CONTRACT from $LOCAL_PATH"
-            echo "$CONTRACT_DIR"
-            echo "$CONTRACT_NAME"
-            echo "$CONTRACT"
-            echo "$LOCAL_PATH"
             node stellar/deploy-contract deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
           done
