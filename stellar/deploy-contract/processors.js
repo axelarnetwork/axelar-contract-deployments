@@ -1,18 +1,18 @@
 'use strict';
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
-const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('./utils');
-const { getDomainSeparator, getChainConfig } = require('../common');
-const { prompt, validateParameters } = require('../common/utils');
-const { weightedSignersToScVal } = require('./type-utils');
+const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('../utils');
+const { getDomainSeparator, getChainConfig } = require('../../common');
+const { prompt, validateParameters } = require('../../common/utils');
+const { weightedSignersToScVal } = require('../type-utils');
 const { ethers } = require('hardhat');
 const { readFileSync } = require('fs');
 const {
     utils: { arrayify, id },
 } = ethers;
 
-require('./cli-utils');
+require('../cli-utils');
 
 const deploy = async (options, config, chain, contractName) => {
     const { yes } = options;

@@ -1,11 +1,11 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData } = require('./utils');
-const { addStoreOptions } = require('../common/cli-utils');
+const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData } = require('../utils');
+const { addStoreOptions } = require('../../common/cli-utils');
 const { mainProcessor, upgrade, upload, deploy } = require('./processors');
 
-require('./cli-utils');
+require('../cli-utils');
 
 const CONTRACT_DEPLOY_OPTIONS = {
     AxelarGateway: () => [

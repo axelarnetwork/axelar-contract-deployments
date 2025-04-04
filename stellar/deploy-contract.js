@@ -3,7 +3,7 @@
 const { Command } = require('commander');
 const { addBaseOptions } = require('./utils');
 const { addOptionsToCommands } = require('../common');
-const { getDeployContractCommands, getUpgradeContractCommands, getUploadContractCommands } = require('./commands');
+const { getDeployContractCommands, getUpgradeContractCommands, getUploadContractCommands } = require('./deploy-contract/commands');
 
 require('./cli-utils');
 

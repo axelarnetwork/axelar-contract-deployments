@@ -7,10 +7,7 @@
   "scripts": {
     "lint": "eslint --fix '**/*.js'",
     "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test:sui": "mocha sui",
-    "stellar:deploy": "node stellar/deploy-contract.js deploy",
-    "stellar:upgrade": "node stellar/deploy-contract.js upgrade",
-    "stellar:upload": "node stellar/deploy-contract.js upload"
+    "test:sui": "mocha sui"
   },
   "repository": {
     "type": "git",
