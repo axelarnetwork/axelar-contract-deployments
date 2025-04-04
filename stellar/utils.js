@@ -195,7 +195,7 @@ async function broadcast(operation, wallet, chain, action, options = {}, simulat
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
-    return await sendTransaction(tx, server, action, options);
+    return sendTransaction(tx, server, action, options);
 }
 
 function getAssetCode(balance, chain) {
@@ -304,7 +304,7 @@ const getNewSigners = async (wallet, config, chain, options) => {
         };
     }
 
-    return await getAmplifierVerifiers(config, chain.axelarId);
+    return getAmplifierVerifiers(config, chain.axelarId);
 };
 
 function serializeValue(value) {
@@ -426,7 +426,18 @@ const getContractCodePath = async (options, contractName) => {
 
     if (options.version) {
         const url = getContractR2Url(contractName, options.version);
-        return await downloadContractCode(url, contractName, options.version);
+        return downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
+const getUploadContractCodePath = async (options, contractName) => {
+    if (options.artifactPath) return options.artifactPath;
+
+    if (options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return downloadContractCode(url, contractName, options.version);
     }
 
     throw new Error('Either --artifact-path or --version must be provided');
@@ -545,6 +556,7 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     getContractCodePath,
+    getUploadContractCodePath,
     isValidAddress,
     SUPPORTED_CONTRACTS,
     BytesToScVal,
