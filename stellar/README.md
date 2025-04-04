@@ -429,3 +429,15 @@ node stellar/multicall.js multicall '[
   }
 ]'
 ```
+Multicall to get flow limit
+
+```
+node stellar/multicall.js multicall '[
+  {
+    "contract": "CBF4KPQTQLOLIAIDVLZA6FKL6LK5VHRJSPXP7OREAPM4XIJMMNUERJSB",
+    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
+    "function": "flow_limit",
+    "args": ["0xabcd1234"]
+  }
+]' --chain-name stellar-2025-q1 
+```
