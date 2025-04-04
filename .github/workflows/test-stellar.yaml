@@ -105,8 +105,8 @@ jobs:
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
                       "tokenAddress": "${{ steps.get_xlm_address.outputs.xlm_address }}",
-                      "rpc": "http://127.0.0.1:8000/soroban/rpc",
-                      "horizonRpc": "http://127.0.0.1:8000",
+                      "rpc": "http://localhost:8000/soroban/rpc",
+                      "horizonRpc": "http://localhost:8000",
                       "contracts": {}
                   }
               }
