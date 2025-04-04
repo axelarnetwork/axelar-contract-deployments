@@ -4,24 +4,25 @@
 
 This tool facilitates the deployment of Axelar network components by automating configurations, wallet setup, contract deployments, and governance integrations. It supports multiple environments, including `mainnet`, `testnet`, `stagenet`, `devnet-amplifier`, and custom `devnet` deployments.
 
-The automation tool reduces the need for an operator to manually coordinate between deployment scripts, significantly streamlining the end-to-end deployment flow.
+The automation tool reduces the need for an operator to manually coordinate between deployment scripts, significantly streamlining the end-to-end deployment flow. It is designed for both manual execution and automation via CI/CD pipelines.
 
 ## Features
 
-- Selectable network environments
+- Command-line based automation
 - Environment-based configuration
 - Automatic wallet creation
 - Configuration file generation
 - Contract deployment
 - Governance and admin configurations
 - Verifier and multisig setup
+- Error handling and validation
 
 ## Installation
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourorg/axelar-deployment.git
-   cd axelar-deployment
+   cd axelar-deployment/deployment-automation
    ```
 
 2. Install dependencies:
@@ -69,6 +70,7 @@ SIGNING_THRESHOLD=["6", "10"]
 CONFIRMATION_HEIGHT=1
 MINIMUM_ROTATION_DELAY=0
 DEPLOYMENT_TYPE=create
+CONTRACT_VERSION=2.0.0
 ```
 
 **Important**: If you have environment variables already set in your shell that might conflict with those in your `.env` file, run the tool using:
@@ -81,127 +83,153 @@ env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
 
 ### Running the Tool
 
-To start the deployment process, run:
+The tool is now fully command-line based and requires specific flags for operation:
 
 ```bash
-npm start
+npm start -- [options]
 ```
 
-Follow the interactive prompts to guide the deployment.
+### Command-Line Options
 
-### Network Selection
+The following options are available:
 
-If `NAMESPACE` is not set in your `.env` file, you will be prompted to select a network:
+```
+Main Options:
+  --new-deployment                Start a new deployment
+  --resume-deployment             Resume an existing deployment
+  
+Resume Options:
+  --verifiers-registered          Indicate verifiers have registered support
+  --no-verifiers-registered       Indicate verifiers have not registered support
+  --proposals-approved            Indicate multisig proposals have been approved
+  --no-proposals-approved         Indicate multisig proposals have not been approved
+  --force-gateway-deployment      Try to deploy gateway even if earlier steps fail
+  --continue-on-error             Continue execution despite errors
 
-- `mainnet`
-- `testnet`
-- `stagenet`
-- `devnet-amplifier`
-- Custom `devnet`
+Configuration Options:
+  --namespace <value>             Set the network namespace
+  --chain-name <value>            Set the chain name
+  --chain-id <value>              Set the chain ID
+  --token-symbol <value>          Set the token symbol
+  --gas-limit <value>             Set the gas limit
+  --rpc-url <value>               Set the RPC URL
+  --axelar-rpc-url <value>        Set the Axelar RPC URL
+  --version <value>               Set the contract version
+  --help                          Display help information
+```
 
-### Required Inputs
+### Deployment Process
 
-The tool requires the following details in your `.env` file:
+The deployment process is split into three distinct stages:
 
-- **Chain Name**: The name of the blockchain.
-- **Chain ID**: The numerical ID for the chain.
-- **Token Symbol**: Native token symbol.
-- **Gas Limit**: Gas limit per transaction.
-- **Private Key**: Private key for transaction signing. This key needs to be properly funded to deploy and interact with smart contracts on the target chain.
-- **RPC URL**: Endpoint for blockchain interactions.
-- **Axelar RPC URL**: Endpoint for Axelar node interactions.
-- **Mnemonic**: Wallet mnemonic for key management. The deployer will need to have a properly funded Axelar wallet to perform deployments and proposals on the target Axelar network.
+1. **Initial Deployment**
+   ```bash
+   npm start -- --new-deployment --namespace devnet-user --chain-name mynewchain
+   ```
+   This deploys contracts and registers the chain with Axelar.
 
-### Custom Network Requirements
+2. **After Verifiers Register**
+   ```bash
+   npm start -- --resume-deployment --chain-name mynewchain --verifiers-registered --no-proposals-approved
+   ```
+   This runs after verifiers have registered support for the chain.
 
-For custom devnets, the corresponding config JSON is required and should be copied to the `axelar-chains-config/info` directory.
+3. **After Proposals Are Approved**
+   ```bash
+   npm start -- --resume-deployment --chain-name mynewchain --verifiers-registered --proposals-approved
+   ```
+   This completes the deployment after multisig proposals have been approved.
 
-## Deployment Steps
+### Error Handling and Recovery
 
-Deployments are broken into three steps:
+The tool has built-in error handling for common scenarios:
 
-1. **Initial Deployment**: This step sets up the necessary configurations, deploys contracts, and generates the required environment files.
+- **Reward Pools Already Exist**: Automatically detected and handled
+- **Verifier Set Not Changed**: Automatically detected and handled
+- **Gateway Address Mismatch**: Throws error on production networks, continues on custom devnets
 
-2. **Verifier Registration & Multisig Proposals**: After the initial deployment, external actions must take place:
-   - Verifiers must register the chain with Axelar.
-   - Once verifiers have registered the chain, multisig proposals must be created and submitted.
-   - The proposals then require validation and approval before moving forward.
+### Stopping Points
 
-3. **Completing Deployment**: Once the verifiers have registered the chain and multisig proposals have been verified, the tool can proceed with finalizing the deployment steps. This includes confirming multisig contract interactions and ensuring the system is fully integrated.
+The deployment process has predetermined stopping points that require external actions:
+
+1. **After Initial Deployment**: Verifiers need to register support
+2. **After Verifier Registration**: Multisig proposals need approval
+3. **After Proposal Approval**: Final deployment steps
+
+At each stopping point, the tool will print clear instructions for the next command to run.
 
 ## Deployment Configuration Storage
 
-The tool uses a structured approach to store deployment configurations:
+Deployment configurations are stored within the network's JSON file:
 
-- All configurations are stored within the network's JSON file (e.g., `mainnet.json`, `testnet.json`)
-- Each network file contains a `deployments` section with:
-  - A `default` entry that stores network-wide configuration defaults
-  - Individual chain entries stored under their respective chain names
-- When starting a new deployment, the tool uses values from the `default` entry when not explicitly provided
-- When resuming a deployment, it first loads the default values and then applies chain-specific overrides
-- Sensitive data (private keys, mnemonics) is excluded from the stored configurations
+- Each network file (`mainnet.json`, `testnet.json`, etc.) contains a `deployments` section
+- A `default` entry stores network-wide configuration defaults
+- Individual chain deployments are stored under their respective chain names
+- Sensitive data is excluded from stored configurations
 
-This structure ensures consistent deployments while allowing for chain-specific customizations.
+## CI/CD Integration
 
-## Resuming Deployment
+Example GitHub Actions workflow:
 
-If deployment is interrupted, it can be resumed:
+```yaml
+name: Deploy Chain
 
-1. Run the tool:
-   ```bash
-   npm start
-   ```
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Network namespace'
+        required: true
+      chain_name:
+        description: 'Chain name'
+        required: true
+      stage:
+        description: 'Deployment stage'
+        required: true
+        type: choice
+        options:
+          - initial
+          - after_verifiers
+          - final
 
-2. When prompted, select `no` to indicate this is not a new deployment:
-   ```
-   Is this a new deployment? (yes/no): no
-   ```
-
-3. The tool will prompt for the chain name and network if not already provided.
-
-4. If multiple chain deployments exist for the selected network, you can choose which one to resume.
-
-5. The tool will ask additional questions to determine where to resume:
-   - Have verifiers registered support for the chain?
-   - Have multisig proposals been approved?
-
-Based on your answers, the tool will continue from the appropriate stage in the deployment process.
-
-## Stopping Points
-
-The entire deployment process is broken into multiple steps that account for asynchronous actions that must be coordinated.
-
-### Verifier Updates
-
-The first stopping point is after the Gateway registration proposal has been submitted and approved. Verifiers need to update their `config.toml` files and register chain support:
-
-```bash
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmMsgVerifier"
-
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmVerifierSetVerifier"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Deploy - Initial Stage
+        if: github.event.inputs.stage == 'initial'
+        run: npm start -- --new-deployment --namespace ${{ github.event.inputs.namespace }} --chain-name ${{ github.event.inputs.chain_name }}
+        env:
+          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
+          MNEMONIC: ${{ secrets.MNEMONIC }}
+          
+      - name: Deploy - After Verifiers
+        if: github.event.inputs.stage == 'after_verifiers'
+        run: npm start -- --resume-deployment --chain-name ${{ github.event.inputs.chain_name }} --verifiers-registered --no-proposals-approved
+        env:
+          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
+          MNEMONIC: ${{ secrets.MNEMONIC }}
+          
+      - name: Deploy - Final Stage
+        if: github.event.inputs.stage == 'final'
+        run: npm start -- --resume-deployment --chain-name ${{ github.event.inputs.chain_name }} --verifiers-registered --proposals-approved
+        env:
+          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
+          MNEMONIC: ${{ secrets.MNEMONIC }}
 ```
-
-```bash
-ampd register-chain-support validators $CHAIN
-```
-
-### Multisig Proposals
-
-After verifiers have registered support, the tool will verify and proceed to submit proposals for the multisig address. Since these proposals need to be approved, the tool will pause to let voting proceed.
-
-### Reward Pools and Final Contract Execution
-
-Once the multisig proposals are approved, the tool will create reward pools, set up the genesis verifier set, and deploy the gateway on the target chain.
 
 ## Security Considerations
 
@@ -212,7 +240,7 @@ Once the multisig proposals are approved, the tool will create reward pools, set
 
 ## Troubleshooting
 
-If you encounter issues with environment variables not being loaded from your `.env` file:
+If you encounter issues:
 
 1. Check for conflicting environment variables in your shell:
    ```bash
@@ -224,11 +252,9 @@ If you encounter issues with environment variables not being loaded from your `.
    env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
    ```
 
-## Error Handling
+3. For gateway deployment issues on non-custom networks, ensure the predicted address matches existing deployments by checking the salt, contract bytecode, and deployer address.
 
-Common failure points include:
-
-- **Invalid Private Key**: Ensure the private key starts with `0x`.
-- **Invalid RPC URLs**: Must start with `http://` or `https://`.
-- **Chain Already Exists in Config**: Prevents accidental overwrites.
-- **Missing Environment Variables**: Check your `.env` file for completeness.
+4. Use the `--help` flag to see all available options:
+   ```bash
+   npm start -- --help
+   ```
