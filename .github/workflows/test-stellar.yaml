@@ -85,8 +85,8 @@ jobs:
         with:
           url: 'http://localhost:8000'
           responseCode: 200
-          timeout: 300000
-          interval: 2000
+          timeout: 500000
+          interval: 1000
 
       - name: Add as configured network
         run: |
