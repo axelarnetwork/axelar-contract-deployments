@@ -1,19 +1,9 @@
 'use strict';
 
-const { Address, nativeToScVal, scValToNative, Operation, xdr, authorizeInvocation, rpc } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const {
-    getWallet,
-    broadcast,
-    serializeValue,
-    addBaseOptions,
-    getNetworkPassphrase,
-    createAuthorizedFunc,
-    getContractCodePath,
-    SUPPORTED_CONTRACTS,
-    BytesToScVal,
-} = require('./utils');
+const { getWallet, broadcast, serializeValue, addBaseOptions, getContractCodePath, SUPPORTED_CONTRACTS, BytesToScVal } = require('./utils');
 const { getDomainSeparator, getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 const { addStoreOptions } = require('../common/cli-utils');
@@ -247,41 +237,14 @@ async function upgrade(options, _, chain, contractName) {
     const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    const version = sanitizeUpgradeVersion(options.version);
+    const args = [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal);
 
-    const operation = Operation.invokeContractFunction({
-        contract: chain.contracts.Upgrader.address,
-        function: 'upgrade',
-        args: [contractAddress, version, newWasmHash, [options.migrationData]].map(nativeToScVal),
-        auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
-    });
+    const upgrader = new Contract(upgraderAddress);
+    const operation = upgrader.call('upgrade', ...args);
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     printInfo('Contract upgraded successfully!', contractAddress);
-}
-
-async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
-    // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
-    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
-
-    return Promise.all(
-        [
-            createAuthorizedFunc(contractAddress, 'upgrade', [nativeToScVal(newWasmHash)]),
-            createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]),
-        ].map((auth) =>
-            authorizeInvocation(
-                wallet,
-                validUntil,
-                new xdr.SorobanAuthorizedInvocation({
-                    function: auth,
-                    subInvocations: [],
-                }),
-                wallet.publicKey(),
-                getNetworkPassphrase(chain.networkType),
-            ),
-        ),
-    );
 }
 
 async function mainProcessor(options, processor, contractName) {
@@ -312,13 +275,7 @@ function main() {
         addDeployOptions(command);
 
         // Attach the preAction hook to this specific command
-        command.hook('preAction', async (thisCommand) => {
-            const opts = thisCommand.opts();
-
-            // Pass contractName directly since it's known in this scope
-            const contractCodePath = await getContractCodePath(opts, contractName);
-            Object.assign(opts, { contractCodePath });
-        });
+        command.hook('preAction', preActionHook(contractName));
 
         // Main action handler
         command.action((options) => {
@@ -380,6 +337,16 @@ Examples:
     program.parse();
 }
 
+function preActionHook(contractName) {
+    return async (thisCommand) => {
+        const opts = thisCommand.opts();
+
+        // Pass contractName directly since it's known in this scope
+        const contractCodePath = await getContractCodePath(opts, contractName);
+        Object.assign(opts, { contractCodePath });
+    };
+}
+
 function sanitizeMigrationData(migrationData, version, contractName) {
     if (migrationData === null || migrationData === '()') return null;
 
@@ -430,15 +397,6 @@ function customMigrationData(migrationDataObj, version, contractName) {
     } catch (error) {
         throw new Error(`Failed to convert custom migration data for ${contractName}: ${error}`);
     }
-}
-
-/* Note: Once R2 uploads for stellar use the cargo version number (does not include 'v' prefix), this will no longer be necessary. */
-function sanitizeUpgradeVersion(version) {
-    if (version.startsWith('v')) {
-        return version.slice(1);
-    }
-
-    return version;
 }
 
 if (require.main === module) {
