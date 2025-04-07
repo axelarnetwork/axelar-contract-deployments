@@ -184,24 +184,18 @@ async function execute(wallet, _, chain, contract, args, options) {
 }
 
 async function migrateTokens(wallet, _, chain, contract, args, options) {
-    const [tokenIds, version] = args;
+    const tokenIds = Array.isArray(args) ? args : [args];
 
     for (const tokenId of tokenIds) {
-        await migrateToken(wallet, _, chain, contract, [tokenId, version], options);
+        printInfo('Migrating token', tokenId);
+
+        const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
+        const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
+        const newVersionScVal = nativeToScVal(options.version, { type: 'string' });
+
+        const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
+        await broadcast(operation, wallet, chain, 'Migrated token', options);
     }
-}
-
-async function migrateToken(wallet, _, chain, contract, args, options) {
-    const [tokenId, version] = args;
-
-    printInfo('Migrating token', tokenId);
-
-    const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
-    const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
-    const newVersionScVal = nativeToScVal(version, { type: 'string' });
-
-    const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
-    await broadcast(operation, wallet, chain, 'Migrated token', options);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -300,31 +294,11 @@ if (require.main === module) {
         });
 
     program
-        .command('migrate-token <tokenId> <version>')
-        .description("Migrates a token's TokenManager and InterchainToken to a new version")
-        .addOption(
-            new Option(
-                '--tokenId <tokenId>',
-                'The tokenId to migrate in base64 format (example: "Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="',
-            ),
-        )
+        .command('migrate-tokens <tokenIds...>')
+        .description('Migrates token TokenManagers and InterchainTokens to a new version')
         .addOption(new Option('--version <version>', 'The version to migrate to'))
-        .action((tokenId, version, options) => {
-            mainProcessor(migrateToken, [tokenId, version], options);
-        });
-
-    program
-        .command('migrate-tokens <tokenIds> <version>')
-        .description('Migrates the TokenManagers and InterchainTokens of the tokens to a new version')
-        .addOption(
-            new Option(
-                '--tokenIds <tokenIds>',
-                'The tokenIds to migrate in base64 format (example: ["Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="])',
-            ),
-        )
-        .addOption(new Option('--version <version>', 'The version to migrate to'))
-        .action((tokenIds, version, options) => {
-            mainProcessor(migrateTokens, [tokenIds, version], options);
+        .action((tokenIds, options) => {
+            mainProcessor(migrateTokens, tokenIds, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
