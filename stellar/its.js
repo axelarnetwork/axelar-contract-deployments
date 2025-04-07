@@ -184,7 +184,9 @@ async function execute(wallet, _, chain, contract, args, options) {
 }
 
 async function migrateTokens(wallet, _, chain, contract, args, options) {
-    const tokenIds = Array.isArray(args) ? args : [args];
+    let tokenIds = Array.isArray(args) ? args : [args];
+
+    tokenIds = tokenIds.map((tokenId) => '0x'.concat(Buffer.from(tokenId, 'base64').toString('hex')));
 
     for (const tokenId of tokenIds) {
         printInfo('Migrating token', tokenId);
