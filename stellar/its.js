@@ -183,6 +183,14 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+async function migrateTokens(wallet, _, chain, contract, args, options) {
+    const [tokenIds, version] = args;
+
+    for (const tokenId of tokenIds) {
+        await migrateToken(wallet, _, chain, contract, [tokenId, version], options);
+    }
+}
+
 async function migrateToken(wallet, _, chain, contract, args, options) {
     const [tokenId, version] = args;
 
@@ -301,6 +309,20 @@ if (require.main === module) {
         .addOption(new Option('--version <version>', 'The version to migrate to'))
         .action((tokenId, version, options) => {
             mainProcessor(migrateToken, [tokenId, version], options);
+        });
+
+    program
+        .command('migrate-tokens <tokenIds> <version>')
+        .description('Migrates the TokenManagers and InterchainTokens of the tokens to a new version')
+        .addOption(
+            new Option(
+                '--tokenIds <tokenIds>',
+                'The tokenIds to migrate in base64 format (example: ["Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="])',
+            ),
+        )
+        .addOption(new Option('--version <version>', 'The version to migrate to'))
+        .action((tokenIds, version, options) => {
+            mainProcessor(migrateTokens, [tokenIds, version], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
