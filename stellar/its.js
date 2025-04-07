@@ -190,12 +190,7 @@ async function migrateToken(wallet, _, chain, contract, args, options) {
     const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
     const newVersionScVal = nativeToScVal(version, { type: 'string' });
 
-    const operation = contract.call(
-        'migrate_token',
-        tokenIdScVal,
-        upgraderAddressScVal,
-        newVersionScVal,
-    );
+    const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
     await broadcast(operation, wallet, chain, 'Migrated token', options);
 }
 
