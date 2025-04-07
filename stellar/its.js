@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -23,7 +23,7 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains, asciiToBytes } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -139,7 +139,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function interchainTransfer(wallet, _, chain, contract, args, options) {
+async function interchainTransfer(wallet, config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [tokenId, destinationChain, destinationAddress, amount] = args;
     const data = options.data === '' ? nativeToScVal(null, { type: 'null' }) : hexToScVal(options.data);
@@ -151,12 +151,16 @@ async function interchainTransfer(wallet, _, chain, contract, args, options) {
         isValidNumber: { gasAmount },
     });
 
+    const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+    printInfo('Human-readable destination address', destinationAddress);
+    printInfo('Encoded ITS destination address', itsDestinationAddress);
+
     const operation = contract.call(
         'interchain_transfer',
         caller,
         hexToScVal(tokenId),
         nativeToScVal(destinationChain, { type: 'string' }),
-        hexToScVal(destinationAddress),
+        hexToScVal(itsDestinationAddress),
         nativeToScVal(amount, { type: 'i128' }),
         data,
         tokenToScVal(gasTokenAddress, gasAmount),
@@ -179,9 +183,15 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
-async function encodeRecipient(wallet, _, chain, contract, args, options) {
-    const [recipient] = args;
-    printInfo('Encoded Recipient', asciiToBytes(recipient));
+async function migrateToken(wallet, _, chain, contract, args, options) {
+    const [tokenId, version] = args;
+
+    const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
+    const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
+    const newVersionScVal = nativeToScVal(version, { type: 'string' });
+
+    const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
+    await broadcast(operation, wallet, chain, 'Migrated token', options);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -280,10 +290,17 @@ if (require.main === module) {
         });
 
     program
-        .command('encode-recipient <recipient>')
-        .description('Encode stellar address as bytes for ITS recipient')
-        .action((recipient, options) => {
-            mainProcessor(encodeRecipient, [recipient], options);
+        .command('migrate-token <tokenId> <version>')
+        .description("Migrates a token's TokenManager and InterchainToken to a new version")
+        .addOption(
+            new Option(
+                '--tokenId <tokenId>',
+                'The tokenId to migrate in base64 format (example: "Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="',
+            ),
+        )
+        .addOption(new Option('--version <version>', 'The version to migrate to'))
+        .action((tokenId, version, options) => {
+            mainProcessor(migrateToken, [tokenId, version], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
