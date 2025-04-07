@@ -22,7 +22,7 @@ const deploy = async (options, config, chain, contractName) => {
         return;
     }
 
-    const wasmHash = await uploadWasm(wallet, chain, options.contractCodePath);
+    const wasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
     const initializeArgs = await getInitializeArgs(config, chain, contractName, wallet, options);
     const serializedArgs = Object.fromEntries(
         Object.entries(initializeArgs).map(([key, value]) => [key, serializeValue(scValToNative(value))]),
@@ -81,7 +81,7 @@ const upgrade = async (options, _, chain, contractName) => {
 
     contractAddress = Address.fromString(contractAddress);
 
-    const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath);
+    const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
     const args = [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal);
@@ -97,7 +97,7 @@ const upgrade = async (options, _, chain, contractName) => {
 const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
     const contractCodePath = await getUploadContractCodePath(options, contractName);
-    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath);
+    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
@@ -196,13 +196,13 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
 
 const uploadContract = async (contractName, options, wallet, chain) => {
     const contractCodePath = await getContractCodePath(options, contractName);
-    return uploadWasm(wallet, chain, contractCodePath);
+    return uploadWasm(wallet, chain, contractCodePath, contractName);
 };
 
-const uploadWasm = async (wallet, chain, filePath) => {
+const uploadWasm = async (wallet, chain, filePath, contractName) => {
     const bytecode = readFileSync(filePath);
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
-    const wasmResponse = await broadcast(operation, wallet, chain, 'Uploaded wasm');
+    const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`);
     return wasmResponse.value();
 };
 

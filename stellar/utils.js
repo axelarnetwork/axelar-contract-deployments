@@ -12,7 +12,7 @@ const {
     xdr,
     nativeToScVal,
 } = require('@stellar/stellar-sdk');
-const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX, isValidStellarAddress } = require('../common/utils');
+const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
 const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
 const { ethers } = require('hardhat');
@@ -486,12 +486,10 @@ function pascalToKebab(str) {
 function sanitizeMigrationData(migrationData, version, contractName) {
     if (migrationData === null || migrationData === '()') return null;
 
-    if (isValidStellarAddress(migrationData)) {
-        return migrationData;
-    }
-
-    if (typeof migrationData === 'string') {
-        return migrationData;
+    try {
+        return Address.fromString(migrationData);
+    } catch (_) {
+        // not an address, continue to next parsing attempt
     }
 
     let parsed;
@@ -499,7 +497,8 @@ function sanitizeMigrationData(migrationData, version, contractName) {
     try {
         parsed = JSON.parse(migrationData);
     } catch (_) {
-        // not json, continue
+        // not json, keep as string
+        return migrationData;
     }
 
     if (Array.isArray(parsed)) {
