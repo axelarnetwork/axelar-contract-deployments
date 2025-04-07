@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -183,6 +183,17 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+async function migrateToken(wallet, _, chain, contract, args, options) {
+    const [tokenId, version] = args;
+
+    const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
+    const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
+    const newVersionScVal = nativeToScVal(version, { type: 'string' });
+
+    const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
+    await broadcast(operation, wallet, chain, 'Migrated token', options);
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -276,6 +287,20 @@ if (require.main === module) {
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+        });
+
+    program
+        .command('migrate-token <tokenId> <version>')
+        .description("Migrates a token's TokenManager and InterchainToken to a new version")
+        .addOption(
+            new Option(
+                '--tokenId <tokenId>',
+                'The tokenId to migrate in base64 format (example: "Ti+Y+1GPlMl6ZvSfJSq1lTJna8pWcboxzVkujlT0/F0="',
+            ),
+        )
+        .addOption(new Option('--version <version>', 'The version to migrate to'))
+        .action((tokenId, version, options) => {
+            mainProcessor(migrateToken, [tokenId, version], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
