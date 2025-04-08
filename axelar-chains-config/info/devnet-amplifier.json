@@ -669,7 +669,7 @@
         "AxelarOperators": {
           "address": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q"
           }
