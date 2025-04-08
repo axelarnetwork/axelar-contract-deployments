@@ -1,4 +1,4 @@
-name: Setup Stellar Network
+name: Setup Stellar CLI and Local Network
 
 on:
   workflow_call:

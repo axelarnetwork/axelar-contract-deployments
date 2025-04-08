@@ -65,7 +65,7 @@ jobs:
         run: npm ci
 
       - name: Setup Stellar CLI & network
-        uses: ./.github/actions/reusable-setup-stellar-cli-network.yaml
+        uses: ./.github/actions/setup-stellar/action.yaml
 
       - name: Prepare local.json
         run: |
