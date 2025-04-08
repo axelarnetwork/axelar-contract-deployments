@@ -473,7 +473,8 @@
         "gasLimit": 12000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "binance": {
       "name": "Binance",
@@ -714,7 +715,8 @@
         "gasLimit": 8000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "kava": {
       "name": "Kava",
