@@ -1064,7 +1064,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 60,
-      "decimals": 18 
+      "decimals": 18
     },
     "immutable": {
       "name": "Immutable",

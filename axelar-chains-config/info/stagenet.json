@@ -220,7 +220,7 @@
       },
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "decimals": 18 
+      "decimals": 18
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -480,7 +480,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
-      "decimals": 18 
+      "decimals": 18
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -845,7 +845,7 @@
       "confirmations": 1,
       "finality": "400",
       "approxFinalityWaitTime": 30,
-      "decimals": 18 
+      "decimals": 18
     },
     "polygon-sepolia": {
       "name": "Polygon-Sepolia",
