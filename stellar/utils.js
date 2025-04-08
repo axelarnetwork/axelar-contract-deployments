@@ -39,12 +39,12 @@ const SUPPORTED_CONTRACTS = new Set([
     'Multicall',
 ]);
 
-const CustomMigrationDataTypeToScValV110 = {
+const CustomMigrationDataTypeToScValV111 = {
     InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV110(migrationData),
 };
 
 const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
-    '1.1.0': CustomMigrationDataTypeToScValV110,
+    '1.1.1': CustomMigrationDataTypeToScValV111,
 };
 
 function getNetworkPassphrase(networkType) {
