@@ -108,7 +108,8 @@
         "api": "https://api-testnet.snowtrace.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "fantom": {
       "name": "Fantom",
@@ -331,7 +332,8 @@
         "gasLimit": 12000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "binance": {
       "name": "Binance",
@@ -586,7 +588,8 @@
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "decimals": 18
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -730,7 +733,8 @@
         "api": ""
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "linea-sepolia": {
       "name": "Linea-Sepolia",
@@ -1281,7 +1285,8 @@
         "api": "https://api-holesky.fraxscan.com/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 80
+      "approxFinalityWaitTime": 80,
+      "decimals": 18
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
@@ -1607,6 +1612,7 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "decimals": 8,
       "timeout": 50000,
       "chainType": "evm",
       "explorer": {
