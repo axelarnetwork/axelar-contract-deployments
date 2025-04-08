@@ -111,12 +111,13 @@ jobs:
 
       - name: Wait for friendbot to successfully fund address
         run: |
-          echo "Waiting for friendbot to successfully fund the address..."
+          addr="${{ steps.setup_wallet.outputs.stellar_address }}"
+          echo "Waiting for friendbot to successfully fund address: $addr"
 
           for i in {1..60}; do
             echo "Attempt $i: calling friendbot..."
 
-            RESPONSE=$(curl -s "http://localhost:8000/friendbot?addr=GBWLFYBZH6AHLFG6VMU2VLY4SC47HE3KYCZKDGPHEVPAPRWOXPC3DWP7")
+            RESPONSE=$(curl -s "http://localhost:8000/friendbot?addr=$addr")
 
             if echo "$RESPONSE" | grep -q '"successful": *true'; then
               echo "✅ Friendbot successfully funded the address."
