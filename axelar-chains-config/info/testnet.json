@@ -233,7 +233,8 @@
         "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40
+      "approxFinalityWaitTime": 40,
+      "decimals": 18
     },
     "fantom": {
       "name": "Fantom",
@@ -596,7 +597,8 @@
         "api": "https://api-testnet.bscscan.com/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 2
+      "approxFinalityWaitTime": 2,
+      "decimals": 18
     },
     "celo": {
       "name": "Celo",
@@ -2252,7 +2254,8 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "hedera": {
       "name": "Hedera",

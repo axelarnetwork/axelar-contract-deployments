@@ -367,6 +367,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "decimals": 18,
       "gasOptions": {
         "gasPriceAdjustment": 1.5
       }
@@ -1593,7 +1594,8 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "hedera": {
       "name": "Hedera",

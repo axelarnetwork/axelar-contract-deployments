@@ -263,7 +263,8 @@
         "gasPrice": 150000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "fantom": {
       "name": "Fantom",
@@ -781,6 +782,7 @@
         "gasPrice": 30000000000
       },
       "finality": "finalized",
+      "decimals": 18,
       "approxFinalityWaitTime": 2
     },
     "arbitrum": {
@@ -2490,7 +2492,8 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "sui": {
       "name": "Sui",

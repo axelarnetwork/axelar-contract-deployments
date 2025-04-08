@@ -621,7 +621,8 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "stellar-2025-q1": {
       "name": "Stellar",
