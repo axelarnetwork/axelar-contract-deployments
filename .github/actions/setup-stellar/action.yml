@@ -21,14 +21,6 @@ runs:
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_ENV
               echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_ENV
 
-        - name: Wait for Stellar RPC
-          uses: nev7n/wait_for_response@v1
-          with:
-              url: 'http://localhost:8000/'
-              responseCode: 200
-              timeout: 60000
-              interval: 1000
-
         - name: Add as configured network
           shell: bash
           run: |
