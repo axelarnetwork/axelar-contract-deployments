@@ -21,6 +21,22 @@ runs:
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_ENV
               echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_ENV
 
+        - name: Wait for Stellar network
+          shell: bash
+          run: |
+              echo "Waiting for Stellar network RPC to become ready..."
+              for i in {1..60}; do
+                echo "Attempt $i: checking..."
+                if curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
+                  echo "✅ Stellar RPC is ready"
+                  exit 0
+                fi
+                echo "  - RPC not ready yet"
+                sleep 2
+              done
+              echo "❌ Stellar RPC did not become ready in 120 seconds."
+              exit 1
+
         - name: Add as configured network
           shell: bash
           run: |
