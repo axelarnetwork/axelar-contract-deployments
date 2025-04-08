@@ -2555,6 +2555,7 @@
       "networkType": "testnet",
       "chainType": "xrpl",
       "finality": "1",
+      "decimals": 6,
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "XRPL Explorer",
@@ -3166,6 +3167,10 @@
         },
         "stellar-2025-q1": {
           "maxUintBits": 127,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "xrpl": {
+          "maxUintBits": 256,
           "maxDecimalsWhenTruncating": 255
         }
       },
