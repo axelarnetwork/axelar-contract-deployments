@@ -28,7 +28,7 @@ export const axelarGatewaySchema = {
         connectionType: { type: 'string' },
     },
     required: ['connectionType'],
-}
+};
 
 export const contractSchema = {
     id: '/info.chains.contracts',
@@ -38,9 +38,9 @@ export const contractSchema = {
         '(^[a-z]|[A-Z])[a-z]*': {
             $ref: contractValueSchema.id,
         },
-        'AxelarGateway': {
+        AxelarGateway: {
             $ref: axelarGatewaySchema.id,
-        }
+        },
     },
     properties: {
         skipRevertTests: {
@@ -90,9 +90,20 @@ export const chainValueSchema = {
         finality: { type: 'string' },
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
-        decimals: { type: 'number' }
+        decimals: { type: 'number' },
     },
-    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType', 'finality', 'approxFinalityWaitTime', 'decimals'],
+    required: [
+        'name',
+        'axelarId',
+        'rpc',
+        'tokenSymbol',
+        'contracts',
+        'explorer',
+        'chainType',
+        'finality',
+        'approxFinalityWaitTime',
+        'decimals',
+    ],
 };
 
 export const chainsSchema = {
@@ -123,7 +134,7 @@ export function addAllSchema(validator) {
     validator.addSchema(contractSchema, contractSchema.id);
     validator.addSchema(explorerSchema, explorerSchema.id);
     validator.addSchema(gasOptionSchema, gasOptionSchema.id);
-    validator.addSchema(axelarGatewaySchema, axelarGatewaySchema.id)
+    validator.addSchema(axelarGatewaySchema, axelarGatewaySchema.id);
 
     return validator;
 }
