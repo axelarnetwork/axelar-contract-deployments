@@ -64,46 +64,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install stable Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.81.0
-          targets: wasm32-unknown-unknown
-
-      - name: Install Stellar CLI
-        run: cargo install --locked stellar-cli --version 22.2.0 --features opt
-
-      - name: Setup Stellar local network
-        id: setup_network
-        run: |
-          stellar container start local --protocol-version 22
-          echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
-          echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
-
-      - name: Wait for Stellar network
-        run: |
-          echo "Waiting for Stellar network (checking current_protocol_version)..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
-              echo "Stellar network is ready."
-              exit 0
-            fi
-            echo "Attempt $i: Stellar network not ready yet, retrying in 2 seconds..."
-            sleep 2
-          done
-          echo "Stellar network did not become ready in time."
-          exit 1
-
-      - name: Add as configured network
-        run: |
-          stellar network add local \
-              --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
-              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
-
-      - name: Retrieve native token address
-        id: get_xlm_address
-        run: |
-          echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_OUTPUT
+      - name: Setup Stellar CLI & network
+        uses: ./.github/actions/reusable-setup-stellar-cli-network.yaml
 
       - name: Prepare local.json
         run: |
@@ -115,8 +77,8 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
-                      "tokenAddress": "${{ steps.get_xlm_address.outputs.xlm_address }}",
-                      "rpc": "http://localhost:8000/soroban/rpc",
+                      "tokenAddress": "'"$xlm_address"'",
+                      "rpc": "'"$rpc_url"'",
                       "horizonRpc": "http://localhost:8000",
                       "contracts": {}
                   }
