@@ -763,7 +763,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, _options, contractConfig) =>
 };
 
 const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConfig) => {
-    const { adminAddress, governanceAddress } = contractConfig;
+    const { adminAddress, governanceAddress, operatorAddress } = contractConfig;
     const {
         axelar: { contracts },
     } = config;
@@ -779,6 +779,7 @@ const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConf
     return {
         governance_address: governanceAddress,
         admin_address: adminAddress,
+        operator_address: operatorAddress,
         axelarnet_gateway_address: axelarnetGatewayAddress,
     };
 };
