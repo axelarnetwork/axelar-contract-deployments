@@ -114,7 +114,7 @@ jobs:
           addr="${{ steps.setup_wallet.outputs.stellar_address }}"
           echo "Waiting for friendbot to successfully fund address: $addr"
 
-          for i in {1..60}; do
+          for i in {1..30}; do
             echo "Attempt $i: calling friendbot..."
 
             RESPONSE=$(curl -s "http://localhost:8000/friendbot?addr=$addr")
@@ -128,7 +128,7 @@ jobs:
             sleep 2
           done
 
-          echo "Friendbot did not successfully fund the address in time."
+          echo "Friendbot did not successfully fund the address in 60 seconds."
           exit 1
 
       - name: Prepare .env
