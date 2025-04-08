@@ -2574,6 +2574,7 @@
       "networkType": "testnet",
       "chainType": "xrpl",
       "finality": "1",
+      "decimals": 6,
       "approxFinalityWaitTime": 1,
       "explorer": {
         "name": "XRPL Explorer",
