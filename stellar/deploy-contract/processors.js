@@ -95,7 +95,7 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('Contract upgraded successfully', { contractName, contractAddress, newWasmHash });
+    printInfo('Contract upgraded successfully', { contractName, newWasmHash });
 };
 
 const upload = async (options, _, chain, contractName) => {
