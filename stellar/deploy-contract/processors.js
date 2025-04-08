@@ -2,7 +2,16 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, authorizeInvocation, xdr, rpc } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath, createAuthorizedFunc, getNetworkPassphrase } = require('../utils');
+const {
+    getWallet,
+    broadcast,
+    serializeValue,
+    getContractCodePath,
+    BytesToScVal,
+    getUploadContractCodePath,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
+} = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
