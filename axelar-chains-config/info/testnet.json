@@ -355,7 +355,8 @@
         "gasLimit": 8000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -824,7 +825,8 @@
         "url": "https://explorer.evm-alpha.kava.io"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "filecoin": {
       "name": "Filecoin",
@@ -940,7 +942,8 @@
       "eip1559": true,
       "finality": "120",
       "approxFinalityWaitTime": 60,
-      "txTimeout": 180000
+      "txTimeout": 180000,
+      "decimals": 18
     },
     "scroll": {
       "name": "Scroll",
@@ -1058,7 +1061,8 @@
         "l1FeeScalar": 1150000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "decimals": 18 
     },
     "immutable": {
       "name": "Immutable",
@@ -1169,7 +1173,8 @@
         "api": "https://explorer.testnet.immutable.com/api"
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -1277,6 +1282,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 25,
+      "decimals": 18,
       "onchainGasEstimate": {
         "l1ChainName": "ethereum",
         "gasEstimationType": 3
@@ -1369,7 +1375,8 @@
         "url": ""
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -1483,7 +1490,8 @@
         "api": "https://api-holesky.fraxscan.com/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 80
+      "approxFinalityWaitTime": 80,
+      "decimals": 18
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
@@ -1598,7 +1606,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
@@ -1713,7 +1722,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
@@ -1828,7 +1838,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
@@ -1940,7 +1951,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "decimals": 18
     },
     "polygon-sepolia": {
       "name": "Polygon-Sepolia",
@@ -2051,7 +2063,8 @@
         "gasPriceAdjustment": 1.5
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "linea-sepolia": {
       "name": "Linea-Sepolia",
@@ -2162,7 +2175,8 @@
       },
       "confirmations": 1,
       "finality": "400",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18
     },
     "flow": {
       "name": "Flow",
@@ -2267,6 +2281,7 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "decimals": 8,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",

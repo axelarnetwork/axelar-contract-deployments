@@ -219,7 +219,8 @@
         "api": "https://api-testnet.ftmscan.com/api"
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18 
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -478,7 +479,8 @@
         "api": ""
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18 
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -842,7 +844,8 @@
       },
       "confirmations": 1,
       "finality": "400",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18 
     },
     "polygon-sepolia": {
       "name": "Polygon-Sepolia",
@@ -950,7 +953,8 @@
         "gasPriceAdjustment": 1.5
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
@@ -1062,7 +1066,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
@@ -1174,7 +1179,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -1394,7 +1400,8 @@
         "gasPrice": 25000000,
         "gasLimit": 100000000000
       },
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "decimals": 18
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
@@ -1506,7 +1513,8 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "flow": {
       "name": "Flow",
