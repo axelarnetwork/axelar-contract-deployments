@@ -1,72 +1,45 @@
-name: Setup Stellar CLI and Local Network
+name: Setup Stellar CLI & Network
+description: Install Stellar CLI and starts local Stellar network
 
-on:
-  workflow_call:
-    outputs:
-      rpc_url:
-        description: 'Stellar RPC URL'
-        value: ${{ jobs.setup.outputs.rpc_url }}
-      network_passphrase:
-        description: 'Stellar Network Passphrase'
-        value: ${{ jobs.setup.outputs.network_passphrase }}
-      xlm_address:
-        description: 'XLM Native Token Address'
-        value: ${{ jobs.setup.outputs.xlm_address }}
-
-jobs:
-  setup:
-    runs-on: blacksmith-4vcpu-ubuntu-2204
-    outputs:
-      rpc_url: ${{ steps.setup_network.outputs.rpc_url }}
-      network_passphrase: ${{ steps.setup_network.outputs.network_passphrase }}
-      xlm_address: ${{ steps.get_xlm_address.outputs.xlm_address }}
+runs:
+    using: 'composite'
     steps:
-      - uses: actions/checkout@v4
+        - name: Install Stellar CLI
+          run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
-      - name: Install stable Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.81.0
-          targets: wasm32-unknown-unknown
+        - name: Start Stellar local network
+          run: |
+              stellar container start local --protocol-version 22
+              echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_ENV
+              echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_ENV
 
-      - name: Install Stellar CLI
-        run: cargo install --locked stellar-cli --version 22.2.0 --features opt
+        - name: Wait for Stellar network
+          run: |
+              echo "Waiting for Stellar network to be reachable (rpc + friendbot)..."
+              for i in {1..60}; do
+                echo "Attempt $i: checking..."
+                if ! curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
+                  echo "  - RPC not ready yet"
+                  sleep 2
+                  continue
+                fi
+                if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/friendbot | grep -q '^[0-9][0-9][0-9]$'; then
+                  echo "✅ Stellar network is ready"
+                  exit 0
+                else
+                  echo "  - Friendbot not responding (curl failure)"
+                fi
+                sleep 2
+              done
+              echo "❌ Stellar network did not become ready in 120 seconds."
+              exit 1
 
-      - name: Setup Stellar local network
-        id: setup_network
-        run: |
-          stellar container start local --protocol-version 22
-          echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
-          echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
+        - name: Add as configured network
+          run: |
+              stellar network add local \
+                --rpc-url "$rpc_url" \
+                --network-passphrase "$network_passphrase"
 
-      - name: Wait for Stellar network (RPC + friendbot reachable)
-        run: |
-          echo "Waiting for Stellar network to be reachable (rpc + friendbot)..."
-          for i in {1..60}; do
-            echo "Attempt $i: checking..."
-            if ! curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
-              echo "  - RPC not ready yet"
-              sleep 2
-              continue
-            fi
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/friendbot | grep -q '^[0-9][0-9][0-9]$'; then
-              echo "✅ Stellar network is ready"
-              exit 0
-            else
-              echo "  - Friendbot not responding (curl failure)"
-            fi
-            sleep 2
-          done
-          echo "❌ Stellar network did not become ready in 120 seconds."
-          exit 1
-
-      - name: Add as configured network
-        run: |
-          stellar network add local \
-            --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
-            --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
-
-      - name: Retrieve native token address
-        id: get_xlm_address
-        run: |
-          echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_OUTPUT
+        - name: Retrieve native token address
+          run: |
+              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_ENV

@@ -64,8 +64,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup Stellar CLI & network
+      - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
+
+      - name: Use the environment variables
+        run: |
+          echo "RPC URL: $rpc_url"
+          echo "Network passphrase: $network_passphrase"
+          echo "XLM address: $xlm_address"
 
       - name: Prepare local.json
         run: |
