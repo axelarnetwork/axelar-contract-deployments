@@ -30,7 +30,7 @@ jobs:
     name: Test Stellar
     needs: check-relevant-changes
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
       # axelar-contract-deployments
@@ -128,7 +128,7 @@ jobs:
             sleep 2
           done
 
-          echo "❌ Friendbot did not successfully fund the address in time."
+          echo "Friendbot did not successfully fund the address in time."
           exit 1
 
       - name: Prepare .env
