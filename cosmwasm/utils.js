@@ -1117,7 +1117,7 @@ const getContractCodePath = async (options, contractName) => {
 
     if (options.version) {
         const url = getContractR2Url(contractName, options.version);
-        return await downloadContractCode(url, contractName, options.version);
+        return downloadContractCode(url, contractName, options.version);
     }
 
     throw new Error('Either --artifact-path or --version must be provided');
