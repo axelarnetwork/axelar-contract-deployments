@@ -188,7 +188,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Token Manager Deployer',
             contractName: 'TokenManagerDeployer',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('TokenManagerDeployer', artifactPath),
@@ -204,7 +204,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Interchain Token',
             contractName: 'InterchainToken',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainToken', artifactPath),
@@ -220,7 +220,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Interchain Token Deployer',
             contractName: 'InterchainTokenDeployer',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenDeployer', artifactPath),
@@ -236,7 +236,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Token Manager',
             contractName: 'TokenManager',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('TokenManager', artifactPath),
@@ -252,7 +252,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Token Handler',
             contractName: 'TokenHandler',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('TokenHandler', artifactPath),
@@ -268,7 +268,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Gateway Caller',
             contractName: 'GatewayCaller',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('GatewayCaller', artifactPath),
@@ -298,7 +298,7 @@ async function deployAll(config, wallet, chain, options) {
 
                 printInfo('ITS Implementation args', args);
 
-                return await deployContract(
+                return deployContract(
                     proxyDeployMethod,
                     wallet,
                     InterchainTokenService,
@@ -325,7 +325,7 @@ async function deployAll(config, wallet, chain, options) {
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
                 printInfo('ITS Proxy args', args);
 
-                return await deployContract(
+                return deployContract(
                     proxyDeployMethod,
                     wallet,
                     getContractJSON('InterchainProxy', artifactPath),
@@ -341,7 +341,7 @@ async function deployAll(config, wallet, chain, options) {
             name: 'Interchain Token Factory Implementation',
             contractName: 'InterchainTokenFactory',
             async deploy() {
-                return await deployContract(
+                return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenFactory', artifactPath),
@@ -360,7 +360,7 @@ async function deployAll(config, wallet, chain, options) {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
                 printInfo('ITS Factory Proxy args', args);
 
-                return await deployContract(
+                return deployContract(
                     proxyDeployMethod,
                     wallet,
                     getContractJSON('InterchainProxy', artifactPath),

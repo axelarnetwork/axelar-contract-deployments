@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -183,6 +183,23 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+async function migrateTokens(wallet, _, chain, contract, args, options) {
+    let tokenIds = Array.isArray(args) ? args : [args];
+
+    tokenIds = tokenIds.map((tokenId) => '0x'.concat(Buffer.from(tokenId, 'base64').toString('hex')));
+
+    for (const tokenId of tokenIds) {
+        printInfo('Migrating token', tokenId);
+
+        const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
+        const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
+        const newVersionScVal = nativeToScVal(options.version, { type: 'string' });
+
+        const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
+        await broadcast(operation, wallet, chain, 'Migrated token', options);
+    }
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -276,6 +293,14 @@ if (require.main === module) {
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+        });
+
+    program
+        .command('migrate-tokens <tokenIds...>')
+        .description('Migrates token TokenManagers and InterchainTokens to a new version')
+        .addOption(new Option('--version <version>', 'The version to migrate to'))
+        .action((tokenIds, options) => {
+            mainProcessor(migrateTokens, tokenIds, options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
