@@ -54,6 +54,7 @@ const programHandler = () => {
         .action((options) => {
             mainProcessor(rewards, options);
         });
+
     addAmplifierQueryOptions(rewardCmd);
 
     program.parse();
