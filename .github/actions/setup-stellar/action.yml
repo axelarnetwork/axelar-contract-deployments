@@ -5,15 +5,18 @@ runs:
     using: 'composite'
     steps:
         - name: Install Stellar CLI
+          shell: bash
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
         - name: Start Stellar local network
+          shell: bash
           run: |
               stellar container start local --protocol-version 22
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_ENV
               echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_ENV
 
         - name: Wait for Stellar network
+          shell: bash
           run: |
               echo "Waiting for Stellar network to be reachable (rpc + friendbot)..."
               for i in {1..60}; do
@@ -35,11 +38,13 @@ runs:
               exit 1
 
         - name: Add as configured network
+          shell: bash
           run: |
               stellar network add local \
                 --rpc-url "$rpc_url" \
                 --network-passphrase "$network_passphrase"
 
         - name: Retrieve native token address
+          shell: bash
           run: |
               echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_ENV
