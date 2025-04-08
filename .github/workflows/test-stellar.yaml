@@ -105,10 +105,30 @@ jobs:
         run: |
           stellar keys generate test \
               --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
-              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}" \
-              --fund
+              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
           echo "private_key=$(stellar keys show test)" >> $GITHUB_OUTPUT
           echo "stellar_address=$(stellar keys address test)" >> $GITHUB_OUTPUT
+
+      - name: Wait for friendbot to successfully fund address
+        run: |
+          echo "Waiting for friendbot to successfully fund the address..."
+
+          for i in {1..60}; do
+            echo "Attempt $i: calling friendbot..."
+
+            RESPONSE=$(curl -s "http://localhost:8000/friendbot?addr=GBWLFYBZH6AHLFG6VMU2VLY4SC47HE3KYCZKDGPHEVPAPRWOXPC3DWP7")
+
+            if echo "$RESPONSE" | grep -q '"successful": *true'; then
+              echo "✅ Friendbot successfully funded the address."
+              exit 0
+            fi
+
+            echo "  - Not yet successful. Retrying in 2 seconds..."
+            sleep 2
+          done
+
+          echo "❌ Friendbot did not successfully fund the address in time."
+          exit 1
 
       - name: Prepare .env
         run: |

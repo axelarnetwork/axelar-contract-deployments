@@ -24,23 +24,17 @@ runs:
         - name: Wait for Stellar network
           shell: bash
           run: |
-              echo "Waiting for Stellar network to be reachable (rpc + friendbot)..."
+              echo "Waiting for Stellar network RPC to become ready..."
               for i in {1..60}; do
                 echo "Attempt $i: checking..."
-                if ! curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
-                  echo "  - RPC not ready yet"
-                  sleep 2
-                  continue
-                fi
-                if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/friendbot | grep -q '^[0-9][0-9][0-9]$'; then
-                  echo "✅ Stellar network is ready"
+                if curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
+                  echo "✅ Stellar RPC is ready"
                   exit 0
-                else
-                  echo "  - Friendbot not responding (curl failure)"
                 fi
+                echo "  - RPC not ready yet"
                 sleep 2
               done
-              echo "❌ Stellar network did not become ready in 120 seconds."
+              echo "❌ Stellar RPC did not become ready in 120 seconds."
               exit 1
 
         - name: Add as configured network
