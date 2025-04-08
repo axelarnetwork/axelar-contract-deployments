@@ -4,6 +4,12 @@ description: Install Stellar CLI and starts local Stellar network
 runs:
     using: 'composite'
     steps:
+        - name: Install stable Rust toolchain
+          uses: dtolnay/rust-toolchain@stable
+          with:
+              toolchain: 1.81.0
+              targets: wasm32-unknown-unknown
+
         - name: Install Stellar CLI
           shell: bash
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
