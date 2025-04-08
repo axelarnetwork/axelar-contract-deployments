@@ -137,6 +137,7 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
+      "decimals": 18,
       "onchainGasEstimate": {
         "blobBaseFee": 1
       }
@@ -392,7 +393,8 @@
         "gasPrice": 1000000000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "polygon": {
       "name": "Polygon",
@@ -519,7 +521,8 @@
         "gasPrice": 350000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 5
+      "approxFinalityWaitTime": 5,
+      "decimals": 18
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -643,7 +646,8 @@
         "gasPrice": 625000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "binance": {
       "name": "Binance",
@@ -912,7 +916,8 @@
         "gasPrice": 2000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "celo": {
       "name": "Celo",
@@ -1038,7 +1043,8 @@
         "gasPrice": 100000000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "kava": {
       "name": "Kava",
@@ -1162,7 +1168,8 @@
         "gasPrice": 50000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "filecoin": {
       "name": "Filecoin",
@@ -1291,7 +1298,8 @@
       },
       "finality": "120",
       "approxFinalityWaitTime": 60,
-      "txTimeout": 180000
+      "txTimeout": 180000,
+      "decimals": 18
     },
     "optimism": {
       "name": "Optimism",
@@ -1424,7 +1432,8 @@
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "linea": {
       "name": "Linea",
@@ -1552,7 +1561,8 @@
         "gasPriceAdjustment": 2
       },
       "finality": "400",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18
     },
     "base": {
       "name": "Base",
@@ -1682,7 +1692,8 @@
         "l1FeeScalar": 1101
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "decimals": 18
     },
     "mantle": {
       "name": "Mantle",
@@ -1816,7 +1827,8 @@
         "gasPriceAdjustment": 1.8
       },
       "finality": "9000",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "decimals": 18
     },
     "scroll": {
       "name": "Scroll",
@@ -1943,7 +1955,8 @@
         "gasPrice": 25000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 60
+      "approxFinalityWaitTime": 60,
+      "decimals": 18
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -2040,7 +2053,8 @@
         "gasPrice": 40
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "immutable": {
       "name": "Immutable",
@@ -2151,7 +2165,8 @@
         "api": "https://explorer.immutable.com/api"
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1
+      "approxFinalityWaitTime": 1,
+      "decimals": 18
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -2274,7 +2289,8 @@
         "gasPrice": 5001270
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 80
+      "approxFinalityWaitTime": 80,
+      "decimals": 18
     },
     "blast": {
       "name": "Blast",
@@ -2397,7 +2413,8 @@
         "gasPrice": 5641495
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "decimals": 18
     },
     "flow": {
       "name": "Flow",
