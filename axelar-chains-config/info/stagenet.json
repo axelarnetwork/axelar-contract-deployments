@@ -1721,7 +1721,8 @@
           },
           "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
           "operator": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
-          "minimumRotationDelay": 0
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier"
         },
         "Utils": {
           "address": "0xaa789bbc9d03a48d29e950ecbc9bc78918e1696e4a76adf7230416f0f49e4838",
@@ -2021,7 +2022,8 @@
                 "threshold": "1"
               }
             ]
-          }
+          },
+          "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CBRMCHA6EEVQJVKIBDLOXGZSOPUXMYXYMKPNVNNFCDBIP7VEFQCHBLXR",
