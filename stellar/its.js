@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal, Address, Operation, rpc, authorizeInvocation, xdr } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address, Operation, rpc, authorizeInvocation, xdr, scValToNative } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -221,19 +221,23 @@ async function migrateTokens(wallet, _, chain, contract, args, options) {
 
         printInfo('InterchainToken address', interchainTokenAddress);
 
+        const auths = await createMigrateTokenAuths(
+            tokenManagerAddress,
+            interchainTokenAddress,
+            tokenIdScVal,
+            upgraderAddressScVal,
+            newVersionScVal,
+            chain,
+            wallet,
+        );
+
+        printInfo('Auths', serializeValue(auths));
+
         const operation = Operation.invokeContractFunction({
             contract: chain.contracts.InterchainTokenService.address,
             function: 'migrate_token',
             args: [tokenIdScVal, upgraderAddressScVal, newVersionScVal],
-            auth: await createMigrateTokenAuths(
-                tokenManagerAddress,
-                interchainTokenAddress,
-                tokenIdScVal,
-                upgraderAddressScVal,
-                newVersionScVal,
-                chain,
-                wallet,
-            ),
+            auth: auths,
         });
 
         await broadcast(operation, wallet, chain, 'Migrated token', options);
@@ -252,13 +256,31 @@ async function createMigrateTokenAuths(
     // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
     const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
 
-    return Promise.all(
-        [
+    const auths = [];
+
+    auths.push(
+        ...[
             createAuthorizedFunc(Address.fromString(chain.contracts.InterchainTokenService.address), 'migrate_token', [
                 tokenIdScVal,
                 upgraderAddressScVal,
                 newVersionScVal,
             ]),
+        ].map((auth) =>
+            authorizeInvocation(
+                wallet,
+                validUntil,
+                new xdr.SorobanAuthorizedInvocation({
+                    function: auth,
+                    subInvocations: [],
+                }),
+                wallet.publicKey(),
+                getNetworkPassphrase(chain.networkType),
+            ),
+        ),
+    );
+
+    auths.push(
+        ...[
             createAuthorizedFunc(Address.fromString(tokenManagerAddress), 'upgrade', [
                 nativeToScVal(chain.contracts.InterchainTokenService.initializeArgs.tokenManagerWasmHash),
             ]),
@@ -280,6 +302,8 @@ async function createMigrateTokenAuths(
             ),
         ),
     );
+
+    return Promise.all(auths);
 }
 
 async function mainProcessor(processor, args, options) {
