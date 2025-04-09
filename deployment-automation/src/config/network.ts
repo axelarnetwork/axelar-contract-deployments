@@ -97,7 +97,7 @@ export function isCustomDevnet(): boolean {
   if (config.NAMESPACE === "mainnet" || 
       config.NAMESPACE === "testnet" || 
       config.NAMESPACE === "stagenet" || 
-      config.NAMESPACE === "devnet-amplifier") {
+      config.NAMESPACE === "devnet-markus") {
     return false; // Not a custom devnet
   } else {
     return true; // Is a custom devnet
