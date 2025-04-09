@@ -22,7 +22,6 @@ runs:
 
         - name: Wait for Stellar network
           shell: bash
-          timeout-minutes: 2
           run: |
               echo "Waiting for Stellar network RPC to become ready..."
               while true; do

@@ -65,6 +65,7 @@ jobs:
         run: npm ci
 
       - name: Setup Stellar network
+        timeout-minutes: 4
         uses: ./.github/actions/setup-stellar
 
       - name: Use the environment variables
