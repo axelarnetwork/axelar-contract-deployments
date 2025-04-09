@@ -2,15 +2,15 @@ name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
 outputs:
-    rpc_url:
-        description: 'RPC URL of the local Stellar network'
-        value: ${{ steps.start.outputs.rpc_url }}
     network_passphrase:
         description: 'Network passphrase of the local Stellar network'
         value: ${{ steps.start.outputs.network_passphrase }}
     horizon_rpc:
         description: 'Horizon RPC URL'
         value: ${{ steps.start.outputs.horizon_rpc }}
+    rpc_url:
+        description: 'RPC URL of the local Stellar network'
+        value: ${{ steps.start.outputs.rpc_url }}
     xlm_address:
         description: 'Native XLM asset address'
         value: ${{ steps.native_token.outputs.xlm_address }}
@@ -30,9 +30,9 @@ runs:
           shell: bash
           run: |
               stellar container start local --protocol-version 22
+              echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
               echo "horizon_rpc=http://localhost:8000" >> $GITHUB_OUTPUT
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
-              echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
 
         - name: Wait for Stellar network
           shell: bash
