@@ -5,6 +5,7 @@ require('dotenv').config();
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
 const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
+
 const {
     CONTRACTS,
     prepareWallet,
@@ -27,7 +28,6 @@ const upload = async (client, wallet, config, options) => {
     const { contractBaseConfig, contractConfig } = getAmplifierContractConfig(config, options);
 
     printInfo('Uploading contract binary');
-
     const { checksum, codeId } = await uploadContract(client, wallet, config, options);
 
     printInfo('Uploaded contract binary with codeId', codeId);
@@ -57,7 +57,7 @@ const instantiate = async (client, wallet, config, options) => {
 
     contractConfig.codeId = codeId;
 
-    const initMsg = CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
+    const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
 
     contractConfig.address = contractAddress;

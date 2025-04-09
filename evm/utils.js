@@ -35,6 +35,7 @@ const {
     findProjectRoot,
     timeout,
     getSaltFromKey,
+    getCurrentVerifierSet,
 } = require('../common');
 const {
     create3DeployContract,
@@ -43,7 +44,6 @@ const {
     getCreate3Address,
     printObj,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
@@ -210,7 +210,11 @@ function isValidBytesAddress(input) {
 }
 
 function isValidBytesArray(input) {
-    const bytesRegex = /^0x[a-fA-F0-9]/;
+    if (input.length % 2 === 1) {
+        return false;
+    }
+
+    const bytesRegex = /^0x[a-fA-F0-9]*/;
     return bytesRegex.test(input);
 }
 
@@ -422,7 +426,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             if (!options.offline) {
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress(initCode, deployer, salt);
+                return deployerInterface.deployedAddress(initCode, deployer, salt);
             }
 
             salt = keccak256(defaultAbiCoder.encode(['address', 'bytes32'], [deployer, salt]));
@@ -442,7 +446,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress('0x', deployer, salt);
+                return deployerInterface.deployedAddress('0x', deployer, salt);
             }
 
             const createDeployer = await getDeployedAddress(deployer, 'create2', {
@@ -476,33 +480,8 @@ const getEVMBatch = async (config, chain, batchID = '') => {
     return batch;
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
-    const keyID = options.keyID || '';
-
-    if (isAddress(keyID)) {
-        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
-    }
-
-    const evmAddresses = options.amplifier
-        ? await getAmplifierKeyAddresses(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
-
-    const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
-
-    const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
-    const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
-    const threshold = Number(evmAddresses.threshold);
-
-    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
-};
-
-const getAmplifierKeyAddresses = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -512,6 +491,26 @@ const getAmplifierKeyAddresses = async (config, chain) => {
         .sort((a, b) => a.address.localeCompare(b.address));
 
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
+};
+
+const getEVMAddresses = async (config, chain, options = {}) => {
+    const keyID = options.keyID || '';
+
+    if (isAddress(keyID)) {
+        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
+    }
+
+    const evmAddresses = options.amplifier
+        ? await getAmplifierVerifiers(config, chain)
+        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+
+    const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
+
+    const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
+    const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
+    const threshold = Number(evmAddresses.threshold);
+
+    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
 function loadParallelExecutionConfig(env, chain) {
@@ -1022,7 +1021,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -1078,7 +1077,6 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    getAmplifierKeyAddresses,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,

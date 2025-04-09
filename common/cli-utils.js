@@ -63,8 +63,33 @@ const addOptionsToCommands = (program, optionMethod, options) => {
     }
 };
 
+const addStoreOptions = (program) => {
+    program.addOption(
+        new Option(
+            '-a, --artifact-path <artifactPath>',
+            'Path to the contract artifact file to upload (required if --version is not used)',
+        ).env('ARTIFACT_PATH'),
+    );
+
+    program.addOption(
+        new Option(
+            '-v, --version <contractVersion>',
+            'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-path is not used)',
+        ).env('CONTRACT_VERSION'),
+    );
+
+    program.hook('preAction', async (thisCommand) => {
+        const opts = thisCommand.opts();
+
+        if (!opts.artifactPath && !opts.version) {
+            throw new Error('Either --artifact-path or --version is required');
+        }
+    });
+};
+
 module.exports = {
     addEnvOption,
     addBaseOptions,
     addOptionsToCommands,
+    addStoreOptions,
 };

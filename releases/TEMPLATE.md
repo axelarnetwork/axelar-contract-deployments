@@ -1,9 +1,23 @@
+# Setup
+
+Create a new branch, e.g. `chore/stellar-2025-q1-devnet-amplifier`
+
+Push the branch and open a new PR to track your progress. The PR title should follow the format:
+
+```text
+chore(stellar): <TYPE> <CHAIN> <ENV> <VERSION>
+
+where TYPE = deploy | update
+```
+
+Example: `chore(stellar): deploy stellar-2025-q1 devnet-amplifier v1.0.0`
+
 # Release name
 
 |  | **Owner** |
 |-----------|------------|
-| **Created By** | @ gh_username (<email>) |
-| **Deployment** | @ gh_username (<email>) |
+| **Created By** | @ gh_username ([<email>]) |
+| **Deployment** | @ gh_username ([<email>]) |
 
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|

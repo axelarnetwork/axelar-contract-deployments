@@ -1,17 +1,24 @@
 'use strict';
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
 const { getWallet, broadcast, addBaseOptions, tokenToScVal, addressToScVal, hexToScVal } = require('./utils');
-const { addOptionsToCommands, getChainConfig } = require('../common');
+const { addOptionsToCommands, getChainConfig, validateParameters } = require('../common');
 require('./cli-utils');
 
 async function send(wallet, _, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
     const caller = addressToScVal(wallet.publicKey());
+    const [destinationChain, destinationAddress, payload] = args;
 
-    const [destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount] = args;
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
 
     const operation = contract.call(
         'send',
@@ -19,7 +26,7 @@ async function send(wallet, _, chain, contractConfig, args, options) {
         nativeToScVal(destinationChain, { type: 'string' }),
         nativeToScVal(destinationAddress, { type: 'string' }),
         hexToScVal(payload),
-        tokenToScVal(gasTokenAddress, gasFeeAmount),
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
     await broadcast(operation, wallet, chain, 'Send Called', options);
@@ -49,11 +56,17 @@ async function mainProcessor(processor, args, options) {
     printInfo('Environment', options.env);
     printInfo('Chain Name', options.chainName);
 
-    if (!chain.contracts?.example) {
-        throw new Error('Example package not found.');
+    if (!chain.contracts?.AxelarExample) {
+        throw new Error('AxelarExample package not found.');
     }
 
-    await processor(wallet, config, chain, chain.contracts.example, args, options);
+    const contractId = chain.contracts.AxelarExample.address;
+
+    validateParameters({
+        isValidStellarAddress: { contractId },
+    });
+
+    await processor(wallet, config, chain, chain.contracts.AxelarExample, args, options);
 
     saveConfig(config, options.env);
 }
@@ -64,10 +77,12 @@ if (require.main === module) {
     program.name('gmp').description('Example of Stellar gmp commands');
 
     program
-        .command('send <destinationChain> <destinationAddress> <payload> <gasTokenAddress> <gasFeeAmount>')
+        .command('send <destinationChain> <destinationAddress> <payload>')
         .description('Send gmp contract call')
-        .action((destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount, options) => {
-            mainProcessor(send, [destinationChain, destinationAddress, payload, gasTokenAddress, gasFeeAmount], options);
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .action((destinationChain, destinationAddress, payload, options) => {
+            mainProcessor(send, [destinationChain, destinationAddress, payload], options);
         });
 
     program

@@ -11,15 +11,16 @@ const {
     findOwnedObjectIdByType,
     saveGeneratedTx,
 } = require('./utils');
+const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 
 function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, moveCall) {
     const operatorId = contractConfig.objects.Operators;
-    const gasCollectorCapId = gasServiceConfig.objects.GasCollectorCap;
+    const gasCollectorCapId = gasServiceConfig.objects.OperatorCap;
 
     const [cap, borrowObj] = tx.moveCall({
         target: `${contractConfig.address}::operators::loan_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), tx.object(gasCollectorCapId)],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
     moveCall(cap);
@@ -27,7 +28,7 @@ function operatorMoveCall(contractConfig, gasServiceConfig, operatorCapId, tx, m
     tx.moveCall({
         target: `${contractConfig.address}::operators::restore_cap`,
         arguments: [tx.object(operatorId), tx.object(operatorCapId), cap, borrowObj],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
     return tx;
@@ -48,6 +49,7 @@ async function collectGas(keypair, client, gasServiceConfig, contractConfig, arg
         tx.moveCall({
             target: `${gasServiceConfig.address}::gas_service::collect_gas`,
             arguments: [tx.object(gasServiceConfig.objects.GasService), cap, tx.pure.address(receiver), tx.pure.u64(amount)],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
@@ -79,6 +81,7 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
                 tx.pure.address(receiver),
                 tx.pure.u64(amount),
             ],
+            typeArguments: [`${SUI_PACKAGE_ID}::sui::SUI`],
         });
     });
 
@@ -90,7 +93,7 @@ async function refund(keypair, client, gasServiceConfig, contractConfig, args, o
 
 async function storeCap(keypair, client, gasServiceConfig, contractConfig, args, options) {
     const [capId] = args;
-    const gasCollectorCapId = capId || gasServiceConfig.objects.GasCollectorCap;
+    const operatorCapId = capId || gasServiceConfig.objects.OperatorCap;
     const ownerCapId = contractConfig.objects.OwnerCap;
     const operatorId = contractConfig.objects.Operators;
 
@@ -98,8 +101,8 @@ async function storeCap(keypair, client, gasServiceConfig, contractConfig, args,
 
     tx.moveCall({
         target: `${contractConfig.address}::operators::store_cap`,
-        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(gasCollectorCapId)],
-        typeArguments: [`${gasServiceConfig.address}::gas_service::GasCollectorCap`],
+        arguments: [tx.object(operatorId), tx.object(ownerCapId), tx.object(operatorCapId)],
+        typeArguments: [`${gasServiceConfig.address}::operator_cap::OperatorCap`],
     });
 
     return {
@@ -140,7 +143,7 @@ async function removeCap(keypair, client, gasServiceConfig, contractConfig, args
     const cap = tx.moveCall({
         target: `${contractConfig.address}::operators::remove_cap`,
         arguments: [tx.object(operatorsObjectId), tx.object(ownerCapObjectId), tx.object(capId)],
-        typeArguments: [`${gasServiceAddress}::gas_service::GasCollectorCap`],
+        typeArguments: [`${gasServiceAddress}::operator_cap::OperatorCap`],
     });
 
     tx.transferObjects([cap], capReceiver);

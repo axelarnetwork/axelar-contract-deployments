@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('fs');
 const path = require('path');
 const { outputJsonSync } = require('fs-extra');
 const chalk = require('chalk');
@@ -13,6 +13,15 @@ const {
     utils: { keccak256, hexlify, defaultAbiCoder },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
+const fetch = require('node-fetch');
+const StellarSdk = require('@stellar/stellar-sdk');
+
+const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
+
+const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
+
+const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
+const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -30,7 +39,9 @@ const writeJSON = (data, name) => {
 };
 
 const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (typeof info === 'object') {
+    if (typeof info === 'boolean') {
+        info = String(info);
+    } else if (typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }
 
@@ -246,6 +257,46 @@ function isValidTimeFormat(timeString) {
     return regex.test(timeString);
 }
 
+/**
+ * Validate if the given address is a Stellar address.
+ *
+ * A valid Stellar address is either:
+ * - a valid Stellar account address (starts with 'G')
+ * - a valid Stellar contract address (starts with 'C')
+ *
+ * @param {string} address - The input Stellar address.
+ * @returns {boolean} - True if the address is valid, otherwise false.
+ */
+function isValidStellarAddress(address) {
+    return isValidStellarAccount(address) || isValidStellarContract(address);
+}
+
+/**
+ * Validate if the given address is a Stellar account address.
+ *
+ * A valid Stellar account address:
+ * - Is a 56-character Base32-encoded string starting with 'G'.
+ *
+ * @param {string} address - The input Stellar account address.
+ * @returns {boolean} - True if the address is a valid Stellar account, otherwise false.
+ */
+function isValidStellarAccount(address) {
+    return StellarSdk.StrKey.isValidEd25519PublicKey(address);
+}
+
+/**
+ * Validate if the given address is a Stellar contract address.
+ *
+ * A valid Stellar contract address can be:
+ * - A 56-character Base32-encoded string starting with 'C'.
+ *
+ * @param {string} address - The input Stellar contract address.
+ * @returns {boolean} - True if the address is a valid Stellar contract, otherwise false.
+ */
+function isValidStellarContract(address) {
+    return StellarSdk.StrKey.isValidContract(address);
+}
+
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
@@ -256,6 +307,9 @@ const validationFunctions = {
     isString,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isValidStellarAddress,
+    isValidStellarAccount,
+    isValidStellarContract,
 };
 
 function validateParameters(parameters) {
@@ -331,7 +385,7 @@ function findProjectRoot(startDir) {
     while (currentDir !== path.parse(currentDir).root) {
         const potentialPackageJson = path.join(currentDir, 'package.json');
 
-        if (fs.existsSync(potentialPackageJson)) {
+        if (existsSync(potentialPackageJson)) {
             return currentDir;
         }
 
@@ -431,6 +485,20 @@ const getChainConfig = (config, chainName, options = {}) => {
     return chainConfig;
 };
 
+const getChainConfigByAxelarId = (config, chainAxelarId) => {
+    if (chainAxelarId === 'axelar') {
+        return config.axelar;
+    }
+
+    for (const chain of Object.values(config.chains)) {
+        if (chain.axelarId === chainAxelarId) {
+            return chain;
+        }
+    }
+
+    throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
+};
+
 const getMultisigProof = async (config, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(config.axelar.rpc);
@@ -438,18 +506,105 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
     return value;
 };
 
+const getCurrentVerifierSet = async (config, chain) => {
+    const client = await CosmWasmClient.connect(config.axelar.rpc);
+    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
+        config.axelar.contracts.MultisigProver[chain].address,
+        'current_verifier_set',
+    );
+
+    return {
+        verifierSetId,
+        verifierSet,
+        signers: Object.values(verifierSet.signers),
+    };
+};
+
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const getItsEdgeContract = (chainConfig) => {
+const itsEdgeContract = (chainConfig) => {
     const itsEdgeContract =
-        chainConfig.contracts.InterchainTokenService?.address || chainConfig.contracts.InterchainTokenService?.objects?.ChannelId;
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
 
     if (!itsEdgeContract) {
-        throw new Error(`Missing InterchainTokenService edge contract for chain ${chainConfig.name}`);
+        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
     }
 
     return itsEdgeContract;
 };
+
+const downloadContractCode = async (url, contractName, version) => {
+    const tempDir = path.join(process.cwd(), 'artifacts');
+
+    if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+    }
+
+    const outputPath = path.join(tempDir, `${contractName}-${version}.wasm`);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Failed to download WASM file: ${response.statusText}`);
+    }
+
+    const buffer = await response.buffer();
+    writeFileSync(outputPath, buffer);
+
+    return outputPath;
+};
+
+const tryItsEdgeContract = (chainConfig) => {
+    const itsEdgeContract =
+        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
+        chainConfig.contracts.InterchainTokenService?.address;
+
+    return itsEdgeContract;
+};
+
+const itsEdgeChains = (config) =>
+    Object.values(config.chains)
+        .filter(itsEdgeContract)
+        .map((chain) => chain.axelarId);
+
+const parseTrustedChains = (config, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
+};
+
+const readContractCode = (options) => {
+    return readFileSync(options.contractCodePath);
+};
+
+function asciiToBytes(string) {
+    return hexlify(Buffer.from(string, 'ascii'));
+}
+
+/**
+ * Encodes the destination address for Interchain Token Service (ITS) transfers.
+ * This function ensures proper encoding of the destination address based on the destination chain type.
+ * Note: - Stellar addresses are converted to ASCII byte arrays.
+ *       - EVM and Sui addresses are returned as-is (default behavior).
+ *       - Additional encoding logic can be added for new chain types.
+ */
+function encodeITSDestination(config, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+
+    switch (chainType) {
+        case undefined:
+            printWarn(`destinationChain ${destinationChain} not found in config`);
+            return destinationAddress;
+
+        case 'stellar':
+            validateParameters({ isValidStellarAddress: { destinationAddress } });
+            return asciiToBytes(destinationAddress);
+
+        case 'evm':
+        case 'sui':
+        default: // EVM, Sui, and other chains (return as-is)
+            return destinationAddress;
+    }
+}
 
 module.exports = {
     loadConfig,
@@ -485,9 +640,24 @@ module.exports = {
     validateParameters,
     getDomainSeparator,
     getChainConfig,
+    getChainConfigByAxelarId,
     getMultisigProof,
     getAmplifierContractOnchainConfig,
     getSaltFromKey,
     calculateDomainSeparator,
-    getItsEdgeContract,
+    downloadContractCode,
+    pascalToKebab,
+    pascalToSnake,
+    readContractCode,
+    VERSION_REGEX,
+    SHORT_COMMIT_HASH_REGEX,
+    itsEdgeContract,
+    tryItsEdgeContract,
+    parseTrustedChains,
+    isValidStellarAddress,
+    isValidStellarAccount,
+    isValidStellarContract,
+    getCurrentVerifierSet,
+    asciiToBytes,
+    encodeITSDestination,
 };

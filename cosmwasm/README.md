@@ -111,8 +111,11 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ### Deploy the contracts
 
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
+Contract wasm binary can be passed by specifiying the path to the contract artifact file or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
-    `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -a [path to contract artifacts] -c [contract name] -e [environment] -n <chain name>`
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-path [contract wasm path] -c [contract name] -e [environment] -n <chain name>`
+
+-   `node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
@@ -130,20 +133,20 @@ Available subcommands:
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
-Example deployments:
+Example deployments with order dependency:
 
-1.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `node deploy-contract.js upload -m [mnemonic] -a [path to artifacts] -c "Router" --instantiate2 -e devnet`
+1.  `node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "AxelarnetGateway" --instantiate2 -e devnet`
+2.  `node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "Router" --instantiate2 -e devnet`
 3.  `node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
 4.  `node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
-5.  `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "ServiceRegistry" -e devnet`
-6.  `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Rewards" -e devnet`
-7.  `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Coordinator" -e devnet`
-8.  `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Multisig" -e devnet`
-9.  `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "InterchainTokenService" -e devnet`
-10. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "VotingVerifier" -e devnet -n "avalanche"`
-11. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "Gateway" -e devnet -n "avalanche"`
-12. `node deploy-contract.js upload-instantiate -m [mnemonic] -a [path to artifacts] -c "MultisigProver" -e devnet -n "avalanche"`
+5.  `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "ServiceRegistry" -e devnet`
+6.  `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Rewards" -e devnet`
+7.  `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Coordinator" -e devnet`
+8.  `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Multisig" -e devnet`
+9.  `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "InterchainTokenService" -e devnet`
+10. `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "VotingVerifier" -e devnet -n "avalanche"`
+11. `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Gateway" -e devnet -n "avalanche"`
+12. `node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "MultisigProver" -e devnet -n "avalanche"`
 
 ### Constant Address Deployment
 
@@ -304,4 +307,38 @@ node cosmwasm/submit-proposal.js migrate \
   --msg '{}' \
   --fetchCodeId \
   --deposit 100000000
+```
+
+### Rotating verifier set
+1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:
+```
+MNEMONIC="<mnemonic for multisig prover admin>"
+ENV="<environment>"
+```
+
+2. Register/Deregister verifiers for the chain in scope:
+```bash
+ampd register-chain-support <service-name> <chain-name>
+or
+ampd deregister-chain-support <service-name> <chain-name>
+```
+
+3. Update verifier set
+```bash
+node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
+```
+
+4. Using multisig session id output in last command, submit proof on destination chain. For example:
+- Sui:
+```bash
+node sui/gateway.js submitProof <multisig-session-id>
+```
+- EVM:
+```bash
+node evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
+```
+
+4. Confirm verifier rotation
+```bash
+node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
 ```
