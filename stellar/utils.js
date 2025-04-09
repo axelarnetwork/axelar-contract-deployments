@@ -16,7 +16,7 @@ const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require
 const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
 const { ethers } = require('hardhat');
-const { itsCustomMigrationDataToScValV110 } = require('./type-utils');
+const { itsCustomMigrationDataToScValV111 } = require('./type-utils');
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -40,7 +40,7 @@ const SUPPORTED_CONTRACTS = new Set([
 ]);
 
 const CustomMigrationDataTypeToScValV111 = {
-    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV110(migrationData),
+    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV111(migrationData),
 };
 
 const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
