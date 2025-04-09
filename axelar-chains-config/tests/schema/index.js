@@ -25,13 +25,13 @@ export const axelarGatewaySchema = {
     id: '/info/chains.contracts.AxelarGateway',
     type: 'object',
     properties: {
-        connectionType: { 
+        connectionType: {
             type: 'string',
             enum: ['consensus', 'amplifier'],
         },
     },
     required: ['connectionType'],
-    additionalProperties: true, 
+    additionalProperties: true,
 };
 
 export const contractSchema = {
