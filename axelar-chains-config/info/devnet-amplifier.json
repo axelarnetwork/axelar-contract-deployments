@@ -972,7 +972,8 @@
             12,
             13,
             14
-          ]
+          ],
+          "connectionType": "amplifier"
         },
         "InterchainTokenService": {
           "address": "rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC",
