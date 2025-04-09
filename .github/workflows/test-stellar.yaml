@@ -69,9 +69,9 @@ jobs:
 
       - name: Use the environment variables
         run: |
-          echo "RPC URL: $rpc_url"
-          echo "Network passphrase: $network_passphrase"
-          echo "XLM address: $xlm_address"
+          echo "RPC URL: ${{ steps.setup_network.outputs.rpc_url }}"
+          echo "Network passphrase: ${{ steps.setup_network.outputs.network_passphrase }}"
+          echo "XLM address: ${{ steps.setup_network.outputs.xlm_address }}"
 
       - name: Prepare local.json
         run: |
@@ -83,8 +83,8 @@ jobs:
                       "networkType": "local",
                       "chainType": "stellar",
                       "tokenSymbol": "XLM",
-                      "tokenAddress": "'"$xlm_address"'",
-                      "rpc": "'"$rpc_url"'",
+                      "tokenAddress": "'"${{ steps.setup_network.outputs.xlm_address }}"'",
+                      "rpc": "'"${{ steps.setup_network.outputs.rpc_url }}"'",
                       "horizonRpc": "http://localhost:8000",
                       "contracts": {}
                   }
@@ -104,8 +104,8 @@ jobs:
         id: setup_wallet
         run: |
           stellar keys generate test \
-              --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
-              --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
+              --rpc-url "http://localhost:8000/soroban/rpc" \
+              --network-passphrase "Standalone Network ; February 2017"
           echo "private_key=$(stellar keys show test)" >> $GITHUB_OUTPUT
           echo "stellar_address=$(stellar keys address test)" >> $GITHUB_OUTPUT
 

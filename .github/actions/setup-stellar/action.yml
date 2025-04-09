@@ -1,50 +1,48 @@
 name: Setup Stellar CLI & Network
-description: Install Stellar CLI and starts local Stellar network
+description: Install Stellar CLI and start a local Stellar network
 
 runs:
     using: 'composite'
     steps:
         - name: Install stable Rust toolchain
           uses: dtolnay/rust-toolchain@stable
-          with:
-              toolchain: 1.81.0
-              targets: wasm32-unknown-unknown
 
         - name: Install Stellar CLI
           shell: bash
-          run: cargo install --locked stellar-cli --version 22.2.0 --features opt
+          run: cargo install --locked stellar-cli --version 22 --features opt
 
         - name: Start Stellar local network
           shell: bash
           run: |
               stellar container start local --protocol-version 22
-              echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_ENV
-              echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_ENV
+              RPC_HOST="http://localhost:8000"
+              RPC_URL="${RPC_HOST}/soroban/rpc"
+              echo "rpc_url=${RPC_URL}" >> $GITHUB_OUTPUT
+              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
 
         - name: Wait for Stellar network
           shell: bash
+          timeout-minutes: 2
           run: |
               echo "Waiting for Stellar network RPC to become ready..."
-              for i in {1..30}; do
-                echo "Attempt $i: checking..."
-                if curl -s http://localhost:8000/ | grep -q '"current_protocol_version"'; then
+              while true; do
+                echo "Checking..."
+                if curl -s "${RPC_HOST}/" | grep -q '"current_protocol_version"'; then
                   echo "✅ Stellar RPC is ready"
                   exit 0
                 fi
                 echo "  - RPC not ready yet"
                 sleep 2
               done
-              echo "Stellar RPC did not become ready in 60 seconds."
-              exit 1
 
         - name: Add as configured network
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "$rpc_url" \
-                --network-passphrase "$network_passphrase"
+                --rpc-url "${{ steps.start_stellar_local_network.outputs.rpc_url }}" \
+                --network-passphrase "${{ steps.start_stellar_local_network.outputs.network_passphrase }}"
 
         - name: Retrieve native token address
           shell: bash
           run: |
-              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_ENV
+              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_OUTPUT
