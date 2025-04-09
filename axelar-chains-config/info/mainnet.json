@@ -6,6 +6,7 @@
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -147,6 +148,7 @@
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -271,6 +273,7 @@
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -399,6 +402,7 @@
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -526,6 +530,7 @@
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -650,6 +655,7 @@
       "chainId": 56,
       "rpc": "https://bscrpc.com",
       "tokenSymbol": "BNB",
+      "decimals": 18,
       "wrappedSymbol": "WBNB",
       "chainType": "evm",
       "contracts": {
@@ -789,6 +795,7 @@
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -918,6 +925,7 @@
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1044,6 +1052,7 @@
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1168,6 +1177,7 @@
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1297,6 +1307,7 @@
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1430,6 +1441,7 @@
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1558,6 +1570,7 @@
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1688,6 +1701,7 @@
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1822,6 +1836,7 @@
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1949,6 +1964,7 @@
       "chainId": 2031,
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "contracts": {
@@ -2046,6 +2062,7 @@
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -2157,6 +2174,7 @@
       "chainId": 252,
       "rpc": "https://rpc.frax.com",
       "tokenSymbol": "frxETH",
+      "decimals": 18,
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 8000000
@@ -2280,6 +2298,7 @@
       "chainId": 81457,
       "rpc": "https://rpc.blast.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
@@ -2403,6 +2422,7 @@
       "chainId": 747,
       "rpc": "https://mainnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
@@ -2498,10 +2518,10 @@
       "networkType": "mainnet",
       "rpc": "https://sui-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
+      "decimals": 9,
       "chainType": "sui",
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "decimals": 9,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/mainnet"
@@ -2545,7 +2565,8 @@
           },
           "domainSeparator": "0xb92c62ca5a6860211b2cf0340641e8d6dffa3207c78c3055d7f708f2bfba3171",
           "operator": "0x980372415053fe9d09956dea38d33d295f10de3d5c5226099304fe346ce241c9",
-          "minimumRotationDelay": 86400000
+          "minimumRotationDelay": 86400000,
+          "connectionType": "amplifier"
         },
         "Utils": {
           "address": "0x5920750d9804267493c958bffb7fcc1aa534705fffefbeaab0314418d631550c",
@@ -2749,7 +2770,8 @@
                 "threshold": "1"
               }
             ]
-          }
+          },
+          "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CCO23C66LAPU5YO66VNXB75T7SDVZ5UZ2GHAU3M7T2YGRKHJI3B2LZPQ",
