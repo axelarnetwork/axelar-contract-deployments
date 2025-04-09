@@ -132,8 +132,12 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'DEPLOYER',
     'CONTRACT_ADMIN',
     'PROVER_ADMIN',
-    'CONTRACT_VERSION'
+    'VOTING_VERIFIER_CONTRACT_VERSION',
+    'GATEWAY_CONTRACT_VERSION',
+    'MULTISIG_PROVER_CONTRACT_VERSION',
+    'RUN_AS_ACCOUNT',
   ];
+  
   
   for (const key of envVarKeys) {
     const value = getEnvVar(key);
