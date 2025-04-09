@@ -1,8 +1,22 @@
 name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
+outputs:
+    rpc_url:
+        description: 'RPC URL of the local Stellar network'
+        value: ${{ steps.start.outputs.rpc_url }}
+    network_passphrase:
+        description: 'Network passphrase'
+        value: ${{ steps.start.outputs.network_passphrase }}
+    xlm_address:
+        description: 'Native XLM asset address'
+        value: ${{ steps.native_token.outputs.xlm_address }}
+
 runs:
     using: 'composite'
+    env:
+        RPC_HOST: http://localhost:8000
+        RPC_URL: http://localhost:8000/soroban/rpc
     steps:
         - name: Install stable Rust toolchain
           uses: dtolnay/rust-toolchain@stable
@@ -12,13 +26,12 @@ runs:
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
         - name: Start Stellar local network
+          id: start
           shell: bash
           run: |
               stellar container start local --protocol-version 22
-              RPC_HOST="http://localhost:8000"
-              RPC_URL="${RPC_HOST}/soroban/rpc"
-              echo "rpc_url=${RPC_URL}" >> $GITHUB_OUTPUT
-              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
+              echo "rpc_url=${RPC_URL}" >> "$GITHUB_OUTPUT"
+              echo "network_passphrase=Standalone Network ; February 2017" >> "$GITHUB_OUTPUT"
 
         - name: Wait for Stellar network
           shell: bash
@@ -38,10 +51,11 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "${{ steps.start_stellar_local_network.outputs.rpc_url }}" \
-                --network-passphrase "${{ steps.start_stellar_local_network.outputs.network_passphrase }}"
+                --rpc-url "${{ steps.start.outputs.rpc_url }}" \
+                --network-passphrase "${{ steps.start.outputs.network_passphrase }}"
 
         - name: Retrieve native token address
+          id: native_token
           shell: bash
           run: |
-              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> $GITHUB_OUTPUT
+              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> "$GITHUB_OUTPUT"
