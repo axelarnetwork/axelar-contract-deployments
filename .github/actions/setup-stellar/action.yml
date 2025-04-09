@@ -1,7 +1,7 @@
 name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
-runs:
+runs: 
     using: 'composite'
     env:
         HORIZON_RPC: 'http://localhost:8000'
