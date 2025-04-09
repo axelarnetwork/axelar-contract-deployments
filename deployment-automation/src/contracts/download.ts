@@ -31,7 +31,7 @@ export async function getLatestVersion(contractDir: string): Promise<string | nu
 /**
  * Function to download contract files from remote source
  */
-export async function downloadContractFiles(userVersion: string): Promise<Map<string, ContractFile>> {
+export async function downloadContractFiles(): Promise<Map<string, ContractFile>> {
   console.log("⚡ Downloading contract files...");
   
   // Ensure the directory for downloads exists
@@ -47,6 +47,12 @@ export async function downloadContractFiles(userVersion: string): Promise<Map<st
   // Map to store contract file information
   const contractFiles = new Map<string, ContractFile>();
 
+  // Get contract versions from environment variables or use default
+  const getContractVersion = (contractType: string): string => {
+    const envKey = `${contractType.toUpperCase().replace(/-/g, '_')}_CONTRACT_VERSION`;
+    return process.env[envKey] || "latest";
+  };
+
   // Loop through each contract directory and get the files
   for (const dir of contractDirectories) {
     const fileName = contractTypeToFileName(dir);  // Convert hyphens to underscores
@@ -54,16 +60,9 @@ export async function downloadContractFiles(userVersion: string): Promise<Map<st
     
     const wasmFilePath = path.join(WASM_DIR, `${fileName}.wasm`);
     const checksumFilePath = path.join(WASM_DIR, `${fileName}_checksums.txt`);
-    
-    if (!userVersion) {
-      const latestVersion = await getLatestVersion(dir);
-      if (!latestVersion) {
-        console.error("❌ No version specified and getLatestVersion is not fully implemented.");
-        throw new Error("Version required but not provided");
-      }
-    }
 
-    const version = userVersion || "latest";
+    // Get the specific version for this contract type
+    const version = getContractVersion(dir);
     const fileUrl = `${BASE_URL}/${dir}/${version}/${fileName}.wasm`;
     const checksumUrl = `${BASE_URL}/${dir}/${version}/checksums.txt`;
 

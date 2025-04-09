@@ -241,13 +241,6 @@ async function main(): Promise<void> {
     // Set default values for custom devnets
     handleCustomDevnet();
     
-    // Get contract version from command line arguments or environment variables
-    const userVersion = config.CONTRACT_VERSION || '';
-    if (userVersion) {
-      displayMessage(MessageType.INFO, `Using contract version: ${userVersion}`);
-    } else {
-      displayMessage(MessageType.INFO, "Using latest contract version");
-    }
 
     displayMessage(MessageType.INFO, "Environment Variables Set:");
     console.log(`   NETWORK=${config.NAMESPACE}`);
@@ -257,9 +250,12 @@ async function main(): Promise<void> {
     console.log(`   GAS_LIMIT=${config.GAS_LIMIT}`);
     console.log(`   RPC_URL=${config.RPC_URL}`);
     console.log(`   AXELAR_RPC_URL=${config.AXELAR_RPC_URL}`);
+    console.log(`   GATEWAY_VERSION=${config.GATEWAY_CONTRACT_VERSION}`);
+    console.log(`   MULTISIG_PROVER_CONTRACT_VERSION=${config.MULTISIG_PROVER_CONTRACT_VERSION}`);
+    console.log(`   VOTING_VERIFIER_VERSION=${config.VOTING_VERIFIER_CONTRACT_VERSION}`);
 
     // Run the deployment process
-    await runNewDeployment(userVersion);
+    await runNewDeployment();
 
   } catch (error) {
     displayMessage(MessageType.ERROR, `Deployment failed: ${error}`);

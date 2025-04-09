@@ -36,24 +36,18 @@ export function extractSalt(contractName: string): void {
 /**
  * Function to deploy contracts
  */
-export async function deployContracts(contractFiles: Map<string, ContractFile>): Promise<void> {
-  if (isCustomDevnet()) {
-    // Extract SALT for "VotingVerifier"
-    const votingVerifier = contractFiles.get("voting_verifier");
-    if (!votingVerifier) {
-      console.error("Missing voting_verifier contract files!");
-      throw new Error("Missing voting_verifier contract files");
-    }
-    
+export async function deployContracts(): Promise<void> {
+  if (isCustomDevnet()) {    
     extractSalt("voting_verifier");
 
     // Run the deployment command with explicit file path
     console.log("⚡ Deploying VotingVerifier Contract...");
-    console.log(`Using file path: ${votingVerifier.filePath}`);
+    console.log(`Using version: ${config.VOTING_VERIFIER_CONTRACT_VERSION}`);
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
         -c "VotingVerifier" \
+        -v "${config.VOTING_VERIFIER_CONTRACT_VERSION}" \
         -e "${config.NAMESPACE}" \
         -n "${config.CHAIN_NAME}" \
         --admin "${config.CONTRACT_ADMIN}" \
@@ -65,21 +59,17 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
     }
 
     // Extract SALT for "Gateway"
-    const gateway = contractFiles.get("gateway");
-    if (!gateway) {
-      console.error("Missing gateway contract files!");
-      throw new Error("Missing gateway contract files");
-    }
-    
     extractSalt("gateway");
 
     // Run the deployment command for Gateway contract with explicit file path
     console.log("⚡ Deploying Gateway Contract...");
+    console.log(`Using version: ${config.GATEWAY_CONTRACT_VERSION}`);
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
         -c "Gateway" \
         -e "${config.NAMESPACE}" \
+        -v "${config.GATEWAY_CONTRACT_VERSION}" \
         -n "${config.CHAIN_NAME}" \
         --admin "${config.CONTRACT_ADMIN}" \
         -y \
@@ -90,21 +80,17 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
     }
 
     // Extract SALT for "MultisigProver"
-    const multisigProver = contractFiles.get("multisig_prover");
-    if (!multisigProver) {
-      console.error("Missing multisig_prover contract files!");
-      throw new Error("Missing multisig_prover contract files");
-    }
-    
     extractSalt("multisig_prover");
 
     // Run the deployment command for MultisigProver contract with explicit file path
     console.log("⚡ Deploying MultisigProver Contract...");
+    console.log(`Using version: ${config.MULTISIG_PROVER_CONTRACT_VERSION}`);
     try {
       await execAsync(`node ../cosmwasm/deploy-contract.js upload-instantiate \
         -m "${config.MNEMONIC}" \
         -c "MultisigProver" \
         -e "${config.NAMESPACE}" \
+        -v "${config.MULTISIG_PROVER_CONTRACT_VERSION}" \
         -n "${config.CHAIN_NAME}" \
         --admin "${config.CONTRACT_ADMIN}" \
         -y \
@@ -116,9 +102,13 @@ export async function deployContracts(contractFiles: Map<string, ContractFile>):
   } else {
     // Non-custom devnet logic
     try {
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN}`);
+      console.log("⚡ Instantiate contracts...");
+      console.log("⚡ Instantiate VotingVerifier Contract...");
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
+      console.log("⚡ Instantiate Gateway Contract...");
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
+      console.log("⚡ Instantiate MultisigProver Contract...");
+      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
     } catch (error) {
       console.error(`Error instantiating contracts: ${error}`);
       throw error;
