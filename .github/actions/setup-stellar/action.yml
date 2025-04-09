@@ -1,22 +1,12 @@
 name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
-outputs:
-    rpc_url:
-        description: 'RPC URL of the local Stellar network'
-        value: ${{ steps.start.outputs.rpc_url }}
-    network_passphrase:
-        description: 'Network passphrase'
-        value: ${{ steps.start.outputs.network_passphrase }}
-    xlm_address:
-        description: 'Native XLM asset address'
-        value: ${{ steps.native_token.outputs.xlm_address }}
-
 runs:
     using: 'composite'
     env:
-        RPC_HOST: http://localhost:8000
-        RPC_URL: http://localhost:8000/soroban/rpc
+        HORIZON_RPC: 'http://localhost:8000'
+        RPC_URL: 'http://localhost:8000/soroban/rpc'
+        NETWORK_PASSPHRASE: 'Standalone Network ; February 2017'
     steps:
         - name: Install stable Rust toolchain
           uses: dtolnay/rust-toolchain@stable
@@ -30,8 +20,9 @@ runs:
           shell: bash
           run: |
               stellar container start local --protocol-version 22
+              echo "horizon_rpc=${HORIZON_RPC}" >> "$GITHUB_OUTPUT"
               echo "rpc_url=${RPC_URL}" >> "$GITHUB_OUTPUT"
-              echo "network_passphrase=Standalone Network ; February 2017" >> "$GITHUB_OUTPUT"
+              echo "network_passphrase=${NETWORK_PASSPHRASE}" >> "$GITHUB_OUTPUT"
 
         - name: Wait for Stellar network
           shell: bash
@@ -39,7 +30,7 @@ runs:
               echo "Waiting for Stellar network RPC to become ready..."
               while true; do
                 echo "Checking..."
-                if curl -s "${RPC_HOST}/" | grep -q '"current_protocol_version"'; then
+                if curl -s "${HORIZON_RPC}/" | grep -q '"current_protocol_version"'; then
                   echo "✅ Stellar RPC is ready"
                   exit 0
                 fi
@@ -51,8 +42,8 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "${{ steps.start.outputs.rpc_url }}" \
-                --network-passphrase "${{ steps.start.outputs.network_passphrase }}"
+                --rpc-url "${RPC_URL}" \
+                --network-passphrase "${NETWORK_PASSPHRASE}"
 
         - name: Retrieve native token address
           id: native_token
