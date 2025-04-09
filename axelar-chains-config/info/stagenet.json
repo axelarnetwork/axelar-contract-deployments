@@ -6,6 +6,7 @@
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -108,8 +109,7 @@
         "api": "https://api-testnet.snowtrace.io/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "fantom": {
       "name": "Fantom",
@@ -117,6 +117,7 @@
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "FTM",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -219,8 +220,7 @@
         "api": "https://api-testnet.ftmscan.com/api"
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -228,6 +228,7 @@
       "chainId": 1287,
       "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
       "tokenSymbol": "DEV",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -333,8 +334,7 @@
         "gasLimit": 12000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "binance": {
       "name": "Binance",
@@ -342,6 +342,7 @@
       "chainId": 97,
       "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "tokenSymbol": "BNB",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGasService": {
@@ -370,7 +371,6 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
-      "decimals": 18,
       "gasOptions": {
         "gasPriceAdjustment": 1.5
       }
@@ -381,6 +381,7 @@
       "chainId": 2221,
       "rpc": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -479,8 +480,7 @@
         "api": ""
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
@@ -488,6 +488,7 @@
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
@@ -590,8 +591,7 @@
         "blobBaseFee": 50187563959
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 40,
-      "decimals": 18
+      "approxFinalityWaitTime": 40
     },
     "arbitrum-sepolia": {
       "name": "Arbitrum-Sepolia",
@@ -702,6 +702,7 @@
       "chainId": 2090,
       "rpc": "https://centrifuge-parachain.api.onfinality.io/rpc?apikey=66c3bd57-e1d5-4d22-bfc6-d63436b44a5a",
       "tokenSymbol": "CFG",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "contracts": {
@@ -735,8 +736,7 @@
         "api": ""
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "linea-sepolia": {
       "name": "Linea-Sepolia",
@@ -744,6 +744,7 @@
       "chainId": 59141,
       "rpc": "https://rpc.sepolia.linea.build",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -844,8 +845,7 @@
       },
       "confirmations": 1,
       "finality": "400",
-      "approxFinalityWaitTime": 30,
-      "decimals": 18
+      "approxFinalityWaitTime": 30
     },
     "polygon-sepolia": {
       "name": "Polygon-Sepolia",
@@ -853,6 +853,7 @@
       "chainId": 80002,
       "rpc": "https://rpc-amoy.polygon.technology",
       "tokenSymbol": "MATIC",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
@@ -953,8 +954,7 @@
         "gasPriceAdjustment": 1.5
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "base-sepolia": {
       "name": "Base-Sepolia",
@@ -962,6 +962,7 @@
       "chainId": 84532,
       "rpc": "https://sepolia.base.org",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1066,8 +1067,7 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30,
-      "decimals": 18
+      "approxFinalityWaitTime": 30
     },
     "blast-sepolia": {
       "name": "Blast-Sepolia",
@@ -1075,6 +1075,7 @@
       "chainId": 168587773,
       "rpc": "https://sepolia.blast.io/",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1179,8 +1180,7 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "decimals": 18
+      "approxFinalityWaitTime": 25
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -1188,6 +1188,7 @@
       "chainId": 2522,
       "rpc": "https://rpc.testnet.frax.com",
       "tokenSymbol": "frxETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1291,8 +1292,7 @@
         "api": "https://api-holesky.fraxscan.com/api"
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 80,
-      "decimals": 18
+      "approxFinalityWaitTime": 80
     },
     "mantle-sepolia": {
       "name": "Mantle-Sepolia",
@@ -1300,6 +1300,7 @@
       "chainId": 5003,
       "rpc": "https://rpc.sepolia.mantle.xyz",
       "tokenSymbol": "MNT",
+      "decimals": 18,
       "chainType": "evm",
       "confirmations": 2,
       "explorer": {
@@ -1400,8 +1401,7 @@
         "gasPrice": 25000000,
         "gasLimit": 100000000000
       },
-      "approxFinalityWaitTime": 60,
-      "decimals": 18
+      "approxFinalityWaitTime": 60
     },
     "optimism-sepolia": {
       "name": "Optimism-Sepolia",
@@ -1409,6 +1409,7 @@
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1513,8 +1514,7 @@
         }
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "decimals": 18
+      "approxFinalityWaitTime": 25
     },
     "flow": {
       "name": "Flow",
@@ -1522,6 +1522,7 @@
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1607,8 +1608,7 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "hedera": {
       "name": "Hedera",
@@ -1617,10 +1617,10 @@
       "chainId": 296,
       "rpc": "https://testnet.hashio.io/api",
       "tokenSymbol": "HBAR",
+      "decimals": 8,
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
-      "decimals": 8,
       "timeout": 50000,
       "chainType": "evm",
       "explorer": {
@@ -1692,8 +1692,8 @@
       "networkType": "testnet",
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
-      "chainType": "sui",
       "decimals": 9,
+      "chainType": "sui",
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
@@ -1916,9 +1916,9 @@
       "chainId": 1449000,
       "rpc": "https://rpc.testnet.xrplevm.org",
       "tokenSymbol": "XRP",
+      "decimals": 18,
       "confirmations": 1,
       "finality": "finalized",
-      "decimals": 18,
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
@@ -2006,10 +2006,10 @@
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
       "chainType": "stellar",
+      "tokenSymbol": "XLM",
       "decimals": 7,
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "tokenSymbol": "XLM",
       "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       "explorer": {
         "name": "Stellar Expert",

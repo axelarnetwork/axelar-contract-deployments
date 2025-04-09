@@ -537,6 +537,7 @@
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
@@ -621,8 +622,7 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "stellar-2025-q1": {
       "name": "Stellar",
@@ -630,11 +630,11 @@
       "rpc": "https://soroban-testnet.stellar.org",
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
-      "chainType": "stellar",
+      "tokenSymbol": "XLM",
       "decimals": 7,
+      "chainType": "stellar",
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "tokenSymbol": "XLM",
       "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       "explorer": {
         "name": "Stellar Expert",
@@ -723,9 +723,9 @@
       "networkType": "testnet",
       "rpc": "https://sui-testnet-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
+      "decimals": 9,
       "chainType": "sui",
       "finality": "1",
-      "decimals": 9,
       "approxFinalityWaitTime": 1,
       "contracts": {
         "Utils": {

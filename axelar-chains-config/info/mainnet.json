@@ -6,6 +6,7 @@
       "chainId": 1,
       "rpc": "https://mainnet.infura.io/v3/a4812158fbab4a2aaa849e6f4a6dc605",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -137,7 +138,6 @@
       },
       "finality": "finalized",
       "approxFinalityWaitTime": 40,
-      "decimals": 18,
       "onchainGasEstimate": {
         "blobBaseFee": 1
       }
@@ -148,6 +148,7 @@
       "chainId": 43114,
       "rpc": "https://api.avax.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -264,8 +265,7 @@
         "gasPrice": 150000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "fantom": {
       "name": "Fantom",
@@ -273,6 +273,7 @@
       "chainId": 250,
       "rpc": "https://rpc.ftm.tools",
       "tokenSymbol": "FTM",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -393,8 +394,7 @@
         "gasPrice": 1000000000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "polygon": {
       "name": "Polygon",
@@ -402,6 +402,7 @@
       "chainId": 137,
       "rpc": "https://polygon-rpc.com",
       "tokenSymbol": "MATIC",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -521,8 +522,7 @@
         "gasPrice": 350000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 5,
-      "decimals": 18
+      "approxFinalityWaitTime": 5
     },
     "moonbeam": {
       "name": "Moonbeam",
@@ -530,6 +530,7 @@
       "chainId": 1284,
       "rpc": "https://rpc.api.moonbeam.network",
       "tokenSymbol": "GLMR",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -646,8 +647,7 @@
         "gasPrice": 625000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "binance": {
       "name": "Binance",
@@ -655,6 +655,7 @@
       "chainId": 56,
       "rpc": "https://bscrpc.com",
       "tokenSymbol": "BNB",
+      "decimals": 18,
       "wrappedSymbol": "WBNB",
       "chainType": "evm",
       "contracts": {
@@ -786,7 +787,6 @@
         "gasPrice": 30000000000
       },
       "finality": "finalized",
-      "decimals": 18,
       "approxFinalityWaitTime": 2
     },
     "arbitrum": {
@@ -795,6 +795,7 @@
       "chainId": 42161,
       "rpc": "https://arb1.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -916,8 +917,7 @@
         "gasPrice": 2000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "decimals": 18
+      "approxFinalityWaitTime": 25
     },
     "celo": {
       "name": "Celo",
@@ -925,6 +925,7 @@
       "chainId": 42220,
       "rpc": "https://forno.celo.org",
       "tokenSymbol": "CELO",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1043,8 +1044,7 @@
         "gasPrice": 100000000000
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "kava": {
       "name": "Kava",
@@ -1052,6 +1052,7 @@
       "chainId": 2222,
       "rpc": "https://evm.kava.io",
       "tokenSymbol": "KAVA",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1168,8 +1169,7 @@
         "gasPrice": 50000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "filecoin": {
       "name": "Filecoin",
@@ -1177,6 +1177,7 @@
       "chainId": 314,
       "rpc": "https://rpc.ankr.com/filecoin",
       "tokenSymbol": "FIL",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1298,8 +1299,7 @@
       },
       "finality": "120",
       "approxFinalityWaitTime": 60,
-      "txTimeout": 180000,
-      "decimals": 18
+      "txTimeout": 180000
     },
     "optimism": {
       "name": "Optimism",
@@ -1307,6 +1307,7 @@
       "chainId": 10,
       "rpc": "https://optimism-mainnet.public.blastapi.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1432,8 +1433,7 @@
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "decimals": 18
+      "approxFinalityWaitTime": 25
     },
     "linea": {
       "name": "Linea",
@@ -1441,6 +1441,7 @@
       "chainId": 59144,
       "rpc": "https://rpc.linea.build",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1561,8 +1562,7 @@
         "gasPriceAdjustment": 2
       },
       "finality": "400",
-      "approxFinalityWaitTime": 30,
-      "decimals": 18
+      "approxFinalityWaitTime": 30
     },
     "base": {
       "name": "Base",
@@ -1570,6 +1570,7 @@
       "chainId": 8453,
       "rpc": "https://developer-access-mainnet.base.org",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1692,8 +1693,7 @@
         "l1FeeScalar": 1101
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30,
-      "decimals": 18
+      "approxFinalityWaitTime": 30
     },
     "mantle": {
       "name": "Mantle",
@@ -1701,6 +1701,7 @@
       "chainId": 5000,
       "rpc": "https://rpc.mantle.xyz",
       "tokenSymbol": "MNT",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1827,8 +1828,7 @@
         "gasPriceAdjustment": 1.8
       },
       "finality": "9000",
-      "approxFinalityWaitTime": 60,
-      "decimals": 18
+      "approxFinalityWaitTime": 60
     },
     "scroll": {
       "name": "Scroll",
@@ -1836,6 +1836,7 @@
       "chainId": 534352,
       "rpc": "https://rpc.scroll.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1955,8 +1956,7 @@
         "gasPrice": 25000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 60,
-      "decimals": 18
+      "approxFinalityWaitTime": 60
     },
     "centrifuge": {
       "name": "Centrifuge",
@@ -1964,6 +1964,7 @@
       "chainId": 2031,
       "rpc": "https://fullnode.parachain.centrifuge.io",
       "tokenSymbol": "CFG",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "contracts": {
@@ -2053,8 +2054,7 @@
         "gasPrice": 40
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "immutable": {
       "name": "Immutable",
@@ -2062,6 +2062,7 @@
       "chainId": 13371,
       "rpc": "https://rpc.immutable.com/",
       "tokenSymbol": "IMX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -2165,8 +2166,7 @@
         "api": "https://explorer.immutable.com/api"
       },
       "finality": "1",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "fraxtal": {
       "name": "Fraxtal",
@@ -2174,6 +2174,7 @@
       "chainId": 252,
       "rpc": "https://rpc.frax.com",
       "tokenSymbol": "frxETH",
+      "decimals": 18,
       "confirmations": 2,
       "gasOptions": {
         "gasLimit": 8000000
@@ -2289,8 +2290,7 @@
         "gasPrice": 5001270
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 80,
-      "decimals": 18
+      "approxFinalityWaitTime": 80
     },
     "blast": {
       "name": "Blast",
@@ -2298,6 +2298,7 @@
       "chainId": 81457,
       "rpc": "https://rpc.blast.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
@@ -2413,8 +2414,7 @@
         "gasPrice": 5641495
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25,
-      "decimals": 18
+      "approxFinalityWaitTime": 25
     },
     "flow": {
       "name": "Flow",
@@ -2422,6 +2422,7 @@
       "chainId": 747,
       "rpc": "https://mainnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "ConstAddressDeployer": {
@@ -2509,8 +2510,7 @@
       },
       "confirmations": 1,
       "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "decimals": 18
+      "approxFinalityWaitTime": 1
     },
     "sui": {
       "name": "Sui",
@@ -2518,10 +2518,10 @@
       "networkType": "mainnet",
       "rpc": "https://sui-rpc.publicnode.com:443",
       "tokenSymbol": "SUI",
+      "decimals": 9,
       "chainType": "sui",
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "decimals": 9,
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/mainnet"
