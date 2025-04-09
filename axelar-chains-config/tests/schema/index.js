@@ -25,9 +25,13 @@ export const axelarGatewaySchema = {
     id: '/info/chains.contracts.AxelarGateway',
     type: 'object',
     properties: {
-        connectionType: { type: 'string' },
+        connectionType: { 
+            type: 'string',
+            enum: ['consensus', 'amplifier'],
+        },
     },
     required: ['connectionType'],
+    additionalProperties: true, 
 };
 
 export const contractSchema = {
@@ -110,7 +114,7 @@ export const chainsSchema = {
     id: '/info.chains',
     type: 'object',
     patternProperties: {
-        '^[a-z]+$': {
+        '^[a-z][a-z0-9-]*$': {
             $ref: chainValueSchema.id,
         },
     },
