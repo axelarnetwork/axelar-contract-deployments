@@ -282,13 +282,20 @@ async function createMigrateTokenAuths(
             nativeToScVal(chain.contracts.InterchainTokenService.initializeArgs.interchainTokenWasmHash),
         ]),
         createAuthorizedFunc(Address.fromString(interchainTokenAddress), 'migrate', [nativeToScVal(null)]),
-    ].map((auth) => {
+    ].map((auth, index) => {
+        const sorobanAddressCredentials = new xdr.SorobanAddressCredentials({
+            address: Address.fromString(chain.contracts.InterchainTokenService.address).toScAddress(),
+            nonce: xdr.Int64.fromString(index.toString()),
+            signatureExpirationLedger: validUntil,
+            signature: xdr.ScVal.scvVec([]),
+        });
+
         return new xdr.SorobanAuthorizationEntry({
             rootInvocation: new xdr.SorobanAuthorizedInvocation({
                 function: auth,
                 subInvocations: [],
             }),
-            credentials: xdr.SorobanCredentials.sorobanCredentialsSourceAccount(),
+            credentials: xdr.SorobanCredentials.sorobanCredentialsAddress(sorobanAddressCredentials),
         });
     });
 
