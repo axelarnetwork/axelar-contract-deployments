@@ -30,7 +30,7 @@ runs:
           shell: bash
           run: |
               stellar container start local --protocol-version 22
-              echo "network_passphrase=Standalone Network ; February 2017" >> $GITHUB_OUTPUT
+              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
               echo "horizon_rpc=http://localhost:8000" >> $GITHUB_OUTPUT
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
 
