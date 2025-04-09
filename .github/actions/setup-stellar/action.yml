@@ -9,7 +9,7 @@ runs:
 
         - name: Install Stellar CLI
           shell: bash
-          run: cargo install --locked stellar-cli --version 22 --features opt
+          run: cargo install --locked stellar-cli --version ^22 --features opt
 
         - name: Start Stellar local network
           shell: bash
