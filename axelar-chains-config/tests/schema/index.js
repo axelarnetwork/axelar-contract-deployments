@@ -34,15 +34,15 @@ export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '(^[a-z]|[A-Z])[a-z]*': {
+        // PascalName e.g. 'AxelarGasService' etc.
+        '^(?!AxelarGateway)(^[a-z]|[A-Z])[a-zA-Z]*$': {
             $ref: contractValueSchema.id,
-        },
-        AxelarGateway: {
-            $ref: axelarGatewaySchema.id,
         },
     },
     properties: {
+        AxelarGateway: {
+            $ref: axelarGatewaySchema.id,
+        },
         skipRevertTests: {
             type: 'boolean',
         },
