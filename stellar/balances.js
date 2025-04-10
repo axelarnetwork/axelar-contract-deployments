@@ -1,6 +1,7 @@
-const { Command, Option } = require('commander');
-const { getWallet } = require('./utils');
+const { Command } = require('commander');
+const { getWallet, addBaseOptions } = require('./utils');
 const { loadConfig } = require('../evm/utils');
+const { getChainConfig } = require('../common');
 require('./cli-utils');
 
 async function processCommand(options, _, chain) {
@@ -12,21 +13,11 @@ if (require.main === module) {
 
     program.name('balances').description('Wallet balance');
 
-    program.addOption(
-        new Option('-e, --env <env>', 'environment')
-            .choices(['local', 'devnet', 'stagenet', 'testnet', 'mainnet'])
-            .default('testnet')
-            .makeOptionMandatory(true)
-            .env('ENV'),
-    );
-
-    program.addOption(new Option('-p, --privateKey <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
-
-    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
+    addBaseOptions(program);
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config, config.stellar);
+        processCommand(options, config, getChainConfig(config, options.chainName));
     });
 
     program.parse();

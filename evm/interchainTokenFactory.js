@@ -5,10 +5,11 @@ const {
     getDefaultProvider,
     Contract,
     constants: { AddressZero },
+    BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
-const { addExtendedOptions } = require('./cli-utils');
+const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
@@ -19,7 +20,6 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenFactory';
-
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
@@ -54,26 +54,29 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'interchainTokenSalt': {
-            const { chainNameHash, deployer } = options;
+        case 'interchainTokenDeploySalt': {
+            const { deployer } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            validateParameters({ isValidAddress: { deployer }, isKeccak256Hash: { chainNameHash } });
+            validateParameters({ isValidAddress: { deployer } });
 
-            const interchainTokenSalt = await interchainTokenFactory.interchainTokenSalt(chainNameHash, deployer, deploymentSalt);
-            printInfo(`interchainTokenSalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`, interchainTokenSalt);
+            const interchainTokenDeploySalt = await interchainTokenFactory.interchainTokenDeploySalt(deployer, deploymentSalt);
+            printInfo(
+                `interchainTokenDeploySalt for deployer ${deployer} and deployment salt: ${deploymentSalt}`,
+                interchainTokenDeploySalt,
+            );
 
             break;
         }
 
-        case 'canonicalInterchainTokenSalt': {
-            const { chainNameHash, tokenAddress } = options;
+        case 'canonicalinterchainTokenDeploySalt': {
+            const { tokenAddress } = options;
 
-            validateParameters({ isValidAddress: { tokenAddress }, isKeccak256Hash: { chainNameHash } });
+            validateParameters({ isValidAddress: { tokenAddress } });
 
-            const canonicalInterchainTokenSalt = await interchainTokenFactory.canonicalInterchainTokenSalt(chainNameHash, tokenAddress);
-            printInfo(`canonicalInterchainTokenSalt for token address: ${tokenAddress}`, canonicalInterchainTokenSalt);
+            const canonicalinterchainTokenDeploySalt = await interchainTokenFactory.canonicalinterchainTokenDeploySalt(tokenAddress);
+            printInfo(`canonicalinterchainTokenDeploySalt for token address: ${tokenAddress}`, canonicalinterchainTokenDeploySalt);
 
             break;
         }
@@ -132,38 +135,45 @@ async function processCommand(config, chain, options) {
                 name,
                 symbol,
                 decimals,
-                parseInt(initialSupply * 10 ** decimals),
+                BigNumber.from(10).pow(decimals).mul(parseInt(initialSupply)),
                 minter,
                 gasOptions,
             );
 
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
+            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
             break;
         }
 
         case 'deployRemoteInterchainToken': {
-            const { originalChain, minter, destinationChain, gasValue } = options;
+            const { destinationChain, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
-                isString: { originalChain },
                 isNonEmptyString: { destinationChain },
-                isAddress: { minter },
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
 
-            const tx = await interchainTokenFactory.deployRemoteInterchainToken(
-                originalChain,
+            const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
-                minter,
                 destinationChain,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
             );
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -177,32 +187,95 @@ async function processCommand(config, chain, options) {
 
             const tx = await interchainTokenFactory.registerCanonicalInterchainToken(tokenAddress, gasOptions);
 
+            const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
+            printInfo('tokenId', tokenId);
+
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
 
             break;
         }
 
         case 'deployRemoteCanonicalInterchainToken': {
-            const { originalChain, tokenAddress, destinationChain, gasValue } = options;
+            const { tokenAddress, destinationChain, gasValue } = options;
 
             validateParameters({
                 isValidAddress: { tokenAddress },
-                isString: { originalChain },
                 isNonEmptyString: { destinationChain },
                 isValidNumber: { gasValue },
             });
 
             isValidDestinationChain(config, destinationChain);
 
-            const tx = await interchainTokenFactory.deployRemoteCanonicalInterchainToken(
-                originalChain,
+            const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
                 destinationChain,
                 gasValue,
                 { value: gasValue, ...gasOptions },
             );
 
+            const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
+            printInfo('tokenId', tokenId);
+
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'registerCustomToken': {
+            const { tokenAddress, tokenManagerType, operator } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isValidAddress: { tokenAddress },
+                isAddress: { operator },
+                isValidNumber: { tokenManagerType },
+            });
+
+            const tx = await interchainTokenFactory.registerCustomToken(
+                deploymentSalt,
+                tokenAddress,
+                tokenManagerType,
+                operator,
+                gasOptions,
+            );
+            const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'linkToken': {
+            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
+
+            validateParameters({
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { tokenManagerType, gasValue },
+                isValidBytesArray: { linkParams, destinationTokenAddress },
+            });
+
+            const tx = await interchainTokenFactory.linkToken(
+                deploymentSalt,
+                destinationChain,
+                destinationTokenAddress,
+                tokenManagerType,
+                linkParams,
+                gasValue,
+                { value: gasValue, ...gasOptions },
+            );
+
+            const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'LinkTokenStarted');
 
             break;
         }
@@ -222,14 +295,14 @@ if (require.main === module) {
 
     program.name('InterchainTokenFactory').description('Script to perform interchain token factory commands');
 
-    addExtendedOptions(program, { address: true, salt: true });
+    addEvmOptions(program, { address: true, salt: true });
 
     program.addOption(
         new Option('--action <action>', 'interchain token factory action')
             .choices([
                 'contractId',
-                'interchainTokenSalt',
-                'canonicalInterchainTokenSalt',
+                'interchainTokenDeploySalt',
+                'canonicalinterchainTokenDeploySalt',
                 'interchainTokenId',
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
@@ -237,25 +310,29 @@ if (require.main === module) {
                 'deployRemoteInterchainToken',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
+                'registerCustomToken',
+                'linkToken',
             ])
             .makeOptionMandatory(true),
     );
 
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
     program.addOption(new Option('--sender <sender>', 'TokenManager deployer address'));
-    program.addOption(new Option('--chainNameHash <chainNameHash>', 'chain name hash'));
     program.addOption(new Option('--deployer <deployer>', 'deployer address'));
     program.addOption(new Option('--tokenAddress <tokenAddress>', 'token address'));
     program.addOption(new Option('--name <name>', 'token name'));
     program.addOption(new Option('--symbol <symbol>', 'token symbol'));
     program.addOption(new Option('--decimals <decimals>', 'token decimals'));
     program.addOption(new Option('--minter <minter>', 'token minter').default(AddressZero));
+    program.addOption(new Option('--operator <operator>', 'token manager operator').default(AddressZero));
+    program.addOption(new Option('--tokenManagerType <tokenManagerType>', 'token manager type'));
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
-    program.addOption(new Option('--originalChain <originalChain>', 'original chain').default(''));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
+    program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));
+    program.addOption(new Option('--linkParams <linkParams>', 'parameters to use for linking'));
 
     program.action((options) => {
         main(options);

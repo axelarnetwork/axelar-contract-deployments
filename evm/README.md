@@ -9,11 +9,23 @@ By default the version of contracts specified in `package.json` will be used for
 
 Add the deployer private key in `.env` folder (see `.example.env` for reference).
 
-## AxelarGateway
+## Deployer Factories
 
-Deploy the gateway contract.
+EVM contracts can be deployed using one of 3 supported deployment methods:
 
-`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+- `create`: Standard nonce based contract deployment
+- `create2`: Contract deployment using `CREATE2` opcode, the deployed address is deterministic based on the sender address, contract bytecode, and the salt
+- `create3`: Contract deployment using the CREATE3 technique, the deployed address is deterministic based only on the sender address, and the salt. The dependency on the contract bytecode is removed, but as a result, you can't trust that the contract bytecode is the same across chains.
+
+A tutorial can be found [here](https://www.axelar.network/blog/same-address-cross-chain-tutorial).
+
+Factories have already been deployed on Axelar connected EVM chains. You can deploy your own factories via the following:
+
+```bash
+node evm/deploy-contract.js -c Create2Deployer -m create
+
+node evm/deploy-contract.js -c Create3Deployer -m create2
+```
 
 ## Axelar Amplifier Gateway
 
@@ -22,6 +34,20 @@ Deploy the Axelar Amplifier Gateway contract. This is the required gateway contr
 `node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
+
+### Submit Amplifier Proofs
+
+To submit proofs constructed on Amplifier to the gateway, use the following command:
+
+```bash
+node evm/gateway.js --action submitProof --multisigSessionId [session id]
+```
+
+## Axelar Gateway (legacy connection)
+
+Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
+
+`node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
@@ -160,13 +186,13 @@ node evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositSer
 
 ### Prerequisites
 
--   Clone the repo containing the contract source code.
+- Clone the repo containing the contract source code.
 
 ```bash
 git clone https://github.com/axelarnetwork/axelar-cgp-solidity.git
 ```
 
--   Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
+- Checkout to the version of contracts to verify in the directory provided to the command before compiling artifacts used by the command.
 
 ```bash
 git checkout vX.Y.Z
@@ -176,14 +202,14 @@ npm ci
 npm run build
 ```
 
--   Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
+- Update `.hardhat.config.js` to have `chains` and `keys` to point to the current repo.
 
 ```javascript
 const chains = require(`../axelar-contract-deployments/axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`../axelar-contract-deployments/keys.json`);
 ```
 
--   `keys.json` is expected to be in the format described [here](./.example.keys.json).
+- `keys.json` is expected to be in the format described [here](./.example.keys.json).
     You can generate the explorer API key via creating an account on the explorer.
 
 ### Example
@@ -206,7 +232,14 @@ Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--
 node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
 ```
 
-Verify AxelarAmplifierGateway contract. `--address` can be optionally specified (otherwise will default to the value from config).
+## Verify Token Ownership requests
+
+Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets/d/1zKH1DINTiz83iXbbZRNRurxxZTaU0r5JS4A1c8b9-9A/edit?resourcekey=&gid=1705825087#gid=1705825087) into a csv format.
+
+`node evm/check-ownership-request.js -f sheet_path.csv`
+
+## Verify AxelarAmplifierGateway contract.
+`--address` can be optionally specified (otherwise will default to the value from config).
 
 1. First clone the `axelar-gmp-sdk-solidity` repo: `git clone git@github.com:axelarnetwork/axelar-gmp-sdk-solidity.git`
 2. Checkout the branch or commit from where the contract was deployed: `git checkout <branch_name>`
@@ -224,3 +257,17 @@ To get details of options provided in the command run:
 ```bash
 node evm/verify-contract.js --help
 ```
+
+## Interchain Token Service
+
+### Link Token
+
+#### Legacy custom ITS tokens
+
+Custom tokens that have already registered with ITS (via `deployTokenManager`) prior to ITS v2.1.0 release can continue being linked to new chains via the following approach. However, we do recommend registering them. Token manager type should be passed in via `--type` flag (e.g. `MINT_BURN`).
+
+```bash
+node evm/its.js link-token --salt [deploy-salt] [token-id] [destination-chain] [token-address] [type] [operator]
+```
+
+The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of hashing the provided salt string.

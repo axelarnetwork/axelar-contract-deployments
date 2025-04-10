@@ -1,5 +1,6 @@
 'use strict';
 
+const axios = require('axios');
 const { ethers } = require('hardhat');
 const {
     ContractFactory,
@@ -9,14 +10,33 @@ const {
     getDefaultProvider,
     BigNumber,
 } = ethers;
-const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { outputJsonSync } = require('fs-extra');
-const zkevm = require('@0xpolygonhermez/zkevm-commonjs');
-const readlineSync = require('readline-sync');
 const chalk = require('chalk');
+const {
+    loadConfig,
+    saveConfig,
+    isNonEmptyString,
+    isNonEmptyStringArray,
+    isNumber,
+    isNumberArray,
+    isString,
+    isValidNumber,
+    isValidTimeFormat,
+    printInfo,
+    isValidDecimal,
+    copyObject,
+    printError,
+    printWarn,
+    writeJSON,
+    httpGet,
+    httpPost,
+    sleep,
+    findProjectRoot,
+    timeout,
+    getSaltFromKey,
+    getCurrentVerifierSet,
+} = require('../common');
 const {
     create3DeployContract,
     deployContractConstant,
@@ -24,15 +44,10 @@ const {
     getCreate3Address,
     printObj,
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
-const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-
-const getSaltFromKey = (key) => {
-    return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
-};
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
@@ -123,138 +138,6 @@ const deployCreate3 = async (
     return contract;
 };
 
-const printInfo = (msg, info = '', colour = chalk.green) => {
-    if (info) {
-        console.log(`${msg}: ${colour(info)}\n`);
-    } else {
-        console.log(`${msg}\n`);
-    }
-};
-
-const printWarn = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
-    }
-
-    console.log(`${chalk.italic.yellow(msg)}\n`);
-};
-
-const printError = (msg, info = '') => {
-    if (info) {
-        msg = `${msg}: ${info}`;
-    }
-
-    console.log(`${chalk.bold.red(msg)}\n`);
-};
-
-function printLog(log) {
-    console.log(JSON.stringify({ log }, null, 2));
-}
-
-const writeJSON = (data, name) => {
-    outputJsonSync(name, data, {
-        spaces: 2,
-        EOL: '\n',
-    });
-};
-
-const httpGet = (url) => {
-    return new Promise((resolve, reject) => {
-        (url.startsWith('https://') ? https : http).get(url, (res) => {
-            const { statusCode } = res;
-            const contentType = res.headers['content-type'];
-            let error;
-
-            if (statusCode !== 200 && statusCode !== 301) {
-                error = new Error('Request Failed.\n' + `Request: ${url}\nStatus Code: ${statusCode}`);
-            } else if (!/^application\/json/.test(contentType)) {
-                error = new Error('Invalid content-type.\n' + `Expected application/json but received ${contentType}`);
-            }
-
-            if (error) {
-                res.resume();
-                reject(error);
-                return;
-            }
-
-            res.setEncoding('utf8');
-            let rawData = '';
-            res.on('data', (chunk) => {
-                rawData += chunk;
-            });
-            res.on('end', () => {
-                try {
-                    const parsedData = JSON.parse(rawData);
-                    resolve(parsedData);
-                } catch (e) {
-                    reject(e);
-                }
-            });
-        });
-    });
-};
-
-const httpPost = async (url, data) => {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-    return response.json();
-};
-
-const isNonEmptyString = (arg) => {
-    return typeof arg === 'string' && arg !== '';
-};
-
-const isString = (arg) => {
-    return typeof arg === 'string';
-};
-
-const isStringArray = (arr) => Array.isArray(arr) && arr.every(isString);
-
-const isNumber = (arg) => {
-    return Number.isInteger(arg);
-};
-
-const isValidNumber = (arg) => {
-    return !isNaN(parseInt(arg)) && isFinite(arg);
-};
-
-const isValidDecimal = (arg) => {
-    return !isNaN(parseFloat(arg)) && isFinite(arg);
-};
-
-const isNumberArray = (arr) => {
-    if (!Array.isArray(arr)) {
-        return false;
-    }
-
-    for (const item of arr) {
-        if (!isNumber(item)) {
-            return false;
-        }
-    }
-
-    return true;
-};
-
-const isNonEmptyStringArray = (arr) => {
-    if (!Array.isArray(arr)) {
-        return false;
-    }
-
-    for (const item of arr) {
-        if (typeof item !== 'string') {
-            return false;
-        }
-    }
-
-    return true;
-};
-
 const isAddressArray = (arr) => {
     if (!Array.isArray(arr)) return false;
 
@@ -279,12 +162,6 @@ const isBytes32Array = (arr) => {
     }
 
     return true;
-};
-
-const getCurrentTimeInSeconds = () => {
-    const now = new Date();
-    const currentTimeInSecs = Math.floor(now.getTime() / 1000);
-    return currentTimeInSecs;
 };
 
 /**
@@ -332,6 +209,15 @@ function isValidBytesAddress(input) {
     return addressRegex.test(input);
 }
 
+function isValidBytesArray(input) {
+    if (input.length % 2 === 1) {
+        return false;
+    }
+
+    const bytesRegex = /^0x[a-fA-F0-9]*/;
+    return bytesRegex.test(input);
+}
+
 const isContract = async (address, provider) => {
     const code = await provider.getCode(address);
     return code && code !== '0x';
@@ -343,22 +229,6 @@ function isValidAddress(address, allowZeroAddress) {
     }
 
     return isAddress(address);
-}
-
-/**
- * Validate if the input string matches the time format YYYY-MM-DDTHH:mm:ss
- *
- * @param {string} timeString - The input time string.
- * @return {boolean} - Returns true if the format matches, false otherwise.
- */
-function isValidTimeFormat(timeString) {
-    const regex = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|1\d|2\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
-
-    if (timeString === '0') {
-        return true;
-    }
-
-    return regex.test(timeString);
 }
 
 // Validate if the input privateKey is correct
@@ -411,6 +281,7 @@ const validationFunctions = {
     isValidAddress,
     isValidPrivateKey,
     isValidTokenId,
+    isValidBytesArray,
 };
 
 function validateParameters(parameters) {
@@ -431,38 +302,6 @@ function validateParameters(parameters) {
         }
     }
 }
-
-/**
- * Parses the input string into an array of arguments, recognizing and converting
- * to the following types: boolean, number, array, and string.
- *
- * @param {string} args - The string of arguments to parse.
- *
- * @returns {Array} - An array containing parsed arguments.
- *
- * @example
- * const input = "hello true 123 [1,2,3]";
- * const output = parseArgs(input);
- * console.log(output); // Outputs: [ 'hello', true, 123, [ 1, 2, 3] ]
- */
-const parseArgs = (args) => {
-    return args
-        .split(/\s+/)
-        .filter((item) => item !== '')
-        .map((arg) => {
-            if (arg.startsWith('[') && arg.endsWith(']')) {
-                return JSON.parse(arg);
-            } else if (arg === 'true') {
-                return true;
-            } else if (arg === 'false') {
-                return false;
-            } else if (!isNaN(arg) && !arg.startsWith('0x')) {
-                return Number(arg);
-            }
-
-            return arg;
-        });
-};
 
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
@@ -497,8 +336,7 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     }
 
     if (chain.toLowerCase() === 'polygon-zkevm') {
-        const codehash = zkevm.smtUtils.hashContractBytecode(bytecode);
-        return codehash;
+        throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
     }
 
     return keccak256(bytecode);
@@ -521,7 +359,7 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     }
 
     if (deployMethod === 'create2') {
-        deployer = chain.contracts.ConstAddressDeployer?.address;
+        deployer = chain.contracts.ConstAddressDeployer?.address || chain.contracts.Create2Deployer?.address;
     } else {
         deployer = chain.contracts.Create3Deployer?.address;
     }
@@ -588,7 +426,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             if (!options.offline) {
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress(initCode, deployer, salt);
+                return deployerInterface.deployedAddress(initCode, deployer, salt);
             }
 
             salt = keccak256(defaultAbiCoder.encode(['address', 'bytes32'], [deployer, salt]));
@@ -608,7 +446,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress('0x', deployer, salt);
+                return deployerInterface.deployedAddress('0x', deployer, salt);
             }
 
             const createDeployer = await getDeployedAddress(deployer, 'create2', {
@@ -642,40 +480,8 @@ const getEVMBatch = async (config, chain, batchID = '') => {
     return batch;
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
-    const keyID = options.keyID || '';
-
-    if (isAddress(keyID)) {
-        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
-    }
-
-    const evmAddresses = options.amplifier
-        ? await getAmplifierKeyAddresses(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
-
-    const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
-
-    const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
-    const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
-    const threshold = Number(evmAddresses.threshold);
-
-    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
-};
-
-const getContractConfig = async (config, chain) => {
-    const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
-    return JSON.parse(Buffer.from(value).toString('ascii'));
-};
-
-const getAmplifierKeyAddresses = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
-        'current_verifier_set',
-    );
-    const signers = Object.values(verifierSet.signers);
+const getAmplifierVerifiers = async (config, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -687,27 +493,35 @@ const getAmplifierKeyAddresses = async (config, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const getEVMAddresses = async (config, chain, options = {}) => {
+    const keyID = options.keyID || '';
 
-function loadConfig(env) {
-    return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
-}
+    if (isAddress(keyID)) {
+        return { addresses: [keyID], weights: [Number(1)], threshold: 1, keyID: 'debug' };
+    }
+
+    const evmAddresses = options.amplifier
+        ? await getAmplifierVerifiers(config, chain)
+        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+
+    const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
+
+    const addresses = sortedAddresses.map((weightedAddress) => weightedAddress.address);
+    const weights = sortedAddresses.map((weightedAddress) => Number(weightedAddress.weight));
+    const threshold = Number(evmAddresses.threshold);
+
+    return { addresses, weights, threshold, keyID: evmAddresses.key_id };
+};
 
 function loadParallelExecutionConfig(env, chain) {
     return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
-function saveConfig(config, env) {
-    writeJSON(config, `${__dirname}/../axelar-chains-config/info/${env}.json`);
 }
 
 function saveParallelExecutionConfig(config, env, chain) {
     writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
 }
 
-async function printWalletInfo(wallet, options = {}) {
+async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
     const address = await wallet.getAddress();
     printInfo('Wallet address', address);
@@ -718,7 +532,7 @@ async function printWalletInfo(wallet, options = {}) {
         if (balance.isZero()) {
             printError('Wallet balance', '0');
         } else {
-            printInfo('Wallet balance', `${balance / 1e18}`);
+            printInfo('Wallet balance', `${balance / 1e18} ${chain.tokenSymbol || ''}`);
         }
 
         printInfo('Wallet nonce', (await wallet.provider.getTransactionCount(address)).toString());
@@ -808,30 +622,6 @@ const deployContract = async (
     }
 };
 
-const dateToEta = (utcTimeString) => {
-    if (utcTimeString === '0') {
-        return 0;
-    }
-
-    const date = new Date(utcTimeString + 'Z');
-
-    if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date format provided: ${utcTimeString}`);
-    }
-
-    return Math.floor(date.getTime() / 1000);
-};
-
-const etaToDate = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-
-    if (isNaN(date.getTime())) {
-        throw new Error(`Invalid timestamp provided: ${timestamp}`);
-    }
-
-    return date.toISOString().slice(0, 19);
-};
-
 /**
  * Check if a specific event was emitted in a transaction receipt.
  *
@@ -846,27 +636,32 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-function copyObject(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
-
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
 
-    if (!options.chainName && !options.chainNames) {
-        throw new Error('Chain names were not provided');
-    }
-
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    let chains = options.chainName ? [options.chainName] : options.chainNames.split(',');
     const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
+
+    let chains = [];
 
     if (options.chainNames === 'all') {
         chains = Object.keys(config.chains);
+        chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
+    } else if (options.chainNames) {
+        chains = options.chainNames.split(',');
+        chains.forEach((chain) => {
+            if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
+                throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
+            }
+        });
+    }
+
+    if (chains.length === 0) {
+        throw new Error('Chain names were not provided');
     }
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
@@ -989,24 +784,6 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 };
 
-/**
- * Prompt the user for confirmation
- * @param {string} question Prompt question
- * @param {boolean} yes If true, skip the prompt
- * @returns {boolean} Returns true if the prompt was skipped, false otherwise
- */
-const prompt = (question, yes = false) => {
-    // skip the prompt if yes was passed
-    if (yes) {
-        return false;
-    }
-
-    const answer = readlineSync.question(`${question} ${chalk.green('(y/n)')} `);
-    console.log();
-
-    return answer !== 'y';
-};
-
 function getConfigByChainId(chainId, config) {
     for (const chain of Object.values(config.chains)) {
         if (chain.chainId === chainId) {
@@ -1015,22 +792,6 @@ function getConfigByChainId(chainId, config) {
     }
 
     throw new Error(`Chain with chainId ${chainId} not found in the config`);
-}
-
-function findProjectRoot(startDir) {
-    let currentDir = startDir;
-
-    while (currentDir !== path.parse(currentDir).root) {
-        const potentialPackageJson = path.join(currentDir, 'package.json');
-
-        if (fs.existsSync(potentialPackageJson)) {
-            return currentDir;
-        }
-
-        currentDir = path.resolve(currentDir, '..');
-    }
-
-    throw new Error('Unable to find project root');
 }
 
 function findContractPath(dir, contractName) {
@@ -1093,6 +854,11 @@ function getContractJSON(contractName, artifactPath) {
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
     }
+}
+
+function getQualifiedContractName(contractName) {
+    const contractJSON = getContractJSON(contractName);
+    return `${contractJSON.sourceName}:${contractJSON.contractName}`;
 }
 
 /**
@@ -1186,20 +952,6 @@ function isValidChain(config, chainName) {
     }
 }
 
-function toBigNumberString(number) {
-    return Math.ceil(number).toLocaleString('en', { useGrouping: false });
-}
-
-function timeout(prom, time, exception) {
-    let timer;
-
-    // Racing the promise with a timer
-    // If the timer resolves first, the promise is rejected with the exception
-    return Promise.race([prom, new Promise((resolve, reject) => (timer = setTimeout(reject, time, exception)))]).finally(() =>
-        clearTimeout(timer),
-    );
-}
-
 async function relayTransaction(options, chain, contract, method, params, nativeValue = 0, gasOptions = {}, expectedEvent = null) {
     if (options.relayerAPI) {
         const result = await httpPost(options.relayerAPI, {
@@ -1239,6 +991,19 @@ async function relayTransaction(options, chain, contract, method, params, native
     );
 }
 
+async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
+    apiUrl = `${apiUrl}?module=contract&action=getcontractcreation&contractaddresses=${tokenAddress}&apikey=${apiKey}`;
+
+    try {
+        const response = await axios.get(apiUrl);
+        return response.data.result[0].txHash;
+    } catch (error) {
+        printWarn(`Error fetching deployment tx for token ${tokenAddress}:`, error);
+    }
+
+    throw new Error('Deployment transaction not found.');
+}
+
 async function getWeightedSigners(config, chain, options) {
     let signers;
     let verifierSetId;
@@ -1256,7 +1021,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierKeyAddresses(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -1271,56 +1036,39 @@ async function getWeightedSigners(config, chain, options) {
     return { signers: [signers], verifierSetId };
 }
 
+// Verify contract using it's source code path. The path is retrieved dynamically by the name.
+const verifyContractByName = (env, chain, name, contract, args, options = {}) => {
+    verifyContract(env, chain, contract, args, { ...options, contractPath: getQualifiedContractName(name) });
+};
+
+const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
+
 module.exports = {
+    ...require('../common/utils'),
     deployCreate,
     deployCreate2,
     deployCreate3,
     deployContract,
-    writeJSON,
-    copyObject,
-    httpGet,
-    httpPost,
     printObj,
-    printLog,
-    printInfo,
-    printWarn,
-    printError,
     getBytecodeHash,
     predictAddressCreate,
     getDeployedAddress,
-    isString,
-    isNonEmptyString,
-    isStringArray,
-    isNumber,
-    isValidNumber,
-    isValidDecimal,
-    isNumberArray,
-    isNonEmptyStringArray,
     isAddressArray,
     isKeccak256Hash,
     isValidCalldata,
     isValidBytesAddress,
     validateParameters,
-    parseArgs,
     getProxy,
     getEVMBatch,
     getEVMAddresses,
     getConfigByChainId,
-    sleep,
-    loadConfig,
-    saveConfig,
     printWalletInfo,
-    isValidTimeFormat,
-    dateToEta,
-    etaToDate,
-    getCurrentTimeInSeconds,
     wasEventEmitted,
     isContract,
     isValidAddress,
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
-    prompt,
     mainProcessor,
     getContractPath,
     getContractJSON,
@@ -1329,10 +1077,10 @@ module.exports = {
     getSaltFromKey,
     getDeployOptions,
     isValidChain,
-    toBigNumberString,
-    timeout,
-    getAmplifierKeyAddresses,
-    getContractConfig,
     relayTransaction,
+    getDeploymentTx,
     getWeightedSigners,
+    getQualifiedContractName,
+    verifyContractByName,
+    isConsensusChain,
 };

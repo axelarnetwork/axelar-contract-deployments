@@ -112,3 +112,18 @@ local.json
 keys.json
 
 temp-arguments.js
+*Untitled*
+*.wasm
+checksums.txt
+
+# Sui Move Packages
+sui/move
+
+# VSCode
+.vscode
+.DS_Store
+
+# Jetbrains
+.idea
+
+.stellar/

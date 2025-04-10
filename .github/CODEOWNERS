@@ -4,3 +4,5 @@
 * @axelarnetwork/chainops
 ./cosmwasm @axelarnetwork/core
 ./evm @axelarnetwork/contracts
+./sui @axelarnetwork/contracts
+./stellar @axelarnetwork/contracts
