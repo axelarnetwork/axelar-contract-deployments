@@ -33,8 +33,8 @@ runs:
 
               echo "Waiting for Stellar network to become ready..."
               while true; do
-                echo "Checking Friendbot... ($FRIENDBOT)"
-                if curl -s "$FRIENDBOT" | grep -q '"status"'; then
+                echo "Checking Friendbot: ${FRIENDBOT} ..."
+                if curl -s "${FRIENDBOT}" | grep -q '"status"'; then
                     echo "✅ Stellar Network is ready"
                     exit 0
                 fi
@@ -55,8 +55,8 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "$SOROBAN_RPC" \
-                --network-passphrase "$NETWORK_PASSPHRASE"
+                --rpc-url "${SOROBAN_RPC}" \
+                --network-passphrase "${NETWORK_PASSPHRASE}"
 
         - name: Prepare local.json
           shell: bash
@@ -70,8 +70,8 @@ runs:
                           "chainType": "stellar",
                           "tokenSymbol": "XLM",
                           "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
-                          "rpc": "$SOROBAN_RPC",
-                          "horizonRpc": "$HORIZON_RPC",
+                          "rpc": "${SOROBAN_RPC}",
+                          "horizonRpc": "${HORIZON_RPC}",
                           "contracts": {}
                       }
                   }
@@ -85,7 +85,8 @@ runs:
           shell: bash
           run: |
               ROOT_SECRET=$(stellar container logs local | grep 'network root secret key:' | cut -d ':' -f2 | xargs)
-              echo "PRIVATE_KEY=$ROOT_SECRET" >> .env
+              echo "PRIVATE_KEY=${ROOT_SECRET}" >> .env
               echo "ENV=local" >> .env
               echo "CHAIN=stellar" >> .env
               echo "YES=true" >> .env
+              cat .env
