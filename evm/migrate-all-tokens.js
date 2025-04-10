@@ -45,9 +45,7 @@ async function migrateTokens(name) {
     for (const index in tokenManagers) {
         const tokenData = tokenManagers[index];
         // event TokenManagerDeployed(tokenId, tokenManager_, tokenManagerType, params);
-        const tokenId = tokenData[0];
-        const tokenManagerAddress = tokenData[1];
-        const tokenManagerType = tokenData[2];
+        const {tokenId, tokenManagerAddress, tokenManagerType } = tokenData;
 
         if (tokenManagerType === NATIVE_INTERCHAIN_TOKEN_MANAGER_TYPE) {
             try {
