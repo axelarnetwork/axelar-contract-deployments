@@ -16,7 +16,7 @@ runs:
           run: |
               echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
               echo "LOCALHOST=http://localhost:8000" >> $GITHUB_ENV
-              echo "HORIZON_RPC=$LOCALHOST" >> $GITHUB_ENV
+              echo "HORIZON_RPC=$LOCALHOST/" >> $GITHUB_ENV
               echo "SOROBAN_RPC=$LOCALHOST/soroban/rpc" >> $GITHUB_ENV
               echo "FRIENDBOT=$LOCALHOST/friendbot" >> $GITHUB_ENV
 
@@ -28,7 +28,7 @@ runs:
         - name: Wait for Stellar network
           shell: bash
           run: |
-              MAX_WAIT=60
+              MAX_WAIT=120
               ELAPSED=0
 
               echo "Waiting for Stellar network to become ready..."
