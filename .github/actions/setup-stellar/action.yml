@@ -11,9 +11,6 @@ outputs:
     rpc_url:
         description: 'RPC URL of the local Stellar network'
         value: ${{ steps.start.outputs.rpc_url }}
-    xlm_address:
-        description: 'Native XLM asset address'
-        value: ${{ steps.native_token.outputs.xlm_address }}
 
 runs:
     using: 'composite'
@@ -26,7 +23,7 @@ runs:
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
         - name: Start Stellar local network
-          id: start
+          id: setup_network
           shell: bash
           run: |
               stellar container start local --protocol-version 22
@@ -40,7 +37,7 @@ runs:
               echo "Waiting for Stellar network RPC to become ready..."
               while true; do
                 echo "Checking..."
-                if curl -s "${{ steps.start.outputs.horizon_rpc }}" | grep -q '"current_protocol_version"'; then
+                if curl -s "${{ steps.setup_network.outputs.horizon_rpc }}" | grep -q '"current_protocol_version"'; then
                   echo "✅ Stellar RPC is ready"
                   exit 0
                 fi
@@ -52,11 +49,33 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "${{ steps.start.outputs.rpc_url }}" \
-                --network-passphrase "${{ steps.start.outputs.network_passphrase }}"
+                --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
+                --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
 
-        - name: Retrieve native token address
-          id: native_token
-          shell: bash
+        - name: Prepare local.json
           run: |
-              echo "xlm_address=$(stellar contract id asset --asset native --network local)" >> "$GITHUB_OUTPUT"
+              echo '{
+                  "chains": {
+                      "stellar": {
+                          "name": "Stellar",
+                          "axelarId": "stellar",
+                          "networkType": "local",
+                          "chainType": "stellar",
+                          "tokenSymbol": "XLM",
+                          "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
+                          "rpc": "${{ steps.setup_network.outputs.rpc_url }}",
+                          "horizonRpc": "${{ steps.setup_network.outputs.horizon_rpc }}",
+                          "contracts": {}
+                      }
+                  }
+              }' > ./axelar-chains-config/info/local.json
+
+        - name: Display local.json
+          run: cat ./axelar-chains-config/info/local.json
+
+        - name: Prepare .env
+          run: |
+              echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
+              echo "ENV=local" >> .env
+              echo "CHAIN=stellar" >> .env
+              echo "YES=true" >> .env
