@@ -18,18 +18,12 @@ import { deployGatewayContract } from '../axelar/gateway';
 import { saveDeploymentConfig } from './deploy';
 import { displayMessage, MessageType } from '../utils/cli-utils';
 
+// DEPRECATED
+/*
 export async function gotoAfterChainRegistration(): Promise<void> {
     displayMessage(MessageType.INFO, "Continuing deployment after chain registration...");
   
     try {
-      // Run the verification step that gateway router was registered
-      await verifyExecution();
-  
-      // Retrieve contract addresses
-      retrieveMultisigAddresses();
-  
-      // Register and authorize MultisigProver
-      await authorizeMultisigProver();
       
       // Save updated deployment config
       saveDeploymentConfig();
@@ -46,27 +40,17 @@ export async function gotoAfterChainRegistration(): Promise<void> {
       process.exit(1);
     }
   }
-
+*/
 /**
  * Function to handle the state after multisig proposals have been approved
  */
 export async function gotoAfterMultisigProposals(): Promise<void> {
   try {
-    await verifyMultisig();
+    // Run the verification step that gateway router was registered
+    await verifyExecution();
 
-    // Try to create reward pools, but continue on failure
-    try {
-      await createRewardPools();
-    } catch (error) {
-      // Check if the error is because the pool already exists
-      const errorStr = String(error);
-      if (errorStr.includes("rewards pool already exists")) {
-        displayMessage(MessageType.WARNING, "Reward pools already exist. Continuing...");
-      } else {
-        displayMessage(MessageType.WARNING, `Reward pool creation encountered an issue: ${error}`);
-        displayMessage(MessageType.INFO, "Continuing with deployment...");
-      }
-    }
+    // Verify multisig
+    await verifyMultisig();
 
     // Try to add funds to reward pools, but continue on failure
     try {

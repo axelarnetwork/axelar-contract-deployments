@@ -7,7 +7,10 @@ import * as fs from 'fs';
 import { execSync } from 'child_process';
 import { config } from '../config/environment';
 import { isCustomDevnet } from '../config/network';
-import { downloadContractFiles } from '../contracts/download';
+import { 
+  createVotingVerifierRewardPool, 
+  createMultisigRewardPool 
+} from '../axelar/rewards';
 import { deployContracts } from '../contracts/deploy';
 import { updateNetworkWithChainConfig } from '../utils/json';
 import { setupWallet, getTokenDenomination } from '../wallet/setup';
@@ -22,7 +25,8 @@ import {
 import { 
   updateMultisigProver, 
   retrieveMultisigAddresses, 
-  authorizeMultisigProver 
+  authorizeMultisigProver,
+  registerMultisigProverWithCoordinator 
 } from '../axelar/multisig';
 import { 
   updateVotingVerifierConfig,
@@ -90,8 +94,10 @@ export async function runNewDeployment(): Promise<void> {
       await registerChainWithRouter();
     } else {
       // Capture the proposal ID returned from submitChainRegistrationProposal
-      const proposalId = await submitChainRegistrationProposal();
-      config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
+      const registerChainProposalId = await submitChainRegistrationProposal();
+      if (registerChainProposalId) {
+        console.log(`✅ Chain Gateway registration proposal submitted with ID: ${registerChainProposalId}`);
+      }
     }
     
     // Generate extra envs for next steps needed as part of verifier set
@@ -103,7 +109,31 @@ export async function runNewDeployment(): Promise<void> {
       console.error(`Error extracting addresses: ${error}`);
       throw error;
     }
-    
+  
+    // Register and authorize MultisigProver
+    const coordinatorProposalId = await registerMultisigProverWithCoordinator();
+    if (coordinatorProposalId) {
+      console.log(`✅ Multisig prover registration proposal submitted with ID: ${coordinatorProposalId}`);
+    }
+      
+    // Authorize multisig prover
+    const multisigProposalId = await authorizeMultisigProver();
+    if (multisigProposalId) {
+      console.log(`✅ Multisig prover authorization proposal submitted with ID: ${multisigProposalId}`);
+    }
+
+    // create reward pools
+    const multisigRewardProposalId = await createMultisigRewardPool()
+    if (multisigRewardProposalId) {
+      console.log(`✅ Multisig reward pool proposal submitted with ID: ${multisigRewardProposalId}`);
+    }
+
+    const votingVerifierRewardProposalId = await createVotingVerifierRewardPool()
+    if (votingVerifierRewardProposalId) {
+      console.log(`✅ Multisig reward pool proposal submitted with ID: ${votingVerifierRewardProposalId}`);
+    }
+
+
     console.log("🎉 Chain registration complete! Need to Update the Verifiers!");
     
     // Save deployment config for future use
@@ -126,7 +156,9 @@ export function saveDeploymentConfig(): void {
     'DEPOSIT_VALUE', 'REWARD_AMOUNT', 'TOKEN_DENOM', 'PROXY_GATEWAY_ADDRESS',
     'ROUTER_ADDRESS', 'GATEWAY_ADDRESS', 'MULTISIG_ADDRESS', 'MULTISIG_PROVER_ADDRESS',
     'VOTING_VERIFIER_ADDRESS', 'REWARDS_ADDRESS', 'COORDINATOR_ADDRESS', 'WALLET_ADDRESS',
-    'REGISTER_GATEWAY_PROPOSAL_ID'
+    'REGISTER_GATEWAY_PROPOSAL_ID', "REGISTER_MULTISIG_PROVER_COORDINATOR_PROPOSAL_ID",
+    "AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID", 'CREATE_VOTING_VERIFIER_REWARD_POOL_PROPOSAL_ID',
+    'CREATE_MULTISIG_REWARD_POOL_PROPOSAL_ID'
   ];
   
   const configData: Record<string, string> = {};
@@ -197,9 +229,9 @@ export function saveDeploymentConfig(): void {
     }
     
     displayMessage(MessageType.INFO, 
-      "Once amplifiers are registered, rerun with --resume-deployment --verifiers-registered --proposals-not-approved");
-    displayMessage(MessageType.INFO, 
       `Use your original .env file when resuming deployment.`);
+    displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
+        config.CHAIN_NAME + " --verifiers-registered --proposals-approved");
   } else {
     displayMessage(MessageType.ERROR, `Cannot save config: CHAIN_NAME is not set.`);
     process.exit(1);
