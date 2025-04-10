@@ -233,8 +233,6 @@ async function migrateTokens(wallet, _, chain, contract, args, options) {
             wallet,
         );
 
-        // printInfo('Auths', serializeValue(auths));
-
         const operation = Operation.invokeContractFunction({
             contract: chain.contracts.InterchainTokenService.address,
             function: 'migrate_token',
