@@ -93,8 +93,10 @@ const upgrade = async (options, _, chain, contractName) => {
     const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
+    // FIXME: Revert this after v1.1.1 release
     const version = sanitizeUpgradeVersion(options.version);
 
+    // FIXME: Revert this after v1.1.1 release
     const operation = Operation.invokeContractFunction({
         contract: chain.contracts.Upgrader.address,
         function: 'upgrade',
@@ -231,6 +233,7 @@ const mainProcessor = async (options, processor, contractName) => {
     saveConfig(config, options.env);
 };
 
+// FIXME: Remove this after v1.1.1 release
 async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
     // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
     const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
@@ -254,6 +257,7 @@ async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, c
     );
 }
 
+// FIXME: Remove this after v1.1.1 release
 /* Note: Once R2 uploads for stellar use the cargo version number (does not include 'v' prefix), this will no longer be necessary. */
 function sanitizeUpgradeVersion(version) {
     if (version.startsWith('v')) {

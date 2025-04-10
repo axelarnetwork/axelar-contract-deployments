@@ -185,6 +185,7 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+// FIXME: Remove this after v1.1.1 release
 async function migrateTokens(wallet, _, chain, contract, args, options) {
     let tokenIds = Array.isArray(args) ? args : [args];
 
@@ -244,6 +245,7 @@ async function migrateTokens(wallet, _, chain, contract, args, options) {
     }
 }
 
+// FIXME: Remove this after v1.1.1 release
 async function createMigrateTokenAuths(
     contract,
     tokenManagerAddress,
