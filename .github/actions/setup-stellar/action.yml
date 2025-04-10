@@ -50,7 +50,7 @@ runs:
 
                 echo "Checking Soroban RPC..."
                 SOROBAN_STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-                  -X POST "$SOROBAN_RPC" \
+                  -X POST "${{ steps.setup_network.outputs.rpc_url }}" \
                   -H 'Content-Type: application/json' \
                   -d '{"jsonrpc":"2.0","id":0,"method":"getNetwork"}')
 
