@@ -1,7 +1,7 @@
 {
   "ethereum-sepolia": {
     "start": 4841100,
-    "end": 8091588,
+    "end": 8092592,
     "tokenManagers": [
       {
         "tokenId": "0x4be105fcedc88dc79bd14b0d8038dcf02cf1955bf79d9c10afc910dbebb3d2f9",
@@ -6721,7 +6721,7 @@
   },
   "moonbeam": {
     "start": 5630796,
-    "end": 11569125,
+    "end": 11571299,
     "tokenManagers": [
       {
         "tokenId": "0x4be105fcedc88dc79bd14b0d8038dcf02cf1955bf79d9c10afc910dbebb3d2f9",
@@ -8512,7 +8512,7 @@
   },
   "binance": {
     "start": 35746783,
-    "end": 49926347,
+    "end": 49935050,
     "tokenManagers": [
       {
         "tokenId": "0x09afa56ee3dd0a9fa08c4717258e2e3ccb602a04a9a790806917dc1251478407",
@@ -13450,7 +13450,7 @@
   },
   "celo": {
     "start": 21312550,
-    "end": 43345036,
+    "end": 43358105,
     "tokenManagers": [
       {
         "tokenId": "0x982521acef7457410d0be0742280cafeb25516745317fb620803a001cabf345a",
@@ -15982,7 +15982,7 @@
   },
   "kava": {
     "start": 7785798,
-    "end": 16907328,
+    "end": 16909935,
     "tokenManagers": [
       {
         "tokenId": "0x982521acef7457410d0be0742280cafeb25516745317fb620803a001cabf345a",
@@ -17073,7 +17073,7 @@
   },
   "scroll": {
     "start": 2517366,
-    "end": 9098937,
+    "end": 9103293,
     "tokenManagers": [
       {
         "tokenId": "0x4be105fcedc88dc79bd14b0d8038dcf02cf1955bf79d9c10afc910dbebb3d2f9",
@@ -18123,7 +18123,7 @@
   },
   "immutable": {
     "start": 11345223,
-    "end": 22655421,
+    "end": 22661955,
     "tokenManagers": [
       {
         "tokenId": "0x1ffc4d1fc17fe5c1170a6d2a3b8e3efdef22c1ad095d0ed3c78c6bdc552040e7",
@@ -18879,7 +18879,7 @@
   },
   "arbitrum-sepolia": {
     "start": 20409114,
-    "end": 141227510,
+    "end": 141279757,
     "tokenManagers": [
       {
         "tokenId": "0xb01d90cccc07b6da85d31329bdb4943262f93e8ef4b1f51fb82bdf158bca70f9",
@@ -19152,7 +19152,7 @@
   },
   "fraxtal": {
     "start": 4812998,
-    "end": 22151489,
+    "end": 22158024,
     "tokenManagers": [
       {
         "tokenId": "0x06c8963348d4275ac065327d1e5910722be27e64a513e5391f8141062cb7a8ab",
@@ -19284,7 +19284,7 @@
   },
   "optimism-sepolia": {
     "start": 6976277,
-    "end": 26248908,
+    "end": 26255442,
     "tokenManagers": [
       {
         "tokenId": "0x06c8963348d4275ac065327d1e5910722be27e64a513e5391f8141062cb7a8ab",
@@ -20487,7 +20487,7 @@
   },
   "fantom": {
     "start": 22946356,
-    "end": 50751092,
+    "end": 50773557,
     "tokenManagers": [
       {
         "tokenId": "0x116eb96fc8ef5e72de21bd119fc7272dda99fa0a8fbbe16bebf5775e43e27783",
@@ -26655,7 +26655,7 @@
   },
   "avalanche": {
     "start": 28376116,
-    "end": 39381598,
+    "end": 39387076,
     "tokenManagers": [
       {
         "tokenId": "0x116eb96fc8ef5e72de21bd119fc7272dda99fa0a8fbbe16bebf5775e43e27783",
@@ -31978,12 +31978,21 @@
         "tokenAddress": "0x288eE29Aa75dF0E23ab2f282cBfD6e5B9103C23B",
         "decimals": 15,
         "track": true
+      },
+      {
+        "tokenId": "0x9b0884930f0497b16dd4504cdcfe0e6fda8c7671494b0dee02a8e7b75eb70947",
+        "tokenManagerAddress": "0xffeFD7F0ED6DC9454ae141D18b24919aFd8B11ad",
+        "tokenManagerType": 0,
+        "deployParams": "0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000f1eccc78eab6f12a019cbcebd31373dd58296ea60000000000000000000000000000000000000000000000000000000000000000",
+        "tokenAddress": "0xF1Eccc78eab6F12A019cbcEbd31373Dd58296ea6",
+        "decimals": 18,
+        "track": true
       }
     ]
   },
   "blast-sepolia": {
     "start": 2517001,
-    "end": 19806834,
+    "end": 19813368,
     "tokenManagers": [
       {
         "tokenId": "0x5d43c532b02e429edeb88840adc476aa014582766b440cb74cf13feb51c632b2",
@@ -32421,7 +32430,7 @@
   },
   "mantle-sepolia": {
     "start": 4088160,
-    "end": 21377840,
+    "end": 21384375,
     "tokenManagers": [
       {
         "tokenId": "0x2fa44d6139c6d2a0b2c9f4e3faea8e4841411fbcadf599d01c2d8b758e90ff38",
@@ -32454,7 +32463,7 @@
   },
   "polygon-sepolia": {
     "start": 9320640,
-    "end": 20287548,
+    "end": 20293694,
     "tokenManagers": [
       {
         "tokenId": "0xe3abc0e8060708bd2e939c13be9a1aec7ae01acd16692267308ce1d617907dba",
@@ -33123,7 +33132,7 @@
   },
   "linea-sepolia": {
     "start": 2451544,
-    "end": 11693860,
+    "end": 11700283,
     "tokenManagers": [
       {
         "tokenId": "0x62bbc9c6b4669c4d78575146478f6d47c8aeeded34ab7514eee31df9a123ffd4",
@@ -33228,7 +33237,7 @@
   },
   "flow": {
     "start": 21387915,
-    "end": 41457722,
+    "end": 41483858,
     "tokenManagers": [
       {
         "tokenId": "0xe70a00b0491321b0a355ed2a3ec27b0bb9f352a2effad7b56afd65ec3f1258d0",
@@ -34696,12 +34705,48 @@
         "tokenAddress": "0xfB4c44Cc7B5bDa0219e709c95305fdBf3EEe8DCc",
         "decimals": 9,
         "track": true
+      },
+      {
+        "tokenId": "0xef5500d1c91aeeded677366c70af5dec60364779a305c63e8b8dc5751094132c",
+        "tokenManagerAddress": "0x0eaaF0E6F197c3C461da499bf9735B2d53521cf7",
+        "tokenManagerType": 0,
+        "deployParams": "0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000e8155a3acda4651d91f41ee61a00d12c49d0f7a90000000000000000000000000000000000000000000000000000000000000000",
+        "tokenAddress": "0xE8155A3acda4651D91f41EE61A00d12c49d0f7a9",
+        "decimals": 18,
+        "track": true
+      },
+      {
+        "tokenId": "0xdf1b2c9083e9162b71ef50322551c8fefa57fb41f2675e0238428f0272000882",
+        "tokenManagerAddress": "0x0A3DF9Caac23AaDA034847Ff3e6847f2d6228Bf5",
+        "tokenManagerType": 0,
+        "deployParams": "0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000005a11185f057da44fcf95fe1119931d89bb1c17a0000000000000000000000000000000000000000000000000000000000000001483a93500d23fbc3e82b410ad07a6a9f7a0670d66000000000000000000000000",
+        "tokenAddress": "0x5a11185F057dA44FcF95fE1119931d89BB1C17a0",
+        "decimals": 18,
+        "track": true
+      },
+      {
+        "tokenId": "0x2a2091a4198a0f9422ce6c4f18c70914e3c88658750e7af7a9aa38cd4984e892",
+        "tokenManagerAddress": "0xe9450dB137Ea19b356eFca722656D7a3555c4124",
+        "tokenManagerType": 0,
+        "deployParams": "0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000007d82edde01aef909181d2816b458fbe3ab9a2a2e000000000000000000000000000000000000000000000000000000000000001483a93500d23fbc3e82b410ad07a6a9f7a0670d66000000000000000000000000",
+        "tokenAddress": "0x7D82EddE01aef909181d2816b458fBe3ab9a2a2e",
+        "decimals": 18,
+        "track": true
+      },
+      {
+        "tokenId": "0x61c7f542594b86395bf057d3462d48e59a4b37dbb64877a26a4b4c9a48d7aee9",
+        "tokenManagerAddress": "0xbB25f1eb09937B5BbD4964470cD9aDfFF792A29f",
+        "tokenManagerType": 0,
+        "deployParams": "0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000de2f0731cda9e65f1e7d5eaf9f7a800ba80637de000000000000000000000000000000000000000000000000000000000000001483a93500d23fbc3e82b410ad07a6a9f7a0670d66000000000000000000000000",
+        "tokenAddress": "0xdE2f0731cDa9e65f1e7D5eAf9F7A800BA80637De",
+        "decimals": 18,
+        "track": true
       }
     ]
   },
   "base-sepolia": {
     "start": 1,
-    "end": 24266033,
+    "end": 24272568,
     "tokenManagers": [
       {
         "tokenId": "0xed4d0aeb3f3d59e98d1da76c744d014be9dfb608656a4a120524534bd7f7ca32",
