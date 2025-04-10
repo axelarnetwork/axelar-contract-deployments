@@ -14,11 +14,11 @@ runs:
         - name: Set environment variables
           shell: bash
           run: |
-              echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
-              echo "LOCALHOST=http://localhost:8000" >> $GITHUB_ENV
+              LOCALHOST=http://localhost:8000
               echo "HORIZON_RPC=$LOCALHOST/" >> $GITHUB_ENV
               echo "SOROBAN_RPC=$LOCALHOST/soroban/rpc" >> $GITHUB_ENV
               echo "FRIENDBOT=$LOCALHOST/friendbot" >> $GITHUB_ENV
+              echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
 
         - name: Start Stellar local network
           shell: bash
