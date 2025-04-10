@@ -14,8 +14,11 @@ runs:
         - name: Set environment variables
           shell: bash
           run: |
-              echo "LOCALHOST=http://localhost:8000" >> $GITHUB_ENV
               echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
+              echo "LOCALHOST=http://localhost:8000" >> $GITHUB_ENV
+              echo "HORIZON_RPC=$LOCALHOST" >> $GITHUB_ENV
+              echo "SOROBAN_RPC=$LOCALHOST/soroban/rpc" >> $GITHUB_ENV
+              echo "FRIENDBOT=$LOCALHOST/friendbot" >> $GITHUB_ENV
 
         - name: Start Stellar local network
           shell: bash
@@ -26,7 +29,7 @@ runs:
           shell: bash
           run: |
               echo "Waiting for Stellar network to become ready..."
-              until curl -s "$LOCALHOST/friendbot" | grep -q '"status"'; do
+              until curl -s "$FRIENDBOT" | grep -q '"status"'; do
                 echo "  - Stellar Network not ready yet"
                 sleep 2
               done
@@ -36,7 +39,7 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "$LOCALHOST/soroban/rpc" \
+                --rpc-url "$SOROBAN_RPC" \
                 --network-passphrase "$NETWORK_PASSPHRASE"
 
         - name: Prepare local.json
@@ -51,8 +54,8 @@ runs:
                           "chainType": "stellar",
                           "tokenSymbol": "XLM",
                           "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
-                          "rpc": "$LOCALHOST/soroban/rpc",
-                          "horizonRpc": "$LOCALHOST",
+                          "rpc": "$SOROBAN_RPC",
+                          "horizonRpc": "$HORIZON_RPC",
                           "contracts": {}
                       }
                   }
@@ -65,7 +68,7 @@ runs:
         - name: Prepare .env
           shell: bash
           run: |
-              ROOT_SECRET=$(stellar container logs | grep 'network root secret key:' | cut -d ':' -f2 | xargs)
+              ROOT_SECRET=$(stellar container logs local | grep 'network root secret key:' | cut -d ':' -f2 | xargs)
               echo "PRIVATE_KEY=$ROOT_SECRET" >> .env
               echo "ENV=local" >> .env
               echo "CHAIN=stellar" >> .env
