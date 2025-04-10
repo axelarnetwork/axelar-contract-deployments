@@ -211,7 +211,8 @@ export async function submitChainRegistrationProposal(): Promise<number> {
     if (proposalId === null) {
       throw new Error('Could not extract proposal ID from command output');
     }
-    
+
+    config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
     return proposalId;
   } catch (error: unknown) {
     console.error(`Error submitting register gateway proposal: ${error}`);

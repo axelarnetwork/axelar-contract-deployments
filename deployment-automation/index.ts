@@ -31,7 +31,6 @@ import {
   runNewDeployment, 
 } from './src/commands/deploy';
 import { 
-  gotoAfterChainRegistration, 
   gotoAfterMultisigProposals, 
   printEnvJsonAndExit 
 } from './src/commands/resume';
@@ -185,7 +184,8 @@ async function main(): Promise<void> {
           if (proposalsApproved) {
             await gotoAfterMultisigProposals();
           } else {
-            await gotoAfterChainRegistration();
+            //deprecate
+            //await gotoAfterChainRegistration();
           }
         } else {
           printEnvJsonAndExit();
