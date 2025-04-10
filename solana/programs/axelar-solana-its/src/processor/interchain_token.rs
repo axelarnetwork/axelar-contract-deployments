@@ -1,6 +1,7 @@
 //! Module that handles the processing of the `InterchainToken` deployment.
 
 use alloy_primitives::Bytes;
+use axelar_solana_gateway::num_traits::Zero;
 use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
@@ -16,7 +17,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction};
-use spl_token_2022::instruction::initialize_mint;
+use spl_token_2022::instruction::{initialize_mint, AuthorityType};
 use spl_token_2022::state::Mint;
 
 use super::gmp::{self, GmpAccounts};
@@ -44,6 +45,7 @@ pub(crate) struct DeployInterchainTokenAccounts<'a> {
     pub(crate) sysvar_instructions: &'a AccountInfo<'a>,
     pub(crate) mpl_token_metadata_program: &'a AccountInfo<'a>,
     pub(crate) mpl_token_metadata_account: &'a AccountInfo<'a>,
+    pub(crate) payer_ata: &'a AccountInfo<'a>,
     pub(crate) minter: Option<&'a AccountInfo<'a>>,
     pub(crate) minter_roles_pda: Option<&'a AccountInfo<'a>>,
 }
@@ -72,6 +74,7 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
             sysvar_instructions: next_account_info(accounts_iter)?,
             mpl_token_metadata_program: next_account_info(accounts_iter)?,
             mpl_token_metadata_account: next_account_info(accounts_iter)?,
+            payer_ata: next_account_info(accounts_iter)?,
             minter: next_account_info(accounts_iter).ok(),
             minter_roles_pda: next_account_info(accounts_iter).ok(),
         })
@@ -103,13 +106,28 @@ pub(crate) fn process_deploy<'a>(
     name: String,
     symbol: String,
     decimals: u8,
+    initial_supply: u64,
 ) -> ProgramResult {
     let (payer, other_accounts) = accounts
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
 
     let token_id = crate::interchain_token_id(payer.key, &salt);
-    process_inbound_deploy(payer, other_accounts, token_id, name, symbol, decimals)?;
+    let parsed_accounts =
+        DeployInterchainTokenAccounts::from_account_info_slice(other_accounts, &())?;
+    if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    process_inbound_deploy(
+        payer,
+        parsed_accounts,
+        token_id,
+        name,
+        symbol,
+        decimals,
+        initial_supply,
+    )?;
 
     set_return_data(&token_id);
 
@@ -118,45 +136,47 @@ pub(crate) fn process_deploy<'a>(
 
 pub(crate) fn process_inbound_deploy<'a>(
     payer: &'a AccountInfo<'a>,
-    accounts: &'a [AccountInfo<'a>],
+    accounts: DeployInterchainTokenAccounts<'a>,
     token_id: [u8; 32],
     name: String,
     symbol: String,
     decimals: u8,
+    initial_supply: u64,
 ) -> ProgramResult {
-    let parsed_accounts = DeployInterchainTokenAccounts::from_account_info_slice(accounts, &())?;
     msg!("Instruction: InboundDeploy");
-    let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
+    let its_root_pda_bump = InterchainTokenService::load(accounts.its_root_pda)?.bump;
     assert_valid_its_root_pda(
-        parsed_accounts.its_root_pda,
-        parsed_accounts.gateway_root_pda.key,
+        accounts.its_root_pda,
+        accounts.gateway_root_pda.key,
         its_root_pda_bump,
     )?;
 
     let (interchain_token_pda, interchain_token_pda_bump) =
-        crate::find_interchain_token_pda(parsed_accounts.its_root_pda.key, &token_id);
-    if interchain_token_pda.ne(parsed_accounts.token_mint.key) {
+        crate::find_interchain_token_pda(accounts.its_root_pda.key, &token_id);
+    if interchain_token_pda.ne(accounts.token_mint.key) {
         msg!("Invalid mint account provided");
         return Err(ProgramError::InvalidArgument);
     }
 
     let (token_manager_pda, token_manager_pda_bump) =
-        crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, &token_id);
-    if token_manager_pda.ne(parsed_accounts.token_manager_pda.key) {
+        crate::find_token_manager_pda(accounts.its_root_pda.key, &token_id);
+    if token_manager_pda.ne(accounts.token_manager_pda.key) {
         msg!("Invalid TokenManager account provided");
         return Err(ProgramError::InvalidArgument);
     }
 
     setup_mint(
         payer,
-        &parsed_accounts,
+        &accounts,
         decimals,
         &token_id,
         interchain_token_pda_bump,
+        token_manager_pda_bump,
+        initial_supply,
     )?;
     setup_metadata(
         payer,
-        &parsed_accounts,
+        &accounts,
         &token_id,
         name,
         symbol,
@@ -164,18 +184,43 @@ pub(crate) fn process_inbound_deploy<'a>(
         token_manager_pda_bump,
     )?;
 
+    // Fixed supply token, remove mint authority. This needs to be done after setting up the
+    // metadata as metaplex doesn't allow metadata creation without mint authority.
+    if accounts.minter.is_none() && initial_supply > 0 {
+        invoke_signed(
+            &spl_token_2022::instruction::set_authority(
+                accounts.token_program.key,
+                accounts.token_mint.key,
+                None,
+                AuthorityType::MintTokens,
+                accounts.token_manager_pda.key,
+                &[],
+            )?,
+            &[
+                accounts.token_mint.clone(),
+                accounts.token_manager_pda.clone(),
+            ],
+            &[&[
+                seed_prefixes::TOKEN_MANAGER_SEED,
+                accounts.its_root_pda.key.as_ref(),
+                &token_id,
+                &[token_manager_pda_bump],
+            ]],
+        )?;
+    }
+
     // The minter passed in the DeployInterchainToken call is used as the
     // `TokenManager` operator as well, see:
     // https://github.com/axelarnetwork/interchain-token-service/blob/v2.0.1/contracts/InterchainTokenService.sol#L758
     let deploy_token_manager = DeployTokenManagerInternal::new(
         token_manager::Type::NativeInterchainToken,
         token_id,
-        *parsed_accounts.token_mint.key,
-        parsed_accounts.minter.map(|account| *account.key),
-        parsed_accounts.minter.map(|account| *account.key),
+        *accounts.token_mint.key,
+        accounts.minter.map(|account| *account.key),
+        accounts.minter.map(|account| *account.key),
     );
 
-    let deploy_token_manager_accounts = DeployTokenManagerAccounts::from(parsed_accounts);
+    let deploy_token_manager_accounts = DeployTokenManagerAccounts::from(accounts);
     super::token_manager::deploy(
         payer,
         &deploy_token_manager_accounts,
@@ -203,7 +248,7 @@ pub(crate) fn process_outbound_deploy<'a>(
     let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
 
     msg!("Instruction: OutboundDeploy");
-    let destination_minter = if let Some(destination_minter) = maybe_destination_minter {
+    let destination_minter_data = if let Some(destination_minter) = maybe_destination_minter {
         let minter = next_account_info(accounts_iter)?;
         let deploy_approval = next_account_info(accounts_iter)?;
         let minter_roles_account = next_account_info(accounts_iter)?;
@@ -219,11 +264,9 @@ pub(crate) fn process_outbound_deploy<'a>(
             Roles::MINTER,
         )?;
 
-        use_deploy_approval(minter, deploy_approval, &destination_minter)?;
-
-        destination_minter.into()
+        Some((Bytes::from(destination_minter), deploy_approval, minter))
     } else {
-        Bytes::default()
+        None
     };
 
     let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
@@ -237,7 +280,10 @@ pub(crate) fn process_outbound_deploy<'a>(
         name: token_metadata.name.trim_end_matches('\0').to_owned(),
         symbol: token_metadata.symbol.trim_end_matches('\0').to_owned(),
         decimals: mint_data.decimals,
-        minter: destination_minter,
+        minter: destination_minter_data
+            .as_ref()
+            .map(|data| data.0.clone())
+            .unwrap_or_default(),
     });
 
     let (_other, outbound_message_accounts) = accounts.split_at(outbound_message_accounts_index);
@@ -252,7 +298,15 @@ pub(crate) fn process_outbound_deploy<'a>(
         signing_pda_bump,
         None,
         true,
-    )
+    )?;
+
+    // This closes the account and transfers lamports back, thus, this needs to happen after all
+    // CPIs
+    if let Some((destination_minter, deploy_approval, minter)) = destination_minter_data {
+        use_deploy_approval(minter, deploy_approval, &destination_minter)?;
+    }
+
+    Ok(())
 }
 
 pub(crate) fn deploy_remote_interchain_token<'a>(
@@ -363,6 +417,8 @@ fn setup_mint<'a>(
     decimals: u8,
     token_id: &[u8],
     interchain_token_pda_bump: u8,
+    token_manager_pda_bump: u8,
+    initial_supply: u64,
 ) -> ProgramResult {
     let rent = Rent::get()?;
 
@@ -406,6 +462,31 @@ fn setup_mint<'a>(
             accounts.token_program.clone(),
         ],
     )?;
+
+    if initial_supply > 0 {
+        invoke_signed(
+            &spl_token_2022::instruction::mint_to(
+                accounts.token_program.key,
+                accounts.token_mint.key,
+                accounts.payer_ata.key,
+                payer.key,
+                &[],
+                initial_supply,
+            )?,
+            &[
+                accounts.token_mint.clone(),
+                accounts.payer_ata.clone(),
+                accounts.token_manager_pda.clone(),
+                accounts.token_program.clone(),
+            ],
+            &[&[
+                seed_prefixes::TOKEN_MANAGER_SEED,
+                accounts.its_root_pda.key.as_ref(),
+                token_id,
+                &[token_manager_pda_bump],
+            ]],
+        )?;
+    }
 
     Ok(())
 }

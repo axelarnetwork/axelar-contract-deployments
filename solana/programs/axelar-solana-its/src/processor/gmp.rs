@@ -14,7 +14,7 @@ use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::sysvar::Sysvar;
 
-use crate::processor::interchain_token;
+use crate::processor::interchain_token::{self, DeployInterchainTokenAccounts};
 use crate::processor::interchain_transfer::process_inbound_transfer;
 use crate::processor::link_token;
 use crate::state::token_manager::TokenManager;
@@ -84,14 +84,19 @@ pub(crate) fn process_inbound<'a>(
             instruction_accounts,
             &transfer,
         ),
-        GMPPayload::DeployInterchainToken(deploy) => interchain_token::process_inbound_deploy(
-            payer,
-            instruction_accounts,
-            deploy.token_id.0,
-            deploy.name,
-            deploy.symbol,
-            deploy.decimals,
-        ),
+        GMPPayload::DeployInterchainToken(deploy) => {
+            let parsed_accounts =
+                DeployInterchainTokenAccounts::from_account_info_slice(instruction_accounts, &())?;
+            interchain_token::process_inbound_deploy(
+                payer,
+                parsed_accounts,
+                deploy.token_id.0,
+                deploy.name,
+                deploy.symbol,
+                deploy.decimals,
+                0,
+            )
+        }
         GMPPayload::LinkToken(payload) => {
             link_token::process_inbound(payer, instruction_accounts, &payload)
         }

@@ -119,10 +119,10 @@ CAUTION: Different Program Id could be provided when deployed. In that case, it 
 
 ## Invoke the test
 
-Before starting the test, change folder to `bindings/generated/`:
+Before starting the test, change folder to `bindings`:
 
 ```bash
-cd bindings/generated
+cd bindings
 ```
 
 Install the dependencies:
@@ -177,4 +177,4 @@ Initializing failed, probably it has been already initialized. Skipping...
 
 `native-to-anchor` bump to version 0.29 in the original repo so that everyone can call it.
 
-Bunch of typescript packages are defined in `generated/package.json`. Some of them are probably not necessary.
+Bunch of typescript packages are defined in `package.json`. Some of them are probably not necessary.

@@ -274,7 +274,8 @@ impl ItsTestContext {
             "Test Token".to_owned(),
             "TT".to_owned(),
             9,
-            self.solana_wallet,
+            0,
+            Some(self.solana_wallet),
         )
         .unwrap();
         self.send_solana_tx(&[deploy_local_ix]).await.unwrap();

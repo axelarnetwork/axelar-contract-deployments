@@ -235,6 +235,9 @@ pub enum InterchainTokenServiceInstruction {
 
         /// Token decimals
         decimals: u8,
+
+        /// Initial supply
+        initial_supply: u64,
     },
 
     /// Deploys a remote interchain token
@@ -1123,7 +1126,8 @@ pub fn deploy_interchain_token(
     name: String,
     symbol: String,
     decimals: u8,
-    minter: Pubkey,
+    initial_supply: u64,
+    minter: Option<Pubkey>,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
@@ -1135,13 +1139,13 @@ pub fn deploy_interchain_token(
         &mint,
         &spl_token_2022::ID,
     );
+    let payer_ata =
+        get_associated_token_address_with_program_id(&payer, &mint, &spl_token_2022::ID);
     let (its_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &its_root_pda);
-    let (minter_roles_pda, _) =
-        role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &minter);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
 
-    let accounts = vec![
+    let mut accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -1156,15 +1160,22 @@ pub fn deploy_interchain_token(
         AccountMeta::new_readonly(sysvar::instructions::ID, false),
         AccountMeta::new_readonly(mpl_token_metadata::ID, false),
         AccountMeta::new(metadata_account_key, false),
-        AccountMeta::new_readonly(minter, false),
-        AccountMeta::new(minter_roles_pda, false),
+        AccountMeta::new(payer_ata, false),
     ];
+
+    if let Some(minter) = minter {
+        let (minter_roles_pda, _) =
+            role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &minter);
+        accounts.push(AccountMeta::new_readonly(minter, false));
+        accounts.push(AccountMeta::new(minter_roles_pda, false));
+    }
 
     let data = to_vec(&InterchainTokenServiceInstruction::DeployInterchainToken {
         salt,
         name,
         symbol,
         decimals,
+        initial_supply,
     })?;
 
     Ok(Instruction {
@@ -1476,7 +1487,7 @@ pub fn interchain_transfer(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
     let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let (authority, signer) = authority.map_or((token_manager_pda, false), |key| (key, true));
+    let authority = authority.unwrap_or(token_manager_pda);
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
@@ -1484,7 +1495,7 @@ pub fn interchain_transfer(
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(authority, signer),
+        AccountMeta::new_readonly(authority, false),
         AccountMeta::new(source_account, false),
         AccountMeta::new(mint, false),
         AccountMeta::new_readonly(token_manager_pda, false),
@@ -1947,6 +1958,8 @@ fn derive_specific_its_accounts(
             specific_accounts.push(AccountMeta::new_readonly(sysvar::instructions::ID, false));
             specific_accounts.push(AccountMeta::new_readonly(mpl_token_metadata::ID, false));
             specific_accounts.push(AccountMeta::new(metadata_account_key, false));
+            // No initial supply is ever set through GMP, so no payer ATA required.
+            specific_accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
             if minter.len() == axelar_solana_encoding::types::pubkey::ED25519_PUBKEY_LEN {
                 let minter_key = Pubkey::new_from_array(

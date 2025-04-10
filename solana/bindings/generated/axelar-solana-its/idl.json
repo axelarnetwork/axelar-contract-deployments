@@ -413,7 +413,7 @@
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "sourceAccount",
@@ -592,14 +592,21 @@
           "isSigner": false
         },
         {
+          "name": "payerAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "minter",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "minterRolesPda",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -623,6 +630,10 @@
         {
           "name": "decimals",
           "type": "u8"
+        },
+        {
+          "name": "initialSupply",
+          "type": "u64"
         }
       ]
     },
@@ -1109,7 +1120,7 @@
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "sourceAccount",
@@ -1229,7 +1240,7 @@
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "sourceAccount",

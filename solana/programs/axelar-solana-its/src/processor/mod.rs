@@ -109,7 +109,10 @@ pub fn process_instruction<'a>(
             name,
             symbol,
             decimals,
-        } => interchain_token::process_deploy(accounts, salt, name, symbol, decimals),
+            initial_supply,
+        } => {
+            interchain_token::process_deploy(accounts, salt, name, symbol, decimals, initial_supply)
+        }
         InterchainTokenServiceInstruction::DeployRemoteInterchainToken {
             salt,
             destination_chain,

@@ -83,6 +83,7 @@ pub mod axelar_solana_its {
         name: String,
         symbol: String,
         decimals: u8,
+        initial_supply: u64,
     ) -> Result<()> {
         Ok(())
     }
@@ -238,10 +239,7 @@ pub mod axelar_solana_its {
         Ok(())
     }
 
-    pub fn interchain_token_mint(
-        ctx: Context<InterchainTokenMint>,
-        amount: u64,
-    ) -> Result<()> {
+    pub fn interchain_token_mint(ctx: Context<InterchainTokenMint>, amount: u64) -> Result<()> {
         Ok(())
     }
 
@@ -377,7 +375,7 @@ pub struct DeployRemoteCanonicalInterchainToken<'info> {
 #[derive(Accounts)]
 pub struct InterchainTransfer<'info> {
     payer: Signer<'info>,
-    authority: Signer<'info>,
+    authority: AccountInfo<'info>,
     #[account(mut)]
     source_account: AccountInfo<'info>,
     #[account(mut)]
@@ -421,9 +419,11 @@ pub struct DeployInterchainToken<'info> {
     mpl_token_metadata: AccountInfo<'info>,
     #[account(mut)]
     metadata_account: AccountInfo<'info>,
-    minter: AccountInfo<'info>,
     #[account(mut)]
-    minter_roles_pda: AccountInfo<'info>,
+    payer_ata: AccountInfo<'info>,
+    minter: Option<AccountInfo<'info>>,
+    #[account(mut)]
+    minter_roles_pda: Option<AccountInfo<'info>>,
 }
 
 #[derive(Accounts)]
@@ -530,7 +530,7 @@ pub struct LinkToken<'info> {
 #[derive(Accounts)]
 pub struct CallContractWithInterchainToken<'info> {
     payer: Signer<'info>,
-    authority: Signer<'info>,
+    authority: AccountInfo<'info>,
     #[account(mut)]
     source_account: AccountInfo<'info>,
     #[account(mut)]
@@ -555,7 +555,7 @@ pub struct CallContractWithInterchainToken<'info> {
 #[derive(Accounts)]
 pub struct CallContractWithInterchainTokenOffchainData<'info> {
     payer: Signer<'info>,
-    authority: Signer<'info>,
+    authority: AccountInfo<'info>,
     #[account(mut)]
     source_account: AccountInfo<'info>,
     #[account(mut)]

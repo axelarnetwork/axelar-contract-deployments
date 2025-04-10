@@ -432,7 +432,7 @@ type AxelarSolanaIts = {
         {
           name: "authority";
           isMut: false;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -608,14 +608,21 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
+          name: "payerAta";
+          isMut: true;
+          isSigner: false;
+        },
+        {
           name: "minter";
           isMut: false;
           isSigner: false;
+          isOptional: true;
         },
         {
           name: "minterRolesPda";
           isMut: true;
           isSigner: false;
+          isOptional: true;
         }
       ];
       args: [
@@ -636,6 +643,10 @@ type AxelarSolanaIts = {
         {
           name: "decimals";
           type: "u8";
+        },
+        {
+          name: "initialSupply";
+          type: "u64";
         }
       ];
     },
@@ -1110,7 +1121,7 @@ type AxelarSolanaIts = {
         {
           name: "authority";
           isMut: false;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -1227,7 +1238,7 @@ type AxelarSolanaIts = {
         {
           name: "authority";
           isMut: false;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -2677,7 +2688,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "authority",
           isMut: false,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: "sourceAccount",
@@ -2853,14 +2864,21 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
+          name: "payerAta",
+          isMut: true,
+          isSigner: false,
+        },
+        {
           name: "minter",
           isMut: false,
           isSigner: false,
+          isOptional: true,
         },
         {
           name: "minterRolesPda",
           isMut: true,
           isSigner: false,
+          isOptional: true,
         },
       ],
       args: [
@@ -2881,6 +2899,10 @@ const IDL: AxelarSolanaIts = {
         {
           name: "decimals",
           type: "u8",
+        },
+        {
+          name: "initialSupply",
+          type: "u64",
         },
       ],
     },
@@ -3355,7 +3377,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "authority",
           isMut: false,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: "sourceAccount",
@@ -3472,7 +3494,7 @@ const IDL: AxelarSolanaIts = {
         {
           name: "authority",
           isMut: false,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: "sourceAccount",

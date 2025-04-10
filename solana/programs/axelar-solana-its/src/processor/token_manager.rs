@@ -80,6 +80,7 @@ pub(crate) fn deploy<'a>(
     deploy_token_manager: &DeployTokenManagerInternal,
     token_manager_pda_bump: u8,
 ) -> ProgramResult {
+    msg!("Instruction: TM Deploy");
     check_accounts(accounts)?;
 
     validate_token_manager_type(

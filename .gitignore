@@ -25,7 +25,9 @@ rustc-ice-*
 **/borsh_encoding_message_limits_report.csv
 **/abi_encoding_message_limits_report.csv
 
+solana/bindings/dist
 solana/bindings/generated/.anchor
 solana/bindings/generated/pnpm-lock.yaml
 solana/bindings/generated/temp
 solana/bindings/generated/dist
+solana/bindings/axelar-solana-its/dist

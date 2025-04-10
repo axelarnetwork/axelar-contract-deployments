@@ -772,7 +772,7 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
 
         let destination_program_accounts = accounts
             .get(destination_accounts_index..)
-            .ok_or(ProgramError::InvalidAccountData)?;
+            .ok_or(ProgramError::NotEnoughAccountKeys)?;
 
         Ok(Self {
             gateway_root_pda: give_token_accounts.gateway_root_pda,
