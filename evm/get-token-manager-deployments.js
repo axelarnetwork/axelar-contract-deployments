@@ -10,7 +10,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
+const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
 
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
@@ -21,33 +21,40 @@ const queryLimit = {
     avalanche: 2048,
     fantom: 500000,
     polygon: 500000,
+    "polygon-sepolia": 500000,
     moonbeam: 2000,
     binance: 10000,
     arbitrum: 500000,
-    celo: 2000,
+    "arbitrum-sepolia": 500000,
+    celo: 50000,
     kava: 10000,
     filecoin: 0,
     optimism: 10000,
+    "optimism-sepolia": 10000,
     linea: 500000,
+    "linea-sepolia": 500000,
     base: 10000,
+    "base-sepolia": 10000,
     mantle: 10000,
+    "mantle-sepolia": 10000,
     blast: 10000,
+    "blast-sepolia": 10000,
     fraxtal: 50000,
-    scroll: 500000,
+    scroll: 10000,
+    flow: 500000,
+    immutable: 5000,
 };
 
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if (chain.contracts.InterchainTokenService.skip) return false;
+        if (!chain.contracts.InterchainTokenService || chain.contracts.InterchainTokenService.skip) return false;
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
-
-        // if (name != 'mantle') { return; }
 
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         console.log('processing... ', name);
 
-        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
+        const rpc = env === 'mainnet' || env === 'testnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -87,7 +94,6 @@ async function getTokenManagers(name) {
                 tokenManagerInfo[name].end = end;
                 fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
                 tries = 0;
-                console.log(name, end, min);
             } catch (e) {
                 tries++;
                 if (tries >= 10) {
@@ -107,6 +113,5 @@ async function getTokenManagers(name) {
     for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokenManagers(name).then((success) => console.log(name, 'returned', success));
-        
     }
 })();
