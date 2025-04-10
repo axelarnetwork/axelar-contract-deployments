@@ -11,7 +11,7 @@ async function processCommand(_, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
 
     const wallet = await getWallet(options.privateKey, provider);
-    await printWalletInfo(wallet, options);
+    await printWalletInfo(wallet, options, chain);
 }
 
 async function main(options) {

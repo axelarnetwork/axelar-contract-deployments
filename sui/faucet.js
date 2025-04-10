@@ -1,40 +1,56 @@
 'use strict';
 
-const { addBaseOptions } = require('./cli-utils');
-const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui.js/faucet');
-const { getWallet, printWalletInfo } = require('./sign-utils');
-const { Command } = require('commander');
-const { saveConfig, loadConfig, printInfo } = require('../evm/utils');
+const { requestSuiFromFaucetV0, getFaucetHost } = require('@mysten/sui/faucet');
+const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
+const { getWallet, printWalletInfo, addBaseOptions } = require('./utils');
+const { Command, Option } = require('commander');
 
 async function processCommand(config, chain, options) {
     const [keypair, client] = getWallet(chain, options);
+    const recipient = options.recipient || keypair.toSuiAddress();
 
-    await printWalletInfo(keypair, client, chain, options);
+    await printWalletInfo(recipient, client, chain, options);
+
+    const balance = Number((await client.getBalance({ owner: recipient })).totalBalance) / 1e9;
+
+    if (balance >= Number(options.minBalance)) {
+        printWarn('Wallet balance above minimum, skipping faucet request');
+        process.exit(0);
+    }
 
     await requestSuiFromFaucetV0({
         host: getFaucetHost(chain.networkType),
-        recipient: keypair.toSuiAddress(),
+        recipient,
     });
 
-    printInfo('Funds requested');
+    printInfo('Funds requested', recipient);
 }
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    await processor(config, config.sui, options);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(config, chain, options);
     saveConfig(config, options.env);
 }
 
 if (require.main === module) {
     const program = new Command();
 
-    program.name('faucet').description('Query the faucet for funds.');
+    program
+        .name('faucet')
+        .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
+        .addOption(
+            new Option(
+                '--minBalance <amount>',
+                'tokens will only be requested from the faucet if recipient balance is below the amount provided',
+            ).default('1'),
+        )
+        .description('Query the faucet for funds.')
+        .action((options) => {
+            mainProcessor(options, processCommand);
+        });
 
     addBaseOptions(program);
-
-    program.action((options) => {
-        mainProcessor(options, processCommand);
-    });
 
     program.parse();
 }

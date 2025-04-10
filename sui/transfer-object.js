@@ -1,9 +1,7 @@
-const { TransactionBlock } = require('@mysten/sui.js/transactions');
+const { Transaction } = require('@mysten/sui/transactions');
 const { Command, Option } = require('commander');
-const { printInfo, validateParameters } = require('../evm/utils');
-const { addExtendedOptions } = require('./cli-utils');
-const { getWallet, printWalletInfo } = require('./sign-utils');
-const { loadSuiConfig } = require('./utils');
+const { loadConfig, validateParameters, getChainConfig } = require('../common/utils');
+const { getWallet, printWalletInfo, addExtendedOptions, broadcast, saveGeneratedTx } = require('./utils');
 
 async function processCommand(chain, options) {
     const [keypair, client] = getWallet(chain, options);
@@ -37,25 +35,22 @@ async function processCommand(chain, options) {
         isKeccak256Hash: { objectId },
     });
 
-    const tx = new TransactionBlock();
-    tx.transferObjects([`${objectId}`], tx.pure(recipient));
+    const tx = new Transaction();
+    tx.transferObjects([`${objectId}`], tx.pure.address(recipient));
 
-    const result = await client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: keypair,
-        options: {
-            showObjectChanges: true,
-            showBalanceChanges: true,
-            showEvents: true,
-        },
-    });
-
-    printInfo('Transaction result', JSON.stringify(result));
+    if (options.offline) {
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, 'Transferred Object', client, options);
+    } else {
+        await broadcast(client, keypair, tx, 'Transferred Object', options);
+    }
 }
 
 async function mainProcessor(options, processor) {
-    const config = loadSuiConfig(options.env);
-    await processor(config.sui, options);
+    const config = loadConfig(options.env);
+    const chain = getChainConfig(config, options.chainName);
+    await processor(chain, options);
 }
 
 if (require.main === module) {
@@ -68,6 +63,9 @@ if (require.main === module) {
     program.addOption(new Option('--objectId <objectId>', 'object id to be transferred'));
     program.addOption(new Option('--objectName <objectName>', 'object name to be transferred'));
     program.addOption(new Option('--recipient <recipient>', 'recipient to transfer object to').makeOptionMandatory(true));
+    program.addOption(new Option('--sender <sender>', 'transaction sender'));
+    program.addOption(new Option('--offline', 'store tx block for sign'));
+    program.addOption(new Option('--txFilePath <file>', 'unsigned transaction will be stored'));
 
     program.action(async (options) => {
         mainProcessor(options, processCommand);

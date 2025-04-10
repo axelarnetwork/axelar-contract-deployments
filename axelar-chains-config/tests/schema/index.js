@@ -2,7 +2,6 @@ const axelarSchema = {
     id: '/info.axelar',
     type: 'object',
     properties: {
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         rpc: { type: 'string' },
         // Matches for "" "http://example.com:443" "https://example.com:443" "https://example.com" "http://example.com"
@@ -10,7 +9,7 @@ const axelarSchema = {
         grpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
     },
-    required: ['id', 'axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
+    required: ['axelarId', 'rpc', 'lcd', 'grpc', 'tokenSymbol'],
 };
 
 export const contractValueSchema = {
@@ -22,13 +21,25 @@ export const contractValueSchema = {
     required: ['address'],
 };
 
+export const axelarGatewaySchema = {
+    id: '/info/chains.contracts.AxelarGateway',
+    type: 'object',
+    properties: {
+        connectionType: { type: 'string' },
+    },
+    required: ['connectionType'],
+};
+
 export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
         // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '\b[A-Z][a-z]*([A-Z][a-z]*)*\b': {
+        '(^[a-z]|[A-Z])[a-z]*': {
             $ref: contractValueSchema.id,
+        },
+        AxelarGateway: {
+            $ref: axelarGatewaySchema.id,
         },
     },
     properties: {
@@ -36,7 +47,7 @@ export const contractSchema = {
             type: 'boolean',
         },
     },
-    required: ['AxelarGateway'],
+    required: [],
 };
 
 export const explorerSchema = {
@@ -66,9 +77,10 @@ export const chainValueSchema = {
     type: 'object',
     properties: {
         name: { type: 'string' },
-        id: { type: 'string' },
         axelarId: { type: 'string' },
         chainId: { type: 'number' },
+        networkType: { type: 'string' },
+        chainType: { type: 'string' },
         rpc: { type: 'string' },
         tokenSymbol: { type: 'string' },
         contracts: { $ref: contractSchema.id },
@@ -77,8 +89,21 @@ export const chainValueSchema = {
         confirmations: { type: 'number' },
         finality: { type: 'string' },
         approxFinalityWaitTime: { type: 'number' },
+        timeout: { type: 'number' },
+        decimals: { type: 'number' },
     },
-    required: ['name', 'id', 'axelarId', 'chainId', 'rpc', 'tokenSymbol', 'contracts', 'explorer'],
+    required: [
+        'name',
+        'axelarId',
+        'rpc',
+        'tokenSymbol',
+        'contracts',
+        'explorer',
+        'chainType',
+        'finality',
+        'approxFinalityWaitTime',
+        'decimals',
+    ],
 };
 
 export const chainsSchema = {
@@ -109,6 +134,7 @@ export function addAllSchema(validator) {
     validator.addSchema(contractSchema, contractSchema.id);
     validator.addSchema(explorerSchema, explorerSchema.id);
     validator.addSchema(gasOptionSchema, gasOptionSchema.id);
+    validator.addSchema(axelarGatewaySchema, axelarGatewaySchema.id);
 
     return validator;
 }
