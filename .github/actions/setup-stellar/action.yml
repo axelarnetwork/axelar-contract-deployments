@@ -11,7 +11,9 @@ outputs:
     rpc_url:
         description: 'RPC URL of the local Stellar network'
         value: ${{ steps.start.outputs.rpc_url }}
-
+    friendbot:
+        description: 'Friendbot of the local Stellar network'
+        value: ${{ steps.start.outputs.friendbot }}
 runs:
     using: 'composite'
     steps:
@@ -30,37 +32,21 @@ runs:
               echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
               echo "horizon_rpc=http://localhost:8000" >> $GITHUB_OUTPUT
               echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
+              echo "friendbot=http://localhost:8000/friendbot" >> $GITHUB_OUTPUT
 
         - name: Wait for Stellar network
           shell: bash
           run: |
-              echo "Waiting for Stellar network RPC to become ready..."
-              echo "  Horizon RPC: ${{ steps.setup_network.outputs.horizon_rpc }}"
-              echo "  Soroban RPC: ${{ steps.setup_network.outputs.rpc_url }}"
+              echo "Waiting for Stellar network to become ready..."
 
               while true; do
-                echo "Checking Horizon RPC..."
-                if curl -s "${{ steps.setup_network.outputs.horizon_rpc }}" | grep -q '"current_protocol_version"'; then
-                  echo "✅ Horizon RPC is ready"
-                else
-                  echo "  - Horizon RPC not ready yet"
-                  sleep 2
-                  continue
-                fi
-
-                echo "Checking Soroban RPC..."
-                SOROBAN_STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-                  -X POST "${{ steps.setup_network.outputs.rpc_url }}" \
-                  -H 'Content-Type: application/json' \
-                  -d '{"jsonrpc":"2.0","id":0,"method":"getNetwork"}')
-
-                if [ "$SOROBAN_STATUS_CODE" -eq 200 ]; then
-                  echo "✅ Soroban RPC is ready"
+                echo "Checking Friendbot: ${{ steps.setup_network.outputs.friendbot }} ..."
+                if curl -s "${{ steps.setup_network.outputs.friendbot }}" | grep -q '"status"'; then
+                  echo "✅ Stellar Network is ready"
                   exit 0
-                else
-                  echo "  - Soroban RPC not ready yet"
                 fi
 
+                echo "  - Stellar Network not ready yet"
                 sleep 2
               done
 
