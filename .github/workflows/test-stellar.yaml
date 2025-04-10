@@ -74,6 +74,9 @@ jobs:
         timeout-minutes: 5
         uses: ./.github/actions/setup-stellar
 
+      - name: Wait for 60 seconds
+        run: sleep 60
+
       - name: Deploy Contracts
         run: |
           # List of contracts to deploy
