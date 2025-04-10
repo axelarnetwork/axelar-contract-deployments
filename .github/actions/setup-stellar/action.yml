@@ -53,6 +53,7 @@ runs:
                 --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
 
         - name: Prepare local.json
+          shell: bash
           run: |
               echo '{
                   "chains": {
@@ -71,9 +72,11 @@ runs:
               }' > ./axelar-chains-config/info/local.json
 
         - name: Display local.json
+          shell: bash
           run: cat ./axelar-chains-config/info/local.json
 
         - name: Prepare .env
+          shell: bash
           run: |
               echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
               echo "ENV=local" >> .env
