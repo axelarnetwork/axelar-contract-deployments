@@ -136,6 +136,7 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'GATEWAY_CONTRACT_VERSION',
     'MULTISIG_PROVER_CONTRACT_VERSION',
     'RUN_AS_ACCOUNT',
+    'EPOCH_DURATION',
   ];
   
   

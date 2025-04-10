@@ -258,20 +258,23 @@ export function retrieveMultisigAddresses(): void {
   }
 }
 
-/**
- * Function to authorize MultisigProver as a caller
- */
-export async function authorizeMultisigProver(): Promise<void> {
-  // Construct JSON Payload for the Execute Call
-  const jsonCmdMultisig = JSON.stringify({
-    authorize_callers: {
-      contracts: {
-        [config.MULTISIG_PROVER_ADDRESS!]: config.CHAIN_NAME
-      }
-    }
-  });
-  console.log(`📜 JSON Command for Multisig: ${jsonCmdMultisig}`);
+// Helper function to extract proposal ID from command output
+function extractProposalId(output: string): number {
+  const proposalIdMatch = output.match(/Proposal submitted: (\d+)/);
+  const proposalId = proposalIdMatch ? parseInt(proposalIdMatch[1], 10) : null;
+  
+  if (proposalId === null) {
+    throw new Error('Could not extract proposal ID from command output');
+  }
+  
+  return proposalId;
+}
 
+/**
+ * Registers the multisig prover with the Coordinator contract
+ * @returns The proposal ID for the Coordinator registration if applicable
+ */
+export async function registerMultisigProverWithCoordinator(): Promise<number | void> {
   // Prepare JSON for registering the prover contract
   const jsonCmdMultisigProver = JSON.stringify({
     register_prover_contract: {
@@ -282,7 +285,7 @@ export async function authorizeMultisigProver(): Promise<void> {
   console.log(`📜 JSON Command for Coordinator: ${jsonCmdMultisigProver}`);
 
   if (isCustomDevnet()) {
-    console.log("Register prover contract");
+    console.log("Register prover contract with Coordinator");
 
     try {
       await execAsync(`axelard tx wasm execute "${config.COORDINATOR_ADDRESS}" '${jsonCmdMultisigProver}' \
@@ -292,11 +295,94 @@ export async function authorizeMultisigProver(): Promise<void> {
         --node "${config.AXELAR_RPC_URL}" \
         --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
         --keyring-backend test \
-        --chain-id "${config.NAMESPACE}"`);
+        --chain-id "${config.NAMESPACE}" \
+        -e "${config.NAMESPACE}"`);
+        
+      console.log(`✅ Multisig prover registered with Coordinator for ${config.CHAIN_NAME}`);
+    } catch (error) {
+      console.error(`Error registering prover contract with Coordinator: ${error}`);
+      throw error;
+    }
+  } else {
+    // Actual networks require proposal for chain integration
+    try {
+      const command = config.NAMESPACE === "devnet-markus"
+        ? `node ../cosmwasm/submit-proposal.js execute \
+            -c Coordinator \
+            -t "Register Multisig Prover for ${config.CHAIN_NAME}" \
+            -d "Register Multisig Prover address for ${config.CHAIN_NAME} at Coordinator contract" \
+            --runAs ${config.RUN_AS_ACCOUNT} \
+            --deposit ${config.DEPOSIT_VALUE} \
+            -e "${config.NAMESPACE}" \
+            --msg '${jsonCmdMultisigProver}' -y`
+        : `node ../cosmwasm/submit-proposal.js execute \
+            -c Coordinator \
+            -t "Register Multisig Prover for ${config.CHAIN_NAME}" \
+            -d "Register Multisig Prover address for ${config.CHAIN_NAME} at Coordinator contract" \
+            --deposit ${config.DEPOSIT_VALUE} \
+            -e "${config.NAMESPACE}" \
+            --msg '${jsonCmdMultisigProver}' -y`;
+      
+      // Submit proposal for Coordinator contract and capture output
+      const { stdout, stderr } = await execAsync(command, { maxBuffer: 1024 * 1024 * 10 });
+      
+      // Log the complete command output
+      console.log(`\n==== COORDINATOR PROPOSAL OUTPUT START ====`);
+      console.log(stdout);
+      if (stderr) {
+        console.error(`==== STDERR OUTPUT ====`);
+        console.error(stderr);
+      }
+      console.log(`==== COORDINATOR PROPOSAL OUTPUT END ====\n`);
+      
+      // Extract the proposal ID
+      const coordinatorProposalId = extractProposalId(stdout);
+      console.log(`✅ Coordinator proposal #${coordinatorProposalId} submitted for ${config.CHAIN_NAME}`);
+      
+      // Save proposal ID to config
+      config.REGISTER_MULTISIG_PROVER_COORDINATOR_PROPOSAL_ID = coordinatorProposalId.toString();
+      
+      // Save proposal output to file for record keeping
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const logFilePath = `./logs/coordinator-proposal-${config.CHAIN_NAME}-${timestamp}.log`;
+      await fs.promises.mkdir('./logs', { recursive: true });
+      await fs.promises.writeFile(logFilePath, 
+        `Command: ${command}\n\n` +
+        `STDOUT:\n${stdout}\n\n` +
+        (stderr ? `STDERR:\n${stderr}\n\n` : '') +
+        `Timestamp: ${new Date().toISOString()}\n` +
+        `Proposal ID: ${coordinatorProposalId}`
+      );
+      console.log(`📄 Coordinator proposal output saved to ${logFilePath}`);
+      
+      return coordinatorProposalId;
+    } catch (error) {
+      console.error(`Error submitting coordinator proposal: ${error}`);
+      throw error;
+    }
+  }
+}
 
-      // Execute the Transaction for Multisig Contract
-      console.log("⚡ Executing authorize_callers for Multisig Contract...");
+/**
+ * Authorizes the multisig prover with the Multisig contract
+ * @returns The proposal ID for the Multisig authorization if applicable
+ */
+export async function authorizeMultisigProver(): Promise<number | void> {
+  // Construct JSON Payload for the Execute Call
+  const jsonCmdMultisig = JSON.stringify({
+    authorize_callers: {
+      contracts: {
+        [config.MULTISIG_PROVER_ADDRESS!]: config.CHAIN_NAME
+      }
+    }
+  });
+  console.log(`📜 JSON Command for Multisig: ${jsonCmdMultisig}`);
 
+  if (isCustomDevnet()) {
+    // Execute the Transaction for Multisig Contract
+    console.log("⚡ Executing authorize_callers for Multisig Contract...");
+
+    try {
       await execAsync(`axelard tx wasm execute "${config.MULTISIG_ADDRESS}" '${jsonCmdMultisig}' \
         --from amplifier \
         --gas auto \
@@ -305,46 +391,67 @@ export async function authorizeMultisigProver(): Promise<void> {
         --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
         --keyring-backend test \
         --chain-id "${config.NAMESPACE}"`);
+        
+      console.log(`✅ Multisig prover authorized for ${config.CHAIN_NAME}`);
     } catch (error) {
-      console.error(`Error registering prover contract: ${error}`);
+      console.error(`Error authorizing multisig prover: ${error}`);
       throw error;
     }
   } else {
     // Actual networks require proposal for chain integration
     try {
-      if (config.NAMESPACE === "devnet-amplifier") {
-        await execAsync(`node ../cosmwasm/submit-proposal.js execute \
-          -c Coordinator \
-          -t "Register Multisig Prover for ${config.CHAIN_NAME}" \
-          -d "Register Multisig Prover address for ${config.CHAIN_NAME} at Coordinator contract" \
-          --runAs ${config.RUN_AS_ACCOUNT} \
-          --deposit ${config.DEPOSIT_VALUE} \
-          --msg '${jsonCmdMultisigProver}'`);
-        
-        await execAsync(`node ../cosmwasm/submit-proposal.js execute \
-          -c Multisig \
-          -t "Authorize Multisig Prover for ${config.CHAIN_NAME}" \
-          -d "Authorize Multisig Prover address for ${config.CHAIN_NAME} at Multisig contract" \
-          --runAs ${config.RUN_AS_ACCOUNT} \
-          --deposit ${config.DEPOSIT_VALUE} \
-          --msg '${jsonCmdMultisig}'`);
-      } else {
-        await execAsync(`node ../cosmwasm/submit-proposal.js execute \
-          -c Coordinator \
-          -t "Register Multisig Prover for ${config.CHAIN_NAME}" \
-          -d "Register Multisig Prover address for ${config.CHAIN_NAME} at Coordinator contract" \
-          --deposit ${config.DEPOSIT_VALUE} \
-          --msg '${jsonCmdMultisigProver}'`);
-
-        await execAsync(`node ../cosmwasm/submit-proposal.js execute \
-          -c Multisig \
-          -t "Authorize Multisig Prover for ${config.CHAIN_NAME}" \
-          -d "Authorize Multisig Prover address for ${config.CHAIN_NAME} at Multisig contract" \
-          --deposit ${config.DEPOSIT_VALUE} \
-          --msg '${jsonCmdMultisig}'`);
+      const command = config.NAMESPACE === "devnet-markus"
+        ? `node ../cosmwasm/submit-proposal.js execute \
+            -c Multisig \
+            -t "Authorize Multisig Prover for ${config.CHAIN_NAME}" \
+            -d "Authorize Multisig Prover address for ${config.CHAIN_NAME} at Multisig contract" \
+            --runAs ${config.RUN_AS_ACCOUNT} \
+            --deposit ${config.DEPOSIT_VALUE} \
+            -e "${config.NAMESPACE}" \
+            --msg '${jsonCmdMultisig}' -y`
+        : `node ../cosmwasm/submit-proposal.js execute \
+            -c Multisig \
+            -t "Authorize Multisig Prover for ${config.CHAIN_NAME}" \
+            -d "Authorize Multisig Prover address for ${config.CHAIN_NAME} at Multisig contract" \
+            --deposit ${config.DEPOSIT_VALUE} \
+            -e "${config.NAMESPACE}" \
+            --msg '${jsonCmdMultisig}' -y`;
+      
+      // Submit proposal for Multisig contract and capture output
+      const { stdout, stderr } = await execAsync(command, { maxBuffer: 1024 * 1024 * 10 });
+      
+      // Log the complete command output
+      console.log(`\n==== MULTISIG PROPOSAL OUTPUT START ====`);
+      console.log(stdout);
+      if (stderr) {
+        console.error(`==== STDERR OUTPUT ====`);
+        console.error(stderr);
       }
+      console.log(`==== MULTISIG PROPOSAL OUTPUT END ====\n`);
+      
+      // Extract the proposal ID
+      const multisigProposalId = extractProposalId(stdout);
+      console.log(`✅ Multisig proposal #${multisigProposalId} submitted for ${config.CHAIN_NAME}`);
+      
+      // Save proposal ID to config
+      config.AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID = multisigProposalId.toString();
+      
+      // Save proposal output to file for record keeping
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const logFilePath = `./logs/multisig-proposal-${config.CHAIN_NAME}-${timestamp}.log`;
+      await fs.promises.mkdir('./logs', { recursive: true });
+      await fs.promises.writeFile(logFilePath, 
+        `Command: ${command}\n\n` +
+        `STDOUT:\n${stdout}\n\n` +
+        (stderr ? `STDERR:\n${stderr}\n\n` : '') +
+        `Timestamp: ${new Date().toISOString()}\n` +
+        `Proposal ID: ${multisigProposalId}`
+      );
+      console.log(`📄 Multisig proposal output saved to ${logFilePath}`);
+      
+      return multisigProposalId;
     } catch (error) {
-      console.error(`Error submitting proposals: ${error}`);
+      console.error(`Error submitting multisig proposal: ${error}`);
       throw error;
     }
   }
