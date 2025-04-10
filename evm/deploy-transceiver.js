@@ -32,12 +32,14 @@ const { Command, Option } = require('commander');
 
 const sepolia = '0xaa8267908e8d2BEfeB601f88A7Cf3ec148039423';
 
+// TODO: Need to import the artifacts properly.
 const implementation = require('../../example-wormhole-axelar-wsteth/artifacts/src/axelar/AxelarTransceiver.sol/AxelarTransceiver.json');
 const proxy = require('../../example-wormhole-axelar-wsteth/artifacts/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol/ERC1967Proxy.json');
 const library = require('../../example-wormhole-axelar-wsteth/artifacts/@wormhole-foundation/native_token_transfer/libraries/TransceiverStructs.sol/TransceiverStructs.json');
 async function processCommand(config, chain, options) {
     const gateway = chain.contracts.AxelarGateway.address;
-    const gasService = chain.contracts.AxelarGasService.address
+    const gasService = chain.contracts.AxelarGasService.address;
+    // TODO: put the correct ntt manager address here
     const nttManager = '0x6981F5621691CBfE3DdD524dE71076b79F0A0278';
     
     const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
