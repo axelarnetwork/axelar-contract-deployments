@@ -1,19 +1,6 @@
 name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
-outputs:
-    network_passphrase:
-        description: 'Network passphrase of the local Stellar network'
-        value: ${{ steps.start.outputs.network_passphrase }}
-    horizon_rpc:
-        description: 'Horizon RPC URL'
-        value: ${{ steps.start.outputs.horizon_rpc }}
-    rpc_url:
-        description: 'RPC URL of the local Stellar network'
-        value: ${{ steps.start.outputs.rpc_url }}
-    friendbot:
-        description: 'Friendbot of the local Stellar network'
-        value: ${{ steps.start.outputs.friendbot }}
 runs:
     using: 'composite'
     steps:
@@ -24,38 +11,33 @@ runs:
           shell: bash
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
+        - name: Set environment variables
+          shell: bash
+          run: |
+              echo "LOCALHOST=http://localhost:8000" >> $GITHUB_ENV
+              echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
+
         - name: Start Stellar local network
-          id: setup_network
           shell: bash
           run: |
               stellar container start local --protocol-version 22
-              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
-              echo "horizon_rpc=http://localhost:8000" >> $GITHUB_OUTPUT
-              echo "rpc_url=http://localhost:8000/soroban/rpc" >> $GITHUB_OUTPUT
-              echo "friendbot=http://localhost:8000/friendbot" >> $GITHUB_OUTPUT
 
         - name: Wait for Stellar network
           shell: bash
           run: |
               echo "Waiting for Stellar network to become ready..."
-
-              while true; do
-                echo "Checking Friendbot: ${{ steps.setup_network.outputs.friendbot }} ..."
-                if curl -s "${{ steps.setup_network.outputs.friendbot }}" | grep -q '"status"'; then
-                  echo "✅ Stellar Network is ready"
-                  exit 0
-                fi
-
+              until curl -s "$LOCALHOST/friendbot" | grep -q '"status"'; do
                 echo "  - Stellar Network not ready yet"
                 sleep 2
               done
+              echo "✅ Stellar Network is ready"
 
         - name: Add as configured network
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "${{ steps.setup_network.outputs.rpc_url }}" \
-                --network-passphrase "${{ steps.setup_network.outputs.network_passphrase }}"
+                --rpc-url "$LOCALHOST/soroban/rpc" \
+                --network-passphrase "$NETWORK_PASSPHRASE"
 
         - name: Prepare local.json
           shell: bash
@@ -69,8 +51,8 @@ runs:
                           "chainType": "stellar",
                           "tokenSymbol": "XLM",
                           "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
-                          "rpc": "${{ steps.setup_network.outputs.rpc_url }}",
-                          "horizonRpc": "${{ steps.setup_network.outputs.horizon_rpc }}",
+                          "rpc": "$LOCALHOST/soroban/rpc",
+                          "horizonRpc": "$LOCALHOST",
                           "contracts": {}
                       }
                   }
@@ -83,8 +65,8 @@ runs:
         - name: Prepare .env
           shell: bash
           run: |
-              # The root account is derived from the network ID/passphrase
-              echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
+              ROOT_SECRET=$(stellar container logs | grep 'network root secret key:' | cut -d ':' -f2 | xargs)
+              echo "PRIVATE_KEY=$ROOT_SECRET" >> .env
               echo "ENV=local" >> .env
               echo "CHAIN=stellar" >> .env
               echo "YES=true" >> .env
