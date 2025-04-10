@@ -32,17 +32,24 @@ runs:
               ELAPSED=0
 
               echo "Waiting for Stellar network to become ready..."
-              until curl -s "$FRIENDBOT" | grep -q '"status"'; do
-                echo "  - Stellar Network not ready yet"
+              while true; do
+                echo "Checking Friendbot... ($FRIENDBOT)"
+                if curl -s "$FRIENDBOT" | grep -q '"status"'; then
+                    echo "✅ Stellar Network is ready"
+                    exit 0
+                fi
+
                 sleep 2
                 ELAPSED=$((ELAPSED + 2))
+
                 if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
                   echo "Timed out after $MAX_WAIT seconds waiting for Stellar network."
                   exit 1
                 fi
-              done
 
-              echo "✅ Stellar Network is ready"
+                echo "  - Stellar Network not ready yet"
+
+              done
 
         - name: Add as configured network
           shell: bash
