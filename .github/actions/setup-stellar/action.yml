@@ -83,6 +83,7 @@ runs:
         - name: Prepare .env
           shell: bash
           run: |
+              # The root account is derived from the network ID/passphrase
               echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
               echo "ENV=local" >> .env
               echo "CHAIN=stellar" >> .env
