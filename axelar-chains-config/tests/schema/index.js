@@ -39,7 +39,7 @@ export const contractSchema = {
     type: 'object',
     patternProperties: {
         // PascalName e.g. 'AxelarGasService' etc.
-        '^(?!AxelarGateway)(^[a-z]|[A-Z])[a-zA-Z]*$': {
+        '^[a-zA-Z][a-zA-Z]*$': {
             $ref: contractValueSchema.id,
         },
     },
