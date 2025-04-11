@@ -64,12 +64,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Set Artifact Base URL
-        id: set_artifact_base_url
-        run: |
-          ARTIFACT_BASE_URL="https://static.axelar.network/releases/stellar"
-          echo "url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
-
       - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
 
@@ -79,23 +73,6 @@ jobs:
           CONTRACTS=("AxelarOperators" "AxelarGasService")
 
           for CONTRACT in "${CONTRACTS[@]}"; do
-            # Derive CONTRACT_DIR by:
-            # - Converting the CONTRACT name to lowercase.
-            # - Replacing any non-alphanumeric characters with a hyphen (-).
-            # - Prefixing with "stellar-".
-            CONTRACT_DIR="stellar-$(echo $CONTRACT | sed 's/\([^A-Z]\)\([A-Z]\)/\1-\2/g' | tr '[:upper:]' '[:lower:]')"
-
-            # Derive CONTRACT_NAME by:
-            # - Replacing hyphens in the CONTRACT_DIR with underscores (_).
-            CONTRACT_NAME=$(echo "${CONTRACT_DIR}" | sed 's/-/_/g')
-
-            ARTIFACT_URL="${{ steps.set_artifact_base_url.outputs.url }}/${CONTRACT_DIR}/${{ steps.get_short_commit_hash.outputs.hash }}/wasm/${CONTRACT_NAME}.wasm"
-            LOCAL_PATH="./artifacts/${CONTRACT_NAME}.wasm"
-
-            mkdir -p ./artifacts
-            echo "Downloading $CONTRACT from $ARTIFACT_URL"
-            curl -sSfL "$ARTIFACT_URL" -o "$LOCAL_PATH"
-
-            echo "Deploying $CONTRACT from $LOCAL_PATH"
-            node stellar/deploy-contract deploy "$CONTRACT" --artifact-path "$LOCAL_PATH"
+            echo "Deploying $CONTRACT with short hash version: ${{ steps.get_short_commit_hash.outputs.hash }}"
+            node stellar/deploy-contract deploy "$CONTRACT" --version ${{ steps.get_short_commit_hash.outputs.hash }}
           done
