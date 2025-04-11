@@ -70,7 +70,7 @@ jobs:
       - name: Deploy Contracts
         run: |
           # List of contracts to deploy
-          CONTRACTS=("AxelarOperators" "AxelarGasService")
+          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainToken" "TokenManager" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
 
           for CONTRACT in "${CONTRACTS[@]}"; do
             echo "Deploying $CONTRACT with short hash version: ${{ steps.get_short_commit_hash.outputs.hash }}"
