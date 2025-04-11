@@ -143,7 +143,7 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', options, wallet, chain));
             const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', options, wallet, chain));
 
-            const result = {
+            return {
                 owner,
                 operator,
                 gatewayAddress,
@@ -154,10 +154,6 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
                 interchainTokenWasmHash,
                 tokenManagerWasmHash,
             };
-            console.log('ahram test');
-            console.log('InterchainTokenService');
-            console.log(result);
-            return result;
         }
 
         case 'AxelarOperators':
