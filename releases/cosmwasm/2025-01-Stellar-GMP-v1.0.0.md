@@ -323,9 +323,8 @@ ampd register-chain-support "[service name]" $CHAIN
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
-# Query to check if the funding command worked
-axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$MULTISIG\"}}}" --output json | jq .
-axelard q wasm contract-state smart $REWARDS "{\"rewards_pool\":{\"pool_id\":{\"chain_name\":\"$CHAIN\",\"contract\":\"$VOTING_VERIFIER\"}}}" --output json | jq .
+# Check reward pool to confirm funding worked
+node cosmwasm/query.js rewards -n $CHAIN
 ```
 
 13. Create genesis verifier set
