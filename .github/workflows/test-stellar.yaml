@@ -69,6 +69,9 @@ jobs:
 
       - name: Deploy Contracts
         run: |
+          PRIVATE_KEY=$(grep '^PRIVATE_KEY=' .env | cut -d '=' -f2- | xargs)
+          ACCOUNT_ID=$(grep '^ACCOUNT_ID=' .env | cut -d '=' -f2- | xargs)
+
           # List of contracts to deploy
           CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainToken" "TokenManager" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
 
@@ -76,3 +79,5 @@ jobs:
             echo "Deploying $CONTRACT with short hash version: ${{ steps.get_short_commit_hash.outputs.hash }}"
             node stellar/deploy-contract deploy "$CONTRACT" --version ${{ steps.get_short_commit_hash.outputs.hash }}
           done
+
+          node stellar/operators.js is-operator $ACCOUNT_ID
