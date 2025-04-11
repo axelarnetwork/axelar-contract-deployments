@@ -667,11 +667,11 @@
           "connectionType": "amplifier"
         },
         "AxelarOperators": {
-          "address": "CDJQ52UPLRQDFPWH72XSCZ7BPJ2OSAV47ZNL2QSYJD3FVNM35MMO6WMV",
-          "deployer": "GBL3CICTZNEQIVUEKP74PGSSU275KAMNQABOEQENHFUXB5P5FGBXETET",
-          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
+          "address": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO",
+          "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
+          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
           "initializeArgs": {
-            "owner": "GBL3CICTZNEQIVUEKP74PGSSU275KAMNQABOEQENHFUXB5P5FGBXETET"
+            "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q"
           }
         },
         "AxelarGasService": {

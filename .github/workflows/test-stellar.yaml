@@ -72,6 +72,13 @@ jobs:
           PRIVATE_KEY=$(grep '^PRIVATE_KEY=' .env | cut -d '=' -f2- | xargs)
           ACCOUNT_ID=$(grep '^ACCOUNT_ID=' .env | cut -d '=' -f2- | xargs)
 
+          stellar keys generate wallet --fund --network local
+          NEW_ACCOUNT_ID=$(stellar keys address wallet)
+
+          ############################
+          ### Contract Deployments ###
+          ############################
+
           # List of contracts to deploy
           CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainToken" "TokenManager" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
 
@@ -80,4 +87,27 @@ jobs:
             node stellar/deploy-contract deploy "$CONTRACT" --version ${{ steps.get_short_commit_hash.outputs.hash }}
           done
 
-          node stellar/operators.js is-operator $ACCOUNT_ID
+          #####################################
+          ### Test AxelarOperators Contract ###
+          #####################################
+
+          node stellar/operators.js add-operator $ACCOUNT_ID
+
+          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
+          if ! echo "$OUTPUT" | grep -q 'is an operator'; then
+            exit 1
+          fi
+
+          node stellar/operators.js add-operator $ACCOUNT_ID
+
+          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
+          if ! echo "$OUTPUT" | grep -q 'is an operator'; then
+            exit 1
+          fi
+
+          node stellar/operators.js remove-operator $ACCOUNT_ID
+
+          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
+          if ! echo "$OUTPUT" | grep -q 'is not an operator'; then
+            exit 1
+          fi
