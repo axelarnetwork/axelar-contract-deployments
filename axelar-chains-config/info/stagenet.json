@@ -599,6 +599,7 @@
       "chainId": 421614,
       "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
