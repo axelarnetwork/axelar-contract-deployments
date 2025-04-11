@@ -85,8 +85,8 @@ runs:
         - name: Prepare .env
           shell: bash
           run: |
-              stellar container logs local
-              ROOT_SECRET=$(stellar container logs local | grep 'root secret key' | cut -d ':' -f2 | xargs)
+              timeout 2 stellar container logs local
+              ROOT_SECRET=$(timeout 2 stellar container logs local | grep 'network root secret key:' | cut -d ':' -f2 | xargs)
               echo "PRIVATE_KEY=${ROOT_SECRET}" >> .env
               echo "ENV=local" >> .env
               echo "CHAIN=stellar" >> .env
