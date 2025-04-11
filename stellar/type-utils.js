@@ -96,7 +96,7 @@ function proofToScVal(proof) {
     );
 }
 
-function itsCustomMigrationDataToScValV110(migrationData) {
+function itsCustomMigrationDataToScValV112(migrationData) {
     return nativeToScVal(
         {
             new_token_manager_wasm_hash: Buffer.from(migrationData.newTokenManagerWasmHash, 'hex'),
@@ -116,5 +116,5 @@ module.exports = {
     messagesToScVal,
     weightedSignersToScVal,
     proofToScVal,
-    itsCustomMigrationDataToScValV110,
+    itsCustomMigrationDataToScValV112,
 };
