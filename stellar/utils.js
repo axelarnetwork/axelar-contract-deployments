@@ -422,6 +422,9 @@ function getContractArtifactPath(artifactPath, contractName) {
 }
 
 const getContractCodePath = async (options, contractName) => {
+    console.log('ahram getContractCodePath');
+    console.log(options);
+
     if (options.artifactPath) {
         if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
             return getContractArtifactPath(options.artifactPath, contractName);

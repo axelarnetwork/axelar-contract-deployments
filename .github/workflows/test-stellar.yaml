@@ -82,7 +82,6 @@ jobs:
           CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
 
           for CONTRACT in "${CONTRACTS[@]}"; do
-            echo "Deploying $CONTRACT with short hash version: ${{ steps.get_short_commit_hash.outputs.hash }}"
             node stellar/deploy-contract deploy "$CONTRACT" --version ${{ steps.get_short_commit_hash.outputs.hash }}
           done
 
@@ -103,3 +102,11 @@ jobs:
           if ! echo "$OUTPUT" | grep -q 'is not an operator'; then
             exit 1
           fi
+
+          ##########################
+          ### Test Pause/Unpause ###
+          ##########################
+
+          ##############################################
+          ### Test Transfer Ownership / Operatorship ###
+          ##############################################
