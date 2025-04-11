@@ -79,8 +79,7 @@ jobs:
           ### Contract Deployments ###
           ############################
 
-          # List of contracts to deploy
-          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainToken" "TokenManager" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
+          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
 
           for CONTRACT in "${CONTRACTS[@]}"; do
             echo "Deploying $CONTRACT with short hash version: ${{ steps.get_short_commit_hash.outputs.hash }}"
@@ -90,13 +89,6 @@ jobs:
           #####################################
           ### Test AxelarOperators Contract ###
           #####################################
-
-          node stellar/operators.js add-operator $ACCOUNT_ID
-
-          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
-          if ! echo "$OUTPUT" | grep -q 'is an operator'; then
-            exit 1
-          fi
 
           node stellar/operators.js add-operator $ACCOUNT_ID
 
