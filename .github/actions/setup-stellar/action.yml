@@ -12,13 +12,14 @@ runs:
           run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
         - name: Set environment variables
+          id: env
           shell: bash
           run: |
               LOCALHOST=http://localhost:8000
-              echo "HORIZON_RPC=$LOCALHOST/" >> $GITHUB_ENV
-              echo "SOROBAN_RPC=$LOCALHOST/soroban/rpc" >> $GITHUB_ENV
-              echo "FRIENDBOT=$LOCALHOST/friendbot" >> $GITHUB_ENV
-              echo "NETWORK_PASSPHRASE='Standalone Network ; February 2017'" >> $GITHUB_ENV
+              echo "horizon_rpc=$LOCALHOST/" >> $GITHUB_OUTPUT
+              echo "soroban_rpc=$LOCALHOST/soroban/rpc" >> $GITHUB_OUTPUT
+              echo "friendbot=$LOCALHOST/friendbot" >> $GITHUB_OUTPUT
+              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
 
         - name: Start Stellar local network
           shell: bash
@@ -33,8 +34,8 @@ runs:
 
               echo "Waiting for Stellar network to become ready..."
               while true; do
-                echo "Checking Friendbot: ${FRIENDBOT} ..."
-                if curl -s "${FRIENDBOT}" | grep -q '"status"'; then
+                echo "Checking Friendbot: ${{ steps.env.outputs.friendbot }} ..."
+                if curl -s "${{ steps.env.outputs.friendbot }}" | grep -q '"status"'; then
                     echo "✅ Stellar Network is ready"
                     exit 0
                 fi
@@ -55,8 +56,8 @@ runs:
           shell: bash
           run: |
               stellar network add local \
-                --rpc-url "${SOROBAN_RPC}" \
-                --network-passphrase "${NETWORK_PASSPHRASE}"
+                --rpc-url "${{ steps.env.outputs.soroban_rpc }}" \
+                --network-passphrase "${{ steps.env.outputs.network_passphrase }}"
 
         - name: Prepare local.json
           shell: bash
@@ -70,8 +71,8 @@ runs:
                           "chainType": "stellar",
                           "tokenSymbol": "XLM",
                           "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
-                          "rpc": "${SOROBAN_RPC}",
-                          "horizonRpc": "${HORIZON_RPC}",
+                          "rpc": "${{ steps.env.outputs.soroban_rpc }}",
+                          "horizonRpc": "${{ steps.env.outputs.horizon_rpc }}",
                           "contracts": {}
                       }
                   }
