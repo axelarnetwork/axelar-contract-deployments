@@ -67,46 +67,13 @@ jobs:
       - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
 
-      - name: Deploy Contracts
-        run: |
-          PRIVATE_KEY=$(grep '^PRIVATE_KEY=' .env | cut -d '=' -f2- | xargs)
-          ACCOUNT_ID=$(grep '^ACCOUNT_ID=' .env | cut -d '=' -f2- | xargs)
+      ###### Command: Deploy Contract ######
 
-          stellar keys generate wallet --fund --network local
-          NEW_ACCOUNT_ID=$(stellar keys address wallet)
+      - name: Deploy AxelarOperators
+        run: node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.get_short_commit_hash.outputs.hash }}
 
-          ############################
-          ### Contract Deployments ###
-          ############################
+      - name: Deploy AxelarGasService
+        run: node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.get_short_commit_hash.outputs.hash }}
 
-          CONTRACTS=("AxelarOperators" "AxelarGasService" "AxelarGateway" "InterchainTokenService" "Upgrader" "AxelarExample" "Multicall")
-
-          for CONTRACT in "${CONTRACTS[@]}"; do
-            node stellar/deploy-contract deploy "$CONTRACT" --version ${{ steps.get_short_commit_hash.outputs.hash }}
-          done
-
-          #####################################
-          ### Test AxelarOperators Contract ###
-          #####################################
-
-          node stellar/operators.js add-operator $ACCOUNT_ID
-
-          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
-          if ! echo "$OUTPUT" | grep -q 'is an operator'; then
-            exit 1
-          fi
-
-          node stellar/operators.js remove-operator $ACCOUNT_ID
-
-          OUTPUT=$(node stellar/operators.js is-operator $ACCOUNT_ID)
-          if ! echo "$OUTPUT" | grep -q 'is not an operator'; then
-            exit 1
-          fi
-
-          ##########################
-          ### Test Pause/Unpause ###
-          ##########################
-
-          ##############################################
-          ### Test Transfer Ownership / Operatorship ###
-          ##############################################
+      - name: Deploy AxelarGateway
+        run: node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.get_short_commit_hash.outputs.hash }}
