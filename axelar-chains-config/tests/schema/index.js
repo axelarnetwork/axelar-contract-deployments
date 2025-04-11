@@ -25,24 +25,28 @@ export const axelarGatewaySchema = {
     id: '/info/chains.contracts.AxelarGateway',
     type: 'object',
     properties: {
-        connectionType: { type: 'string' },
+        connectionType: {
+            type: 'string',
+            enum: ['consensus', 'amplifier'],
+        },
     },
     required: ['connectionType'],
+    additionalProperties: true,
 };
 
 export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '(^[a-z]|[A-Z])[a-z]*': {
+        // PascalName e.g. 'AxelarGasService' etc.
+        '^[a-zA-Z][a-zA-Z]*$': {
             $ref: contractValueSchema.id,
-        },
-        AxelarGateway: {
-            $ref: axelarGatewaySchema.id,
         },
     },
     properties: {
+        AxelarGateway: {
+            $ref: axelarGatewaySchema.id,
+        },
         skipRevertTests: {
             type: 'boolean',
         },
@@ -110,7 +114,7 @@ export const chainsSchema = {
     id: '/info.chains',
     type: 'object',
     patternProperties: {
-        '^[a-z]+$': {
+        '^[a-z][a-z0-9-]*$': {
             $ref: chainValueSchema.id,
         },
     },
