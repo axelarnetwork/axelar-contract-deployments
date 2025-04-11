@@ -5,12 +5,14 @@ const { execSync } = require('child_process');
 const { loadConfig } = require('../evm/utils');
 const path = require('path');
 const { stellarCmd, getNetworkPassphrase } = require('./utils');
-const { addEnvOption } = require('../common');
+const { addEnvOption, getChainConfig } = require('../common');
 const { validateParameters } = require('../common/utils');
 require('./cli-utils');
 
-function processCommand(options, _, chain) {
+function processCommand(options, config) {
     const { artifactPath, contractId, outputDir } = options;
+
+    const chain = getChainConfig(config, options.chainName);
 
     validateParameters({
         isValidStellarAddress: { contractId },
@@ -43,7 +45,7 @@ function main() {
 
     program.action((options) => {
         const config = loadConfig(options.env);
-        processCommand(options, config, config.chains.stellar);
+        processCommand(options, config);
     });
 
     program.parse();

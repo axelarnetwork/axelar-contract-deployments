@@ -202,13 +202,17 @@ function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
 
+function getRpcOptions(chain) {
+    return {
+        allowHttp: chain.networkType === 'local',
+    };
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new rpc.Server(chain.rpc, {
-        allowHttp: chain.networkType === 'local',
-    });
-    const horizonServer = new Horizon.Server(chain.horizonRpc, { allowHttp: true });
+    const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
     const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);

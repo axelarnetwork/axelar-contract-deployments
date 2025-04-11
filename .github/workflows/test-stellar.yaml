@@ -71,7 +71,6 @@ jobs:
           echo "url=${ARTIFACT_BASE_URL}" >> $GITHUB_OUTPUT
 
       - name: Setup Stellar network
-        timeout-minutes: 5
         uses: ./.github/actions/setup-stellar
 
       - name: Deploy Contracts
