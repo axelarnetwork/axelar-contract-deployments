@@ -24,6 +24,15 @@ const {
 
 require('../cli-utils');
 
+const updateContractVersionInfo = (chain, contractName, options) => {
+    chain.contracts[contractName].version = options.version;
+
+    if (contractName === 'InterchainTokenService') {
+        chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
+        chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
+    }
+};
+
 const deploy = async (options, config, chain, contractName) => {
     const { yes } = options;
     const wallet = await getWallet(chain, options);
@@ -58,15 +67,10 @@ const deploy = async (options, config, chain, contractName) => {
         address: contractAddress,
         deployer: wallet.publicKey(),
         wasmHash: serializeValue(wasmHash),
-        version: options.version,
         initializeArgs: serializedArgs,
     };
 
-    if (contractName === 'InterchainTokenService') {
-        chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
-        chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
-    }
-
+    updateContractVersionInfo(chain, contractName, options);
     printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
 
@@ -75,6 +79,10 @@ const upgrade = async (options, _, chain, contractName) => {
 
     if (!options.version && !options.artifactPath) {
         throw new Error('--version or --artifact-path required to upgrade');
+    }
+
+    if (contractName === 'InterchainTokenService' && !options.interchainTokenVersion && !options.tokenManagerVersion) {
+        throw new Error('--interchain-token-version or --token-manager-version required to upgrade InterchainTokenService');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -107,7 +115,8 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    chain.contracts[contractName].version = options.version;
+    updateContractVersionInfo(chain, contractName, options);
+
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
 

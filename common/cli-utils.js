@@ -79,15 +79,13 @@ const addStoreOptions = (program) => {
     );
 
     program.addOption(
-        new Option('--interchain-token-version <interchainTokenVersion>', 'Specify a released version for InterchainToken').env(
+        new Option('--interchain-token-version <interchainTokenVersion>', 'Specify the version for InterchainToken').env(
             'INTERCHAIN_TOKEN_VERSION',
         ),
     );
 
     program.addOption(
-        new Option('--token-manager-version <tokenManagerVersion>', 'Specify a released version for TokenManager').env(
-            'TOKEN_MANAGER_VERSION',
-        ),
+        new Option('--token-manager-version <tokenManagerVersion>', 'Specify the version for TokenManager').env('TOKEN_MANAGER_VERSION'),
     );
 
     program.hook('preAction', async (thisCommand) => {
