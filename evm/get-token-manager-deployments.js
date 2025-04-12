@@ -8,7 +8,7 @@ const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${e
 const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 const fs = require('fs');
 const toml = require('toml');
-const { printInfo } = require('../common');
+const { printInfo, printWarn } = require('../common');
 
 const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
 
@@ -40,7 +40,10 @@ const queryLimit = {
 async function getTokenManagers(name) {
     try {
         const chain = info.chains[name];
-        if (tokenManagerInfo[name] == null || chain.contracts.InterchainTokenService.skip) return false;
+        if (tokenManagerInfo[name] == null || !chain.contracts.InterchainTokenService?.address) {
+            printWarn('Skipping', name);
+            return false
+        };
         printInfo(`ITS at ${name} is at`, chain.contracts.InterchainTokenService.address );
 
         // if (name != 'mantle') { return; }
@@ -49,11 +52,11 @@ async function getTokenManagers(name) {
         console.log('processing... ', name);
         console.log(name, eventsLength);
 
-        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
+        const rpc = (env === 'mainnet' || env === 'testnet') ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
-        
+
         const blockNumber = await provider.getBlockNumber();
 
         if (!tokenManagerInfo[name]) {
@@ -106,9 +109,8 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
-    /*for (const name of Object.keys(info.chains)) {
+    for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokenManagers(name).then((success) => console.log(name, 'returned', success));
-        
-    }*/
+    }
 })();
