@@ -415,6 +415,19 @@ function getContractArtifactPath(artifactPath, contractName) {
     return basePath + fileName;
 }
 
+const getContractVersion = (options, contractName) => {
+    const { version: defaultVersion, interchainTokenVersion, tokenManagerVersion } = options;
+
+    switch (contractName) {
+        case 'InterchainToken':
+            return interchainTokenVersion || defaultVersion;
+        case 'TokenManager':
+            return tokenManagerVersion || defaultVersion;
+        default:
+            return defaultVersion;
+    }
+};
+
 const getContractCodePath = async (options, contractName) => {
     if (options.artifactPath) {
         if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
@@ -424,9 +437,11 @@ const getContractCodePath = async (options, contractName) => {
         return options.artifactPath;
     }
 
-    if (options.version) {
-        const url = getContractR2Url(contractName, options.version);
-        return downloadContractCode(url, contractName, options.version);
+    const version = getContractVersion(options, contractName);
+
+    if (version) {
+        const url = getContractR2Url(contractName, version);
+        return downloadContractCode(url, contractName, version);
     }
 
     throw new Error('Either --artifact-path or --version must be provided');
@@ -562,4 +577,5 @@ module.exports = {
     BytesToScVal,
     pascalToKebab,
     sanitizeMigrationData,
+    getContractVersion,
 };

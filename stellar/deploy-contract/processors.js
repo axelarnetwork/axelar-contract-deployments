@@ -11,6 +11,7 @@ const {
     getUploadContractCodePath,
     createAuthorizedFunc,
     getNetworkPassphrase,
+    getContractVersion,
 } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
@@ -57,16 +58,16 @@ const deploy = async (options, config, chain, contractName) => {
         address: contractAddress,
         deployer: wallet.publicKey(),
         wasmHash: serializeValue(wasmHash),
+        version: options.version,
         initializeArgs: serializedArgs,
     };
 
-    printInfo('Contract deployed successfully', {
-        contractName,
-        contractAddress,
-        deployer: wallet.publicKey(),
-        wasmHash: serializeValue(wasmHash),
-        initializeArgs: serializedArgs,
-    });
+    if (contractName === 'InterchainTokenService') {
+        chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
+        chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
+    }
+
+    printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
 
 const upgrade = async (options, _, chain, contractName) => {
@@ -106,6 +107,7 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
+    chain.contracts[contractName].version = options.version;
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
 
