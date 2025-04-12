@@ -21,7 +21,6 @@ bincode.workspace = true
 bitvec.workspace = true
 borsh.workspace = true
 bytemuck.workspace = true
-bytemuck_derive.workspace = true
 ed25519-dalek.workspace = true
 event-utils.workspace = true
 hex.workspace = true

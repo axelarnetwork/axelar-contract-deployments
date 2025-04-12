@@ -78,7 +78,6 @@ bnum = { version = "0.10", features = ["serde"] }
 borsh = { version = "1", features = ["derive"] }
 bs58 = "0.5.1"
 bytemuck = { version = "1", features = ["derive"] }
-bytemuck_derive = "=1.7.1" # fixed because of https://github.com/axelarnetwork/axelar-amplifier/pull/744#issuecomment-2741488412
 cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
 ed25519-dalek = "2"
@@ -162,7 +161,7 @@ program-utils = { path = "helpers/program-utils" }
 role-management = { path = "helpers/role-management" }
 
 [workspace.metadata.cargo-machete]
-ignored = ["num-traits", "bytemuck_derive"]
+ignored = ["num-traits"]
 
 [profile.release]
 overflow-checks = true
