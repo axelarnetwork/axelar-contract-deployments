@@ -24,15 +24,6 @@ const {
 
 require('../cli-utils');
 
-const updateContractVersionInfo = (chain, contractName, options) => {
-    chain.contracts[contractName].version = options.version;
-
-    if (contractName === 'InterchainTokenService') {
-        chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
-        chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
-    }
-};
-
 const deploy = async (options, config, chain, contractName) => {
     const { yes } = options;
     const wallet = await getWallet(chain, options);
@@ -71,6 +62,7 @@ const deploy = async (options, config, chain, contractName) => {
     };
 
     updateContractVersionInfo(chain, contractName, options);
+
     printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
 
@@ -81,8 +73,10 @@ const upgrade = async (options, _, chain, contractName) => {
         throw new Error('--version or --artifact-path required to upgrade');
     }
 
-    if (contractName === 'InterchainTokenService' && !options.interchainTokenVersion && !options.tokenManagerVersion) {
-        throw new Error('--interchain-token-version or --token-manager-version required to upgrade InterchainTokenService');
+    if (contractName === 'InterchainTokenService') {
+        if (!options.interchainTokenVersion || !options.tokenManagerVersion) {
+            throw new Error('--interchain-token-version and --token-manager-version are required to upgrade InterchainTokenService');
+        }
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -116,6 +110,7 @@ const upgrade = async (options, _, chain, contractName) => {
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
     updateContractVersionInfo(chain, contractName, options);
+    updateInterchainTokenServiceWasmHash(chain, contractName, options);
 
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
@@ -230,6 +225,24 @@ const uploadWasm = async (wallet, chain, filePath, contractName) => {
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
     const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`);
     return wasmResponse.value();
+};
+
+const updateContractVersionInfo = (chain, contractName, options) => {
+    chain.contracts[contractName].version = options.version;
+
+    if (contractName !== 'InterchainTokenService') return;
+
+    chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
+    chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
+};
+
+const updateInterchainTokenServiceWasmHash = (chain, contractName, options) => {
+    if (contractName !== 'InterchainTokenService') return;
+
+    const migrationData = scValToNative(options.migrationData);
+
+    chain.contracts[contractName].initializeArgs.interchainTokenWasmHash = serializeValue(migrationData.new_interchain_token_wasm_hash);
+    chain.contracts[contractName].initializeArgs.tokenManagerWasmHash = serializeValue(migrationData.new_token_manager_wasm_hash);
 };
 
 const mainProcessor = async (options, processor, contractName) => {
