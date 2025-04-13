@@ -2020,6 +2020,7 @@
           "address": "CDERZ3XLJKWZR2NFUNFO5LS7TBDFRHHLMTE2JTE6C7VXGZMGF6DEGXFC",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
@@ -2039,50 +2040,50 @@
               }
             ]
           },
-          "version": "1.1.1",
           "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CBRMCHA6EEVQJVKIBDLOXGZSOPUXMYXYMKPNVNNFCDBIP7VEFQCHBLXR",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3"
-          },
-          "version": "1.1.1"
+          }
         },
         "AxelarGasService": {
           "address": "CALN6JRIISOYAYOHJHGZQWCJW3QB2MECDEDAH7E6KUW7YCJGJJNVHBWH",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "CBRMCHA6EEVQJVKIBDLOXGZSOPUXMYXYMKPNVNNFCDBIP7VEFQCHBLXR"
-          },
-          "version": "1.1.1"
+          }
         },
         "AxelarExample": {
           "address": "CDMT7AQM5WE7KGVS2257SGDZH6TA7KBFHQM2N4VWOWSWUV3GACR4YU3H",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
+          "version": "1.0.3",
           "initializeArgs": {
             "gatewayAddress": "CDERZ3XLJKWZR2NFUNFO5LS7TBDFRHHLMTE2JTE6C7VXGZMGF6DEGXFC",
             "gasServiceAddress": "CALN6JRIISOYAYOHJHGZQWCJW3QB2MECDEDAH7E6KUW7YCJGJJNVHBWH",
             "itsAddress": "CBD5WIIZ3BR62DQWUON2SV556UYSHL3KLBTPRX54TWDYJGPMVLZUBXXP"
-          },
-          "version": "1.0.3"
+          }
         },
         "Upgrader": {
           "address": "CDHKWDHCCOMNIF2RAZ26TGMW726RGFBN6IOYYDH7RPZVSBB6MR3APBBJ",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
-          "initializeArgs": {},
-          "version": "1.1.1"
+          "version": "1.1.1",
+          "initializeArgs": {}
         },
         "InterchainTokenService": {
           "address": "CBD5WIIZ3BR62DQWUON2SV556UYSHL3KLBTPRX54TWDYJGPMVLZUBXXP",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
+          "version": "1.1.2",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
@@ -2094,9 +2095,8 @@
             "interchainTokenWasmHash": "71648e1b8ee1231ea03c096257ed3c6d55478effbfab77b8e587a5139ab84cbe",
             "tokenManagerWasmHash": "9883cdb6740d685007a88dbd5a1269ffc1550a81a182fed5de3748356d0e342c"
           },
-          "version": "1.1.2",
-          "interchainTokenVersion": "1.1.1",
-          "tokenManagerVersion": "1.1.1"
+          "TokenManagerVersion": "1.1.1",
+          "InterchainTokenVersion": "1.1.1"
         },
         "Multicall": {
           "address": "CDY327IFXISX2WW6OFCCHM5VVQ2W3DFT2LPEWOFERSRFLWGPH3RLZVMK",
