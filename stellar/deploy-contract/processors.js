@@ -57,7 +57,7 @@ const deploy = async (options, config, chain, contractName) => {
         address: contractAddress,
         deployer: wallet.publicKey(),
         wasmHash: serializeValue(wasmHash),
-        version: options.version,
+        ...(options.version && { version: options.version }),
         initializeArgs: serializedArgs,
     };
 
@@ -101,8 +101,10 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    chain.contracts[contractName].version = options.version;
-    updateInterchainTokenServiceWasmHash(chain, contractName, options);
+
+    if (options.version) {
+        chain.contracts[contractName].version = options.version;
+    }
 
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
@@ -111,11 +113,6 @@ const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
     const contractCodePath = await getUploadContractCodePath(options, contractName);
     const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
-
-    if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
-        chain.contracts.InterchainTokenService[contractName + 'Version'] = options.version;
-    }
-
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
@@ -222,15 +219,6 @@ const uploadWasm = async (wallet, chain, filePath, contractName) => {
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
     const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`);
     return wasmResponse.value();
-};
-
-const updateInterchainTokenServiceWasmHash = (chain, contractName, options) => {
-    if (contractName !== 'InterchainTokenService') return;
-
-    const migrationData = scValToNative(options.migrationData);
-
-    chain.contracts[contractName].initializeArgs.interchainTokenWasmHash = serializeValue(migrationData.new_interchain_token_wasm_hash);
-    chain.contracts[contractName].initializeArgs.tokenManagerWasmHash = serializeValue(migrationData.new_token_manager_wasm_hash);
 };
 
 const mainProcessor = async (options, processor, contractName) => {
