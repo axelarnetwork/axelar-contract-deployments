@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address, Operation, rpc, authorizeInvocation, xdr } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -22,6 +22,8 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
@@ -183,6 +185,7 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+// TODO: Remove this after v1.1.1 release
 async function migrateTokens(wallet, _, chain, contract, args, options) {
     let tokenIds = Array.isArray(args) ? args : [args];
 
@@ -190,14 +193,114 @@ async function migrateTokens(wallet, _, chain, contract, args, options) {
 
     for (const tokenId of tokenIds) {
         printInfo('Migrating token', tokenId);
+        printInfo('Upgrader address', chain.contracts.Upgrader.address);
 
-        const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
+        const tokenIdScVal = hexToScVal(tokenId);
         const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
         const newVersionScVal = nativeToScVal(options.version, { type: 'string' });
 
-        const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
+        const tokenManagerAddressOperation = contract.call('token_manager_address', tokenIdScVal);
+        const tokenManagerAddressResult = await broadcast(
+            tokenManagerAddressOperation,
+            wallet,
+            chain,
+            'Retrieved TokenManager address',
+            options,
+        );
+        const tokenManagerAddress = serializeValue(tokenManagerAddressResult.value());
+
+        printInfo('TokenManager address', tokenManagerAddress);
+
+        const interchainTokenAddressOperation = contract.call('interchain_token_address', tokenIdScVal);
+        const interchainTokenAddressResult = await broadcast(
+            interchainTokenAddressOperation,
+            wallet,
+            chain,
+            'Retrieved InterchainToken address',
+            options,
+        );
+        const interchainTokenAddress = serializeValue(interchainTokenAddressResult.value());
+
+        printInfo('InterchainToken address', interchainTokenAddress);
+
+        const auths = await createMigrateTokenAuths(
+            contract,
+            tokenManagerAddress,
+            interchainTokenAddress,
+            tokenIdScVal,
+            upgraderAddressScVal,
+            newVersionScVal,
+            chain,
+            wallet,
+        );
+
+        const operation = Operation.invokeContractFunction({
+            contract: chain.contracts.InterchainTokenService.address,
+            function: 'migrate_token',
+            args: [tokenIdScVal, upgraderAddressScVal, newVersionScVal],
+            auth: auths,
+        });
+
         await broadcast(operation, wallet, chain, 'Migrated token', options);
     }
+}
+
+// TODO: Remove this after v1.1.1 release
+async function createMigrateTokenAuths(
+    contract,
+    tokenManagerAddress,
+    interchainTokenAddress,
+    tokenIdScVal,
+    upgraderAddressScVal,
+    newVersionScVal,
+    chain,
+    wallet,
+) {
+    // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
+    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
+
+    const walletAuth = await authorizeInvocation(
+        wallet,
+        validUntil,
+        new xdr.SorobanAuthorizedInvocation({
+            function: createAuthorizedFunc(Address.fromString(chain.contracts.InterchainTokenService.address), 'migrate_token', [
+                tokenIdScVal,
+                upgraderAddressScVal,
+                newVersionScVal,
+            ]),
+            subInvocations: [],
+        }),
+        wallet.publicKey(),
+        getNetworkPassphrase(chain.networkType),
+    );
+
+    const contractAuths = [
+        createAuthorizedFunc(Address.fromString(tokenManagerAddress), 'upgrade', [
+            nativeToScVal(chain.contracts.InterchainTokenService.initializeArgs.tokenManagerWasmHash),
+        ]),
+        createAuthorizedFunc(Address.fromString(tokenManagerAddress), 'migrate', [nativeToScVal(null)]),
+        createAuthorizedFunc(Address.fromString(interchainTokenAddress), 'upgrade', [
+            nativeToScVal(chain.contracts.InterchainTokenService.initializeArgs.interchainTokenWasmHash),
+        ]),
+        createAuthorizedFunc(Address.fromString(interchainTokenAddress), 'migrate', [nativeToScVal(null)]),
+    ].map((auth, index) => {
+        const sorobanAddressCredentials = new xdr.SorobanAddressCredentials({
+            address: Address.fromString(chain.contracts.InterchainTokenService.address).toScAddress(),
+            nonce: xdr.Int64.fromString(index.toString()),
+            signatureExpirationLedger: validUntil,
+            signature: xdr.ScVal.scvVec([]),
+        });
+
+        return new xdr.SorobanAuthorizationEntry({
+            rootInvocation: new xdr.SorobanAuthorizedInvocation({
+                function: auth,
+                subInvocations: [],
+            }),
+            credentials: xdr.SorobanCredentials.sorobanCredentialsAddress(sorobanAddressCredentials),
+        });
+    });
+
+    return [walletAuth, ...contractAuths];
 }
 
 async function mainProcessor(processor, args, options) {
