@@ -723,11 +723,11 @@
             "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4",
             "chainName": "stellar-2025-q1",
             "nativeTokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-            "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
-            "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
+            "interchainTokenWasmHash": "71648e1b8ee1231ea03c096257ed3c6d55478effbfab77b8e587a5139ab84cbe",
+            "tokenManagerWasmHash": "9883cdb6740d685007a88dbd5a1269ffc1550a81a182fed5de3748356d0e342c"
           },
-          "interchainTokenVersion": "1.1.1",
-          "tokenManagerVersion": "1.1.1"
+          "TokenManagerVersion": "1.1.1",
+          "InterchainTokenVersion": "1.1.1"
         },
         "Multicall": {
           "address": "CC2OSV5HNXFQIG6QQ6LK5L2NYXO62H4DQ3MVXXBLEXJ36KSN6Y4S7ODD",
