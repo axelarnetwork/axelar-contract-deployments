@@ -651,6 +651,7 @@
           "address": "CDWXQAUFE26XOYFWW2M3RSZPBOXHWCGLUTR5NZTFEGOV6YZQJPVARUKX",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
@@ -670,50 +671,50 @@
               }
             ]
           },
-          "version": "1.1.1",
           "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q"
-          },
-          "version": "1.1.1"
+          }
         },
         "AxelarGasService": {
           "address": "CCBTZ4MMXSMRYYGKMRYJGP3SU6HDOUAFQULQA67BSHFPDXO2BWGGGVKO",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO"
-          },
-          "version": "1.1.1"
+          }
         },
         "AxelarExample": {
           "address": "CCLP6NGSB3JFUA37IKC4FNUL7XCWPUJDLGOFLOEVSCAT5HGUYVIZ5FYX",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
+          "version": "1.0.3",
           "initializeArgs": {
             "gatewayAddress": "CDWXQAUFE26XOYFWW2M3RSZPBOXHWCGLUTR5NZTFEGOV6YZQJPVARUKX",
             "gasServiceAddress": "CCBTZ4MMXSMRYYGKMRYJGP3SU6HDOUAFQULQA67BSHFPDXO2BWGGGVKO",
             "itsAddress": "CATNQHWMG4VOWPSWF4HXVW7ASDJNX7M7F6JLFC544T7ZMMXXAE2HUDTY"
-          },
-          "version": "1.0.3"
+          }
         },
         "Upgrader": {
           "address": "CD7U4CN26Y74C3FFAOY3RHFSMMN3IDMOXR77CA32WMHCRIG5URMDIG4D",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
-          "initializeArgs": {},
-          "version": "1.1.1"
+          "version": "1.1.1",
+          "initializeArgs": {}
         },
         "InterchainTokenService": {
           "address": "CATNQHWMG4VOWPSWF4HXVW7ASDJNX7M7F6JLFC544T7ZMMXXAE2HUDTY",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
+          "version": "1.1.2",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
@@ -725,16 +726,15 @@
             "interchainTokenWasmHash": "71648e1b8ee1231ea03c096257ed3c6d55478effbfab77b8e587a5139ab84cbe",
             "tokenManagerWasmHash": "9883cdb6740d685007a88dbd5a1269ffc1550a81a182fed5de3748356d0e342c"
           },
-          "version": "1.1.2",
-          "interchainTokenVersion": "1.1.1",
-          "tokenManagerVersion": "1.1.1"
+          "TokenManagerVersion": "1.1.1",
+          "InterchainTokenVersion": "1.1.1"
         },
         "Multicall": {
           "address": "CC2OSV5HNXFQIG6QQ6LK5L2NYXO62H4DQ3MVXXBLEXJ36KSN6Y4S7ODD",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
           "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
-          "initializeArgs": {},
-          "version": "1.0.1"
+          "version": "1.0.1",
+          "initializeArgs": {}
         }
       }
     },
