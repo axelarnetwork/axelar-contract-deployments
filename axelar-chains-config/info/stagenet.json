@@ -2101,8 +2101,8 @@
           "address": "CDY327IFXISX2WW6OFCCHM5VVQ2W3DFT2LPEWOFERSRFLWGPH3RLZVMK",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
           "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
-          "initializeArgs": {},
-          "version": "1.0.1"
+          "version": "1.0.1",
+          "initializeArgs": {}
         }
       }
     }
