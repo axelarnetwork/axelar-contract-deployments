@@ -113,7 +113,7 @@ const upload = async (options, _, chain, contractName) => {
     const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
 
     if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
-        chain.contracts.InterchainTokenService[contractName] = options.version;
+        chain.contracts.InterchainTokenService[contractName + 'Version'] = options.version;
     }
 
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
