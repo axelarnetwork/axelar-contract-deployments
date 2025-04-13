@@ -11,7 +11,6 @@ const {
     getUploadContractCodePath,
     createAuthorizedFunc,
     getNetworkPassphrase,
-    getContractVersion,
 } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
@@ -58,10 +57,9 @@ const deploy = async (options, config, chain, contractName) => {
         address: contractAddress,
         deployer: wallet.publicKey(),
         wasmHash: serializeValue(wasmHash),
+        version: options.version,
         initializeArgs: serializedArgs,
     };
-
-    updateContractVersionInfo(chain, contractName, options);
 
     printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
@@ -71,12 +69,6 @@ const upgrade = async (options, _, chain, contractName) => {
 
     if (!options.version && !options.artifactPath) {
         throw new Error('--version or --artifact-path required to upgrade');
-    }
-
-    if (contractName === 'InterchainTokenService') {
-        if (!options.interchainTokenVersion || !options.tokenManagerVersion) {
-            throw new Error('--interchain-token-version and --token-manager-version are required to upgrade InterchainTokenService');
-        }
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -109,7 +101,7 @@ const upgrade = async (options, _, chain, contractName) => {
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    updateContractVersionInfo(chain, contractName, options);
+    chain.contracts[contractName].version = options.version;
     updateInterchainTokenServiceWasmHash(chain, contractName, options);
 
     printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
@@ -119,6 +111,11 @@ const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
     const contractCodePath = await getUploadContractCodePath(options, contractName);
     const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
+
+    if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
+        chain.contracts.InterchainTokenService[contractName] = options.version;
+    }
+
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
@@ -225,15 +222,6 @@ const uploadWasm = async (wallet, chain, filePath, contractName) => {
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
     const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`);
     return wasmResponse.value();
-};
-
-const updateContractVersionInfo = (chain, contractName, options) => {
-    chain.contracts[contractName].version = options.version;
-
-    if (contractName !== 'InterchainTokenService') return;
-
-    chain.contracts[contractName].interchainTokenVersion = getContractVersion(options, 'InterchainToken');
-    chain.contracts[contractName].tokenManagerVersion = getContractVersion(options, 'TokenManager');
 };
 
 const updateInterchainTokenServiceWasmHash = (chain, contractName, options) => {
