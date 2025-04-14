@@ -633,7 +633,7 @@
     "stellar-2025-q1": {
       "name": "Stellar",
       "axelarId": "stellar-2025-q1",
-      "rpc": "https://soroban-testnet.stellar.org",
+      "rpc": "https://damp-cosmopolitan-darkness.stellar-testnet.quiknode.pro/6a77a1a0e73e70eb21cffa22bb0357140a7c80df",
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
       "tokenSymbol": "XLM",

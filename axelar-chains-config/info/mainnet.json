@@ -2739,7 +2739,7 @@
     "stellar": {
       "name": "Stellar",
       "axelarId": "stellar",
-      "rpc": "https://mainnet.sorobanrpc.com",
+      "rpc": "https://solemn-fabled-orb.stellar-mainnet.quiknode.pro/8607c78f8c418838f5acd8593cc8e32bf4482abd/",
       "horizonRpc": "https://horizon.stellar.org",
       "networkType": "mainnet",
       "chainType": "stellar",
