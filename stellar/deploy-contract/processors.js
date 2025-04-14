@@ -1,8 +1,17 @@
 'use strict';
 
-const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
+const { Address, nativeToScVal, scValToNative, Operation, authorizeInvocation, xdr, rpc } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath } = require('../utils');
+const {
+    getWallet,
+    broadcast,
+    serializeValue,
+    getContractCodePath,
+    BytesToScVal,
+    getUploadContractCodePath,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
+} = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -48,16 +57,11 @@ const deploy = async (options, config, chain, contractName) => {
         address: contractAddress,
         deployer: wallet.publicKey(),
         wasmHash: serializeValue(wasmHash),
+        ...(options.version && { version: options.version }),
         initializeArgs: serializedArgs,
     };
 
-    printInfo('Contract deployed successfully', {
-        contractName,
-        contractAddress,
-        deployer: wallet.publicKey(),
-        wasmHash: serializeValue(wasmHash),
-        initializeArgs: serializedArgs,
-    });
+    printInfo('Contract deployed successfully', chain.contracts[contractName]);
 };
 
 const upgrade = async (options, _, chain, contractName) => {
@@ -84,14 +88,25 @@ const upgrade = async (options, _, chain, contractName) => {
     const newWasmHash = await uploadWasm(wallet, chain, options.contractCodePath, contractName);
     printInfo('New Wasm hash', serializeValue(newWasmHash));
 
-    const args = [contractAddress, options.version, newWasmHash, [options.migrationData]].map(nativeToScVal);
+    // TODO: Revert this after v1.1.1 release
+    const version = sanitizeUpgradeVersion(options.version);
 
-    const upgrader = new Contract(upgraderAddress);
-    const operation = upgrader.call('upgrade', ...args);
+    // TODO: Revert this after v1.1.1 release
+    const operation = Operation.invokeContractFunction({
+        contract: chain.contracts.Upgrader.address,
+        function: 'upgrade',
+        args: [contractAddress, version, newWasmHash, [options.migrationData]].map(nativeToScVal),
+        auth: await createUpgradeAuths(contractAddress, newWasmHash, options.migrationData, chain, wallet),
+    });
 
     await broadcast(operation, wallet, chain, 'Upgraded contract', options);
     chain.contracts[contractName].wasmHash = serializeValue(newWasmHash);
-    printInfo('Contract upgraded successfully', { contractName, contractAddress, wasmHash: serializeValue(newWasmHash) });
+
+    if (options.version) {
+        chain.contracts[contractName].version = options.version;
+    }
+
+    printInfo('Contract upgraded successfully', { contractName, newWasmHash: serializeValue(newWasmHash) });
 };
 
 const upload = async (options, _, chain, contractName) => {
@@ -217,6 +232,40 @@ const mainProcessor = async (options, processor, contractName) => {
     await processor(options, config, chain, contractName);
     saveConfig(config, options.env);
 };
+
+// TODO: Remove this after v1.1.1 release
+async function createUpgradeAuths(contractAddress, newWasmHash, migrationData, chain, wallet) {
+    // 20 seems a reasonable number of ledgers to allow for the upgrade to take effect
+    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
+
+    return Promise.all(
+        [
+            createAuthorizedFunc(contractAddress, 'upgrade', [nativeToScVal(newWasmHash)]),
+            createAuthorizedFunc(contractAddress, 'migrate', [nativeToScVal(migrationData)]),
+        ].map((auth) =>
+            authorizeInvocation(
+                wallet,
+                validUntil,
+                new xdr.SorobanAuthorizedInvocation({
+                    function: auth,
+                    subInvocations: [],
+                }),
+                wallet.publicKey(),
+                getNetworkPassphrase(chain.networkType),
+            ),
+        ),
+    );
+}
+
+// TODO: Remove this after v1.1.1 release
+/* Note: Once R2 uploads for stellar use the cargo version number (does not include 'v' prefix), this will no longer be necessary. */
+function sanitizeUpgradeVersion(version) {
+    if (version.startsWith('v')) {
+        return version.slice(1);
+    }
+
+    return version;
+}
 
 module.exports = {
     deploy,
