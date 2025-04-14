@@ -6,6 +6,7 @@
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
@@ -90,6 +91,7 @@
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
@@ -174,6 +176,7 @@
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
@@ -258,6 +261,7 @@
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
@@ -351,6 +355,7 @@
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
@@ -444,6 +449,7 @@
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "explorer": {
@@ -644,7 +650,8 @@
         "AxelarGateway": {
           "address": "CDWXQAUFE26XOYFWW2M3RSZPBOXHWCGLUTR5NZTFEGOV6YZQJPVARUKX",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+          "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
@@ -669,7 +676,8 @@
         "AxelarOperators": {
           "address": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q"
           }
@@ -677,16 +685,18 @@
         "AxelarGasService": {
           "address": "CCBTZ4MMXSMRYYGKMRYJGP3SU6HDOUAFQULQA67BSHFPDXO2BWGGGVKO",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
+          "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "CDOWLXRHI3JVLTDXUZK4AA5RYT4MO53KGGHWRVTMLI6C74HJPAG5W7WO"
           }
         },
         "AxelarExample": {
-          "address": "CCLIFKEJLZO73SU5NFP4MGUT4MN57YEBPVTGUUL7G7G34C35OJZUBPYH",
+          "address": "CCLP6NGSB3JFUA37IKC4FNUL7XCWPUJDLGOFLOEVSCAT5HGUYVIZ5FYX",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "a4dbe77402308e9152dfd31777519b2ff19167db81c5a15f3032a15ee3ea3bc9",
+          "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
+          "version": "1.0.3",
           "initializeArgs": {
             "gatewayAddress": "CDWXQAUFE26XOYFWW2M3RSZPBOXHWCGLUTR5NZTFEGOV6YZQJPVARUKX",
             "gasServiceAddress": "CCBTZ4MMXSMRYYGKMRYJGP3SU6HDOUAFQULQA67BSHFPDXO2BWGGGVKO",
@@ -694,15 +704,17 @@
           }
         },
         "Upgrader": {
-          "address": "CAB7HFMRI67WGOWO5DGVO4OUMGOW2LT2CVPSMF5ALYOA4JSNR3O2MGIQ",
+          "address": "CD7U4CN26Y74C3FFAOY3RHFSMMN3IDMOXR77CA32WMHCRIG5URMDIG4D",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "a29f0384e948343a4bdc11c8c640c56345cbf91acf770828219766fc6c829382",
+          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
+          "version": "1.1.1",
           "initializeArgs": {}
         },
         "InterchainTokenService": {
           "address": "CATNQHWMG4VOWPSWF4HXVW7ASDJNX7M7F6JLFC544T7ZMMXXAE2HUDTY",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "7ebdf38b7df81ad0deaae0d09b3123b6f1617ffae9618382c5d11acb7b991191",
+          "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
+          "version": "1.1.2",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
@@ -714,6 +726,13 @@
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
           }
+        },
+        "Multicall": {
+          "address": "CC2OSV5HNXFQIG6QQ6LK5L2NYXO62H4DQ3MVXXBLEXJ36KSN6Y4S7ODD",
+          "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
+          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+          "version": "1.0.1",
+          "initializeArgs": {}
         }
       }
     },
@@ -952,6 +971,7 @@
       "rpc": "wss://s.devnet.rippletest.net:51233",
       "wssRpc": "wss://s.devnet.rippletest.net:51233",
       "tokenSymbol": "XRP",
+      "decimals": 6,
       "networkType": "testnet",
       "chainType": "xrpl",
       "finality": "1",
@@ -972,7 +992,8 @@
             12,
             13,
             14
-          ]
+          ],
+          "connectionType": "amplifier"
         },
         "InterchainTokenService": {
           "address": "rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC",
