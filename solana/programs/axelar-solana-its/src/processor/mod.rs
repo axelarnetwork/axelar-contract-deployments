@@ -3,6 +3,7 @@
 use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
+use event_utils::Event as _;
 use interchain_token::process_mint;
 use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
@@ -22,7 +23,7 @@ use crate::instruction::InterchainTokenServiceInstruction;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
 use crate::{
-    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, Roles,
+    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, event, Roles,
 };
 
 pub(crate) mod gmp;
@@ -78,8 +79,8 @@ pub fn process_instruction<'a>(
             accounts,
             deployer,
             salt,
-            &destination_chain,
-            &destination_minter,
+            destination_chain,
+            destination_minter,
         ),
         InterchainTokenServiceInstruction::RevokeDeployRemoteInterchainToken {
             deployer,
@@ -89,7 +90,7 @@ pub fn process_instruction<'a>(
             accounts,
             deployer,
             salt,
-            &destination_chain,
+            destination_chain,
         ),
         InterchainTokenServiceInstruction::RegisterCanonicalInterchainToken => {
             link_token::register_canonical_interchain_token(accounts)
@@ -593,7 +594,9 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
         its_root_config.bump,
     )?;
 
-    its_root_config.add_trusted_chain(chain_name);
+    let trusted_chain_event = event::TrustedChainSet { chain_name };
+    trusted_chain_event.emit();
+    its_root_config.add_trusted_chain(trusted_chain_event.chain_name);
     its_root_config.store(payer, its_root_pda, system_account)?;
 
     Ok(())
@@ -615,6 +618,11 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
         gateway_root_pda_account.key,
         its_root_config.bump,
     )?;
+
+    event::TrustedChainRemoved {
+        chain_name: chain_name.to_owned(),
+    }
+    .emit();
 
     its_root_config.remove_trusted_chain(chain_name);
     its_root_config.store(payer, its_root_pda, system_account)?;

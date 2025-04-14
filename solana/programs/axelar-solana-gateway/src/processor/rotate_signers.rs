@@ -3,6 +3,7 @@ use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+use event_utils::{read_array, EventParseError};
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -11,7 +12,6 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::sysvar::Sysvar;
 
-use super::event_utils::{read_array, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;

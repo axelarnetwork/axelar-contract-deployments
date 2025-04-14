@@ -2,7 +2,7 @@
 
 use solana_program::pubkey::Pubkey;
 
-use crate::event_utils::{parse_u64_le, read_array, read_string, EventParseError};
+use event_utils::{read_array, read_string, read_u64, EventParseError};
 
 /// Even emitted by the Axelar Solana Gas service
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -77,7 +77,7 @@ impl NativeGasPaidForContractCallEvent {
         let gas_fee_amount_data = data
             .next()
             .ok_or(EventParseError::MissingData("gas_fee_amount"))?;
-        let gas_fee_amount = parse_u64_le("gas_fee_amount", &gas_fee_amount_data)?;
+        let gas_fee_amount = read_u64("gas_fee_amount", &gas_fee_amount_data)?;
 
         Ok(Self {
             config_pda,
@@ -123,7 +123,7 @@ impl NativeGasAddedEvent {
         let log_index_data = data
             .next()
             .ok_or(EventParseError::MissingData("log_index"))?;
-        let log_index = parse_u64_le("log_index", &log_index_data)?;
+        let log_index = read_u64("log_index", &log_index_data)?;
 
         let refund_address_data = data
             .next()
@@ -134,7 +134,7 @@ impl NativeGasAddedEvent {
         let gas_fee_amount_data = data
             .next()
             .ok_or(EventParseError::MissingData("gas_fee_amount"))?;
-        let gas_fee_amount = parse_u64_le("gas_fee_amount", &gas_fee_amount_data)?;
+        let gas_fee_amount = read_u64("gas_fee_amount", &gas_fee_amount_data)?;
 
         Ok(Self {
             config_pda,
@@ -178,7 +178,7 @@ impl NativeGasRefundedEvent {
         let log_index_data = data
             .next()
             .ok_or(EventParseError::MissingData("log_index"))?;
-        let log_index = parse_u64_le("log_index", &log_index_data)?;
+        let log_index = read_u64("log_index", &log_index_data)?;
 
         let receiver_data = data
             .next()
@@ -186,7 +186,7 @@ impl NativeGasRefundedEvent {
         let receiver = Pubkey::new_from_array(read_array::<32>("receiver", &receiver_data)?);
 
         let fees_data = data.next().ok_or(EventParseError::MissingData("fees"))?;
-        let fees = parse_u64_le("fees", &fees_data)?;
+        let fees = read_u64("fees", &fees_data)?;
 
         Ok(Self {
             tx_hash,
@@ -275,7 +275,7 @@ impl SplGasPaidForContractCallEvent {
         let gas_fee_amount_data = data
             .next()
             .ok_or(EventParseError::MissingData("gas_fee_amount"))?;
-        let gas_fee_amount = parse_u64_le("gas_fee_amount", &gas_fee_amount_data)?;
+        let gas_fee_amount = read_u64("gas_fee_amount", &gas_fee_amount_data)?;
 
         Ok(Self {
             config_pda,
@@ -345,7 +345,7 @@ impl SplGasAddedEvent {
         let log_index_data = data
             .next()
             .ok_or(EventParseError::MissingData("log_index"))?;
-        let log_index = parse_u64_le("log_index", &log_index_data)?;
+        let log_index = read_u64("log_index", &log_index_data)?;
 
         let refund_address_data = data
             .next()
@@ -356,7 +356,7 @@ impl SplGasAddedEvent {
         let gas_fee_amount_data = data
             .next()
             .ok_or(EventParseError::MissingData("gas_fee_amount"))?;
-        let gas_fee_amount = parse_u64_le("gas_fee_amount", &gas_fee_amount_data)?;
+        let gas_fee_amount = read_u64("gas_fee_amount", &gas_fee_amount_data)?;
 
         Ok(Self {
             config_pda,
@@ -424,7 +424,7 @@ impl SplGasRefundedEvent {
         let log_index_data = data
             .next()
             .ok_or(EventParseError::MissingData("log_index"))?;
-        let log_index = parse_u64_le("log_index", &log_index_data)?;
+        let log_index = read_u64("log_index", &log_index_data)?;
 
         let receiver_data = data
             .next()
@@ -432,7 +432,7 @@ impl SplGasRefundedEvent {
         let receiver = Pubkey::new_from_array(read_array::<32>("receiver", &receiver_data)?);
 
         let fees_data = data.next().ok_or(EventParseError::MissingData("fees"))?;
-        let fees = parse_u64_le("fees", &fees_data)?;
+        let fees = read_u64("fees", &fees_data)?;
 
         Ok(Self {
             config_pda_ata,

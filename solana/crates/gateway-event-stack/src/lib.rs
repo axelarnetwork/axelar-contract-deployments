@@ -115,14 +115,12 @@ pub fn decode_base64(input: &str) -> Option<Vec<u8>> {
 ///
 /// - if the discrimintant for the event is not present
 /// - if the event was detected via the discriminant but the data does not match the discriminant type
-pub fn parse_gateway_logs<T>(
-    log: &T,
-) -> Result<GatewayEvent, axelar_solana_gateway::processor::EventParseError>
+pub fn parse_gateway_logs<T>(log: &T) -> Result<GatewayEvent, event_utils::EventParseError>
 where
     T: AsRef<str>,
 {
     use axelar_solana_gateway::event_prefixes::*;
-    use axelar_solana_gateway::processor::EventParseError;
+    use event_utils::EventParseError;
 
     let mut logs = log
         .as_ref()
@@ -180,18 +178,16 @@ where
 ///
 /// - if the discrimintant for the event is not present
 /// - if the event was detected via the discriminant but the data does not match the discriminant type
-pub fn parse_gas_service_log<T>(
-    log: &T,
-) -> Result<GasServiceEvent, axelar_solana_gas_service_events::event_utils::EventParseError>
+pub fn parse_gas_service_log<T>(log: &T) -> Result<GasServiceEvent, event_utils::EventParseError>
 where
     T: AsRef<str>,
 {
     use axelar_solana_gas_service_events::event_prefixes::*;
-    use axelar_solana_gas_service_events::event_utils::EventParseError;
     use axelar_solana_gas_service_events::events::{
         NativeGasAddedEvent, NativeGasPaidForContractCallEvent, NativeGasRefundedEvent,
         SplGasAddedEvent, SplGasPaidForContractCallEvent, SplGasRefundedEvent,
     };
+    use event_utils::EventParseError;
 
     let mut logs = log
         .as_ref()

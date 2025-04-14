@@ -23,15 +23,16 @@ borsh.workspace = true
 bytemuck.workspace = true
 bytemuck_derive.workspace = true
 ed25519-dalek.workspace = true
+event-utils.workspace = true
 hex.workspace = true
 itertools.workspace = true
 libsecp256k1.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
 program-utils.workspace = true
+role-management.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
-role-management.workspace = true
 
 [dev-dependencies]
 hex.workspace = true

@@ -83,6 +83,7 @@ pub(crate) fn process_inbound<'a>(
             payload_account,
             instruction_accounts,
             &transfer,
+            inner.source_chain,
         ),
         GMPPayload::DeployInterchainToken(deploy) => {
             let parsed_accounts =

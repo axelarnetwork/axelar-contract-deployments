@@ -25,6 +25,7 @@ mod from_solana_to_evm;
 mod pause_unpause;
 mod role_management;
 
+use event_utils::Event;
 use solana_program_test::BanksTransactionResultWithMetadata;
 use solana_sdk::account::Account;
 use solana_sdk::account_info::Account as AccountTrait;
@@ -278,7 +279,19 @@ impl ItsTestContext {
             Some(self.solana_wallet),
         )
         .unwrap();
-        self.send_solana_tx(&[deploy_local_ix]).await.unwrap();
+        let tx = self.send_solana_tx(&[deploy_local_ix]).await.unwrap();
+
+        let deploy_event = tx
+            .metadata
+            .unwrap()
+            .log_messages
+            .iter()
+            .find_map(|log| {
+                axelar_solana_its::event::InterchainTokenDeployed::try_from_log(log).ok()
+            })
+            .unwrap();
+
+        assert_eq!(deploy_event.name, "Test Token", "token name does not match");
 
         let approve_remote_deployment =
             axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
@@ -355,6 +368,13 @@ impl ItsTestContext {
 
         let tx = self.send_solana_tx(&[transfer_ix]).await.unwrap();
         let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+        let logs = tx.metadata.unwrap().log_messages;
+        let transfer_event = logs
+            .iter()
+            .find_map(|log| axelar_solana_its::event::InterchainTransfer::try_from_log(log).ok())
+            .unwrap();
+
+        assert_eq!(transfer_event.amount, amount);
 
         self.relay_to_evm(&call_contract_event.payload).await;
 
@@ -405,12 +425,21 @@ impl ItsTestContext {
             .ok_or("no logs found")
             .unwrap();
 
-        self.relay_to_solana(
-            log.payload.as_ref(),
-            Some(solana_token),
-            spl_token_2022::id(),
-        )
-        .await;
+        let tx = self
+            .relay_to_solana(
+                log.payload.as_ref(),
+                Some(solana_token),
+                spl_token_2022::id(),
+            )
+            .await;
+        let logs = tx.metadata.unwrap().log_messages;
+        let transfer_received_event = logs
+            .iter()
+            .find_map(|log| {
+                axelar_solana_its::event::InterchainTransferReceived::try_from_log(log).ok()
+            })
+            .unwrap();
+        assert_eq!(transfer_received_event.amount, amount_back);
 
         let token_account_data = self
             .solana_chain

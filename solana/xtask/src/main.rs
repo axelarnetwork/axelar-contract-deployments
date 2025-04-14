@@ -175,7 +175,7 @@ fn workspace_crates_by_category(
         .leak(); // fine to leak as xtask is short lived
     let all_crate_data = crates_in_repo.split_whitespace();
     let all_crate_data = all_crate_data
-        .filter(|item| !item.starts_with('[')) // filters "[dev-dependencies]"
+        .filter(|item| !item.starts_with('[') && !item.contains("proc-macro")) // filters "[dev-dependencies]" and "(proc-macro)"
         .tuples()
         .group_by(|(_, _, path)| path.contains("solana/programs"));
     let mut solana_programs = vec![];

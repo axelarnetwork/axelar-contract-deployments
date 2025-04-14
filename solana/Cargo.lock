@@ -781,8 +781,8 @@ dependencies = [
 name = "axelar-solana-gas-service-events"
 version = "0.1.0"
 dependencies = [
+ "event-utils",
  "solana-program",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -798,6 +798,7 @@ dependencies = [
  "bytemuck",
  "bytemuck_derive",
  "ed25519-dalek 2.1.1",
+ "event-utils",
  "hex",
  "itertools 0.12.1",
  "lazy_static",
@@ -887,6 +888,7 @@ dependencies = [
  "axelar-solana-memo-program",
  "bitflags 2.6.0",
  "borsh 1.5.3",
+ "event-utils",
  "evm-contracts-test-suite",
  "interchain-token-transfer-gmp",
  "itertools 0.12.1",
@@ -2809,6 +2811,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
+name = "event-macros"
+version = "0.1.0"
+dependencies = [
+ "keccak-const",
+ "quote",
+ "syn 2.0.90",
+]
+
+[[package]]
+name = "event-utils"
+version = "0.1.0"
+dependencies = [
+ "axelar-message-primitives",
+ "base64 0.21.7",
+ "event-macros",
+ "solana-program",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "evm-contracts-rs"
 version = "0.1.0"
 dependencies = [
@@ -3133,6 +3155,7 @@ dependencies = [
  "axelar-solana-gas-service-events",
  "axelar-solana-gateway",
  "base64 0.21.7",
+ "event-utils",
  "pretty_assertions",
  "solana-sdk",
  "test-log",
@@ -4149,6 +4172,12 @@ dependencies = [
  "digest 0.10.7",
  "sha3-asm",
 ]
+
+[[package]]
+name = "keccak-const"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57d8d8ce877200136358e0bbff3a77965875db3af755a11e1fa6b1b3e2df13ea"
 
 [[package]]
 name = "kernel32-sys"

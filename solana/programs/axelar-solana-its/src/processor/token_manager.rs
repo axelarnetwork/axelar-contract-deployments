@@ -1,5 +1,6 @@
 //! Processor for [`TokenManager`] related requests.
 
+use event_utils::Event as _;
 use program_utils::{BorshPda, ValidPDA};
 use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;
@@ -14,9 +15,9 @@ use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWit
 use spl_token_2022::instruction::AuthorityType;
 use spl_token_2022::state::Mint;
 
-use crate::assert_valid_its_root_pda;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
+use crate::{assert_valid_its_root_pda, event};
 use crate::{assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice, Roles};
 
 pub(crate) fn set_flow_limit(
@@ -155,6 +156,17 @@ pub(crate) fn deploy<'a>(
             &[token_manager.bump],
         ],
     )?;
+
+    event::TokenManagerDeployed {
+        token_id: deploy_token_manager.token_id,
+        token_manager: *accounts.token_manager_pda.key,
+        token_manager_type: deploy_token_manager.manager_type.into(),
+        params: deploy_token_manager
+            .operator
+            .map(|op| op.to_bytes().to_vec())
+            .unwrap_or_default(),
+    }
+    .emit();
 
     Ok(())
 }

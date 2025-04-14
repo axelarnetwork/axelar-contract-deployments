@@ -10,6 +10,7 @@ use solana_program::pubkey::Pubkey;
 use state::InterchainTokenService;
 
 mod entrypoint;
+pub mod event;
 pub mod executable;
 pub mod instruction;
 pub mod processor;

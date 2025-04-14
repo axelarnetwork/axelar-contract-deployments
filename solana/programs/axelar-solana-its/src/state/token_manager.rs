@@ -108,6 +108,35 @@ impl From<Type> for U256 {
     }
 }
 
+impl From<Type> for u8 {
+    fn from(value: Type) -> Self {
+        match value {
+            Type::NativeInterchainToken => 0,
+            Type::MintBurnFrom => 1,
+            Type::LockUnlock => 2,
+            Type::LockUnlockFee => 3,
+            Type::MintBurn => 4,
+        }
+    }
+}
+
+impl TryFrom<u8> for Type {
+    type Error = ProgramError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        let converted = match value {
+            0 => Self::NativeInterchainToken,
+            1 => Self::MintBurnFrom,
+            2 => Self::LockUnlock,
+            3 => Self::LockUnlockFee,
+            4 => Self::MintBurn,
+            _ => return Err(ProgramError::InvalidInstructionData),
+        };
+
+        Ok(converted)
+    }
+}
+
 /// Struct containing state of a `TokenManager`
 #[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
 pub struct TokenManager {

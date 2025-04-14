@@ -3,6 +3,7 @@
 use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
+use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
 use program_utils::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -25,7 +26,8 @@ use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
-    assert_valid_flow_slot_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
+    assert_valid_flow_slot_pda, assert_valid_token_manager_pda, event, seed_prefixes,
+    FromAccountInfoSlice,
 };
 
 use super::gmp::{self, GmpAccounts};
@@ -64,6 +66,7 @@ pub(crate) fn process_inbound_transfer<'a>(
     message_payload_account: &'a AccountInfo<'a>,
     accounts: &'a [AccountInfo<'a>],
     payload: &InterchainTransfer,
+    source_chain: String,
 ) -> ProgramResult {
     let parsed_accounts =
         GiveTokenAccounts::from_account_info_slice(accounts, &(payer, message_payload_account))?;
@@ -81,6 +84,21 @@ pub(crate) fn process_inbound_transfer<'a>(
     };
 
     give_token(&parsed_accounts, &token_manager, converted_amount)?;
+
+    event::InterchainTransferReceived {
+        command_id: command_id(&message.cc_id.chain, &message.cc_id.id),
+        token_id: token_manager.token_id,
+        source_chain,
+        source_address: payload.source_address.to_vec(),
+        destination_address: *parsed_accounts.destination_account.key,
+        amount: converted_amount,
+        data_hash: if payload.data.is_empty() {
+            [0; 32]
+        } else {
+            solana_program::keccak::hash(payload.data.as_ref()).0
+        },
+    }
+    .emit();
 
     if !payload.data.is_empty() {
         let program_account = parsed_accounts.destination_account;
@@ -226,13 +244,31 @@ pub(crate) fn process_outbound_transfer<'a>(
     let amount_minus_fees = take_token(&take_token_accounts, &token_manager, amount)?;
     amount = amount_minus_fees;
 
+    let transfer_event = event::InterchainTransfer {
+        token_id,
+        source_address: *take_token_accounts.token_manager_ata.key,
+        destination_chain,
+        destination_address,
+        amount,
+        data_hash: if let Some(data) = &data {
+            if data.is_empty() {
+                [0; 32]
+            } else {
+                solana_program::keccak::hash(data.as_ref()).0
+            }
+        } else {
+            [0; 32]
+        },
+    };
+    transfer_event.emit();
+
     let payload = GMPPayload::InterchainTransfer(InterchainTransfer {
         selector: InterchainTransfer::MESSAGE_TYPE_ID
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_id: token_id.into(),
         source_address: take_token_accounts.token_mint.key.to_bytes().into(),
-        destination_address: destination_address.into(),
+        destination_address: transfer_event.destination_address.into(),
         amount: alloy_primitives::U256::from(amount),
         data: data.unwrap_or_default().into(),
     });
@@ -241,7 +277,7 @@ pub(crate) fn process_outbound_transfer<'a>(
         take_token_accounts.payer,
         &gmp_accounts,
         &payload,
-        destination_chain,
+        transfer_event.destination_chain,
         gas_value,
         signing_pda_bump,
         payload_hash,

@@ -1,3 +1,4 @@
+use event_utils::{read_array, EventParseError};
 use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
@@ -5,7 +6,6 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
 use solana_program::pubkey::Pubkey;
 
-use super::event_utils::{read_array, EventParseError};
 use super::Processor;
 use crate::error::GatewayError;
 use crate::state::GatewayConfig;

@@ -2,6 +2,7 @@
 
 use alloy_primitives::Bytes;
 use axelar_solana_gateway::num_traits::Zero;
+use event_utils::Event as _;
 use interchain_token_transfer_gmp::{DeployInterchainToken, GMPPayload};
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
@@ -22,10 +23,10 @@ use spl_token_2022::state::Mint;
 
 use super::gmp::{self, GmpAccounts};
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
-use crate::assert_valid_deploy_approval_pda;
 use crate::state::deploy_approval::DeployApproval;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
+use crate::{assert_valid_deploy_approval_pda, event};
 use crate::{
     assert_valid_its_root_pda, assert_valid_token_manager_pda, seed_prefixes, FromAccountInfoSlice,
     Roles,
@@ -112,22 +113,42 @@ pub(crate) fn process_deploy<'a>(
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
 
-    let token_id = crate::interchain_token_id(payer.key, &salt);
+    let deploy_salt = crate::interchain_token_deployer_salt(payer.key, &salt);
+    let token_id = crate::interchain_token_id_internal(&deploy_salt);
     let parsed_accounts =
         DeployInterchainTokenAccounts::from_account_info_slice(other_accounts, &())?;
+    let token_address = *parsed_accounts.token_mint.key;
+    let minter = parsed_accounts.minter.map(|account| *account.key);
     if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
         return Err(ProgramError::InvalidArgument);
     }
+
+    event::InterchainTokenIdClaimed {
+        token_id,
+        deployer: *payer.key,
+        salt: deploy_salt,
+    }
+    .emit();
 
     process_inbound_deploy(
         payer,
         parsed_accounts,
         token_id,
-        name,
-        symbol,
+        name.clone(),
+        symbol.clone(),
         decimals,
         initial_supply,
     )?;
+
+    crate::event::InterchainTokenDeployed {
+        token_id,
+        token_address,
+        minter: minter.unwrap_or_default(),
+        name,
+        symbol,
+        decimals,
+    }
+    .emit();
 
     set_return_data(&token_id);
 
@@ -271,14 +292,29 @@ pub(crate) fn process_outbound_deploy<'a>(
 
     let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
     let mint_data = Mint::unpack(&mint.try_borrow_data()?)?;
+    let name = token_metadata.name.trim_end_matches('\0').to_owned();
+    let symbol = token_metadata.symbol.trim_end_matches('\0').to_owned();
+
+    let deployment_started_event = event::InterchainTokenDeploymentStarted {
+        token_id,
+        token_name: name,
+        token_symbol: symbol,
+        token_decimals: mint_data.decimals,
+        minter: destination_minter_data
+            .as_ref()
+            .map(|data| data.0.to_vec())
+            .unwrap_or_default(),
+        destination_chain: destination_chain.clone(),
+    };
+    deployment_started_event.emit();
 
     let message = GMPPayload::DeployInterchainToken(DeployInterchainToken {
         selector: DeployInterchainToken::MESSAGE_TYPE_ID
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_id: token_id.into(),
-        name: token_metadata.name.trim_end_matches('\0').to_owned(),
-        symbol: token_metadata.symbol.trim_end_matches('\0').to_owned(),
+        name: deployment_started_event.token_name,
+        symbol: deployment_started_event.token_symbol,
         decimals: mint_data.decimals,
         minter: destination_minter_data
             .as_ref()
@@ -528,8 +564,8 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     accounts: &[AccountInfo<'_>],
     deployer: Pubkey,
     salt: [u8; 32],
-    destination_chain: &str,
-    destination_minter: &[u8],
+    destination_chain: String,
+    destination_minter: Vec<u8>,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
 
@@ -549,10 +585,10 @@ pub(crate) fn approve_deploy_remote_interchain_token(
     )?;
 
     let token_id = crate::interchain_token_id(&deployer, &salt);
-    let (_, bump) = crate::find_deployment_approval_pda(payer.key, &token_id, destination_chain);
+    let (_, bump) = crate::find_deployment_approval_pda(payer.key, &token_id, &destination_chain);
 
     let approval = DeployApproval {
-        approved_destination_minter: solana_program::keccak::hash(destination_minter).to_bytes(),
+        approved_destination_minter: solana_program::keccak::hash(&destination_minter).to_bytes(),
         bump,
     };
 
@@ -570,6 +606,15 @@ pub(crate) fn approve_deploy_remote_interchain_token(
         ],
     )?;
 
+    event::DeployRemoteInterchainTokenApproval {
+        minter: *payer.key,
+        deployer,
+        token_id,
+        destination_chain,
+        destination_minter,
+    }
+    .emit();
+
     Ok(())
 }
 
@@ -577,7 +622,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     accounts: &[AccountInfo<'_>],
     deployer: Pubkey,
     salt: [u8; 32],
-    destination_chain: &str,
+    destination_chain: String,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
@@ -595,9 +640,17 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
         deploy_approval_account,
         payer.key,
         &token_id,
-        destination_chain,
+        &destination_chain,
         approval.bump,
     )?;
+
+    event::RevokeRemoteInterchainTokenApproval {
+        minter: *payer.key,
+        deployer,
+        token_id,
+        destination_chain,
+    }
+    .emit();
 
     program_utils::close_pda(payer, deploy_approval_account)
 }
