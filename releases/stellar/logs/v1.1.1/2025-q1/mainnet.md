@@ -6,5 +6,109 @@ a229a5f-250959"],["axelar","0x81d4274316380ec968c5cd249963b03588447104e369be005c
 ```
 
 ```text
+Wallet address: GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3
 
+Wallet balances: 409.0945038 XLM
+
+Wallet sequence: 240976600500273171
+
+Proceed with upgrade on Stellar? (y/n) y
+
+Uploaded AxelarGateway wasm tx: 2ebcf4296ff931b38e085def744a379decf026c4e995de5b439be7ada2124aa5
+
+New Wasm hash: d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24
+
+Upgraded contract tx: 7bef9f6d863da0794df4d2979b48bd6d9d0a3adb2b841fb5bed28024f4644b31
+
+Contract upgraded successfully: {
+  "contractName": "AxelarGateway",
+  "newWasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24"
+}
+```
+
+```bash
+node stellar/deploy-contract.js upgrade AxelarOperators --version 1.1.1 --migration-data '["GBAGPWP4GXOB4PD62KLUGOWKWVBYSUQOO37XHB7PNYWKVHSDAVO4HWHD","GDK4ZR7W
+NQMQ43WZTZDB3YRSWIOEQGPD4CZBKQOKYNIUHLQ6PZNPMOJK"]'
+```
+
+```text
+Wallet address: GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3
+
+Wallet balances: 383.0461123 XLM
+
+Wallet sequence: 240976600500273174
+
+Proceed with upgrade on Stellar? (y/n) y
+
+Uploaded AxelarOperators wasm tx: d688e4e1e07836238d5b730b9735d7866ffb706cd5b53cffadd67118dd72daa6
+
+New Wasm hash: 8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2
+
+Upgraded contract tx: fdea67e9601a0b054f9f47a6ca827ec6629b6c124886762b101921b9d2434368
+
+Contract upgraded successfully: {
+  "contractName": "AxelarOperators",
+  "newWasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2"
+}
+```
+
+```bash
+node stellar/deploy-contract.js upgrade AxelarGasService --version 1.1.1
+```
+
+```text
+Wallet address: GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3
+
+Wallet balances: 378.9354348 XLM
+
+Wallet sequence: 240976600500273176
+
+Proceed with upgrade on Stellar? (y/n) y
+
+Uploaded AxelarGasService wasm tx: 939a075399181f79e08e224e4b732f47a3ae0210a67098abe807613bf3230d00
+
+New Wasm hash: 5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729
+
+Upgraded contract tx: 6f03ad36b5b35a1d6f519a3fa9e3d3f74bfd9522e717ed1031a7738cf8b181fa
+
+Contract upgraded successfully: {
+  "contractName": "AxelarGasService",
+  "newWasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729"
+}
+```
+
+```bash
+node stellar/deploy-contract.js deploy AxelarExample --version 1.0.3
+```
+
+```bash
+node stellar/deploy-contract.js deploy Multicall --version 1.0.1
+```
+
+```text
+Uploaded Multicall wasm tx: e8369bb9e8a8ac43d5466611772e629d7df37c7884eab6b656feff836373173b
+
+Initializing contract with args: {}
+
+Initialized contract tx: 28e149bc734f355ebd8e323542918f8d1de1cc3884fab02629718ebb956d7dd3
+
+Contract initialized at address: CC5LVKQA73ZVVUBAOCV5INV4TXPMELBFJ6XTQUBJTP4O2LSUKAA7VHLZ
+
+Contract deployed successfully: {
+  "address": "CC5LVKQA73ZVVUBAOCV5INV4TXPMELBFJ6XTQUBJTP4O2LSUKAA7VHLZ",
+  "deployer": "GC2SJ4YXCMP2LYXMXBNJMK6SNK4XUR7TGJXY4GA3VACNMCZVCQ6VFGG3",
+  "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+  "version": "1.0.1",
+  "initializeArgs": {}
+}
+```
+
+## ITS Upgrade
+
+```bash
+node stellar/deploy-contract.js upload TokenManager --version 1.1.1
+```
+
+```bash
+node stellar/deploy-contract.js upload InterchainToken --version 1.1.1
 ```
