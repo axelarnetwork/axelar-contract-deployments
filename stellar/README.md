@@ -21,7 +21,7 @@ Add Soroban network in the config
 ```bash
 stellar network add \
   --global testnet \
-  --rpc-url https://soroban-testnet.stellar.org:443 \
+  --rpc-url https://damp-cosmopolitan-darkness.stellar-testnet.quiknode.pro/6a77a1a0e73e70eb21cffa22bb0357140a7c80df:443 \
   --network-passphrase "Test SDF Network ; September 2015"
 ```
 
