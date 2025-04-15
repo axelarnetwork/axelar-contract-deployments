@@ -6,6 +6,7 @@
 #![allow(clippy::multiple_inherent_impl)]
 #![allow(clippy::wildcard_enum_match_arm)]
 #![allow(clippy::unimplemented)]
+#![allow(deprecated)]
 
 pub mod base;
 pub mod gas_service;

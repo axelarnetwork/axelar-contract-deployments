@@ -1,12 +1,14 @@
 //! Program entrypoint
 
+#![allow(unexpected_cfgs)]
+
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
 
 use crate::processor::Processor;
 
-#[cfg(all(target_os = "solana", not(feature = "no-entrypoint")))]
+#[cfg(not(feature = "no-entrypoint"))]
 solana_program::entrypoint!(process_instruction);
 
 /// Solana entrypoint

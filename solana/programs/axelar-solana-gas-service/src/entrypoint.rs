@@ -1,6 +1,7 @@
 //! Program entrypoint
 
-#![cfg(all(target_os = "solana", not(feature = "no-entrypoint")))]
+#![allow(unexpected_cfgs)]
+#![cfg(not(feature = "no-entrypoint"))]
 
 use crate::processor::process_instruction;
 
