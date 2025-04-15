@@ -32,11 +32,6 @@ jobs:
     if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      # this sets up nested repos: https://github.com/actions/checkout?tab=readme-ov-file#checkout-multiple-repos-nested
-      # axelar-contract-deployments
-      #   - axelar-amplifier-stellar
-      #
-      # future steps depend on this directory structure
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -46,20 +41,19 @@ jobs:
           repository: axelarnetwork/axelar-amplifier-stellar
           path: axelar-amplifier-stellar
 
-      - name: Get Latest Short Commit Hash from axelar-amplifier-stellar
-        id: get_short_commit_hash
+      - name: Get latest short commit for axelar-amplifier-stellar
+        id: commit_hash
         run: |
           cd axelar-amplifier-stellar
           git fetch --all
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: useblacksmith/setup-node@v5
         with:
-          node-version: '18' # Hardcoded to ensure consistency.
+          node-version: 18.x
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -70,10 +64,10 @@ jobs:
       ###### Command: Deploy Contract ######
 
       - name: Deploy AxelarOperators
-        run: node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.get_short_commit_hash.outputs.hash }}
+        run: node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarGasService
-        run: node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.get_short_commit_hash.outputs.hash }}
+        run: node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarGateway
-        run: node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.get_short_commit_hash.outputs.hash }}
+        run: node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}

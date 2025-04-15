@@ -15,10 +15,10 @@ runs:
           id: env
           shell: bash
           run: |
-              LOCALHOST=http://localhost:8000
-              echo "horizon_rpc=$LOCALHOST/" >> $GITHUB_OUTPUT
-              echo "soroban_rpc=$LOCALHOST/soroban/rpc" >> $GITHUB_OUTPUT
-              echo "friendbot=$LOCALHOST/friendbot" >> $GITHUB_OUTPUT
+              RPC=http://localhost:8000
+              echo "horizon_rpc=$RPC/" >> $GITHUB_OUTPUT
+              echo "soroban_rpc=$RPC/soroban/rpc" >> $GITHUB_OUTPUT
+              echo "friendbot=$RPC/friendbot" >> $GITHUB_OUTPUT
               echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
 
         - name: Start Stellar local network

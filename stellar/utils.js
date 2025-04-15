@@ -202,6 +202,10 @@ function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
 
+/*
+ * To enable connecting to the local network, allowHttp needs to be set to true.
+ * This is necessary because the local network does not accept HTTPS requests.
+ */
 function getRpcOptions(chain) {
     return {
         allowHttp: chain.networkType === 'local',
