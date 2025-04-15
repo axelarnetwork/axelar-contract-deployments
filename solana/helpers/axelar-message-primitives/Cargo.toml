@@ -4,6 +4,9 @@ description = "Defines simple primitive data types that wrap around and work wit
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [lib]
 crate-type = ["cdylib", "lib"]
 
