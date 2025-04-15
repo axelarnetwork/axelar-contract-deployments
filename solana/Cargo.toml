@@ -56,9 +56,21 @@ shadow_unrelated = "allow"
 module_name_repetitions = "allow"
 semicolon_outside_block = "allow" # remove this after we update rust-toolchain.toml -- buggy lint
 similar_names = "allow"
+allow_attributes_without_reason = "allow"
+allow_attributes = "allow"
+arbitrary_source_item_ordering = "allow"
+doc_lazy_continuation = "allow"
+field_scoped_visibility_modifiers = "allow"
+large_futures = "allow"
+map_with_unused_argument_over_ranges = "allow"
+missing_const_for_fn = "allow"
+needless_lifetimes = "allow"
+precedence = "allow"
+renamed_function_params = "allow"
+too_long_first_doc_paragraph = "allow"
+unused_trait_names = "allow"
 
 [workspace.lints.rust]
-missing_docs = { level = "warn", priority = -1 }
 rust_2018_idioms = { level = "deny", priority = 0 }
 unreachable_pub = { level = "warn", priority = -1 }
 unused_imports = { level = "warn", priority = -1 }
