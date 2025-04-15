@@ -50,7 +50,7 @@ const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
         case 'local':
-            return Networks.SANDBOX;
+            return Networks.STANDALONE;
         case 'futurenet':
             return Networks.FUTURENET;
         case 'testnet':
@@ -173,7 +173,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
-    const server = new rpc.Server(chain.rpc);
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -202,11 +202,21 @@ function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
 
+/*
+ * To enable connecting to the local network, allowHttp needs to be set to true.
+ * This is necessary because the local network does not accept HTTPS requests.
+ */
+function getRpcOptions(chain) {
+    return {
+        allowHttp: chain.networkType === 'local',
+    };
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new rpc.Server(chain.rpc);
-    const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
     const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);
