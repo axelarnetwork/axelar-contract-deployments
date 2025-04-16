@@ -33,7 +33,8 @@ import {
   retrieveVotingVerifierAddress 
 } from '../axelar/verification';
 import { 
-  retrieveRewardsAddress 
+  retrieveRewardsAddress,
+  createRewardPools 
 } from '../axelar/rewards';
 import { saveJsonToFile, loadJsonFromFile } from '../utils/fs';
 import { displayMessage, MessageType } from '../utils/cli-utils';
@@ -77,7 +78,7 @@ export async function runNewDeployment(): Promise<void> {
       await getTokenDenomination();
     } else {
       try {
-        await deployContracts(); // Empty map for non-custom devnet
+        await deployContracts();
       } catch (error) {
         console.error(`Error instantiating contracts: ${error}`);
         throw error;
@@ -88,16 +89,10 @@ export async function runNewDeployment(): Promise<void> {
     extractRouterAddress();
     extractGatewayAddress();
     
-    // Store the proposal ID when submitting chain registration
-    if (isCustomDevnet()) {
-      // Run the command to register the chain
-      await registerChainWithRouter();
-    } else {
-      // Capture the proposal ID returned from submitChainRegistrationProposal
-      const registerChainProposalId = await submitChainRegistrationProposal();
-      if (registerChainProposalId) {
-        console.log(`✅ Chain Gateway registration proposal submitted with ID: ${registerChainProposalId}`);
-      }
+    // Capture the proposal ID returned from submitChainRegistrationProposal
+    const registerChainProposalId = await submitChainRegistrationProposal();
+    if (registerChainProposalId) {
+      console.log(`✅ Chain Gateway registration proposal submitted with ID: ${registerChainProposalId}`);
     }
     
     // Generate extra envs for next steps needed as part of verifier set
@@ -138,6 +133,9 @@ export async function runNewDeployment(): Promise<void> {
     
     // Save deployment config for future use
     saveDeploymentConfig();
+
+    displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
+      config.CHAIN_NAME + " --verifiers-registered --proposals-approved");
     process.exit(0);
   } catch (error) {
     displayMessage(MessageType.ERROR, `Deployment failed: ${error}`);
@@ -207,9 +205,10 @@ export function saveDeploymentConfig(): void {
           DEPLOYMENT_TYPE: "create",
           DEPLOYER: "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           CONTRACT_ADMIN: networkConfig.axelar?.contracts?.ServiceRegistry?.governanceAccount || "",
-          PROVER_ADMIN: networkConfig.axelar?.contracts?.ServiceRegistry?.adminAccount || "",
+          PROVER_ADMIN: "amplifier",
           DEPOSIT_VALUE: "100000000",
-          REWARD_AMOUNT: "1000000uamplifier"
+          REWARD_AMOUNT: "1000000",
+          WALLET_ADDRESS: "amplifier"
         }
       };
     }
@@ -230,8 +229,6 @@ export function saveDeploymentConfig(): void {
     
     displayMessage(MessageType.INFO, 
       `Use your original .env file when resuming deployment.`);
-    displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
-        config.CHAIN_NAME + " --verifiers-registered --proposals-approved");
   } else {
     displayMessage(MessageType.ERROR, `Cannot save config: CHAIN_NAME is not set.`);
     process.exit(1);

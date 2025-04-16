@@ -104,6 +104,7 @@ export async function createGenesisVerifierSet(): Promise<void> {
         --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
         --keyring-backend test \
         --chain-id "${config.NAMESPACE}"`);
+        
       
       console.log("✅ Successfully updated verifier set");
       
@@ -306,7 +307,7 @@ export async function registerMultisigProverWithCoordinator(): Promise<number | 
   } else {
     // Actual networks require proposal for chain integration
     try {
-      const command = config.NAMESPACE === "devnet-markus"
+      const command = config.NAMESPACE === "devnet-amplifier"
         ? `node ../cosmwasm/submit-proposal.js execute \
             -c Coordinator \
             -t "Register Multisig Prover for ${config.CHAIN_NAME}" \
@@ -400,7 +401,7 @@ export async function authorizeMultisigProver(): Promise<number | void> {
   } else {
     // Actual networks require proposal for chain integration
     try {
-      const command = config.NAMESPACE === "devnet-markus"
+      const command = config.NAMESPACE === "devnet-amplifier"
         ? `node ../cosmwasm/submit-proposal.js execute \
             -c Multisig \
             -t "Authorize Multisig Prover for ${config.CHAIN_NAME}" \

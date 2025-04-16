@@ -12,6 +12,7 @@
   "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
   "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
   "DEPOSIT_VALUE": "100000000",
-  "REWARD_AMOUNT": "1000000uamplifier"
+  "REWARD_AMOUNT": "1000000",
+  "TOKEN_DENOM": "uamplifier"
 }
 }

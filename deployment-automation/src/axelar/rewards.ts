@@ -66,7 +66,7 @@ export async function createVotingVerifierRewardPool(): Promise<number | void> {
     }
   } else {
     // Logic for submitting proposals through the NodeJS script
-    const command = config.NAMESPACE === "devnet-markus"
+    const command = config.NAMESPACE === "devnet-amplifier"
       ? `node ../cosmwasm/submit-proposal.js execute \
         -c Rewards \
         -t "Create pool for ${config.CHAIN_NAME} in ${config.CHAIN_NAME} voting verifier" \
@@ -180,7 +180,7 @@ export async function createMultisigRewardPool(): Promise<number | void> {
     }
   } else {
     // Logic for submitting proposals through the NodeJS script
-    const command = config.NAMESPACE === "devnet-markus"
+    const command = config.NAMESPACE === "devnet-amplifier"
       ? `node ../cosmwasm/submit-proposal.js execute \
         -c Rewards \
         -t "Create pool for ${config.CHAIN_NAME} in ${config.CHAIN_NAME} multisig" \
@@ -275,7 +275,18 @@ export async function addFundsToVotingVerifierRewardPool(): Promise<void> {
     }
     
     try {
-      await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.VOTING_VERIFIER_ADDRESS}\\" } } }" --amount ${config.REWARD_AMOUNT} --from ${config.WALLET_ADDRESS}`);
+
+      await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} \
+        "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.VOTING_VERIFIER_ADDRESS}\\" } } }" \
+        --amount ${config.REWARD_AMOUNT}${config.TOKEN_DENOM} \
+        --from ${config.WALLET_ADDRESS} \
+        --node "${config.AXELAR_RPC_URL}" \
+        --gas auto \
+        --gas-adjustment 2 \
+        --gas-prices 0.00005${config.TOKEN_DENOM} \
+        --keyring-backend test \
+        --chain-id "${config.NAMESPACE}"`);
+
       console.log("✅ Added funds to voting verifier reward pool");
     } catch (error) {
       // Check if it's a non-critical error
@@ -308,14 +319,25 @@ export async function addFundsToMultisigRewardPool(): Promise<void> {
     if (!config.REWARDS_ADDRESS) {
       retrieveRewardsAddress();
     }
-    
+
     try {
-      await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.MULTISIG_ADDRESS}\\" } } }" --amount ${config.REWARD_AMOUNT} --from ${config.WALLET_ADDRESS}`);
+      await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} \
+         "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.MULTISIG_ADDRESS}\\" } } }" \
+         --amount ${config.REWARD_AMOUNT}${config.TOKEN_DENOM} \
+         --from ${config.WALLET_ADDRESS} \
+         --node "${config.AXELAR_RPC_URL}" \
+         --gas auto \
+         --gas-adjustment 2 \
+         --gas-prices 0.00005${config.TOKEN_DENOM} \
+         --keyring-backend test \
+         --chain-id "${config.NAMESPACE}"`);
+
       console.log("✅ Added funds to multisig reward pool");
     } catch (error) {
       // Check if it's a non-critical error
       const errorStr = String(error);
       if (errorStr.includes("rewards already added") || errorStr.includes("insufficient funds")) {
+        console.log("⚠️ Error adding funds:", errorStr);
         console.log("⚠️ Could not add funds to multisig reward pool. Continuing...");
       } else {
         throw error;

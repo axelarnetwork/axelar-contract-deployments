@@ -32,7 +32,8 @@ import {
 } from './src/commands/deploy';
 import { 
   gotoAfterMultisigProposals, 
-  printEnvJsonAndExit 
+  printEnvJsonAndExit,
+  gotoResubmitProposals 
 } from './src/commands/resume';
 import { CONFIG_DIR } from './constants';
 
@@ -184,8 +185,7 @@ async function main(): Promise<void> {
           if (proposalsApproved) {
             await gotoAfterMultisigProposals();
           } else {
-            //deprecate
-            //await gotoAfterChainRegistration();
+            await gotoResubmitProposals();
           }
         } else {
           printEnvJsonAndExit();

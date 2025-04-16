@@ -34,7 +34,7 @@ export async function registerChain(): Promise<void> {
     }
   } else {
     try {
-      if (config.NAMESPACE === "devnet-markus") {
+      if (config.NAMESPACE === "devnet-amplifier") {
         await execAsync(`node ../cosmwasm/submit-proposal.js execute \
           -c Router \
           -t "Register Gateway for ${config.CHAIN_NAME}" \
