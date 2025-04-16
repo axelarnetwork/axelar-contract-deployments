@@ -141,6 +141,7 @@ export async function registerChainWithRouter(): Promise<void> {
 export async function submitChainRegistrationProposal(): Promise<number | void> {
   console.log("⚡ Registering the chain...");
   const jsonCmdRegister = buildJsonCmdRegister();
+  
   if (isCustomDevnet()) {
     try {
       await execAsync(`axelard tx wasm execute "${config.ROUTER_ADDRESS}" '${jsonCmdRegister}' \
@@ -153,12 +154,18 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
         --chain-id "${config.NAMESPACE}"`);
         
       console.log(`✅ Chain ${config.CHAIN_NAME} successfully registered with router`);
-    } catch (error) {
+    } catch (error: any) {
+      // Check if error is due to gateway already being registered
+      const errorMessage = String(error);
+      if (errorMessage.includes("gateway is already registered")) {
+        console.log(`✅ Chain ${config.CHAIN_NAME} is already registered with router`);
+        return;
+      }
       console.error(`Error registering chain: ${error}`);
       throw error;
     }
   } else {
-      const command = config.NAMESPACE === "devnet-amplifier"
+    const command = config.NAMESPACE === "devnet-amplifier"
       ? `node ../cosmwasm/submit-proposal.js execute \
         -c Router \
         -t "Register Gateway for ${config.CHAIN_NAME}" \
@@ -192,10 +199,12 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
       
       // Extract proposal ID from output using regex
       const proposalIdMatch = stdout.match(/Proposal submitted: (\d+)/);
-      const proposalId = proposalIdMatch ? parseInt(proposalIdMatch[1], 10) : null;
+      const proposalId = proposalIdMatch ? parseInt(proposalIdMatch[1], 10) : undefined;
       
-      if (proposalId !== null) {
+      if (proposalId !== undefined) {
         console.log(`✅ Proposal #${proposalId} submitted to register chain ${config.CHAIN_NAME} with router`);
+        config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
+        return proposalId;
       } else {
         console.log(`✅ Proposal submitted to register chain ${config.CHAIN_NAME} with router (could not extract proposal ID)`);
       }
@@ -209,18 +218,20 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
         `STDOUT:\n${stdout}\n\n` +
         (stderr ? `STDERR:\n${stderr}\n\n` : '') +
         `Timestamp: ${new Date().toISOString()}\n` +
-        (proposalId !== null ? `Proposal ID: ${proposalId}` : 'Could not extract proposal ID')
+        (proposalId !== undefined ? `Proposal ID: ${proposalId}` : 'Could not extract proposal ID')
       );
       console.log(`📄 Command output saved to ${logFilePath}`);
       
-      // Return the proposal ID or throw an error if it couldn't be extracted
-      if (proposalId === null) {
-        throw new Error('Could not extract proposal ID from command output');
-      }
-
-      config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
-      return proposalId;
+      // Return undefined rather than null to match the return type
+      return undefined;
     } catch (error: unknown) {
+      // Check if error indicates gateway is already registered
+      const errorMessage = String(error);
+      if (errorMessage.includes("gateway is already registered")) {
+        console.log(`✅ Chain ${config.CHAIN_NAME} is already registered with router. No new proposal needed.`);
+        return;
+      }
+      
       console.error(`Error submitting register gateway proposal: ${error}`);
       
       // Type guard for error object with stdout/stderr properties
@@ -236,6 +247,8 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
         if (proposalIdMatch) {
           const proposalId = parseInt(proposalIdMatch[1], 10);
           console.log(`📝 Found proposal ID in error output: ${proposalId}`);
+          config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
+          return proposalId;
         }
       }
       
