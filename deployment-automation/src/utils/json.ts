@@ -67,29 +67,6 @@ export function updateNetworkWithChainConfig(): void {
     // Add the chain configuration directly to the chains section
     existingJson.chains[config.CHAIN_NAME!] = chainConfig;
   
-    // Initialize deployments section if it doesn't exist
-    if (!existingJson.deployments) {
-      // Create the deployments section with network default values
-      existingJson.deployments = {
-        default: {
-          GOVERNANCE_ADDRESS: existingJson.axelar?.contracts?.ServiceRegistry?.governanceAccount || "",
-          ADMIN_ADDRESS: existingJson.axelar?.contracts?.ServiceRegistry?.adminAccount || "",
-          SERVICE_NAME: "validators",
-          VOTING_THRESHOLD: JSON.stringify(["6", "10"]),
-          SIGNING_THRESHOLD: JSON.stringify(["6", "10"]),
-          CONFIRMATION_HEIGHT: "1",
-          MINIMUM_ROTATION_DELAY: "0",
-          DEPLOYMENT_TYPE: "create",
-          DEPLOYER: "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          CONTRACT_ADMIN: existingJson.axelar?.contracts?.ServiceRegistry?.governanceAccount || "",
-          PROVER_ADMIN: "amplifier",
-          DEPOSIT_VALUE: "100000000",
-          REWARD_AMOUNT: "1000000",
-
-        }
-      };
-    }
-  
     // Write back the updated JSON
     fs.writeFileSync(networkJsonPath, JSON.stringify(existingJson, null, 2));
     console.log(`✅ Successfully added '${config.CHAIN_NAME}' to ${networkJsonPath}`);
