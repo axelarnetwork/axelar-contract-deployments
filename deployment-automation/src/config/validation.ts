@@ -11,17 +11,17 @@ import { getEnvVar, getRequiredEnvVar, createEnvTemplate } from '../utils/env';
  */
 export function validatePrivateKey(): void {
   try {
-    const privateKey = getRequiredEnvVar('TARGET_CHAIN_PRIVATE_KEY');
+    const privateKey = getRequiredEnvVar('PRIVATE_KEY');
     
     if (!/^0x[0-9a-fA-F]+$/.test(privateKey)) {
       throw new Error("Invalid private key format. Make sure it starts with '0x' and contains only hexadecimal characters (0-9, a-f).");
     }
     
-    config.TARGET_CHAIN_PRIVATE_KEY = privateKey;
+    config.PRIVATE_KEY = privateKey;
     displayMessage(MessageType.SUCCESS, "Valid private key loaded from environment");
   } catch (error) {
     displayMessage(MessageType.ERROR, `Private key validation failed: ${error}`);
-    displayMessage(MessageType.INFO, "Please add a valid TARGET_CHAIN_PRIVATE_KEY to your .env file");
+    displayMessage(MessageType.INFO, "Please add a valid PRIVATE_KEY to your .env file");
     createEnvTemplate();
     throw error;
   }

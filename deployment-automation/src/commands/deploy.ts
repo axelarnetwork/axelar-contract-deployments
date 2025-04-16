@@ -15,11 +15,9 @@ import { deployContracts } from '../contracts/deploy';
 import { updateNetworkWithChainConfig } from '../utils/json';
 import { setupWallet, getTokenDenomination } from '../wallet/setup';
 import { 
-  deployGatewayContract, 
   extractProxyGatewayAddress, 
   extractRouterAddress, 
   extractGatewayAddress,
-  registerChainWithRouter,
   submitChainRegistrationProposal
 } from '../axelar/gateway';
 import { 
@@ -33,10 +31,8 @@ import {
   retrieveVotingVerifierAddress 
 } from '../axelar/verification';
 import { 
-  retrieveRewardsAddress,
-  createRewardPools 
+  retrieveRewardsAddress 
 } from '../axelar/rewards';
-import { saveJsonToFile, loadJsonFromFile } from '../utils/fs';
 import { displayMessage, MessageType } from '../utils/cli-utils';
 import { filterSensitiveData } from '../utils/env';
 import { CONFIG_DIR } from '../../constants';
@@ -51,7 +47,7 @@ export async function runNewDeployment(): Promise<void> {
     
     // Extract the predicted gateway proxy address
     try {
-      const setupOutput = execSync(`node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly -p "${config.TARGET_CHAIN_PRIVATE_KEY}"`, { stdio: 'pipe' }).toString();
+      const setupOutput = execSync(`node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly`, { stdio: 'pipe' }).toString();
       
       // Print output for debugging
       console.log(setupOutput);
@@ -64,8 +60,11 @@ export async function runNewDeployment(): Promise<void> {
     }
     
     // Call the functions to update JSON
+    console.log("⚡ Updating JSON with new chain config vonting verifier...");
     updateVotingVerifierConfig();
+    console.log("⚡ Updating JSON with new chain config multisig...");
     updateMultisigProver();
+
     
     if (isCustomDevnet()) {
       // Setup wallet for custom devnet
@@ -78,6 +77,7 @@ export async function runNewDeployment(): Promise<void> {
       await getTokenDenomination();
     } else {
       try {
+        console.log("⚡ Deploying contracts...");
         await deployContracts();
       } catch (error) {
         console.error(`Error instantiating contracts: ${error}`);
