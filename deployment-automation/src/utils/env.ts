@@ -137,6 +137,8 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'MULTISIG_PROVER_CONTRACT_VERSION',
     'RUN_AS_ACCOUNT',
     'EPOCH_DURATION',
+    'WALLET_ADDRESS',
+    'TOKEN_DENOM'
   ];
   
   

@@ -34,8 +34,11 @@ export async function deployGatewayContract(): Promise<string> {
             console.error(`❌ Address mismatch detected!`);
             console.error(`   Predicted: ${predictedAddress}`);
             console.error(`   Existing:  ${existingAddress}`);
-            console.error("For non-custom devnets, this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
-            throw new Error("Gateway address mismatch detected. Deploy aborted.");
+            if (config.NAMESPACE === "mainnet" || config.NAMESPACE === "testnet" || config.NAMESPACE === "stagenet") {
+                console.error("For mainnet, testnet and stagenet this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
+                throw new Error("Gateway address mismatch detected. Deploy aborted.");
+            }
+            
         }
       }
       
@@ -128,134 +131,138 @@ export function extractGatewayAddress(): void {
 export async function registerChainWithRouter(): Promise<void> {
   const jsonCmdRegister = buildJsonCmdRegister();
   
-  console.log("⚡ Registering the chain...");
   
-  try {
-    await execAsync(`axelard tx wasm execute "${config.ROUTER_ADDRESS}" '${jsonCmdRegister}' \
-      --from ${config.WALLET_ADDRESS || 'amplifier'} \
-      --gas auto \
-      --gas-adjustment 2 \
-      --node "${config.AXELAR_RPC_URL}" \
-      --gas-prices 0.00005${config.TOKEN_DENOM} \
-      --keyring-backend test \
-      --chain-id "${config.NAMESPACE}"`);
-      
-    console.log(`✅ Chain ${config.CHAIN_NAME} successfully registered with router`);
-  } catch (error) {
-    console.error(`Error registering chain: ${error}`);
-    throw error;
-  }
+  
 }
 
 /**
  * Submit a proposal to register a chain with the router
  */
-export async function submitChainRegistrationProposal(): Promise<number> {
+export async function submitChainRegistrationProposal(): Promise<number | void> {
+  console.log("⚡ Registering the chain...");
   const jsonCmdRegister = buildJsonCmdRegister();
-  const command = config.NAMESPACE === "devnet-markus"
-    ? `node ../cosmwasm/submit-proposal.js execute \
-      -c Router \
-      -t "Register Gateway for ${config.CHAIN_NAME}" \
-      -d "Register Gateway address for ${config.CHAIN_NAME} at Router contract" \
-      --runAs ${config.RUN_AS_ACCOUNT} \
-      --deposit ${config.DEPOSIT_VALUE} \
-      --msg '${jsonCmdRegister}' \
-      -e "${config.NAMESPACE}" -y`
-    : `node ../cosmwasm/submit-proposal.js execute \
-      -c Router \
-      -t "Register Gateway for ${config.CHAIN_NAME}" \
-      -d "Register Gateway address for ${config.CHAIN_NAME} at Router contract" \
-      --deposit ${config.DEPOSIT_VALUE} \
-      --msg '${jsonCmdRegister}' \
-      -e "${config.NAMESPACE}" -y`;
-  
-  try {
-    console.log(`Executing command: ${command}`);
-    
-    // Use util.promisify(exec) with stdout and stderr options
-    const { stdout, stderr } = await execAsync(command, { maxBuffer: 1024 * 1024 * 10 }); // 10MB buffer to handle large outputs
-    
-    // Log the complete command output
-    console.log(`\n==== COMMAND OUTPUT START ====`);
-    console.log(stdout);
-    if (stderr) {
-      console.error(`==== STDERR OUTPUT ====`);
-      console.error(stderr);
-    }
-    console.log(`==== COMMAND OUTPUT END ====\n`);
-    
-    // Extract proposal ID from output using regex
-    const proposalIdMatch = stdout.match(/Proposal submitted: (\d+)/);
-    const proposalId = proposalIdMatch ? parseInt(proposalIdMatch[1], 10) : null;
-    
-    if (proposalId !== null) {
-      console.log(`✅ Proposal #${proposalId} submitted to register chain ${config.CHAIN_NAME} with router`);
-    } else {
-      console.log(`✅ Proposal submitted to register chain ${config.CHAIN_NAME} with router (could not extract proposal ID)`);
-    }
-    
-    // Save output to file for record keeping
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const logFilePath = `./logs/proposal-${config.CHAIN_NAME}-${timestamp}.log`;
-    await fs.promises.mkdir('./logs', { recursive: true });
-    await fs.promises.writeFile(logFilePath, 
-      `Command: ${command}\n\n` +
-      `STDOUT:\n${stdout}\n\n` +
-      (stderr ? `STDERR:\n${stderr}\n\n` : '') +
-      `Timestamp: ${new Date().toISOString()}\n` +
-      (proposalId !== null ? `Proposal ID: ${proposalId}` : 'Could not extract proposal ID')
-    );
-    console.log(`📄 Command output saved to ${logFilePath}`);
-    
-    // Return the proposal ID or throw an error if it couldn't be extracted
-    if (proposalId === null) {
-      throw new Error('Could not extract proposal ID from command output');
-    }
-
-    config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
-    return proposalId;
-  } catch (error: unknown) {
-    console.error(`Error submitting register gateway proposal: ${error}`);
-    
-    // Type guard for error object with stdout/stderr properties
-    const execError = error as { stdout?: string; stderr?: string; stack?: string };
-    
-    // If error contains stdout/stderr properties, log them
-    if (execError.stdout) {
-      console.log(`\n==== ERROR STDOUT ====`);
-      console.log(execError.stdout);
-      
-      // Try to extract proposal ID from error output if possible
-      const proposalIdMatch = execError.stdout.match(/Proposal submitted: (\d+)/);
-      if (proposalIdMatch) {
-        const proposalId = parseInt(proposalIdMatch[1], 10);
-        console.log(`📝 Found proposal ID in error output: ${proposalId}`);
-      }
-    }
-    
-    if (execError.stderr) {
-      console.error(`==== ERROR STDERR ====`);
-      console.error(execError.stderr);
-    }
-    
-    // Save error details to file
+  if (isCustomDevnet()) {
     try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const errorLogPath = `./logs/proposal-error-${config.CHAIN_NAME}-${timestamp}.log`;
-      await fs.promises.mkdir('./logs', { recursive: true });
-      await fs.promises.writeFile(errorLogPath, 
-        `Command: ${command}\n\n` +
-        `Error: ${error}\n\n` +
-        (execError.stdout ? `STDOUT:\n${execError.stdout}\n\n` : '') +
-        (execError.stderr ? `STDERR:\n${execError.stderr}\n\n` : '') +
-        (execError.stack ? `Stack: ${execError.stack}\n\n` : '') +
-        `Timestamp: ${new Date().toISOString()}`
-      );
-      console.log(`📄 Error details saved to ${errorLogPath}`);
-    } catch (logError) {
-      console.error(`Failed to save error log: ${logError}`);
+      await execAsync(`axelard tx wasm execute "${config.ROUTER_ADDRESS}" '${jsonCmdRegister}' \
+        --from ${config.WALLET_ADDRESS || 'amplifier'} \
+        --gas auto \
+        --gas-adjustment 2 \
+        --node "${config.AXELAR_RPC_URL}" \
+        --gas-prices 0.00005${config.TOKEN_DENOM} \
+        --keyring-backend test \
+        --chain-id "${config.NAMESPACE}"`);
+        
+      console.log(`✅ Chain ${config.CHAIN_NAME} successfully registered with router`);
+    } catch (error) {
+      console.error(`Error registering chain: ${error}`);
+      throw error;
     }
+  } else {
+      const command = config.NAMESPACE === "devnet-amplifier"
+      ? `node ../cosmwasm/submit-proposal.js execute \
+        -c Router \
+        -t "Register Gateway for ${config.CHAIN_NAME}" \
+        -d "Register Gateway address for ${config.CHAIN_NAME} at Router contract" \
+        --runAs ${config.RUN_AS_ACCOUNT} \
+        --deposit ${config.DEPOSIT_VALUE} \
+        --msg '${jsonCmdRegister}' \
+        -e "${config.NAMESPACE}" -y`
+      : `node ../cosmwasm/submit-proposal.js execute \
+        -c Router \
+        -t "Register Gateway for ${config.CHAIN_NAME}" \
+        -d "Register Gateway address for ${config.CHAIN_NAME} at Router contract" \
+        --deposit ${config.DEPOSIT_VALUE} \
+        --msg '${jsonCmdRegister}' \
+        -e "${config.NAMESPACE}" -y`;
     
-    throw error;
+    try {
+      console.log(`Executing command: ${command}`);
+      
+      // Use util.promisify(exec) with stdout and stderr options
+      const { stdout, stderr } = await execAsync(command, { maxBuffer: 1024 * 1024 * 10 }); // 10MB buffer to handle large outputs
+      
+      // Log the complete command output
+      console.log(`\n==== COMMAND OUTPUT START ====`);
+      console.log(stdout);
+      if (stderr) {
+        console.error(`==== STDERR OUTPUT ====`);
+        console.error(stderr);
+      }
+      console.log(`==== COMMAND OUTPUT END ====\n`);
+      
+      // Extract proposal ID from output using regex
+      const proposalIdMatch = stdout.match(/Proposal submitted: (\d+)/);
+      const proposalId = proposalIdMatch ? parseInt(proposalIdMatch[1], 10) : null;
+      
+      if (proposalId !== null) {
+        console.log(`✅ Proposal #${proposalId} submitted to register chain ${config.CHAIN_NAME} with router`);
+      } else {
+        console.log(`✅ Proposal submitted to register chain ${config.CHAIN_NAME} with router (could not extract proposal ID)`);
+      }
+      
+      // Save output to file for record keeping
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const logFilePath = `./logs/proposal-${config.CHAIN_NAME}-${timestamp}.log`;
+      await fs.promises.mkdir('./logs', { recursive: true });
+      await fs.promises.writeFile(logFilePath, 
+        `Command: ${command}\n\n` +
+        `STDOUT:\n${stdout}\n\n` +
+        (stderr ? `STDERR:\n${stderr}\n\n` : '') +
+        `Timestamp: ${new Date().toISOString()}\n` +
+        (proposalId !== null ? `Proposal ID: ${proposalId}` : 'Could not extract proposal ID')
+      );
+      console.log(`📄 Command output saved to ${logFilePath}`);
+      
+      // Return the proposal ID or throw an error if it couldn't be extracted
+      if (proposalId === null) {
+        throw new Error('Could not extract proposal ID from command output');
+      }
+
+      config.REGISTER_GATEWAY_PROPOSAL_ID = proposalId.toString();
+      return proposalId;
+    } catch (error: unknown) {
+      console.error(`Error submitting register gateway proposal: ${error}`);
+      
+      // Type guard for error object with stdout/stderr properties
+      const execError = error as { stdout?: string; stderr?: string; stack?: string };
+      
+      // If error contains stdout/stderr properties, log them
+      if (execError.stdout) {
+        console.log(`\n==== ERROR STDOUT ====`);
+        console.log(execError.stdout);
+        
+        // Try to extract proposal ID from error output if possible
+        const proposalIdMatch = execError.stdout.match(/Proposal submitted: (\d+)/);
+        if (proposalIdMatch) {
+          const proposalId = parseInt(proposalIdMatch[1], 10);
+          console.log(`📝 Found proposal ID in error output: ${proposalId}`);
+        }
+      }
+      
+      if (execError.stderr) {
+        console.error(`==== ERROR STDERR ====`);
+        console.error(execError.stderr);
+      }
+      
+      // Save error details to file
+      try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const errorLogPath = `./logs/proposal-error-${config.CHAIN_NAME}-${timestamp}.log`;
+        await fs.promises.mkdir('./logs', { recursive: true });
+        await fs.promises.writeFile(errorLogPath, 
+          `Command: ${command}\n\n` +
+          `Error: ${error}\n\n` +
+          (execError.stdout ? `STDOUT:\n${execError.stdout}\n\n` : '') +
+          (execError.stderr ? `STDERR:\n${execError.stderr}\n\n` : '') +
+          (execError.stack ? `Stack: ${execError.stack}\n\n` : '') +
+          `Timestamp: ${new Date().toISOString()}`
+        );
+        console.log(`📄 Error details saved to ${errorLogPath}`);
+      } catch (logError) {
+        console.error(`Failed to save error log: ${logError}`);
+      }
+      
+      throw error;
+    }
   }
 }
