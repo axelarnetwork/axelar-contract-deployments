@@ -12,6 +12,7 @@
   "CONTRACT_ADMIN": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
   "PROVER_ADMIN": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
   "DEPOSIT_VALUE": "100000000",
-  "REWARD_AMOUNT": "1000000uaxl"
+  "REWARD_AMOUNT": "1000000uaxl",
+   "TOKEN_DENOM": "uaxl"
 }
 }

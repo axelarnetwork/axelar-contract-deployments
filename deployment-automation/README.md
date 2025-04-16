@@ -120,7 +120,7 @@ Configuration Options:
 
 ### Deployment Process
 
-The deployment process is split into three distinct stages:
+The deployment process is split into two distinct stages:
 
 1. **Initial Deployment**
    ```bash
@@ -128,13 +128,7 @@ The deployment process is split into three distinct stages:
    ```
    This deploys contracts and registers the chain with Axelar.
 
-2. **After Verifiers Register**
-   ```bash
-   npm start -- --resume-deployment --chain-name mynewchain --verifiers-registered --no-proposals-approved
-   ```
-   This runs after verifiers have registered support for the chain.
-
-3. **After Proposals Are Approved**
+2. **After Verifiers Register and Proposals Are Approved**
    ```bash
    npm start -- --resume-deployment --chain-name mynewchain --verifiers-registered --proposals-approved
    ```

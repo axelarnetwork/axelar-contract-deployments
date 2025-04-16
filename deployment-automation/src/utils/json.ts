@@ -175,9 +175,10 @@ export function updateNetworkWithChainConfig(): void {
           DEPLOYMENT_TYPE: "create",
           DEPLOYER: "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           CONTRACT_ADMIN: existingJson.axelar?.contracts?.ServiceRegistry?.governanceAccount || "",
-          PROVER_ADMIN: existingJson.axelar?.contracts?.ServiceRegistry?.adminAccount || "",
+          PROVER_ADMIN: "amplifier",
           DEPOSIT_VALUE: "100000000",
-          REWARD_AMOUNT: "1000000uamplifier"
+          REWARD_AMOUNT: "1000000",
+
         }
       };
     }

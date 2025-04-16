@@ -3,36 +3,68 @@
  */
 
 import { config } from '../config/environment';
-import { verifyExecution } from '../axelar/verification';
+import { verifyExecution, retrieveVotingVerifierAddress } from '../axelar/verification';
 import { 
   retrieveMultisigAddresses, 
   verifyMultisig, 
   authorizeMultisigProver,
-  createGenesisVerifierSet 
+  createGenesisVerifierSet,
+  registerMultisigProverWithCoordinator 
 } from '../axelar/multisig';
 import { 
-  createRewardPools, 
-  addFundsToRewardPools 
+  retrieveRewardsAddress, 
+  addFundsToRewardPools,
+  createMultisigRewardPool,
+  createVotingVerifierRewardPool 
 } from '../axelar/rewards';
-import { deployGatewayContract } from '../axelar/gateway';
+import { deployGatewayContract, submitChainRegistrationProposal } from '../axelar/gateway';
 import { saveDeploymentConfig } from './deploy';
 import { displayMessage, MessageType } from '../utils/cli-utils';
 
-// DEPRECATED
-/*
-export async function gotoAfterChainRegistration(): Promise<void> {
-    displayMessage(MessageType.INFO, "Continuing deployment after chain registration...");
+
+export async function gotoResubmitProposals(): Promise<void> {
+    displayMessage(MessageType.INFO, "Resubmit Proposals...");
   
     try {
+        // Generate extra envs for next steps needed as part of verifier set
+        try {
+          retrieveRewardsAddress();
+          retrieveMultisigAddresses();
+          retrieveVotingVerifierAddress();
+        } catch (error) {
+          console.error(`Error extracting addresses: ${error}`);
+          throw error;
+        }
+
+        // Capture the proposal ID returned from submitChainRegistrationProposal
+        const registerChainProposalId = await submitChainRegistrationProposal();
+        if (registerChainProposalId) {
+          console.log(`✅ Chain Gateway registration proposal submitted with ID: ${registerChainProposalId}`);
+        }
       
-      // Save updated deployment config
-      saveDeploymentConfig();
-      
-+      displayMessage(MessageType.INFO, "Chain registration and MultisigProver authorization complete.");
-      displayMessage(MessageType.INFO, "The multisig proposals now need to be approved.");
-      displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
-                     config.CHAIN_NAME + " --verifiers-registered --proposals-approved");
-      
+        // Register and authorize MultisigProver
+        const coordinatorProposalId = await registerMultisigProverWithCoordinator();
+        if (coordinatorProposalId) {
+          console.log(`✅ Multisig prover registration proposal submitted with ID: ${coordinatorProposalId}`);
+        }
+          
+        // Authorize multisig prover
+        const multisigProposalId = await authorizeMultisigProver();
+        if (multisigProposalId) {
+          console.log(`✅ Multisig prover authorization proposal submitted with ID: ${multisigProposalId}`);
+        }
+    
+        // create reward pools
+        const multisigRewardProposalId = await createMultisigRewardPool()
+        if (multisigRewardProposalId) {
+          console.log(`✅ Multisig reward pool proposal submitted with ID: ${multisigRewardProposalId}`);
+        }
+    
+        const votingVerifierRewardProposalId = await createVotingVerifierRewardPool()
+        if (votingVerifierRewardProposalId) {
+          console.log(`✅ Multisig reward pool proposal submitted with ID: ${votingVerifierRewardProposalId}`);
+        }
+
       // Explicitly exit the process
       process.exit(0);
     } catch (error) {
@@ -40,7 +72,6 @@ export async function gotoAfterChainRegistration(): Promise<void> {
       process.exit(1);
     }
   }
-*/
 /**
  * Function to handle the state after multisig proposals have been approved
  */
