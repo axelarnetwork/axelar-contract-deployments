@@ -130,7 +130,7 @@ export async function verifyMultisig(): Promise<void> {
 export async function createGenesisVerifierSet(): Promise<void> {
     try {
       await execAsync(`axelard tx wasm execute ${config.MULTISIG_PROVER_ADDRESS} '"update_verifier_set"' \
-        --from ${config.PROVER_ADMIN} \
+        --from amplifier \
         --gas auto \
         --gas-adjustment 2 \
         --node "${config.AXELAR_RPC_URL}" \
@@ -329,8 +329,7 @@ export async function registerMultisigProverWithCoordinator(): Promise<number | 
         --node "${config.AXELAR_RPC_URL}" \
         --gas-prices ${GAS_PRICE_COEFFICIENT}${config.TOKEN_DENOM} \
         --keyring-backend test \
-        --chain-id "${config.NAMESPACE}" \
-        -e "${config.NAMESPACE}"`);
+        --chain-id "${config.NAMESPACE}"`);
         
       console.log(`✅ Multisig prover registered with Coordinator for ${config.CHAIN_NAME}`);
     } catch (error) {

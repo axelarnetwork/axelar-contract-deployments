@@ -17,7 +17,7 @@ export async function deployGatewayContract(): Promise<string> {
     try {
       // First run in predictOnly mode to get the predicted address
       if (!isCustomDevnet()) {
-        const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -p "${config.TARGET_CHAIN_PRIVATE_KEY}" --predictOnly`;
+        const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly`;
       
         console.log("Running prediction command:", predictCmd);
         const predictOutput = execSync(predictCmd, { stdio: 'pipe' }).toString();
@@ -44,7 +44,7 @@ export async function deployGatewayContract(): Promise<string> {
       
       // For custom devnets or if no warnings, proceed with actual deployment
       // Add -y flag to auto-confirm the deployment
-      const deployCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -p "${config.TARGET_CHAIN_PRIVATE_KEY}" -y`;
+      const deployCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -y`;
       
       console.log("Running deployment command:", deployCmd);
       const deployOutput = execSync(deployCmd, { stdio: 'pipe' }).toString();
@@ -145,7 +145,7 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
   if (isCustomDevnet()) {
     try {
       await execAsync(`axelard tx wasm execute "${config.ROUTER_ADDRESS}" '${jsonCmdRegister}' \
-        --from ${config.WALLET_ADDRESS || 'amplifier'} \
+        --from ${config.WALLET_ADDRESS} \
         --gas auto \
         --gas-adjustment 2 \
         --node "${config.AXELAR_RPC_URL}" \
