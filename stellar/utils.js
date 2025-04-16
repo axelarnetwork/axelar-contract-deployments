@@ -152,7 +152,7 @@ async function sendTransaction(tx, server, action, options = {}) {
             throw Error(`Transaction failed: ${getResponse.resultXdr}`);
         }
 
-        // Native payment — don't try to parse sorobanMeta
+        // Native payment — sorobanMeta is not present, so skip parsing.
         if (options.nativePayment) return;
 
         // Make sure the transaction's resultMetaXDR is not empty

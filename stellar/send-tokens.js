@@ -18,7 +18,7 @@ async function processCommand(chain, options) {
     const nativeAssetBalance = await getNativeBalance(chain, wallet.publicKey());
     const totalAmount = amount * recipients.length;
 
-    if (nativeAssetBalance <= totalAmount) {
+    if (nativeAssetBalance < totalAmount) {
         printError(`Wallet balance ${nativeAssetBalance} has insufficient funds for ${totalAmount}.`);
         return;
     }
