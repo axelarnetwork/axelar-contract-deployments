@@ -21,8 +21,8 @@ The automation tool reduces the need for an operator to manually coordinate betw
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourorg/axelar-deployment.git
-   cd axelar-deployment/deployment-automation
+   git clone https://github.com/axelarnetwork/axelar-contract-deployments.git
+   cd axelar-contract-deployments/deployment-automation
    ```
 
 2. Install dependencies:
@@ -60,7 +60,7 @@ AXELAR_RPC_URL=http://k8s-devnetma-coresent-f604372d89-fc213dff8d4139da.elb.us-e
 NAMESPACE=devnet-markus
 
 # Sensitive Data (KEEP SECURE!)
-TARGET_CHAIN_PRIVATE_KEY=0xYourPrivateKeyHere
+PRIVATE_KEY=0xYourPrivateKeyHere
 MNEMONIC="your twelve to twenty four word mnemonic phrase here"
 
 # Optional Configuration
@@ -70,13 +70,15 @@ SIGNING_THRESHOLD=["6", "10"]
 CONFIRMATION_HEIGHT=1
 MINIMUM_ROTATION_DELAY=0
 DEPLOYMENT_TYPE=create
-CONTRACT_VERSION=2.0.0
+VOTING_VERIFIER_CONTRACT_VERSION=1.1.0
+GATEWAY_CONTRACT_VERSION=1.1.1
+MULTISIG_PROVER_CONTRACT_VERSION=1.1.1
 ```
 
 **Important**: If you have environment variables already set in your shell that might conflict with those in your `.env` file, run the tool using:
 
 ```bash
-env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
+env -u MNEMONIC -u PRIVATE_KEY npm start
 ```
 
 ## Usage
@@ -124,9 +126,9 @@ The deployment process is split into two distinct stages:
 
 1. **Initial Deployment**
    ```bash
-   npm start -- --new-deployment --namespace devnet-user --chain-name mynewchain
+   npm start -- --new-deployment
    ```
-   This deploys contracts and registers the chain with Axelar.
+   This instantiates contracts and submits proposals to register chain with Axelar, authorize multisig prover, and create reward pools.
 
 2. **After Verifiers Register and Proposals Are Approved**
    ```bash
@@ -141,13 +143,14 @@ The tool has built-in error handling for common scenarios:
 - **Reward Pools Already Exist**: Automatically detected and handled
 - **Verifier Set Not Changed**: Automatically detected and handled
 - **Gateway Address Mismatch**: Throws error on production networks, continues on custom devnets
+- **Gateway Already Registered**: Continues deployment if proposal for registering chain on gateway is already approved
 
 ### Stopping Points
 
 The deployment process has predetermined stopping points that require external actions:
 
-1. **After Initial Deployment**: Verifiers need to register support
-2. **After Verifier Registration**: Multisig proposals need approval
+1. **After Initial Deployment**: Verifiers need to register support and proposals need to be voted on and approved
+2. **After Verifier Registration**: In case proposals expire they can be resubmitted
 3. **After Proposal Approval**: Final deployment steps
 
 At each stopping point, the tool will print clear instructions for the next command to run.
@@ -163,67 +166,11 @@ Deployment configurations are stored within the network's JSON file:
 
 ## CI/CD Integration
 
-Example GitHub Actions workflow:
-
-```yaml
-name: Deploy Chain
-
-on:
-  workflow_dispatch:
-    inputs:
-      namespace:
-        description: 'Network namespace'
-        required: true
-      chain_name:
-        description: 'Chain name'
-        required: true
-      stage:
-        description: 'Deployment stage'
-        required: true
-        type: choice
-        options:
-          - initial
-          - after_verifiers
-          - final
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          
-      - name: Install dependencies
-        run: npm install
-        
-      - name: Build project
-        run: npm run build
-        
-      - name: Deploy - Initial Stage
-        if: github.event.inputs.stage == 'initial'
-        run: npm start -- --new-deployment --namespace ${{ github.event.inputs.namespace }} --chain-name ${{ github.event.inputs.chain_name }}
-        env:
-          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
-          MNEMONIC: ${{ secrets.MNEMONIC }}
-          
-      - name: Deploy - After Verifiers
-        if: github.event.inputs.stage == 'after_verifiers'
-        run: npm start -- --resume-deployment --chain-name ${{ github.event.inputs.chain_name }} --verifiers-registered --no-proposals-approved
-        env:
-          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
-          MNEMONIC: ${{ secrets.MNEMONIC }}
-          
-      - name: Deploy - Final Stage
-        if: github.event.inputs.stage == 'final'
-        run: npm start -- --resume-deployment --chain-name ${{ github.event.inputs.chain_name }} --verifiers-registered --proposals-approved
-        env:
-          TARGET_CHAIN_PRIVATE_KEY: ${{ secrets.TARGET_CHAIN_PRIVATE_KEY }}
-          MNEMONIC: ${{ secrets.MNEMONIC }}
-```
+Example GitHub Actions workflow that we want to achieve
+1. Execute voting on submited proposals for devnet, testnet, stagenet
+2. After initial deployment utilize generated configs to create PR or directly update infrastructure repo to update verifier set
+3. Register the ampd support for chain
+4. Config updates on the axelar-deployment-contracts repo for the axelar-chains-config needs to be commited to repository
 
 ## Security Considerations
 
@@ -243,7 +190,7 @@ If you encounter issues:
 
 2. Run the tool with explicitly unset variables:
    ```bash
-   env -u MNEMONIC -u TARGET_CHAIN_PRIVATE_KEY npm start
+   env -u MNEMONIC -u PRIVATE_KEY npm start
    ```
 
 3. For gateway deployment issues on non-custom networks, ensure the predicted address matches existing deployments by checking the salt, contract bytecode, and deployer address.
