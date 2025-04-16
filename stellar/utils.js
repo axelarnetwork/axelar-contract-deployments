@@ -152,6 +152,9 @@ async function sendTransaction(tx, server, action, options = {}) {
             throw Error(`Transaction failed: ${getResponse.resultXdr}`);
         }
 
+        // Native payment — don't try to parse sorobanMeta
+        if (options.nativePayment) return;
+
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
         if (!getResponse.resultMetaXdr) {
@@ -174,6 +177,12 @@ async function sendTransaction(tx, server, action, options = {}) {
 
 async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+
+    if (options.nativePayment) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        tx.sign(wallet);
+        return sendTransaction(tx, server, action, options);
+    }
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -239,6 +248,13 @@ async function getBalances(horizonServer, address) {
             throw error;
         });
     return response.balances;
+}
+
+async function getNativeBalance(chain, address) {
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+    const balances = await getBalances(horizonServer, address);
+    const native = balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE);
+    return native ? parseFloat(native.balance) : 0;
 }
 
 async function estimateCost(tx, server) {
@@ -559,6 +575,7 @@ module.exports = {
     getNewSigners,
     serializeValue,
     getBalances,
+    getNativeBalance,
     createAuthorizedFunc,
     addressToScVal,
     hexToScVal,
