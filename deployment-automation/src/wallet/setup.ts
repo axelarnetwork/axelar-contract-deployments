@@ -66,7 +66,7 @@ export async function setupWallet(): Promise<void> {
  * Function to determine the token denomination
  */
 export async function getTokenDenomination(): Promise<void> {
-  console.log("⚡ Querying wallet balance to determine token denomination...");
+  console.log(`⚡ Querying wallet balance for ${config.WALLET_ADDRESS} and to determine token denomination...`);
 
   try {
     const balanceOutput = execSync(`axelard q bank balances "${config.WALLET_ADDRESS}" --node "${config.AXELAR_RPC_URL}"`, { stdio: 'pipe' }).toString();

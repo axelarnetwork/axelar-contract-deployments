@@ -11,7 +11,7 @@ export interface EnvironmentConfig {
   CHAIN_ID?: string;
   TOKEN_SYMBOL?: string;
   GAS_LIMIT?: string;
-  TARGET_CHAIN_PRIVATE_KEY?: string;
+  PRIVATE_KEY?: string;
   RPC_URL?: string;
   AXELAR_RPC_URL?: string;
   MNEMONIC?: string;
