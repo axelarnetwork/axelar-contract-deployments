@@ -34,6 +34,7 @@
     "typescript": "^5.0.0"
   },
   "exports": {
+    "./event-utils": "./dist/event-utils/src/index.js",
     "./executable": "./dist/executable/src/index.js",
     "./its": "./dist/axelar-solana-its/src/index.js",
     "./anchor/its": "./dist/generated/axelar-solana-its/src/index.js",

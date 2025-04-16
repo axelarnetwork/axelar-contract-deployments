@@ -90,7 +90,11 @@ pub(crate) fn process_inbound_transfer<'a>(
         token_id: token_manager.token_id,
         source_chain,
         source_address: payload.source_address.to_vec(),
-        destination_address: *parsed_accounts.destination_account.key,
+        destination_address: *parsed_accounts
+            .program_ata
+            .map_or(parsed_accounts.destination_account.key, |account| {
+                account.key
+            }),
         amount: converted_amount,
         data_hash: if payload.data.is_empty() {
             [0; 32]

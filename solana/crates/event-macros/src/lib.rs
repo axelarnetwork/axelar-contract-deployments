@@ -227,7 +227,6 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
 
              let segments: Result<Vec<Vec<u8>>, _> = data_part
                  .split(' ')
-                 .filter(|s| !s.is_empty())
                  .map(|s| ::event_utils::base64::engine::general_purpose::STANDARD.decode(s))
                  .collect();
 

@@ -117,8 +117,6 @@ pub(crate) fn process_deploy<'a>(
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
     let parsed_accounts =
         DeployInterchainTokenAccounts::from_account_info_slice(other_accounts, &())?;
-    let token_address = *parsed_accounts.token_mint.key;
-    let minter = parsed_accounts.minter.map(|account| *account.key);
     if initial_supply.is_zero() && parsed_accounts.minter.is_none() {
         return Err(ProgramError::InvalidArgument);
     }
@@ -134,21 +132,11 @@ pub(crate) fn process_deploy<'a>(
         payer,
         parsed_accounts,
         token_id,
-        name.clone(),
-        symbol.clone(),
-        decimals,
-        initial_supply,
-    )?;
-
-    crate::event::InterchainTokenDeployed {
-        token_id,
-        token_address,
-        minter: minter.unwrap_or_default(),
         name,
         symbol,
         decimals,
-    }
-    .emit();
+        initial_supply,
+    )?;
 
     set_return_data(&token_id);
 
@@ -199,8 +187,8 @@ pub(crate) fn process_inbound_deploy<'a>(
         payer,
         &accounts,
         &token_id,
-        name,
-        symbol,
+        name.clone(),
+        symbol.clone(),
         String::new(),
         token_manager_pda_bump,
     )?;
@@ -248,6 +236,19 @@ pub(crate) fn process_inbound_deploy<'a>(
         &deploy_token_manager,
         token_manager_pda_bump,
     )?;
+
+    event::InterchainTokenDeployed {
+        token_id,
+        token_address: *deploy_token_manager_accounts.token_mint.key,
+        minter: deploy_token_manager_accounts
+            .operator
+            .map(|account| *account.key)
+            .unwrap_or_default(),
+        name,
+        symbol,
+        decimals,
+    }
+    .emit();
 
     Ok(())
 }
