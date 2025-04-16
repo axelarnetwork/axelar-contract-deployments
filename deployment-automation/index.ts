@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { config } from './src/config/environment';
-import { getNetworkName, handleCustomDevnet } from './src/config/network';
+import { handleCustomDevnet } from './src/config/network';
 import { 
   validatePrivateKey, 
   validateRpcUrl, 

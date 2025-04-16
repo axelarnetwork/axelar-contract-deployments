@@ -1,18 +1,113 @@
 {
-  "default":{
-  "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-  "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-  "SERVICE_NAME": "validators",
-  "VOTING_THRESHOLD": ["6", "10"],
-  "SIGNING_THRESHOLD": ["6", "10"],
-  "CONFIRMATION_HEIGHT": "1",
-  "MINIMUM_ROTATION_DELAY": "0",
-  "DEPLOYMENT_TYPE": "create3",
-  "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-  "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-  "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-  "DEPOSIT_VALUE": "100000000",
-  "REWARD_AMOUNT": "1000000",
-  "TOKEN_DENOM": "uamplifier"
-}
+  "deployments": {
+    "default": {
+      "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "SERVICE_NAME": "validators",
+      "VOTING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "SIGNING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "0",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000",
+      "TOKEN_DENOM": "uamplifier",
+      "RUN_AS_ACCOUNT": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "EPOCH_DURATION": "3600",
+      "WALLET_ADDRESS": "devnet-amplifier"
+    },
+    "avaxtest5": {
+      "NAMESPACE": "devnet-amplifier",
+      "CHAIN_NAME": "avaxtest5",
+      "CHAIN_ID": "43113",
+      "TOKEN_SYMBOL": "AVAX",
+      "GAS_LIMIT": "15000000",
+      "RPC_URL": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "AXELAR_RPC_URL": "http://devnet-amplifier.axelar.dev:26657",
+      "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "SERVICE_NAME": "validators",
+      "VOTING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "SIGNING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "0",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000",
+      "TOKEN_DENOM": "uamplifier",
+      "PROXY_GATEWAY_ADDRESS": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+      "ROUTER_ADDRESS": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
+      "GATEWAY_ADDRESS": "axelar1utmhrln29wj95fu0nnkm00gdrt5pdhzjju6pz525fm4693rjwdysumyugd",
+      "MULTISIG_ADDRESS": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
+      "MULTISIG_PROVER_ADDRESS": "axelar1fkfnqnsrkdzqggyyj2jqlxkw7agfnu642jgk5vd9wgfevt7cza5sy3wte4",
+      "VOTING_VERIFIER_ADDRESS": "axelar1vdz2a5jxreg3u4fznflzr6emtkulxgmwsas7amvpgjkd5kg4s00sdq6n78",
+      "REWARDS_ADDRESS": "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l",
+      "COORDINATOR_ADDRESS": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
+      "REGISTER_GATEWAY_PROPOSAL_ID": "141",
+      "REGISTER_MULTISIG_PROVER_COORDINATOR_PROPOSAL_ID": "142",
+      "AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID": "143",
+      "CREATE_VOTING_VERIFIER_REWARD_POOL_PROPOSAL_ID": "145",
+      "CREATE_MULTISIG_REWARD_POOL_PROPOSAL_ID": "144"
+    },
+    "avaxtest6": {
+      "NAMESPACE": "devnet-amplifier",
+      "CHAIN_NAME": "avaxtest6",
+      "CHAIN_ID": "43113",
+      "TOKEN_SYMBOL": "AVAX",
+      "GAS_LIMIT": "15000000",
+      "RPC_URL": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "AXELAR_RPC_URL": "http://devnet-amplifier.axelar.dev:26657",
+      "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "SERVICE_NAME": "validators",
+      "VOTING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "SIGNING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "0",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000",
+      "TOKEN_DENOM": "uamplifier",
+      "PROXY_GATEWAY_ADDRESS": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+      "ROUTER_ADDRESS": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
+      "GATEWAY_ADDRESS": "axelar1lcgl3rape7m0uthd3k7n3c5yr5mtsvqueq4cfx49cyzze8436ceq63uj0r",
+      "MULTISIG_ADDRESS": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
+      "MULTISIG_PROVER_ADDRESS": "axelar14yry2pjyqnm5xz0vwwwuazgkwup5q3emr396ukwpmm4jnladmznq8fhmrw",
+      "VOTING_VERIFIER_ADDRESS": "axelar1g4j02s3nvgez022uz0wkzyy4pefwudfm99n3ngwt0udfln5g94gqn86crw",
+      "REWARDS_ADDRESS": "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l",
+      "COORDINATOR_ADDRESS": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
+      "REGISTER_GATEWAY_PROPOSAL_ID": "146",
+      "REGISTER_MULTISIG_PROVER_COORDINATOR_PROPOSAL_ID": "147",
+      "AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID": "148",
+      "CREATE_VOTING_VERIFIER_REWARD_POOL_PROPOSAL_ID": "150",
+      "CREATE_MULTISIG_REWARD_POOL_PROPOSAL_ID": "149"
+    }
+  }
 }

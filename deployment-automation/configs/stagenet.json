@@ -1,18 +1,21 @@
 {
-  "default":{
-  "GOVERNANCE_ADDRESS": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-  "ADMIN_ADDRESS": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-  "SERVICE_NAME": "amplifier",
-  "VOTING_THRESHOLD": ["51", "100"],
-  "SIGNING_THRESHOLD": ["51", "100"],
-  "CONFIRMATION_HEIGHT": "1",
-  "MINIMUM_ROTATION_DELAY": "300",
-  "DEPLOYMENT_TYPE": "create3",
-  "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-  "CONTRACT_ADMIN": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-  "PROVER_ADMIN": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-  "DEPOSIT_VALUE": "100000000",
-  "REWARD_AMOUNT": "1000000uaxl",
-   "TOKEN_DENOM": "uaxl"
-}
+  "deployments": {
+    "default":{
+      "GOVERNANCE_ADDRESS": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "ADMIN_ADDRESS": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+      "SERVICE_NAME": "amplifier",
+      "VOTING_THRESHOLD": ["51", "100"],
+      "SIGNING_THRESHOLD": ["51", "100"],
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "300",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
+      "PROVER_ADMIN": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000",
+      "TOKEN_DENOM": "uaxl",
+      "EPOCH_DURATION": "600"
+    }
+  }
 }

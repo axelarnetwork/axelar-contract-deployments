@@ -6,7 +6,6 @@ import * as fs from 'fs';
 import { WASM_DIR } from '../../constants';
 import { config } from '../config/environment';
 import { isCustomDevnet } from '../config/network';
-import { ContractFile } from './types';
 import { execAsync } from '../utils/exec';
 
 /**
@@ -100,18 +99,42 @@ export async function deployContracts(): Promise<void> {
       throw error;
     }
   } else {
-    // Non-custom devnet logic
-    try {
-      console.log("⚡ Instantiate contracts...");
-      console.log("⚡ Instantiate VotingVerifier Contract...");
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
-      console.log("⚡ Instantiate Gateway Contract...");
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
-      console.log("⚡ Instantiate MultisigProver Contract...");
-      await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
-    } catch (error) {
-      console.error(`Error instantiating contracts: ${error}`);
-      throw error;
+    console.log("⚡ Instantiating contracts...");
+    const contractsToInstantiate = [
+      "VotingVerifier",
+      "Gateway",
+      "MultisigProver"
+    ];
+
+    // Instantiate each contract
+    for (const contractName of contractsToInstantiate) {
+      await instantiateContract(contractName);
+    }
+    
+    console.log("✅ Contract instantiation process completed");
+  }
+}
+
+/**
+ * Function to instantiate a single contract
+ */
+async function instantiateContract(contractName: string): Promise<void> {
+  console.log(`⚡ Instantiate ${contractName} Contract...`);
+  try {
+    await execAsync(`node ./../cosmwasm/deploy-contract.js instantiate -c ${contractName} --fetchCodeId --instantiate2 --admin ${config.CONTRACT_ADMIN} -n ${config.CHAIN_NAME} -e ${config.NAMESPACE} -y`);
+    console.log(`✅ Successfully instantiated ${contractName} contract`);
+  } catch (error: unknown) {
+    // Type guard for the error
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : String(error);
+    
+    // Check if this is a "duplicate instance" error
+    if (errorMessage.includes("instance with this code id, sender and label exists")) {
+      console.log(`ℹ️ ${contractName} contract already instantiated, skipping...`);
+    } else {
+      console.error(`❌ Error instantiating ${contractName}: ${errorMessage}`);
+      throw error; // Re-throw if it's not a duplicate error
     }
   }
 }

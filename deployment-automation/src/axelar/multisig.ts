@@ -10,7 +10,7 @@ import { isCustomDevnet } from '../config/network';
 import { GAS_PRICE_COEFFICIENT } from '../../constants';
 
 /**
- * Function to update the namespace JSON file with MultisigProver contract
+ * Function to update MultisigProver inside axelar.contracts in JSON config
  */
 export function updateMultisigProver(): void {
   const namespaceJsonPath = `../axelar-chains-config/info/${config.NAMESPACE}.json`;
@@ -36,13 +36,46 @@ export function updateMultisigProver(): void {
     throw new Error(`Chain '${config.CHAIN_NAME}' already exists under 'MultisigProver'`);
   }
 
+  // Handle signing threshold parsing properly
+  let signingThreshold = ["6", "10"]; // Default value
+  
+  if (config.SIGNING_THRESHOLD) {
+    try {
+      // If it's already an array, use it directly
+      if (Array.isArray(config.SIGNING_THRESHOLD)) {
+        signingThreshold = config.SIGNING_THRESHOLD;
+      } 
+      // If it's a string representation of an array
+      else if (typeof config.SIGNING_THRESHOLD === 'string') {
+        // Check if the string starts with [ and ends with ]
+        if (config.SIGNING_THRESHOLD.trim().startsWith('[') && config.SIGNING_THRESHOLD.trim().endsWith(']')) {
+          signingThreshold = JSON.parse(config.SIGNING_THRESHOLD);
+        } 
+        // If it's a comma-separated string like "6,10"
+        else if (config.SIGNING_THRESHOLD.includes(',')) {
+          signingThreshold = config.SIGNING_THRESHOLD.split(',').map(item => item.trim());
+        }
+        // If it's just a single value like "6"
+        else {
+          console.log(`⚠️ SIGNING_THRESHOLD is a single value: ${config.SIGNING_THRESHOLD}. Using ["${config.SIGNING_THRESHOLD}", "10"]`);
+          signingThreshold = [config.SIGNING_THRESHOLD, "10"];
+        }
+      }
+    } catch (error) {
+      console.error(`Error parsing SIGNING_THRESHOLD (${config.SIGNING_THRESHOLD}): ${error}`);
+      console.log(`⚠️ Using default SIGNING_THRESHOLD: ${JSON.stringify(signingThreshold)}`);
+    }
+  }
+  
+  console.log(`✅ Using SIGNING_THRESHOLD: ${JSON.stringify(signingThreshold)}`);
+
   // Create the new chain entry with updated environment variables
   const newMultisigProverEntry = {
     governanceAddress: config.GOVERNANCE_ADDRESS,
     adminAddress: config.ADMIN_ADDRESS,
     destinationChainID: config.CHAIN_ID,
-    signingThreshold: JSON.parse(config.SIGNING_THRESHOLD!),
-    serviceName: config.SERVICE_NAME,
+    signingThreshold: signingThreshold,
+    serviceName: config.SERVICE_NAME || "validators",
     verifierSetDiffThreshold: 0,
     encoder: "abi",
     keyType: "ecdsa"
@@ -57,7 +90,7 @@ export function updateMultisigProver(): void {
 
   // Confirm the new entry was added
   console.log("🔍 Verifying the new MultisigProver entry...");
-  console.log(JSON.stringify(existingJson.axelar.contracts.MultisigProver, null, 2));
+  console.log(JSON.stringify(existingJson.axelar.contracts.MultisigProver[config.CHAIN_NAME!], null, 2));
 }
 
 /**

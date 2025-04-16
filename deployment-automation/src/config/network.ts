@@ -39,58 +39,6 @@ export function loadNetworkConfig(network: string): void {
 }
 
 /**
- * Function to get the network name from user input
- */
-export async function getNetworkName(): Promise<void> {
-  console.log("Select a network:");
-  console.log("1) mainnet");
-  console.log("2) testnet");
-  console.log("3) stagenet");
-  console.log("4) devnet-amplifier");
-  console.log("5) Custom devnet (e.g., devnet-user)");
-  
-  while (true) {
-    const choice = await question("Enter your choice (1-5): ");
-    switch (choice) {
-      case '1': 
-        config.NAMESPACE = "mainnet"; 
-        // Load network configuration
-        loadNetworkConfig("mainnet");
-        return;
-      case '2': 
-        config.NAMESPACE = "testnet"; 
-        // Load network configuration
-        loadNetworkConfig("testnet");
-        return;
-      case '3': 
-        config.NAMESPACE = "stagenet"; 
-        // Load network configuration
-        loadNetworkConfig("stagenet");
-        return;
-      case '4': 
-        config.NAMESPACE = "devnet-amplifier"; 
-        // Load network configuration
-        loadNetworkConfig("devnet-amplifier");
-        return;
-      case '5': 
-        const customName = await question("Enter your custom devnet name (e.g., devnet-user): ");
-        config.NAMESPACE = customName;
-        
-        // Check if configuration exists for this custom network
-        if (fs.existsSync(path.join(CONFIG_DIR, `${customName}.json`))) {
-          loadNetworkConfig(customName);
-        } else {
-          console.log(`⚠️ No configuration found for ${customName}. Using default values.`);
-        }
-        return;
-      default: 
-        console.log("❌ Invalid choice. Please select 1, 2, 3, 4 or 5.");
-        break;
-    }
-  }
-}
-
-/**
  * Function to check if the network is a custom devnet
  */
 export function isCustomDevnet(): boolean {
