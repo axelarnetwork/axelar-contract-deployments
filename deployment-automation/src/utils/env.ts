@@ -14,12 +14,19 @@ dotenv.config();
  * Sensitive environment variable keys that should not be logged or saved in config files
  */
 export const SENSITIVE_ENV_KEYS = [
-  'TARGET_CHAIN_PRIVATE_KEY',
-  'MNEMONIC',
   'PRIVATE_KEY',
+  'MNEMONIC',
   'SECRET_KEY',
   'PASSWORD'
 ];
+
+/**
+ * Map of environment variable aliases
+ * Keys are the primary names, values are the aliases
+ */
+export const ENV_VAR_ALIASES: Record<string, string[]> = {
+  // No aliases needed as we're standardizing on PRIVATE_KEY
+};
 
 /**
  * Get an environment variable with an optional fallback value
@@ -86,8 +93,11 @@ GAS_LIMIT=
 RPC_URL=
 AXELAR_RPC_URL=
 
+# Environment Namespace (used to load config file)
+ENV_NAMESPACE=
+
 # Sensitive Data (keep secure!)
-TARGET_CHAIN_PRIVATE_KEY=
+PRIVATE_KEY=
 MNEMONIC=
 
 # Optional Configuration
@@ -107,9 +117,65 @@ DEPLOYMENT_TYPE=
 }
 
 /**
+ * Load configuration from a JSON file based on environment namespace
+ */
+export function loadConfigFromFile(envNamespace: string): Record<string, any> {
+  try {
+    const configPath = path.resolve(process.cwd(), `configs/${envNamespace}.json`);
+    
+    if (!fs.existsSync(configPath)) {
+      displayMessage(
+        MessageType.WARNING, 
+        `Configuration file for environment ${envNamespace} not found: ${configPath}`
+      );
+      return {};
+    }
+
+    const configContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configContent);
+    
+    // Extract default deployment values
+    if (config.deployments && config.deployments.default) {
+      displayMessage(
+        MessageType.INFO, 
+        `Loaded configuration for environment: ${envNamespace}`
+      );
+      return config.deployments.default;
+    } else {
+      displayMessage(
+        MessageType.WARNING, 
+        `No default deployment configuration found in ${configPath}`
+      );
+      return {};
+    }
+  } catch (error) {
+    displayMessage(
+      MessageType.ERROR, 
+      `Failed to load configuration file: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return {};
+  }
+}
+
+/**
  * Load environment variables into the config
  */
 export function loadEnvVarsIntoConfig(config: any): void {
+  // Check if we have an environment namespace specified
+  const envNamespace = getEnvVar('ENV_NAMESPACE');
+  
+  // If we have an environment namespace, load config from the corresponding file
+  if (envNamespace) {
+    const fileConfig = loadConfigFromFile(envNamespace);
+    
+    // Merge file config into the main config
+    Object.assign(config, fileConfig);
+    displayMessage(
+      MessageType.INFO, 
+      `Loaded configuration from configs/${envNamespace}.json`
+    );
+  }
+  
   // List of environment variables to check
   const envVarKeys = [
     'NAMESPACE',
@@ -117,7 +183,7 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'CHAIN_ID',
     'TOKEN_SYMBOL',
     'GAS_LIMIT',
-    'TARGET_CHAIN_PRIVATE_KEY',
+    'PRIVATE_KEY',
     'RPC_URL',
     'AXELAR_RPC_URL',
     'MNEMONIC',
@@ -138,10 +204,12 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'RUN_AS_ACCOUNT',
     'EPOCH_DURATION',
     'WALLET_ADDRESS',
-    'TOKEN_DENOM'
+    'TOKEN_DENOM',
+    'DEPOSIT_VALUE',
+    'REWARD_AMOUNT'
   ];
   
-  
+  // Environment variables take precedence over file config
   for (const key of envVarKeys) {
     const value = getEnvVar(key);
     if (value !== undefined) {

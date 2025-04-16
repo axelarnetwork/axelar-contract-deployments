@@ -942,6 +942,81 @@
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
       }
+    },
+    "avaxtest2": {
+      "name": "avaxtest2",
+      "id": "43113",
+      "axelarId": "avaxtest2",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest3": {
+      "name": "avaxtest3",
+      "id": "43113",
+      "axelarId": "avaxtest3",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest4": {
+      "name": "avaxtest4",
+      "id": "43113",
+      "axelarId": "avaxtest4",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest5": {
+      "name": "avaxtest5",
+      "id": "43113",
+      "axelarId": "avaxtest5",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest6": {
+      "name": "avaxtest6",
+      "id": "43113",
+      "axelarId": "avaxtest6",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -1129,8 +1204,81 @@
           "codeId": 854,
           "address": "axelar1w78434ta3l83fstf743xh9v5vkh4k203x2rh7l6w093n4s4vzv0suz09g3"
         },
-        "storeCodeProposalId": "78",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
+        "storeCodeProposalId": "79",
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
+        "avaxtest2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55"
+        },
+        "avaxtest3": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1cfsv2wuv465w0pmqf4hc6lgzlsnq7a9cplf95d9jkhv6vxq7fglq5wjdx9"
+        },
+        "avaxtest4": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1sds70skdj4znyt35l6mtd7fht8wnfsy85ht8tsyve5ru92ugpvpsckeapl"
+        },
+        "avaxtest5": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1vdz2a5jxreg3u4fznflzr6emtkulxgmwsas7amvpgjkd5kg4s00sdq6n78"
+        },
+        "avaxtest6": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1g4j02s3nvgez022uz0wkzyy4pefwudfm99n3ngwt0udfln5g94gqn86crw"
+        }
       },
       "Gateway": {
         "avalanche-fuji": {
@@ -1159,6 +1307,22 @@
         "stellar-2025-q1": {
           "codeId": 848,
           "address": "axelar1tatg2n9gsq6vkkafm6pv8hsunr236wgdk4gdc7lw0hs2e3cnspmsw75rld"
+        },
+        "avaxtest3": {
+          "codeId": 848,
+          "address": "axelar1cpwh6wjfjxvx5gmzn5ej32ttpfeujqjzecg8ynlsvsuqltzsgm8sstshpd"
+        },
+        "avaxtest4": {
+          "codeId": 848,
+          "address": "axelar1ym0zfpfrdqpeclz763wtwez9uah0ggz6lyp9u7u9u8t8vshchp0qhugkj6"
+        },
+        "avaxtest5": {
+          "codeId": 848,
+          "address": "axelar1utmhrln29wj95fu0nnkm00gdrt5pdhzjju6pz525fm4693rjwdysumyugd"
+        },
+        "avaxtest6": {
+          "codeId": 848,
+          "address": "axelar1lcgl3rape7m0uthd3k7n3c5yr5mtsvqueq4cfx49cyzze8436ceq63uj0r"
         }
       },
       "MultisigProver": {
@@ -1257,8 +1421,85 @@
           "domainSeparator": "0x9b90841c0ee97f5016eab9cba092490f454c896916d5f0470bea8f7fb650762d",
           "address": "axelar1lgtcv0lfxwaz2prmea2y73lespr3mnwkfjv9kr0q6j7qhvhvwx6s54cesj"
         },
-        "storeCodeProposalId": "82",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+        "storeCodeProposalId": "83",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
+        "avaxtest2": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa"
+        },
+        "avaxtest3": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x3df95b8f4308361ebc655de5272857d282f5e9a5f7244aba6029513992ac04b1",
+          "address": "axelar1rxkt5hc5wkd50pykurlmc36w2r0ea34e67jpdzlmr7g5t09l06asfgla0s"
+        },
+        "avaxtest4": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x1132d2aae038ed10fc22e3b755103568f516c13d90bfa3d6cc54e7d9e376ff44",
+          "address": "axelar1hccf96tq9hh0p22zrspx2kgpzuvrzz7t5cv4lvgn2w7fyg6e8zlsj6tj29"
+        },
+        "avaxtest5": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xdabbf341e4d2089bad1308646fe07fd31474b631a79446c5ddee3248cc906289",
+          "address": "axelar1fkfnqnsrkdzqggyyj2jqlxkw7agfnu642jgk5vd9wgfevt7cza5sy3wte4"
+        },
+        "avaxtest6": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x59997c256c883a6d49ba1744b486930a792e4549be9123450725d93d4405f092",
+          "address": "axelar14yry2pjyqnm5xz0vwwwuazgkwup5q3emr396ukwpmm4jnladmznq8fhmrw"
+        }
       }
     },
     "axelarId": "axelar",
@@ -1269,5 +1510,22 @@
     "tokenSymbol": "AMPLIFIER",
     "gasPrice": "0.00005uamplifier",
     "gasLimit": "auto"
+  },
+  "deployments": {
+    "default": {
+      "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "ADMIN_ADDRESS": "",
+      "SERVICE_NAME": "validators",
+      "VOTING_THRESHOLD": "[\"6\",\"10\"]",
+      "SIGNING_THRESHOLD": "[\"6\",\"10\"]",
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "0",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "PROVER_ADMIN": "amplifier",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000"
+    }
   }
 }
