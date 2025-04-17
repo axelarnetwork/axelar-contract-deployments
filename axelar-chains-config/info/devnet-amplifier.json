@@ -942,6 +942,75 @@
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
       }
+    },
+    "avaxtest11": {
+      "name": "avaxtest11",
+      "id": "43113",
+      "axelarId": "avaxtest11",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {},
+        "ConstAddressDeployer": {
+          "address": "0x2d2BBA05D0dFA808Fb42492337d2F9136bA0f201",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6449eb4C0485F920279e66937b706a61ca82aAB5",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x439B64c11cFbD4FE05633751450ADe10F78da7c5",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        }
+      }
+    },
+    "avaxtest12": {
+      "name": "avaxtest12",
+      "id": "43113",
+      "axelarId": "avaxtest12",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
+      "contracts": {
+        "AxelarGateway": {},
+        "ConstAddressDeployer": {
+          "address": "0x1ab894cA206ae403b6fc7C1488cff4F8DA69b3e2",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x2a12242E14225Ff2e608D80529a86880Ca5188a0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        }
+      }
     }
   },
   "axelar": {
@@ -1130,7 +1199,37 @@
           "address": "axelar1w78434ta3l83fstf743xh9v5vkh4k203x2rh7l6w093n4s4vzv0suz09g3"
         },
         "storeCodeProposalId": "78",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
+        "avaxtest11": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x3359bB73Ba27237234fDe4646c750304aD98b412",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1s3dyaexc98fl95t4dq4uuj9704ezxkt2q5vdy9j8pfjahxjrrxssja4ys6"
+        },
+        "avaxtest12": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x94f76C0CBbE795A11E524c7B1868369efa593819",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar12z8hwu8de8j0fmqymufmkun3gd3um8u2q47rdkr5a3ydj7ntmv0s3una6x"
+        }
       },
       "Gateway": {
         "avalanche-fuji": {
@@ -1159,6 +1258,14 @@
         "stellar-2025-q1": {
           "codeId": 848,
           "address": "axelar1tatg2n9gsq6vkkafm6pv8hsunr236wgdk4gdc7lw0hs2e3cnspmsw75rld"
+        },
+        "avaxtest11": {
+          "codeId": 848,
+          "address": "axelar1jfmr4c3w98rcs7t36npj9tgmhe084ksx04utqa4quumn0u9dy7dssy82xg"
+        },
+        "avaxtest12": {
+          "codeId": 848,
+          "address": "axelar1uqe90emfrd2vqtc9v07rzd3zygsang2x2xz4dnfyay74xu73k3wqy9mp92"
         }
       },
       "MultisigProver": {
@@ -1258,7 +1365,39 @@
           "address": "axelar1lgtcv0lfxwaz2prmea2y73lespr3mnwkfjv9kr0q6j7qhvhvwx6s54cesj"
         },
         "storeCodeProposalId": "82",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
+        "avaxtest11": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x18e6f2222dfe1061915a74f94ea660cfcd547efbb1c7aaec2714636e7b341959",
+          "address": "axelar1wcytffc8x02qrpt9r24556vcs29fzdvdmqsl6mdslyg3ul57rtrspll7kt"
+        },
+        "avaxtest12": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xad3d6f29c935471c3cb849b49c42dc454e36d80683ab02cfabcef4f12e5a3c94",
+          "address": "axelar1gfn4gj7hjagj0pk8e29ncp7xfqz7ypthpck3hh2nt9flykrzz24smqp06s"
+        }
       }
     },
     "axelarId": "axelar",
