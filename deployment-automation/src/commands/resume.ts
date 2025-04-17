@@ -17,7 +17,10 @@ import {
   createMultisigRewardPool,
   createVotingVerifierRewardPool 
 } from '../axelar/rewards';
-import { deployGatewayContract, submitChainRegistrationProposal } from '../axelar/gateway';
+import { deployGatewayContract, submitChainRegistrationProposal, transferGatewayOwnership } from '../axelar/gateway';
+import { deployConstAddrDeployer, deployCreate3Deployer } from '../axelar/deployers';
+import { deployAxelarGasService } from '../axelar/gas-service';
+import { deployOperatorsContract, addOperator } from '../axelar/operators';
 import { saveDeploymentConfig } from './deploy';
 import { displayMessage, MessageType } from '../utils/cli-utils';
 
@@ -105,6 +108,22 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
       }
     }
 
+    // Deploy ConstAddrDeployer
+    try {
+      await deployConstAddrDeployer();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `ConstAddrDeployer deployment encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+
+    // Deploy Create3Deployer
+    try {
+      await deployCreate3Deployer();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `Create3Deployer deployment encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+
     // Deploy gateway contract (this is the critical step)
     try {
       const gatewayOutput = await deployGatewayContract();
@@ -119,6 +138,43 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
         process.exit(2); // Special exit code for this case
       } else {
         throw error;
+      }
+    }
+
+    // Deploy Operators
+    try {
+      await deployOperatorsContract();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `Operators deployment encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+    // Add operator
+    try {
+      await addOperator();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `Adding operator encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+
+    // Deploy AxelarGasService
+    try {
+      const gasServiceOutput = await deployAxelarGasService();
+      console.log(gasServiceOutput);
+      displayMessage(MessageType.SUCCESS, "AxelarGasService deployed successfully!");
+    }
+    catch (error) {
+      displayMessage(MessageType.ERROR, `AxelarGasService deployment failed: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+
+    if (config.NAMESPACE === "testnet" || config.NAMESPACE === "mainnet") {
+      try {
+        const transferGatewayOutput =  transferGatewayOwnership();
+        console.log(transferGatewayOutput);
+        displayMessage(MessageType.SUCCESS, "Gateway ownership transferred successfully!");
+      } catch (error) {
+        displayMessage(MessageType.ERROR, `Gateway ownership transfer failed: ${error}`);
+        displayMessage(MessageType.INFO, "Continuing with deployment...");
       }
     }
 

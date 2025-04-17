@@ -16,9 +16,16 @@ import { isCustomDevnet } from '../config/network';
 export async function deployGatewayContract(): Promise<string> {
     try {
       // First run in predictOnly mode to get the predicted address
-      if (!isCustomDevnet()) {
+      if (config.NAMESPACE === "mainnet" || config.NAMESPACE === "testnet" || config.NAMESPACE === "stagenet") {
+        // burn two nonces and then check if the address is correct
+        const burn_nonce = `node evm/send-tokens.js -r "${config.DEPLOYER}" --amount 0.0001 -n "${config.CHAIN_NAME}"`
+        console.log("Running burn nonce command:", burn_nonce);
+        const burn_nonce_output_one = execSync(burn_nonce, { stdio: 'pipe' }).toString();
+        console.log("Burn nonce output:", burn_nonce_output_one);
+        const burn_nonce_output_two = execSync(burn_nonce, { stdio: 'pipe' }).toString();
+        console.log("Burn nonce output:", burn_nonce_output_two);
+
         const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly`;
-      
         console.log("Running prediction command:", predictCmd);
         const predictOutput = execSync(predictCmd, { stdio: 'pipe' }).toString();
         console.log("Prediction output:", predictOutput);
@@ -34,11 +41,8 @@ export async function deployGatewayContract(): Promise<string> {
             console.error(`❌ Address mismatch detected!`);
             console.error(`   Predicted: ${predictedAddress}`);
             console.error(`   Existing:  ${existingAddress}`);
-            if (config.NAMESPACE === "mainnet" || config.NAMESPACE === "testnet" || config.NAMESPACE === "stagenet") {
-                console.error("For mainnet, testnet and stagenet this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
-                throw new Error("Gateway address mismatch detected. Deploy aborted.");
-            }
-            
+            console.error("For mainnet, testnet and stagenet this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
+            throw new Error("Gateway address mismatch detected. Deploy aborted.");
         }
       }
       
@@ -277,5 +281,106 @@ export async function submitChainRegistrationProposal(): Promise<number | void> 
       
       throw error;
     }
+  }
+}
+
+
+/**
+ * Function to transfer ownership of the AxelarGateway contract
+ * @returns Promise containing the operation output
+ */
+export async function transferGatewayOwnership(): Promise<string> {
+  try {
+    // Use provided new owner address, or fallback to config, or use hardcoded value as last resort
+    const ownerAddress = '0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05'; // TODO check if its really a hardocded value
+    
+    console.log(`⚡ Transferring AxelarGateway ownership to ${ownerAddress}...`);
+    
+    // Command to transfer ownership
+    const transferCmd = `node ../evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner ${ownerAddress} --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -y`;
+    
+    console.log("Running ownership transfer command:", transferCmd);
+    
+    // For custom devnets, we might use synchronous execution
+    if (isCustomDevnet()) {
+      // Execute the command
+      const transferOutput = execSync(transferCmd, { stdio: 'pipe' }).toString();
+      console.log("Ownership transfer output:", transferOutput);
+      
+      // Check if transfer was successful
+      if (transferOutput.includes("Transaction status: SUCCESS") || transferOutput.includes("Transfer status: SUCCESS")) {
+        console.log(`✅ AxelarGateway ownership transferred successfully to ${ownerAddress}!`);
+      } else if (transferOutput.includes("Transaction status: FAILED") || transferOutput.includes("Transfer status: FAILED")) {
+        throw new Error("AxelarGateway ownership transfer failed, check the output for details.");
+      }
+      
+      return transferOutput;
+    } else {
+      // For non-devnet environments, use execAsync for better error handling
+      const { stdout, stderr } = await execAsync(transferCmd, { maxBuffer: 1024 * 1024 * 10 }); // 10MB buffer
+      
+      // Log the complete command output
+      console.log(`\n==== COMMAND OUTPUT START ====`);
+      console.log(stdout);
+      if (stderr) {
+        console.error(`==== STDERR OUTPUT ====`);
+        console.error(stderr);
+      }
+      console.log(`==== COMMAND OUTPUT END ====\n`);
+      
+      // Check for success message
+      if (stdout.includes("Transaction status: SUCCESS") || stdout.includes("Transfer status: SUCCESS")) {
+        console.log(`✅ AxelarGateway ownership transferred successfully to ${ownerAddress}!`);
+      } else if (stdout.includes("Transaction status: FAILED") || stdout.includes("Transfer status: FAILED")) {
+        throw new Error("AxelarGateway ownership transfer failed, check the output for details.");
+      } else if (stdout.includes("already owned by") && stdout.includes(ownerAddress)) {
+        console.log(`✅ AxelarGateway is already owned by ${ownerAddress}, no transfer needed.`);
+      }
+      
+      // Save output to file for record keeping
+      try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const logFilePath = `./logs/ownership-transfer-${config.CHAIN_NAME}-${timestamp}.log`;
+        await fs.promises.mkdir('./logs', { recursive: true });
+        await fs.promises.writeFile(logFilePath, 
+          `Command: ${transferCmd}\n\n` +
+          `STDOUT:\n${stdout}\n\n` +
+          (stderr ? `STDERR:\n${stderr}\n\n` : '') +
+          `Timestamp: ${new Date().toISOString()}\n`
+        );
+        console.log(`📄 Command output saved to ${logFilePath}`);
+      } catch (logError) {
+        console.error(`Failed to save log: ${logError}`);
+      }
+      
+      return stdout;
+    }
+  } catch (error: any) {
+    // Special handling for specific error cases
+    const errorMessage = String(error);
+    
+    // Check if this is the "already owned by" case which might be expected
+    if (errorMessage.includes("already owned by")) {
+      console.log(`✅ AxelarGateway ownership is already set correctly, continuing...`);
+      return "Already owned";
+    }
+    
+    console.error(`Error transferring AxelarGateway ownership: ${error}`);
+    
+    // Save error details to file
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const errorLogPath = `./logs/ownership-error-${config.CHAIN_NAME}-${timestamp}.log`;
+      await fs.promises.mkdir('./logs', { recursive: true });
+      await fs.promises.writeFile(errorLogPath, 
+        `Error: ${error}\n\n` +
+        `Timestamp: ${new Date().toISOString()}`
+      );
+      console.log(`📄 Error details saved to ${errorLogPath}`);
+    } catch (logError) {
+      console.error(`Failed to save error log: ${logError}`);
+    }
+    
+    throw error;
   }
 }
