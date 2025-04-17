@@ -9,10 +9,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install nightly
+    - name: Install stable
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: nightly
+        toolchain: 1.85.1
+        components: rustc, rustfmt, rust-std, clippy, rustc-dev, rust-docs
 
     - uses: Swatinem/rust-cache@v2
       with:
