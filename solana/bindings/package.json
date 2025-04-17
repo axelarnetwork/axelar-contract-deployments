@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
+    "@coral-xyz/borsh": "^0.31.0",
     "@native-to-anchor/buffer-layout": "=0.1.0",
     "@solana/spl-token": "^0.4.13",
     "@solana/web3.js": "^1.87.0",
