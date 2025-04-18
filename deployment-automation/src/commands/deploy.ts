@@ -34,6 +34,7 @@ import {
   retrieveRewardsAddress 
 } from '../axelar/rewards';
 import { displayMessage, MessageType } from '../utils/cli-utils';
+import { updateInfrastructureConfig } from '../utils/infrastructure-config';
 import { filterSensitiveData } from '../utils/env';
 import { CONFIG_DIR } from '../../constants';
 
@@ -133,6 +134,12 @@ export async function runNewDeployment(): Promise<void> {
     
     // Save deployment config for future use
     saveDeploymentConfig();
+
+    // Update infrastructure config
+    if (!isCustomDevnet()) {
+      // Update the network with the new chain config
+      updateInfrastructureConfig();
+    }
 
     displayMessage(MessageType.INFO, "Once proposals are approved, rerun with --resume-deployment --chain-name " + 
       config.CHAIN_NAME + " --verifiers-registered --proposals-approved");

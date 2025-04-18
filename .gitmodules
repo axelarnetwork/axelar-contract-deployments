@@ -1,0 +1,3 @@
+[submodule "deployment-automation/infrastructure"]
+	path = deployment-automation/infrastructure
+	url = https://github.com/axelarnetwork/infrastructure
