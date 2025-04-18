@@ -164,7 +164,7 @@ mod tests {
     mod utils {
         use super::*;
 
-        pub async fn chain_setup() -> (ExampleEncoder<ContractMiddleware>, TestBlockchain) {
+        pub(super) async fn chain_setup() -> (ExampleEncoder<ContractMiddleware>, TestBlockchain) {
             let evm_chain = TestBlockchain::new();
             let alice = evm_chain.construct_provider_with_signer(0);
             let contract: ExampleEncoder<ContractMiddleware> =
@@ -172,7 +172,7 @@ mod tests {
             (contract, evm_chain)
         }
 
-        pub fn evm_accounts_fixture() -> (
+        pub(super) fn evm_accounts_fixture() -> (
             Vec<AccountMeta>,
             Vec<evm_contracts_rs::contracts::example_encoder::SolanaAccountRepr>,
         ) {

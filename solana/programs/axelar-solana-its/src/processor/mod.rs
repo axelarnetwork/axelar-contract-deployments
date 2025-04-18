@@ -407,7 +407,7 @@ fn process_operator_accept_operatorship<'a>(
 
 fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
-) -> Result<RoleManagementAccounts<'_>, ProgramError> {
+) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let gateway_root_pda = next_account_info(accounts_iter)?;
 
@@ -500,7 +500,7 @@ fn process_tm_accept_operatorship<'a>(
 
 fn process_tm_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
-) -> Result<RoleManagementAccounts<'_>, ProgramError> {
+) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let its_root_pda = next_account_info(accounts_iter)?;
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;

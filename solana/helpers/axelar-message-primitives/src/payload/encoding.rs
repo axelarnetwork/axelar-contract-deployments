@@ -96,7 +96,7 @@ mod tests {
 
     use super::*;
 
-    pub fn account_fixture() -> [SolanaAccountRepr; 4] {
+    pub(super) fn account_fixture() -> [SolanaAccountRepr; 4] {
         [(true, true), (true, false), (false, true), (false, false)].map(
             |(is_signer, is_writer)| {
                 let key = solana_program::pubkey::Pubkey::new_unique();
@@ -116,7 +116,7 @@ mod tests {
         )
     }
 
-    pub fn account_fixture_2() -> SolanaAccountRepr {
+    pub(super) fn account_fixture_2() -> SolanaAccountRepr {
         let key = solana_program::pubkey::Pubkey::new_unique();
         let mut lamports = 100;
         let account = solana_program::account_info::AccountInfo::new(

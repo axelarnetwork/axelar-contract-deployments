@@ -10,7 +10,7 @@ tokio.workspace = true
 solana-program.workspace = true
 solana-program-test.workspace = true
 bincode.workspace = true
-axelar-solana-gateway.workspace = true
+axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-executable.workspace = true
 typed-builder.workspace = true
 solana-sdk.workspace = true

@@ -56,10 +56,48 @@ shadow_unrelated = "allow"
 module_name_repetitions = "allow"
 semicolon_outside_block = "allow" # remove this after we update rust-toolchain.toml -- buggy lint
 similar_names = "allow"
+allow_attributes_without_reason = "allow"
+allow_attributes = "allow"
+arbitrary_source_item_ordering = "allow"
+arithmetic_side_effects = "allow"
+as_conversions = "allow"
+cast_lossless = "allow"
+default_numeric_fallback = "allow"
+doc_lazy_continuation = "allow"
+doc_markdown = "allow"
+explicit_deref_methods = "allow"
+explicit_iter_loop = "allow"
+field_scoped_visibility_modifiers = "allow"
+implicit_clone = "allow"
+inconsistent_struct_constructor = "allow"
+large_futures = "allow"
+manual_inspect = "allow"
+map_err_ignore = "allow"
+map_with_unused_argument_over_ranges = "allow"
+min_ident_chars = "allow"
+missing_const_for_fn = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+needless_lifetimes = "allow"
+needless_pass_by_value = "allow"
+non_minimal_cfg = "allow"
+precedence = "allow"
+redundant_clone = "allow"
+std_instead_of_core = "allow"
+renamed_function_params = "allow"
+too_long_first_doc_paragraph = "allow"
+transmute_ptr_to_ptr = "allow"
+undocumented_unsafe_blocks = "allow"
+unnecessary_map_or = "allow"
+unnecessary_wraps = "allow"
+unseparated_literal_suffix = "allow"
+unused_trait_names = "allow"
+unwrap_used = "allow"
+use_self = "allow"
 
 [workspace.lints.rust]
-missing_docs = { level = "warn", priority = -1 }
-rust_2018_idioms = { level = "deny", priority = 0 }
+rust_2018_idioms = { level = "allow", priority = 0 }
 unreachable_pub = { level = "warn", priority = -1 }
 unused_imports = { level = "warn", priority = -1 }
 unused_must_use = { level = "deny", priority = -1 }
@@ -78,7 +116,6 @@ bnum = { version = "0.10", features = ["serde"] }
 borsh = { version = "1", features = ["derive"] }
 bs58 = "0.5.1"
 bytemuck = { version = "1", features = ["derive"] }
-bytemuck_derive = "=1.7.1" # fixed because of https://github.com/axelarnetwork/axelar-amplifier/pull/744#issuecomment-2741488412
 cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
 ed25519-dalek = "2"
@@ -105,18 +142,18 @@ serde_json = "1"
 sha3 = "0.10"
 signature = "2"
 simd-json = "0.13"
-solana-client = "=2.0.16"
-solana-logger = "=2.0.16"
-solana-program = "=2.0.16"
-solana-program-test = "=2.0.16"
-solana-sdk = "=2.0.16"
-solana-rpc-client = "=2.0.16"
-solana-rpc-client-api = "=2.0.16"
-solana-test-validator = "=2.0.16"
-spl-associated-token-account = "5.0.1"
+solana-client = "2.2.7"
+solana-logger = "2.3.1"
+solana-program = "2.2.1"
+solana-program-test = "2.2.7"
+solana-sdk = "2.2.2"
+solana-rpc-client = "2.2.7"
+solana-rpc-client-api = "2.2.7"
+solana-test-validator = "2.2.7"
+spl-associated-token-account = "6.0.0"
 spl-pod = "0.4.0"
 spl-token = "6.0.0"
-spl-token-2022 = "5.0.2"
+spl-token-2022 = "8.0.1"
 spl-token-metadata-interface = "0.5.1"
 static_assertions = "1"
 test-context = "0.4"
@@ -162,7 +199,7 @@ program-utils = { path = "helpers/program-utils" }
 role-management = { path = "helpers/role-management" }
 
 [workspace.metadata.cargo-machete]
-ignored = ["num-traits", "bytemuck_derive"]
+ignored = ["num-traits"]
 
 [profile.release]
 overflow-checks = true

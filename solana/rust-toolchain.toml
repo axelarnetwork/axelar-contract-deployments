@@ -1,3 +1,3 @@
 [toolchain]
 # Same one that is used on the Solana repo
-channel = "1.79.0"
+channel = "1.85.1"

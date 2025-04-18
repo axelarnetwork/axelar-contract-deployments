@@ -1,5 +1,6 @@
 //! Program entrypoint
 
+#![allow(unexpected_cfgs)]
 #![cfg(not(feature = "no-entrypoint"))]
 
 use solana_program::account_info::AccountInfo;

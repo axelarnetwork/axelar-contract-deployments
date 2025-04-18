@@ -3,6 +3,9 @@ name = "program-utils"
 version = "0.1.0"
 edition = "2021"
 
+[lints]
+workspace = true
+
 [lib]
 crate-type = ["cdylib", "lib"]
 
@@ -10,7 +13,6 @@ crate-type = ["cdylib", "lib"]
 rkyv = { workspace = true, features = ["validation"] }
 borsh.workspace = true
 bytemuck.workspace = true
-bytemuck_derive.workspace = true
 solana-program.workspace = true
 
 [dev-dependencies]
