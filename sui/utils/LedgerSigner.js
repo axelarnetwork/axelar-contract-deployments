@@ -41,7 +41,7 @@ class LedgerSigner extends Signer {
             await this.init();
         }
 
-        return await this.sui.getPublicKey(this.path);
+        return this.sui.getPublicKey(this.path);
     }
 
     async toSuiAddress() {
