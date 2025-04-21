@@ -93,9 +93,9 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Devnet-amplifier** | ?                                            |
+| **Stagenet**         | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
+| **Testnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 ```bash
@@ -108,9 +108,9 @@ node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Devnet-amplifier** | ?                                            |
+| **Stagenet**         | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -128,9 +128,9 @@ node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Devnet-amplifier** | `0`                    | `create3`        | ?                                            |
+| **Stagenet**         | `300`                  | `create3`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -143,9 +143,9 @@ node evm/deploy-amplifier-gateway.js \
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Devnet-amplifier** | ?                                            |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
@@ -169,9 +169,9 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Devnet-amplifier** | ?                                            |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
