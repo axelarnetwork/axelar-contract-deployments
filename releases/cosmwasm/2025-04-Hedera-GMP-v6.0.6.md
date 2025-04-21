@@ -202,7 +202,7 @@ axelard q wasm contract-state smart <router-address> '{"chain_info": "$CHAIN"}' 
 | **Devnet-amplifier** | https://testnet.hashio.io/api |
 | **Stagenet**         | https://testnet.hashio.io/api |
 | **Testnet**          | https://testnet.hashio.io/api |
-| **Mainnet**          | ``                            |
+| **Mainnet**          | https://mainnet.hashio.io/api |
 
 ```bash
 [[handlers]]
