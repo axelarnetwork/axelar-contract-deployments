@@ -90,19 +90,6 @@ node evm/its.js -n $CHAIN --action setTrustedAddress --trustedChain all --truste
 node evm/its.js -n all --action setTrustedAddress --trustedChain $CHAIN --trustedAddress hub
 ```
 
-## Setting up trusted chains on hedera
-
-```bash
-# Register token metadata
-node evm/its.js --action registerTokenMetadata --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-
-# Fetch token manager address
-node evm/its.js --action tokenManagerAddress --tokenId [tokenId]
-
-# tranfer mintership to token manager
-node evm/its.js --action transferMintership --tokenAddress 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE --minter [tokenManager]
-```
-
 ## Checklist
 
 The following checks should be performed after the rollout
