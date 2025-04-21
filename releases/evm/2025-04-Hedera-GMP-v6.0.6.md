@@ -5,8 +5,8 @@
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | Completed             | 2024-09-18 |
 | **Testnet**          | Completed             | 2024-09-18 |
@@ -96,7 +96,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 | **Devnet-amplifier** | ?                                            |
 | **Stagenet**         | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Testnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
-| **Mainnet**          | ?                                            |
+| **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
 ```bash
 node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
@@ -111,7 +111,7 @@ node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../
 | **Devnet-amplifier** | ?                                            |
 | **Stagenet**         | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | ?                                            |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
 node evm/deploy-contract.js -c Create3Deployer -m create2
@@ -131,7 +131,7 @@ node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0
 | **Devnet-amplifier** | `0`                    | `create3`        | ?                                            |
 | **Stagenet**         | `300`                  | `create3`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `86400`                | `create`         | ?                                            |
+| **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
 node evm/deploy-amplifier-gateway.js \
@@ -146,7 +146,7 @@ node evm/deploy-amplifier-gateway.js \
 | **Devnet-amplifier** | ?                                            |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | ?                                            |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
 node evm/deploy-contract.js -c Operators -m create2
@@ -172,7 +172,7 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 | **Devnet-amplifier** | ?                                            |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` |
-| **Mainnet**          | ?                                            |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
 node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "$OPERATOR_ADDRESS"}'
