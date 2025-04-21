@@ -183,6 +183,33 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+async function flowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    const operation = contract.call('flow_limit', hexToScVal(tokenId));
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
+    const flowLimit = returnValue.value();
+    
+    if (flowLimit === undefined || flowLimit === null) {
+        printInfo('Flow Limit', 'No limit set');
+    } else {
+        printInfo('Flow Limit', flowLimit);
+    }
+}
+
+async function setFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId, flowLimit] = args;
+    const flowLimitScVal = flowLimit === 'null' ? 
+        nativeToScVal(null, { type: 'void' }) : 
+        nativeToScVal(flowLimit, { type: 'i128' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
+    printInfo('Successfully set flow limit', flowLimit === 'null' ? 'No limit' : flowLimit);
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -276,6 +303,20 @@ if (require.main === module) {
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+        });
+
+    program
+        .command('flow-limit <tokenId>')
+        .description('Get the flow limit for a token')
+        .action((tokenId, options) => {
+            mainProcessor(flowLimit, [tokenId], options);
+        });
+
+    program
+        .command('set-flow-limit <tokenId> <flowLimit>')
+        .description('Set the flow limit for a token. Use "null" to remove the limit')
+        .action((tokenId, flowLimit, options) => {
+            mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
