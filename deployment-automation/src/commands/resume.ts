@@ -23,6 +23,8 @@ import { deployAxelarGasService } from '../axelar/gas-service';
 import { deployOperatorsContract, addOperator } from '../axelar/operators';
 import { saveDeploymentConfig } from './deploy';
 import { displayMessage, MessageType } from '../utils/cli-utils';
+import { updateEdsConfig } from '../utils/eds-config';
+import { isCustomDevnet } from '../config/network';
 
 
 export async function gotoResubmitProposals(): Promise<void> {
@@ -174,6 +176,17 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
         displayMessage(MessageType.SUCCESS, "Gateway ownership transferred successfully!");
       } catch (error) {
         displayMessage(MessageType.ERROR, `Gateway ownership transfer failed: ${error}`);
+        displayMessage(MessageType.INFO, "Continuing with deployment...");
+      }
+    }
+
+    if (!isCustomDevnet()) {
+      // Update EDS config
+      try {
+        await updateEdsConfig();
+      }
+      catch (error) {
+        displayMessage(MessageType.ERROR, `Updating EDS config failed: ${error}`);
         displayMessage(MessageType.INFO, "Continuing with deployment...");
       }
     }

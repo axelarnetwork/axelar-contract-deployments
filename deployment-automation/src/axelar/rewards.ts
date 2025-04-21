@@ -274,8 +274,44 @@ export async function addFundsToVotingVerifierRewardPool(): Promise<void> {
       retrieveRewardsAddress();
     }
     
+    // Ensure TOKEN_DENOM is defined
+    if (!config.TOKEN_DENOM) {
+      console.error("❌ TOKEN_DENOM is not defined in the configuration");
+      throw new Error("TOKEN_DENOM is not defined");
+    }
+    
+    // Check if the reward pool already has funds
+    console.log("Checking existing balance in reward pool...");
     try {
-
+      const { stdout: balanceOutput } = await execAsync(
+        `axelard query bank balances ${config.REWARDS_ADDRESS} --node "${config.AXELAR_RPC_URL}" --chain-id "${config.NAMESPACE}"`
+      );
+      
+      console.log("Current reward pool balance:", balanceOutput);
+      
+      // Check if the balance output contains the expected denomination
+      if (balanceOutput.includes(config.TOKEN_DENOM)) {
+        // Extract the amount from the balance output
+        const amountMatch = balanceOutput.match(new RegExp(`amount:\\s*"(\\d+)"\\s*denom:\\s*${config.TOKEN_DENOM}`));
+        
+        if (amountMatch && amountMatch[1]) {
+          const currentAmount = parseInt(amountMatch[1], 10);
+          console.log(`Found existing balance of ${currentAmount} ${config.TOKEN_DENOM}`);
+          
+          // If there are funds already, skip adding more
+          if (currentAmount > 0) {
+            console.log("✅ Reward pool already has funds. Skipping additional funding.");
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.log("⚠️ Error checking reward pool balance:", error);
+      console.log("Will attempt to add funds anyway...");
+    }
+    
+    // Proceed with adding funds
+    try {
       await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} \
         "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.VOTING_VERIFIER_ADDRESS}\\" } } }" \
         --amount ${config.REWARD_AMOUNT}${config.TOKEN_DENOM} \
@@ -292,6 +328,7 @@ export async function addFundsToVotingVerifierRewardPool(): Promise<void> {
       // Check if it's a non-critical error
       const errorStr = String(error);
       if (errorStr.includes("rewards already added") || errorStr.includes("insufficient funds")) {
+        console.log("⚠️ Error adding funds:", errorStr);
         console.log("⚠️ Could not add funds to voting verifier reward pool. Continuing...");
       } else {
         throw error;
@@ -319,19 +356,56 @@ export async function addFundsToMultisigRewardPool(): Promise<void> {
     if (!config.REWARDS_ADDRESS) {
       retrieveRewardsAddress();
     }
-
+    
+    // Ensure TOKEN_DENOM is defined
+    if (!config.TOKEN_DENOM) {
+      console.error("❌ TOKEN_DENOM is not defined in the configuration");
+      throw new Error("TOKEN_DENOM is not defined");
+    }
+    
+    // Check if the reward pool already has funds
+    console.log("Checking existing balance in reward pool...");
+    try {
+      const { stdout: balanceOutput } = await execAsync(
+        `axelard query bank balances ${config.REWARDS_ADDRESS} --node "${config.AXELAR_RPC_URL}" --chain-id "${config.NAMESPACE}"`
+      );
+      
+      console.log("Current reward pool balance:", balanceOutput);
+      
+      // Check if the balance output contains the expected denomination
+      if (balanceOutput.includes(config.TOKEN_DENOM)) {
+        // Extract the amount from the balance output
+        const amountMatch = balanceOutput.match(new RegExp(`amount:\\s*"(\\d+)"\\s*denom:\\s*${config.TOKEN_DENOM}`));
+        
+        if (amountMatch && amountMatch[1]) {
+          const currentAmount = parseInt(amountMatch[1], 10);
+          console.log(`Found existing balance of ${currentAmount} ${config.TOKEN_DENOM}`);
+          
+          // If there are funds already, skip adding more
+          if (currentAmount > 0) {
+            console.log("✅ Reward pool already has funds. Skipping additional funding.");
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.log("⚠️ Error checking reward pool balance:", error);
+      console.log("Will attempt to add funds anyway...");
+    }
+    
+    // Proceed with adding funds
     try {
       await execAsync(`axelard tx wasm execute ${config.REWARDS_ADDRESS} \
-         "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.MULTISIG_ADDRESS}\\" } } }" \
-         --amount ${config.REWARD_AMOUNT}${config.TOKEN_DENOM} \
-         --from ${config.WALLET_ADDRESS} \
-         --node "${config.AXELAR_RPC_URL}" \
-         --gas auto \
-         --gas-adjustment 2 \
-         --gas-prices 0.00005${config.TOKEN_DENOM} \
-         --keyring-backend test \
-         --chain-id "${config.NAMESPACE}"`);
-
+        "{ \\"add_rewards\\": { \\"pool_id\\": { \\"chain_name\\": \\"${config.CHAIN_NAME}\\", \\"contract\\": \\"${config.MULTISIG_ADDRESS}\\" } } }" \
+        --amount ${config.REWARD_AMOUNT}${config.TOKEN_DENOM} \
+        --from ${config.WALLET_ADDRESS} \
+        --node "${config.AXELAR_RPC_URL}" \
+        --gas auto \
+        --gas-adjustment 2 \
+        --gas-prices 0.00005${config.TOKEN_DENOM} \
+        --keyring-backend test \
+        --chain-id "${config.NAMESPACE}"`);
+      
       console.log("✅ Added funds to multisig reward pool");
     } catch (error) {
       // Check if it's a non-critical error
