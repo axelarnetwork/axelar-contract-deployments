@@ -1,7 +1,3 @@
-/**
- * Update infrastructure submodule config with deployment values
- */
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
@@ -43,12 +39,7 @@ export async function updateInfrastructureConfig(): Promise<void> {
     const chainName = config.CHAIN_NAME;
     const rpcUrl = config.RPC_URL;
     const votingVerifierAddress = config.VOTING_VERIFIER_ADDRESS;
-    const namespace = config.NAMESPACE || 'devnet';
-
-    if (namespace === 'devnet' || namespace === 'custom-devnet') {
-      displayMessage(MessageType.INFO, `Skipping infrastructure update for ${namespace}`);
-      return;
-    }
+    const namespace = config.NAMESPACE;
 
     let helmValuesPath: string;
     if (namespace === 'devnet-amplifier') {
@@ -171,27 +162,27 @@ export async function updateInfrastructureConfig(): Promise<void> {
           throw new Error("Could not find handlers section in YAML file");
         }
         
-        // Create the new handler entries with the proper indentation
+        // Create the new handler entries with the proper indentation - REMOVED QUOTES
         const newEntries = [];
         
         if (!hasMsgVerifier) {
           newEntries.push(
-            `${handlersIndentation}- type: "EvmMsgVerifier"`,
-            `${handlersIndentation}  cosmwasm_contract: "${votingVerifierAddress}"`,
-            `${handlersIndentation}  chain_name: "${chainName}"`,
-            `${handlersIndentation}  chain_rpc_url: "${rpcUrl}"`,
-            `${handlersIndentation}  chain_finalization: "RPCFinalizedBlock"`
+            `${handlersIndentation}- type: EvmMsgVerifier`,
+            `${handlersIndentation}  cosmwasm_contract: ${votingVerifierAddress}`,
+            `${handlersIndentation}  chain_name: ${chainName}`,
+            `${handlersIndentation}  chain_rpc_url: ${rpcUrl}`,
+            `${handlersIndentation}  chain_finalization: RPCFinalizedBlock`
           );
           displayMessage(MessageType.SUCCESS, `Added EvmMsgVerifier handler for ${chainName}`);
         }
         
         if (!hasSetVerifier) {
           newEntries.push(
-            `${handlersIndentation}- type: "EvmVerifierSetVerifier"`,
-            `${handlersIndentation}  cosmwasm_contract: "${votingVerifierAddress}"`,
-            `${handlersIndentation}  chain_name: "${chainName}"`,
-            `${handlersIndentation}  chain_rpc_url: "${rpcUrl}"`,
-            `${handlersIndentation}  chain_finalization: "RPCFinalizedBlock"`
+            `${handlersIndentation}- type: EvmVerifierSetVerifier`,
+            `${handlersIndentation}  cosmwasm_contract: ${votingVerifierAddress}`,
+            `${handlersIndentation}  chain_name: ${chainName}`,
+            `${handlersIndentation}  chain_rpc_url: ${rpcUrl}`,
+            `${handlersIndentation}  chain_finalization: RPCFinalizedBlock`
           );
           displayMessage(MessageType.SUCCESS, `Added EvmVerifierSetVerifier handler for ${chainName}`);
         }

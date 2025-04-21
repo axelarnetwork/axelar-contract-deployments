@@ -11,8 +11,6 @@ import { isCustomDevnet } from '../config/network';
 
 /**
  * Deploy the AxelarGasService contract using the Operators address as collector
- * @param operatorsAddress The address of the operators contract to use as collector
- * @param deployMethod Optional deployment method (defaults to 'create2')
  * @returns Promise containing the deployment output
  */
 export async function deployAxelarGasService(): Promise<string> {
@@ -35,18 +33,27 @@ export async function deployAxelarGasService(): Promise<string> {
         const deployOutput = execSync(deployCmd, { stdio: 'pipe' }).toString();
         console.log("Deployment output:", deployOutput);
         
+        // Extract deployed contract address from proxy address regardless of success message
+        const proxyAddressMatch = deployOutput.match(/\w+\s+\|\s+Proxy for AxelarGasService:\s+(0x[a-fA-F0-9]+)/);
+        if (proxyAddressMatch && proxyAddressMatch[1]) {
+          config.GAS_SERVICE_ADDRESS = proxyAddressMatch[1];
+          console.log(`✅ Extracted GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+        }
+        
         // Check if deployment was successful
-        if (deployOutput.includes("Deployment status: SUCCESS")) {
+        if (deployOutput.includes("Deployment status: SUCCESS") || proxyAddressMatch) {
           console.log("✅ AxelarGasService deployed successfully!");
         } else if (deployOutput.includes("Deployment status: FAILED")) {
           throw new Error("AxelarGasService deployment failed, check the output for details.");
         }
         
-        // Extract deployed contract address if present in the output
-        const addressMatch = deployOutput.match(/Contract deployed at: (0x[a-fA-F0-9]+)/);
-        if (addressMatch && addressMatch[1]) {
-          config.GAS_SERVICE_ADDRESS = addressMatch[1];
-          console.log(`✅ Extracted GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+        // If we still didn't get the address, try the old pattern as fallback
+        if (!config.GAS_SERVICE_ADDRESS) {
+          const addressMatch = deployOutput.match(/Contract deployed at: (0x[a-fA-F0-9]+)/);
+          if (addressMatch && addressMatch[1]) {
+            config.GAS_SERVICE_ADDRESS = addressMatch[1];
+            console.log(`✅ Extracted GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+          }
         }
         
         return deployOutput;
@@ -63,26 +70,28 @@ export async function deployAxelarGasService(): Promise<string> {
         }
         console.log(`==== COMMAND OUTPUT END ====\n`);
         
-        // Check for success message
-        if (stdout.includes("Deployment status: SUCCESS")) {
+        // Extract deployed contract address from proxy address regardless of success message
+        const proxyAddressMatch = stdout.match(/\w+\s+\|\s+Proxy for AxelarGasService:\s+(0x[a-fA-F0-9]+)/);
+        if (proxyAddressMatch && proxyAddressMatch[1]) {
+          config.GAS_SERVICE_ADDRESS = proxyAddressMatch[1];
+          console.log(`✅ Extracted GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+        }
+        
+        // Then continue with your success/failure checks
+        if (stdout.includes("Deployment status: SUCCESS") || proxyAddressMatch) {
           console.log("✅ AxelarGasService deployed successfully!");
-          
-          // Extract deployed contract address if present in the output
-          const addressMatch = stdout.match(/Contract deployed at: (0x[a-fA-F0-9]+)/);
-          if (addressMatch && addressMatch[1]) {
-            config.GAS_SERVICE_ADDRESS = addressMatch[1];
-            console.log(`✅ Extracted GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
-          }
         } else if (stdout.includes("Deployment status: FAILED")) {
           throw new Error("AxelarGasService deployment failed, check the output for details.");
         } else if (stdout.includes("already deployed")) {
           console.log("✅ AxelarGasService is already deployed, reusing existing deployment.");
           
-          // Try to extract the existing address
-          const addressMatch = stdout.match(/Contract found at: (0x[a-fA-F0-9]+)/);
-          if (addressMatch && addressMatch[1]) {
-            config.GAS_SERVICE_ADDRESS = addressMatch[1];
-            console.log(`✅ Using existing GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+          // Try to extract the existing address if we didn't already get it from proxy output
+          if (!config.GAS_SERVICE_ADDRESS) {
+            const addressMatch = stdout.match(/Contract found at: (0x[a-fA-F0-9]+)/);
+            if (addressMatch && addressMatch[1]) {
+              config.GAS_SERVICE_ADDRESS = addressMatch[1];
+              console.log(`✅ Using existing GAS_SERVICE_ADDRESS: ${config.GAS_SERVICE_ADDRESS}`);
+            }
           }
         }
         

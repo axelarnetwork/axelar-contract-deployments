@@ -14,59 +14,68 @@ import { isCustomDevnet } from '../config/network';
  * Function to deploy gateway contract
  */
 export async function deployGatewayContract(): Promise<string> {
-    try {
-      // First run in predictOnly mode to get the predicted address
-      if (config.NAMESPACE === "mainnet" || config.NAMESPACE === "testnet" || config.NAMESPACE === "stagenet") {
-        // burn two nonces and then check if the address is correct
-        const burn_nonce = `node evm/send-tokens.js -r "${config.DEPLOYER}" --amount 0.0001 -n "${config.CHAIN_NAME}"`
-        console.log("Running burn nonce command:", burn_nonce);
-        const burn_nonce_output_one = execSync(burn_nonce, { stdio: 'pipe' }).toString();
-        console.log("Burn nonce output:", burn_nonce_output_one);
-        const burn_nonce_output_two = execSync(burn_nonce, { stdio: 'pipe' }).toString();
-        console.log("Burn nonce output:", burn_nonce_output_two);
-
-        const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly`;
-        console.log("Running prediction command:", predictCmd);
-        const predictOutput = execSync(predictCmd, { stdio: 'pipe' }).toString();
-        console.log("Prediction output:", predictOutput);
+  try {
+    // First run in predictOnly mode to get the predicted address
+    if (config.NAMESPACE === "mainnet" || config.NAMESPACE === "testnet" || config.NAMESPACE === "stagenet") {
+      // burn two nonces and then check if the address is correct
+      const burn_nonce = `node evm/send-tokens.js -r "${config.DEPLOYER}" --amount 0.0001 -n "${config.CHAIN_NAME}"`;
+      console.log("Running burn nonce command:", burn_nonce);
+      const burn_nonce_output_one = execSync(burn_nonce, { stdio: 'pipe' }).toString();
+      console.log("Burn nonce output:", burn_nonce_output_one);
+      const burn_nonce_output_two = execSync(burn_nonce, { stdio: 'pipe' }).toString();
+      console.log("Burn nonce output:", burn_nonce_output_two);
+      
+      const predictCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" --predictOnly`;
+      console.log("Running prediction command:", predictCmd);
+      const predictOutput = execSync(predictCmd, { stdio: 'pipe' }).toString();
+      console.log("Prediction output:", predictOutput);
+      
+      // Specifically check for the address mismatch warning
+      const addressMismatchRegex = /Predicted address\s+(0x[a-fA-F0-9]+)\s+does not match existing deployment\s+(0x[a-fA-F0-9]+)/;
+      const mismatchMatch = predictOutput.match(addressMismatchRegex);
+      
+      if (mismatchMatch) {
+        const predictedAddress = mismatchMatch[1];
+        const existingAddress = mismatchMatch[2];
         
-        // Specifically check for the address mismatch warning
-        const addressMismatchRegex = /Predicted address\s+(0x[a-fA-F0-9]+)\s+does not match existing deployment\s+(0x[a-fA-F0-9]+)/;
-        const mismatchMatch = predictOutput.match(addressMismatchRegex);
-        
-        if (mismatchMatch) {
-            const predictedAddress = mismatchMatch[1];
-            const existingAddress = mismatchMatch[2];
-            
-            console.error(`❌ Address mismatch detected!`);
-            console.error(`   Predicted: ${predictedAddress}`);
-            console.error(`   Existing:  ${existingAddress}`);
-            console.error("For mainnet, testnet and stagenet this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
-            throw new Error("Gateway address mismatch detected. Deploy aborted.");
-        }
+        console.error(`❌ Address mismatch detected!`);
+        console.error(`   Predicted: ${predictedAddress}`);
+        console.error(`   Existing:  ${existingAddress}`);
+        console.error("For mainnet, testnet and stagenet this is a critical error. Please check the deployer, salt, args, or contract bytecode.");
+        throw new Error("Gateway address mismatch detected. Deploy aborted.");
       }
-      
-      // For custom devnets or if no warnings, proceed with actual deployment
-      // Add -y flag to auto-confirm the deployment
-      const deployCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -y`;
-      
-      console.log("Running deployment command:", deployCmd);
-      const deployOutput = execSync(deployCmd, { stdio: 'pipe' }).toString();
-      console.log("Deployment output:", deployOutput);
-      
-      // Check if deployment was successful
-      if (deployOutput.includes("Deployment status: SUCCESS")) {
-        console.log("✅ Gateway deployed successfully!");
-      } else if (deployOutput.includes("Deployment status: FAILED")) {
-        throw new Error("Gateway deployment failed, check the output for details.");
-      }
-      
-      return deployOutput;
-    } catch (error) {
-      console.error(`Error deploying gateway contract: ${error}`);
-      throw error;
     }
+    
+    // For custom devnets or if no warnings, proceed with actual deployment
+    // Add -y flag to auto-confirm the deployment
+    const deployCmd = `node ../evm/deploy-amplifier-gateway.js --env "${config.NAMESPACE}" -n "${config.CHAIN_NAME}" -m "${config.DEPLOYMENT_TYPE}" --minimumRotationDelay "${config.MINIMUM_ROTATION_DELAY}" -y`;
+    
+    console.log("Running deployment command:", deployCmd);
+    const deployOutput = execSync(deployCmd, { stdio: 'pipe' }).toString();
+    console.log("Deployment output:", deployOutput);
+    
+    // Extract the Gateway Proxy address
+    const gatewayProxyMatch = deployOutput.match(/Gateway Proxy:\s+(0x[a-fA-F0-9]+)/);
+    if (gatewayProxyMatch && gatewayProxyMatch[1]) {
+      config.PROXY_GATEWAY_ADDRESS = gatewayProxyMatch[1];
+      console.log(`✅ Extracted PROXY_GATEWAY_ADDRESS: ${config.PROXY_GATEWAY_ADDRESS}`);
+    } else {
+      console.warn("⚠️ Could not extract Gateway Proxy address from deployment output");
+    }
+    
+    // Check if deployment was successful
+    if (deployOutput.includes("Deployment status: SUCCESS")) {
+      console.log("✅ Gateway deployed successfully!");
+    } else if (deployOutput.includes("Deployment status: FAILED")) {
+      throw new Error("Gateway deployment failed, check the output for details.");
+    }
+    
+    return deployOutput;
+  } catch (error) {
+    console.error(`Error deploying gateway contract: ${error}`);
+    throw error;
   }
+}
 
 /**
  * Function to extract the Predicted Gateway Proxy Address

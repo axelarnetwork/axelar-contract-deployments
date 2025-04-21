@@ -130,7 +130,7 @@ export async function verifyMultisig(): Promise<void> {
 export async function createGenesisVerifierSet(): Promise<void> {
     try {
       await execAsync(`axelard tx wasm execute ${config.MULTISIG_PROVER_ADDRESS} '"update_verifier_set"' \
-        --from amplifier \
+        --from "${config.WALLET_ADDRESS}" \
         --gas auto \
         --gas-adjustment 2 \
         --node "${config.AXELAR_RPC_URL}" \
