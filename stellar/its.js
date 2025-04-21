@@ -190,7 +190,7 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
 
     const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
     const flowLimit = returnValue.value();
-    
+
     if (flowLimit === undefined || flowLimit === null) {
         printInfo('Flow Limit', 'No limit set');
     } else {
@@ -200,9 +200,7 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
 
 async function setFlowLimit(wallet, _, chain, contract, args, options) {
     const [tokenId, flowLimit] = args;
-    const flowLimitScVal = flowLimit === 'null' ? 
-        nativeToScVal(null, { type: 'void' }) : 
-        nativeToScVal(flowLimit, { type: 'i128' });
+    const flowLimitScVal = flowLimit === 'null' ? nativeToScVal(null, { type: 'void' }) : nativeToScVal(flowLimit, { type: 'i128' });
 
     const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
 
