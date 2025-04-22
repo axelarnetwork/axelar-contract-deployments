@@ -1,6 +1,7 @@
 //! Program entrypoint
 
 #![allow(unexpected_cfgs)]
+#![cfg(not(feature = "no-entrypoint"))]
 
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
@@ -8,7 +9,6 @@ use solana_program::pubkey::Pubkey;
 
 use crate::processor::Processor;
 
-#[cfg(not(feature = "no-entrypoint"))]
 solana_program::entrypoint!(process_instruction);
 
 fn process_instruction(
