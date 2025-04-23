@@ -57,6 +57,13 @@ jobs:
                   }
                 }
               }
+            },
+            "axelar": {
+              "contracts": {
+                "InterchainTokenService": {
+                  "address": "its_hub_address"
+                }
+              }
             }
           }' > ./axelar-chains-config/info/local.json
 
