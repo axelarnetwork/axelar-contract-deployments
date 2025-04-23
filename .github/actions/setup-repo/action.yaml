@@ -47,3 +47,9 @@ runs:
       shell: bash
       run: |
         sudo apt-get install -y protobuf-compiler bzip2 clang
+
+    - name: Install deps for rust check and docs
+      shell: bash
+      run: |
+        sudo apt install -y pkg-config libusb-1.0-0-dev libftdi1-dev
+        sudo apt-get install libudev-dev
