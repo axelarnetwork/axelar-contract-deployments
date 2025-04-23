@@ -291,6 +291,7 @@ async function deployAll(config, wallet, chain, options) {
                     contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
+                    itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
                     contractConfig.gatewayCaller,
