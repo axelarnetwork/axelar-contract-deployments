@@ -63,7 +63,8 @@ jobs:
                 "InterchainTokenService": {
                   "address": "its_hub_address"
                 }
-              }
+              },
+              "axelarId": "axelar"
             }
           }' > ./axelar-chains-config/info/local.json
 
