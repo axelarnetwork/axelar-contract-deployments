@@ -61,7 +61,7 @@ jobs:
             "axelar": {
               "contracts": {
                 "InterchainTokenService": {
-                  "address": "its_hub_address"
+                  "address": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
                 }
               },
               "axelarId": "axelar"
