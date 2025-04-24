@@ -9,9 +9,17 @@ import { config } from '../config/environment';
 import { displayMessage, MessageType } from '../utils/cli-utils';
 
 /**
- * Update the EDS TOML config with new chain information
+ * Update the EDS TOML and tfvars config with new chain information
  */
 export async function updateEdsConfig(): Promise<void> {
+  await updateEdsTomlConfig();
+  await updateEdsTfvarsConfig();
+}
+
+/**
+ * Update the EDS TOML config with new chain information
+ */
+export async function updateEdsTomlConfig(): Promise<void> {
   try {
     displayMessage(MessageType.INFO, "Updating EDS configuration...");
 
@@ -26,7 +34,7 @@ export async function updateEdsConfig(): Promise<void> {
     if (!config.VOTING_VERIFIER_ADDRESS) throw new Error("VOTING_VERIFIER_ADDRESS not found in configuration");
 
     const chainName = config.CHAIN_NAME;
-    const gasLimit = config.GAS_LIMIT || 14000000; // Default to 14000000 if not provided
+    const gasLimit = config.GAS_LIMIT; // Default to 14000000 if not provided
     const rpcUrl = config.RPC_URL;
     const gatewayAddress = config.PROXY_GATEWAY_ADDRESS;
     const gasServiceAddress = config.GAS_SERVICE_ADDRESS;
@@ -87,6 +95,7 @@ export async function updateEdsConfig(): Promise<void> {
         const newEvmSection = `
 [[evm]]
 chain-name                                = "${chainName}"
+rpc-params                                = { request_timeout = "30s" }
 rpc-url                                   = [
   "${rpcUrl}",
 ]
@@ -409,6 +418,108 @@ verifier    = "${axelarVerifierAddress}"`;
 
   } catch (error) {
     displayMessage(MessageType.ERROR, `Failed to update EDS config: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Updates a single tfvars file with the new chain information
+ */
+async function updateSingleTfvarsFile(filePath: string, chainName: string): Promise<void> {
+  if (!fs.existsSync(filePath)) {
+    displayMessage(MessageType.ERROR, `Tfvars file not found at: ${filePath}`);
+    throw new Error(`Tfvars file not found at: ${filePath}`);
+  }
+
+  let content = fs.readFileSync(filePath, 'utf8');
+
+  // Find the amplifier_evm_chains line
+  const chainsRegex = /amplifier_evm_chains\s*=\s*\[(.*?)\]/s;
+  const match = content.match(chainsRegex);
+
+  if (match) {
+    // Get existing chains
+    const existingChains = match[1]
+      .split(',')
+      .map(chain => chain.trim())
+      .filter(chain => chain.length > 0)
+      .map(chain => chain.replace(/"/g, ''));
+
+    // Check if chain already exists
+    if (!existingChains.includes(chainName)) {
+      // Add new chain to the list
+      const updatedChains = [...existingChains, chainName]
+        .map(chain => `"${chain}"`)
+        .join(', ');
+
+      // Update the content
+      const updatedContent = content.replace(
+        chainsRegex,
+        `amplifier_evm_chains = [${updatedChains}]`
+      );
+
+      // Write back to file
+      fs.writeFileSync(filePath, updatedContent);
+      displayMessage(
+        MessageType.SUCCESS,
+        `Added ${chainName} to amplifier_evm_chains in ${filePath}`
+      );
+    } else {
+      displayMessage(
+        MessageType.WARNING,
+        `Chain ${chainName} already exists in ${filePath}`
+      );
+    }
+  } else {
+    // If amplifier_evm_chains doesn't exist, create it
+    const newChainConfig = `\namplifier_evm_chains = ["${chainName}"]\n`;
+    fs.appendFileSync(filePath, newChainConfig);
+    displayMessage(
+      MessageType.SUCCESS,
+      `Created amplifier_evm_chains with ${chainName} in ${filePath}`
+    );
+  }
+}
+
+/**
+ * Update the EDS tfvars config with new chain information
+ */
+export async function updateEdsTfvarsConfig(): Promise<void> {
+  try {
+    displayMessage(MessageType.INFO, "Updating EDS tfvars configuration...");
+
+    if (!config.CHAIN_NAME) throw new Error("CHAIN_NAME not found in configuration");
+    if (!config.NAMESPACE) throw new Error("NAMESPACE not found in configuration");
+
+    const chainName = config.CHAIN_NAME;
+    const namespace = config.NAMESPACE;
+
+    // Define paths for both tfvars files
+    const amplifierTfvarsPath = path.join(
+      'infrastructure',
+      'terraform',
+      'microservices',
+      'amplifier_deployment',
+      `${namespace}.tfvars`
+    );
+
+    const monitoringTfvarsPath = path.join(
+      'infrastructure',
+      'terraform',
+      'microservices',
+      'monitoring',
+      `${namespace}.tfvars`
+    );
+
+    // Update both tfvars files
+    await updateSingleTfvarsFile(amplifierTfvarsPath, chainName);
+
+    if (config.NAMESPACE !== 'devnet-amplifier') {
+      await updateSingleTfvarsFile(monitoringTfvarsPath, chainName);
+    }
+
+  } catch (error) {
+    displayMessage(MessageType.ERROR, `Failed to update EDS tfvars config: ${error}`);
     throw error;
   }
 }

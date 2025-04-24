@@ -42,16 +42,16 @@ export enum MessageType {
 export function displayMessage(type: MessageType, message: string): void {
   switch(type) {
     case MessageType.INFO:
-      console.log(`ℹ️ ${message}`);
+      console.info(`ℹ️ ${message}`);
       break;
     case MessageType.SUCCESS:
       console.log(`✅ ${message}`);
       break;
     case MessageType.WARNING:
-      console.log(`⚠️ ${message}`);
+      console.warn(`⚠️ ${message}`);
       break;
     case MessageType.ERROR:
-      console.log(`❌ ${message}`);
+      console.error(`❌ ${message}`);
       break;
     default:
       console.log(message);
