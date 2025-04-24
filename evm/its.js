@@ -429,11 +429,10 @@ async function processCommand(config, chain, action, options) {
 
         case 'set-trusted-chains': {
             const [itsChain] = args;
-            const contract = new Contract(interchainTokenService.address, IOwnable.abi, wallet);
-            const [owner, operator] = await Promise.all([contract.owner(), contract.operator()]);
+            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
-            if (![owner, operator].some((addr) => addr.toLowerCase() === walletAddress.toLowerCase())) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner} or operator: ${operator}`);
+            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
             validateParameters({ isNonEmptyString: { itsChain } });
