@@ -28,13 +28,17 @@ stellar network add \
 Create a new Stellar keypair
 
 ```bash
+# Generate keypair
 stellar keys generate wallet --network testnet
 
 # Address
 stellar keys address wallet
 
-# Get private key
+# Private Key
 stellar keys show wallet
+
+# Remove the keypair
+stellar keys rm wallet --global;
 ```
 
 Set `PRIVATE_KEY` in `.env` to the above value.
@@ -54,6 +58,7 @@ Setup
 
 ```bash
 cargo build
+cargo test
 stellar contract build
 ```
 
@@ -68,7 +73,7 @@ stellar contract build
 Deploy the gateway contract
 
 ```bash
-node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGateway --version X.Y.Z
 ```
 
 Provide `--estimate-cost` to show the gas costs for the initialize transaction instead of executing it.
@@ -76,40 +81,33 @@ Provide `--estimate-cost` to show the gas costs for the initialize transaction i
 ### Operators
 
 ```bash
-node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarOperators --version X.Y.Z
 ```
 
 ### Gas Service
 
 ```bash
-node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0
+node stellar/deploy-contract.js deploy AxelarGasService --version X.Y.Z
 ```
 
 ### Interchain Token Service
 
-Deploy Interchain Token and Token Manager wasm first.
-
 ```bash
-node stellar/deploy-contract.js deploy InterchainToken --version v1.0.0
-node stellar/deploy-contract.js deploy TokenManager --version v1.0.0
-node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0
+node stellar/deploy-contract.js deploy InterchainTokenService --version X.Y.Z
 ```
 
-### Example
+### Axelar Example
 
-Note that example contract should use `--artifact-path` or `--version` option to deploy contract. The contract wasm binary can be passed by specifiying the wasm file path or by specifying the contract version. The contract version has to a be a tagged release in semantic version format X.Y.Z or a commit hash.
-
-
--   `node stellar/deploy-contract.js deploy AxelarExample --artifact-path ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/stellar_example.optimized.wasm`
-
--   `node stellar/deploy-contract.js deploy AxelarExample --version 1.0.0`
+```bash
+node stellar/deploy-contract.js deploy AxelarExample --version X.Y.Z
+```
 
 ## Upgrades
 
 To facilitate contract upgrades, the `Upgrader` contract needs to be deployed first.
 
 ```bash
-node stellar/deploy-contract.js deploy Upgrader --version v1.0.0
+node stellar/deploy-contract.js deploy Upgrader --version X.Y.Z
 ```
 
 After the `Upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
@@ -173,14 +171,6 @@ node stellar/deploy-contract.js upload <CONTRACT_NAME> --artifact-path ./axelar-
 ```
 
 ---
-
-## Generate bindings
-
-Generate TypeScript bindings for the contract
-
-```bash
-node stellar/generate-bindings.js --artifact-path /path/to/optimized.wasm --contract-id [contract-address] --output-dir ./stellar/bindings/[contract-name]
-```
 
 ## Contract Interaction
 
@@ -275,7 +265,7 @@ node stellar/its.js deploy-interchain-token [name] [symbol] [decimal] [salt] [in
 #### Deploy Remote Interchain Token
 
 ```bash
-node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-token-address [address] --gas-amount [amount]
+node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-amount [amount]
 ```
 
 #### Register Canonical Token
@@ -287,13 +277,13 @@ node stellar/its.js register-canonical-token [token-address]
 #### Deploy Remote Canonical Token
 
 ```bash
-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-token-address [address] --gas-amount [amount]
+node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-amount [amount]
 ```
 
 #### Interchain Transfer
 
 ```bash
-node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-token-address [address] --gas-amount [amount]
+node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-amount [amount]
 ```
 
 #### Execute
@@ -358,7 +348,7 @@ node stellar/contract.js restore-instance [contract-name]
 #### GMP - Send Command (Outgoing)
 
 ```bash
-node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-token-address [address] --gas-amount [amount]
+node stellar/gmp.js send [destination-chain] [destination-address] [payload] --gas-amount [amount]
 
 # Example
 node stellar/gmp.js send avalanche 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
