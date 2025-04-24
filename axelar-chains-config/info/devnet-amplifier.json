@@ -1022,7 +1022,22 @@
         "gasLimit": 15000000
       },
       "contracts": {
-        "AxelarGateway": {}
+        "AxelarGateway": {},
+        "ConstAddressDeployer": {
+          "address": "0x1874B7eB4E301B8189297d782004964E646C1F95",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x7A1FE376373f0F0f853f0e46E54462A069802E73",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        }
       }
     }
   },
@@ -1224,7 +1239,9 @@
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55"
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1v8hm3yacyxpu3uj06s5w2gn4lctfdevyxzj6pxcwmjlcspmtquuqfzpx79"
         }
       },
       "Gateway": {
@@ -1254,6 +1271,10 @@
         "stellar-2025-q1": {
           "codeId": 848,
           "address": "axelar1tatg2n9gsq6vkkafm6pv8hsunr236wgdk4gdc7lw0hs2e3cnspmsw75rld"
+        },
+        "avaxtest34": {
+          "codeId": 848,
+          "address": "axelar16p9mjvn4r70gtg6m093arw40clae4m7jsl9gtat4v2ypf3cmrr7s0r47cr"
         }
       },
       "MultisigProver": {
@@ -1365,7 +1386,10 @@
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
-          "keyType": "ecdsa"
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x819abf9c5f002ef4a95f4856d36c353912f5fecedc903eb61d4c15daa01d9a54",
+          "address": "axelar1k2y6nucpz3zmnmlr6m3240v0232xc66ues8phkdn9mc98f493xlq89qxkv"
         }
       },
       "XrplVotingVerifier": {
