@@ -189,6 +189,17 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             return {};
         }
 
+        case 'AxelarGovernance': {
+            return {
+                gateway: nativeToScVal(Address.fromString(chain.contracts.AxelarGateway.address), { type: 'address' }),
+                owner,
+                operator,
+                governance_chain: nativeToScVal("test-chain", { type: 'string' }),
+                governance_address: nativeToScVal("test-address", { type: 'string' }),
+                minimum_time_delay: nativeToScVal(chain.minimumTimeDelay || 86400, { type: 'u64' })
+            };
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
