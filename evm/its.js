@@ -428,41 +428,36 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'set-trusted-chains': {
-            const [itsChain, itsAddress] = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
+            const [itsChain] = args;
+            const contract = new Contract(interchainTokenService.address, IOwnable.abi, wallet);
+            const [owner, operator] = await Promise.all([contract.owner(), contract.operator()]);
 
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+            if (![owner, operator].some((addr) => addr.toLowerCase() === walletAddress.toLowerCase())) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner} or operator: ${operator}`);
             }
 
             validateParameters({ isNonEmptyString: { itsChain } });
 
-            let trustedChains, trustedAddresses;
+            let trustedChains;
 
             if (itsChain === 'all') {
                 trustedChains = parseTrustedChains(config, [itsChain]);
-
-                trustedAddresses = trustedChains.map((_) => itsAddress || chain.contracts?.InterchainTokenService?.address);
             } else {
                 const trustedChain =
                     getChainConfig(config, itsChain.toLowerCase(), { skipCheck: true })?.axelarId || itsChain.toLowerCase();
-                const trustedAddress =
-                    itsAddress || getChainConfig(config, itsChain.toLowerCase())?.contracts?.InterchainTokenService?.address;
 
-                validateParameters({ isNonEmptyString: { trustedChain, trustedAddress } });
+                validateParameters({ isNonEmptyString: { trustedChain } });
 
                 trustedChains = [trustedChain];
-                trustedAddresses = [trustedAddress];
             }
 
-            if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
+            if (!prompt(`Proceed with setting trusted chain(s) for: ${trustedChains.join(', ')}?`, yes)) {
                 return;
             }
 
-            for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
-                const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
-
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+            for (const trustedChain of trustedChains) {
+                const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
             }
 
             break;
@@ -862,11 +857,10 @@ if (require.main === module) {
 
     program
         .command('set-trusted-chains')
-        .description('Set trusted address')
+        .description('Set trusted chains')
         .argument('<its-chain>', 'ITS chain')
-        .argument('[its-address]', 'ITS address')
-        .action((itsChain, itsAddress, options, cmd) => {
-            main(cmd.name(), [itsChain, itsAddress], options);
+        .action((itsChain, options, cmd) => {
+            main(cmd.name(), [itsChain], options);
         });
 
     program
