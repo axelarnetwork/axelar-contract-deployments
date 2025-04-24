@@ -666,43 +666,6 @@ async function processCommand(config, chain, action, options) {
             break;
         }
 
-        case 'add-trusted-chains': {
-            const [trustedChain] = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
-
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
-            }
-
-            validateParameters({ isNonEmptyString: { trustedChain } });
-
-            const trustedChains = parseTrustedChains(config, trustedChain);
-            const chainConfig = getChainConfig(config, trustedChain.toLowerCase());
-            const isAmplifier = chainConfig?.contracts?.AxelarGateway?.connectionType === 'amplifier';
-
-            const trustedAddress = isAmplifier
-                ? 'hub'
-                : options.trustedAddress
-                  ? options.trustedAddress
-                  : chainConfig?.contracts?.InterchainTokenService?.address;
-
-            if (trustedAddress === undefined) {
-                throw new Error(`Invalid chain/address: ${trustedChain}`);
-            }
-
-            const trustedAddresses = [trustedAddress];
-
-            if (prompt(`Proceed with setting trusted address for chain ${trustedChains} to ${trustedAddresses}?`, yes)) {
-                return;
-            }
-
-            const tx = await interchainTokenService.setTrustedAddress(trustedChains, trustedAddresses, gasOptions);
-
-            await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainAdded');
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -834,14 +797,6 @@ if (require.main === module) {
         });
 
     program
-        .command('trusted-chain')
-        .description('Get trusted chain')
-        .argument('<trusted-chain>', 'Trusted chain')
-        .action((trustedChain, options, cmd) => {
-            main(cmd.name(), [trustedChain], options);
-        });
-
-    program
         .command('set-trusted-chains')
         .description('Set trusted chains')
         .argument('<its-chain>', 'ITS chain')
@@ -912,15 +867,6 @@ if (require.main === module) {
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
-        });
-
-    program
-        .command('add-trusted-chains')
-        .description('Add trusted chains')
-        .argument('<trusted-chain>', 'Trusted chain')
-        .addOption(new Option('--trustedAddress <trustedAddress>', 'Trusted Address'))
-        .action((trustedChain, options, cmd) => {
-            main(cmd.name(), [trustedChain], options);
         });
 
     addOptionsToCommands(program, addEvmOptions, { address: true, salt: true });
