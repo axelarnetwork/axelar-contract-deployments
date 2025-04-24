@@ -443,7 +443,7 @@ async function processCommand(config, chain, action, options) {
 
             console.log('debug 1-4', trustedChains);
 
-            if (!prompt(`Proceed with setting trusted chain(s) for: ${trustedChains.join(', ')}?`, yes)) {
+            if (prompt(`Proceed with setting trusted chain(s) for: ${trustedChains.join(', ')}?`, yes)) {
                 return;
             }
 
