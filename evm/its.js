@@ -313,7 +313,7 @@ async function processCommand(config, chain, action, options) {
                 isValidCalldata: { metadata },
             });
 
-            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+            if (!(await interchainTokenService.trustedAddress(destinationChain))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
@@ -412,27 +412,12 @@ async function processCommand(config, chain, action, options) {
             break;
         }
 
-        case 'trusted-address': {
-            const [trustedChain] = args;
-            validateParameters({ isNonEmptyString: { trustedChain } });
-
-            const trustedAddress = await interchainTokenService.trustedAddress(trustedChain);
-
-            if (trustedAddress) {
-                printInfo(`Trusted address for chain ${trustedChain}`, trustedAddress);
-            } else {
-                printWarn(`No trusted address for chain ${trustedChain}`);
-            }
-
-            break;
-        }
-
         case 'set-trusted-chains': {
             const [itsChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+                throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
 
             validateParameters({ isNonEmptyString: { itsChain } });
@@ -456,7 +441,7 @@ async function processCommand(config, chain, action, options) {
 
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainsSet');
             }
 
             break;
@@ -467,7 +452,7 @@ async function processCommand(config, chain, action, options) {
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+                throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
 
             let trustedChains;
@@ -481,15 +466,15 @@ async function processCommand(config, chain, action, options) {
                     throw new Error(`Invalid chain: ${trustedChain}`);
                 }
 
-                if ((await interchainTokenService.trustedAddress(trustedChain)) === '') {
-                    printError(`No trusted address for chain ${trustedChain}`);
+                if (!(await interchainTokenService.isTrustedChain(trustedChain))) {
+                    printError(`Not a trusted chain ${trustedChain}`);
                     return;
                 }
 
                 trustedChains = [trustedChain];
             }
 
-            printInfo(`Removing trusted address for chains ${trustedChains}`);
+            printInfo(`Removing trusted chain(s) ${trustedChains}`);
 
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
@@ -847,8 +832,8 @@ if (require.main === module) {
         });
 
     program
-        .command('trusted-address')
-        .description('Get trusted address for chain')
+        .command('trusted-chain')
+        .description('Get trusted chain')
         .argument('<trusted-chain>', 'Trusted chain')
         .action((trustedChain, options, cmd) => {
             main(cmd.name(), [trustedChain], options);
