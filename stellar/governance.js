@@ -3,7 +3,7 @@
 const { Contract, nativeToScVal, scValToNative, Address } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const { getWallet, broadcast, addBaseOptions } = require('./utils');
-const { loadConfig, printInfo, prompt, validateParameters, saveConfig, addOptionsToCommands, getChainConfig } = require('../common');
+const { loadConfig, prompt, validateParameters, saveConfig, addOptionsToCommands, getChainConfig } = require('../common');
 
 const ProposalType = {
     ScheduleTimelock: 1,
@@ -19,13 +19,13 @@ function createProposalPayload(commandType, target, callData, functionName, nati
         nativeToScVal(Buffer.from(callData, 'hex'), { type: 'bytes' }),
         nativeToScVal(functionName, { type: 'symbol' }),
         nativeToScVal(nativeValue, { type: 'i128' }),
-        nativeToScVal(eta, { type: 'u64' })
+        nativeToScVal(eta, { type: 'u64' }),
     ]);
 }
 
 async function execute(wallet, _, chain, contract, args, options) {
     const [sourceChain, sourceAddress, payload] = args;
-    
+
     validateParameters({
         isNonEmptyString: { sourceChain, sourceAddress },
     });
@@ -37,115 +37,111 @@ async function execute(wallet, _, chain, contract, args, options) {
         isNonEmptyString: { function: functionName },
     });
 
-    const proposalPayload = createProposalPayload(
-        ProposalType.ScheduleTimelock,
-        target,
-        callData,
-        functionName,
-        nativeValue,
-        eta || 0
-    );
+    const proposalPayload = createProposalPayload(ProposalType.ScheduleTimelock, target, callData, functionName, nativeValue, eta || 0);
 
-    const operation = contract.call('execute', 
+    const operation = contract.call(
+        'execute',
         nativeToScVal(sourceChain, { type: 'string' }),
         nativeToScVal(sourceAddress, { type: 'string' }),
-        proposalPayload
+        proposalPayload,
     );
     const result = await broadcast(operation, wallet, chain, 'Governance execute', options);
-    
+
     return result;
 }
 
 async function executeProposal(wallet, _, chain, contract, args, options) {
     const [target, callData, functionName, nativeValue, tokenAddress] = args;
-    
+
     validateParameters({
         isValidStellarAddress: { target, tokenAddress },
         isNonEmptyString: { function: functionName },
     });
 
-    const operation = contract.call('execute_proposal', 
+    const operation = contract.call(
+        'execute_proposal',
         Address.fromString(target).toScVal(),
         nativeToScVal(callData, { type: 'bytes' }),
         nativeToScVal(functionName, { type: 'symbol' }),
         nativeToScVal(nativeValue, { type: 'i128' }),
-        Address.fromString(tokenAddress).toScVal()
+        Address.fromString(tokenAddress).toScVal(),
     );
     const result = await broadcast(operation, wallet, chain, 'Execute proposal', options);
-    
+
     return result;
 }
 
 async function executeOperatorProposal(wallet, _, chain, contract, args, options) {
     const [target, callData, functionName, nativeValue, tokenAddress] = args;
-    
+
     validateParameters({
         isValidStellarAddress: { target, tokenAddress },
         isNonEmptyString: { function: functionName },
     });
 
-    const operation = contract.call('execute_operator_proposal', 
+    const operation = contract.call(
+        'execute_operator_proposal',
         Address.fromString(target).toScVal(),
         nativeToScVal(callData, { type: 'bytes' }),
         nativeToScVal(functionName, { type: 'symbol' }),
         nativeToScVal(nativeValue, { type: 'i128' }),
-        Address.fromString(tokenAddress).toScVal()
+        Address.fromString(tokenAddress).toScVal(),
     );
     const result = await broadcast(operation, wallet, chain, 'Execute operator proposal', options);
-    
+
     return result;
 }
 
 async function proposalEta(wallet, _, chain, contract, args, options) {
     const [target, callData, functionName, nativeValue] = args;
-    
+
     validateParameters({
         isValidStellarAddress: { target },
         isNonEmptyString: { function: functionName },
     });
 
-    const operation = contract.call('proposal_eta', 
+    const operation = contract.call(
+        'proposal_eta',
         Address.fromString(target).toScVal(),
         nativeToScVal(callData, { type: 'bytes' }),
         nativeToScVal(functionName, { type: 'symbol' }),
-        nativeToScVal(nativeValue, { type: 'i128' })
+        nativeToScVal(nativeValue, { type: 'i128' }),
     );
     const result = await broadcast(operation, wallet, chain, 'Get proposal ETA', options);
-    
+
     return scValToNative(result);
 }
 
 async function isOperatorProposalApproved(wallet, _, chain, contract, args, options) {
     const [target, callData, functionName, nativeValue] = args;
-    
+
     validateParameters({
         isValidStellarAddress: { target },
         isNonEmptyString: { function: functionName },
     });
 
-    const operation = contract.call('is_operator_proposal_approved', 
+    const operation = contract.call(
+        'is_operator_proposal_approved',
         Address.fromString(target).toScVal(),
         nativeToScVal(Buffer.from(callData, 'hex'), { type: 'bytes' }),
         nativeToScVal(functionName, { type: 'symbol' }),
-        nativeToScVal(nativeValue, { type: 'i128' })
+        nativeToScVal(nativeValue, { type: 'i128' }),
     );
     const result = await broadcast(operation, wallet, chain, 'Check operator proposal approval', options);
-    
+
     return scValToNative(result);
 }
 
 async function transferOperatorship(wallet, _, chain, contract, args, options) {
     const [newOperator] = args;
-    
+
     validateParameters({
         isValidStellarAddress: { newOperator },
     });
 
-    const operation = contract.call('transfer_operatorship_wrapper', 
-        Address.fromString(newOperator).toScVal()
-    );
+    const operation = contract.call('transfer_operatorship_wrapper', Address.fromString(newOperator).toScVal());
     const result = await broadcast(operation, wallet, chain, 'Transfer operatorship', options);
-    
+
     return result;
 }
 
@@ -164,7 +160,7 @@ async function mainProcessor(processor, args, options) {
     console.log(contractAddress);
 
     validateParameters({
-        isValidStellarAddress: { contractAddress }
+        isValidStellarAddress: { contractAddress },
     });
 
     const contract = new Contract(contractAddress);
@@ -225,4 +221,3 @@ if (require.main === module) {
 
     program.parse();
 }
-
