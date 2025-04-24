@@ -159,7 +159,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
@@ -252,7 +252,7 @@ async function processCommand(config, chain, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
