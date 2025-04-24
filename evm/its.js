@@ -413,18 +413,12 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'set-trusted-chains': {
-            console.log('debug 1', args);
             const [itsChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
-
-            console.log('debug 1-1', itsChain);
-            console.log('debug 1-2', owner);
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
-
-            console.log('debug 1-3', itsChain);
 
             validateParameters({ isNonEmptyString: { itsChain } });
 
@@ -441,20 +435,14 @@ async function processCommand(config, chain, action, options) {
                 trustedChains = [trustedChain];
             }
 
-            console.log('debug 1-4', trustedChains);
-
-            if (prompt(`Proceed with setting trusted chain(s) for: ${trustedChains.join(', ')}?`, yes)) {
+            if (prompt(`Proceed with setting trusted chain(s): ${trustedChains}?`, yes)) {
                 return;
             }
-
-            console.log('debug 2', trustedChains);
 
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
                 await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
             }
-
-            console.log('debug 3', 'set-trusted-chains completed');
 
             break;
         }
@@ -470,7 +458,7 @@ async function processCommand(config, chain, action, options) {
             let trustedChains;
 
             if (itsChain === 'all') {
-                [trustedChains] = await getTrustedChainsAndAddresses(config, interchainTokenService);
+                trustedChains = parseTrustedChains(config, [itsChain]);
             } else {
                 const trustedChain = config.chains[itsChain.toLowerCase()]?.axelarId;
 
@@ -486,10 +474,12 @@ async function processCommand(config, chain, action, options) {
                 trustedChains = [trustedChain];
             }
 
-            printInfo(`Removing trusted chain(s) ${trustedChains}`);
+            if (prompt(`Proceed with removing trusted chain(s): ${trustedChains}?`, yes)) {
+                return;
+            }
 
             for (const trustedChain of trustedChains) {
-                const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
+                const tx = await interchainTokenService.removeTrustedChain(trustedChain, gasOptions);
                 await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainRemoved');
             }
 
