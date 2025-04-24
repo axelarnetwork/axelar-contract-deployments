@@ -1,11 +1,13 @@
+const { Command } = require('commander');
 const fsStandard = require('fs');
 const fs = require('fs').promises;
 const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
-const archiver = require('archiver');
-const { Command, Option } = require('commander');
-const { addOptionsToCommands, addBaseOptions } = require('./utils');
+const JSZip = require('jszip');
+const { printInfo, printError, pascalToSnake } = require('../common/utils');
+
+const { addBaseOptions } = require('./utils');
 
 const BASE_URL = 'https://api.welldonestudio.io/compiler/sui';
 const MOVE_FOLDER_PATH = './sui/move';
@@ -23,22 +25,6 @@ const CONTRACTS = [
     'Example',
 ];
 
-function printInfo(message, value = '') {
-    console.log(`[INFO] ${message}: ${value}`);
-}
-
-function printError(message, value = '') {
-    console.error(`[ERROR] ${message}: ${value}`);
-    process.exit(1);
-}
-
-function toCamelCase(str) {
-    return str
-        .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => (index === 0 ? word.toLowerCase() : word.toUpperCase()))
-        .replace(/\s+/g, '')
-        .replace(/([a-z])([A-Z])/g, '$1$2');
-}
-
 async function getContractAddress(env, contract) {
     const configPath = path.join(__dirname, '../axelar-chains-config', 'info', `${env}.json`);
 
@@ -55,14 +41,22 @@ async function getContractAddress(env, contract) {
 
 async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
     try {
+        // Validate moveFolderPath exists
+        await fs.access(moveFolderPath).catch(() => {
+            throw new Error(`Move folder path does not exist: ${moveFolderPath}`);
+        });
+
         const centralDepsFolderPath = path.join(moveFolderPath, 'deps');
         await fs.mkdir(centralDepsFolderPath, { recursive: true });
+
         const moveContents = await fs.readdir(moveFolderPath, { withFileTypes: true });
 
         for (const item of moveContents) {
             const sourcePath = path.join(moveFolderPath, item.name);
             const destPath = path.join(centralDepsFolderPath, item.name);
+
             if (item.name === 'deps') continue;
+
             await fs.cp(sourcePath, destPath, { recursive: true });
             printInfo('Copied to central deps', `${sourcePath} to ${destPath}`);
         }
@@ -71,13 +65,16 @@ async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
             if (item.isDirectory() && item.name !== 'deps') {
                 const subDirPath = path.join(moveFolderPath, item.name);
                 const subDirDepsFolderPath = path.join(subDirPath, 'deps');
+
                 await fs.mkdir(subDirDepsFolderPath, { recursive: true });
+
                 const centralDepsContents = await fs.readdir(centralDepsFolderPath, { withFileTypes: true });
 
                 for (const depItem of centralDepsContents) {
                     if (depItem.name !== item.name) {
                         const sourcePath = path.join(centralDepsFolderPath, depItem.name);
                         const destPath = path.join(subDirDepsFolderPath, depItem.name);
+
                         await fs.cp(sourcePath, destPath, { recursive: true });
                         printInfo('Copied to subdirectory deps', `${sourcePath} to ${destPath}`);
                     }
@@ -96,38 +93,76 @@ async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
                 } else if (item.name === 'Move.toml') {
                     try {
                         let tomlContent = await fs.readFile(itemPath, 'utf-8');
+
                         tomlContent = tomlContent.replace(/local\s*=\s*"\.\.\/([^"]+)"/g, 'local = "./deps/$1"');
+
                         await fs.writeFile(itemPath, tomlContent);
                         printInfo('Updated Move.toml', itemPath);
                     } catch (error) {
-                        printInfo('Skipping Move.toml update', `${itemPath}: ${error.message}`);
+                        printInfo('Skipping Move.toml update due to error', `${itemPath}: ${error.message}`);
                     }
                 }
             }
         };
 
         await updateTomlInFolder(moveFolderPath);
+
         printInfo('Dependency update completed');
     } catch (error) {
         printError('Failed to copy and update dependencies', error.message);
     }
 }
 
-async function createZipsForSubdirectories(moveFolderPath = MOVE_FOLDER_PATH) {
+async function addFolderToZip(folderPath, zipFolder) {
+    const contents = await fs.readdir(folderPath, { withFileTypes: true });
+
+    for (const file of contents) {
+        const filePath = path.join(folderPath, file.name);
+
+        if (file.isDirectory()) {
+            const newFolder = zipFolder.folder(file.name);
+            await addFolderToZip(filePath, newFolder);
+        } else {
+            const fileData = await fs.readFile(filePath);
+            zipFolder.file(file.name, fileData);
+        }
+    }
+}
+
+async function zipSubdirectories(moveFolderPath = MOVE_FOLDER_PATH) {
     try {
-        const zipFolderPath = path.join(moveFolderPath, 'zip');
-        await fs.mkdir(zipFolderPath, { recursive: true });
+        // Validate moveFolderPath exists
+        await fs.access(moveFolderPath).catch(() => {
+            throw new Error(`Move folder path does not exist: ${moveFolderPath}`);
+        });
+
         const moveContents = await fs.readdir(moveFolderPath, { withFileTypes: true });
 
+        if (moveContents.length === 0) {
+            printInfo('No subdirectories found to zip');
+            return;
+        }
+
         for (const item of moveContents) {
-            if (item.isDirectory() && item.name !== 'deps' && item.name !== 'zip') {
+            if (item.isDirectory() && item.name !== 'deps') {
                 const subDirPath = path.join(moveFolderPath, item.name);
-                const zipFilePath = path.join(zipFolderPath, `${item.name}.zip`);
-                const output = fsStandard.createWriteStream(zipFilePath);
-                const archive = archiver('zip', { zlib: { level: 9 } });
-                archive.pipe(output);
-                archive.directory(subDirPath, item.name);
-                await archive.finalize();
+                const zipFilePath = path.join(moveFolderPath, `${item.name}.zip`);
+
+                await fs.access(subDirPath).catch(() => {
+                    throw new Error(`Subdirectory does not exist: ${subDirPath}`);
+                });
+
+                const zip = new JSZip();
+
+                await addFolderToZip(subDirPath, zip.folder(item.name));
+
+                const zipContent = await zip.generateAsync({
+                    type: 'nodebuffer',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }, // Match macOS Finder's moderate compression
+                });
+
+                await fs.writeFile(zipFilePath, zipContent);
                 printInfo('Created ZIP file', zipFilePath);
             }
         }
@@ -143,7 +178,7 @@ async function checkVerificationStatus(network, packageId) {
         const response = await axios.get(`${BASE_URL}/verifications`, { params: { network, packageId } });
         return response.data;
     } catch (error) {
-        printError('Failed to check verification status', error.message);
+        throw new Error(`Failed to check verification status: ${error.message}`);
     }
 }
 
@@ -156,18 +191,18 @@ async function uploadSourceCode(network, packageId, srcZipPath) {
         const response = await axios.post(`${BASE_URL}/verifications/sources`, form, { headers: form.getHeaders() });
         return response.data.srcFileId;
     } catch (error) {
-        printError('Failed to upload source code', error.message);
+        throw new Error(`Failed to upload source code: ${error.message}`);
     }
 }
 
-async function verifyPackage(network, packageId, srcFileId, isRemixSrcUploaded) {
+async function verifyPackage(network, packageId, srcFileId, isSrcUploaded) {
     try {
         const payload = { network, packageId };
-        if (!isRemixSrcUploaded && srcFileId) payload.srcFileId = srcFileId;
+        if (!isSrcUploaded && srcFileId) payload.srcFileId = srcFileId;
         const response = await axios.post(`${BASE_URL}/verifications`, payload, { headers: { 'Content-Type': 'application/json' } });
         return response.data;
     } catch (error) {
-        printError('Failed to verify package', error.message);
+        throw new Error(`Failed to verify package: ${error.message}`);
     }
 }
 
@@ -178,7 +213,7 @@ async function getVerifiedSourceCode(network, packageId) {
         });
         return response.data;
     } catch (error) {
-        printError('Failed to fetch verified source code', error.message);
+        throw new Error(`Failed to fetch verified source code: ${error.message}`);
     }
 }
 
@@ -190,17 +225,17 @@ async function processVerification(network, packageId, srcZipPath) {
 
     let srcFileId = null;
 
-    if (!status.isRemixSrcUploaded && srcZipPath) {
+    if (!status.isSrcUploaded && srcZipPath) {
         printInfo('Uploading source code', srcZipPath);
         srcFileId = await uploadSourceCode(network, packageId, srcZipPath);
         printInfo('Source file uploaded with ID', srcFileId);
-    } else if (!status.isRemixSrcUploaded) {
-        printError('Source code not uploaded via Remix and no source zip provided');
+    } else if (!status.isSrcUploaded) {
+        throw new Error('Source code not uploaded via Remix and no source zip provided');
     }
 
     if (!status.isVerified) {
         printInfo('Verifying package', packageId);
-        const verificationResult = await verifyPackage(network, packageId, srcFileId, status.isRemixSrcUploaded);
+        const verificationResult = await verifyPackage(network, packageId, srcFileId, status.isSrcUploaded);
         printInfo('Verification result', JSON.stringify(verificationResult, null, 2));
     } else {
         printInfo('Package already verified');
@@ -211,46 +246,44 @@ async function processVerification(network, packageId, srcZipPath) {
     printInfo('Verified source code', JSON.stringify(sourceCode, null, 2));
 }
 
-async function verifyContracts(env, contractName) {
-    console.log(`[INFO] Starting contract verification for environment: ${env}`);
+async function verifyContracts(contractName, options) {
+    printInfo('Starting contract verification for environment', options.env);
     await copyAndUpdateDependencies();
-    await createZipsForSubdirectories();
+    await zipSubdirectories();
 
     const contractsToVerify = contractName.toLowerCase() === 'all' ? CONTRACTS : [contractName];
 
     if (!CONTRACTS.includes(contractName) && contractName.toLowerCase() !== 'all') {
-        printError(`Invalid contract name: ${contractName}. Must be one of: ${CONTRACTS.join(', ')} or 'all'`);
+        throw new Error(`Invalid contract name: ${contractName}. Must be one of: ${CONTRACTS.join(', ')} or 'all'`);
     }
 
     for (const contract of contractsToVerify) {
-        const camelCaseContract = toCamelCase(contract);
+        const pascalCaseContract = pascalToSnake(contract);
 
         try {
-            const address = await getContractAddress(env, contract);
-            const srcZipPath = path.join(MOVE_FOLDER_PATH, 'zip', `${camelCaseContract}.zip`);
-            await processVerification(env, address, srcZipPath);
-            console.log(`[INFO] Successfully verified ${contract}`);
+            const address = await getContractAddress(options.env, contract);
+            const srcZipPath = path.join(MOVE_FOLDER_PATH, `${pascalCaseContract}.zip`);
+            await processVerification(options.env, address, srcZipPath);
+            printInfo('Successfully verified', contract);
         } catch (error) {
-            console.error(`[ERROR] Failed to verify ${contract}: ${error.message}`);
+            printError('Failed to verify', `${contract}: ${error.message}`);
         }
     }
 
-    console.log(`[INFO] Contract verification process completed`);
+    printInfo('Contract verification process completed');
 }
 
 if (require.main === module) {
     const program = new Command();
-    addOptionsToCommands(program, addBaseOptions);
     program
-        .name('verify-sui-contract')
-        .description('Verify Sui Move contracts using WELLDONE Studio API.')
-        .addOption(new Option('-c, --contract <contractName>', 'Contract name to verify or "all" for all contracts').default('all'))
-        .action(async (options) => {
-            try {
-                await verifyContracts(options.env, options.contract);
-            } catch (error) {
-                printError('Verification process failed', error.message);
-            }
+        .name('verify-contract')
+        .description('Verify Sui contracts using WELLDONE Studio API.')
+        .argument('<contractName>', 'Contract name to verify or "all" to verify all contracts')
+        .action((contractName, options) => {
+            verifyContracts(contractName, options);
         });
+
+    addBaseOptions(program);
+
     program.parse();
 }
