@@ -313,7 +313,7 @@ async function processCommand(config, chain, action, options) {
                 isValidCalldata: { metadata },
             });
 
-            if (!(await interchainTokenService.trustedAddress(destinationChain))) {
+            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
@@ -413,6 +413,7 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'set-trusted-chains': {
+            console.log('debug 1', args);
             const [itsChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
@@ -439,10 +440,14 @@ async function processCommand(config, chain, action, options) {
                 return;
             }
 
+            console.log('debug 2', trustedChains);
+
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainsSet');
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
             }
+
+            console.log('debug 3', 'set-trusted-chains completed');
 
             break;
         }
@@ -478,7 +483,7 @@ async function processCommand(config, chain, action, options) {
 
             for (const trustedChain of trustedChains) {
                 const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainsRemoved');
+                await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainRemoved');
             }
 
             break;
