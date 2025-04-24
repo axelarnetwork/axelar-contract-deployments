@@ -406,3 +406,54 @@ Transfer the operatorship of the contract:
 ```bash
 node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
+
+## Governance Contract Functionality
+
+The Governance contract allows managing proposals and executing governance actions.
+
+#### Execute Governance Command
+
+```bash
+node stellar/governance.js execute <sourceChain> <sourceAddress> <payload>
+```
+
+#### Execute Time-Locked Proposal
+
+```bash
+node stellar/governance.js execute-proposal <target> <callData> <function> <nativeValue> <tokenAddress>
+```
+
+#### Execute Operator-Approved Proposal
+
+```bash
+node stellar/governance.js execute-operator-proposal <target> <callData> <function> <nativeValue> <tokenAddress>
+```
+
+#### Get Proposal ETA
+
+```bash
+node stellar/governance.js proposal-eta <target> <callData> <function> <nativeValue>
+```
+
+#### Check Operator Proposal Approval
+
+```bash
+node stellar/governance.js is-operator-proposal-approved <target> <callData> <function> <nativeValue>
+```
+
+#### Example: Creating and Executing a Proposal
+
+1. Create a proposal payload:
+```bash
+node stellar/governance.js execute "avalanche" "0x1234" "0x5678"
+```
+
+2. Execute a time-locked proposal:
+```bash
+node stellar/governance.js execute-proposal "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB" "0x1234" "upgrade" 0 "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK"
+```
+
+3. Check proposal status:
+```bash
+node stellar/governance.js proposal-eta "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB" "0x1234" "upgrade" 0
+```
