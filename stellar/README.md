@@ -318,9 +318,14 @@ node stellar/its.js set-flow-limit [token-id] [flow-limit]
 
 # Example
 node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5 1000000
+```
 
-# To remove the flow limit
-node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5 null
+#### Remove Flow Limit
+```bash
+node stellar/its.js set-flow-limit [token-id]
+
+# Example
+node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
 ## TTL extension and state archival recovery
