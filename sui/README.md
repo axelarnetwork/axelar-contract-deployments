@@ -432,6 +432,18 @@ Remove trusted chains
 node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+## Sui Contract Verification
+
+Note:
+
+-   If all contracts need to be verified use `all` instead of `contractName`
+-   Ensure correct move folder is present in `sui` directory
+-   Contracts like AxelarGateway have dependency on other contracts. Make sure such contracts are present in `move` folder
+
+```bash
+node sui/verify-contract.js <all/contractName> 
+```
+
 ## Examples
 
 -   [GMP Example Guide](docs/gmp.md)
