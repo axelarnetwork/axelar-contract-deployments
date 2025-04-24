@@ -417,9 +417,14 @@ async function processCommand(config, chain, action, options) {
             const [itsChain] = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
+            console.log('debug 1-1', itsChain);
+            console.log('debug 1-2', owner);
+
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
+
+            console.log('debug 1-3', itsChain);
 
             validateParameters({ isNonEmptyString: { itsChain } });
 
@@ -435,6 +440,8 @@ async function processCommand(config, chain, action, options) {
 
                 trustedChains = [trustedChain];
             }
+
+            console.log('debug 1-4', trustedChains);
 
             if (!prompt(`Proceed with setting trusted chain(s) for: ${trustedChains.join(', ')}?`, yes)) {
                 return;
