@@ -1,21 +1,21 @@
 'use strict';
 
-const { Command } = require('commander');
-const { addBaseOptions } = require('./utils');
+const { Command, Option } = require('commander');
+const { addBaseOptions, generateKeypair } = require('./utils');
 const { loadConfig, printInfo, getChainConfig } = require('../common/utils');
-const { Horizon, Keypair } = require('@stellar/stellar-sdk');
+const { Horizon } = require('@stellar/stellar-sdk');
 
-async function processCommand(chain, _options) {
-    const keypair = Keypair.random();
+async function processCommand(chain, options) {
+    const keypair = await generateKeypair(options);
     const horizonServer = new Horizon.Server(chain.horizonRpc);
-
-    printInfo('Keypair generated');
-    printInfo('Private key', keypair.secret());
-    printInfo('Address', keypair.publicKey());
 
     // Initializes the account on-chain; without this call, the account does not yet exist.
     // Friendbot funds and activates the account (only available on testnets)
     await horizonServer.friendbot(keypair.publicKey()).call();
+
+    printInfo('Keypair generated and funded');
+    printInfo('Private key', keypair.secret());
+    printInfo('Address', keypair.publicKey());
 }
 
 async function mainProcessor(options, processor) {
@@ -30,6 +30,8 @@ if (require.main === module) {
     program.name('generate-keypair').description('Generate keypair.');
 
     addBaseOptions(program, { ignorePrivateKey: true });
+
+    program.addOption(new Option('--signatureScheme <signatureScheme>', 'sig scheme').choices(['ed25519']).default('ed25519'));
 
     program.action((options) => {
         mainProcessor(options, processCommand);

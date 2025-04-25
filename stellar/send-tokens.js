@@ -12,7 +12,7 @@ async function processCommand(chain, options) {
 
     validateParameters({
         isValidDecimal: amount,
-        isValidStellarAddresses: { recipients },
+        isValidStellarAddress: { recipients },
     });
 
     const nativeAssetBalance = await getNativeBalance(chain, wallet.publicKey());

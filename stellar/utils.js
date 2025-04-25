@@ -561,6 +561,17 @@ function customMigrationData(migrationDataObj, version, contractName) {
     }
 }
 
+async function generateKeypair(options) {
+    switch (options.signatureScheme) {
+        case 'ed25519':
+            return Keypair.random();
+
+        default: {
+            throw new Error(`Unsupported scheme: ${options.signatureScheme}`);
+        }
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -589,4 +600,5 @@ module.exports = {
     BytesToScVal,
     pascalToKebab,
     sanitizeMigrationData,
+    generateKeypair,
 };

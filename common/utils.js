@@ -258,31 +258,25 @@ function isValidTimeFormat(timeString) {
 }
 
 /**
- * Validate if the given address is a Stellar address.
+ * Validate if the given address or array of addresses are valid Stellar addresses.
  *
  * A valid Stellar address is either:
  * - a valid Stellar account address (starts with 'G')
  * - a valid Stellar contract address (starts with 'C')
  *
- * @param {string} address - The input Stellar address.
- * @returns {boolean} - True if the address is valid, otherwise false.
+ * @param {string|string[]} addresses - A single Stellar address or an array of Stellar addresses.
+ * @returns {boolean} - True if the address or all addresses are valid, otherwise false.
  */
-function isValidStellarAddress(address) {
-    return isValidStellarAccount(address) || isValidStellarContract(address);
-}
+function isValidStellarAddress(addresses) {
+    if (typeof addresses === 'string') {
+        return isValidStellarAccount(addresses) || isValidStellarContract(addresses);
+    }
 
-/**
- * Validates that all provided strings are valid Stellar addresses.
- *
- * A valid Stellar address is either:
- * - a valid Stellar account address (starts with 'G')
- * - a valid Stellar contract address (starts with 'C')
- *
- * @param {string[]} addresses - An array of Stellar address strings.
- * @returns {boolean} - Returns true if all addresses are valid, false otherwise.
- */
-function isValidStellarAddresses(addresses) {
-    return Array.isArray(addresses) && addresses.every((address) => isValidStellarAccount(address) || isValidStellarContract(address));
+    if (Array.isArray(addresses)) {
+        return addresses.every((address) => isValidStellarAccount(address) || isValidStellarContract(address));
+    }
+
+    return false;
 }
 
 /**
@@ -322,7 +316,6 @@ const validationFunctions = {
     isNonEmptyStringArray,
     isValidTimeFormat,
     isValidStellarAddress,
-    isValidStellarAddresses,
     isValidStellarAccount,
     isValidStellarContract,
 };

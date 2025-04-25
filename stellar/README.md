@@ -29,16 +29,7 @@ Create a new Stellar keypair
 
 ```bash
 # Generate keypair
-stellar keys generate wallet --network testnet
-
-# Address
-stellar keys address wallet
-
-# Private Key
-stellar keys show wallet
-
-# Remove the keypair
-stellar keys rm wallet --global;
+node stellar/generate-keypair.js
 ```
 
 Set `PRIVATE_KEY` in `.env` to the above value.
