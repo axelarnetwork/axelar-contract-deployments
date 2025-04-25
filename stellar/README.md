@@ -312,7 +312,7 @@ node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada
 
 #### Remove Flow Limit
 ```bash
-node stellar/its.js set-flow-limit [token-id]
+node stellar/its.js remove-flow-limit [token-id]
 
 # Example
 node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5

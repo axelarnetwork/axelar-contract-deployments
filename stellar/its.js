@@ -186,6 +186,10 @@ async function execute(wallet, _, chain, contract, args, options) {
 async function flowLimit(wallet, _, chain, contract, args, options) {
     const [tokenId] = args;
 
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
 
     const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
@@ -198,24 +202,35 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     }
 }
 
-async function removeFlowLimit(wallet, _, chain, contract, args, options) {
-    const [tokenId] = args;
-    const flowLimitScVal = nativeToScVal(null, { type: 'void' });
-
-    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
-
-    await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
-    printInfo('Successfully removed flow limit');
-}
-
 async function setFlowLimit(wallet, _, chain, contract, args, options) {
     const [tokenId, flowLimit] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidNumber: { flowLimit },
+    });
+
     const flowLimitScVal = nativeToScVal(flowLimit, { type: 'i128' });
 
     const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
 
     await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
     printInfo('Successfully set flow limit', flowLimit);
+}
+
+async function removeFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const flowLimitScVal = nativeToScVal(null, { type: 'void' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
+    printInfo('Successfully removed flow limit');
 }
 
 async function mainProcessor(processor, args, options) {
