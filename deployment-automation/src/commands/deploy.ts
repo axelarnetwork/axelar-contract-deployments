@@ -154,7 +154,7 @@ export async function runNewDeployment(): Promise<void> {
 export function saveDeploymentConfig(): void {
   const configKeys = [
     'NAMESPACE', 'CHAIN_NAME', 'CHAIN_ID', 'TOKEN_SYMBOL', 'GAS_LIMIT',
-    'RPC_URL', 'AXELAR_RPC_URL',
+    'RPC_URL', 'AXELAR_RPC_URL', 'EPOCH_DURATION',
     'GOVERNANCE_ADDRESS', 'ADMIN_ADDRESS', 'SERVICE_NAME', 'VOTING_THRESHOLD',
     'SIGNING_THRESHOLD', 'CONFIRMATION_HEIGHT', 'MINIMUM_ROTATION_DELAY',
     'DEPLOYMENT_TYPE', 'DEPLOYER', 'CONTRACT_ADMIN', 'PROVER_ADMIN',

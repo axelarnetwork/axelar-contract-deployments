@@ -280,35 +280,7 @@ export async function addFundsToVotingVerifierRewardPool(): Promise<void> {
       throw new Error("TOKEN_DENOM is not defined");
     }
     
-    // Check if the reward pool already has funds
-    console.log("Checking existing balance in reward pool...");
-    try {
-      const { stdout: balanceOutput } = await execAsync(
-        `axelard query bank balances ${config.REWARDS_ADDRESS} --node "${config.AXELAR_RPC_URL}" --chain-id "${config.NAMESPACE}"`
-      );
-      
-      console.log("Current reward pool balance:", balanceOutput);
-      
-      // Check if the balance output contains the expected denomination
-      if (balanceOutput.includes(config.TOKEN_DENOM)) {
-        // Extract the amount from the balance output
-        const amountMatch = balanceOutput.match(new RegExp(`amount:\\s*"(\\d+)"\\s*denom:\\s*${config.TOKEN_DENOM}`));
-        
-        if (amountMatch && amountMatch[1]) {
-          const currentAmount = parseInt(amountMatch[1], 10);
-          console.log(`Found existing balance of ${currentAmount} ${config.TOKEN_DENOM}`);
-          
-          // If there are funds already, skip adding more
-          if (currentAmount > 0) {
-            console.log("✅ Reward pool already has funds. Skipping additional funding.");
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.log("⚠️ Error checking reward pool balance:", error);
-      console.log("Will attempt to add funds anyway...");
-    }
+
     
     // Proceed with adding funds
     try {
@@ -362,36 +334,7 @@ export async function addFundsToMultisigRewardPool(): Promise<void> {
       console.error("❌ TOKEN_DENOM is not defined in the configuration");
       throw new Error("TOKEN_DENOM is not defined");
     }
-    
-    // Check if the reward pool already has funds
-    console.log("Checking existing balance in reward pool...");
-    try {
-      const { stdout: balanceOutput } = await execAsync(
-        `axelard query bank balances ${config.REWARDS_ADDRESS} --node "${config.AXELAR_RPC_URL}" --chain-id "${config.NAMESPACE}"`
-      );
-      
-      console.log("Current reward pool balance:", balanceOutput);
-      
-      // Check if the balance output contains the expected denomination
-      if (balanceOutput.includes(config.TOKEN_DENOM)) {
-        // Extract the amount from the balance output
-        const amountMatch = balanceOutput.match(new RegExp(`amount:\\s*"(\\d+)"\\s*denom:\\s*${config.TOKEN_DENOM}`));
-        
-        if (amountMatch && amountMatch[1]) {
-          const currentAmount = parseInt(amountMatch[1], 10);
-          console.log(`Found existing balance of ${currentAmount} ${config.TOKEN_DENOM}`);
-          
-          // If there are funds already, skip adding more
-          if (currentAmount > 0) {
-            console.log("✅ Reward pool already has funds. Skipping additional funding.");
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.log("⚠️ Error checking reward pool balance:", error);
-      console.log("Will attempt to add funds anyway...");
-    }
+
     
     // Proceed with adding funds
     try {
