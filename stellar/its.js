@@ -183,6 +183,52 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
+async function flowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const operation = contract.call('flow_limit', hexToScVal(tokenId));
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
+    const flowLimit = returnValue.value();
+
+    printInfo('Flow Limit', flowLimit || 'No limit set');
+}
+
+async function setFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId, flowLimit] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidNumber: { flowLimit },
+    });
+
+    const flowLimitScVal = nativeToScVal(flowLimit, { type: 'i128' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
+    printInfo('Successfully set flow limit', flowLimit);
+}
+
+async function removeFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const flowLimitScVal = nativeToScVal(null, { type: 'void' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
+    printInfo('Successfully removed flow limit');
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -276,6 +322,27 @@ if (require.main === module) {
         .description('Execute ITS message')
         .action((sourceChain, messageId, sourceAddress, payload, options) => {
             mainProcessor(execute, [sourceChain, messageId, sourceAddress, payload], options);
+        });
+
+    program
+        .command('flow-limit <tokenId>')
+        .description('Get the flow limit for a token')
+        .action((tokenId, options) => {
+            mainProcessor(flowLimit, [tokenId], options);
+        });
+
+    program
+        .command('set-flow-limit <tokenId> <flowLimit>')
+        .description('Set the flow limit for a token')
+        .action((tokenId, flowLimit, options) => {
+            mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
+        });
+
+    program
+        .command('remove-flow-limit <tokenId>')
+        .description('Remove the flow limit for a token')
+        .action((tokenId, options) => {
+            mainProcessor(removeFlowLimit, [tokenId], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
