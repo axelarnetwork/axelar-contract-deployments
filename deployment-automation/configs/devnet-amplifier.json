@@ -1700,6 +1700,50 @@
       "AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID": "403",
       "CREATE_VOTING_VERIFIER_REWARD_POOL_PROPOSAL_ID": "405",
       "CREATE_MULTISIG_REWARD_POOL_PROPOSAL_ID": "404"
+    },
+    "plume15": {
+      "NAMESPACE": "devnet-amplifier",
+      "CHAIN_NAME": "plume15",
+      "CHAIN_ID": "98867",
+      "TOKEN_SYMBOL": "PLUME",
+      "GAS_LIMIT": "5000000",
+      "RPC_URL": "https://testnet-rpc.plumenetwork.xyz",
+      "AXELAR_RPC_URL": "http://devnet-amplifier.axelar.dev:26657",
+      "EPOCH_DURATION": "100",
+      "GOVERNANCE_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "ADMIN_ADDRESS": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "SERVICE_NAME": "validators",
+      "VOTING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "SIGNING_THRESHOLD": [
+        "6",
+        "10"
+      ],
+      "CONFIRMATION_HEIGHT": "1",
+      "MINIMUM_ROTATION_DELAY": "0",
+      "DEPLOYMENT_TYPE": "create",
+      "DEPLOYER": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+      "CONTRACT_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "PROVER_ADMIN": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+      "DEPOSIT_VALUE": "100000000",
+      "REWARD_AMOUNT": "1000000",
+      "TOKEN_DENOM": "uamplifier",
+      "PROXY_GATEWAY_ADDRESS": "0xfE093d89b5C1FF9110d3f1C6Ffc7030A6B243907",
+      "ROUTER_ADDRESS": "axelar14jjdxqhuxk803e9pq64w4fgf385y86xxhkpzswe9crmu6vxycezst0zq8y",
+      "GATEWAY_ADDRESS": "axelar15aanqex6gal84lmpf7cgw6205uua4w383u2ee3l2e5uhsqnhnrnqm3huyt",
+      "MULTISIG_ADDRESS": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
+      "MULTISIG_PROVER_ADDRESS": "axelar1juzgyj3cer6dc3u326ccm456z3q4jm4qj98rfk37lcralf9y8tgs6ahr2g",
+      "VOTING_VERIFIER_ADDRESS": "axelar1gs0h3dpaqsqtpuqnjs9j938t08x6l528h7xhqxa27e3zj7kfx7hsu35nkt",
+      "REWARDS_ADDRESS": "axelar1vaj9sfzc3z0gpel90wu4ljutncutv0wuhvvwfsh30rqxq422z89qnd989l",
+      "COORDINATOR_ADDRESS": "axelar1m2498n4h2tskcsmssjnzswl5e6eflmqnh487ds47yxyu6y5h4zuqr9zk4g",
+      "WALLET_ADDRESS": "devnet-amplifier",
+      "REGISTER_GATEWAY_PROPOSAL_ID": "417",
+      "REGISTER_MULTISIG_PROVER_COORDINATOR_PROPOSAL_ID": "418",
+      "AUTHORIZE_MULTISIG_PROVER_PROPOSAL_ID": "419",
+      "CREATE_VOTING_VERIFIER_REWARD_POOL_PROPOSAL_ID": "421",
+      "CREATE_MULTISIG_REWARD_POOL_PROPOSAL_ID": "420"
     }
   }
 }
