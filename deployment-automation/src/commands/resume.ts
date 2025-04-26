@@ -110,24 +110,8 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
       }
     }
 
-    // Deploy ConstAddrDeployer
-    try {
-      await deployConstAddrDeployer();
-    } catch (error) {
-      displayMessage(MessageType.WARNING, `ConstAddrDeployer deployment encountered an issue: ${error}`);
-      displayMessage(MessageType.INFO, "Continuing with deployment...");
-    }
-
-    // Deploy Create3Deployer
-    try {
-      await deployCreate3Deployer();
-    } catch (error) {
-      displayMessage(MessageType.WARNING, `Create3Deployer deployment encountered an issue: ${error}`);
-      displayMessage(MessageType.INFO, "Continuing with deployment...");
-    }
-
-    // Deploy gateway contract (this is the critical step)
-    try {
+     // Deploy gateway contract (this is the critical step)
+     try {
       const gatewayOutput = await deployGatewayContract();
       console.log(gatewayOutput);
       displayMessage(MessageType.SUCCESS, "Gateway deployed successfully!");
@@ -141,6 +125,23 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
       } else {
         throw error;
       }
+    }
+
+    // Deploy ConstAddrDeployer
+    /*
+    try {
+      await deployConstAddrDeployer();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `ConstAddrDeployer deployment encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
+    }
+
+    // Deploy Create3Deployer
+    try {
+      await deployCreate3Deployer();
+    } catch (error) {
+      displayMessage(MessageType.WARNING, `Create3Deployer deployment encountered an issue: ${error}`);
+      displayMessage(MessageType.INFO, "Continuing with deployment...");
     }
 
     // Deploy Operators
@@ -168,6 +169,8 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
       displayMessage(MessageType.ERROR, `AxelarGasService deployment failed: ${error}`);
       displayMessage(MessageType.INFO, "Continuing with deployment...");
     }
+
+    */
 
     if (config.NAMESPACE === "testnet" || config.NAMESPACE === "mainnet") {
       try {
