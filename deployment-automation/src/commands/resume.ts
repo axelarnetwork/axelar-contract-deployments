@@ -128,7 +128,7 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
     }
 
     // Deploy ConstAddrDeployer
-    /*
+
     try {
       await deployConstAddrDeployer();
     } catch (error) {
@@ -169,8 +169,6 @@ export async function gotoAfterMultisigProposals(): Promise<void> {
       displayMessage(MessageType.ERROR, `AxelarGasService deployment failed: ${error}`);
       displayMessage(MessageType.INFO, "Continuing with deployment...");
     }
-
-    */
 
     if (config.NAMESPACE === "testnet" || config.NAMESPACE === "mainnet") {
       try {
