@@ -1009,6 +1009,54 @@
           ]
         }
       }
+    },
+    "xrpl-dev2": {
+      "name": "XRPL",
+      "axelarId": "xrpl-dev2",
+      "rpc": "wss://s.devnet.rippletest.net:51233",
+      "wssRpc": "wss://s.devnet.rippletest.net:51233",
+      "tokenSymbol": "XRP",
+      "decimals": 6,
+      "networkType": "testnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://devnet.xrpl.org"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "rPtmTB5wYqzUYi1UJaXggg8pb4GqmGpvfB",
+          "initialSigner": "rhZatrV2t3orGYM4CzQNJidTRQMi2iGyxb",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        },
+        "AxelarGateway": {
+          "address": "rPtmTB5wYqzUYi1UJaXggg8pb4GqmGpvfB",
+          "initialSigner": "rhZatrV2t3orGYM4CzQNJidTRQMi2iGyxb",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        }
+      }
     }
   },
   "axelar": {
