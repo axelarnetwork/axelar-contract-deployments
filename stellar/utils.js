@@ -572,6 +572,19 @@ async function generateKeypair(options) {
     }
 }
 
+function isFriendbotSupported(networkType) {
+    switch (networkType) {
+        case 'local':
+        case 'futurenet':
+        case 'testnet':
+            return true;
+        case 'mainnet':
+            return false;
+        default:
+            throw new Error(`Unknown network type: ${networkType}`);
+    }
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -601,4 +614,5 @@ module.exports = {
     pascalToKebab,
     sanitizeMigrationData,
     generateKeypair,
+    isFriendbotSupported,
 };

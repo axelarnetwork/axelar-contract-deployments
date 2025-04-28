@@ -1,7 +1,7 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const { addBaseOptions, generateKeypair } = require('./utils');
+const { addBaseOptions, generateKeypair, isFriendbotSupported } = require('./utils');
 const { loadConfig, printInfo, getChainConfig } = require('../common/utils');
 const { Horizon } = require('@stellar/stellar-sdk');
 
@@ -9,11 +9,16 @@ async function processCommand(chain, options) {
     const keypair = await generateKeypair(options);
     const horizonServer = new Horizon.Server(chain.horizonRpc);
 
-    // Initializes the account on-chain; without this call, the account does not yet exist.
-    // Friendbot funds and activates the account (only available on testnets)
-    await horizonServer.friendbot(keypair.publicKey()).call();
+    // Fund and activate the account using Friendbot if supported by the network.
+    // Friendbot is available only on local, futurenet, and testnet.
+    // On unsupported networks (e.g., mainnet), manual funding is required.
+    if (isFriendbotSupported(chain.networkType)) {
+        await horizonServer.friendbot(keypair.publicKey()).call();
+        printInfo('Keypair generated and funded via Friendbot');
+    } else {
+        printInfo('Keypair generated (manual funding required)');
+    }
 
-    printInfo('Keypair generated and funded');
     printInfo('Private key', keypair.secret());
     printInfo('Address', keypair.publicKey());
 }
