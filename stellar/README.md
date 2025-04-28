@@ -289,6 +289,32 @@ node stellar/its.js interchain-transfer [token-id] [destination-chain] [destinat
 node stellar/its.js execute [source-chain] [message-id] [source-address] [payload]
 ```
 
+#### Get Flow Limit
+
+```bash
+node stellar/its.js flow-limit [token-id]
+
+# Example
+node stellar/its.js flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
+#### Set Flow Limit
+
+```bash
+node stellar/its.js set-flow-limit [token-id] [flow-limit]
+
+# Example
+node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5 1000000
+```
+
+#### Remove Flow Limit
+```bash
+node stellar/its.js remove-flow-limit [token-id]
+
+# Example
+node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
 ## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.
