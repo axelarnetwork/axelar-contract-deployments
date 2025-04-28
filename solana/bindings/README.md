@@ -1,10 +1,10 @@
 # Instructions for working with bindings
 
-Here are already prepared bindings which should work out of the box with the `memo-program` and `gateway` from this repository. Both, `memo-program` and `gateway` had some slight changes to make it work with the `native-to-anchor` binary. 
+Here are already prepared bindings which work out of the box with the `memo-program`, `gateway` and `its` programs. 
 
-It has been tested on the local node.
+Tests are run on the local node.
 
-`native-to-anchor` created the `idl.json` file and from it, lib file that represents `memo-program` and a `src` folder with typescript code.
+External binary `native-to-anchor` created the `idl.json` file and from it, lib file that represents each program and a `src` folder with typescript code.
 
 On top of that, plain `Anchor.toml` has been provided here that has been copied from `hello_world` example and adjusted accordingly.
 
@@ -31,7 +31,7 @@ That is why in script, `native-to-anchor` is being called with an absolute path.
 
 Initially, folder `generated` has been built just by calling `native-to-anchor` on the target `program`, but the binary also generates additional files which are unnecessary and are stored in the `temp` folder. There is no need to run `native-to-anchor`, because the bindings are already prepared.
 
-In case that bindings need to be generated, right now it can only be run in two ways: to generate `memo-program` or `gateway`. It can be run in the following way:
+In case that bindings need to be generated, it can be used to generate `memo-program`, `gateway` or `its` program. It is used in the following way:
 
 ```bash
 cd <repo_root>/solana
@@ -43,10 +43,16 @@ To generate `memo-program`:
 cargo xtask create-bindings memo-program
 ```
 
-Or `gateway`:
+To generate `gateway`:
 
 ```bash
 cargo xtask create-bindings gateway
+```
+
+To generate `its`:
+
+```bash
+cargo xtask create-bindings its
 ```
 
 In that way, new bindings are created in the `temp/` folder. In case it is necessary to update the bindings in the correspondings folder, it needs to be called like this:
@@ -145,33 +151,9 @@ Test OK: Program throws error, but data is properly sent through bindings.
     ✔ ApproveMessage (76ms)
 Test OK: Program throws error, but data is properly sent through bindings.
     ✔ RotateSigners
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ CallContract
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ CallContractOffchainData
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ InitializeConfig
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ InitializePayloadVerificationSession
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ VerifySignature
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ InitializeMessagePayload
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ WriteMessagePayload
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ CommitMessagePayload
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ CloseMessagePayload
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ ValidateMessage
-Test OK: Program throws error, but data is properly sent through bindings.
-    ✔ TransferOperatorship
-
-  Ping Memo Program
-Initializing failed, probably it has been already initialized. Skipping...
-    ✔ Is initialized!
 ```
+
+In case that some of the tests have failed, issue report has to be done.
 
 ## Additional things to be checked
 
