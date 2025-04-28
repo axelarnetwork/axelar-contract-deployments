@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -183,21 +183,50 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
-async function migrateTokens(wallet, _, chain, contract, args, options) {
-    let tokenIds = Array.isArray(args) ? args : [args];
+async function flowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
 
-    tokenIds = tokenIds.map((tokenId) => '0x'.concat(Buffer.from(tokenId, 'base64').toString('hex')));
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
 
-    for (const tokenId of tokenIds) {
-        printInfo('Migrating token', tokenId);
+    const operation = contract.call('flow_limit', hexToScVal(tokenId));
 
-        const tokenIdScVal = nativeToScVal(Buffer.from(tokenId, 'hex'));
-        const upgraderAddressScVal = nativeToScVal(Address.fromString(chain.contracts.Upgrader.address), { type: 'address' });
-        const newVersionScVal = nativeToScVal(options.version, { type: 'string' });
+    const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
+    const flowLimit = returnValue.value();
 
-        const operation = contract.call('migrate_token', tokenIdScVal, upgraderAddressScVal, newVersionScVal);
-        await broadcast(operation, wallet, chain, 'Migrated token', options);
-    }
+    printInfo('Flow Limit', flowLimit || 'No limit set');
+}
+
+async function setFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId, flowLimit] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidNumber: { flowLimit },
+    });
+
+    const flowLimitScVal = nativeToScVal(flowLimit, { type: 'i128' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Set Flow Limit', options);
+    printInfo('Successfully set flow limit', flowLimit);
+}
+
+async function removeFlowLimit(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const flowLimitScVal = nativeToScVal(null, { type: 'void' });
+
+    const operation = contract.call('set_flow_limit', hexToScVal(tokenId), flowLimitScVal);
+
+    await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
+    printInfo('Successfully removed flow limit');
 }
 
 async function mainProcessor(processor, args, options) {
@@ -296,11 +325,24 @@ if (require.main === module) {
         });
 
     program
-        .command('migrate-tokens <tokenIds...>')
-        .description('Migrates token TokenManagers and InterchainTokens to a new version')
-        .addOption(new Option('--version <version>', 'The version to migrate to'))
-        .action((tokenIds, options) => {
-            mainProcessor(migrateTokens, tokenIds, options);
+        .command('flow-limit <tokenId>')
+        .description('Get the flow limit for a token')
+        .action((tokenId, options) => {
+            mainProcessor(flowLimit, [tokenId], options);
+        });
+
+    program
+        .command('set-flow-limit <tokenId> <flowLimit>')
+        .description('Set the flow limit for a token')
+        .action((tokenId, flowLimit, options) => {
+            mainProcessor(setFlowLimit, [tokenId, flowLimit], options);
+        });
+
+    program
+        .command('remove-flow-limit <tokenId>')
+        .description('Remove the flow limit for a token')
+        .action((tokenId, options) => {
+            mainProcessor(removeFlowLimit, [tokenId], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
