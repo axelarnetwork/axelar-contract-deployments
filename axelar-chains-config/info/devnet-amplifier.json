@@ -1020,7 +1020,7 @@
       "confirmations": 1,
       "finality": "finalized",
       "decimals": 18,
-      "approxFinalityWaitTime": 1,
+      "approxFinalityWaitTime": 30,
       "chainType": "evm",
       "explorer": {
         "name": "Plume-testnet Explorer",
