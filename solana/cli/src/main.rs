@@ -2,6 +2,7 @@ mod broadcast;
 mod combine;
 mod config;
 mod error;
+mod gas_service;
 mod gateway;
 mod generate;
 mod send;
@@ -135,6 +136,9 @@ struct GenerateCommandArgs {
 enum InstructionSubcommand {
     #[clap(long_about = "Commands for Gateway program", subcommand)]
     Gateway(gateway::Commands),
+
+    #[clap(long_about = "Commands for GasService program", subcommand)]
+    GasService(gas_service::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -252,6 +256,9 @@ async fn build_instruction(
     let serializable_ix = match instruction {
         InstructionSubcommand::Gateway(command) => {
             gateway::build_instruction(fee_payer, command, config).await?
+        }
+        InstructionSubcommand::GasService(command) => {
+            gas_service::build_instruction(fee_payer, command, config).await?
         }
     };
 
