@@ -2,6 +2,7 @@ mod broadcast;
 mod combine;
 mod config;
 mod error;
+mod gateway;
 mod generate;
 mod send;
 mod sign;
@@ -132,6 +133,8 @@ struct GenerateCommandArgs {
 
 #[derive(Subcommand, Debug)]
 enum InstructionSubcommand {
+    #[clap(long_about = "Commands for Gateway program", subcommand)]
+    Gateway(gateway::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -247,6 +250,9 @@ async fn build_instruction(
     config: &Config,
 ) -> eyre::Result<Instruction> {
     let serializable_ix = match instruction {
+        InstructionSubcommand::Gateway(command) => {
+            gateway::build_instruction(fee_payer, command, config).await?
+        }
     };
 
     Ok(serializable_ix)
