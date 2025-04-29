@@ -34,7 +34,9 @@ export function updateNetworkWithChainConfig(): void {
       chainId: parseInt(config.CHAIN_ID!),
       rpc: config.RPC_URL,
       tokenSymbol: config.TOKEN_SYMBOL,
-      confirmations: 1,
+      confirmations: parseInt(config.CHAIN_CONFIRMATIONS!),
+      finality: config.CHAIN_FINALITY!,
+      approxFinalityWaitTime: parseInt(config.CHAIN_APPROX_FINALITY_WAIT_TIME!),
       gasOptions: {
         gasLimit: parseInt(config.GAS_LIMIT!)
       }

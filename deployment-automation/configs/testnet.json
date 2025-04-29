@@ -15,7 +15,12 @@
       "DEPOSIT_VALUE": "2000000000",
       "REWARD_AMOUNT": "1000000",
       "TOKEN_DENOM": "uaxl",
-      "EPOCH_DURATION": "600"
+      "EPOCH_DURATION": "600",
+      "CHAIN_FINALITY": "finalized",
+      "CHAIN_CONFIRMATIONS": "1",
+      "CHAIN_APPROX_FINALITY_WAIT_TIME": "1",
+      "AMPD_FINALITY": "RPCFinalizedBlock",
+      "AXELAR_MULTISIG_ADDRESS": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5"
     }
   }
 }
