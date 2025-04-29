@@ -41,6 +41,9 @@ export interface EnvironmentConfig {
   SALT?: string;
   EPOCH_DURATION?: string;
   RUN_AS_ACCOUNT?: string;
+  CHAIN_FINALITY?: string;
+  CHAIN_CONFIRMATIONS?: string;
+  CHAIN_APPROX_FINALITY_WAIT_TIME?: string;
   
   // Command line args and state flags
   CONTRACT_VERSION?: string;

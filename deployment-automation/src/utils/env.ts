@@ -206,7 +206,12 @@ export function loadEnvVarsIntoConfig(config: any): void {
     'WALLET_ADDRESS',
     'TOKEN_DENOM',
     'DEPOSIT_VALUE',
-    'REWARD_AMOUNT'
+    'REWARD_AMOUNT',
+    'CHAIN_FINALITY',
+    'CHAIN_CONFIRMATIONS',
+    'CHAIN_APPROX_FINALITY_WAIT_TIME',
+    'AMPD_FINALITY',
+    'AXELAR_MULTISIG_ADDRESS'
   ];
   
   // Environment variables take precedence over file config
