@@ -1,0 +1,15 @@
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/eigerco/axelar-amplifier.git?rev=3f036ec"]
+git = "https://github.com/eigerco/axelar-amplifier.git"
+rev = "3f036ec"
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/eigerco/solana-axelar.git?rev=1c97f24"]
+git = "https://github.com/eigerco/solana-axelar.git"
+rev = "1c97f24"
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "vendor"

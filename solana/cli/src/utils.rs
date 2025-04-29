@@ -1,0 +1,133 @@
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
+
+use crate::error::{AppError, Result};
+use crate::types::{
+    NetworkType, PartialSignature, SignedSolanaTransaction, UnsignedSolanaTransaction,
+};
+
+const DEVNET_AMPLIFIER_CONFIG: &'static str = include_str!("../devnet-amplifier.json");
+const TESTNET_AMPLIFIER_CONFIG: &'static str = include_str!("../testnet.json");
+const MAINNET_AMPLIFIER_CONFIG: &'static str = include_str!("../mainnet.json");
+
+static MAINNET_INFO: LazyLock<serde_json::Value> =
+    LazyLock::new(|| serde_json::from_str(MAINNET_AMPLIFIER_CONFIG).unwrap());
+
+static TESTNET_INFO: LazyLock<serde_json::Value> =
+    LazyLock::new(|| serde_json::from_str(TESTNET_AMPLIFIER_CONFIG).unwrap());
+
+static DEVNET_INFO: LazyLock<serde_json::Value> =
+    LazyLock::new(|| serde_json::from_str(DEVNET_AMPLIFIER_CONFIG).unwrap());
+
+pub fn chains_info(network: NetworkType) -> &'static serde_json::Value {
+    match network {
+        NetworkType::Mainnet => &*MAINNET_INFO,
+        NetworkType::Testnet => &*TESTNET_INFO,
+        NetworkType::Devnet => &*DEVNET_INFO,
+        NetworkType::Localnet => panic!(
+            "Cannot automatically load chains info for Localnet. \
+             Please pass the required arguments to the CLI."
+        ),
+    }
+}
+
+pub fn save_chains_info(network: NetworkType, info: serde_json::Value, output_dir: &Path) {
+    let path = match network {
+        NetworkType::Mainnet => "mainnet.json",
+        NetworkType::Testnet => "testnet.json",
+        NetworkType::Devnet => "devnet-amplifier.json",
+        NetworkType::Localnet => panic!("Cannot save chains info for Localnet."),
+    };
+
+    let file = std::fs::File::create(output_dir.join(path)).expect("Unable to create file");
+    serde_json::to_writer_pretty(file, &info).expect("Unable to write data");
+}
+
+pub fn read_json_file<T: DeserializeOwned>(path: &Path) -> Result<T> {
+    let file = File::open(path).map_err(|e| AppError::IoError(e))?;
+    let reader = std::io::BufReader::new(file);
+    serde_json::from_reader(reader).map_err(|e| AppError::JsonError(e))
+}
+
+pub fn write_json_file<T: Serialize>(data: &T, path: &Path) -> Result<()> {
+    let file = File::create(path).map_err(|e| AppError::IoError(e))?;
+    let writer = std::io::BufWriter::new(file);
+    serde_json::to_writer_pretty(writer, data).map_err(|e| AppError::JsonError(e))
+}
+
+pub fn load_unsigned_solana_transaction(path: &Path) -> Result<UnsignedSolanaTransaction> {
+    read_json_file(path)
+}
+
+pub fn save_unsigned_solana_transaction(tx: &UnsignedSolanaTransaction, path: &Path) -> Result<()> {
+    write_json_file(tx, path)
+}
+
+pub fn load_partial_signature(path: &Path) -> Result<PartialSignature> {
+    read_json_file(path)
+}
+
+pub fn save_partial_signature(sig: &PartialSignature, path: &Path) -> Result<()> {
+    write_json_file(sig, path)
+}
+
+pub fn load_signed_solana_transaction(path: &Path) -> Result<SignedSolanaTransaction> {
+    read_json_file(path)
+}
+
+pub fn save_signed_solana_transaction(tx: &SignedSolanaTransaction, path: &Path) -> Result<()> {
+    write_json_file(tx, path)
+}
+
+pub fn create_offline_bundle(
+    bundle_name: &str,
+    output_dir: &Path,
+    files_to_include: &[(&str, &Path)],
+) -> Result<PathBuf> {
+    let target_path = output_dir.join(format!("{}.tar.gz", bundle_name));
+    let tar_gz_file = File::create(&target_path).unwrap();
+    let gz_encoder = flate2::write::GzEncoder::new(tar_gz_file, flate2::Compression::default());
+    let mut tar_builder = tar::Builder::new(gz_encoder);
+    tar_builder.follow_symlinks(true);
+
+    for (name_in_archive, path_on_disk) in files_to_include {
+        if !path_on_disk.exists() {
+            return Err(AppError::PackagingError(format!(
+                "File specified for packaging not found: {}",
+                path_on_disk.display()
+            )));
+        }
+        if path_on_disk.is_file() {
+            println!(
+                "Adding file to bundle: {} (from {})",
+                name_in_archive,
+                path_on_disk.display()
+            );
+            tar_builder
+                .append_path_with_name(path_on_disk, name_in_archive)
+                .unwrap();
+        } else if path_on_disk.is_dir() {
+            println!(
+                "Adding directory to bundle: {} (from {})",
+                name_in_archive,
+                path_on_disk.display()
+            );
+            tar_builder
+                .append_dir_all(name_in_archive, path_on_disk)
+                .unwrap();
+        } else {
+            return Err(AppError::PackagingError(format!(
+                "Path specified for packaging is not a file or directory: {}",
+                path_on_disk.display()
+            )));
+        }
+    }
+
+    let gz_encoder = tar_builder.into_inner().unwrap();
+    gz_encoder.finish().unwrap();
+
+    Ok(target_path)
+}
