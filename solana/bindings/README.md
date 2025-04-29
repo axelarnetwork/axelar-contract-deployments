@@ -16,7 +16,7 @@ From the `root` of the folder, clone the following repo in a folder above:
 
 ```bash
 cd ..
-git clone git@github.com:ICavlek/native-to-anchor.git
+git clone git@github.com:eigerco/native-to-anchor.git
 cd native-to-anchor/generator/
 cargo build
 ```
