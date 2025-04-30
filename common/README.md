@@ -2,7 +2,7 @@
 
 ### Encode ITS Destination Address
 
-When sending interchain tokens across different chains using the **Interchain Token Service (ITS)**, the recipient address must be encoded into a chain-specific format. This encoding ensures that the ITS protocol can correctly route the token to the intended recipient on the destination chain. Without this encoding, the destination address would not be understood by the ITS contract, leading to failed or misrouted transactions.
+When sending interchain tokens across different chains using the **Interchain Token Service (ITS)**, the recipient address must be encoded into a chain-specific format. This encoding ensures that the ITS protocol can correctly route the token to the intended recipient on the destination chain. Without it, the destination address may not be recognized by the ITS contract, potentially leading to failed or misrouted transactions.
 
 ```bash
 # Usage
