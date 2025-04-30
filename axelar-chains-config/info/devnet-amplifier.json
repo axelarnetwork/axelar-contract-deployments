@@ -740,7 +740,7 @@
       "name": "Sui",
       "axelarId": "sui-2",
       "networkType": "testnet",
-      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "rpc": "https://sui-testnet-rpc.publicnode.com",
       "tokenSymbol": "SUI",
       "decimals": 9,
       "chainType": "sui",
