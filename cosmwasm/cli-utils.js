@@ -1,6 +1,6 @@
 'use strict';
 
-require('../common/cli-utils')
+require('../common/cli-utils');
 
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
