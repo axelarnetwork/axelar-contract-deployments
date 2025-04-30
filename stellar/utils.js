@@ -586,7 +586,7 @@ function isFriendbotSupported(networkType) {
 }
 
 module.exports = {
-    ...require('ts-node/register'), /* enable node during migration */
+    ...require('ts-node/register') /* enable node during migration */,
     stellarCmd,
     ASSET_TYPE_NATIVE,
     buildTransaction,

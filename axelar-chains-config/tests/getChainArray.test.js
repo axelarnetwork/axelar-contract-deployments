@@ -1,8 +1,9 @@
 import fs from 'fs';
-import { describe, expect, it, beforeAll } from 'vitest';
 import { Validator } from 'jsonschema';
-import { chainValueSchema, addAllSchema } from './schema';
+import { beforeAll, describe, expect, it } from 'vitest';
+
 import { getChainArray } from '..';
+import { addAllSchema, chainValueSchema } from './schema';
 
 describe('getChainArray', () => {
     let validator;
