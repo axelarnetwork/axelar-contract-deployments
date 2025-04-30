@@ -1,9 +1,12 @@
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use solana_sdk::pubkey::Pubkey;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::LazyLock;
 
+use crate::config::Config;
 use crate::error::{AppError, Result};
 use crate::types::{
     NetworkType, PartialSignature, SignedSolanaTransaction, UnsignedSolanaTransaction,
@@ -149,4 +152,20 @@ pub(crate) fn create_offline_bundle(
     gz_encoder.finish().unwrap();
 
     Ok(target_path)
+}
+
+pub(crate) fn encode_its_destination(
+    config: &Config,
+    destination_chain: &str,
+    destination_address: String,
+) -> eyre::Result<Vec<u8>> {
+    let chain_type = String::deserialize(
+        &chains_info(config.network_type)[CHAINS_KEY][destination_chain][CHAIN_TYPE_KEY],
+    )?;
+
+    match chain_type.to_lowercase().as_str() {
+        "stellar" => Ok(destination_address.into_bytes()),
+        "svm" => Ok(Pubkey::from_str(&destination_address)?.to_bytes().to_vec()),
+        _ => Ok(hex::decode(destination_address)?),
+    }
 }
