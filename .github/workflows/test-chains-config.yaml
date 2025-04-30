@@ -20,6 +20,10 @@ jobs:
         run: npm ci
         working-directory: axelar-chains-config
 
+      - name: Build
+        run: npm run build
+        working-directory: axelar-chains-config
+
       - name: Test
         run: npm run test
         working-directory: axelar-chains-config
