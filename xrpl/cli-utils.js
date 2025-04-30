@@ -1,5 +1,7 @@
 'use strict';
 
+require('../common/cli-utils')
+
 const xrpl = require('xrpl');
 const { Option } = require('commander');
 const { addEnvOption } = require('../common/cli-utils');
@@ -41,7 +43,6 @@ const addBaseOptions = (program, _options = {}) => {
 };
 
 module.exports = {
-    ...require('../common/cli-utils'),
     addBaseOptions,
     addWalletOptions,
     addSkipPromptOption,

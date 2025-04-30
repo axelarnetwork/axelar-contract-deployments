@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
 
 const { printInfo, loadConfig, saveConfig } = require('../common');
 const { prepareWallet, prepareClient, initContractConfig, getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');

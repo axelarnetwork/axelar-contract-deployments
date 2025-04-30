@@ -12,7 +12,7 @@
 1. Install npm dependencies.
 
 ```sh
-npm ci
+npm ci && npm run build
 ```
 
 2. Create a new XRPL keypair via the [`generate-wallet.js` script](#generate-wallet).
