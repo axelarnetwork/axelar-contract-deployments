@@ -1,6 +1,7 @@
-import { describe, expect, it, beforeAll } from 'vitest';
 import fs from 'fs';
 import { Validator } from 'jsonschema';
+import { beforeAll, describe, expect, it } from 'vitest';
+
 import { addAllSchema, schema } from './schema';
 
 describe('Verify `info/*.json` files', () => {

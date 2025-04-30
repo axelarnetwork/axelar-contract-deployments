@@ -1,6 +1,6 @@
 'use strict';
 
-require('../common/cli-utils')
+require('../common/cli-utils');
 
 const xrpl = require('xrpl');
 const { Option } = require('commander');
