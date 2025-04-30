@@ -17,8 +17,11 @@ pub(crate) enum Commands {
     #[clap(long_about = "Initialize the ITS program")]
     Init(InitArgs),
 
-    #[clap(long_about = "Set the pause status of the ITS program")]
-    SetPauseStatus(SetPauseStatusArgs),
+    #[clap(long_about = "Pause ITS")]
+    Pause,
+
+    #[clap(long_about = "Unpause ITS")]
+    Unpause,
 
     #[clap(long_about = "Add a new trusted chain to ITS")]
     SetTrustedChain(TrustedChainArgs),
@@ -295,7 +298,7 @@ pub(crate) struct InitArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct SetPauseStatusArgs {
-    #[clap(short, long)]
+    #[clap(short, long, required = true)]
     paused: bool,
 }
 
@@ -571,8 +574,9 @@ pub(crate) async fn build_instruction(
 ) -> eyre::Result<Instruction> {
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config).await,
-        Commands::SetPauseStatus(set_pause_args) => {
-            set_pause_status(fee_payer, set_pause_args).await
+        Commands::Pause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: true }).await,
+        Commands::Unpause => {
+            set_pause_status(fee_payer, SetPauseStatusArgs { paused: false }).await
         }
         Commands::SetTrustedChain(set_trusted_chain_args) => {
             set_trusted_chain(fee_payer, set_trusted_chain_args).await
