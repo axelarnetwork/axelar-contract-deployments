@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::error::{AppError, Result};
-use crate::types::{BroadcastArgs, NetworkType, SignedSolanaTransaction};
-use crate::utils;
+use crate::types::{BroadcastArgs, SignedSolanaTransaction};
+use crate::utils::{self, print_transaction_result};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig, hash::Hash, instruction::Instruction as SolanaInstruction,
@@ -135,32 +135,10 @@ pub fn broadcast_solana_transaction(args: &BroadcastArgs, config: &Config) -> Re
         args.signed_tx_path.display()
     );
 
-    match submit_solana_transaction(&config.url, &signed_tx_data) {
-        Ok(tx_signature) => {
-            println!("------------------------------------------");
-            println!("✅ Solana Transaction successfully broadcast and confirmed!");
-            println!("   Transaction Signature (ID): {}", tx_signature);
-            println!("   RPC Endpoint: {}", config.url);
-            let explorer_base_url = "https://explorer.solana.com/tx/";
-            let cluster_param = match config.network_type {
-                NetworkType::Mainnet => "",
-                NetworkType::Testnet => "?cluster=testnet",
-                NetworkType::Devnet => "?cluster=devnet",
-                NetworkType::Localnet => "?cluster=custom",
-            };
-            println!(
-                "   Explorer Link: {}{}{}",
-                explorer_base_url, tx_signature, cluster_param
-            );
-            println!("------------------------------------------");
-        }
-        Err(e) => {
-            eprintln!("------------------------------------------");
-            eprintln!("❌ Solana Transaction broadcast failed.");
-            eprintln!("------------------------------------------");
-            return Err(e);
-        }
-    }
+    print_transaction_result(
+        config,
+        submit_solana_transaction(&config.url, &signed_tx_data),
+    )?;
 
     Ok(())
 }

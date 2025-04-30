@@ -1,6 +1,7 @@
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Signature;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -167,5 +168,37 @@ pub(crate) fn encode_its_destination(
         "stellar" => Ok(destination_address.into_bytes()),
         "svm" => Ok(Pubkey::from_str(&destination_address)?.to_bytes().to_vec()),
         _ => Ok(hex::decode(destination_address)?),
+    }
+}
+
+pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature>) -> Result<()> {
+    match result {
+        Ok(tx_signature) => {
+            println!("------------------------------------------");
+            println!("✅ Solana Transaction successfully broadcast and confirmed!");
+            println!("   Transaction Signature (ID): {}", tx_signature);
+            println!("   RPC Endpoint: {}", config.url);
+            let explorer_base_url = "https://explorer.solana.com/tx/";
+            let cluster_param = match config.network_type {
+                NetworkType::Mainnet => "",
+                NetworkType::Testnet => "?cluster=testnet",
+                NetworkType::Devnet => "?cluster=devnet",
+                NetworkType::Localnet => "?cluster=custom",
+            };
+            println!(
+                "   Explorer Link: {}{}{}",
+                explorer_base_url, tx_signature, cluster_param
+            );
+            println!("------------------------------------------");
+
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("------------------------------------------");
+            eprintln!("❌ Solana Transaction broadcast failed.");
+            eprintln!("------------------------------------------");
+
+            Err(e.into())
+        }
     }
 }
