@@ -2,11 +2,11 @@ require('@nomicfoundation/hardhat-toolbox');
 require('@nomiclabs/hardhat-ethers');
 require('@typechain/hardhat');
 
-const { importNetworks, readJSON } = require('./axelar-chains-config');
+const { importNetworks, readJSON } = require(`${__dirname}/axelar-chains-config`);
 
 const env = process.env.NETWORK || 'testnet';
-const chains = readJSON(`./axelar-chains-config/info/${env}.json`);
-const keys = readJSON(`./keys.json`);
+const chains = readJSON(`${__dirname}/axelar-chains-config/info/${env}.json`);
+const keys = readJSON(`${__dirname}/keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
 
 networks.hardhat.hardfork = process.env.EVM_VERSION || 'merge';
