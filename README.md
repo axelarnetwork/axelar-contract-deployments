@@ -18,6 +18,9 @@ Build the project via
 
 Please note that this project currently supports both Javascript and Typescript.
 
+All new commands should continue to use `node` for continuity.
+The migration from `node` to `ts-node` will be done all at once.
+
 ### To migrate to Typescript, you may use the following steps
 
 1. When touching a file or creating a new file, ensure the file's extension is `.ts`
