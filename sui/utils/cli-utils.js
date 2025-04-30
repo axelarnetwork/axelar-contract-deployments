@@ -1,8 +1,5 @@
 'use strict';
 
-require('ts-node/register'); /* enable node during migration */
-require('dotenv').config();
-
 const { Option, InvalidArgumentError } = require('commander');
 const { getUnitAmount } = require('./amount-utils');
 const { addEnvOption, addOptionsToCommands } = require('../../common');
@@ -72,6 +69,7 @@ const parseSuiUnitAmount = (value, previous) => {
 };
 
 module.exports = {
+    ...require('../../common/cli-utils'),
     addBaseOptions,
     addExtendedOptions,
     addOptionsToCommands,

@@ -1,8 +1,5 @@
 'use strict';
 
-require('ts-node/register'); /* enable node during migration */
-require('dotenv').config();
-
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
 const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getContractCodePath } = require('./utils');
@@ -178,6 +175,7 @@ const addProposalOptions = (program) => {
 };
 
 module.exports = {
+    ...require('../common/cli-utils'),
     addAmplifierOptions,
     addAmplifierQueryOptions,
 };
