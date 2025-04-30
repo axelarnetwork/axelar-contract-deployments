@@ -17,6 +17,9 @@ importers:
       '@native-to-anchor/buffer-layout':
         specifier: '=0.1.0'
         version: 0.1.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@solana/spl-token':
         specifier: ^0.4.13
         version: 0.4.13(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
@@ -372,6 +375,10 @@ packages:
 
   '@noble/hashes@1.7.1':
     resolution: {integrity: sha512-B8XBPsn4vT/KJAGqDzbwztd+6Yte3P4V7iafm24bxgDe/mlRuK6xmWPuCNrKt2vDafZ8MfJLlchDG/vYafQEjQ==}
+    engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
 
   '@rollup/plugin-commonjs@21.0.2':
@@ -1324,7 +1331,7 @@ snapshots:
   '@coral-xyz/anchor@0.29.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
-      '@noble/hashes': 1.7.1
+      '@noble/hashes': 1.8.0
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       bn.js: 5.2.1
       bs58: 4.0.1
@@ -1720,6 +1727,8 @@ snapshots:
 
   '@noble/hashes@1.7.1': {}
 
+  '@noble/hashes@1.8.0': {}
+
   '@rollup/plugin-commonjs@21.0.2(rollup@2.70.1)':
     dependencies:
       '@rollup/pluginutils': 3.1.0(rollup@2.70.1)
@@ -1878,7 +1887,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.27.0
       '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
+      '@noble/hashes': 1.8.0
       '@solana/buffer-layout': 4.0.1
       agentkeepalive: 4.6.0
       bigint-buffer: 1.1.5
