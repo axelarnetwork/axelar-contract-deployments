@@ -103,6 +103,8 @@ fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, Strin
     match s.to_lowercase().as_str() {
         "lockunlock" | "lock_unlock" => Ok(state::token_manager::Type::LockUnlock),
         "mintburn" | "mint_burn" => Ok(state::token_manager::Type::MintBurn),
+        "mintburnfrom" | "mint_burn_from" => Ok(state::token_manager::Type::MintBurnFrom),
+        "lockunlockfee" | "lock_unlock_fee" => Ok(state::token_manager::Type::LockUnlockFee),
         _ => Err(format!("Invalid token manager type: {}", s)),
     }
 }
