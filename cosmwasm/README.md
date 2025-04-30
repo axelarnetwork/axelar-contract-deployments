@@ -4,7 +4,7 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 
 ### Setup
 
-`npm ci`
+`npm ci && npm run build`
 
 1. Compile the contracts in the amplifier [repo](https://github.com/axelarnetwork/axelar-amplifier) using the [rust optimizer](https://github.com/CosmWasm/rust-optimizer) for cosmwasm.
 

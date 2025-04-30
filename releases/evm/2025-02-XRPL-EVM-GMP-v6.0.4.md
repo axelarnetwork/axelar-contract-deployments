@@ -36,7 +36,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 Update npm dependencies (including contracts)
 
 ```bash
-npm ci
+npm ci && npm run build
 ```
 
 #### Devnet-Amplifier / Stagenet / Testnet

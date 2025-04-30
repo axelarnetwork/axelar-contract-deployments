@@ -5,7 +5,7 @@ By default the version of contracts specified in `package.json` will be used for
 
 ## Setup
 
-`npm ci`
+`npm ci && npm run build`
 
 Add the deployer private key in `.env` folder (see `.example.env` for reference).
 

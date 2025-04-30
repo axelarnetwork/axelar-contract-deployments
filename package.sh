@@ -8,6 +8,8 @@ fi
 if [ ! -f deps.zip ]; then
     npm ci
 
+    npm run build
+
     zip -rq deps.zip node_modules
 fi
 

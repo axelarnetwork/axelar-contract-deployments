@@ -46,6 +46,10 @@ jobs:
         shell: bash
         run: npm ci
 
+      - name: Build
+        shell: bash
+        run: npm run build
+
       - name: Get Sui Version
         shell: bash
         run: |
