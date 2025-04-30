@@ -7,8 +7,6 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node index.ts",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
     "test": "mocha -r ts-node/register 'test/**/*.ts'",
