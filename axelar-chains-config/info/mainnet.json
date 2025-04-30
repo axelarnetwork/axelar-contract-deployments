@@ -2841,6 +2841,35 @@
         "name": "Stellar Expert",
         "url": "https://stellar.expert/explorer/public"
       }
+    },
+    "xrpl-evm": {
+      "name": "XRPL EVM",
+      "axelarId": "xrpl-evm",
+      "chainId": 1440000,
+      "rpc": "http://mainnet-json-rpc-1868519179.us-east-1.elb.amazonaws.com",
+      "tokenSymbol": "XRP",
+      "decimals": 18,
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {},
+      "contracts": {
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0xe50A35500805b555A8318Bdb98E542FB50DD6E08",
+          "interchainToken": "0x7F9F70Da4af54671a6abAc58e705b5634cac8819",
+          "interchainTokenDeployer": "0x4c555f2E0c69aC02747986ce5F6A14e2BCE44F13",
+          "tokenManager": "0x9D3583cBeB5542287B635Bf09D693C8106284C27",
+          "tokenHandler": "0xcC360c322f72a89E5247F3875a02c214F31DA035",
+          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "gatewayCaller": "0x994014b7f3E5Ac898aAD533b10534B69D65DD6dE"
+        }
+      }
     }
   },
   "axelar": {
@@ -2959,6 +2988,21 @@
           "domainSeparator": "0xd2937eba76cea053386484dae0e3d497548237ecb777dfdd5401e12cfc97ec78",
           "address": "axelar1wdgp5xyqjyv5zsq86n6pah2lsmd46mn0gt4055mvvk6mezn9skqs6p93dg"
         },
+        "xrpl-evm": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 16,
+          "domainSeparator": "0x0474cdd6880766991d1bab2fdfae4385e7b54b1032d68f9b1c0bab887b2f5ca4",
+          "address": "axelar198xehj5htckk75s8wcamxerxtdc45669zdqjmr69guveqntj9f6s5rqq55"
+        },
         "storeCodeProposalId": "263",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "codeId": 16,
@@ -2979,6 +3023,10 @@
         "stellar": {
           "codeId": 17,
           "address": "axelar1t46envzujl4kmhst6myg364v00f8jcyjespw6tr00r3ycd0pehxqetqrpm"
+        },
+        "xrpl-evm": {
+          "codeId": 17,
+          "address": "axelar1vvdukrmxdylvnn8e59s3gnn49lutv3n9tg4vnsttn33a8zulgfssl62q69"
         }
       },
       "VotingVerifier": {
@@ -3025,6 +3073,21 @@
           "addressFormat": "stellar",
           "codeId": 20,
           "address": "axelar1dalnx2yvmu3g3aau8m7fj426fk9u8dnzlr5azvqmr4x82rtclats8lhjmu"
+        },
+        "xrpl-evm": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 20,
+          "address": "axelar1q8kn9t39ddpce42atk0d6wpdudr6djqxmz689m3nxy92ck0nnftqxfsuyk"
         },
         "storeCodeProposalId": "267",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
