@@ -80,15 +80,156 @@ pub(crate) enum Commands {
 
     #[clap(long_about = "Accept ITS operatorship transfer")]
     AcceptOperatorship(AcceptOperatorshipArgs),
+
+    #[clap(subcommand, long_about = "Manage Token Managers")]
+    TokenManager(TokenManagerCommand),
+
+    #[clap(subcommand, long_about = "Manage Interchain Tokens")]
+    InterchainToken(InterchainTokenCommand),
 }
 
-// Helper functions for parsing CLI arguments
+#[derive(Subcommand, Debug)]
+pub(crate) enum TokenManagerCommand {
+    #[clap(long_about = "Set the flow limit for a token manager")]
+    SetFlowLimit(TokenManagerSetFlowLimitArgs),
+    #[clap(long_about = "Add a flow limiter role to an account for a token manager")]
+    AddFlowLimiter(TokenManagerAddFlowLimiterArgs),
+    #[clap(long_about = "Remove a flow limiter role from an account for a token manager")]
+    RemoveFlowLimiter(TokenManagerRemoveFlowLimiterArgs),
+    #[clap(long_about = "Transfer operatorship of a token manager")]
+    TransferOperatorship(TokenManagerTransferOperatorshipArgs),
+    #[clap(long_about = "Propose operatorship transfer for a token manager")]
+    ProposeOperatorship(TokenManagerProposeOperatorshipArgs),
+    #[clap(long_about = "Accept operatorship transfer for a token manager")]
+    AcceptOperatorship(TokenManagerAcceptOperatorshipArgs),
+    #[clap(long_about = "Hand over mint authority from payer to token manager")]
+    HandoverMintAuthority(TokenManagerHandoverMintAuthorityArgs),
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerSetFlowLimitArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    flow_limit: u64,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerAddFlowLimiterArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    flow_limiter: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerRemoveFlowLimiterArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    flow_limiter: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerTransferOperatorshipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    to: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerProposeOperatorshipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    to: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerAcceptOperatorshipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    from: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TokenManagerHandoverMintAuthorityArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    mint: Pubkey,
+    /// The token program used for the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+}
+
+#[derive(Subcommand, Debug)]
+pub(crate) enum InterchainTokenCommand {
+    #[clap(long_about = "Mint interchain tokens (requires minter role)")]
+    Mint(InterchainTokenMintArgs),
+    #[clap(long_about = "Transfer mintership for an interchain token")]
+    TransferMintership(InterchainTokenTransferMintershipArgs),
+    #[clap(long_about = "Propose mintership transfer for an interchain token")]
+    ProposeMintership(InterchainTokenProposeMintershipArgs),
+    #[clap(long_about = "Accept mintership transfer for an interchain token")]
+    AcceptMintership(InterchainTokenAcceptMintershipArgs),
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InterchainTokenMintArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    mint: Pubkey,
+    #[clap(long)]
+    to: Pubkey,
+    /// The token program used for the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+    #[clap(long)]
+    amount: u64,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InterchainTokenTransferMintershipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    to: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InterchainTokenProposeMintershipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    to: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InterchainTokenAcceptMintershipArgs {
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+    #[clap(long)]
+    from: Pubkey,
+}
+
 fn hash_salt(s: &str) -> eyre::Result<[u8; 32]> {
     Ok(solana_sdk::keccak::hash(s.as_bytes()).0)
 }
 
 fn parse_hex_vec(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
     hex::decode(s.strip_prefix("0x").unwrap_or(s))
+}
+
+fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
+    let decoded: [u8; 32] = hex::decode(s.strip_prefix("0x").unwrap_or(s))?
+        .try_into()
+        .map_err(|_| eyre::eyre!("Invalid hex string length. Expected 32 bytes."))?;
+
+    Ok(decoded)
 }
 
 fn parse_token_program(s: &str) -> Result<Pubkey, String> {
@@ -315,7 +456,7 @@ pub(crate) struct InterchainTransferArgs {
     source_account: Pubkey,
     #[clap(long)]
     authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = hash_salt)]
+    #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
     #[clap(long)]
     destination_chain: String,
@@ -344,7 +485,7 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     source_account: Pubkey,
     #[clap(long)]
     authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = hash_salt)]
+    #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
     #[clap(long)]
     destination_chain: String,
@@ -375,7 +516,7 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     source_account: Pubkey,
     #[clap(long)]
     authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = hash_salt)]
+    #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
     #[clap(long)]
     destination_chain: String,
@@ -405,7 +546,7 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct SetFlowLimitArgs {
-    #[clap(long, value_parser = hash_salt)]
+    #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
     #[clap(long)]
     flow_limit: u64,
@@ -472,12 +613,43 @@ pub(crate) async fn build_instruction(
         Commands::TransferOperatorship(args) => transfer_operatorship(fee_payer, args).await,
         Commands::ProposeOperatorship(args) => propose_operatorship(fee_payer, args).await,
         Commands::AcceptOperatorship(args) => accept_operatorship(fee_payer, args).await,
+        Commands::TokenManager(command) => match command {
+            TokenManagerCommand::SetFlowLimit(args) => {
+                token_manager_set_flow_limit(fee_payer, args).await
+            }
+            TokenManagerCommand::AddFlowLimiter(args) => {
+                token_manager_add_flow_limiter(fee_payer, args).await
+            }
+            TokenManagerCommand::RemoveFlowLimiter(args) => {
+                token_manager_remove_flow_limiter(fee_payer, args).await
+            }
+            TokenManagerCommand::TransferOperatorship(args) => {
+                token_manager_transfer_operatorship(fee_payer, args).await
+            }
+            TokenManagerCommand::ProposeOperatorship(args) => {
+                token_manager_propose_operatorship(fee_payer, args).await
+            }
+            TokenManagerCommand::AcceptOperatorship(args) => {
+                token_manager_accept_operatorship(fee_payer, args).await
+            }
+            TokenManagerCommand::HandoverMintAuthority(args) => {
+                token_manager_handover_mint_authority(fee_payer, args).await
+            }
+        },
+        Commands::InterchainToken(command) => match command {
+            InterchainTokenCommand::Mint(args) => interchain_token_mint(fee_payer, args).await,
+            InterchainTokenCommand::TransferMintership(args) => {
+                interchain_token_transfer_mintership(fee_payer, args).await
+            }
+            InterchainTokenCommand::ProposeMintership(args) => {
+                interchain_token_propose_mintership(fee_payer, args).await
+            }
+            InterchainTokenCommand::AcceptMintership(args) => {
+                interchain_token_accept_mintership(fee_payer, args).await
+            }
+        },
     }
 }
-
-// Note: The `call_contract_with_interchain_token_offchain_data` instruction builder
-// returns a tuple `(Instruction, Vec<u8>)`. This CLI currently only handles the
-// `Instruction`. The offchain data needs separate handling (e.g., storing or logging).
 
 async fn init(
     fee_payer: &Pubkey,
@@ -836,4 +1008,149 @@ async fn accept_operatorship(
     Ok(axelar_solana_its::instruction::accept_operatorship(
         *fee_payer, args.from,
     )?)
+}
+
+async fn token_manager_set_flow_limit(
+    fee_payer: &Pubkey,
+    args: TokenManagerSetFlowLimitArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::set_flow_limit(
+            *fee_payer,
+            args.token_id,
+            args.flow_limit,
+        )?,
+    )
+}
+
+async fn token_manager_add_flow_limiter(
+    fee_payer: &Pubkey,
+    args: TokenManagerAddFlowLimiterArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::add_flow_limiter(
+            *fee_payer,
+            args.token_id,
+            args.flow_limiter,
+        )?,
+    )
+}
+
+async fn token_manager_remove_flow_limiter(
+    fee_payer: &Pubkey,
+    args: TokenManagerRemoveFlowLimiterArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
+            *fee_payer,
+            args.token_id,
+            args.flow_limiter,
+        )?,
+    )
+}
+
+async fn token_manager_transfer_operatorship(
+    fee_payer: &Pubkey,
+    args: TokenManagerTransferOperatorshipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::transfer_operatorship(
+            *fee_payer,
+            args.token_id,
+            args.to,
+        )?,
+    )
+}
+
+async fn token_manager_propose_operatorship(
+    fee_payer: &Pubkey,
+    args: TokenManagerProposeOperatorshipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::propose_operatorship(
+            *fee_payer,
+            args.token_id,
+            args.to,
+        )?,
+    )
+}
+
+async fn token_manager_accept_operatorship(
+    fee_payer: &Pubkey,
+    args: TokenManagerAcceptOperatorshipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::accept_operatorship(
+            *fee_payer,
+            args.token_id,
+            args.from,
+        )?,
+    )
+}
+
+async fn token_manager_handover_mint_authority(
+    fee_payer: &Pubkey,
+    args: TokenManagerHandoverMintAuthorityArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::token_manager::handover_mint_authority(
+            *fee_payer,
+            args.token_id,
+            args.mint,
+            args.token_program,
+        )?,
+    )
+}
+
+async fn interchain_token_mint(
+    fee_payer: &Pubkey,
+    args: InterchainTokenMintArgs,
+) -> eyre::Result<Instruction> {
+    Ok(axelar_solana_its::instruction::interchain_token::mint(
+        args.token_id, // Note: payer is not the first argument here
+        args.mint,
+        args.to,
+        *fee_payer, // Payer is the minter in this context
+        args.token_program,
+        args.amount,
+    )?)
+}
+
+async fn interchain_token_transfer_mintership(
+    fee_payer: &Pubkey,
+    args: InterchainTokenTransferMintershipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::interchain_token::transfer_mintership(
+            *fee_payer,
+            args.token_id,
+            args.to,
+        )?,
+    )
+}
+
+async fn interchain_token_propose_mintership(
+    fee_payer: &Pubkey,
+    args: InterchainTokenProposeMintershipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::interchain_token::propose_mintership(
+            *fee_payer,
+            args.token_id,
+            args.to,
+        )?,
+    )
+}
+
+async fn interchain_token_accept_mintership(
+    fee_payer: &Pubkey,
+    args: InterchainTokenAcceptMintershipArgs,
+) -> eyre::Result<Instruction> {
+    Ok(
+        axelar_solana_its::instruction::interchain_token::accept_mintership(
+            *fee_payer,
+            args.token_id,
+            args.from,
+        )?,
+    )
 }
