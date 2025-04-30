@@ -3,6 +3,9 @@
 Install dependencies via
 `npm ci`
 
+Build the project via
+`npm run build`
+
 ## Deployment Instructions
 
 - [EVM](./evm/README.md)
