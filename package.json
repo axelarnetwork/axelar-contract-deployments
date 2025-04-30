@@ -9,8 +9,7 @@
     "build": "tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test": "mocha -r ts-node/register 'test/**/*.ts'",
-    "test:sui": "mocha sui"
+    "test": "mocha -r ts-node/register 'test/**/*.ts'"
   },
   "repository": {
     "type": "git",
