@@ -740,6 +740,9 @@ async fn register_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
 ) -> eyre::Result<Instruction> {
+    let token_id = axelar_solana_its::canonical_interchain_token_id(&args.mint);
+    println!("Token ID: {}", hex::encode(token_id));
+
     Ok(
         axelar_solana_its::instruction::register_canonical_interchain_token(
             *fee_payer,
@@ -772,6 +775,9 @@ async fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Instruction> {
+    let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
+    println!("Token ID: {}", hex::encode(token_id));
+
     Ok(axelar_solana_its::instruction::deploy_interchain_token(
         *fee_payer,
         args.salt,
@@ -846,6 +852,9 @@ async fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
 ) -> eyre::Result<Instruction> {
+    let token_id = axelar_solana_its::linked_token_id(fee_payer, &args.salt);
+    println!("Token ID: {}", hex::encode(token_id));
+
     Ok(axelar_solana_its::instruction::register_custom_token(
         *fee_payer,
         args.salt,
@@ -863,6 +872,7 @@ async fn link_token(
 ) -> eyre::Result<Instruction> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
+
     Ok(axelar_solana_its::instruction::link_token(
         *fee_payer,
         args.salt,
