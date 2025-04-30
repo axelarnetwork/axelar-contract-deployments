@@ -1,3 +1,4 @@
+require('ts-node/register'); /* enable node during migration */
 require('dotenv').config();
 
 const axios = require('axios');

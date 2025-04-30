@@ -1,5 +1,6 @@
 'use strict';
 
+require('ts-node/register'); /* enable node during migration */
 require('dotenv').config();
 
 const { printInfo, loadConfig, saveConfig } = require('../common');
