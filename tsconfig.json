@@ -10,9 +10,9 @@
         "outDir": "dist",
         "declaration": true,
         "resolveJsonModule": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "allowJs": true // remove once all JS is removed
     },
     "include": ["**/*.ts", "hardhat.config.js"],
     "exclude": ["node_modules", "dist"],
-    "files": ["hardhat.config.js"]
 }
