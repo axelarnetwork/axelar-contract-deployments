@@ -4,18 +4,18 @@ require('@typechain/hardhat');
 
 const { importNetworks, readJSON } = require('./axelar-chains-config');
 
-const env = process.env.NETWORK || "testnet";
+const env = process.env.NETWORK || 'testnet';
 const chains = readJSON(`./axelar-chains-config/info/${env}.json`);
 const keys = readJSON(`./keys.json`);
 const { networks, etherscan } = importNetworks(chains, keys);
 
-networks.hardhat.hardfork = process.env.EVM_VERSION || "merge";
+networks.hardhat.hardfork = process.env.EVM_VERSION || 'merge';
 
 const config = {
   solidity: {
-    version: "0.8.21",
+    version: '0.8.21',
     settings: {
-      evmVersion: process.env.EVM_VERSION || "london",
+      evmVersion: process.env.EVM_VERSION || 'london',
       optimizer: {
         enabled: true,
         runs: 1000000,
@@ -35,14 +35,14 @@ const config = {
       },
     },
   },
-  defaultNetwork: "hardhat",
+  defaultNetwork: 'hardhat',
   networks,
   etherscan,
   mocha: {
     timeout: 1000000,
   },
   gasReporter: {
-    enabled: process.env.REPORT_GAS !== "",
+    enabled: process.env.REPORT_GAS !== '',
   },
 };
 
