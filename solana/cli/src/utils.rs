@@ -13,15 +13,18 @@ const DEVNET_AMPLIFIER_CONFIG: &'static str = include_str!("../devnet-amplifier.
 const TESTNET_AMPLIFIER_CONFIG: &'static str = include_str!("../testnet.json");
 const MAINNET_AMPLIFIER_CONFIG: &'static str = include_str!("../mainnet.json");
 
-pub(crate) const CHAINS_KEY: &str = "chains";
-pub(crate) const AXELAR_KEY: &str = "axelar";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
-pub(crate) const GRPC_KEY: &str = "grpc";
-pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const ADDRESS_KEY: &str = "address";
+pub(crate) const AXELAR_KEY: &str = "axelar";
+pub(crate) const CHAINS_KEY: &str = "chains";
+pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
+pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
-pub(crate) const GATEWAY_KEY: &str = "gateway";
+pub(crate) const GAS_CONFIG_ACCOUNT: &str = "configAccount";
+pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
+pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
+pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 
 static MAINNET_INFO: LazyLock<serde_json::Value> =
     LazyLock::new(|| serde_json::from_str(MAINNET_AMPLIFIER_CONFIG).unwrap());
@@ -32,7 +35,7 @@ static TESTNET_INFO: LazyLock<serde_json::Value> =
 static DEVNET_INFO: LazyLock<serde_json::Value> =
     LazyLock::new(|| serde_json::from_str(DEVNET_AMPLIFIER_CONFIG).unwrap());
 
-pub fn chains_info(network: NetworkType) -> &'static serde_json::Value {
+pub(crate) fn chains_info(network: NetworkType) -> &'static serde_json::Value {
     match network {
         NetworkType::Mainnet => &*MAINNET_INFO,
         NetworkType::Testnet => &*TESTNET_INFO,
@@ -44,7 +47,7 @@ pub fn chains_info(network: NetworkType) -> &'static serde_json::Value {
     }
 }
 
-pub fn save_chains_info(network: NetworkType, info: serde_json::Value, output_dir: &Path) {
+pub(crate) fn save_chains_info(network: NetworkType, info: serde_json::Value, output_dir: &Path) {
     let path = match network {
         NetworkType::Mainnet => "mainnet.json",
         NetworkType::Testnet => "testnet.json",
@@ -56,43 +59,49 @@ pub fn save_chains_info(network: NetworkType, info: serde_json::Value, output_di
     serde_json::to_writer_pretty(file, &info).expect("Unable to write data");
 }
 
-pub fn read_json_file<T: DeserializeOwned>(path: &Path) -> Result<T> {
+pub(crate) fn read_json_file<T: DeserializeOwned>(path: &Path) -> Result<T> {
     let file = File::open(path).map_err(|e| AppError::IoError(e))?;
     let reader = std::io::BufReader::new(file);
     serde_json::from_reader(reader).map_err(|e| AppError::JsonError(e))
 }
 
-pub fn write_json_file<T: Serialize>(data: &T, path: &Path) -> Result<()> {
+pub(crate) fn write_json_file<T: Serialize>(data: &T, path: &Path) -> Result<()> {
     let file = File::create(path).map_err(|e| AppError::IoError(e))?;
     let writer = std::io::BufWriter::new(file);
     serde_json::to_writer_pretty(writer, data).map_err(|e| AppError::JsonError(e))
 }
 
-pub fn load_unsigned_solana_transaction(path: &Path) -> Result<UnsignedSolanaTransaction> {
+pub(crate) fn load_unsigned_solana_transaction(path: &Path) -> Result<UnsignedSolanaTransaction> {
     read_json_file(path)
 }
 
-pub fn save_unsigned_solana_transaction(tx: &UnsignedSolanaTransaction, path: &Path) -> Result<()> {
+pub(crate) fn save_unsigned_solana_transaction(
+    tx: &UnsignedSolanaTransaction,
+    path: &Path,
+) -> Result<()> {
     write_json_file(tx, path)
 }
 
-pub fn load_partial_signature(path: &Path) -> Result<PartialSignature> {
+pub(crate) fn load_partial_signature(path: &Path) -> Result<PartialSignature> {
     read_json_file(path)
 }
 
-pub fn save_partial_signature(sig: &PartialSignature, path: &Path) -> Result<()> {
+pub(crate) fn save_partial_signature(sig: &PartialSignature, path: &Path) -> Result<()> {
     write_json_file(sig, path)
 }
 
-pub fn load_signed_solana_transaction(path: &Path) -> Result<SignedSolanaTransaction> {
+pub(crate) fn load_signed_solana_transaction(path: &Path) -> Result<SignedSolanaTransaction> {
     read_json_file(path)
 }
 
-pub fn save_signed_solana_transaction(tx: &SignedSolanaTransaction, path: &Path) -> Result<()> {
+pub(crate) fn save_signed_solana_transaction(
+    tx: &SignedSolanaTransaction,
+    path: &Path,
+) -> Result<()> {
     write_json_file(tx, path)
 }
 
-pub fn create_offline_bundle(
+pub(crate) fn create_offline_bundle(
     bundle_name: &str,
     output_dir: &Path,
     files_to_include: &[(&str, &Path)],
