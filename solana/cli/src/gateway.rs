@@ -14,16 +14,10 @@ use solana_sdk::pubkey::Pubkey;
 
 use crate::config::Config;
 use crate::types::ChainNameOnAxelar;
-use crate::utils;
-
-const CHAINS_KEY: &str = "chains";
-const AXELAR_KEY: &str = "axelar";
-const MULTISIG_PROVER_KEY: &str = "MultisigProver";
-const GRPC_KEY: &str = "grpc";
-const CONTRACTS_KEY: &str = "contracts";
-const ADDRESS_KEY: &str = "address";
-const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
-const GATEWAY_KEY: &str = "gateway";
+use crate::utils::{
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MULTISIG_PROVER_KEY,
+};
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {

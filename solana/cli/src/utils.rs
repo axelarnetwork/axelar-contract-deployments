@@ -13,6 +13,16 @@ const DEVNET_AMPLIFIER_CONFIG: &'static str = include_str!("../devnet-amplifier.
 const TESTNET_AMPLIFIER_CONFIG: &'static str = include_str!("../testnet.json");
 const MAINNET_AMPLIFIER_CONFIG: &'static str = include_str!("../mainnet.json");
 
+pub(crate) const CHAINS_KEY: &str = "chains";
+pub(crate) const AXELAR_KEY: &str = "axelar";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const GRPC_KEY: &str = "grpc";
+pub(crate) const CONTRACTS_KEY: &str = "contracts";
+pub(crate) const ADDRESS_KEY: &str = "address";
+pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
+pub(crate) const GATEWAY_KEY: &str = "gateway";
+pub(crate) const ITS_KEY: &str = "InterchainTokenService";
+
 static MAINNET_INFO: LazyLock<serde_json::Value> =
     LazyLock::new(|| serde_json::from_str(MAINNET_AMPLIFIER_CONFIG).unwrap());
 
