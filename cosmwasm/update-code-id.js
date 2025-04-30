@@ -1,7 +1,6 @@
 'use strict';
 
-require('ts-node/register'); /* enable node during migration */
-require('dotenv').config();
+require('../common/cli-utils');
 
 const { printInfo, loadConfig, saveConfig } = require('../common');
 const { prepareWallet, prepareClient, initContractConfig, getAmplifierContractConfig, fetchCodeIdFromContract } = require('./utils');
