@@ -15,6 +15,12 @@ pub(crate) enum Commands {
 
     #[clap(long_about = "Set the pause status of the ITS program")]
     SetPauseStatus(SetPauseStatusArgs),
+
+    #[clap(long_about = "Add a new trusted chain to ITS")]
+    SetTrustedChain(TrustedChainArgs),
+
+    #[clap(long_about = "Remove an existing trusted chain from ITS")]
+    RemoveTrustedChain(TrustedChainArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -29,6 +35,12 @@ pub(crate) struct SetPauseStatusArgs {
     paused: bool,
 }
 
+#[derive(Parser, Debug)]
+pub(crate) struct TrustedChainArgs {
+    #[clap(short, long)]
+    chain_name: String,
+}
+
 pub(crate) async fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
@@ -38,6 +50,12 @@ pub(crate) async fn build_instruction(
         Commands::Init(init_args) => init(fee_payer, init_args, config).await,
         Commands::SetPauseStatus(set_pause_args) => {
             set_pause_status(fee_payer, set_pause_args).await
+        }
+        Commands::SetTrustedChain(set_trusted_chain_args) => {
+            set_trusted_chain(fee_payer, set_trusted_chain_args).await
+        }
+        Commands::RemoveTrustedChain(remove_trusted_chain_args) => {
+            remove_trusted_chain(fee_payer, remove_trusted_chain_args).await
         }
     }
 }
@@ -67,5 +85,25 @@ async fn set_pause_status(
     Ok(axelar_solana_its::instruction::set_pause_status(
         *fee_payer,
         set_pause_args.paused,
+    )?)
+}
+
+async fn set_trusted_chain(
+    fee_payer: &Pubkey,
+    set_trusted_chain_args: TrustedChainArgs,
+) -> eyre::Result<Instruction> {
+    Ok(axelar_solana_its::instruction::set_trusted_chain(
+        *fee_payer,
+        set_trusted_chain_args.chain_name,
+    )?)
+}
+
+async fn remove_trusted_chain(
+    fee_payer: &Pubkey,
+    remove_trusted_chain_args: TrustedChainArgs,
+) -> eyre::Result<Instruction> {
+    Ok(axelar_solana_its::instruction::remove_trusted_chain(
+        *fee_payer,
+        remove_trusted_chain_args.chain_name,
     )?)
 }
