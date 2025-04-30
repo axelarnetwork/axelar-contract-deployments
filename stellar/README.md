@@ -29,16 +29,7 @@ Create a new Stellar keypair
 
 ```bash
 # Generate keypair
-stellar keys generate wallet --network testnet
-
-# Address
-stellar keys address wallet
-
-# Private Key
-stellar keys show wallet
-
-# Remove the keypair
-stellar keys rm wallet --global;
+node stellar/generate-keypair.js
 ```
 
 Set `PRIVATE_KEY` in `.env` to the above value.
@@ -47,6 +38,12 @@ Testnet funds can be obtained via [this link](https://ftl.ai/) or using the `fau
 
 ```bash
 node stellar/faucet.js --recipient <address>
+```
+
+Send tokens (if needed)
+
+```bash
+node stellar/send-tokens.js --amount <amount> --recipients <recipients>
 ```
 
 ## Deployments
@@ -290,6 +287,32 @@ node stellar/its.js interchain-transfer [token-id] [destination-chain] [destinat
 
 ```bash
 node stellar/its.js execute [source-chain] [message-id] [source-address] [payload]
+```
+
+#### Get Flow Limit
+
+```bash
+node stellar/its.js flow-limit [token-id]
+
+# Example
+node stellar/its.js flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
+#### Set Flow Limit
+
+```bash
+node stellar/its.js set-flow-limit [token-id] [flow-limit]
+
+# Example
+node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5 1000000
+```
+
+#### Remove Flow Limit
+```bash
+node stellar/its.js remove-flow-limit [token-id]
+
+# Example
+node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
 ## TTL extension and state archival recovery
