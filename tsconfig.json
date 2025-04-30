@@ -12,7 +12,7 @@
         "resolveJsonModule": true,
         "sourceMap": true
     },
-    "include": ["**/*.ts"],
+    "include": ["**/*.ts", "hardhat.config.js"],
     "exclude": ["node_modules", "dist"],
-    "files": ["./hardhat.config.ts"]
+    "files": ["hardhat.config.js"]
 }

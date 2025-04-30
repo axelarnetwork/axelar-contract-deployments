@@ -1,9 +1,8 @@
-import "@nomicfoundation/hardhat-toolbox";
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomiclabs/hardhat-ethers";
-import "@typechain/hardhat";
+require('@nomicfoundation/hardhat-toolbox');
+require('@nomiclabs/hardhat-ethers');
+require('@typechain/hardhat');
 
-import { importNetworks, readJSON } from "./axelar-chains-config";
+const { importNetworks, readJSON } = require('./axelar-chains-config');
 
 const env = process.env.NETWORK || "testnet";
 const chains = readJSON(`./axelar-chains-config/info/${env}.json`);
@@ -12,7 +11,7 @@ const { networks, etherscan } = importNetworks(chains, keys);
 
 networks.hardhat.hardfork = process.env.EVM_VERSION || "merge";
 
-const config: HardhatUserConfig = {
+const config = {
   solidity: {
     version: "0.8.21",
     settings: {
@@ -47,4 +46,4 @@ const config: HardhatUserConfig = {
   },
 };
 
-export default config;
+module.exports = config;
