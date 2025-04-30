@@ -1,5 +1,7 @@
 'use strict';
 
+require('../common/cli-utils')
+
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
 const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getContractCodePath } = require('./utils');
@@ -175,7 +177,6 @@ const addProposalOptions = (program) => {
 };
 
 module.exports = {
-    ...require('../common/cli-utils'),
     addAmplifierOptions,
     addAmplifierQueryOptions,
 };
