@@ -25,7 +25,7 @@ Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed fi
 
 ```bash
 # Clone latest main and update deps
-npm ci
+npm ci && npm run build
 ```
 
 Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm`.

@@ -1,3 +1,3 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
