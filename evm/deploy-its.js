@@ -24,7 +24,6 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
-    isConsensusChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
