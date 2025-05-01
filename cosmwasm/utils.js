@@ -194,6 +194,32 @@ const migrateContract = async (client, wallet, config, options) => {
     return client.migrate(account.address, contractConfig.address, contractConfig.codeId, JSON.parse(msg), migrateFee);
 };
 
+const executeContract = async (client, wallet, config, options, msg) => {
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const executeFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    return client.execute(account.address, contractConfig.address, msg, executeFee);
+};
+
+const executeContractMultiple = async (client, wallet, config, options, msgs) => {
+    const [account] = await wallet.getAccounts();
+    const { contractConfig } = getAmplifierContractConfig(config, options);
+
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+    const executeFee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    const instructions = msgs.map((msg) => ({ contractAddress: contractConfig.address, msg }));
+
+    return client.executeMultiple(account.address, instructions, executeFee);
+};
+
 const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
@@ -1197,6 +1223,8 @@ module.exports = {
     uploadContract,
     instantiateContract,
     migrateContract,
+    executeContract,
+    executeContractMultiple,
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
     addDefaultInstantiateAddresses,
