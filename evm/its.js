@@ -24,9 +24,6 @@ const {
     isValidChain,
     getChainConfig,
     parseTrustedChains,
-    itsEdgeContract,
-    getChainConfigByAxelarId,
-    isConsensusChain,
     encodeITSDestination,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
