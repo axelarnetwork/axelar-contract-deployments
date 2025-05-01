@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('../common/cli-utils');
 
 const axios = require('axios');
 const { Command, Option } = require('commander');
