@@ -24,6 +24,10 @@ pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
 pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
+pub(crate) const OPERATOR_KEY: &str = "operator";
+pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
+pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> Result<T> {
     let reader = std::io::BufReader::new(file);

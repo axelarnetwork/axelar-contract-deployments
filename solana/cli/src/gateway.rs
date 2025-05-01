@@ -16,7 +16,8 @@ use crate::config::Config;
 use crate::types::ChainNameOnAxelar;
 use crate::utils::{
     read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY,
-    CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MULTISIG_PROVER_KEY,
+    CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY,
+    MULTISIG_PROVER_KEY, OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -187,12 +188,12 @@ async fn init(
 
     chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
         [GATEWAY_KEY] = json!({
-        "address": bs58::encode(axelar_solana_gateway::id()).into_string(),
-        "deployer": fee_payer,
-        "operator": init_args.operator,
-        "minimumRotationDelay": init_args.minimum_rotation_delay,
-        "previousSignersRetention": init_args.previous_signers_retention,
-        "domainSeparator": domain_separator,
+        ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
+        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
+        OPERATOR_KEY: init_args.operator.to_string(),
+        MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
+        PREVIOUS_SIGNERS_RETENTION_KEY: init_args.previous_signers_retention,
+        DOMAIN_SEPARATOR_KEY: domain_separator,
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
