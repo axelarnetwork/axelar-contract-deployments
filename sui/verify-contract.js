@@ -287,6 +287,9 @@ async function processVerification(network, packageId, srcZipPath) {
         printInfo('Verifying package', packageId);
         const verificationResult = await verifyPackage(network, packageId, srcFileId, status.isSrcUploaded);
         printInfo('Verification result', JSON.stringify(verificationResult, null, 2));
+        if (!verificationResult.isVerified) {
+            throw new Error('Package verification failed');
+        }
     } else {
         printInfo('Package already verified');
     }
