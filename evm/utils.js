@@ -884,7 +884,6 @@ function getQualifiedContractName(contractName) {
  */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline, gasOptions: gasOptionsCli } = options;
-
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
     let gasOptions;
