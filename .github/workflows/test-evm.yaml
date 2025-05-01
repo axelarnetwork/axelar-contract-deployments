@@ -132,6 +132,9 @@ jobs:
       - name: InterchainTokenService set trusted chain
         run: node evm/its.js set-trusted-chains remote -y
 
+      - name: InterchainTokenService is trusted chain
+        run: node evm/its.js is-trusted-chain remote -y
+
       - name: InterchainTokenFactory deploy interchain token on current chain
         run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
