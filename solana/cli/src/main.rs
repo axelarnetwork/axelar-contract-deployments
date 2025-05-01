@@ -5,6 +5,7 @@ mod error;
 mod gas_service;
 mod gateway;
 mod generate;
+mod governance;
 mod its;
 mod send;
 mod sign;
@@ -148,6 +149,9 @@ enum InstructionSubcommand {
 
     #[clap(long_about = "Commands for InterchainTokenService program", subcommand)]
     Its(its::Commands),
+
+    #[clap(long_about = "Commands for Governance program", subcommand)]
+    Governance(governance::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -271,6 +275,9 @@ async fn build_instruction(
         }
         InstructionSubcommand::Its(command) => {
             its::build_instruction(fee_payer, command, config).await?
+        }
+        InstructionSubcommand::Governance(commands) => {
+            governance::build_instruction(fee_payer, commands, config).await?
         }
     };
 

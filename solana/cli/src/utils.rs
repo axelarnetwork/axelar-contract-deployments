@@ -28,6 +28,10 @@ pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 pub(crate) const OPERATOR_KEY: &str = "operator";
 pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
+pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
+pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
+pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
+pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> Result<T> {
     let reader = std::io::BufReader::new(file);
