@@ -11,6 +11,7 @@ const { addBaseOptions } = require('./utils');
 
 const BASE_URL = 'https://api.welldonestudio.io/compiler/sui';
 const MOVE_FOLDER_PATH = './sui/move';
+const VERIFICATION_FOLDER_PATH = path.join(MOVE_FOLDER_PATH, 'verification');
 const CONTRACTS = [
     'Utils',
     'VersionControl',
@@ -39,31 +40,57 @@ async function getContractAddress(env, contract) {
     }
 }
 
-async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
+async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH, contractName = null) {
     try {
         // Validate moveFolderPath exists
         await fs.access(moveFolderPath).catch(() => {
             throw new Error(`Move folder path does not exist: ${moveFolderPath}`);
         });
 
-        const centralDepsFolderPath = path.join(moveFolderPath, 'deps');
-        await fs.mkdir(centralDepsFolderPath, { recursive: true });
+        await fs.mkdir(VERIFICATION_FOLDER_PATH, { recursive: true });
 
         const moveContents = await fs.readdir(moveFolderPath, { withFileTypes: true });
 
-        for (const item of moveContents) {
-            const sourcePath = path.join(moveFolderPath, item.name);
-            const destPath = path.join(centralDepsFolderPath, item.name);
-
-            if (item.name === 'deps') continue;
-
+        if (contractName && contractName.toLowerCase() !== 'all') {
+            // Copy only the specified contract folder
+            const pascalCaseContract = pascalToSnake(contractName);
+            const sourcePath = path.join(moveFolderPath, pascalCaseContract);
+            const destPath = path.join(VERIFICATION_FOLDER_PATH, pascalCaseContract);
+            await fs.access(sourcePath).catch(() => {
+                throw new Error(`Contract folder does not exist: ${sourcePath}`);
+            });
             await fs.cp(sourcePath, destPath, { recursive: true });
-            printInfo('Copied to central deps', `${sourcePath} to ${destPath}`);
+            printInfo('Copied to verification folder', `${sourcePath} to ${destPath}`);
+        } else {
+            // Copy all folders except verification
+            for (const item of moveContents) {
+                if (item.name !== 'verification') {
+                    const sourcePath = path.join(moveFolderPath, item.name);
+                    const destPath = path.join(VERIFICATION_FOLDER_PATH, item.name);
+                    await fs.cp(sourcePath, destPath, { recursive: true });
+                    printInfo('Copied to verification folder', `${sourcePath} to ${destPath}`);
+                }
+            }
         }
 
+        // Copy all move folder contents to verification/deps
+        const centralDepsFolderPath = path.join(VERIFICATION_FOLDER_PATH, 'deps');
+        await fs.mkdir(centralDepsFolderPath, { recursive: true });
+
         for (const item of moveContents) {
-            if (item.isDirectory() && item.name !== 'deps') {
-                const subDirPath = path.join(moveFolderPath, item.name);
+            if (item.name !== 'verification') {
+                const sourcePath = path.join(moveFolderPath, item.name);
+                const destPath = path.join(centralDepsFolderPath, item.name);
+                await fs.cp(sourcePath, destPath, { recursive: true });
+                printInfo('Copied to central deps', `${sourcePath} to ${destPath}`);
+            }
+        }
+
+        const verificationContents = await fs.readdir(VERIFICATION_FOLDER_PATH, { withFileTypes: true });
+
+        for (const item of verificationContents) {
+            if (item.isDirectory() && item.name !== 'deps' && item.name !== 'verification') {
+                const subDirPath = path.join(VERIFICATION_FOLDER_PATH, item.name);
                 const subDirDepsFolderPath = path.join(subDirPath, 'deps');
 
                 await fs.mkdir(subDirDepsFolderPath, { recursive: true });
@@ -88,7 +115,7 @@ async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
             for (const item of contents) {
                 const itemPath = path.join(folderPath, item.name);
 
-                if (item.isDirectory() && item.name !== 'deps') {
+                if (item.isDirectory() && item.name !== 'deps' && item.name !== 'verification') {
                     await updateTomlInFolder(itemPath);
                 } else if (item.name === 'Move.toml') {
                     try {
@@ -105,7 +132,7 @@ async function copyAndUpdateDependencies(moveFolderPath = MOVE_FOLDER_PATH) {
             }
         };
 
-        await updateTomlInFolder(moveFolderPath);
+        await updateTomlInFolder(VERIFICATION_FOLDER_PATH);
 
         printInfo('Dependency update completed');
     } catch (error) {
@@ -129,41 +156,64 @@ async function addFolderToZip(folderPath, zipFolder) {
     }
 }
 
-async function zipSubdirectories(moveFolderPath = MOVE_FOLDER_PATH) {
+async function zipSubdirectories(moveFolderPath = MOVE_FOLDER_PATH, contractName = null) {
     try {
-        // Validate moveFolderPath exists
-        await fs.access(moveFolderPath).catch(() => {
-            throw new Error(`Move folder path does not exist: ${moveFolderPath}`);
+        // Validate verificationFolderPath exists
+        await fs.access(VERIFICATION_FOLDER_PATH).catch(() => {
+            throw new Error(`Verification folder path does not exist: ${VERIFICATION_FOLDER_PATH}`);
         });
 
-        const moveContents = await fs.readdir(moveFolderPath, { withFileTypes: true });
+        const verificationContents = await fs.readdir(VERIFICATION_FOLDER_PATH, { withFileTypes: true });
 
-        if (moveContents.length === 0) {
+        if (verificationContents.length === 0) {
             printInfo('No subdirectories found to zip');
             return;
         }
 
-        for (const item of moveContents) {
-            if (item.isDirectory() && item.name !== 'deps') {
-                const subDirPath = path.join(moveFolderPath, item.name);
-                const zipFilePath = path.join(moveFolderPath, `${item.name}.zip`);
+        if (contractName && contractName.toLowerCase() !== 'all') {
+            // Zip only the specified contract folder
+            const pascalCaseContract = pascalToSnake(contractName);
+            const subDirPath = path.join(VERIFICATION_FOLDER_PATH, pascalCaseContract);
+            const zipFilePath = path.join(VERIFICATION_FOLDER_PATH, `${pascalCaseContract}.zip`);
 
-                await fs.access(subDirPath).catch(() => {
-                    throw new Error(`Subdirectory does not exist: ${subDirPath}`);
-                });
+            await fs.access(subDirPath).catch(() => {
+                throw new Error(`Subdirectory does not exist: ${subDirPath}`);
+            });
 
-                const zip = new JSZip();
+            const zip = new JSZip();
+            await addFolderToZip(subDirPath, zip.folder(pascalCaseContract));
 
-                await addFolderToZip(subDirPath, zip.folder(item.name));
+            const zipContent = await zip.generateAsync({
+                type: 'nodebuffer',
+                compression: 'DEFLATE',
+                compressionOptions: { level: 6 },
+            });
 
-                const zipContent = await zip.generateAsync({
-                    type: 'nodebuffer',
-                    compression: 'DEFLATE',
-                    compressionOptions: { level: 6 }, // Match macOS Finder's moderate compression
-                });
+            await fs.writeFile(zipFilePath, zipContent);
+            printInfo('Created ZIP file', zipFilePath);
+        } else {
+            // Zip all subdirectories
+            for (const item of verificationContents) {
+                if (item.isDirectory() && item.name !== 'deps' && item.name !== 'verification') {
+                    const subDirPath = path.join(VERIFICATION_FOLDER_PATH, item.name);
+                    const zipFilePath = path.join(VERIFICATION_FOLDER_PATH, `${item.name}.zip`);
 
-                await fs.writeFile(zipFilePath, zipContent);
-                printInfo('Created ZIP file', zipFilePath);
+                    await fs.access(subDirPath).catch(() => {
+                        throw new Error(`Subdirectory does not exist: ${subDirPath}`);
+                    });
+
+                    const zip = new JSZip();
+                    await addFolderToZip(subDirPath, zip.folder(item.name));
+
+                    const zipContent = await zip.generateAsync({
+                        type: 'nodebuffer',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 },
+                    });
+
+                    await fs.writeFile(zipFilePath, zipContent);
+                    printInfo('Created ZIP file', zipFilePath);
+                }
             }
         }
 
@@ -248,8 +298,8 @@ async function processVerification(network, packageId, srcZipPath) {
 
 async function verifyContracts(contractName, options) {
     printInfo('Starting contract verification for environment', options.env);
-    await copyAndUpdateDependencies();
-    await zipSubdirectories();
+    await copyAndUpdateDependencies(MOVE_FOLDER_PATH, contractName);
+    await zipSubdirectories(MOVE_FOLDER_PATH, contractName);
 
     const contractsToVerify = contractName.toLowerCase() === 'all' ? CONTRACTS : [contractName];
 
@@ -262,7 +312,7 @@ async function verifyContracts(contractName, options) {
 
         try {
             const address = await getContractAddress(options.env, contract);
-            const srcZipPath = path.join(MOVE_FOLDER_PATH, `${pascalCaseContract}.zip`);
+            const srcZipPath = path.join(VERIFICATION_FOLDER_PATH, `${pascalCaseContract}.zip`);
             await processVerification(options.env, address, srcZipPath);
             printInfo('Successfully verified', contract);
         } catch (error) {
