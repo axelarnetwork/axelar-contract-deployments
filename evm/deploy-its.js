@@ -128,20 +128,12 @@ async function deployAll(config, wallet, chain, options) {
         printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
     }
 
-    const isCurrentChainConsensus = isConsensusChain(chain);
-
     // Register all EVM chains that ITS is or will be deployed on.
     // Add a "skip": true under ITS key in the config if the chain will not have ITS.
     const itsChains = Object.values(config.chains).filter(
         (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.address,
     );
     const trustedChains = itsChains.map((chain) => chain.axelarId);
-    const trustedAddresses = itsChains.map((chain) =>
-        // If both current chain and remote chain are consensus chains, connect them in pairwise mode
-        isCurrentChainConsensus && isConsensusChain(chain)
-            ? chain.contracts?.InterchainTokenService?.address || interchainTokenService
-            : 'hub',
-    );
 
     // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
@@ -152,13 +144,11 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         trustedChains.push(config.axelar?.axelarId);
-        trustedAddresses.push(itsHubAddress);
     }
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
-        printInfo('Trusted addresses', trustedAddresses);
     }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
@@ -318,8 +308,8 @@ async function deployAll(config, wallet, chain, options) {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
                 const deploymentParams = defaultAbiCoder.encode(
-                    ['address', 'string', 'string[]', 'string[]'],
-                    [operatorAddress, chain.axelarId, trustedChains, trustedAddresses],
+                    ['address', 'string', 'string[]'],
+                    [operatorAddress, chain.axelarId, trustedChains],
                 );
                 contractConfig.predeployCodehash = predeployCodehash;
 
