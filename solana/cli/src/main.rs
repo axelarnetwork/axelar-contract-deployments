@@ -57,6 +57,11 @@ struct Cli {
         help = "Directory for output files"
     )]
     output_dir: PathBuf,
+
+    /// Directory containing the JSON files for Axelar chains configuration info
+    /// (devnet-amplifier.json, mainnet.json, testnet.json, etc)
+    #[clap(short, long, default_value = ".", parse(from_os_str))]
+    chains_info_dir: PathBuf,
 }
 
 #[derive(Subcommand, Debug)]
@@ -201,7 +206,7 @@ async fn main() {
 async fn run() -> eyre::Result<()> {
     let cli = Cli::parse();
 
-    let config = Config::new(cli.url, cli.output_dir)?;
+    let config = Config::new(cli.url, cli.output_dir, cli.chains_info_dir)?;
 
     match cli.command {
         Command::Send(args) => {

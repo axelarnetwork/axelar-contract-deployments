@@ -15,8 +15,8 @@ use solana_sdk::pubkey::Pubkey;
 use crate::config::Config;
 use crate::types::ChainNameOnAxelar;
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MULTISIG_PROVER_KEY,
+    read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY,
+    CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MULTISIG_PROVER_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -122,14 +122,15 @@ async fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Instruction> {
+    let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+
     let (gateway_config_pda, _bump) = axelar_solana_gateway::get_gateway_root_config_pda();
     let multisig_prover_address = {
         let address = match init_args.multisig_prover_address {
             Some(address) => address,
             None => String::deserialize(
-                &utils::chains_info(config.network_type)[AXELAR_KEY][CONTRACTS_KEY]
-                    [MULTISIG_PROVER_KEY][ChainNameOnAxelar::from(config.network_type).0]
-                    [ADDRESS_KEY],
+                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY]
+                    [ChainNameOnAxelar::from(config.network_type).0][ADDRESS_KEY],
             )?,
         };
 
@@ -139,9 +140,7 @@ async fn init(
     let axelar_grpc_endpoint = {
         match init_args.axelar_grpc_endpoint {
             Some(endpoint) => endpoint,
-            None => {
-                String::deserialize(&utils::chains_info(config.network_type)[AXELAR_KEY][GRPC_KEY])?
-            }
+            None => String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?,
         }
     };
 
@@ -168,9 +167,8 @@ async fn init(
         match init_args.domain_separator {
             Some(domain_separator) => domain_separator,
             None => String::deserialize(
-                &utils::chains_info(config.network_type)[AXELAR_KEY][CONTRACTS_KEY]
-                    [MULTISIG_PROVER_KEY][ChainNameOnAxelar::from(config.network_type).0]
-                    [DOMAIN_SEPARATOR_KEY],
+                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY]
+                    [ChainNameOnAxelar::from(config.network_type).0][DOMAIN_SEPARATOR_KEY],
             )?,
         }
     };
@@ -187,9 +185,8 @@ async fn init(
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
-    let mut updated_chains_info = utils::chains_info(config.network_type).clone();
-    updated_chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0]
-        [CONTRACTS_KEY][GATEWAY_KEY] = json!({
+    chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+        [GATEWAY_KEY] = json!({
         "address": bs58::encode(axelar_solana_gateway::id()).into_string(),
         "deployer": fee_payer,
         "operator": init_args.operator,
@@ -198,7 +195,7 @@ async fn init(
         "domainSeparator": domain_separator,
     });
 
-    utils::save_chains_info(config.network_type, updated_chains_info, &config.output_dir);
+    write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
     Ok(axelar_solana_gateway::instructions::initialize_config(
         payer,

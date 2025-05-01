@@ -2,14 +2,15 @@ use std::{fs::File, io::Write, time::SystemTime};
 
 use axelar_solana_its::state;
 use clap::{Parser, Subcommand};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 
 use crate::config::Config;
 use crate::types::ChainNameOnAxelar;
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CONTRACTS_KEY, GAS_CONFIG_ACCOUNT, GAS_SERVICE_KEY, ITS_KEY,
+    self, read_json_file_from_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -254,12 +255,12 @@ fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, Strin
 }
 
 fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre::Result<Pubkey> {
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     match maybe_arg {
         Some(id) => Ok(id),
         None => {
             let id = Pubkey::deserialize(
-                &utils::chains_info(config.network_type)
-                    [ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+                &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
                     [GAS_SERVICE_KEY][ADDRESS_KEY],
             ).map_err(|_| eyre::eyre!(
                 "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
@@ -274,13 +275,13 @@ fn try_infer_gas_service_config_account(
     maybe_arg: Option<Pubkey>,
     config: &Config,
 ) -> eyre::Result<Pubkey> {
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     match maybe_arg {
         Some(id) => Ok(id),
         None => {
             let id = Pubkey::deserialize(
-                &utils::chains_info(config.network_type)
-                    [ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
-                    [GAS_SERVICE_KEY][GAS_CONFIG_ACCOUNT],
+                &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+                    [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
             ).map_err(|_| eyre::eyre!(
                 "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
                 Please update the file or pass a value to --gas-config-account"))?;
@@ -655,14 +656,38 @@ pub(crate) async fn build_instruction(
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct ItsInfo {
+    address: String,
+    #[serde(rename = "configAccount")]
+    config_account: String,
+    #[serde(rename = "upgradeAuthority")]
+    upgrade_authority: String,
+}
+
 async fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Instruction> {
-    let its_hub_address = String::deserialize(
-        &utils::chains_info(config.network_type)[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY],
-    )?;
+    let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let its_hub_address =
+        String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
+
+    let its_info = ItsInfo {
+        address: axelar_solana_its::id().to_string(),
+        config_account: axelar_solana_its::find_its_root_pda(
+            &axelar_solana_gateway::get_gateway_root_config_pda().0,
+        )
+        .0
+        .to_string(),
+        upgrade_authority: fee_payer.to_string(),
+    };
+
+    chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+        [ITS_KEY] = serde_json::json!(its_info);
+
+    utils::write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
     Ok(axelar_solana_its::instruction::initialize(
         *fee_payer,
@@ -708,8 +733,12 @@ async fn approve_deploy_remote_interchain_token(
     args: ApproveDeployRemoteInterchainTokenArgs,
     config: &Config,
 ) -> eyre::Result<Instruction> {
-    let destination_minter =
-        utils::encode_its_destination(&config, &args.destination_chain, args.destination_minter)?;
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let destination_minter = utils::encode_its_destination(
+        &chains_info,
+        &args.destination_chain,
+        args.destination_minter,
+    )?;
 
     Ok(
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
@@ -815,8 +844,12 @@ async fn deploy_remote_interchain_token_with_minter(
 ) -> eyre::Result<Instruction> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let destination_minter =
-        utils::encode_its_destination(&config, &args.destination_chain, args.destination_minter)?;
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let destination_minter = utils::encode_its_destination(
+        &chains_info,
+        &args.destination_chain,
+        args.destination_minter,
+    )?;
     Ok(
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
             *fee_payer,
@@ -898,8 +931,12 @@ async fn interchain_transfer(
         .as_secs()
         .try_into()?;
 
-    let destination_address =
-        utils::encode_its_destination(config, &args.destination_chain, args.destination_address)?;
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let destination_address = utils::encode_its_destination(
+        &chains_info,
+        &args.destination_chain,
+        args.destination_address,
+    )?;
 
     Ok(axelar_solana_its::instruction::interchain_transfer(
         *fee_payer,
@@ -929,8 +966,12 @@ async fn call_contract_with_interchain_token(
         .duration_since(SystemTime::UNIX_EPOCH)?
         .as_secs()
         .try_into()?;
-    let destination_address =
-        utils::encode_its_destination(config, &args.destination_chain, args.destination_address)?;
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let destination_address = utils::encode_its_destination(
+        &chains_info,
+        &args.destination_chain,
+        args.destination_address,
+    )?;
     Ok(
         axelar_solana_its::instruction::call_contract_with_interchain_token(
             *fee_payer,
@@ -962,8 +1003,12 @@ async fn call_contract_with_interchain_token_offchain_data(
         .duration_since(SystemTime::UNIX_EPOCH)?
         .as_secs()
         .try_into()?;
-    let destination_address =
-        utils::encode_its_destination(config, &args.destination_chain, args.destination_address)?;
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let destination_address = utils::encode_its_destination(
+        &chains_info,
+        &args.destination_chain,
+        args.destination_address,
+    )?;
 
     let (instruction, payload) =
         axelar_solana_its::instruction::call_contract_with_interchain_token_offchain_data(
@@ -975,7 +1020,7 @@ async fn call_contract_with_interchain_token_offchain_data(
             destination_address,
             args.amount,
             args.mint,
-            args.data, // This is the raw data, the function calculates the hash
+            args.data,
             args.token_program,
             args.gas_value,
             gas_service,

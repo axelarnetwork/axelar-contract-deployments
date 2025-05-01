@@ -21,8 +21,26 @@ impl FromStr for NetworkType {
             .then_some(NetworkType::Mainnet)
             .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
-            .or_else(|| s.contains("localhost").then_some(NetworkType::Localnet))
+            .or_else(|| s.contains("local").then_some(NetworkType::Localnet))
             .ok_or_else(|| AppError::InvalidNetworkType(s.to_string()))
+    }
+}
+
+pub struct ChainsInfoFile(pub String);
+impl From<ChainsInfoFile> for String {
+    fn from(value: ChainsInfoFile) -> Self {
+        value.0
+    }
+}
+
+impl From<NetworkType> for ChainsInfoFile {
+    fn from(value: NetworkType) -> Self {
+        match value {
+            NetworkType::Mainnet => Self("mainnet.json".to_owned()),
+            NetworkType::Testnet => Self("testnet.json".to_owned()),
+            NetworkType::Devnet => Self("devnet-amplifier.json".to_owned()),
+            NetworkType::Localnet => Self("local.json".to_owned()),
+        }
     }
 }
 
