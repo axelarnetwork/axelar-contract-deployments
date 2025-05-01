@@ -183,53 +183,7 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
-
-6. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
-
-| Network              | `http_url`                      |
-| -------------------- | ------------------------------- |
-| **Devnet-amplifier** | https://rpc.testnet.xrplevm.org |
-| **Stagenet**         | https://rpc.testnet.xrplevm.org |
-| **Testnet**          | https://rpc.testnet.xrplevm.org |
-| **Mainnet**          | ``                              |
-
-```bash
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmMsgVerifier"
-
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmVerifierSetVerifier"
-```
-
-7. Update ampd with the `$CHAIN` chain configuration.
-
-```bash
-ampd register-chain-support "[service name]" $CHAIN
-```
-
-8. Register prover contract on coordinator
+6. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -246,7 +200,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -264,15 +218,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
-```
-
-10. Create reward pool for voting verifier
+8. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -305,7 +251,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-11. Create reward pool for multisig
+9. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -329,21 +275,39 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-    Add Rewards:
+
+10. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+
+| Network              | `http_url`                      |
+| -------------------- | ------------------------------- |
+| **Devnet-amplifier** | https://rpc.testnet.xrplevm.org |
+| **Stagenet**         | https://rpc.testnet.xrplevm.org |
+| **Testnet**          | https://rpc.testnet.xrplevm.org |
+| **Mainnet**          | ``                              |
 
 ```bash
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+[[handlers]]
+chain_finalization="RPCFinalizedBlock"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmMsgVerifier"
+
+[[handlers]]
+chain_finalization="RPCFinalizedBlock"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmVerifierSetVerifier"
 ```
 
-Check reward pool to confirm funding worked:
+11. Update ampd with the `$CHAIN` chain configuration.
 
 ```bash
-node cosmwasm/query.js rewards -n $CHAIN
+ampd register-chain-support "[service name]" $CHAIN
 ```
 
-13. Create genesis verifier set
+12. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
@@ -362,6 +326,20 @@ Query the multisig prover for active verifier set
 
 ```bash
 axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
+```
+
+13. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+    Add Rewards:
+
+```bash
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+```
+
+Check reward pool to confirm funding worked:
+
+```bash
+node cosmwasm/query.js rewards -n $CHAIN
 ```
 
 ## Checklist
