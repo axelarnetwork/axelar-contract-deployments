@@ -42,46 +42,46 @@ npm ci
 
 ```json
 "$CHAIN": {
-    "name": "Plume",
-    "axelarId": "plume",
-    "networkType": "testnet",
-    "chainId": 98867,
-    "rpc": "https://testnet-rpc.plumenetwork.xyz",
-    "tokenSymbol": "PLUME",
-    "confirmations": 64,
-    "finality": "finalized",
-    "decimals": 18,
-    "approxFinalityWaitTime": 30,
-    "chainType": "evm",
-    "explorer": {
-      "name": "Plume-testnet Explorer",
-      "url": "https://testnet-explorer.plumenetwork.xyz/"
-    },
-    "contracts": {}
-  }
+  "name": "Plume",
+  "axelarId": "plume",
+  "networkType": "testnet",
+  "chainId": 98867,
+  "rpc": "https://testnet-rpc.plumenetwork.xyz",
+  "tokenSymbol": "PLUME",
+  "confirmations": 64,
+  "finality": "finalized",
+  "decimals": 18,
+  "approxFinalityWaitTime": 30,
+  "chainType": "evm",
+  "explorer": {
+    "name": "Plume-testnet Explorer",
+    "url": "https://testnet-explorer.plumenetwork.xyz/"
+  },
+  "contracts": {}
+}
 ```
 
 #### Mainnet
 
 ```json
 "$CHAIN": {
-    "name": "Plume",
-    "axelarId": "plume",
-    "chainId": "TBD",
-    "rpc": "TBD",
-    "tokenSymbol": "PLUME",
-    "confirmations": 64,
-    "finality": "finalized",
-    "decimals": 18,
-    "approxFinalityWaitTime": 30,
-    "chainType": "evm",
-    "explorer": {
-      "name": "TBD",
-      "url": "TBD",
-      "api": "TBD"
-    },
+  "name": "Plume",
+  "axelarId": "plume",
+  "chainId": "TBD",
+  "rpc": "TBD",
+  "tokenSymbol": "PLUME",
+  "confirmations": 64,
+  "finality": "finalized",
+  "decimals": 18,
+  "approxFinalityWaitTime": 30,
+  "chainType": "evm",
+  "explorer": {
+    "name": "TBD",
+    "url": "TBD",
+    "api": "TBD"
+  },
   "contracts": {}
-  }
+}
 ```
 
 1. Fund the following addresses with native tokens on chain:
