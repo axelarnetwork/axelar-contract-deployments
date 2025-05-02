@@ -18,6 +18,8 @@ axelar-solana-its = { git = "https://github.com/eigerco/solana-axelar.git", rev 
 ] }
 axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
 axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
+governance-gmp = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
+program-utils = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
 
 axelar-wasm-std = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec" }
 voting-verifier = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec", features = [
@@ -27,8 +29,10 @@ multisig-prover = { git = "https://github.com/eigerco/axelar-amplifier.git", rev
     "library",
 ] }
 
+alloy-sol-types = "0.7.6"
 anyhow = "1.0.98"
 bincode = { version = "2.0.1", features = ["serde"] }
+borsh = "1.5.1"
 bs58 = "0.5.1"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
@@ -54,3 +58,4 @@ walkdir = "2.5.0"
 spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
 spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
+base64 = "0.22.1"

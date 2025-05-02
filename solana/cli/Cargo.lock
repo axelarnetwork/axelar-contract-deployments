@@ -1391,6 +1391,7 @@ dependencies = [
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "alloy-sol-types",
  "anyhow",
  "axelar-executable",
  "axelar-solana-encoding",
@@ -1399,7 +1400,9 @@ dependencies = [
  "axelar-solana-governance",
  "axelar-solana-its",
  "axelar-wasm-std",
+ "base64 0.22.1",
  "bincode 2.0.1",
+ "borsh 1.5.7",
  "bs58",
  "clap 3.2.25",
  "cosmrs",
@@ -1407,8 +1410,10 @@ dependencies = [
  "cosmwasm-std 1.5.11",
  "eyre",
  "flate2",
+ "governance-gmp",
  "hex",
  "multisig-prover",
+ "program-utils",
  "rand 0.9.1",
  "reqwest 0.12.15",
  "rust_decimal",

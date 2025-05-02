@@ -212,6 +212,7 @@ async fn run() -> eyre::Result<()> {
 
     let config = Config::new(cli.url, cli.output_dir, cli.chains_info_dir)?;
 
+    // Proceed with building and potentially sending/signing/broadcasting a Solana transaction
     match cli.command {
         Command::Send(args) => {
             let send_args = SendArgs {
@@ -276,8 +277,8 @@ async fn build_instruction(
         InstructionSubcommand::Its(command) => {
             its::build_instruction(fee_payer, command, config).await?
         }
-        InstructionSubcommand::Governance(commands) => {
-            governance::build_instruction(fee_payer, commands, config).await?
+        InstructionSubcommand::Governance(command) => {
+            governance::build_instruction(fee_payer, command, config).await?
         }
     };
 

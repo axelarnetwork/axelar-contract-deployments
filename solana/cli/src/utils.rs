@@ -11,6 +11,7 @@ use crate::error::{AppError, Result};
 use crate::types::{
     NetworkType, PartialSignature, SignedSolanaTransaction, UnsignedSolanaTransaction,
 };
+pub(crate) use solana_sdk::instruction::AccountMeta;
 
 pub(crate) const ADDRESS_KEY: &str = "address";
 pub(crate) const AXELAR_KEY: &str = "axelar";
@@ -146,6 +147,38 @@ pub(crate) fn encode_its_destination(
         "svm" => Ok(Pubkey::from_str(&destination_address)?.to_bytes().to_vec()),
         _ => Ok(hex::decode(destination_address)?),
     }
+}
+
+/// Parses a string representation of an AccountMeta.
+/// Format: "pubkey:is_signer:is_writable" (e.g., "SomePubkey...:false:true")
+pub fn parse_account_meta_string(s: &str) -> Result<AccountMeta> {
+    let parts: Vec<&str> = s.split(':').collect();
+    if parts.len() != 3 {
+        return Err(AppError::InvalidInput(format!(
+            "Invalid AccountMeta format: '{}'. Expected 'pubkey:is_signer:is_writable'",
+            s
+        )));
+    }
+
+    let pubkey = Pubkey::from_str(parts[0])?;
+    let is_signer = bool::from_str(parts[1]).map_err(|_| {
+        AppError::InvalidInput(format!(
+            "Invalid is_signer value: '{}'. Expected 'true' or 'false'",
+            parts[1]
+        ))
+    })?;
+    let is_writable = bool::from_str(parts[2]).map_err(|_| {
+        AppError::InvalidInput(format!(
+            "Invalid is_writable value: '{}'. Expected 'true' or 'false'",
+            parts[2]
+        ))
+    })?;
+
+    Ok(if is_writable {
+        AccountMeta::new(pubkey, is_signer)
+    } else {
+        AccountMeta::new_readonly(pubkey, is_signer)
+    })
 }
 
 pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature>) -> Result<()> {
