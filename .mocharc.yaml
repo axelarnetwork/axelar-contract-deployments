@@ -1,3 +1,5 @@
 exit: true
-spec: test/**/*.js
+spec:
+  - test/**/*.js
+  - test/**/*.ts
 timeout: 10000
