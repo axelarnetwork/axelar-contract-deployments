@@ -2853,6 +2853,11 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
+      "explorer": {
+        "name": "Xrplscan",
+        "url": "[placeholder]",
+        "api": "[placeholder]"
+      },
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
