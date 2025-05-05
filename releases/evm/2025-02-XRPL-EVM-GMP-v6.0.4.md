@@ -3,7 +3,7 @@
 |                | **Owner**                                                                   |
 | -------------- | --------------------------------------------------------------------------- |
 | **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io>, @isi8787 <isaac@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -11,7 +11,7 @@
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**(staging) | Completed             | 2025-02-19 |
 | **Testnet**          | In Progress           | TBD        |
-| **Mainnet**          | In Progress           | 2025-04-29 |
+| **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
