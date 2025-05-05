@@ -88,10 +88,11 @@ jobs:
         run: node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
 
       ###### Environment Variables ######
-      - name: Prepare Environment Variables
+      - name: Set Environment Variables
         run: |
           echo "destinationChain=remote" >> $GITHUB_ENV
           echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+          echo "data=0x1234" >> $GITHUB_ENV
 
           config=$(cat axelar-chains-config/info/local.json)
           echo "nativeTokenAddress=$(echo $config | jq -r '.chains.stellar.tokenAddress')" >> $GITHUB_ENV
@@ -108,7 +109,7 @@ jobs:
         run: node stellar/contract.js unpause AxelarGateway
 
       - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract ${{ env.destinationChain }} ${{ env.destinationAddress }} 0x1234
+        run: node stellar/gateway.js call-contract ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.data }}
 
       - name: Gateway Rotate Signers
         run: node stellar/gateway.js rotate --new-nonce test --signers wallet
@@ -116,7 +117,7 @@ jobs:
       ###### Command: GMP Example ######
 
       - name: Execute outgoing Call Contract
-        run: node stellar/gmp.js sencd ${{ env.destinationChain }} ${{ env.destinationAddress }} 0x1234 --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+        run: node stellar/gmp.js send ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.data }} --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
 
       ###### Command: ITS ######
 
@@ -132,7 +133,6 @@ jobs:
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
         run: |
-
           echo "name=TEST" >> $GITHUB_ENV
           echo "symbol=TEST" >> $GITHUB_ENV
           echo "decimal=18" >> $GITHUB_ENV
