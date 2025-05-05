@@ -132,16 +132,18 @@ jobs:
           echo "salt=0x1234" >> $GITHUB_ENV
           echo "amount=1" >> $GITHUB_ENV
 
-          # config=$(cat axelar-chains-config/info/local.json)
-          # echo "destinationAddress=$(echo $config | jq -r '.chains.stellar.contracts.AxelarExample.Address')" >> $GITHUB_ENV
+          echo "nativeTokenAddress=CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4" >> $GITHUB_ENV
+          echo "tokenId=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+
+          # Note that tokenId is hardcoded since it's derivation must always be the same
 
       - name: Deploy Test Tokens
         run: |
           node stellar/its.js deploy-interchain-token ${{ env.name }} ${{ env.symbol }} ${{ env.decimal }} ${{ env.salt }} ${{ env.amount }}
-          #node stellar/its.js deploy-remote-interchain-token [salt] [destination-chain] --gas-amount [amount]
-          #node stellar/its.js register-canonical-token [token-address]
-          #node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-amount [amount]
-          #node stellar/its.js interchain-transfer [token-id] [destination-chain] [destination-address] [amount] --data [data] --gas-amount [amount]
+          node stellar/its.js deploy-remote-interchain-token ${{ env.salt }} ${{ env.destinationChain }} --gas-amount 10000000
+          node stellar/its.js register-canonical-token ${{ env.nativeTokenAddress }}
+          #node stellar/its.js deploy-remote-canonical-token ${{ env.tokenId }} ${{ env.destinationChain }} --gas-amount 10000000
+          #node stellar/its.js interchain-transfer [token-id] ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data '' --gas-amount 10000000
 
       ###### Command: Flow Limit ######
       # - name: ITS Flow Limit
@@ -157,10 +159,6 @@ jobs:
       #  run: node stellar/its.js remove-flow-limit [token-id]
 
       ###### Command: Operators ######
-
-      ###### Command: Generate Keypair ######
-      - name: Generate Keypair
-        run: node stellar/generate-keypair.js
 
       ###### Command: Transfer Ownership ######
 
