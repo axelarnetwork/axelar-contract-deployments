@@ -183,13 +183,22 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownership for gateway, operators and gas service contracts on `mainnet` and `testnet`
+8. Transfer ownership for contracts on mainnet and testnet.
+
+For Mainnet
 
 ```bash
-# Only for mainnet and official testnet connection
+node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
+
+For Testnet
+
+```bash
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 
 node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
