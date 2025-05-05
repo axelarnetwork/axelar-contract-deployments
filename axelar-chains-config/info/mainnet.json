@@ -2841,6 +2841,54 @@
         "name": "Stellar Expert",
         "url": "https://stellar.expert/explorer/public"
       }
+    },
+    "xrpl": {
+      "name": "XRPL",
+      "axelarId": "xrpl",
+      "rpc": "https://s1.ripple.com:51234",
+      "wssRpc": "wss://s1.ripple.com",
+      "tokenSymbol": "XRP",
+      "decimals": 6,
+      "networkType": "mainnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://livenet.xrpl.org"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+          "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        },
+        "AxelarGateway": {
+          "address": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+          "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        }
+      }
     }
   },
   "axelar": {
