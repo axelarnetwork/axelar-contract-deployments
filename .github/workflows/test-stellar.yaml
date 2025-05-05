@@ -58,6 +58,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
       - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
 

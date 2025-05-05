@@ -1,6 +1,7 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
+
 const { Relayer } = require('@openzeppelin/defender-relay-client');
 const { ethers } = require('hardhat');
 const {
