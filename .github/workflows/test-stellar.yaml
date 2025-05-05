@@ -106,17 +106,6 @@ jobs:
 
       ###### Command: ITS ######
 
-      - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains remote
-
-      - name: Add All Trusted Chains
-        run: node stellar/its.js add-trusted-chains all
-
-      - name: Remove Trusted Chain
-        run: node stellar/its.js remove-trusted-chains remote
-
-      - name: Remove All Trusted Chains
-        run: node stellar/its.js remove-trusted-chains all
 
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
@@ -133,30 +122,46 @@ jobs:
           echo "amount=1" >> $GITHUB_ENV
 
           echo "nativeTokenAddress=CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4" >> $GITHUB_ENV
-          echo "tokenId=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
 
           # Note that tokenId is hardcoded since it's derivation must always be the same
+          echo "tokenId=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+
+      - name: Add Trusted Chain
+        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
 
       - name: Deploy Test Tokens
         run: |
           node stellar/its.js deploy-interchain-token ${{ env.name }} ${{ env.symbol }} ${{ env.decimal }} ${{ env.salt }} ${{ env.amount }}
           node stellar/its.js deploy-remote-interchain-token ${{ env.salt }} ${{ env.destinationChain }} --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
           node stellar/its.js register-canonical-token ${{ env.nativeTokenAddress }}
-          #node stellar/its.js deploy-remote-canonical-token ${{ env.tokenId }} ${{ env.destinationChain }} --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
-          #node stellar/its.js interchain-transfer [token-id] ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data '' --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+          node stellar/its.js deploy-remote-canonical-token ${{ env.tokenId }} ${{ env.destinationChain }} --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+
+      - name: Send Token to another chain
+        run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data '' --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+
+      ###### Command: ITS Trusted Chains ######
+
+      - name: Add Trusted Chain
+        run: node stellar/its.js add-trusted-chains remote
+
+      - name: Remove Trusted Chain
+        run: node stellar/its.js remove-trusted-chains remote
+
+      - name: Add All Trusted Chains
+        run: node stellar/its.js add-trusted-chains all
+
+      - name: Remove All Trusted Chains
+        run: node stellar/its.js remove-trusted-chains all
 
       ###### Command: Flow Limit ######
-      # - name: ITS Flow Limit
-      #  run: node stellar/its.js flow-limit [token-id] [flow-limit]
+      - name: ITS Flow Limit
+        run: node stellar/its.js flow-limit ${{ env.tokenId }}
 
-      #- name: ITS Flow Limit Set
-      #  run: node stellar/its.js set-flow-limit [token-id] [flow-limit]
+      - name: ITS Flow Limit Set
+        run: node stellar/its.js set-flow-limit ${{ env.tokenId }} 1
 
-      #- name: ITS Flow Limit Remove
-      #  run: node stellar/its.js remove-flow-limit [token-id]
-
-      #- name: ITS Flow Limit Remove
-      #  run: node stellar/its.js remove-flow-limit [token-id]
+      - name: ITS Flow Limit Remove
+        run: node stellar/its.js remove-flow-limit ${{ env.tokenId }}
 
       ###### Command: Operators ######
 
