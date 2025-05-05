@@ -1,6 +1,6 @@
 'use strict';
 
-const { prepareClient, prepareWallet, initContractConfig, executeContract, executeContractMultiple } = require('./utils');
+const { prepareClient, prepareWallet, initContractConfig, executeContractMultiple, printBalance } = require('./utils');
 const { loadConfig, printInfo } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
@@ -26,39 +26,14 @@ const xrplMsg = () => {
     };
 };
 
-const xrplVerifier = async (client, wallet, config, options) => {
-    const { iterations, delay } = options;
-
-    const pollIds = [];
-
-    const startTime = performance.now();
-
-    for (let i = 0; i < iterations; i++) {
-        const result = await executeContract(client, wallet, config, options, xrplMsg());
-
-        result.events
-            .filter(({ type }) => type === 'wasm-messages_poll_started')
-            .forEach((event, index) => {
-                const pollId = event.attributes.find(({ key }) => key === 'poll_id').value;
-                pollIds.push(parseInt(JSON.parse(pollId)));
-            });
-
-        await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-
-    const endTime = performance.now();
-
-    printInfo('Poll IDs', pollIds);
-    printInfo('Execution time (ms)', endTime - startTime);
-};
-
 const xrplVerifierBatch = async (client, wallet, config, options) => {
-    const { iterations, batch, delay } = options;
-    const transactions = [];
+    const { time, batch, delay } = options;
+    let pollsCount = 0;
 
     const startTime = performance.now();
+    let elapsedTime = 0;
 
-    for (let i = 0; i < iterations; i++) {
+    while (elapsedTime < time * 1000) {
         const msgs = [];
         const pollIds = [];
 
@@ -70,22 +45,26 @@ const xrplVerifierBatch = async (client, wallet, config, options) => {
 
         result.events
             .filter(({ type }) => type === 'wasm-messages_poll_started')
-            .forEach((event, index) => {
+            .forEach((event) => {
                 const pollId = event.attributes.find(({ key }) => key === 'poll_id').value;
                 pollIds.push(parseInt(JSON.parse(pollId)));
             });
 
-        transactions.push({
-            transactionHash: result.transactionHash,
-            pollIds,
-        });
+        pollsCount += pollIds.length;
+        elapsedTime = performance.now() - startTime;
+
+        printInfo('Transaction', result.transactionHash);
+        printInfo('Poll IDs', pollIds);
+        printInfo('Poll count', pollsCount);
+        printInfo('Elapsed time (ms)', elapsedTime);
+        printInfo('Polls per second', pollsCount / (elapsedTime / 1000));
+        await printBalance(client, wallet, config);
+        console.log('='.repeat(20));
 
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     const endTime = performance.now();
-
-    printInfo('Transactions', transactions);
     printInfo('Execution time (ms)', endTime - startTime);
 };
 
@@ -106,20 +85,10 @@ const programHandler = () => {
 
     program.name('load-test').description('Load testing');
 
-    const verifierCmd = program
-        .command('xrpl-verifier')
-        .description('Load test voting verifier')
-        .option('-i, --iterations <iterations>', 'iterations')
-        .option('-d, --delay <delay>', 'delay in milliseconds between calls')
-        .action((options) => {
-            mainProcessor(xrplVerifier, options);
-        });
-    addAmplifierOptions(verifierCmd, { contractOptions: true });
-
     const verifierBatchCmd = program
         .command('xrpl-verifier-batch')
         .description('Load test voting verifier')
-        .option('-i, --iterations <iterations>', 'iterations')
+        .option('-t, --time <time>', 'time limit in seconds to run the test')
         .option('-b, --batch <batch>', 'batch size per iteration')
         .option('-d, --delay <delay>', 'delay in milliseconds between calls')
         .action((options) => {

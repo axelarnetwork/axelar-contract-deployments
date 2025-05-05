@@ -138,6 +138,13 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
+const printBalance = async (client, wallet, config) => {
+    const [account] = await wallet.getAccounts();
+    const denom = `u${config.axelar.tokenSymbol.toLowerCase()}`;
+    const balance = await client.getBalance(account.address, denom);
+    printInfo(`Account ${account.address} balance`, balance);
+};
+
 const uploadContract = async (client, wallet, config, options) => {
     const {
         axelar: { gasPrice, gasLimit },
@@ -1220,6 +1227,7 @@ module.exports = {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    printBalance,
     uploadContract,
     instantiateContract,
     migrateContract,
