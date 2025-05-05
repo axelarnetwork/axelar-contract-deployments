@@ -114,11 +114,6 @@ jobs:
       - name: Gateway Rotate Signers
         run: node stellar/gateway.js rotate --new-nonce test --signers wallet
 
-      ###### Command: GMP Example ######
-
-      - name: Execute outgoing Call Contract
-        run: node stellar/gmp.js send ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.data }} --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
-
       ###### Command: ITS ######
 
       - name: ITS Paused
