@@ -87,6 +87,15 @@ jobs:
       - name: Deploy Multicall
         run: node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
 
+      ###### Environment Variables ######
+      - name: Prepare Environment Variables
+        run: |
+          echo "destinationChain=remote" >> $GITHUB_ENV
+          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+
+          config=$(cat axelar-chains-config/info/local.json)
+          echo "nativeTokenAddress=$(echo $config | jq -r '.chains.stellar.tokenAddress')" >> $GITHUB_ENV
+
       ###### Command: Gateway ######
 
       - name: Gateway Paused
@@ -99,21 +108,30 @@ jobs:
         run: node stellar/contract.js unpause AxelarGateway
 
       - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract remote 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+        run: node stellar/gateway.js call-contract ${{ env.destinationChain }} ${{ env.destinationAddress }} 0x1234
 
       - name: Gateway Rotate Signers
         run: node stellar/gateway.js rotate --new-nonce test --signers wallet
 
+      ###### Command: GMP Example ######
+
+      - name: Execute outgoing Call Contract
+        run: node stellar/gmp.js sencd ${{ env.destinationChain }} ${{ env.destinationAddress }} 0x1234 --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+
       ###### Command: ITS ######
 
+      - name: ITS Paused
+        run: node stellar/contract.js paused InterchainTokenService
+
+      - name: ITS Pause
+        run: node stellar/contract.js pause InterchainTokenService
+
+      - name: ITS Unpause
+        run: node stellar/contract.js unpause InterchainTokenService
 
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
         run: |
-          echo "sourceChain=stellar" >> $GITHUB_ENV
-          echo "sourceAddress=GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI" >> $GITHUB_ENV
-          echo "destinationChain=remote" >> $GITHUB_ENV
-          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
 
           echo "name=TEST" >> $GITHUB_ENV
           echo "symbol=TEST" >> $GITHUB_ENV
@@ -121,10 +139,8 @@ jobs:
           echo "salt=0x1234" >> $GITHUB_ENV
           echo "amount=1" >> $GITHUB_ENV
 
-          echo "nativeTokenAddress=CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4" >> $GITHUB_ENV
-
           # Note that tokenId is hardcoded since it's derivation must always be the same
-          echo "tokenId=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+          echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_ENV
 
       - name: Add Trusted Chain
         run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
@@ -142,10 +158,10 @@ jobs:
       ###### Command: ITS Trusted Chains ######
 
       - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains remote
+        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
 
       - name: Remove Trusted Chain
-        run: node stellar/its.js remove-trusted-chains remote
+        run: node stellar/its.js remove-trusted-chains ${{ env.destinationChain }}
 
       - name: Add All Trusted Chains
         run: node stellar/its.js add-trusted-chains all
