@@ -85,7 +85,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": 1000000,
+  "confirmationHeight": 14000,
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "eip55"
 }
@@ -208,14 +208,14 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
 
 ```bash
 [[handlers]]
-chain_finalization="ConfirmationHeight"
+chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmMsgVerifier"
 
 [[handlers]]
-chain_finalization="ConfirmationHeight"
+chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
