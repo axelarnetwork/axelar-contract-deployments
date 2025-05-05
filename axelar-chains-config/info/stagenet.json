@@ -224,7 +224,7 @@
       "name": "Moonbeam",
       "axelarId": "moonbeam",
       "chainId": 1287,
-      "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
+      "rpc": "https://moonbase-alpha.blastapi.io/6e7be200-8290-4417-a27b-51051866d2a3",
       "tokenSymbol": "DEV",
       "chainType": "evm",
       "contracts": {

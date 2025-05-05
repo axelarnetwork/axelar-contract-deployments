@@ -10,7 +10,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
+//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
 
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
@@ -18,7 +18,11 @@ const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}
 const endTimestamp = 1710329513;
 const queryLimit = {
     ethereum: 500000,
+    "eth-sepolia": 1000,
+    "ethereum-sepolia": 1000,
+    "core-ethereum": 1000,
     avalanche: 2048,
+    "core-avalanche": 10000,
     fantom: 500000,
     polygon: 500000,
     "polygon-sepolia": 500000,
@@ -38,7 +42,7 @@ const queryLimit = {
     mantle: 10000,
     "mantle-sepolia": 10000,
     blast: 10000,
-    "blast-sepolia": 10000,
+    "blast-sepolia": 1000000,
     fraxtal: 50000,
     scroll: 10000,
     flow: 500000,
@@ -96,7 +100,7 @@ async function getTokenManagers(name) {
                 tries = 0;
             } catch (e) {
                 tries++;
-                if (tries >= 10) {
+                if (tries >= 30) {
                     console.log(e);
                     return false;
                 }
@@ -106,12 +110,19 @@ async function getTokenManagers(name) {
     } catch (e) {
         console.log(name);
         console.log(e);
+        return false;
     }
 }
 
 (async () => {
+    let results = {};
     for (const name of Object.keys(info.chains)) {
+        results[name] = 0;
         // add an await to run in sequence, which is slower.
-        getTokenManagers(name).then((success) => console.log(name, 'returned', success));
+        getTokenManagers(name).then((result) => {
+            results[name] = result;
+            console.log(name);
+            console.log(results);
+        });
     }
 })();
