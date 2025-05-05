@@ -2853,7 +2853,6 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
-      "explorer": {},
       "contracts": {
         "InterchainTokenService": {
           "salt": "ITS v2.1.0",
