@@ -11,7 +11,7 @@
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**(staging) | Completed             | 2025-02-19 |
 | **Testnet**          | Completed             | 2025-03-13 |
-| **Mainnet**          | In Progress           | 2025-04-29 |
+| **Mainnet**          | Completed             | 2025-04-29 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)

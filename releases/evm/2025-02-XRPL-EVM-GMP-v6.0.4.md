@@ -10,8 +10,8 @@
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**(staging) | Completed             | 2025-02-19 |
-| **Testnet**          | In Progress           | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-03-13 |
+| **Mainnet**          | Completed             | 2025-05-05 |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
