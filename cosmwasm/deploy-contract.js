@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
