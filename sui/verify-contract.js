@@ -305,6 +305,7 @@ async function verifyContracts(contractName, options) {
     await zipSubdirectories(MOVE_FOLDER_PATH, contractName);
 
     const contractsToVerify = contractName.toLowerCase() === 'all' ? CONTRACTS : [contractName];
+    let verificationFailed = false; 
 
     if (!CONTRACTS.includes(contractName) && contractName.toLowerCase() !== 'all') {
         throw new Error(`Invalid contract name: ${contractName}. Must be one of: ${CONTRACTS.join(', ')} or 'all'`);
@@ -320,10 +321,15 @@ async function verifyContracts(contractName, options) {
             printInfo('Successfully verified', contract);
         } catch (error) {
             printError('Failed to verify', `${contract}: ${error.message}`);
+            verificationFailed = true; 
         }
     }
 
-    printInfo('Contract verification process completed');
+    if (verificationFailed) {
+        printInfo('Contract verification process completed with some failures');
+    } else {
+        printInfo('All contracts successfully verified');
+    }
 }
 
 if (require.main === module) {
