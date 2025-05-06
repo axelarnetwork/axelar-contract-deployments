@@ -25,26 +25,7 @@ Changes in this release:
 - This rollout upgrades the amplifier multisig contract from `v1.1.1` to `v1.2.0`
 - There is a no state migration involved
 
-1. Download interchain token service wasm bytecode
-
-```bash
-mkdir wasm
-wget https://static.axelar.network/releases/cosmwasm/multisig/1.2.0/multisig.wasm --directory-prefix=wasm/
-```
-
-2. Download and verify Checksum
-```bash
-wget https://static.axelar.network/releases/cosmwasm/multisig/1.2.0/checksums.txt
-CHECKSUM=$(cat checksums.txt | grep multisig.wasm | awk '{print $1}')
-shasum -a 256 wasm/multisig.wasm | grep $CHECKSUM
-```
-
-3. Expected output, make sure this matches before proceeding
-```
-6898517f95da74cbc8c59223cc0f0f6b89e95911c321cf3be87e999935366687  wasm/multisig.wasm
-```
-
-4. Upload new ITS Hub contract
+1. Upload new ITS Hub contract
 
 | environment | INIT_ADDRESSES    |  RUN_AS_ACCOUNT |
 | :-----: | :---: | :---: |
@@ -57,7 +38,7 @@ shasum -a 256 wasm/multisig.wasm | grep $CHECKSUM
 node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES --version 1.2.0
 ```
 
-5. Upgrade Multisig contract
+2. Upgrade Multisig contract
 
 There is no state migration needed during upgrade.
 
