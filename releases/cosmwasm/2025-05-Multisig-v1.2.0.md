@@ -54,7 +54,7 @@ shasum -a 256 wasm/multisig.wasm | grep $CHECKSUM
 | mainnet | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am`   | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
 
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES -a ./wasm/multisig.wasm
+node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES --version 1.2.0
 ```
 
 5. Upgrade Multisig contract
