@@ -442,7 +442,7 @@ This script generates a `verification` folder inside the `move` directory, which
 
 Note:
 
--   Contracts like `AxelarGateway` have dependency on `Utils` & `VersionControl` contracts. Make sure these contracts are present in `move` folder
+-   Contracts like `AxelarGateway` have dependencies on `Utils` & `VersionControl` contracts. Make sure these contracts are present and in the `move` folder
 
 ```bash
 node sui/verify-contract.js <all/contractName> 
