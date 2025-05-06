@@ -20,6 +20,7 @@ runs:
               echo "soroban_rpc=$RPC/soroban/rpc" >> $GITHUB_OUTPUT
               echo "friendbot=$RPC/friendbot" >> $GITHUB_OUTPUT
               echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
+              echo "its_hub_address='its_hub_address'" >> $GITHUB_OUTPUT
 
         - name: Start Stellar local network
           shell: bash
@@ -79,7 +80,7 @@ runs:
                   "axelar": {
                     "contracts": {
                       "InterchainTokenService": {
-                        "address": "its_hub_address"
+                        "address": "${{ steps.env.outputs.its_hub_address }}"
                       }
                     }
                   }
