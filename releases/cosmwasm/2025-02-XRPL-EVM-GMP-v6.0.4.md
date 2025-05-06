@@ -3,7 +3,7 @@
 |                | **Owner**                              |
 | -------------- | -------------------------------------- |
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -11,7 +11,7 @@
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**(staging) | Completed             | 2025-02-19 |
 | **Testnet**          | Completed             | 2025-03-13 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Completed             | 2025-04-29 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -227,7 +227,7 @@ node cosmwasm/submit-proposal.js execute \
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1260000000`        |
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
