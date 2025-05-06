@@ -140,6 +140,7 @@ jobs:
         run: node stellar/its.js remove-trusted-chains all
 
       ###### Command: ITS Example ######
+
       - name: Prepare ITS Example Parameters
         run: |
           echo "name=TEST" >> $GITHUB_ENV
@@ -163,6 +164,7 @@ jobs:
         run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data ''
 
       ###### Command: ITS Flow Limit ######
+
       - name: ITS Flow Limit
         run: node stellar/its.js flow-limit ${{ env.tokenId }}
 
@@ -173,6 +175,7 @@ jobs:
         run: node stellar/its.js remove-flow-limit ${{ env.tokenId }}
 
       ###### Command: Operators ######
+
       - name: Operator
         run: node stellar/operators is-operator ${{ env.accountAddress }}
 
@@ -180,4 +183,4 @@ jobs:
         run: node stellar/operators add-operator ${{ env.accountAddress }}
 
       - name: Remove Operator
-        run: node stellar/operators refund ${{ env.accountAddress }}
+        run: node stellar/operators remove-operator ${{ env.accountAddress }}
