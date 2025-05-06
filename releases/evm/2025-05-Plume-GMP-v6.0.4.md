@@ -1,4 +1,4 @@
-# Plume GMP v6.0.6
+# Plume GMP v6.0.4
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
@@ -12,13 +12,13 @@
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
-- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.6)
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
 ## Background
 
 Changes in the release:
 
-This is the v6.0.6 deployment of EVM compatible Amplifier Gateway contracts for Plume.
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Plume.
 
 ## Deployment
 

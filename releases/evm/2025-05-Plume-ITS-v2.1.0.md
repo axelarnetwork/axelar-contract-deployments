@@ -20,7 +20,7 @@
 
 ## Deployment
 
-Ensure that [Plume GMP](../evm/2025-03-Plume-GMP-v6.0.6.md) is deployed first.
+Ensure that [Plume GMP](../evm/2025-05-Plume-GMP-v6.0.4.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -60,7 +60,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register Plume ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-04-Plume-GMP-v6.0.6.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-05-Plume-GMP-v6.0.4.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \

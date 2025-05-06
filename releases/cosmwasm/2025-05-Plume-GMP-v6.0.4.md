@@ -1,4 +1,4 @@
-# Plume GMP v6.0.6
+# Plume GMP v6.0.4
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
@@ -23,7 +23,7 @@ These are the instructions for deploying Amplifier contracts for the Plume conne
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-03-Plume-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -85,7 +85,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": 14000,
+  "confirmationHeight": 1000000,
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "eip55"
 }
@@ -365,4 +365,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [Plume GMP checklist](../evm/2025-03-Plume-GMP-v6.0.6.md) will test GMP.
+The [Plume GMP checklist](../evm/2025-05-Plume-GMP-v6.0.4.md) will test GMP.
