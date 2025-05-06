@@ -1,0 +1,336 @@
+# Deployment logs
+
+```bash
+node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
+```
+
+```text
+
+Environment: mainnet
+
+
+Chain: XRPL EVM
+
+Wallet address: 0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F
+
+Wallet balance: 2.0001
+
+Wallet nonce: 0
+
+Contract name: ConstAddressDeployer
+
+Pre-deploy Contract bytecode hash: 0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe
+
+Gas options: {}
+
+Constructor args for chain XRPL EVM: []
+
+Deployment method: create
+
+Deployer contract
+
+ConstAddressDeployer will be deployed to: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+
+Proceed with deployment on XRPL EVM? (y/n) y
+
+Deployed Contract bytecode hash: 0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe
+
+XRPL EVM | ConstAddressDeployer: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+```
+
+```bash
+node evm/deploy-contract.js -c Create3Deployer -m create2
+```
+
+```text
+Chain: XRPL EVM
+
+Wallet address: 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+Wallet balance: 2.0001
+
+Wallet nonce: 0
+
+Contract name: Create3Deployer
+
+Pre-deploy Contract bytecode hash: 0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92
+
+Gas options: {}
+
+Constructor args for chain XRPL EVM: []
+
+Create3Deployer deployment salt: Create3Deployer
+
+Deployment method: create2
+
+Deployer contract: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+
+Create3Deployer will be deployed to: 0x6513Aedb4D1593BA12e50644401D976aebDc90d8
+
+Proceed with deployment on XRPL EVM? (y/n) y
+
+Deployed Contract bytecode hash: 0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7
+
+XRPL EVM | Create3Deployer: 0x6513Aedb4D1593BA12e50644401D976aebDc90d8
+```
+
+```bash
+node evm/deploy-amplifier-gateway.js -m create --minimumRotationDelay 86400
+```
+
+```text
+Chain: XRPL EVM
+
+Wallet address: 0xB8Cd93C83A974649D76B1c19f311f639e62272BC
+
+Wallet balance: 11.991437
+
+Wallet nonce: 2
+
+Owner address: 0xB8Cd93C83A974649D76B1c19f311f639e62272BC
+
+Gas options: {}
+
+Predicted gateway proxy address: 0xe432150cce91c13a887f7D836923d5597adD8E31
+
+Does derived address match existing gateway deployments? Proceed with deployment on XRPL EVM? (y/n) y
+
+Retrieving domain separator for XRPL EVM from Axelar network
+
+Deploying gateway implementation contract
+
+Gateway Implementation args: 15, 0x0474cdd6880766991d1bab2fdfae4385e7b54b1032d68f9b1c0bab887b2f5ca4, 86400
+
+Deploy method: create
+
+Deploy salt (if not create based deployment)
+
+Gateway Implementation: 0x05823c334150a48ACD5D325fBA16147c21bA3653
+
+Gateway Implementation codehash: 0x6bf95c2a410e1f72b47cdabc8d8fcf794f3ccd5171f16ddd4a8db8a1f69a82b2
+
+Setup params: [
+  "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+  [
+    {
+      "signers": [
+        {
+          "signer": "0x13476c82AB76dE288A1D2765cc113e83845Fa9E4",
+          "weight": 1
+        },
+        {
+          "signer": "0x20C4AD615e3C5F0eE136C56aDfC5296dA94828C4",
+          "weight": 1
+        },
+        {
+          "signer": "0x215Fa9602f4991C665A3F8CFae301a15D597FDa9",
+          "weight": 1
+        },
+        {
+          "signer": "0x2743A8844F399Bb7a0D6d8535bE417FDe72a867e",
+          "weight": 1
+        },
+        {
+          "signer": "0x2d9A783Ae26a498E7bb77a8813480e62f523AD7d",
+          "weight": 1
+        },
+        {
+          "signer": "0x3A5360b6231B2a44904a683915AAF8E33B760106",
+          "weight": 1
+        },
+        {
+          "signer": "0x40a08E1Ddb42cDb8869342958a829b80cf150c61",
+          "weight": 1
+        },
+        {
+          "signer": "0x40D56668Eb8E2C7E02a15795804f37cC7E9F55cd",
+          "weight": 1
+        },
+        {
+          "signer": "0x47E22383c384a92ece0E16908da432472Efb7B4C",
+          "weight": 1
+        },
+        {
+          "signer": "0x4d5955cBa942A448052469a7B2c5C768bbf7B841",
+          "weight": 1
+        },
+        {
+          "signer": "0x5aa28a502d8A9f9DF24d6F45f6aF5177A7FaA6d0",
+          "weight": 1
+        },
+        {
+          "signer": "0x5d0cB24000B17585B118686d44D7792E4fdB3297",
+          "weight": 1
+        },
+        {
+          "signer": "0x7191523b52690a777820601D60D5523ca1481af9",
+          "weight": 1
+        },
+        {
+          "signer": "0x743E91394FEd80577cD893cBfC23fb78bB59ef22",
+          "weight": 1
+        },
+        {
+          "signer": "0x8b99555aD6d2c3C114037746f3582E2105aC8561",
+          "weight": 1
+        },
+        {
+          "signer": "0x99f6753fA1330AF12E262a94CBc297f1C7BEB890",
+          "weight": 1
+        },
+        {
+          "signer": "0xa360Fae63e806238De4dDe49Bfa92f79Eff73fC6",
+          "weight": 1
+        },
+        {
+          "signer": "0xadDa4A8627185C1d5558552868e45F514Fd64172",
+          "weight": 1
+        },
+        {
+          "signer": "0xB18d3A3C404abDA400b8f818ffaddF987Ba08875",
+          "weight": 1
+        },
+        {
+          "signer": "0xCdB49D6d7167d71dDea024E0ce3Da5FcCeAB37e3",
+          "weight": 1
+        },
+        {
+          "signer": "0xd601001d8CE6B1ED0F6e688005600b346F01fB6b",
+          "weight": 1
+        },
+        {
+          "signer": "0xD88a2598600814E985A1fE19a5B350aAAF324510",
+          "weight": 1
+        },
+        {
+          "signer": "0xEf3350da91a1ca637Fcc2c6d664551A7dD3171c4",
+          "weight": 1
+        },
+        {
+          "signer": "0xf04636C843A8D38Efb549B310C041f5052b6E0cA",
+          "weight": 1
+        },
+        {
+          "signer": "0xF24bbD6f2E0E0b14F897B2c7980D1a4d99125F19",
+          "weight": 1
+        }
+      ],
+      "threshold": 17,
+      "nonce": "0x000000000000000000000000000000000000000000000000000000000111950c"
+    }
+  ]
+]
+
+Deploying gateway proxy contract
+
+Proxy deployment args: 0x05823c334150a48ACD5D325fBA16147c21bA3653, 0x000000000000000000000000b8cd93c83a974649d76b1c19f311f639e62272bc00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000111950c000000000000000000000000000000000000000000000000000000000000001900000000000000000000000013476c82ab76de288a1d2765cc113e83845fa9e4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020c4ad615e3c5f0ee136c56adfc5296da94828c40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000215fa9602f4991c665a3f8cfae301a15d597fda900000000000000000000000000000000000000000000000000000000000000010000000000000000000000002743a8844f399bb7a0d6d8535be417fde72a867e00000000000000000000000000000000000000000000000000000000000000010000000000000000000000002d9a783ae26a498e7bb77a8813480e62f523ad7d00000000000000000000000000000000000000000000000000000000000000010000000000000000000000003a5360b6231b2a44904a683915aaf8e33b760106000000000000000000000000000000000000000000000000000000000000000100000000000000000000000040a08e1ddb42cdb8869342958a829b80cf150c61000000000000000000000000000000000000000000000000000000000000000100000000000000000000000040d56668eb8e2c7e02a15795804f37cc7e9f55cd000000000000000000000000000000000000000000000000000000000000000100000000000000000000000047e22383c384a92ece0e16908da432472efb7b4c00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004d5955cba942a448052469a7b2c5c768bbf7b84100000000000000000000000000000000000000000000000000000000000000010000000000000000000000005aa28a502d8a9f9df24d6f45f6af5177a7faa6d000000000000000000000000000000000000000000000000000000000000000010000000000000000000000005d0cb24000b17585b118686d44d7792e4fdb329700000000000000000000000000000000000000000000000000000000000000010000000000000000000000007191523b52690a777820601d60d5523ca1481af90000000000000000000000000000000000000000000000000000000000000001000000000000000000000000743e91394fed80577cd893cbfc23fb78bb59ef2200000000000000000000000000000000000000000000000000000000000000010000000000000000000000008b99555ad6d2c3c114037746f3582e2105ac8561000000000000000000000000000000000000000000000000000000000000000100000000000000000000000099f6753fa1330af12e262a94cbc297f1c7beb8900000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a360fae63e806238de4dde49bfa92f79eff73fc60000000000000000000000000000000000000000000000000000000000000001000000000000000000000000adda4a8627185c1d5558552868e45f514fd641720000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b18d3a3c404abda400b8f818ffaddf987ba088750000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cdb49d6d7167d71ddea024e0ce3da5fcceab37e30000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d601001d8ce6b1ed0f6e688005600b346f01fb6b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d88a2598600814e985a1fe19a5b350aaaf3245100000000000000000000000000000000000000000000000000000000000000001000000000000000000000000ef3350da91a1ca637fcc2c6d664551a7dd3171c40000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f04636c843a8d38efb549b310c041f5052b6e0ca0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f24bbd6f2e0e0b14f897b2c7980d1a4d99125f190000000000000000000000000000000000000000000000000000000000000001
+
+Gateway Proxy: 0xe432150cce91c13a887f7D836923d5597adD8E31
+
+Existing owner: 0xB8Cd93C83A974649D76B1c19f311f639e62272BC
+
+Deployment status: SUCCESS
+```
+
+```bash
+node evm/deploy-contract.js -c Operators -m create2
+```
+
+```text
+Chain: XRPL EVM
+
+Wallet address: 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+Wallet balance: 11.8502172475
+
+Wallet nonce: 1
+
+Contract name: Operators
+
+Pre-deploy Contract bytecode hash: 0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb
+
+Gas options: {}
+
+Constructor args for chain XRPL EVM: [
+  "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+]
+
+Operators deployment salt: Operators
+
+Deployment method: create2
+
+Deployer contract: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+
+Operators will be deployed to: 0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC
+
+Proceed with deployment on XRPL EVM? (y/n) y
+
+Deployed Contract bytecode hash: 0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb
+
+XRPL EVM | Operators: 0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC
+```
+
+```bash
+node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "0x7D
+dB2d76b80B0AA19bDEa48EB1301182F4CeefbC"}'
+```
+
+```text
+Chain: XRPL EVM
+
+Wallet address: 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+Wallet balance: 11.688325498
+
+Wallet nonce: 4
+
+Gas options: {}
+
+Implementation args for chain XRPL EVM: [
+  "0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC"
+]
+
+Proxy setup args: 0x
+
+AxelarGasService deployment salt: AxelarGasService
+
+Deployment method: create2
+
+Deployer contract: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+
+AxelarGasService will be deployed to: 0x2d5d7d31F671F86C782533cc367F14109a082712
+
+Does derived address match existing deployments? Proceed with deployment on XRPL EVM? (y/n) y
+
+XRPL EVM | ConstAddressDeployer: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
+
+XRPL EVM | Implementation for AxelarGasService: 0xdC46f07661B673Fc262f61FC5b05B10A58a3b7fE
+
+XRPL EVM | Proxy for AxelarGasService: 0x2d5d7d31F671F86C782533cc367F14109a082712
+```
+
+```bash
+node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47F
+c8AE5441Eb47EFfC3665e70e69Ac3F05
+```
+
+```text
+Chain: XRPL EVM
+
+Contract name: AxelarGateway
+
+Wallet address: 0xB8Cd93C83A974649D76B1c19f311f639e62272BC
+
+Wallet balance: 11.360003704
+
+Wallet nonce: 4
+
+Gas options: {}
+
+Ownership Action: transferOwnership
+
+Proceed with transferOwnership on XRPL EVM? (y/n) y
+
+New contract owner: 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
+

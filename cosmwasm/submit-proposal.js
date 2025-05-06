@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
 
 const { createHash } = require('crypto');
 
