@@ -1,4 +1,4 @@
-# Hyperliquid GMP v6.0.6
+# Hyperliquid GMP v6.0.4
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
@@ -12,13 +12,13 @@
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
-- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.6)
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
 ## Background
 
 Changes in the release:
 
-This is the v6.0.6 deployment of EVM compatible Amplifier Gateway contracts for Hyperliquid.
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Hyperliquid.
 
 ## Deployment
 
@@ -115,7 +115,7 @@ b. Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file
    print(exchange.use_big_blocks(False))
    ``` 
 
-c. Fund one account with HYPE on both Hyperliquid mainnet and Hyperliquid EVM. Provision USDC on Arbitrum and swap using the Hyperliquid app (https://app.hyperliquid.xyz/trade) to move funds into correct accounts.
+c. Fund one account with HYPE on both Hyperliquid mainnet and Hyperliquid EVM. Provision USDC on Arbitrum and swap using the Hyperliquid app (https://app.hyperliquid.xyz/trade) to move funds into correct accounts. Enabling large block requires that the account/wallet exist on the main hyperliquid chain. 
 
 d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
@@ -127,7 +127,7 @@ e. Run the script:
 python3 examples/basic_evm_use_big_blocks.py
 ```
 
-Using the same `secret_key` loop over the rest of deployers key by changing the value of `account_address` and run script again for each address that needs to be enabled.
+Steps `c`, `d` and `e` needs to be repeated for each deployer key.  
 
 3. Deploy `ConstAddrDeployer`:
 
