@@ -64,6 +64,18 @@ jobs:
       - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
 
+     ###### Environment Variables ######
+
+      - name: Set Environment Variables
+        run: |
+          echo "destinationChain=remote" >> $GITHUB_ENV
+          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
+          echo "data=0x1234" >> $GITHUB_ENV
+          echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_ENV
+
+          config=$(cat axelar-chains-config/info/local.json)
+          echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_ENV
+
       ###### Command: Deploy Contract ######
 
       - name: Deploy AxelarOperators
@@ -86,17 +98,6 @@ jobs:
 
       - name: Deploy Multicall
         run: node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
-
-      ###### Environment Variables ######
-      - name: Set Environment Variables
-        run: |
-          echo "itsHub=axelar" >> $GITHUB_ENV
-          echo "destinationChain=remote" >> $GITHUB_ENV
-          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
-          echo "data=0x1234" >> $GITHUB_ENV
-
-          config=$(cat axelar-chains-config/info/local.json)
-          echo "nativeTokenAddress=$(echo $config | jq -r '.chains.stellar.tokenAddress')" >> $GITHUB_ENV
 
       ###### Command: Gateway ######
 
@@ -126,6 +127,18 @@ jobs:
       - name: ITS Unpause
         run: node stellar/contract.js unpause InterchainTokenService
 
+      - name: Add Trusted Chain
+        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
+
+      - name: Remove Trusted Chain
+        run: node stellar/its.js remove-trusted-chains ${{ env.destinationChain }}
+
+      - name: Add All Trusted Chains
+        run: node stellar/its.js add-trusted-chains all
+
+      - name: Remove All Trusted Chains
+        run: node stellar/its.js remove-trusted-chains all
+
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
         run: |
@@ -139,7 +152,7 @@ jobs:
           echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_ENV
 
       - name: Add Trusted Chains
-        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }} ${{ env.itsHub }}
+        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }} ${{ env.itsHubAddress }}
 
       - name: Deploy Test Tokens
         run: |
@@ -149,21 +162,7 @@ jobs:
       - name: Send Token to another chain
         run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data ''
 
-      ###### Command: ITS Trusted Chains ######
-
-      - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
-
-      - name: Remove Trusted Chain
-        run: node stellar/its.js remove-trusted-chains ${{ env.destinationChain }}
-
-      - name: Add All Trusted Chains
-        run: node stellar/its.js add-trusted-chains all
-
-      - name: Remove All Trusted Chains
-        run: node stellar/its.js remove-trusted-chains all
-
-      ###### Command: Flow Limit ######
+      ###### Command: ITS Flow Limit ######
       - name: ITS Flow Limit
         run: node stellar/its.js flow-limit ${{ env.tokenId }}
 
@@ -174,7 +173,11 @@ jobs:
         run: node stellar/its.js remove-flow-limit ${{ env.tokenId }}
 
       ###### Command: Operators ######
+      - name: Operator
+        run: node stellar/operators is-operator ${{ env.accountAddress }}
 
-      ###### Command: Transfer Ownership ######
+      - name: Add Operator
+        run: node stellar/operators add-operator ${{ env.accountAddress }}
 
-      ###### Command: Transfer Operatorship ######
+      - name: Remove Operator
+        run: node stellar/operators refund ${{ env.accountAddress }}
