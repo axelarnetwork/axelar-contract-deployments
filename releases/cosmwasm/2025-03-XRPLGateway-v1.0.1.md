@@ -8,8 +8,8 @@
 | **Network**          | **Deployment Status** | **Date**   |
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-03-26 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2025-03-28 |
+| **Testnet**          | Deployed              | 2025-03-28 |
 | **Mainnet**          | -                     | TBD        |
 
 [Release](https://github.com/commonprefix/axelar-amplifier/releases/tag/xrpl-gateway-v1.0.1)
