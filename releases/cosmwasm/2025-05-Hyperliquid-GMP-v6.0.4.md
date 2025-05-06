@@ -1,4 +1,4 @@
-# Hyperliquid GMP v6.0.6
+# Hyperliquid GMP v6.0.4
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
@@ -23,7 +23,7 @@ These are the instructions for deploying Amplifier contracts for the Hyperliquid
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-05-Hyperliquid-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-05-Hyperliquid-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -365,4 +365,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [Hyperliquid GMP checklist](../evm/2025-05-Hyperliquid-GMP-v6.0.6.md) will test GMP.
+The [Hyperliquid GMP checklist](../evm/2025-05-Hyperliquid-GMP-v6.0.4.md) will test GMP.
