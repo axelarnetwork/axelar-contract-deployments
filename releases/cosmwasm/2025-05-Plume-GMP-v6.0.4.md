@@ -3,12 +3,12 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** |                                    |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | -                     | TBD        |
+| **Stagenet**         | Completed             | 2025-05-06 |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -28,7 +28,7 @@ Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `300`                  | `create`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
