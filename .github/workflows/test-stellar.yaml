@@ -90,6 +90,7 @@ jobs:
       ###### Environment Variables ######
       - name: Set Environment Variables
         run: |
+          echo "itsHub=axelar" >> $GITHUB_ENV
           echo "destinationChain=remote" >> $GITHUB_ENV
           echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
           echo "data=0x1234" >> $GITHUB_ENV
@@ -137,8 +138,8 @@ jobs:
           # Note that tokenId is hardcoded since it's derivation must always be the same
           echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_ENV
 
-      - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
+      - name: Add Trusted Chains
+        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }} ${{ env.itsHub }}
 
       - name: Deploy Test Tokens
         run: |
