@@ -144,12 +144,10 @@ jobs:
       - name: Deploy Test Tokens
         run: |
           node stellar/its.js deploy-interchain-token ${{ env.name }} ${{ env.symbol }} ${{ env.decimal }} ${{ env.salt }} ${{ env.amount }}
-          node stellar/its.js deploy-remote-interchain-token ${{ env.salt }} ${{ env.destinationChain }} # --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
-          node stellar/its.js register-canonical-token ${{ env.nativeTokenAddress }}
-          node stellar/its.js deploy-remote-canonical-token ${{ env.tokenId }} ${{ env.destinationChain }} # --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+          node stellar/its.js deploy-remote-interchain-token ${{ env.salt }} ${{ env.destinationChain }}
 
       - name: Send Token to another chain
-        run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data '' --gas-token-address ${{ env.nativeTokenAddress }} --gas-amount 100000000
+        run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data ''
 
       ###### Command: ITS Trusted Chains ######
 
