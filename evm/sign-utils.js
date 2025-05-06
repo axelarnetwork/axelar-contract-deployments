@@ -148,7 +148,7 @@ function storeSignedTx(filePath, signedTx) {
 }
 
 const getNonceFromProvider = async (provider, address) => {
-    return await provider.getTransactionCount(address);
+    return provider.getTransactionCount(address);
 };
 
 function getSignedTx(filePath) {

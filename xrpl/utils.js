@@ -71,7 +71,7 @@ class XRPLClient {
     }
 
     async autofill(tx) {
-        return await this.client.autofill(tx);
+        return this.client.autofill(tx);
     }
 
     async accountInfo(account, ledgerIndex = 'validated') {
@@ -175,7 +175,7 @@ class XRPLClient {
             tx.Fee = args.fee;
         }
 
-        return await this.autofill(tx);
+        return this.autofill(tx);
     }
 
     async signTx(signer, tx, multisign = false) {
@@ -198,7 +198,7 @@ class XRPLClient {
             process.exit(0);
         }
 
-        return await this.submitTx(signedTx.tx_blob);
+        return this.submitTx(signedTx.tx_blob);
     }
 
     checkRequiredField(field, fieldName) {
@@ -210,7 +210,7 @@ class XRPLClient {
     async sendPayment(signer, { destination, amount, memos = [], ...restArgs }, options = { multisign: false, yes: false }) {
         this.checkRequiredField(destination, 'destination');
         this.checkRequiredField(amount, 'amount');
-        return await this.signAndSubmitTx(
+        return this.signAndSubmitTx(
             signer,
             'Payment',
             {
@@ -239,7 +239,7 @@ class XRPLClient {
             throw new Error('Signers list cannot be empty');
         }
 
-        return await this.signAndSubmitTx(
+        return this.signAndSubmitTx(
             signer,
             'SignerListSet',
             {
@@ -258,11 +258,11 @@ class XRPLClient {
 
     async sendTicketCreate(signer, { ticketCount, ...restArgs }, options = { multisign: false, yes: false }) {
         this.checkRequiredField(ticketCount, 'ticketCount');
-        return await this.signAndSubmitTx(signer, 'TicketCreate', { TicketCount: ticketCount }, restArgs, options);
+        return this.signAndSubmitTx(signer, 'TicketCreate', { TicketCount: ticketCount }, restArgs, options);
     }
 
     async sendAccountSet(signer, { transferRate, tickSize, domain, flag, ...restArgs }, options = { multisign: false, yes: false }) {
-        return await this.signAndSubmitTx(
+        return this.signAndSubmitTx(
             signer,
             'AccountSet',
             {
@@ -280,7 +280,7 @@ class XRPLClient {
         this.checkRequiredField(currency, 'currency');
         this.checkRequiredField(issuer, 'issuer');
         this.checkRequiredField(value, 'value');
-        return await this.signAndSubmitTx(
+        return this.signAndSubmitTx(
             signer,
             'TrustSet',
             {

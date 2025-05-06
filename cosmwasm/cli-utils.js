@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
 
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
@@ -85,6 +85,12 @@ const addAmplifierOptions = (program, options) => {
             ),
         );
     }
+};
+
+const addAmplifierQueryOptions = (program) => {
+    addEnvOption(program);
+
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain name').env('CHAIN').argParser((value) => value.toLowerCase()));
 };
 
 const addContractOptions = (program) => {
@@ -172,4 +178,5 @@ const addProposalOptions = (program) => {
 
 module.exports = {
     addAmplifierOptions,
+    addAmplifierQueryOptions,
 };

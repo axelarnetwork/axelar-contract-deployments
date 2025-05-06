@@ -426,7 +426,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
             if (!options.offline) {
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress(initCode, deployer, salt);
+                return deployerInterface.deployedAddress(initCode, deployer, salt);
             }
 
             salt = keccak256(defaultAbiCoder.encode(['address', 'bytes32'], [deployer, salt]));
@@ -446,7 +446,7 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
 
                 const deployerInterface = new Contract(deployerContract, IDeployer.abi, options.provider);
 
-                return await deployerInterface.deployedAddress('0x', deployer, salt);
+                return deployerInterface.deployedAddress('0x', deployer, salt);
             }
 
             const createDeployer = await getDeployedAddress(deployer, 'create2', {

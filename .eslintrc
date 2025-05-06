@@ -1,11 +1,18 @@
 {
-  "extends": "richardpringle",
-  "env": {
-    "es2020": true,
-    "mocha": true
+    "extends": [
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint/eslint-plugin"],
+    "rules": {
+    "@typescript-eslint/no-unused-vars": "off"
   },
-  "rules": {
-    "no-unused-expressions": "off"
-  },
-  "ignorePatterns": ["temp-arguments.js"]
+  "overrides": [
+    {
+      "files": ["*.js"],
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off"
+      }
+    }
+  ]
 }

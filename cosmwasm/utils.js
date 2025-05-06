@@ -51,7 +51,13 @@ const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+
+const prepareDummyWallet = async () => {
+    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
+};
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
@@ -763,7 +769,7 @@ const makeAxelarnetGatewayInstantiateMsg = (config, _options, contractConfig) =>
 };
 
 const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConfig) => {
-    const { adminAddress, governanceAddress } = contractConfig;
+    const { adminAddress, governanceAddress, operatorAddress } = contractConfig;
     const {
         axelar: { contracts },
     } = config;
@@ -779,6 +785,7 @@ const makeInterchainTokenServiceInstantiateMsg = (config, _options, contractConf
     return {
         governance_address: governanceAddress,
         admin_address: adminAddress,
+        operator_address: operatorAddress,
         axelarnet_gateway_address: axelarnetGatewayAddress,
     };
 };
@@ -1111,7 +1118,7 @@ const getContractCodePath = async (options, contractName) => {
 
     if (options.version) {
         const url = getContractR2Url(contractName, options.version);
-        return await downloadContractCode(url, contractName, options.version);
+        return downloadContractCode(url, contractName, options.version);
     }
 
     throw new Error('Either --artifact-path or --version must be provided');
@@ -1178,6 +1185,7 @@ module.exports = {
     CONTRACTS,
     governanceAddress,
     prepareWallet,
+    prepareDummyWallet,
     prepareClient,
     fromHex,
     getSalt,
