@@ -33,6 +33,14 @@ enum Commands {
         #[clap(short, long, default_value_t = false)]
         update: bool,
     },
+    Audit {
+        #[clap(last = true)]
+        args: Vec<String>,
+    },
+    Deny {
+        #[clap(last = true)]
+        args: Vec<String>,
+    },
 }
 
 fn main() -> eyre::Result<()> {
@@ -156,6 +164,16 @@ fn main() -> eyre::Result<()> {
                 )
                 .run()?;
             }
+        }
+        Commands::Audit { args } => {
+            println!("cargo audit");
+            cmd!(sh, "cargo install cargo-audit").run()?;
+            cmd!(sh, "cargo audit {args...}").run()?;
+        }
+        Commands::Deny { args } => {
+            println!("cargo deny");
+            cmd!(sh, "cargo +nightly install cargo-deny").run()?;
+            cmd!(sh, "cargo deny check {args...}").run()?;
         }
     }
 
