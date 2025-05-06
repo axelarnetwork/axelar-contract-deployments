@@ -57,9 +57,9 @@ shasum -a 256 wasm/multisig.wasm | grep $CHECKSUM
 node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES -a ./wasm/multisig.wasm
 ```
 
-5. Migrate ITS Hub contract
+5. Upgrade Multisig contract
 
-Input the correct operator address in the migration msg. This is just the address of the multisig prover admin on each network.
+There is no state migration needed during upgrade.
 
 ```bash
 node cosmwasm/submit-proposal.js migrate \
