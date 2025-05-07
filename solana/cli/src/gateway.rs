@@ -10,16 +10,15 @@ use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use clap::{Parser, Subcommand};
+use clap::{ArgGroup, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use serde::Deserialize;
 use serde_json::json;
-use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 
 use crate::config::Config;
-use crate::types::ChainNameOnAxelar;
+use crate::types::{ChainNameOnAxelar, SerializeableVerifierSet};
 use crate::utils::{
     read_json_file_from_path, write_json_to_file_path, SigningVerifierSet, TestSigner, ADDRESS_KEY,
     AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY,
@@ -43,6 +42,7 @@ pub(crate) enum Commands {
 }
 
 #[derive(Parser, Debug)]
+#[clap(group(ArgGroup::new("signers_source").args(&["signer", "signer-set"]).multiple(false).requires("nonce").required(false)))]
 pub(crate) struct InitArgs {
     #[clap(short = 'r', long)]
     previous_signers_retention: u128,
@@ -50,10 +50,17 @@ pub(crate) struct InitArgs {
     #[clap(short, long)]
     minimum_rotation_delay: RotationDelaySecs,
 
-    /// Instead of querying the MultisigProver for the SignerSet, uses a local SignerSet created
-    /// with the default signer as set in the Solana CLI config. For testing purposes only.
+    /// Hex string with secp256k1 compressed public key
+    #[clap(long)]
+    signer: Option<String>,
+
+    /// Nonce to be used for the SignerSet, required if `signer` or `signers` is set.
     #[clap(short, long)]
-    local_signer: bool,
+    nonce: u64,
+
+    /// A JSON containing a SignerSet
+    #[clap(long)]
+    signer_set: Option<String>,
 
     #[clap(long)]
     operator: Pubkey,
@@ -90,6 +97,10 @@ pub(crate) struct TransferOperatorshipArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct ApproveArgs {
+    /// Hex string with secp256k1 private key of the signer used to generate the proof
+    #[clap(long)]
+    signer: String,
+
     #[clap(long)]
     source_chain: String,
 
@@ -149,53 +160,29 @@ async fn query<T: serde::de::DeserializeOwned>(
     Ok(result)
 }
 
-fn secp256k1_keypair_from_seed(seed: &[u8]) -> (libsecp256k1::SecretKey, libsecp256k1::PublicKey) {
-    let mut digest = solana_sdk::keccak::hashv(&[seed]).0;
-
-    loop {
-        match libsecp256k1::SecretKey::parse_slice(&digest) {
-            // 1 ≤ sk < n ?
-            Ok(sk) => {
-                let pk = libsecp256k1::PublicKey::from_secret_key(&sk);
-                return (sk, pk);
-            }
-            Err(_) => digest = solana_sdk::keccak::hashv(&[&digest]).0,
-        }
-    }
-}
-
-async fn get_weighted_signers(
-    local_signer: bool,
+async fn get_verifier_set(
+    init_args: &InitArgs,
     config: &Config,
     chains_info: &serde_json::Value,
 ) -> eyre::Result<VerifierSet> {
-    if local_signer {
-        let config_file = solana_cli_config::CONFIG_FILE
-            .as_ref()
-            .ok_or_else(|| eyre::eyre!("Missing config file"))?;
-        let cli_config = solana_cli_config::Config::load(config_file)?;
-        let signer_context = clap::ArgMatches::default(); // Dummy context
-        let signer = signer_from_path(
-            &signer_context,
-            &cli_config.keypair_path,
-            "signer",
-            &mut None,
-        )
-        .map_err(|e| eyre::eyre!("Failed to load fee payer: {}", e))?;
-
-        // The gateway doesn't support Ed25519 signatures, thus, we generate a Secp256k1 keypair
-        // using the existing Ed25519 pubkey as seed. This is done only because this is for
-        // testing and we want to avoid requiring another external keypair.
-        let (_sk, pk) = secp256k1_keypair_from_seed(signer.pubkey().as_ref());
-
+    if let Some(signer_key) = &init_args.signer {
+        let key_bytes: [u8; 33] = hex::decode(signer_key.strip_prefix("0x").unwrap_or(signer_key))
+            .map_err(|_| eyre::eyre!("Failed to decode hex"))?
+            .try_into()
+            .map_err(|_| eyre::eyre!("Invalid signer pubkey"))?;
+        let pk = libsecp256k1::PublicKey::parse_compressed(&key_bytes)?;
         let pubkey = PublicKey::Secp256k1(pk.serialize_compressed());
         let signers = BTreeMap::from([(pubkey, 1_u128)]);
 
         Ok(VerifierSet {
-            nonce: 0,
+            nonce: init_args.nonce,
             signers,
             quorum: 1_u128,
         })
+    } else if let Some(signer_set) = &init_args.signer_set {
+        let signer_set: SerializeableVerifierSet = serde_json::from_str(signer_set)?;
+
+        Ok(signer_set.into())
     } else {
         let multisig_prover_address = {
             let address = String::deserialize(
@@ -234,12 +221,11 @@ async fn init(
     init_args: InitArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    println!("gateway id: {:?}", axelar_solana_gateway::id());
     let mut chains_info: serde_json::Value =
         read_json_file_from_path(&config.chains_info_file).unwrap_or_default();
 
     let (gateway_config_pda, _bump) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let verifier_set = get_weighted_signers(init_args.local_signer, config, &chains_info).await?;
+    let verifier_set = get_verifier_set(&init_args, config, &chains_info).await?;
     let domain_separator = {
         let maybe_domain_separator = if init_args.domain_separator.is_none() {
             String::deserialize(
@@ -334,23 +320,17 @@ async fn approve(
 ) -> eyre::Result<Vec<Instruction>> {
     let mut instructions = vec![];
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let config_file = solana_cli_config::CONFIG_FILE
-        .as_ref()
-        .ok_or_else(|| eyre::eyre!("Missing config file"))?;
-    let cli_config = solana_cli_config::Config::load(config_file)?;
-    let signer_context = clap::ArgMatches::default(); // Dummy context
-    let signer = signer_from_path(
-        &signer_context,
-        &cli_config.keypair_path,
-        "signer",
-        &mut None,
-    )
-    .map_err(|e| eyre::eyre!("Failed to load fee payer: {}", e))?;
+    let secret_bytes: [u8; 32] = hex::decode(
+        approve_args
+            .signer
+            .strip_prefix("0x")
+            .unwrap_or(&approve_args.signer),
+    )?
+    .try_into()
+    .map_err(|_err| eyre::eyre!("Invalid signer key"))?;
+    let sk = libsecp256k1::SecretKey::parse(&secret_bytes)?;
+    let pk = libsecp256k1::PublicKey::from_secret_key(&sk);
 
-    // The gateway doesn't support Ed25519 signatures, thus, we generate a Secp256k1 keypair
-    // using the existing Ed25519 pubkey as seed. This is done only because this is for
-    // testing and we want to avoid requiring another external keypair.
-    let (sk, pk) = secp256k1_keypair_from_seed(signer.pubkey().as_ref());
     let signer = TestSigner {
         inner: sk,
         weight: 1_u128,
@@ -407,7 +387,7 @@ async fn approve(
             Signature::EcdsaRecoverable(
                 signature_bytes
                     .try_into()
-                    .map_err(|e| eyre::eyre!("Invalid signature"))?,
+                    .map_err(|_e| eyre::eyre!("Invalid signature"))?,
             ),
         )])
     };
@@ -475,6 +455,6 @@ async fn approve(
     Ok(instructions)
 }
 
-//async fn rotate(fee_payer: &Pubkey, rotate_args: RotateArgs) -> eyre::Result<Vec<Instruction>> {
-//    todo!()
-//}
+async fn rotate(fee_payer: &Pubkey, rotate_args: RotateArgs) -> eyre::Result<Vec<Instruction>> {
+    todo!()
+}

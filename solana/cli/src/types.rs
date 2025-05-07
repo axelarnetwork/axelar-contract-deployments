@@ -1,7 +1,10 @@
 use crate::error::{AppError, Result};
+use axelar_solana_encoding::types::pubkey::PublicKey;
+use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use clap::ArgEnum;
 use serde::{Deserialize, Serialize};
 use solana_sdk::{instruction::Instruction as SolanaInstruction, pubkey::Pubkey};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -178,4 +181,33 @@ pub struct CombineArgs {
 #[derive(Debug, Clone)]
 pub struct BroadcastArgs {
     pub signed_tx_path: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializeableVerifierSet {
+    pub signers: BTreeMap<String, u128>,
+    pub nonce: u64,
+    pub threshold: u128,
+}
+
+impl From<SerializeableVerifierSet> for VerifierSet {
+    fn from(value: SerializeableVerifierSet) -> Self {
+        let signers: BTreeMap<PublicKey, u128> = value
+            .signers
+            .iter()
+            .map(|(pk_str, weight)| {
+                let pk_bytes: [u8; 33] = hex::decode(pk_str)
+                    .expect("Failed to decode public key")
+                    .try_into()
+                    .expect("Invalid public key length");
+                (PublicKey::Secp256k1(pk_bytes), *weight)
+            })
+            .collect();
+
+        Self {
+            signers,
+            nonce: value.nonce,
+            quorum: value.threshold,
+        }
+    }
 }
