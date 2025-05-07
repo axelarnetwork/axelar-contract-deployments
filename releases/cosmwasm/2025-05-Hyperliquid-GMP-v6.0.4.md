@@ -3,7 +3,7 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @isi8787 <isaac@interoplabs.io> |
-| **Deployment** |                                    |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -164,6 +164,10 @@ EPOCH_DURATION=[epoch duration according to the environment]
 - `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
+### Create proposals
+Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Plume-ITS-v2.1.0.md) if possible.
+
+
 5. Register Gateway at the Router
 
 ```bash
@@ -197,38 +201,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
 }
 ```
 
-6. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
-
-| Network              | `http_url`                    |
-| -------------------- | ----------------------------- |
-| **Devnet-amplifier** | https://rpc.hyperliquid-testnet.xyz/evm |
-| **Stagenet**         | https://rpc.hyperliquid-testnet.xyz/evm |
-| **Testnet**          | https://rpc.hyperliquid-testnet.xyz/evm |
-| **Mainnet**          | https://rpc.hyperliquid.xyz/evm                           |
-
-```bash
-[[handlers]]
-chain_finalization="ConfirmationHeight"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmMsgVerifier"
-
-[[handlers]]
-chain_finalization="ConfirmationHeight"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmVerifierSetVerifier"
-```
-
-7. Update ampd with the `$CHAIN` chain configuration.
-
-```bash
-ampd register-chain-support "[service name]" $CHAIN
-```
-
-8. Register prover contract on coordinator
+6. Register prover contract on coordinator
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -245,7 +218,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -271,7 +244,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 }
 ```
 
-10. Create reward pool for voting verifier
+8. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -304,7 +277,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-11. Create reward pool for multisig
+9. Create reward pool for multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -328,7 +301,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
     Add Rewards:
 
 ```bash
@@ -341,6 +314,38 @@ Check reward pool to confirm funding worked:
 ```bash
 node cosmwasm/query.js rewards -n $CHAIN
 ```
+
+11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+
+| Network              | `http_url`                    |
+| -------------------- | ----------------------------- |
+| **Devnet-amplifier** | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Stagenet**         | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Testnet**          | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Mainnet**          | https://rpc.hyperliquid.xyz/evm                           |
+
+```bash
+[[handlers]]
+chain_finalization="ConfirmationHeight"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmMsgVerifier"
+
+[[handlers]]
+chain_finalization="ConfirmationHeight"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmVerifierSetVerifier"
+```
+
+12. Update ampd with the `$CHAIN` chain configuration.
+
+```bash
+ampd register-chain-support "[service name]" $CHAIN
+```
+
 
 13. Create genesis verifier set
 
