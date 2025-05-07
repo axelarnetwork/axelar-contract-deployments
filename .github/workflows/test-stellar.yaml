@@ -76,6 +76,9 @@ jobs:
           config=$(cat axelar-chains-config/info/local.json)
           echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_ENV
 
+          stellar keys generate newAccount --fund --network local
+          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHIB_ENV;
+
       ###### Command: Deploy Contract ######
 
       - name: Deploy AxelarOperators
@@ -184,3 +187,19 @@ jobs:
 
       - name: Remove Operator
         run: node stellar/operators remove-operator ${{ env.accountAddress }}
+
+      ###### Command: Operator ######
+
+      - name: Operator
+        run: node stellar/contract operator InterchainTokenService
+
+      - name: Transfer Operatorship
+        run: node stellar/operators transfer-operatorship InterchainTokenService ${{ env.newAccountAddress }}
+
+      ###### Command: Owner ######
+
+      - name: Owner
+        run: node stellar/contract owner InterchainTokenService
+
+      - name: Transfer Ownership
+        run: node stellar/operators transfer-ownership InterchainTokenService ${{ env.newAccountAddress }}
