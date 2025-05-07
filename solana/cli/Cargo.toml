@@ -29,8 +29,10 @@ multisig-prover = { git = "https://github.com/eigerco/axelar-amplifier.git", rev
     "library",
 ] }
 
+# libsecp256k1 = "0.7.2"
 alloy-sol-types = "0.7.6"
 anyhow = "1.0.98"
+base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
 borsh = "1.5.1"
 bs58 = "0.5.1"
@@ -41,6 +43,7 @@ cosmwasm-std = "1.5"
 eyre = "0.6.12"
 flate2 = { version = "1.1.1", default-features = false, features = ["zlib"] }
 hex = { version = "0.4.3", features = ["serde"] }
+k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
 rand = "0.9.1"
 reqwest = { version = "0.12", features = ["json", "stream"] }
 rust_decimal = "1.37.1"
@@ -51,12 +54,10 @@ solana-clap-v3-utils = "2.2.7"
 solana-cli-config = "2.2.7"
 solana-client = "2.2.7"
 solana-sdk = "2.2.2"
+spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
+spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
+spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
 tar = "0.4.44"
 thiserror = "2.0.12"
 tokio = { version = "1", features = ["full"] }
 walkdir = "2.5.0"
-spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
-spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
-base64 = "0.22.1"
-libsecp256k1 = "0.7.2"

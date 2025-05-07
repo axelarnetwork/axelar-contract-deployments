@@ -1,12 +1,15 @@
-use crate::error::{AppError, Result};
-use axelar_solana_encoding::types::pubkey::PublicKey;
-use axelar_solana_encoding::types::verifier_set::VerifierSet;
-use clap::ArgEnum;
-use serde::{Deserialize, Serialize};
-use solana_sdk::{instruction::Instruction as SolanaInstruction, pubkey::Pubkey};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+use axelar_solana_encoding::types::pubkey::PublicKey;
+use axelar_solana_encoding::types::verifier_set::VerifierSet;
+use clap::ArgEnum;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
+use serde::{Deserialize, Serialize};
+use solana_sdk::{instruction::Instruction as SolanaInstruction, pubkey::Pubkey};
+
+use crate::error::{AppError, Result};
 
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum NetworkType {
@@ -52,7 +55,7 @@ pub struct ChainNameOnAxelar(pub String);
 impl From<NetworkType> for ChainNameOnAxelar {
     fn from(value: NetworkType) -> Self {
         match value {
-            NetworkType::Mainnet => Self("solana-mainnet".to_owned()),
+            NetworkType::Mainnet => Self("solana".to_owned()),
             NetworkType::Testnet => Self("solana-testnet".to_owned()),
             NetworkType::Devnet => Self("solana-devnet".to_owned()),
             NetworkType::Localnet => Self("solana-localnet".to_owned()),
@@ -210,4 +213,76 @@ impl From<SerializeableVerifierSet> for VerifierSet {
             quorum: value.threshold,
         }
     }
+}
+
+/// Uitility verifier set representation that has access to the signing keys
+#[derive(Clone, Debug)]
+pub struct SigningVerifierSet {
+    /// signers that have access to the given verifier set
+    pub signers: Vec<LocalSigner>,
+    /// the nonce for the verifier set
+    pub nonce: u64,
+    /// quorum for the verifier set
+    pub quorum: u128,
+}
+
+impl SigningVerifierSet {
+    /// Create a new `SigningVerifierSet`
+    ///
+    /// # Panics
+    /// if the calculated quorum is larger than u128
+    pub fn new(signers: Vec<LocalSigner>, nonce: u64) -> Self {
+        let quorum = signers
+            .iter()
+            .map(|signer| signer.weight)
+            .try_fold(0, u128::checked_add)
+            .expect("no arithmetic overflow");
+        Self::new_with_quorum(signers, nonce, quorum)
+    }
+
+    /// Create a new `SigningVerifierSet` with a custom quorum
+    #[must_use]
+    pub const fn new_with_quorum(signers: Vec<LocalSigner>, nonce: u64, quorum: u128) -> Self {
+        Self {
+            signers,
+            nonce,
+            quorum,
+        }
+    }
+
+    /// Transform into the verifier set that the gateway expects to operate on
+    #[must_use]
+    pub fn verifier_set(&self) -> VerifierSet {
+        let signers = self
+            .signers
+            .iter()
+            .map(|x| {
+                let pubkey = x.secret.public_key();
+                (
+                    PublicKey::Secp256k1(
+                        pubkey
+                            .to_encoded_point(true)
+                            .as_bytes()
+                            .to_owned()
+                            .try_into()
+                            .expect("Invalid pubkey derived from secret"),
+                    ),
+                    x.weight,
+                )
+            })
+            .collect();
+        VerifierSet {
+            nonce: self.nonce,
+            signers,
+            quorum: self.quorum,
+        }
+    }
+}
+
+/// Single test signer
+#[derive(Clone, Debug)]
+pub struct LocalSigner {
+    pub secret: k256::SecretKey,
+    /// associated weight
+    pub weight: u128,
 }

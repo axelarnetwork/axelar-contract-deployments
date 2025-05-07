@@ -1,7 +1,9 @@
-use axelar_solana_encoding::types::pubkey::PublicKey;
-use axelar_solana_encoding::types::verifier_set::VerifierSet;
+use k256::elliptic_curve::FieldBytes;
+use k256::pkcs8::DecodePrivateKey;
+use k256::{Secp256k1, SecretKey};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use solana_sdk::keccak::hashv;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
 use std::fs::File;
@@ -11,30 +13,34 @@ use std::str::FromStr;
 use crate::config::Config;
 use crate::error::{AppError, Result};
 use crate::types::{
-    NetworkType, PartialSignature, SignedSolanaTransaction, UnsignedSolanaTransaction,
+    ChainNameOnAxelar, NetworkType, PartialSignature, SignedSolanaTransaction,
+    UnsignedSolanaTransaction,
 };
 pub(crate) use solana_sdk::instruction::AccountMeta;
 
 pub(crate) const ADDRESS_KEY: &str = "address";
+pub(crate) const AXELAR_ID_KEY: &str = "axelarId";
 pub(crate) const AXELAR_KEY: &str = "axelar";
 pub(crate) const CHAINS_KEY: &str = "chains";
+pub(crate) const CHAIN_ID_KEY: &str = "chainId";
 pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
+pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
-pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
 pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
 pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
+pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
+pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
+pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
 pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
-pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
-pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
-pub(crate) const OPERATOR_KEY: &str = "operator";
-pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
-pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
-pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
-pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
-pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
+pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
+pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
+pub(crate) const OPERATOR_KEY: &str = "operator";
+pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
+pub(crate) const ROUTER_KEY: &str = "Router";
+pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> Result<T> {
     let reader = std::io::BufReader::new(file);
@@ -215,67 +221,65 @@ pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature
     }
 }
 
-/// Uitility verifier set representation that has access to the signing keys
-#[derive(Clone, Debug)]
-pub struct SigningVerifierSet {
-    /// signers that have access to the given verifier set
-    pub signers: Vec<TestSigner>,
-    /// the nonce for the verifier set
-    pub nonce: u64,
-    /// quorum for the verifier set
-    pub quorum: u128,
+pub(crate) fn domain_separator(
+    chains_info: &serde_json::Value,
+    network_type: NetworkType,
+) -> eyre::Result<[u8; 32]> {
+    if network_type == NetworkType::Localnet {
+        return Ok([0; 32]);
+    }
+
+    let axelar_id = String::deserialize(
+        &chains_info[CHAINS_KEY][ChainNameOnAxelar::from(network_type).0][AXELAR_ID_KEY],
+    )?;
+    let router_address = String::deserialize(
+        &chains_info[CHAINS_KEY][AXELAR_KEY][CONTRACTS_KEY][ROUTER_KEY][ADDRESS_KEY],
+    )?;
+    let chain_id =
+        String::deserialize(&chains_info[CHAINS_KEY][AXELAR_KEY][ADDRESS_KEY][CHAIN_ID_KEY])?;
+
+    Ok(hashv(&[
+        axelar_id.as_bytes(),
+        router_address.as_bytes(),
+        chain_id.as_bytes(),
+    ])
+    .to_bytes()
+    .try_into()?)
 }
 
-impl SigningVerifierSet {
-    /// Create a new `SigningVerifierSet`
-    ///
-    /// # Panics
-    /// if the calculated quorum is larger than u128
-    pub fn new(signers: Vec<TestSigner>, nonce: u64) -> Self {
-        let quorum = signers
-            .iter()
-            .map(|signer| signer.weight)
-            .try_fold(0, u128::checked_add)
-            .expect("no arithmetic overflow");
-        Self::new_with_quorum(signers, nonce, quorum)
+pub(crate) fn parse_secret_key(raw: &str) -> eyre::Result<SecretKey> {
+    if Path::new(raw).exists() {
+        let bytes = std::fs::read(raw)?;
+        return secret_from_bytes(&bytes)
+            .or_else(|| secret_from_str(std::str::from_utf8(&bytes).ok()?))
+            .ok_or_else(|| eyre::eyre!("unrecognised key format in file".to_owned()));
     }
 
-    /// Create a new `SigningVerifierSet` with a custom quorum
-    #[must_use]
-    pub const fn new_with_quorum(signers: Vec<TestSigner>, nonce: u64, quorum: u128) -> Self {
-        Self {
-            signers,
-            nonce,
-            quorum,
-        }
-    }
-
-    /// Transform into the verifier set that the gateway expects to operate on
-    #[must_use]
-    pub fn verifier_set(&self) -> VerifierSet {
-        let signers = self
-            .signers
-            .iter()
-            .map(|x| {
-                let pubkey = libsecp256k1::PublicKey::from_secret_key(&x.inner);
-                (
-                    PublicKey::Secp256k1(pubkey.serialize_compressed()),
-                    x.weight,
-                )
-            })
-            .collect();
-        VerifierSet {
-            nonce: self.nonce,
-            signers,
-            quorum: self.quorum,
-        }
-    }
+    secret_from_str(raw).ok_or_else(|| eyre::eyre!("unrecognised key format".to_owned()))
 }
 
-/// Single test signer
-#[derive(Clone, Debug)]
-pub struct TestSigner {
-    pub inner: libsecp256k1::SecretKey,
-    /// associated weight
-    pub weight: u128,
+fn secret_from_bytes(b: &[u8]) -> Option<SecretKey> {
+    SecretKey::from_pkcs8_der(b)
+        .ok()
+        .or_else(|| SecretKey::from_sec1_der(b).ok())
+        .or_else(|| (b.len() == 32).then(|| SecretKey::from_bytes(b.try_into().ok()?).ok())?)
+}
+
+fn secret_from_str(s: &str) -> Option<SecretKey> {
+    let s = s.trim();
+
+    // PEM (SEC1 or PKCS8)
+    if s.starts_with("-----BEGIN") {
+        return SecretKey::from_pkcs8_pem(s)
+            .ok()
+            .or_else(|| SecretKey::from_sec1_pem(s).ok());
+    }
+
+    // raw hex
+    if s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit()) {
+        let bytes = hex::decode(s).ok()?;
+        return SecretKey::from_bytes(FieldBytes::<Secp256k1>::from_slice(&bytes)).ok();
+    }
+
+    None
 }
