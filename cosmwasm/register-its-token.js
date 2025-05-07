@@ -11,11 +11,11 @@ const ITokenManager = require('@axelar-network/interchain-token-service/artifact
 const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json')
 const fs = require('fs');
 const toml = require('toml');
-const { printInfo, printError, loadConfig } = require('../common');
+const { printInfo, printError, loadConfig, saveConfig } = require('../common');
 const { initContractConfig, prepareWallet, prepareClient, instantiateContract } = require('./utils');
 const { GasPrice } = require('@cosmjs/stargate');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
+//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
 
 
 class TokenIterator {
@@ -37,8 +37,7 @@ class TokenIterator {
     incrementTokenIndex() {
         if(this.tokenIndex >= this.tokenIds.length - 1) return false;
         this.tokenIndex++;
-        this.chainNames = Object.keys(this.token());
-        this.chainNames.slice(0, -1);
+        this.chainNames = Object.keys(this.token()).slice(0, -1);
         this.chainIndex = 0;
         return true;
     }
@@ -66,7 +65,7 @@ class TokenIterator {
                 if(!this.incrementTokenIndex()) return false;
             }
             const chainName = this.chainName()
-            if(chainName === this.token().originChain) continue;
+            if(chainName === this.token().originChain.origin_chain) continue;
             const current = this.get();
             if (!current.registered) {
                 if (current.track) try {
@@ -91,19 +90,32 @@ async function registerToken(tokenIterator) {
     const wallet = await prepareWallet({mnemonic});
     const client = await prepareClient(config, wallet);
     const supply = tokenIterator.get().supply;
-    const supplyParam = supply ? `{tracked: ${supply}}` : "untracked";
-    const msg = `{ "register_p2p_token_instance": {
-        "chain": "${tokenIterator.chainName()}",
-        "token_id": ${tokenIterator.tokenId().slice(2)},
-        "origin_chain": "${tokenIterator.token().originChain}",
-        "decimals": ${tokenIterator.get().decimals},
-        "supply": ${supplyParam},
-    } }`;
-    console.log(msg, info.axelar.contracts.InterchainTokenService.address);
-    const [account] = await wallet.getAccounts();
-    await client.execute(account.address, info.axelar.contracts.InterchainTokenService.address, msg);
+    const supplyParam = supply ? {"tracked": String(supply)} : "untracked";
+    const msg = { "register_p2p_token_instance": {
+        "chain": tokenIterator.chainName(),
+        "token_id": tokenIterator.tokenId().slice(2),
+        "origin_chain": tokenIterator.token().originChain,
+        "decimals": tokenIterator.get().decimals,
+        "supply": supplyParam,
+    } };
+    const registeredChains = {};
+    const registered = await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {"token_instance": {chain: tokenIterator.chainName(), "token_id": tokenIterator.tokenId().slice(2)}});
+    if (registered) return;
+    const [account] = await wallet.getAccounts(info.axelar.contracts.InterchainTokenService.address, {});
+
+    const ensureChainRegistered = async (chain) => {
+        if(registeredChains[chain]) return;
+        registeredChains[chain] = true;
+        if(await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {"its_chain": {"chain": chain}})) return;
+        const msg = {"register_chains":{"chains":[{"chain":chain,"its_edge_contract":"source-its-contract","truncation":{"max_uint_bits":256,"max_decimals_when_truncating":255}}]}};
+        await client.execute(account.address, info.axelar.contracts.InterchainTokenService.address, msg, 'auto');
+    }
+    await ensureChainRegistered(tokenIterator.chainName());
+    await ensureChainRegistered(tokenIterator.token().originChain);
+    
+    await client.execute(account.address, info.axelar.contracts.InterchainTokenService.address, msg, 'auto');
     // If registration is successfull skip this token in the future without needing to query.
-    token.registered = true;
+    tokenIterator.get().registered = true;
 
     saveConfig(config, env);
 }
@@ -111,7 +123,7 @@ async function registerToken(tokenIterator) {
 if (require.main === module) {
     (async () => {
         let iter = new TokenIterator();
-
+        await iter.getNext();await iter.getNext();
         while(await iter.getNext()) {
             await registerToken(iter);
         }
