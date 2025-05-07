@@ -14,8 +14,8 @@ const { printInfo, loadConfig } = require('../common');
 const { initContractConfig, prepareWallet, prepareClient, instantiateContract } = require('../cosmwasm/utils');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
-const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.json`);
+//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
+//const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.json`);
 
 (async () => {
     const tokens = {};
@@ -49,8 +49,7 @@ const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.js
                 "token_config": {"token_id": tokenId.slice(2)}
             });
             if(originChain) {
-                console.log(originChain);
-                token.originChain = originChain;
+                token.originChain = originChain.origin_chain;
                 continue;
             }
         } catch (e) {
@@ -58,10 +57,10 @@ const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.js
         }
 
         // if squid is tracking this token, use this value.
-        if (squidTokens.tokens[tokenId]) {
+        /*if (squidTokens.tokens[tokenId]) {
             token.originChain = squidTokens.tokens[tokenId].originAxelarChainId;
             continue;
-        }
+        }*/
 
         // if only a single chain is untacked, use that chain
         const untracked = [];
@@ -71,6 +70,7 @@ const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.js
             }
         }
         if (untracked.length === 1) {
+            console.log(untracked[0]);
             token.originChain = untracked[0];
             continue;
         }
