@@ -100,7 +100,7 @@ Hyperliquid EVM uses a dual architecture block model:
 
 Contract deployments exceed the fast block gas limit and will require that each deployer key be permissioned to use the slow block model. Additional instructtions are provided if accounts needs to be converted back to fast block to utilize the faster finalization rate.
 
-a. Clone the Hyperliquid Python SDK:
+a. Clone the Hyperliquid Python SDK. This document was prepared using release v0.13 (commit hash: 583a96dc0af53c6d0b4eed06afb5a5c08481821d):
    ```bash
    git clone https://github.com/hyperliquid-dex/hyperliquid-python-sdk.git
    cd hyperliquid-python-sdk
