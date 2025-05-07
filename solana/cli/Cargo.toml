@@ -59,3 +59,4 @@ spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
 spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
 base64 = "0.22.1"
+libsecp256k1 = "0.7.2"

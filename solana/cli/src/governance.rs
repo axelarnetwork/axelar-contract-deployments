@@ -101,7 +101,7 @@ pub(crate) async fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let (config_pda, _) = axelar_solana_governance::state::GovernanceConfig::pda();
 
     match command {
@@ -118,7 +118,7 @@ async fn init(
     init_args: InitArgs,
     config: &Config,
     config_pda: &Pubkey,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let chain_hash = solana_sdk::keccak::hashv(&[init_args.governance_chain.as_bytes()]).0;
     let address_hash = solana_sdk::keccak::hashv(&[init_args.governance_address.as_bytes()]).0;
 
@@ -142,16 +142,16 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(IxBuilder::new()
+    Ok(vec![IxBuilder::new()
         .initialize_config(fee_payer, config_pda, governance_config)
-        .build())
+        .build()])
 }
 
 async fn execute_proposal(
     fee_payer: &Pubkey,
     args: ExecuteProposalArgs,
     config_pda: &Pubkey,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let calldata_bytes = base64::engine::general_purpose::STANDARD.decode(args.base.calldata)?;
     let native_value_receiver_account = args
         .base
@@ -171,14 +171,16 @@ async fn execute_proposal(
         calldata_bytes,
     );
 
-    Ok(builder.execute_proposal(fee_payer, config_pda).build())
+    Ok(vec![builder
+        .execute_proposal(fee_payer, config_pda)
+        .build()])
 }
 
 async fn execute_operator_proposal(
     fee_payer: &Pubkey,
     args: ExecuteOperatorProposalArgs,
     config_pda: &Pubkey,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let calldata_bytes = base64::engine::general_purpose::STANDARD.decode(args.base.calldata)?;
     let native_value_receiver_account = args
         .base
@@ -195,7 +197,7 @@ async fn execute_operator_proposal(
         calldata_bytes,
     );
 
-    Ok(builder
+    Ok(vec![builder
         .execute_operator_proposal(fee_payer, config_pda, &args.operator)
-        .build())
+        .build()])
 }

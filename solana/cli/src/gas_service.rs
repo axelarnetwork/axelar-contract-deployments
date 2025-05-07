@@ -29,7 +29,7 @@ pub(crate) async fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config).await,
     }
@@ -39,7 +39,7 @@ async fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let program_id = axelar_solana_gas_service::id();
     let salt_hash = solana_sdk::keccak::hashv(&[init_args.salt.as_bytes()]).0;
     let (config_pda, _bump) =
@@ -54,11 +54,11 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(axelar_solana_gas_service::instructions::init_config(
+    Ok(vec![axelar_solana_gas_service::instructions::init_config(
         &program_id,
         fee_payer,
         &init_args.authority,
         &config_pda,
         salt_hash,
-    )?)
+    )?])
 }

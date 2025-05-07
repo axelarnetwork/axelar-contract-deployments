@@ -573,7 +573,7 @@ pub(crate) async fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config).await,
         Commands::Pause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: true }).await,
@@ -661,7 +661,7 @@ async fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let its_hub_address =
         String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
@@ -680,50 +680,50 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(axelar_solana_its::instruction::initialize(
+    Ok(vec![axelar_solana_its::instruction::initialize(
         *fee_payer,
         axelar_solana_gateway::get_gateway_root_config_pda().0,
         init_args.operator,
         ChainNameOnAxelar::from(config.network_type).0,
         its_hub_address,
-    )?)
+    )?])
 }
 
 async fn set_pause_status(
     fee_payer: &Pubkey,
     set_pause_args: SetPauseStatusArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::set_pause_status(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::set_pause_status(
         *fee_payer,
         set_pause_args.paused,
-    )?)
+    )?])
 }
 
 async fn set_trusted_chain(
     fee_payer: &Pubkey,
     set_trusted_chain_args: TrustedChainArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::set_trusted_chain(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::set_trusted_chain(
         *fee_payer,
         set_trusted_chain_args.chain_name,
-    )?)
+    )?])
 }
 
 async fn remove_trusted_chain(
     fee_payer: &Pubkey,
     remove_trusted_chain_args: TrustedChainArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::remove_trusted_chain(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::remove_trusted_chain(
         *fee_payer,
         remove_trusted_chain_args.chain_name,
-    )?)
+    )?])
 }
 
 async fn approve_deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: ApproveDeployRemoteInterchainTokenArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_minter = encode_its_destination(
         &chains_info,
@@ -731,7 +731,7 @@ async fn approve_deploy_remote_interchain_token(
         args.destination_minter,
     )?;
 
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
             *fee_payer,
             args.deployer,
@@ -739,47 +739,47 @@ async fn approve_deploy_remote_interchain_token(
             args.destination_chain,
             destination_minter,
         )?,
-    )
+    ])
 }
 
 async fn revoke_deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: RevokeDeployRemoteInterchainTokenArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::revoke_deploy_remote_interchain_token(
             *fee_payer,
             args.deployer,
             args.salt,
             args.destination_chain,
         )?,
-    )
+    ])
 }
 
 async fn register_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::canonical_interchain_token_id(&args.mint);
     println!("Token ID: {}", hex::encode(token_id));
 
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::register_canonical_interchain_token(
             *fee_payer,
             args.mint,
             args.token_program,
         )?,
-    )
+    ])
 }
 
 async fn deploy_remote_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteCanonicalInterchainTokenArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::deploy_remote_canonical_interchain_token(
             *fee_payer,
             args.mint,
@@ -788,35 +788,37 @@ async fn deploy_remote_canonical_interchain_token(
             gas_service,
             gas_config_account,
         )?,
-    )
+    ])
 }
 
 async fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
     println!("Token ID: {}", hex::encode(token_id));
 
-    Ok(axelar_solana_its::instruction::deploy_interchain_token(
-        *fee_payer,
-        args.salt,
-        args.name,
-        args.symbol,
-        args.decimals,
-        args.initial_supply,
-        args.minter,
-    )?)
+    Ok(vec![
+        axelar_solana_its::instruction::deploy_interchain_token(
+            *fee_payer,
+            args.salt,
+            args.name,
+            args.symbol,
+            args.decimals,
+            args.initial_supply,
+            args.minter,
+        )?,
+    ])
 }
 
 async fn deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token(
             *fee_payer,
             args.salt,
@@ -825,14 +827,14 @@ async fn deploy_remote_interchain_token(
             gas_service,
             gas_config_account,
         )?,
-    )
+    ])
 }
 
 async fn deploy_remote_interchain_token_with_minter(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenWithMinterArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
@@ -841,7 +843,7 @@ async fn deploy_remote_interchain_token_with_minter(
         &args.destination_chain,
         args.destination_minter,
     )?;
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
             *fee_payer,
             args.salt,
@@ -852,52 +854,54 @@ async fn deploy_remote_interchain_token_with_minter(
             gas_service,
             gas_config_account,
         )?,
-    )
+    ])
 }
 
 async fn register_token_metadata(
     fee_payer: &Pubkey,
     args: RegisterTokenMetadataArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    Ok(axelar_solana_its::instruction::register_token_metadata(
-        *fee_payer,
-        args.mint,
-        args.token_program,
-        args.gas_value,
-        gas_service,
-        gas_config_account,
-    )?)
+    Ok(vec![
+        axelar_solana_its::instruction::register_token_metadata(
+            *fee_payer,
+            args.mint,
+            args.token_program,
+            args.gas_value,
+            gas_service,
+            gas_config_account,
+        )?,
+    ])
 }
 
 async fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::linked_token_id(fee_payer, &args.salt);
     println!("Token ID: {}", hex::encode(token_id));
 
-    Ok(axelar_solana_its::instruction::register_custom_token(
+    Ok(vec![axelar_solana_its::instruction::register_custom_token(
         *fee_payer,
         args.salt,
         args.mint,
         args.token_manager_type,
         args.token_program,
         args.operator,
-    )?)
+    )?])
 }
 
 async fn link_token(
     fee_payer: &Pubkey,
     args: LinkTokenArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
 
-    Ok(axelar_solana_its::instruction::link_token(
+    Ok(vec![axelar_solana_its::instruction::link_token(
         *fee_payer,
         args.salt,
         args.destination_chain,
@@ -907,14 +911,14 @@ async fn link_token(
         args.gas_value,
         gas_service,
         gas_config_account,
-    )?)
+    )?])
 }
 
 async fn interchain_transfer(
     fee_payer: &Pubkey,
     args: InterchainTransferArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let timestamp: i64 = SystemTime::now()
@@ -929,7 +933,7 @@ async fn interchain_transfer(
         args.destination_address,
     )?;
 
-    Ok(axelar_solana_its::instruction::interchain_transfer(
+    Ok(vec![axelar_solana_its::instruction::interchain_transfer(
         *fee_payer,
         args.source_account,
         args.authority,
@@ -943,14 +947,14 @@ async fn interchain_transfer(
         gas_service,
         gas_config_account,
         timestamp,
-    )?)
+    )?])
 }
 
 async fn call_contract_with_interchain_token(
     fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let timestamp: i64 = SystemTime::now()
@@ -963,7 +967,7 @@ async fn call_contract_with_interchain_token(
         &args.destination_chain,
         args.destination_address,
     )?;
-    Ok(
+    Ok(vec![
         axelar_solana_its::instruction::call_contract_with_interchain_token(
             *fee_payer,
             args.source_account,
@@ -980,14 +984,14 @@ async fn call_contract_with_interchain_token(
             gas_config_account,
             timestamp,
         )?,
-    )
+    ])
 }
 
 async fn call_contract_with_interchain_token_offchain_data(
     fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let timestamp: i64 = SystemTime::now()
@@ -1022,185 +1026,190 @@ async fn call_contract_with_interchain_token_offchain_data(
     let mut file = File::create(config.output_dir.join("offchain_data_payload.bin"))?;
     file.write(&payload)?;
 
-    Ok(instruction)
+    Ok(vec![instruction])
 }
 
-async fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::set_flow_limit(
+async fn set_flow_limit(
+    fee_payer: &Pubkey,
+    args: SetFlowLimitArgs,
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::set_flow_limit(
         *fee_payer,
         args.token_id,
         args.flow_limit,
-    )?)
+    )?])
 }
 
 async fn transfer_operatorship(
     fee_payer: &Pubkey,
     args: TransferOperatorshipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::transfer_operatorship(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::transfer_operatorship(
         *fee_payer, args.to,
-    )?)
+    )?])
 }
 
 async fn propose_operatorship(
     fee_payer: &Pubkey,
     args: TransferOperatorshipArgs, // Reuses args from transfer
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::propose_operatorship(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::propose_operatorship(
         *fee_payer, args.to,
-    )?)
+    )?])
 }
 
 async fn accept_operatorship(
     fee_payer: &Pubkey,
     args: AcceptOperatorshipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::accept_operatorship(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![axelar_solana_its::instruction::accept_operatorship(
         *fee_payer, args.from,
-    )?)
+    )?])
 }
 
 async fn token_manager_set_flow_limit(
     fee_payer: &Pubkey,
     args: TokenManagerSetFlowLimitArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::set_flow_limit(
             *fee_payer,
             args.token_id,
             args.flow_limit,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_add_flow_limiter(
     fee_payer: &Pubkey,
     args: TokenManagerAddFlowLimiterArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::add_flow_limiter(
             *fee_payer,
             args.token_id,
             args.flow_limiter,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_remove_flow_limiter(
     fee_payer: &Pubkey,
     args: TokenManagerRemoveFlowLimiterArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::remove_flow_limiter(
             *fee_payer,
             args.token_id,
             args.flow_limiter,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_transfer_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerTransferOperatorshipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::transfer_operatorship(
             *fee_payer,
             args.token_id,
             args.to,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_propose_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerProposeOperatorshipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::propose_operatorship(
             *fee_payer,
             args.token_id,
             args.to,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_accept_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerAcceptOperatorshipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::accept_operatorship(
             *fee_payer,
             args.token_id,
             args.from,
         )?,
-    )
+    ])
 }
 
 async fn token_manager_handover_mint_authority(
     fee_payer: &Pubkey,
     args: TokenManagerHandoverMintAuthorityArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             *fee_payer,
             args.token_id,
             args.mint,
             args.token_program,
         )?,
-    )
+    ])
 }
 
 async fn interchain_token_mint(
     fee_payer: &Pubkey,
     args: InterchainTokenMintArgs,
-) -> eyre::Result<Instruction> {
-    Ok(axelar_solana_its::instruction::interchain_token::mint(
-        args.token_id, // Note: payer is not the first argument here
-        args.mint,
-        args.to,
-        *fee_payer, // Payer is the minter in this context
-        args.token_program,
-        args.amount,
-    )?)
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
+        axelar_solana_its::instruction::interchain_token::mint(
+            args.token_id, // Note: payer is not the first argument here
+            args.mint,
+            args.to,
+            *fee_payer, // Payer is the minter in this context
+            args.token_program,
+            args.amount,
+        )?,
+    ])
 }
 
 async fn interchain_token_transfer_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenTransferMintershipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::interchain_token::transfer_mintership(
             *fee_payer,
             args.token_id,
             args.to,
         )?,
-    )
+    ])
 }
 
 async fn interchain_token_propose_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenProposeMintershipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::interchain_token::propose_mintership(
             *fee_payer,
             args.token_id,
             args.to,
         )?,
-    )
+    ])
 }
 
 async fn interchain_token_accept_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenAcceptMintershipArgs,
-) -> eyre::Result<Instruction> {
-    Ok(
+) -> eyre::Result<Vec<Instruction>> {
+    Ok(vec![
         axelar_solana_its::instruction::interchain_token::accept_mintership(
             *fee_payer,
             args.token_id,
             args.from,
         )?,
-    )
+    ])
 }

@@ -15,6 +15,7 @@ mod utils;
 use clap::{ArgGroup, Parser, Subcommand};
 use send::build_and_send_solana_transaction;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
+use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use std::path::PathBuf;
@@ -101,10 +102,12 @@ enum Command {
 
 #[derive(Parser, Debug)]
 struct SendCommandArgs {
-    /// Fee Payer Pubkey (Base58 encoded string)
+    /// Fee Payer Pubkey (Base58 encoded string). Loads from Solana CLI config if not passed.
     #[clap(long)]
-    fee_payer: Pubkey,
+    fee_payer: Option<Pubkey>,
 
+    /// List of signers (Base58 encoded strings). Fee payer should also be added here in case it's
+    /// not the default from Solana CLI config.
     #[clap(long, help = "List of signers (Base58 encoded strings)")]
     signer_keys: Vec<String>,
 
@@ -215,9 +218,30 @@ async fn run() -> eyre::Result<()> {
     // Proceed with building and potentially sending/signing/broadcasting a Solana transaction
     match cli.command {
         Command::Send(args) => {
+            let mut signer_keys = args.signer_keys;
+            let fee_payer = match args.fee_payer {
+                Some(fee_payer) => fee_payer,
+                None => {
+                    let config_file = solana_cli_config::CONFIG_FILE
+                        .as_ref()
+                        .ok_or_else(|| eyre::eyre!("Missing config file"))?;
+                    let cli_config = solana_cli_config::Config::load(config_file)?;
+                    let signer_context = clap::ArgMatches::default(); // Dummy context
+                    let signer = signer_from_path(
+                        &signer_context,
+                        &cli_config.keypair_path,
+                        "signer",
+                        &mut None,
+                    )
+                    .map_err(|e| eyre::eyre!("Failed to load fee payer: {}", e))?;
+
+                    signer_keys.push(cli_config.keypair_path);
+                    signer.pubkey()
+                }
+            };
             let send_args = SendArgs {
-                fee_payer: args.fee_payer,
-                signers: args.signer_keys,
+                fee_payer,
+                signers: signer_keys,
             };
             let instruction =
                 build_instruction(&send_args.fee_payer, args.instruction, &config).await?;
@@ -266,7 +290,7 @@ async fn build_instruction(
     fee_payer: &Pubkey,
     instruction: InstructionSubcommand,
     config: &Config,
-) -> eyre::Result<Instruction> {
+) -> eyre::Result<Vec<Instruction>> {
     let serializable_ix = match instruction {
         InstructionSubcommand::Gateway(command) => {
             gateway::build_instruction(fee_payer, command, config).await?

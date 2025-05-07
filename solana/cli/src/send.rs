@@ -13,10 +13,10 @@ use crate::utils::print_transaction_result;
 pub(crate) fn build_and_send_solana_transaction(
     send_args: &SendArgs,
     config: &Config,
-    instruction: Instruction,
+    instructions: Vec<Instruction>,
 ) -> Result<()> {
     let rpc_client = RpcClient::new_with_commitment(&config.url, CommitmentConfig::confirmed());
-    let message = Message::new(&[instruction], Some(&send_args.fee_payer));
+    let message = Message::new(&instructions, Some(&send_args.fee_payer));
     let mut transaction = Transaction::new_unsigned(message);
 
     if send_args.signers.len() < transaction.signatures.len() {

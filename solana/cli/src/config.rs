@@ -17,6 +17,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(url: String, output_dir: PathBuf, chains_info_dir: PathBuf) -> Result<Self> {
+        println!("URL: {}", url);
         if !output_dir.exists() {
             fs::create_dir_all(&output_dir).map_err(|e| AppError::IoError(e))?;
             println!("Created output directory: {}", output_dir.display());

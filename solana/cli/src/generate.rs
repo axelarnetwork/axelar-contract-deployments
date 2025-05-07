@@ -74,7 +74,7 @@ fn fetch_nonce_data_and_verify(
 pub fn generate_unsigned_solana_transaction(
     args: &GenerateArgs,
     config: &Config,
-    instruction: SolanaInstruction,
+    mut instructions: Vec<SolanaInstruction>,
 ) -> Result<()> {
     println!("Starting unsigned Solana transaction generation...");
     println!("Network Type: {:?}", config.network_type);
@@ -113,7 +113,7 @@ pub fn generate_unsigned_solana_transaction(
             println!("Prepending AdvanceNonceAccount instruction.");
 
             sdk_instructions = vec![advance_nonce_ix];
-            sdk_instructions.push(instruction);
+            sdk_instructions.append(&mut instructions);
         }
         (None, None) => {
             println!("Using latest blockhash flow.");
@@ -123,7 +123,7 @@ pub fn generate_unsigned_solana_transaction(
             };
             println!("Using Recent Blockhash: {}", blockhash_for_message);
             params.recent_blockhash = Some(blockhash_for_message.to_string());
-            sdk_instructions = vec![instruction];
+            sdk_instructions = instructions;
         }
         _ => {
             return Err(AppError::InconsistentState(

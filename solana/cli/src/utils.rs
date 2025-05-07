@@ -1,3 +1,5 @@
+use axelar_solana_encoding::types::pubkey::PublicKey;
+use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
@@ -211,4 +213,69 @@ pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature
             Err(e.into())
         }
     }
+}
+
+/// Uitility verifier set representation that has access to the signing keys
+#[derive(Clone, Debug)]
+pub struct SigningVerifierSet {
+    /// signers that have access to the given verifier set
+    pub signers: Vec<TestSigner>,
+    /// the nonce for the verifier set
+    pub nonce: u64,
+    /// quorum for the verifier set
+    pub quorum: u128,
+}
+
+impl SigningVerifierSet {
+    /// Create a new `SigningVerifierSet`
+    ///
+    /// # Panics
+    /// if the calculated quorum is larger than u128
+    pub fn new(signers: Vec<TestSigner>, nonce: u64) -> Self {
+        let quorum = signers
+            .iter()
+            .map(|signer| signer.weight)
+            .try_fold(0, u128::checked_add)
+            .expect("no arithmetic overflow");
+        Self::new_with_quorum(signers, nonce, quorum)
+    }
+
+    /// Create a new `SigningVerifierSet` with a custom quorum
+    #[must_use]
+    pub const fn new_with_quorum(signers: Vec<TestSigner>, nonce: u64, quorum: u128) -> Self {
+        Self {
+            signers,
+            nonce,
+            quorum,
+        }
+    }
+
+    /// Transform into the verifier set that the gateway expects to operate on
+    #[must_use]
+    pub fn verifier_set(&self) -> VerifierSet {
+        let signers = self
+            .signers
+            .iter()
+            .map(|x| {
+                let pubkey = libsecp256k1::PublicKey::from_secret_key(&x.inner);
+                (
+                    PublicKey::Secp256k1(pubkey.serialize_compressed()),
+                    x.weight,
+                )
+            })
+            .collect();
+        VerifierSet {
+            nonce: self.nonce,
+            signers,
+            quorum: self.quorum,
+        }
+    }
+}
+
+/// Single test signer
+#[derive(Clone, Debug)]
+pub struct TestSigner {
+    pub inner: libsecp256k1::SecretKey,
+    /// associated weight
+    pub weight: u128,
 }
