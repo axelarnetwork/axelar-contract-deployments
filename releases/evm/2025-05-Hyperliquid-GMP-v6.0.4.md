@@ -3,7 +3,7 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @isi8787 <isaac@interoplabs.io> |
-| **Deployment** |                                    |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -88,7 +88,7 @@ npm ci
 | Network              | Addresses                                                                                                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F`                                                                                                                                           |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
@@ -98,24 +98,41 @@ Hyperliquid EVM uses a dual architecture block model:
 - **Fast blocks**: 2 seconds duration with a 2M gas limit
 - **Slow blocks**: 1 minute duration with a 30M gas limit
 
-Contract deployments exceed the fast block gas limit and will require that each deployer key be permissioned to use the slow block model.
+Contract deployments exceed the fast block gas limit and will require that each deployer key be permissioned to use the slow block model. Additional instructtions are provided if accounts needs to be converted back to fast block to utilize the faster finalization rate.
 
 a. Clone the Hyperliquid Python SDK:
    ```bash
    git clone https://github.com/hyperliquid-dex/hyperliquid-python-sdk.git
    cd hyperliquid-python-sdk
    ```
+
 b. Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file:
-   - Set the correct environment (testnet or mainnet):
+   #### For devnet-amplifier, testnet and stagenet
    ```bash
    address, info, exchange = example_utils.setup(constants.TESTNET_API_URL, skip_ws=True)
+   ``` 
+
+   #### For mainnet
+   ```bash
+   address, info, exchange = example_utils.setup(constants.MAINNET_API_URL, skip_ws=True)
    ``` 
    - Comment out or delete:
    ```bash
    print(exchange.use_big_blocks(False))
    ``` 
 
-c. Fund one account with HYPE on both Hyperliquid mainnet and Hyperliquid EVM. Provision USDC on Arbitrum and swap using the Hyperliquid app (https://app.hyperliquid.xyz/trade) to move funds into correct accounts. Enabling large block requires that the account/wallet exist on the main hyperliquid chain. 
+c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to procure and swap funds are:
+   #### For devnet-amplifier, testnet and stagenet
+    - Provision USDC funds: from their faucet at: https://app.hyperliquid-testnet.xyz/drip. Faucet requires account exist on mainnet.
+    - Use their trading app https://app.hyperliquid-testnet.xyz/trade and connect wallet.
+    - Buy HYPE with USDC balance
+    - Under `balances` section connect wallet again to perform an EVM transfer.
+
+     #### For mainnet
+    - Provision USDC on Arbitrum
+    - Use their trading app https://app.hyperliquid.xyz/trade and connect wallet.
+    - Buy HYPE with USDC balance
+    - Under `balances` section connect wallet again to perform an EVM transfer.  
 
 d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
@@ -128,6 +145,11 @@ python3 examples/basic_evm_use_big_blocks.py
 ```
 
 Steps `c`, `d` and `e` needs to be repeated for each deployer key.  
+
+f. Delete private key information from `./hyperliquid-python-sdk/examples/config.json`
+
+After release is complete the deployer keys can set to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks. To disable slow/big blocks Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file to add back `print(exchange.use_big_blocks(True))` and rerun step `d` and `e`
+
 
 3. Deploy `ConstAddrDeployer`:
 
