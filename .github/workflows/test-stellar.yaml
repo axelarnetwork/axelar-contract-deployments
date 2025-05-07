@@ -194,7 +194,7 @@ jobs:
         run: node stellar/contract operator InterchainTokenService
 
       - name: Transfer Operatorship
-        run: node stellar/operators transfer-operatorship InterchainTokenService ${{ env.newAccountAddress }}
+        run: node stellar/contract transfer-operatorship InterchainTokenService ${{ env.newAccountAddress }}
 
       ###### Command: Owner ######
 
@@ -202,4 +202,4 @@ jobs:
         run: node stellar/contract owner InterchainTokenService
 
       - name: Transfer Ownership
-        run: node stellar/operators transfer-ownership InterchainTokenService ${{ env.newAccountAddress }}
+        run: node stellar/contract transfer-ownership InterchainTokenService ${{ env.newAccountAddress }}
