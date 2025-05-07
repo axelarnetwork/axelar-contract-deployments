@@ -1,9 +1,11 @@
 'use strict';
 
 const { prepareClient, prepareWallet, initContractConfig, executeContractMultiple, printBalance } = require('./utils');
-const { loadConfig, printInfo } = require('../common');
-const { Command } = require('commander');
+const { loadConfig, printInfo, printWarn, printError } = require('../common');
+const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
+
+const { main: its } = require('../evm/its');
 
 const crypto = require('crypto');
 
@@ -41,7 +43,26 @@ const xrplVerifierBatch = async (client, wallet, config, options) => {
             msgs.push(xrplMsg());
         }
 
-        const result = await executeContractMultiple(client, wallet, config, options, msgs);
+        let result;
+        let retries = 0;
+
+        while (retries < 5) {
+            try {
+                result = await executeContractMultiple(client, wallet, config, options, msgs);
+                break;
+            } catch (error) {
+                retries++;
+
+                printError('Failed to execute contract', error);
+                printWarn(`Retrying [${retries}]...`);
+
+                await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+        }
+
+        if (!result) {
+            throw new Error('Too many retries');
+        }
 
         result.events
             .filter(({ type }) => type === 'wasm-messages_poll_started')
@@ -51,15 +72,61 @@ const xrplVerifierBatch = async (client, wallet, config, options) => {
             });
 
         pollsCount += pollIds.length;
-        elapsedTime = performance.now() - startTime;
+        elapsedTime = (performance.now() - startTime) / 1000;
 
         printInfo('Transaction', result.transactionHash);
         printInfo('Poll IDs', pollIds);
         printInfo('Poll count', pollsCount);
-        printInfo('Elapsed time (ms)', elapsedTime);
-        printInfo('Polls per second', pollsCount / (elapsedTime / 1000));
+        printInfo('Elapsed time (min)', elapsedTime / 60);
+        printInfo('Polls per second', pollsCount / elapsedTime);
         await printBalance(client, wallet, config);
         console.log('='.repeat(20));
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    const endTime = performance.now();
+    printInfo('Execution time (ms)', endTime - startTime);
+};
+
+const xrpl = async (client, wallet, config, options) => {
+    const { time, delay, privateKeys, env } = options;
+    const action = 'interchain-transfer';
+    const args = [
+        'xrpl', // destination chain
+        '0xba5a21ca88ef6bba2bfff5088994f90e1077e2a1cc3dcc38bd261f00fce2824f', // token ID
+        '0x7277577142334d3352694c634c724c6d754e34524e5964594c507239544e38483143', // destination address
+        '1000000000000', // amount
+    ];
+
+    const itsOptions = {
+        chainNames: 'xrpl-evm',
+        gasValue: '278789857820065200',
+        metadata: '0x',
+        env,
+        yes: true,
+    };
+
+    const startTime = performance.now();
+    let elapsedTime = 0;
+    let txCount = 0;
+
+    while (elapsedTime < time) {
+        const results = await Promise.allSettled(
+            privateKeys.map((pk) => {
+                return its(action, args, { ...itsOptions, privateKey: pk });
+            }),
+        );
+
+        const successCount = results.filter((result) => result.status === 'fulfilled').length;
+        txCount += successCount;
+
+        elapsedTime = (performance.now() - startTime) / 1000;
+
+        console.log('='.repeat(20));
+        printInfo('Txs count', txCount.toString());
+        printInfo('Elapsed time (min)', elapsedTime / 60);
+        printInfo('Tx per second', txCount / elapsedTime);
 
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -87,14 +154,29 @@ const programHandler = () => {
 
     const verifierBatchCmd = program
         .command('xrpl-verifier-batch')
-        .description('Load test voting verifier')
+        .description('Stress test the XRPL voting verifier')
         .option('-t, --time <time>', 'time limit in seconds to run the test')
         .option('-b, --batch <batch>', 'batch size per iteration')
-        .option('-d, --delay <delay>', 'delay in milliseconds between calls')
+        .option('-d, --delay <delay>', 'delay in milliseconds between batches')
         .action((options) => {
             mainProcessor(xrplVerifierBatch, options);
         });
     addAmplifierOptions(verifierBatchCmd, { contractOptions: true });
+
+    const xrplCmd = program
+        .command('xrpl')
+        .description('Stress test full XRPL flow')
+        .option('-t, --time <time>', 'time limit in seconds to run the test')
+        .option('-d, --delay <delay>', 'delay in milliseconds between batches')
+        .addOption(
+            new Option('-p, --privateKeys <privateKeys>', 'comma separated list of private keys')
+                .env('PRIVATE_KEYS')
+                .argParser((pks) => pks.split(',').map((pk) => pk.trim())),
+        )
+        .action((options) => {
+            mainProcessor(xrpl, options);
+        });
+    addAmplifierOptions(xrplCmd, {});
 
     program.parse();
 };

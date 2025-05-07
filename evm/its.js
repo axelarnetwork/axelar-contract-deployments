@@ -948,4 +948,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
+module.exports = { main, getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
