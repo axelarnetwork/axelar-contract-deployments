@@ -83,6 +83,8 @@ npm ci
 }
 ```
 
+Ensure python3 version >= 3.11 is installed on your system. 
+
 1. Fund the following addresses with native tokens on chain:
 
 | Network              | Addresses                                                                                                                                                                              |
