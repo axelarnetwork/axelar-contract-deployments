@@ -3220,6 +3220,10 @@
         "stellar": {
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
+        },
+        "xrpl": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
         }
       },
       "AxelarnetGateway": {
@@ -3229,6 +3233,41 @@
         "lastUploadedCodeId": 22,
         "codeId": 22,
         "address": "axelar18vsne7lns36uvm8gv2cv5jl2lghts0xm7dvzpqzn70dl56gk9hvsgu9sqg"
+      }
+    },
+    "XrplVotingVerifier": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "serviceName": "amplifier",
+        "votingThreshold": [
+          "2",
+          "3"
+        ],
+        "blockExpiry": 10,
+        "confirmationHeight": 1,
+        "address": "axelar1lppu77d7h4u7jylw9afctsc2908ea0eh3q6ap82fep5s2qjk9axqvd3sjx"
+      }
+    },
+    "XrplGateway": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+        "address": "axelar1x60sazqdzjd6nrwh6z92qe2r8rpd4x7ev9z0zgxjsfgn2dl7g9xsrfeeu5"
+      }
+    },
+    "XrplMultisigProver": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+        "signingThreshold": [
+          "2",
+          "3"
+        ],
+        "serviceName": "amplifier",
+        "verifierSetDiffThreshold": 0,
+        "xrplTransactionFee": 5000,
+        "ticketCountThreshold": 50,
+        "address": "axelar12k57j826jl8xldyl2hf9hnc9gwf72zl48xfq4qn20sl4kl8unrxsejqvm8"
       }
     }
   }
