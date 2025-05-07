@@ -2,12 +2,12 @@
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** |                                    |
+| **Created By** | @isi8787 <isaac@interoplabs.io> |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>  |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
+| **Devnet Amplifier** | TBC             | YBC |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
