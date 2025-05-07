@@ -77,7 +77,7 @@ jobs:
           echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_ENV
 
           stellar keys generate newAccount --fund --network local
-          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHIB_ENV;
+          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_ENV;
 
       ###### Command: Deploy Contract ######
 
