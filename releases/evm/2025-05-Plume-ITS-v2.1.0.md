@@ -1,39 +1,38 @@
-## XRPL EVM Sidechain ITS v2.1.0
+## Plume ITS v2.1.0
 
-|                | **Owner**                                                                  |
-| -------------- | -------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                     |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
+|                | **Owner**                          |
+| -------------- | ---------------------------------- |
+| **Created By** | @AttissNgo <attiss@interoplabs.io> |
+| **Deployment** |                                    |
 
-| **Network**           | **Deployment Status** | **Date**   |
-| --------------------- | --------------------- | ---------- |
-| **Devnet Amplifier**  | -                     | TBD        |
-| **Stagenet**          | -                     | TBD        |
-| **Testnet** (staging) | Completed             | 2025-02-19 |
-| **Testnet**           | Completed             | 2025-03-13 |
-| **Mainnet**           | Completed             | 2025-05-05 |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Completed             | 2025-04-30 |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
-[Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
+[Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
 
 ## Background
 
-- This is the XRPL EVM sidechain ITS release.
+- This is the Plume ITS release.
 
 ## Deployment
 
-Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed first.
+Ensure that [Plume GMP](../evm/2025-05-Plume-GMP-v6.0.4.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
-npm ci && npm run build
+npm ci
 ```
 
-Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm`.
+Create an `.env` config. Local environment variable `CHAIN` should be set to `plume`.
 
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAINS=xrpl-evm
+CHAINS=xyz
 ```
 
 | Network              | `deployer address`                           |
@@ -59,9 +58,9 @@ node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register xrpl-evm ITS on ITS Hub
+## Register Plume ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-05-Plume-GMP-v6.0.4.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \
@@ -72,31 +71,13 @@ node cosmwasm/submit-proposal.js \
     --runAs $RUN_AS_ACCOUNT
 ```
 
-## Set XRPL EVM as trusted chain on remote ITS contracts
+## Set Plume as trusted chain on remote ITS contracts
 
-Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+Set Plume as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
 node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
-
-## Link XRP token
-
-- Register XRP token metadata with ITS Hub.
-
-```bash
-node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-```
-
-- Submit `linkToken` msg from XRPL to XRPL EVM with the XRP token address as the destination token address.
-
-- Query the linked token manager address for the XRP token.
-
-```bash
-node evm/its.js token-manager-address [tokenId]
-```
-
-- The XRP token mint permission should then be transferred to the token manager.
 
 ## Checklist
 
