@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "Running 'npm ci' post-merge..."
+npm ci

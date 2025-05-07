@@ -9,7 +9,8 @@
     "build": "tsc",
     "lint": "eslint --fix '**/*.{js,ts}'",
     "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test": "mocha -r ts-node/register 'test/**/*.ts'"
+    "test": "mocha -r ts-node/register 'test/**/*.ts'",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -62,6 +63,7 @@
     "eslint": "^8.57.0",
     "fs-extra": "^11.1.1",
     "hardhat": "~2.19.5",
+    "husky": "^9.1.7",
     "mocha": "^10.2.0",
     "prettier": "^3.3.2",
     "readline-sync": "^1.4.10",
