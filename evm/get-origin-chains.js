@@ -14,9 +14,6 @@ const { printInfo, loadConfig } = require('../common');
 const { initContractConfig, prepareWallet, prepareClient, instantiateContract } = require('../cosmwasm/utils');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
-//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
-//const squidTokens = require(`../axelar-chains-config/info/squid-tokens-${env}.json`);
-
 (async () => {
     const tokens = {};
     for (const name of Object.keys(tokenManagerInfo)) {

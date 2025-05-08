@@ -12,8 +12,6 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
-
 async function getTokens(name) {
     try {
         const chain = info.chains[name];
