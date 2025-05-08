@@ -89,7 +89,7 @@ jobs:
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
-          # Use a temporary file to prevent overwriting while reading
+          config=$(cat axelar-chains-config/info/local.json)
           jq '. + {
             "axelar": {
               "contracts": {
@@ -98,10 +98,7 @@ jobs:
                 }
               }
             }
-          }' axelar-chains-config/info/local.json > axelar-chains-config/info/local_temp.json
-
-          # Replace the original file after successful write
-          mv axelar-chains-config/info/local_temp.json axelar-chains-config/info/local.json
+          }' $config > axelar-chains-config/info/local.json
 
       ###### Command: Deploy Latest Contract ######
 
