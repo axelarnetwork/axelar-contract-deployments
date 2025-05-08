@@ -2410,6 +2410,8 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://stagenet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
-    "gasLimit": "auto"
+    "gasLimit": "auto",
+    "depositValue": "100000000",
+    "rewardAmount": "1000000uaxl"
   }
 }

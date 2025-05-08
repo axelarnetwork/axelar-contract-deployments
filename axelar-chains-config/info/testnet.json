@@ -3279,6 +3279,8 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
-    "gasLimit": "auto"
+    "gasLimit": "auto",
+    "depositValue": "2000000000",
+    "rewardAmount": "1000000uaxl"
   }
 }
