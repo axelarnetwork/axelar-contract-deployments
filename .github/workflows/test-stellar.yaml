@@ -89,7 +89,6 @@ jobs:
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
-          config=$(cat axelar-chains-config/info/local.json)
           jq '. + {
             "axelar": {
               "contracts": {
@@ -98,7 +97,8 @@ jobs:
                 }
               }
             }
-          }' $config > axelar-chains-config/info/local.json
+          }' axelar-chains-config/info/local.json > temp.json
+          mv temp.json axelar-chains-config/info/local.json
 
       ###### Command: Deploy Latest Contract ######
 
