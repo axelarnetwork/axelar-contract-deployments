@@ -1494,6 +1494,8 @@
     "grpc": "devnet-amplifier.axelar.dev:9090",
     "tokenSymbol": "AMPLIFIER",
     "gasPrice": "0.00005uamplifier",
-    "gasLimit": "auto"
+    "gasLimit": "auto",
+    "depositValue": "100000000",
+    "rewardAmount": "1000000uamplifier"
   }
 }
