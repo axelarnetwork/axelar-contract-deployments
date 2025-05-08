@@ -88,9 +88,17 @@ jobs:
           # ITS Hub Address
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
-          jq --arg itsHubAddress "$ITS_HUB_ADDRESS" '.axelar.contracts.InterchainTokenService.address = $itsHubAddress' axelar-chains-config/info/local.json > axelar-chains-config/info/local.json
 
-          # Print the config file
+          jq '. + {
+            "axelar": {
+              "contracts": {
+                "InterchainTokenService": {
+                  "address": "'"$ITS_HUB_ADDRESS"'"
+                }
+              }
+            }
+          }' axelar-chains-config/info/local.json | tee axelar-chains-config/info/local.json
+
           cat axelar-chains-config/info/local.json
 
       ###### Command: Deploy Contract ######
