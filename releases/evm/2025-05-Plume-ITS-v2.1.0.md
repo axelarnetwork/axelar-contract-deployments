@@ -3,7 +3,7 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io>                                   |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -92,7 +92,7 @@ node evm/its.js checks -n $CHAIN -y
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
-# Create a token on chain. Substitute the `wallet` below with the deployer key
+# Create a token on chain. Substitute the `minter-address` below with the deployer key
 node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
