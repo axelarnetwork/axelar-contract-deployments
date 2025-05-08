@@ -21,16 +21,32 @@ export const contractValueSchema = {
     required: ['address'],
 };
 
+export const axelarGatewaySchema = {
+    id: '/info/chains.contracts.AxelarGateway',
+    type: 'object',
+    properties: {
+        connectionType: {
+            type: 'string',
+            enum: ['consensus', 'amplifier'],
+        },
+    },
+    required: ['connectionType'],
+    additionalProperties: true,
+};
+
 export const contractSchema = {
     id: '/info.chains.contracts',
     type: 'object',
     patternProperties: {
-        // PascalName e.g. 'AxelarGasService', 'AxelarGateway' etc.
-        '(^[a-z]|[A-Z])[a-z]*': {
+        // PascalName e.g. 'AxelarGasService' etc.
+        '^[a-zA-Z][a-zA-Z]*$': {
             $ref: contractValueSchema.id,
         },
     },
     properties: {
+        AxelarGateway: {
+            $ref: axelarGatewaySchema.id,
+        },
         skipRevertTests: {
             type: 'boolean',
         },
@@ -78,15 +94,27 @@ export const chainValueSchema = {
         finality: { type: 'string' },
         approxFinalityWaitTime: { type: 'number' },
         timeout: { type: 'number' },
+        decimals: { type: 'number' },
     },
-    required: ['name', 'axelarId', 'rpc', 'tokenSymbol', 'contracts', 'explorer', 'chainType', 'finality', 'approxFinalityWaitTime'],
+    required: [
+        'name',
+        'axelarId',
+        'rpc',
+        'tokenSymbol',
+        'contracts',
+        'explorer',
+        'chainType',
+        'finality',
+        'approxFinalityWaitTime',
+        'decimals',
+    ],
 };
 
 export const chainsSchema = {
     id: '/info.chains',
     type: 'object',
     patternProperties: {
-        '^[a-z]+$': {
+        '^[a-z][a-z0-9-]*$': {
             $ref: chainValueSchema.id,
         },
     },
@@ -110,6 +138,7 @@ export function addAllSchema(validator) {
     validator.addSchema(contractSchema, contractSchema.id);
     validator.addSchema(explorerSchema, explorerSchema.id);
     validator.addSchema(gasOptionSchema, gasOptionSchema.id);
+    validator.addSchema(axelarGatewaySchema, axelarGatewaySchema.id);
 
     return validator;
 }

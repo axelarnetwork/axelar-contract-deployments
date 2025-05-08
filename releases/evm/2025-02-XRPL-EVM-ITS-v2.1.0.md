@@ -9,9 +9,9 @@
 | --------------------- | --------------------- | ---------- |
 | **Devnet Amplifier**  | -                     | TBD        |
 | **Stagenet**          | -                     | TBD        |
-| **Testnet** (staging) | Completed      | 2025-02-19 |
+| **Testnet** (staging) | Completed             | 2025-02-19 |
 | **Testnet**           | Completed             | 2025-03-13 |
-| **Mainnet**           | -                     | TBD        |
+| **Mainnet**           | Completed             | 2025-05-05 |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v)
 
@@ -25,7 +25,7 @@ Ensure that [XRPL EVM GMP](../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md) is deployed fi
 
 ```bash
 # Clone latest main and update deps
-npm ci
+npm ci && npm run build
 ```
 
 Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain. `CHAIN` should be set to `xrpl-evm`.
@@ -121,5 +121,5 @@ node evm/interchainTokenFactory.js --action deployInterchainToken --minter [mint
 node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
 
 # Transfer token back from remote chain
-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain] 
+node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```

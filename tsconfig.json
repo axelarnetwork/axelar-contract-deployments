@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": false, // false for easier migration
+        "skipLibCheck": true,
+        "rootDir": "./",
+        "outDir": "dist",
+        "declaration": true,
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "allowJs": true // remove once all JS is removed
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules", "dist"],
+}

@@ -6,6 +6,7 @@
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
       "tokenSymbol": "AVAX",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -116,6 +117,7 @@
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
       "tokenSymbol": "FTM",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -226,6 +228,7 @@
       "chainId": 1287,
       "rpc": "https://moonbase-alpha.blastapi.io/6e7be200-8290-4417-a27b-51051866d2a3",
       "tokenSymbol": "DEV",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -339,6 +342,7 @@
       "chainId": 97,
       "rpc": "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "tokenSymbol": "BNB",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGasService": {
@@ -377,6 +381,7 @@
       "chainId": 2221,
       "rpc": "https://evm.testnet.kava.io",
       "tokenSymbol": "KAVA",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -483,6 +488,7 @@
       "chainId": 11155111,
       "rpc": "https://1rpc.io/sepolia",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
@@ -593,6 +599,7 @@
       "chainId": 421614,
       "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
@@ -696,6 +703,7 @@
       "chainId": 2090,
       "rpc": "https://centrifuge-parachain.api.onfinality.io/rpc?apikey=66c3bd57-e1d5-4d22-bfc6-d63436b44a5a",
       "tokenSymbol": "CFG",
+      "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
       "contracts": {
@@ -737,6 +745,7 @@
       "chainId": 59141,
       "rpc": "https://rpc.sepolia.linea.build",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -845,6 +854,7 @@
       "chainId": 80002,
       "rpc": "https://rpc-amoy.polygon.technology",
       "tokenSymbol": "MATIC",
+      "decimals": 18,
       "confirmations": 2,
       "chainType": "evm",
       "contracts": {
@@ -953,6 +963,7 @@
       "chainId": 84532,
       "rpc": "https://sepolia.base.org",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1065,6 +1076,7 @@
       "chainId": 168587773,
       "rpc": "https://sepolia.blast.io/",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1177,6 +1189,7 @@
       "chainId": 2522,
       "rpc": "https://rpc.testnet.frax.com",
       "tokenSymbol": "frxETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1288,6 +1301,7 @@
       "chainId": 5003,
       "rpc": "https://rpc.sepolia.mantle.xyz",
       "tokenSymbol": "MNT",
+      "decimals": 18,
       "chainType": "evm",
       "confirmations": 2,
       "explorer": {
@@ -1396,6 +1410,7 @@
       "chainId": 11155420,
       "rpc": "https://sepolia.optimism.io",
       "tokenSymbol": "ETH",
+      "decimals": 18,
       "chainType": "evm",
       "gasOptions": {
         "gasLimit": 8000000
@@ -1508,6 +1523,7 @@
       "chainId": 545,
       "rpc": "https://testnet.evm.nodes.onflow.org",
       "tokenSymbol": "FLOW",
+      "decimals": 18,
       "chainType": "evm",
       "contracts": {
         "AxelarGateway": {
@@ -1602,6 +1618,7 @@
       "chainId": 296,
       "rpc": "https://testnet.hashio.io/api",
       "tokenSymbol": "HBAR",
+      "decimals": 8,
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
@@ -1674,10 +1691,10 @@
       "name": "Sui",
       "axelarId": "sui",
       "networkType": "testnet",
-      "rpc": "https://sui-testnet-rpc.publicnode.com:443",
+      "rpc": "https://sui-testnet-rpc.publicnode.com",
       "tokenSymbol": "SUI",
-      "chainType": "sui",
       "decimals": 9,
+      "chainType": "sui",
       "explorer": {
         "name": "Suiscan",
         "url": "https://suiscan.xyz/testnet"
@@ -1721,7 +1738,8 @@
           },
           "domainSeparator": "0x254a1ae90417f8649798698e95a1140808a701c38c8f5723a930b9d0666e54b4",
           "operator": "0x8e3d8f44a89f6bf3573ee0d559722bef0f46c215153caca12322e1ed93046c1f",
-          "minimumRotationDelay": 0
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier"
         },
         "Utils": {
           "address": "0xaa789bbc9d03a48d29e950ecbc9bc78918e1696e4a76adf7230416f0f49e4838",
@@ -1899,9 +1917,9 @@
       "chainId": 1449000,
       "rpc": "https://rpc.testnet.xrplevm.org",
       "tokenSymbol": "XRP",
+      "decimals": 18,
       "confirmations": 1,
       "finality": "finalized",
-      "decimals": 18,
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
@@ -1989,10 +2007,10 @@
       "horizonRpc": "https://horizon-testnet.stellar.org",
       "networkType": "testnet",
       "chainType": "stellar",
+      "tokenSymbol": "XLM",
       "decimals": 7,
       "finality": "1",
       "approxFinalityWaitTime": 1,
-      "tokenSymbol": "XLM",
       "tokenAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       "explorer": {
         "name": "Stellar Expert",
@@ -2002,7 +2020,8 @@
         "AxelarGateway": {
           "address": "CDERZ3XLJKWZR2NFUNFO5LS7TBDFRHHLMTE2JTE6C7VXGZMGF6DEGXFC",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "4e0df4342d505504d3e7fde2cf664fe896b8a01ed992426192968189ed83e821",
+          "wasmHash": "d68610690fa381aace03f16ef591334d61e808bcba0ac9e3a15d76df492aff24",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
@@ -2021,12 +2040,14 @@
                 "threshold": "1"
               }
             ]
-          }
+          },
+          "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CBRMCHA6EEVQJVKIBDLOXGZSOPUXMYXYMKPNVNNFCDBIP7VEFQCHBLXR",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "82acfafba05ef400104d172664e8d30dbadca6e21e97fa9ae2e1c06c9148be1d",
+          "wasmHash": "8e0d3c6ace7b80c80d945eaca495ff2cea7de12e9cf736dcf1fb9aaee07b4dd2",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3"
           }
@@ -2034,16 +2055,18 @@
         "AxelarGasService": {
           "address": "CALN6JRIISOYAYOHJHGZQWCJW3QB2MECDEDAH7E6KUW7YCJGJJNVHBWH",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "aec895c6a9e13f45cc0cc273e503cc818f5a30fd6fdc732e58a7fd9b4966ecef",
+          "wasmHash": "5f85b5ca8888347990b7d6384a3c73dac1fc652f93086224d78dbadfc934d729",
+          "version": "1.1.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "CBRMCHA6EEVQJVKIBDLOXGZSOPUXMYXYMKPNVNNFCDBIP7VEFQCHBLXR"
           }
         },
         "AxelarExample": {
-          "address": "CBSVACITMKBSV5ZJKF5KPE43TRQKYEDMZ3FPJ3NA23GF5H3XA5HESFJX",
+          "address": "CDMT7AQM5WE7KGVS2257SGDZH6TA7KBFHQM2N4VWOWSWUV3GACR4YU3H",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "a4dbe77402308e9152dfd31777519b2ff19167db81c5a15f3032a15ee3ea3bc9",
+          "wasmHash": "cb96e568d52b5933111d3d97c7a3c23330df1db086aad6001f67e2daaa62d73b",
+          "version": "1.0.3",
           "initializeArgs": {
             "gatewayAddress": "CDERZ3XLJKWZR2NFUNFO5LS7TBDFRHHLMTE2JTE6C7VXGZMGF6DEGXFC",
             "gasServiceAddress": "CALN6JRIISOYAYOHJHGZQWCJW3QB2MECDEDAH7E6KUW7YCJGJJNVHBWH",
@@ -2051,15 +2074,17 @@
           }
         },
         "Upgrader": {
-          "address": "CA5JVDIOAEEQ5F2S2D5OGPNM7Z27Y7ZT4ZVHMFALRE6PEAFFMFXDTSCZ",
+          "address": "CDHKWDHCCOMNIF2RAZ26TGMW726RGFBN6IOYYDH7RPZVSBB6MR3APBBJ",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "a29f0384e948343a4bdc11c8c640c56345cbf91acf770828219766fc6c829382",
+          "wasmHash": "8393a1d52cc40fc3fd37d93da56a3322109159d794ab1d0fbee120dcb3d8cbcc",
+          "version": "1.1.1",
           "initializeArgs": {}
         },
         "InterchainTokenService": {
           "address": "CBD5WIIZ3BR62DQWUON2SV556UYSHL3KLBTPRX54TWDYJGPMVLZUBXXP",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "7ebdf38b7df81ad0deaae0d09b3123b6f1617ffae9618382c5d11acb7b991191",
+          "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
+          "version": "1.1.2",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
@@ -2071,6 +2096,13 @@
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
           }
+        },
+        "Multicall": {
+          "address": "CDY327IFXISX2WW6OFCCHM5VVQ2W3DFT2LPEWOFERSRFLWGPH3RLZVMK",
+          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
+          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+          "version": "1.0.1",
+          "initializeArgs": {}
         }
       }
     }
@@ -2345,11 +2377,11 @@
         "lastUploadedCodeId": 24
       },
       "InterchainTokenService": {
-        "storeCodeProposalId": "102",
-        "storeCodeProposalCodeHash": "174688fff71f479dca62066a9db5bb417e8b38db2d066650bf20e7e2b623f854",
+        "storeCodeProposalId": "150",
+        "storeCodeProposalCodeHash": "36c758c8e36951369ff2b5f9590485edab6c302e7c1b385415ecc6e08185d738",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "codeId": 29,
+        "codeId": 37,
         "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
         "sui": {
           "maxUintBits": 64,
@@ -2359,7 +2391,7 @@
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
         },
-        "lastUploadedCodeId": 29
+        "lastUploadedCodeId": 37
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "68",
