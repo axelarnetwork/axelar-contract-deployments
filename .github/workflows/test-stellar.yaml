@@ -103,7 +103,7 @@ jobs:
           # Replace the original file after successful write
           mv axelar-chains-config/info/local_temp.json axelar-chains-config/info/local.json
 
-      ###### Command: Deploy Contract ######
+      ###### Command: Deploy Latest Contract ######
 
       - name: Deploy AxelarOperators
         run: node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
@@ -216,3 +216,11 @@ jobs:
 
       - name: Transfer Ownership
         run: node stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
+
+      ###### Command: Upgrade Contract ######
+
+      - name: Deploy AxelarOperators
+        run: |
+          node stellar/deploy-contract deploy AxelarOperators --version 1.1.0 -y
+          node stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
+
