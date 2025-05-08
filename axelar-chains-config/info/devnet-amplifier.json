@@ -1279,6 +1279,10 @@
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
         },
+        "hyperliquid": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
+        },
         "storeCodeProposalId": "106",
         "storeCodeProposalCodeHash": "174688fff71f479dca62066a9db5bb417e8b38db2d066650bf20e7e2b623f854",
         "lastUploadedCodeId": 1060
