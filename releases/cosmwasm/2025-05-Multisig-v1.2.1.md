@@ -1,18 +1,18 @@
-# Cosmwasm Multisig v1.2.0
+# Cosmwasm Multisig v1.2.1
 
 |  | **Owner** |
 |-----------|------------|
 | **Created By** | @cjcobb23 <cj@interoplabs.io> |
-| **Deployment** | @isi8787 <isaac@interoplabs.io> |
+| **Deployment** | TBD |
 
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|
-| **Devnet Amplifier** | Deployed | 2025-05-06 |
+| **Devnet Amplifier** | - | TBD |
 | **Stagenet** | - | TBD |
-| **Testnet** | Complete | 2025-05-06 |
+| **Testnet** | - | TBD |
 | **Mainnet** | - | TBD |
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/interchain-token-service-v1.2.1)
+[Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v1.2.1)
 
 ## Background
 
@@ -22,7 +22,7 @@ Changes in this release:
 
 ## Deployment
 
-- This rollout upgrades the amplifier multisig contract from `v1.1.1` to `v1.2.0`
+- This rollout upgrades the amplifier multisig contract from `v1.2.0` to `v1.2.1`
 - There is a no state migration involved
 
 1. Upload new ITS Hub contract
@@ -35,7 +35,7 @@ Changes in this release:
 | mainnet | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am`   | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
 
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.0" -d "Upload Multisig contract v1.2.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES --version 1.2.0
+node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v1.2.1" -d "Upload Multisig contract v1.2.1" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES --version 1.2.1
 ```
 
 2. Upgrade Multisig contract
@@ -45,8 +45,8 @@ There is no state migration needed during upgrade.
 ```bash
 node cosmwasm/submit-proposal.js migrate \
   -c Multisig \
-  -t "Migrate Multisig to v1.2.0" \
-  -d "Multisig to v1.2.0" \
+  -t "Migrate Multisig to v1.2.1" \
+  -d "Multisig to v1.2.1" \
   --msg '{}' \
   --fetchCodeId \
   --deposit 2000000000
@@ -62,7 +62,7 @@ axelard query wasm contract-state raw $MULTISIG_ADDRESS 636F6E74726163745F696E66
 Expected output
 
 ```bash
-{"contract":"multisig","version":"1.2.0"}
+{"contract":"multisig","version":"1.2.1"}
 ```
 
 
