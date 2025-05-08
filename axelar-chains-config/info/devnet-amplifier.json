@@ -1010,61 +1010,227 @@
         }
       }
     },
-    "plume-2": {
-      "name": "Plume",
-      "axelarId": "plume-2",
-      "networkType": "testnet",
-      "chainId": 98867,
-      "rpc": "https://testnet-rpc.plumenetwork.xyz",
-      "tokenSymbol": "PLUME",
+    "avaxtest60": {
+      "name": "avaxtest60",
+      "id": "43113",
+      "axelarId": "avaxtest60",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
       "confirmations": 1,
       "finality": "finalized",
-      "decimals": 18,
       "approxFinalityWaitTime": 1,
-      "chainType": "evm",
-      "explorer": {
-        "name": "Plume-testnet Explorer",
-        "url": "https://testnet-explorer.plumenetwork.xyz/"
+      "gasOptions": {
+        "gasLimit": 5000000
       },
       "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest61": {
+      "name": "avaxtest61",
+      "id": "43113",
+      "axelarId": "avaxtest61",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest62": {
+      "name": "avaxtest62",
+      "id": "43113",
+      "axelarId": "avaxtest62",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest63": {
+      "name": "avaxtest63",
+      "id": "43113",
+      "axelarId": "avaxtest63",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest64": {
+      "name": "avaxtest64",
+      "id": "43113",
+      "axelarId": "avaxtest64",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest65": {
+      "name": "avaxtest65",
+      "id": "43113",
+      "axelarId": "avaxtest65",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest66": {
+      "name": "avaxtest66",
+      "id": "43113",
+      "axelarId": "avaxtest66",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest67": {
+      "name": "avaxtest67",
+      "id": "43113",
+      "axelarId": "avaxtest67",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest68": {
+      "name": "avaxtest68",
+      "id": "43113",
+      "axelarId": "avaxtest68",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest69": {
+      "name": "avaxtest69",
+      "id": "43113",
+      "axelarId": "avaxtest69",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
+    },
+    "avaxtest70": {
+      "name": "avaxtest70",
+      "id": "43113",
+      "axelarId": "avaxtest70",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxyDeploymentArgs": [
+            "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000674c4d000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "9cb9c09855eb6ccff5ab929a07cf6f35c6a0c0838274e1be80593b95b44a6460",
+          "address": "0x16Ffd0e5B8f29f17e39D3fae45069aF022dda2E1",
+          "implementation": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "implementationCodehash": "0xbbef287be8c34ee380a92ca6e19d71f52a6450778158c10f07fcae4b9988fca3",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x540aaa13e60d9abb4c4e4318a8e53a55716d96c7500ee8276af5f463d63801ba",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
         "ConstAddressDeployer": {
-          "address": "0x858Bd33dF5BeAabF16Dc0249Acd194564c16BB2d",
+          "address": "0xAE57967ba52289ECBF200D902ACCd7C40f4175f0",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create",
           "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
         },
         "Create3Deployer": {
-          "address": "0x27A6E2Cf2d37B320EDaF5688ae89f21ef19099A8",
+          "address": "0x41B81FBe0B02A4A17A6A2eB0eB80035306525feE",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
           "salt": "Create3Deployer"
         },
-        "AxelarGateway": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxyDeploymentArgs": [
-            "0x75c216B93337e23c8b1DD4F4fB818CA48511Aa2B",
-            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000661dd9000000000000000000000000000000000000000000000000000000000000000500000000000000000000000040e0122633f2f81ab18854eff39d954a26793060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c0900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009b027e69b79099feb3dd1478c574dc986671bea10000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "36daafe02cd36d4540355cd904501b9f71664605598bc4502fb00ab30b615e91",
-          "address": "0xA7938970ebF2E35E2789dc8C3019754c2ed762A8",
-          "implementation": "0x75c216B93337e23c8b1DD4F4fB818CA48511Aa2B",
-          "implementationCodehash": "0xa029d8325304c28c639f8f0a28c1495a386ee6cf615b9765e093328b5fbacda3",
-          "deploymentMethod": "create3",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
-          "minimumRotationDelay": 0,
-          "connectionType": "amplifier",
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "AxelarAmplifierGateway"
-        },
         "Operators": {
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "address": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
+          "address": "0x4BdeCdE61c7Eefc3d8C5645398c8Bd41853BC086",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
@@ -1072,33 +1238,148 @@
           "salt": "Operators"
         },
         "AxelarGasService": {
-          "collector": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
+          "collector": "0x4BdeCdE61c7Eefc3d8C5645398c8Bd41853BC086",
           "salt": "AxelarGasService",
-          "address": "0x2CcdaDdc282D5F22F740398f1992003b525aE0F5",
-          "implementation": "0xC578504932E11C45e18C272C4Ea98F7e7FCA2Cbe",
+          "address": "0xF92fe17E3084a34B5c07bd40F99b499C2A708051",
+          "implementation": "0x755bDf911a12F8ABc8b387D74EF296E525ba9444",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v2.1.0 devnet-amplifier",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0 devnet-amplifier",
-          "tokenManagerDeployer": "0x94168edd3C4DF7CE78cBC94EB9d8d71E1457BE9F",
-          "interchainToken": "0x412b3F9F72ceE68c77D1bFB604921084d1f79cbb",
-          "interchainTokenDeployer": "0x995bc77092d0C5F82c90d9e54A93F562613E5635",
-          "tokenManager": "0x83621ef18479b784672999630ACC472Ed175140C",
-          "tokenHandler": "0x2B68a9771A135E5ea1B0E05B5F2Dd8F4f6fe027c",
-          "gatewayCaller": "0xD9248a848FF4aC0B74e86f4A17D6e232BFbD585B",
-          "implementation": "0xCEbc4E6b7a7ee6A352dE18392941A932E664EE78",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xcCe2c86467d382931653dD3b3E7b3eB4ebD23349"
-        },
-        "InterchainTokenFactory": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0 devnet-amplifier",
-          "implementation": "0x0EBAB1dB776aca68112c53a4F5E4Fc2725aF439d",
-          "address": "0x9186233C327329408a9034F22407244421cADbEF"
         }
-      }
+      },
+      "chainType": "evm"
+    },
+    "avaxtest71": {
+      "name": "avaxtest71",
+      "id": "43113",
+      "axelarId": "avaxtest71",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxyDeploymentArgs": [
+            "0x9F6218591996252F4F34ecE2ea0Cb9A7d69D5296",
+            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000674dbc000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "39236cca710bec8cacee76f307ec0be0dd58322237301d21f49843a420f59f08",
+          "address": "0xFD401BBe3BdC61A76D83f377F8dE027C0FcAaf2B",
+          "implementation": "0x9F6218591996252F4F34ecE2ea0Cb9A7d69D5296",
+          "implementationCodehash": "0x9f85dc131053dcb11a7acfd3cf2fb42741416dc57c118a3f033130e3192a2537",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x6ef811fd8ad4295b8f189afe886a2e70d35e7b749df88c15f74512b819fe261e",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x70c8c93476D04A56039983Cc73CE6204800859D3",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x96dB81855d3eCf7c41d7f57b6c7CE97F631C18B0",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x8FB25A9E30F3FFA2F62754714bB02089Ec7153b2",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x8FB25A9E30F3FFA2F62754714bB02089Ec7153b2",
+          "salt": "AxelarGasService",
+          "address": "0xB615d35DfE6C47434d9199f469C819e02e0988F9",
+          "implementation": "0xfB81cDCe10d2d7676c2B05343e906B078e9109F9",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        }
+      },
+      "chainType": "evm"
+    },
+    "avaxtest72": {
+      "name": "avaxtest72",
+      "id": "43113",
+      "axelarId": "avaxtest72",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxyDeploymentArgs": [
+            "0x701F4B4952851eF1906ba61e4D802436928F4A11",
+            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a61233000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000674e67000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "5bf0f615677be978d32079352a013331e9119925f4794f22f955568aef10aa55",
+          "address": "0x71f334976F986BEA4b5a13c82C7D55E9F8BffC71",
+          "implementation": "0x701F4B4952851eF1906ba61e4D802436928F4A11",
+          "implementationCodehash": "0x44c646f91ae40ac4dfb3eb0bad3149f3166abab2327ce4fb520ec2f09eda094e",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xe804f1fe17a36f0684ce6cb766bbb0af368f95b70e1ff2118dc198f7d76b8119",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x7556F19EC894C422DE1b2b944E24065E173c8Fa9",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0xd8089Dc171D866F0eed0Bd306f90F32C523580a4",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x4136Cf9E0A444245FC52F3E6A23E1E32D0C45FC8",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x4136Cf9E0A444245FC52F3E6A23E1E32D0C45FC8",
+          "salt": "AxelarGasService",
+          "address": "0x987F0d81C1b956d768BE9d6a5917cb56f4b99136",
+          "implementation": "0x5968E1303eA35496181F076aa3219e8c07A1DfbC",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        }
+      },
+      "chainType": "evm"
     }
   },
   "axelar": {
@@ -1286,10 +1567,12 @@
           "codeId": 854,
           "address": "axelar1w78434ta3l83fstf743xh9v5vkh4k203x2rh7l6w093n4s4vzv0suz09g3"
         },
-        "plume-2": {
+        "storeCodeProposalId": "78",
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
+        "plume13": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0xA7938970ebF2E35E2789dc8C3019754c2ed762A8",
+          "sourceGatewayAddress": "0xa10592B5007edB2777c91F7363A653546A858cEA",
           "votingThreshold": [
             "6",
             "10"
@@ -1299,10 +1582,218 @@
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
           "codeId": 854,
-          "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl"
+          "address": "axelar1z8w08h0n7xjmmy0rsr57af7slnt4akp5y24rrz5e0ctxajtklcjqhf55r8"
         },
-        "storeCodeProposalId": "78",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708"
+        "plume15": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xfE093d89b5C1FF9110d3f1C6Ffc7030A6B243907",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1gs0h3dpaqsqtpuqnjs9j938t08x6l528h7xhqxa27e3zj7kfx7hsu35nkt"
+        },
+        "avaxtest60": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1cm5ck0ypw58stq5qvakhlnwxny50wfyzrxam4xdpcgpeqahzuz8qf3f3r0"
+        },
+        "avaxtest61": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar190dtzuwrg24tngyfejm8llfzq7y37pfy3nxzup7az06frwj9lalqhtfynt"
+        },
+        "avaxtest62": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1q532f0qk2r057uwa5evv6artzvhn0av39qc20rpas734xy7vetzsm245kv"
+        },
+        "avaxtest63": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar163yjj5urh3hqr7gzrrz7ydyzj2zcqjhxwpdwgxyjv4p7zj3dfexq29tnc5"
+        },
+        "avaxtest64": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1u62cl87ej8ydpe80ku7vaqkxtnjz6uzl4yf63x8qpsqchxvemgjshsykt2"
+        },
+        "avaxtest65": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar18k5zwa9398z9kql5cmaahpv5k6clwgn28ujwfq39z8crldqcsgwqjw9p6z"
+        },
+        "avaxtest66": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1jn0x0fpsry4cupwggx5p07lst6trfqekdg0kepshv0w20tmzs68s4gt2np"
+        },
+        "avaxtest67": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar18mnpa4qup69kum6n5axqvyrv3hyvd3zj9qswkrzc8txkgkzs0pwqnttkt8"
+        },
+        "avaxtest68": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1y8euc4w07753p7prlxztl84n2aeasfycerap0zc0c3lvxfae6rmsnmajzh"
+        },
+        "avaxtest69": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1s0yx6du2h647zppw2key60pl65c0t5dpu6sn9fr7sqjnxega3yysx942c9"
+        },
+        "avaxtest70": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xB2cDB08489d3Dda86Aa37be79c8fd185Eddc6f6c",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1ra9gxvenpptupty25e2dxa93a7n32t5dtfkr7vt9ykwh28mnns8qd2nxmg"
+        },
+        "avaxtest71": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0xFD401BBe3BdC61A76D83f377F8dE027C0FcAaf2B",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar13uwr8pk87ac32cmgl9ys44vl0we2satg6r3ruhvkjgpzumv7sztq4umxak"
+        },
+        "avaxtest72": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "0x71f334976F986BEA4b5a13c82C7D55E9F8BffC71",
+          "votingThreshold": [
+            "6",
+            "10"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 854,
+          "address": "axelar1vfdeqn25ly3zc65fykxyffgnrkwunz28s9z9yyp4290k5063dtyq53fhd5"
+        }
       },
       "Gateway": {
         "avalanche-fuji": {
@@ -1332,24 +1823,57 @@
           "codeId": 848,
           "address": "axelar1tatg2n9gsq6vkkafm6pv8hsunr236wgdk4gdc7lw0hs2e3cnspmsw75rld"
         },
-        "plume-2": {
+        "avaxtest60": {
           "codeId": 848,
-          "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
-        }
-      },
-      "XrplMultisigProver": {
-        "xrpl-dev": {
-          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
-          "signingThreshold": [
-            "2",
-            "3"
-          ],
-          "serviceName": "validators",
-          "verifierSetDiffThreshold": 1,
-          "address": "axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl",
-          "xrplTransactionFee": 300,
-          "ticketCountThreshold": 5
+          "address": "axelar1fgqjqwzyxrznn9ysxd2nkx8ktpy3syaf6n7afuz80fmvp5hst2wqcfpaac"
+        },
+        "avaxtest61": {
+          "codeId": 848,
+          "address": "axelar1s748u67lhvd0ldqrdp7v942825g86ny36m9rw3mepmkng5ahercslt4zlf"
+        },
+        "avaxtest62": {
+          "codeId": 848,
+          "address": "axelar1qg645jscmgqh6gvdtkdwjcqzlh4n65dn02r6nvyenwdyjn6wrh0q6pued6"
+        },
+        "avaxtest63": {
+          "codeId": 848,
+          "address": "axelar1xq6fta3zc7ey6lnuftcgl44m0hkgascazsacfy672vdsmjl0tkqsupjc4t"
+        },
+        "avaxtest64": {
+          "codeId": 848,
+          "address": "axelar13p30w8saxutn25yjeeudw8rjvxnwjmcl028tg5ft8ldaf03s8nasasld6s"
+        },
+        "avaxtest65": {
+          "codeId": 848,
+          "address": "axelar14m03urj80gw5edyp83xwtqhhppaf9kjzf8kcea48zfkq670j6cnqwtaf2x"
+        },
+        "avaxtest66": {
+          "codeId": 848,
+          "address": "axelar1vpff0drhqmndwxzf37fnjwp8c9gsp6pe7zhdfgutngzhrcs244jqvhjqyl"
+        },
+        "avaxtest67": {
+          "codeId": 848,
+          "address": "axelar1ld4xphthfcn2dprjqt3lm023rjaxfg8kdynucl87xgpx5jeerrusslvmv3"
+        },
+        "avaxtest68": {
+          "codeId": 848,
+          "address": "axelar1468qxhe94d7rp9h9qfcjkrz5uz9ns54qaf98mwtysvy35k8est8qtdt83r"
+        },
+        "avaxtest69": {
+          "codeId": 848,
+          "address": "axelar1s670qly9sgxv5qs05lqexurm5ct42nlw48x7glsc8tqaxzz4r80q4vh70f"
+        },
+        "avaxtest70": {
+          "codeId": 848,
+          "address": "axelar1xpq554esuweg7v02am2mx5fraag4a39kghyv7lggl8cuy2kthwps8eu5mq"
+        },
+        "avaxtest71": {
+          "codeId": 848,
+          "address": "axelar1l84r7ywfx5hga6xnvaqpcz47rmsrf0xggwtqfwx36nwmq5ty57vs03gdmv"
+        },
+        "avaxtest72": {
+          "codeId": 848,
+          "address": "axelar1rkwg53sdmq5sfkj6vm46n447wwdt56se4c9usgkc5924ssxcqhqqtss8vd"
         }
       },
       "MultisigProver": {
@@ -1448,7 +1972,25 @@
           "domainSeparator": "0x9b90841c0ee97f5016eab9cba092490f454c896916d5f0470bea8f7fb650762d",
           "address": "axelar1lgtcv0lfxwaz2prmea2y73lespr3mnwkfjv9kr0q6j7qhvhvwx6s54cesj"
         },
-        "plume-2": {
+        "storeCodeProposalId": "82",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
+        "plume7": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "98867",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x469263418c1afe390d478e41db07a817e7dad6f304b404d3ecbcb3fe7906457d",
+          "address": "axelar1vnvdd02dsl5ykgvush9luqnqwy9d54umfduerkpaudhzyklhk4cqz56my2"
+        },
+        "plume13": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
@@ -1460,11 +2002,233 @@
           "encoder": "abi",
           "keyType": "ecdsa",
           "codeId": 855,
-          "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
-          "address": "axelar1mfn6hevkpj54qkkdy2rznp2azgvqff0rt2cegmflxgqfm0nqx20q6aqnp5"
+          "domainSeparator": "0xb3fbaec85147cb3e6a3b5b6c9539dc909cbb694a3a1950c31b18bba02b03c6f4",
+          "address": "axelar1926ts7nv2an5ul8c5qrjndkyu7p7gypm77nztqprklw25yarm00s7ga7pp"
         },
-        "storeCodeProposalId": "82",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
+        "plume15": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "98867",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x8f50c04702680f97f2b275ec28e99a350d3b12c939aff41afcd7a4b4eb6841e8",
+          "address": "axelar1juzgyj3cer6dc3u326ccm456z3q4jm4qj98rfk37lcralf9y8tgs6ahr2g"
+        },
+        "avaxtest60": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x114dcf8288cf37f64cf9577e96657ef239a423221ce6fd5ff232831bf7fcbb71",
+          "address": "axelar1782fr90vdqwnwlq9gfdg9vr7thdka5anzk2au7vj2fdjk6ka8p8qh9yesx"
+        },
+        "avaxtest61": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xb02d846b44a36d48303d1582b065c3456b04837b06b58956fc988d837f77805e",
+          "address": "axelar1ddlvn0u0sxs58rvqjm7ktgqyrqzajukm0wr43yfcev8n9ugpmg5sdfcs4x"
+        },
+        "avaxtest62": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x712a58054320b44e3b3a178052a5a3d8dafd4dda8afac705078119d67e7cdaf7",
+          "address": "axelar1g50s4wkhvhmqxfhnvpkzy3qvy02lrzrttklyv42sgw6m2k95hq4s73l6ae"
+        },
+        "avaxtest63": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xe8e029610980ed8de4e6e8fd1d539fc5285eee2c379ce5057cca147a1a08abde",
+          "address": "axelar1924yhvq7ydm63qcxqhrsajlckathv9ul5vyhz6l602g5pxjus4zqa48r8r"
+        },
+        "avaxtest64": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xe1de9d12f4756023c7be874ebb2296482d8afdc0d82db16b1c3fc85e3888fe63",
+          "address": "axelar1pw4nvt6mhv79f7zenzczqc23eu0vyz3enuw76xgpwm80u43603qsufyuux"
+        },
+        "avaxtest65": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xba01e8e76f4cf74c379eb711989ebdb2d2b40343cb7217b0d708c17c39d5100d",
+          "address": "axelar18gtt5x3wj0hhpvfaq7yq7e7l0zwfkm22xulfrw62g56z2zu9x4csz7ae7l"
+        },
+        "avaxtest66": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xbbf8717d22440a31bd1fe0c83349979c8b50d0cc492212b3d38bf5b607c97f97",
+          "address": "axelar1cla8nj2gzwzhg7jj5eaadenhectr60ygw8ryzynwdgjf87tk627slwvzsf"
+        },
+        "avaxtest67": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x6a23292d95069a30d277b90db9c9180b1cb6d4574268edc926cf2b261ffe7ae6",
+          "address": "axelar1vt7ynkn7n3087ylx6hzmdtswm5ecnx924treptsp8gzp6afcv3jqkqk4d6"
+        },
+        "avaxtest68": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x6cacd1b91195e3b13f10a35b83e30699e498ad97243408cfddb5c3c732fd2f26",
+          "address": "axelar1zjj6e0aff49mnrqy3c92qvdx927nj3lzwalcclf7qdr085w2dtqsv26z5t"
+        },
+        "avaxtest69": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xb18b0d0b8a83b8243d9764a51c839a5cc21800a247fd93cd844ab219ac5d7878",
+          "address": "axelar1xkef2yayfnnt4vyfp4kra0g73jmzlw8pj4z62gtrwm32p30arg3szz3ksz"
+        },
+        "avaxtest70": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x540aaa13e60d9abb4c4e4318a8e53a55716d96c7500ee8276af5f463d63801ba",
+          "address": "axelar1g9e0q9dm8y9vkw0aut00tavv929rczhwqemeycucwn9l0zwa563qzj7wtw"
+        },
+        "avaxtest71": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0x6ef811fd8ad4295b8f189afe886a2e70d35e7b749df88c15f74512b819fe261e",
+          "address": "axelar13muzfyj4lhfg48umer4ngrc3l45q4jj7uhf48yzjxd84huyu6ausq68hvm"
+        },
+        "avaxtest72": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "destinationChainID": "43113",
+          "signingThreshold": [
+            "6",
+            "10"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 855,
+          "domainSeparator": "0xe804f1fe17a36f0684ce6cb766bbb0af368f95b70e1ff2118dc198f7d76b8119",
+          "address": "axelar1kvhj2qu3c0smsvk68gdkern7yqhy4j4vt2z4lqyvev2u9kuu7xvq4g3s88"
+        }
       },
       "XrplVotingVerifier": {
         "xrpl-dev": {

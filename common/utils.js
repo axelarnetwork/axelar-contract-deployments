@@ -531,6 +531,7 @@ const getCurrentVerifierSet = async (config, chain) => {
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
 const itsEdgeContract = (chainConfig) => {
+    console.log("chainConfig:", JSON.stringify(chainConfig, null, 2));
     const itsEdgeContract =
         chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
         chainConfig.contracts.InterchainTokenService?.address;
