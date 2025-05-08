@@ -2269,8 +2269,8 @@
         "blockExpiry": 10,
         "storeCodeProposalId": "154",
         "storeCodeProposalCodeHash": "6898517f95da74cbc8c59223cc0f0f6b89e95911c321cf3be87e999935366687",
-        "codeId": 25,
-        "lastUploadedCodeId": 6,
+        "codeId": 39,
+        "lastUploadedCodeId": 39,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
