@@ -66,18 +66,27 @@ jobs:
 
      ###### Environment Variables ######
 
-      - name: Set Environment Variables
+      - name: Prepare Environment Variables
+        id: env_vars
         run: |
-          echo "destinationChain=remote" >> $GITHUB_ENV
-          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_ENV
-          echo "data=0x1234" >> $GITHUB_ENV
-          echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_ENV
+          echo "destinationChain=remote" >> $GITHUB_OUTPUT
+          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_OUTPUT
+          echo "data=0x1234" >> $GITHUB_OUTPUT
+          echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_OUTPUT
 
           config=$(cat axelar-chains-config/info/local.json)
-          echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_ENV
+          echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_OUTPUT
 
           stellar keys generate newAccount --fund --network local
-          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_ENV;
+          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_OUTPUT
+
+          # ITS Example Parameters
+          echo "name=TEST" >> $GITHUB_OUTPUT
+          echo "symbol=TEST" >> $GITHUB_OUTPUT
+          echo "decimal=18" >> $GITHUB_OUTPUT
+          echo "salt=0x1234" >> $GITHUB_OUTPUT
+          echo "amount=1" >> $GITHUB_OUTPUT
+          echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_OUTPUT
 
       ###### Command: Deploy Contract ######
 
@@ -114,7 +123,7 @@ jobs:
         run: node stellar/contract.js unpause AxelarGateway
 
       - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.data }}
+        run: node stellar/gateway.js call-contract ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.data }}
 
       - name: Gateway Rotate Signers
         run: node stellar/gateway.js rotate --new-nonce test --signers wallet
@@ -131,10 +140,10 @@ jobs:
         run: node stellar/contract.js unpause InterchainTokenService
 
       - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
+        run: node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Remove Trusted Chain
-        run: node stellar/its.js remove-trusted-chains ${{ env.destinationChain }}
+        run: node stellar/its.js remove-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Add All Trusted Chains
         run: node stellar/its.js add-trusted-chains all
@@ -144,49 +153,38 @@ jobs:
 
       ###### Command: ITS Example ######
 
-      - name: Prepare ITS Example Parameters
-        run: |
-          echo "name=TEST" >> $GITHUB_ENV
-          echo "symbol=TEST" >> $GITHUB_ENV
-          echo "decimal=18" >> $GITHUB_ENV
-          echo "salt=0x1234" >> $GITHUB_ENV
-          echo "amount=1" >> $GITHUB_ENV
-
-          # Note that tokenId is hardcoded since it's derivation must always be the same
-          echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_ENV
-
       - name: Add Trusted Chains
-        run: node stellar/its.js add-trusted-chains ${{ env.destinationChain }}
+        run: node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Deploy Test Tokens
         run: |
-          node stellar/its.js deploy-interchain-token ${{ env.name }} ${{ env.symbol }} ${{ env.decimal }} ${{ env.salt }} ${{ env.amount }}
-          node stellar/its.js deploy-remote-interchain-token ${{ env.salt }} ${{ env.destinationChain }}
+          node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
+          node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Send Token to another chain
-        run: node stellar/its.js interchain-transfer ${{ env.tokenId }} ${{ env.destinationChain }} ${{ env.destinationAddress }} ${{ env.amount }} --data ''
+        run: node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
 
       ###### Command: ITS Flow Limit ######
 
       - name: ITS Flow Limit
-        run: node stellar/its.js flow-limit ${{ env.tokenId }}
+        run: node stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
       - name: ITS Flow Limit Set
-        run: node stellar/its.js set-flow-limit ${{ env.tokenId }} 1
+        run: node stellar/its.js set-flow-limit ${{ steps.env_vars.outputs.tokenId }} 1
 
       - name: ITS Flow Limit Remove
-        run: node stellar/its.js remove-flow-limit ${{ env.tokenId }}
+        run: node stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
       ###### Command: Operators ######
 
       - name: Operator
-        run: node stellar/operators is-operator ${{ env.accountAddress }}
+        run: node stellar/operators is-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       - name: Add Operator
-        run: node stellar/operators add-operator ${{ env.accountAddress }}
+        run: node stellar/operators add-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       - name: Remove Operator
-        run: node stellar/operators remove-operator ${{ env.accountAddress }}
+        run: node stellar/operators remove-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       ###### Command: Operator ######
 
@@ -194,7 +192,7 @@ jobs:
         run: node stellar/contract operator InterchainTokenService
 
       - name: Transfer Operatorship
-        run: node stellar/contract transfer-operatorship InterchainTokenService ${{ env.newAccountAddress }}
+        run: node stellar/contract transfer-operatorship InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
 
       ###### Command: Owner ######
 
@@ -202,4 +200,4 @@ jobs:
         run: node stellar/contract owner InterchainTokenService
 
       - name: Transfer Ownership
-        run: node stellar/contract transfer-ownership InterchainTokenService ${{ env.newAccountAddress }}
+        run: node stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
