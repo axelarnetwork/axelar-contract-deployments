@@ -26,8 +26,6 @@ I suggest doing a one chain at a time at first, to make sure it doesn't take too
 ./axelar-chains-config/tokenManagers.json has all the chains that are valid (had ITS before the update).
 */
 
-const RPCs = toml.parse(fs.readFileSync('./axelar-chains-config/info/rpcs.toml', 'utf-8'));
-
 async function migrateTokens(name) {
     const chainName = name.toLowerCase();
 

@@ -15,9 +15,6 @@ const { printInfo, printError, loadConfig, saveConfig } = require('../common');
 const { initContractConfig, prepareWallet, prepareClient, instantiateContract } = require('./utils');
 const { GasPrice } = require('@cosmjs/stargate');
 
-//const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/info/rpcs-${env}.toml`, 'utf-8'));
-
-
 class TokenIterator {
     constructor() {
         this.tokenIndex = -1;
