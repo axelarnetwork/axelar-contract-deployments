@@ -326,14 +326,14 @@ node cosmwasm/query.js rewards -n $CHAIN
 
 ```bash
 [[handlers]]
-chain_finalization="ConfirmationHeight"
+chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmMsgVerifier"
 
 [[handlers]]
-chain_finalization="ConfirmationHeight"
+chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
 chain_rpc_url=[http url]
 cosmwasm_contract="$VOTING_VERIFIER"
