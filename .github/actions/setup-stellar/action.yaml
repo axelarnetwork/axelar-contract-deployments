@@ -76,13 +76,6 @@ runs:
                           "horizonRpc": "${{ steps.env.outputs.horizon_rpc }}",
                           "contracts": {}
                       }
-                  },
-                  "axelar": {
-                    "contracts": {
-                      "InterchainTokenService": {
-                        "address": "${{ steps.env.outputs.its_hub_address }}"
-                      }
-                    }
                   }
                 }' > ./axelar-chains-config/info/local.json
 

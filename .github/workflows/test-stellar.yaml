@@ -74,8 +74,9 @@ jobs:
           echo "data=0x1234" >> $GITHUB_OUTPUT
           echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_OUTPUT
 
-          config=$(cat axelar-chains-config/info/local.json)
-          echo "itsHubAddress=$(echo $config | jq -r '.axelar.contracts.InterchainTokenService.address')" >> $GITHUB_OUTPUT
+          ITS_HUB_ADDRESS='its_hub_address'
+          echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
+          jq '.axelar.contracts.InterchainTokenService.address = $ITS_HUB_ADDRESS' axelar-chains-config/info/local.json > axelar-chains-config/info/local.json
 
           stellar keys generate newAccount --fund --network local
           echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_OUTPUT
