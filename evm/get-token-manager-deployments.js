@@ -10,6 +10,8 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
+const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/rpcs/info/${env}.toml`, 'utf-8'));
+
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
 // This is after the upgrade.

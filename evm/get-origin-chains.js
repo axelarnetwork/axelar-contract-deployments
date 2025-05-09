@@ -1,18 +1,13 @@
 require('dotenv').config();
 const env = process.env.ENV;
 
-const { ethers } = require('hardhat');
-const { Contract, getDefaultProvider, constants: { AddressZero }, utils: {arrayify} } = ethers;
 const info = require(`../axelar-chains-config/info/${env}.json`);
 const tokenManagerInfo = require(`../axelar-chains-config/info/tokenManagers-${env}.json`);
-const IInterchainTokenService = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
-const ITokenManager = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/ITokenManager.sol/ITokenManager.json');
-const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json')
 const fs = require('fs');
 const toml = require('toml');
-const { printInfo, loadConfig } = require('../common');
-const { initContractConfig, prepareWallet, prepareClient, instantiateContract } = require('../cosmwasm/utils');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
+
+const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/rpcs/info/${env}.toml`, 'utf-8'));
 
 (async () => {
     const tokens = {};
