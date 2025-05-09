@@ -7,7 +7,13 @@ use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use clap::ArgEnum;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
-use solana_sdk::{instruction::Instruction as SolanaInstruction, pubkey::Pubkey};
+use solana_sdk::{
+    hash::Hash,
+    instruction::Instruction as SolanaInstruction,
+    message::Message,
+    pubkey::Pubkey,
+    transaction::Transaction as SolanaTransaction,
+};
 
 use crate::error::{AppError, Result};
 
@@ -152,6 +158,52 @@ pub struct SignedSolanaTransaction {
     pub signatures: Vec<PartialSignature>,
 }
 
+/// A wrapper around SolanaTransaction that can be serialized and deserialized
+#[derive(Debug, Clone)]
+pub struct SerializableSolanaTransaction {
+    pub transaction: SolanaTransaction,
+    pub params: SolanaTransactionParams,
+}
+
+impl SerializableSolanaTransaction {
+    pub fn new(transaction: SolanaTransaction, params: SolanaTransactionParams) -> Self {
+        Self { transaction, params }
+    }
+
+    pub fn to_unsigned(&self) -> UnsignedSolanaTransaction {
+        let message = self.transaction.message.clone();
+        let message_bytes = message.serialize();
+        let signable_message_hex = hex::encode(&message_bytes);
+
+        // Convert compiled instructions back to SerializableInstruction
+        let instructions = message.instructions.iter()
+            .map(|compiled_ix| {
+                let ix = SolanaInstruction {
+                    program_id: message.account_keys[compiled_ix.program_id_index as usize],
+                    accounts: compiled_ix.accounts.iter()
+                        .map(|account_idx| {
+                            let pubkey = message.account_keys[*account_idx as usize];
+                            solana_sdk::instruction::AccountMeta {
+                                pubkey,
+                                is_signer: message.is_signer(*account_idx as usize),
+                                is_writable: message.is_maybe_writable(*account_idx as usize, None),
+                            }
+                        })
+                        .collect(),
+                    data: compiled_ix.data.clone(),
+                };
+                SerializableInstruction::from(&ix)
+            })
+            .collect();
+
+        UnsignedSolanaTransaction {
+            params: self.params.clone(),
+            instructions,
+            signable_message_hex,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SendArgs {
     pub fee_payer: Pubkey,
@@ -182,8 +234,20 @@ pub struct CombineArgs {
 }
 
 #[derive(Debug, Clone)]
+pub struct CombineMultipleArgs {
+    pub unsigned_tx_paths: Vec<PathBuf>,
+    pub signature_paths_per_tx: Vec<Vec<PathBuf>>,
+    pub output_signed_tx_paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone)]
 pub struct BroadcastArgs {
     pub signed_tx_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+pub struct BroadcastMultipleArgs {
+    pub signed_tx_paths: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

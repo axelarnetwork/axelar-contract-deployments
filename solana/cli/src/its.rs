@@ -5,12 +5,14 @@ use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::message::Message;
+use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
-use crate::types::ChainNameOnAxelar;
+use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    encode_its_destination, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
-    AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY,
+    encode_its_destination, fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY,
     OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
@@ -655,6 +657,43 @@ pub(crate) async fn build_instruction(
             }
         },
     }
+}
+
+pub(crate) async fn build_transaction(
+    fee_payer: &Pubkey,
+    command: Commands,
+    config: &Config,
+) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
+    let instructions = build_instruction(fee_payer, command, config).await?;
+
+    // Get blockhash
+    let blockhash = fetch_latest_blockhash(&config.url)?;
+
+    // Create a transaction for each individual instruction
+    let mut serializable_transactions = Vec::with_capacity(instructions.len());
+
+    for instruction in instructions {
+        // Build message and transaction with blockhash for a single instruction
+        let message = solana_sdk::message::Message::new_with_blockhash(&[instruction], Some(fee_payer), &blockhash);
+        let transaction = SolanaTransaction::new_unsigned(message);
+
+        // Create the transaction parameters
+        // Note: Nonce account handling is done in generate_from_transactions
+        // rather than here, so each transaction gets the nonce instruction prepended
+        let params = SolanaTransactionParams {
+            fee_payer: fee_payer.to_string(),
+            recent_blockhash: Some(blockhash.to_string()),
+            nonce_account: None,
+            nonce_authority: None,
+            blockhash_for_message: blockhash.to_string(),
+        };
+
+        // Create a serializable transaction
+        let serializable_tx = SerializableSolanaTransaction::new(transaction, params);
+        serializable_transactions.push(serializable_tx);
+    }
+
+    Ok(serializable_transactions)
 }
 
 async fn init(

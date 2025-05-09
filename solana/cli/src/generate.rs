@@ -1,75 +1,18 @@
 use crate::config::Config;
 use crate::error::{AppError, Result};
 use crate::types::{
-    GenerateArgs, NetworkType, SerializableInstruction, SolanaTransactionParams,
+    GenerateArgs, NetworkType, SerializableInstruction, SerializableSolanaTransaction, SolanaTransactionParams,
     UnsignedSolanaTransaction,
 };
-use crate::utils;
-use solana_client::rpc_client::RpcClient;
+use crate::utils::{self, fetch_latest_blockhash, fetch_nonce_data_and_verify};
 use solana_sdk::{
-    account::Account, hash::Hash, instruction::Instruction as SolanaInstruction, message::Message,
-    nonce::state::State as NonceState, pubkey::Pubkey, system_instruction, system_program,
+    hash::Hash, instruction::Instruction as SolanaInstruction, message::Message,
+    pubkey::Pubkey, system_instruction, transaction::Transaction as SolanaTransaction,
 };
 use std::fs::File;
 use std::path::Path;
 use std::str::FromStr;
 
-fn fetch_latest_blockhash(rpc_url: &str) -> Result<Hash> {
-    let rpc_client = RpcClient::new(rpc_url.to_string());
-    rpc_client.get_latest_blockhash().map_err(AppError::from)
-}
-
-fn fetch_nonce_data_and_verify(
-    rpc_url: &str,
-    nonce_account_pubkey: &Pubkey,
-    expected_nonce_authority: &Pubkey,
-) -> Result<Hash> {
-    let rpc_client = RpcClient::new(rpc_url.to_string());
-    let nonce_account: Account = rpc_client.get_account(nonce_account_pubkey)?;
-
-    if !system_program::check_id(&nonce_account.owner) {
-        return Err(AppError::InvalidInput(format!(
-            "Nonce account {} is not owned by the system program ({}), owner is {}",
-            nonce_account_pubkey,
-            system_program::id(),
-            nonce_account.owner
-        )));
-    }
-
-    let (nonce_state, _size): (NonceState, usize) =
-        bincode::serde::decode_from_slice(&nonce_account.data, bincode::config::legacy()).map_err(
-            |e| {
-                AppError::ChainError(format!(
-                    "Failed to borsh deserialize nonce account state ({}): {}",
-                    nonce_account_pubkey, e
-                ))
-            },
-        )?;
-
-    match nonce_state {
-        NonceState::Initialized(data) => {
-            println!("Nonce account is initialized.");
-            println!(" -> Stored Nonce (Blockhash): {}", data.blockhash());
-            println!(" -> Authority: {}", data.authority);
-            println!(
-                " -> Fee Lamports/Signature: {}",
-                data.fee_calculator.lamports_per_signature
-            );
-
-            if data.authority != *expected_nonce_authority {
-                return Err(AppError::InvalidInput(format!(
-                    "Nonce account authority mismatch. Expected: {}, Found in account: {}",
-                    expected_nonce_authority, data.authority
-                )));
-            }
-            Ok(data.blockhash())
-        }
-        NonceState::Uninitialized => Err(AppError::InvalidInput(format!(
-            "Nonce account {} is uninitialized",
-            nonce_account_pubkey
-        ))),
-    }
-}
 
 pub fn generate_unsigned_solana_transaction(
     args: &GenerateArgs,
@@ -134,7 +77,7 @@ pub fn generate_unsigned_solana_transaction(
 
     params.blockhash_for_message = blockhash_for_message.to_string();
 
-    let message = Message::new_with_blockhash(
+    let message = solana_sdk::message::Message::new_with_blockhash(
         &sdk_instructions,
         Some(&args.fee_payer),
         &blockhash_for_message,
@@ -142,8 +85,10 @@ pub fn generate_unsigned_solana_transaction(
 
     let message_bytes = message.serialize();
     let signable_message_hex = hex::encode(&message_bytes);
+
+    // Create unsigned transaction to write to file
     let unsigned_tx = UnsignedSolanaTransaction {
-        params,
+        params: params.clone(),
         instructions: sdk_instructions
             .iter()
             .map(SerializableInstruction::from)
@@ -191,6 +136,112 @@ pub fn generate_unsigned_solana_transaction(
             bundle_path.display()
         );
         println!("-> This bundle should be securely transferred to each signer's offline machine.");
+    } else {
+        println!("Testnet/Devnet detected. No offline dependency packaging needed.");
+    }
+
+    Ok(())
+}
+
+pub fn generate_from_transactions(
+    args: &GenerateArgs,
+    config: &Config,
+    mut transactions: Vec<SerializableSolanaTransaction>,
+) -> Result<()> {
+    println!("Starting unsigned Solana transaction generation from transactions...");
+    println!("Network Type: {:?}", config.network_type);
+    println!("Fee Payer: {}", args.fee_payer);
+
+    // If nonce account is provided, we need to handle it specially
+    if let (Some(nonce_account), Some(nonce_authority)) = (&args.nonce_account, &args.nonce_authority) {
+        println!("Using Durable Nonce flow with account: {}", nonce_account);
+
+        // Get nonce blockhash
+        let blockhash = fetch_nonce_data_and_verify(&config.url, nonce_account, nonce_authority)?;
+        println!("Using Nonce (Blockhash) from account: {}", blockhash);
+
+        // For each transaction, we need to update with the nonce information
+        // and prepend the advance_nonce_account instruction
+        for tx in &mut transactions {
+            // Update transaction params
+            tx.params.nonce_account = Some(nonce_account.to_string());
+            tx.params.nonce_authority = Some(nonce_authority.to_string());
+            tx.params.blockhash_for_message = blockhash.to_string();
+            tx.params.recent_blockhash = None; // Not needed with nonce
+
+            // Create advance nonce account instruction
+            let advance_nonce_ix = solana_sdk::system_instruction::advance_nonce_account(
+                nonce_account,
+                nonce_authority
+            );
+
+            // Create a new transaction with advance_nonce_account as the first instruction
+            // followed by the original transaction's instructions
+            let mut instructions = vec![advance_nonce_ix];
+
+            // Add all the original instructions from the transaction
+            // We need to extract them from the message
+            let original_message = tx.transaction.message.clone();
+            let account_keys = original_message.account_keys.clone();
+
+            for compiled_ix in &original_message.instructions {
+                let ix = solana_sdk::instruction::Instruction {
+                    program_id: account_keys[compiled_ix.program_id_index as usize],
+                    accounts: compiled_ix.accounts.iter()
+                        .map(|idx| {
+                            let pubkey = account_keys[*idx as usize];
+                            solana_sdk::instruction::AccountMeta {
+                                pubkey,
+                                is_signer: original_message.is_signer(*idx as usize),
+                                is_writable: original_message.is_maybe_writable(*idx as usize, None),
+                            }
+                        })
+                        .collect(),
+                    data: compiled_ix.data.clone(),
+                };
+
+                instructions.push(ix);
+            }
+
+            // Create a new message with the combined instructions and nonce blockhash
+            let new_message = solana_sdk::message::Message::new_with_blockhash(
+                &instructions,
+                Some(&args.fee_payer),
+                &blockhash
+            );
+
+            // Update the transaction with the new message
+            *tx = SerializableSolanaTransaction::new(
+                solana_sdk::transaction::Transaction::new_unsigned(new_message),
+                tx.params.clone()
+            );
+        }
+    }
+
+    // Now save each transaction
+    for (i, tx) in transactions.iter().enumerate() {
+        // Convert the SerializableSolanaTransaction to an UnsignedSolanaTransaction
+        let unsigned_tx = tx.to_unsigned();
+
+        // Filename includes index if we have multiple transactions
+        let unsigned_tx_filename = if transactions.len() > 1 {
+            format!("{}.{}.unsigned.solana.json", args.output_file, i)
+        } else {
+            format!("{}.unsigned.solana.json", args.output_file)
+        };
+
+        let unsigned_tx_path = config.output_dir.join(&unsigned_tx_filename);
+        utils::save_unsigned_solana_transaction(&unsigned_tx, &unsigned_tx_path)?;
+        println!(
+            "Unsigned Solana transaction {} saved to: {}",
+            i + 1,
+            unsigned_tx_path.display()
+        );
+    }
+
+    if config.network_type == NetworkType::Mainnet {
+        println!("Mainnet detected. To create offline bundle, use the 'generate' command with instructions instead.");
+        println!("-> Transactions were saved as individual files that can be signed separately.");
     } else {
         println!("Testnet/Devnet detected. No offline dependency packaging needed.");
     }

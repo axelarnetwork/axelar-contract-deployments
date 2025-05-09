@@ -13,19 +13,18 @@ mod types;
 mod utils;
 
 use clap::{ArgGroup, Parser, Subcommand};
-use send::build_and_send_solana_transaction;
+use send::sign_and_send_transactions;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
-use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use std::path::PathBuf;
 use std::process::exit;
-use types::SendArgs;
+use types::{SendArgs, SerializableSolanaTransaction};
 
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
-use crate::generate::generate_unsigned_solana_transaction;
+use crate::generate::generate_from_transactions;
 use crate::sign::sign_solana_transaction;
 use crate::types::{BroadcastArgs, CombineArgs, GenerateArgs, SignArgs};
 
@@ -243,9 +242,11 @@ async fn run() -> eyre::Result<()> {
                 fee_payer,
                 signers: signer_keys,
             };
-            let instruction =
-                build_instruction(&send_args.fee_payer, args.instruction, &config).await?;
-            build_and_send_solana_transaction(&send_args, &config, instruction)?;
+
+            // Use the transaction-based approach
+            let transactions =
+                build_transaction(&send_args.fee_payer, args.instruction, &config).await?;
+            sign_and_send_transactions(&send_args, &config, transactions)?;
         }
         Command::Generate(args) => {
             let gen_args = GenerateArgs {
@@ -255,10 +256,12 @@ async fn run() -> eyre::Result<()> {
                 recent_blockhash: args.recent_blockhash,
                 output_file: args.output_file,
             };
-            let instruction =
-                build_instruction(&gen_args.fee_payer, args.instruction, &config).await?;
-            println!("Generating...");
-            generate_unsigned_solana_transaction(&gen_args, &config, instruction)?;
+
+            // Use the transaction-based approach
+            let transactions =
+                build_transaction(&gen_args.fee_payer, args.instruction, &config).await?;
+            println!("Generating transactions...");
+            generate_from_transactions(&gen_args, &config, transactions)?;
         }
         Command::Sign(args) => {
             let sign_args = SignArgs {
@@ -286,26 +289,23 @@ async fn run() -> eyre::Result<()> {
     Ok(())
 }
 
-async fn build_instruction(
+async fn build_transaction(
     fee_payer: &Pubkey,
     instruction: InstructionSubcommand,
     config: &Config,
-) -> eyre::Result<Vec<Instruction>> {
-    let serializable_ix = match instruction {
+) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
+    match instruction {
         InstructionSubcommand::Gateway(command) => {
-            gateway::build_instruction(fee_payer, command, config).await?
+            gateway::build_transaction(fee_payer, command, config).await
         }
         InstructionSubcommand::GasService(command) => {
-            gas_service::build_instruction(fee_payer, command, config).await?
+            gas_service::build_transaction(fee_payer, command, config).await
         }
         InstructionSubcommand::Its(command) => {
-            its::build_instruction(fee_payer, command, config).await?
+            its::build_transaction(fee_payer, command, config).await
         }
         InstructionSubcommand::Governance(command) => {
-            governance::build_instruction(fee_payer, command, config).await?
+            governance::build_transaction(fee_payer, command, config).await
         }
-    };
-
-    Ok(serializable_ix)
+    }
 }
-
