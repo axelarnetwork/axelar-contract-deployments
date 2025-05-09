@@ -7,7 +7,7 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Pending             | TBD |
+| **Devnet Amplifier** | In Progress             | 05-08-2025 |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
@@ -83,7 +83,7 @@ npm ci
 }
 ```
 
-Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.   
+Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.
 
 1. Fund the following addresses with native tokens on chain:
 
@@ -134,7 +134,7 @@ c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to pr
     - Provision USDC on Arbitrum
     - Use their trading app https://app.hyperliquid.xyz/trade and connect wallet.
     - Buy HYPE with USDC balance
-    - Under `balances` section connect wallet again to perform an EVM transfer.  
+    - Under `balances` section connect wallet again to perform an EVM transfer.
 
 d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
@@ -146,7 +146,7 @@ e. Run the script:
 python3 examples/basic_evm_use_big_blocks.py
 ```
 
-Steps `c`, `d` and `e` needs to be repeated for each deployer key.  
+Steps `c`, `d` and `e` needs to be repeated for each deployer key.
 
 f. Delete private key information from `./hyperliquid-python-sdk/examples/config.json`
 
