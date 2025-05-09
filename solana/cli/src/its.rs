@@ -2,6 +2,7 @@ use std::{fs::File, io::Write, time::SystemTime};
 
 use axelar_solana_its::state;
 use clap::{Parser, Subcommand};
+use eyre::eyre;
 use serde::Deserialize;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
@@ -10,9 +11,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, encode_its_destination, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    encode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -233,7 +234,7 @@ fn parse_hex_vec(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
 fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
     let decoded: [u8; 32] = hex::decode(s.strip_prefix("0x").unwrap_or(s))?
         .try_into()
-        .map_err(|_| eyre::eyre!("Invalid hex string length. Expected 32 bytes."))?;
+        .map_err(|_| eyre!("Invalid hex string length. Expected 32 bytes."))?;
 
     Ok(decoded)
 }
@@ -264,7 +265,7 @@ fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre:
             let id = Pubkey::deserialize(
                 &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
                     [GAS_SERVICE_KEY][ADDRESS_KEY],
-            ).map_err(|_| eyre::eyre!(
+            ).map_err(|_| eyre!(
                 "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
                 Please update the file or pass a value to --gas-service"))?;
 
@@ -284,7 +285,7 @@ fn try_infer_gas_service_config_account(
             let id = Pubkey::deserialize(
                 &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
                     [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
-            ).map_err(|_| eyre::eyre!(
+            ).map_err(|_| eyre!(
                 "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
                 Please update the file or pass a value to --gas-config-account"))?;
 

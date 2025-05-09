@@ -1,5 +1,4 @@
 use crate::config::Config;
-use crate::error::Result;
 use crate::types::{GenerateArgs, SerializableSolanaTransaction};
 use crate::utils::{self, fetch_nonce_data_and_verify};
 
@@ -7,7 +6,7 @@ pub fn generate_from_transactions(
     args: &GenerateArgs,
     config: &Config,
     mut transactions: Vec<SerializableSolanaTransaction>,
-) -> Result<()> {
+) -> eyre::Result<()> {
     println!("Starting unsigned Solana transaction generation from transactions...");
     println!("Network Type: {:?}", config.network_type);
     println!("Fee Payer: {}", args.fee_payer);

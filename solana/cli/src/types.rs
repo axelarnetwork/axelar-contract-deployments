@@ -5,14 +5,13 @@ use std::str::FromStr;
 use axelar_solana_encoding::types::pubkey::PublicKey;
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use clap::ArgEnum;
+use eyre::eyre;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
 use solana_sdk::{
     instruction::Instruction as SolanaInstruction, pubkey::Pubkey,
     transaction::Transaction as SolanaTransaction,
 };
-
-use crate::error::{AppError, Result};
 
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum NetworkType {
@@ -23,15 +22,15 @@ pub enum NetworkType {
 }
 
 impl FromStr for NetworkType {
-    type Err = AppError;
+    type Err = eyre::Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> eyre::Result<Self> {
         s.contains("mainnet")
             .then_some(NetworkType::Mainnet)
             .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
             .or_else(|| s.contains("local").then_some(NetworkType::Localnet))
-            .ok_or_else(|| AppError::InvalidNetworkType(s.to_string()))
+            .ok_or_else(|| eyre!("Invalid network type: {}", s))
     }
 }
 
@@ -94,9 +93,9 @@ pub struct SerializableAccountMeta {
 }
 
 impl TryFrom<&SerializableInstruction> for SolanaInstruction {
-    type Error = AppError;
+    type Error = eyre::Error;
 
-    fn try_from(si: &SerializableInstruction) -> Result<Self> {
+    fn try_from(si: &SerializableInstruction) -> eyre::Result<Self> {
         let program_id = Pubkey::from_str(&si.program_id)?;
         let accounts = si
             .accounts
@@ -108,7 +107,7 @@ impl TryFrom<&SerializableInstruction> for SolanaInstruction {
                     is_writable: sa.is_writable,
                 })
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<eyre::Result<Vec<_>>>()?;
 
         Ok(SolanaInstruction {
             program_id,

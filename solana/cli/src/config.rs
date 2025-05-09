@@ -1,11 +1,9 @@
+use eyre::eyre;
 use std::path::PathBuf;
 use std::{fs, str::FromStr};
 
 use crate::types::ChainsInfoFile;
-use crate::{
-    error::{AppError, Result},
-    types::NetworkType,
-};
+use crate::types::NetworkType;
 
 #[derive(Debug)]
 pub struct Config {
@@ -16,16 +14,17 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(url: String, output_dir: PathBuf, chains_info_dir: PathBuf) -> Result<Self> {
+    pub fn new(url: String, output_dir: PathBuf, chains_info_dir: PathBuf) -> eyre::Result<Self> {
         println!("URL: {}", url);
         if !output_dir.exists() {
-            fs::create_dir_all(&output_dir).map_err(AppError::IoError)?;
+            fs::create_dir_all(&output_dir)
+                .map_err(|e| eyre!("Failed to create output directory: {}", e))?;
             println!("Created output directory: {}", output_dir.display());
         } else if !output_dir.is_dir() {
-            return Err(AppError::ConfigError(format!(
+            eyre::bail!(
                 "Specified output path exists but is not a directory: {}",
                 output_dir.display()
-            )));
+            );
         }
 
         let network_type = NetworkType::from_str(&url)?;

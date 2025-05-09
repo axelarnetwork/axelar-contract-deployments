@@ -41,7 +41,7 @@ clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
-eyre = "0.6.12"
+eyre = "0.6.11"
 flate2 = { version = "1.1.1", default-features = false, features = ["zlib"] }
 hex = { version = "0.4.3", features = ["serde"] }
 k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
@@ -59,6 +59,5 @@ spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"]
 spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
 spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
 tar = "0.4.44"
-thiserror = "2.0.12"
 tokio = { version = "1", features = ["full"] }
 walkdir = "2.5.0"

@@ -1,7 +1,6 @@
 mod broadcast;
 mod combine;
 mod config;
-mod error;
 mod gas_service;
 mod gateway;
 mod generate;
@@ -13,6 +12,7 @@ mod types;
 mod utils;
 
 use clap::{Parser, Subcommand};
+use eyre::eyre;
 use send::sign_and_send_transactions;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -218,7 +218,7 @@ async fn run() -> eyre::Result<()> {
                 None => {
                     let config_file = solana_cli_config::CONFIG_FILE
                         .as_ref()
-                        .ok_or_else(|| eyre::eyre!("Missing Solana config file"))?;
+                        .ok_or_else(|| eyre!("Missing Solana config file"))?;
                     let cli_config = solana_cli_config::Config::load(config_file)?;
                     let signer_context = clap::ArgMatches::default();
                     let signer = signer_from_path(
@@ -227,7 +227,7 @@ async fn run() -> eyre::Result<()> {
                         "signer",
                         &mut None,
                     )
-                    .map_err(|e| eyre::eyre!("Failed to load fee payer: {}", e))?;
+                    .map_err(|e| eyre!("Failed to load fee payer: {}", e))?;
 
                     signer_keys.push(cli_config.keypair_path);
                     signer.pubkey()

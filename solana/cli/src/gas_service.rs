@@ -7,8 +7,8 @@ use crate::{
     config::Config,
     types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
     utils::{
-        ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-        fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+        fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
+        CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
     },
 };
 

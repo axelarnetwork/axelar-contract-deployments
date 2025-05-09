@@ -1,5 +1,4 @@
 use crate::config::Config;
-use crate::error::{AppError, Result};
 use crate::types::{CombineArgs, NetworkType, PartialSignature, SignedSolanaTransaction};
 use crate::utils;
 use solana_sdk::{pubkey::Pubkey, signature::Signature as SolanaSignature};
@@ -10,7 +9,7 @@ fn get_required_signers_from_instructions(
     instructions: &[crate::types::SerializableInstruction],
     fee_payer: &Pubkey,
     nonce_authority: Option<&Pubkey>,
-) -> Result<HashSet<Pubkey>> {
+) -> eyre::Result<HashSet<Pubkey>> {
     let mut signers = HashSet::new();
     signers.insert(*fee_payer);
     if let Some(na) = nonce_authority {
@@ -26,7 +25,7 @@ fn get_required_signers_from_instructions(
     Ok(signers)
 }
 
-pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> Result<()> {
+pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> eyre::Result<()> {
     println!("Starting Solana signature combination...");
 
     let unsigned_tx = utils::load_unsigned_solana_transaction(&args.unsigned_tx_path)?;
@@ -80,18 +79,16 @@ pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> Result<
         }
         if let Some(existing_sig) = signatures_map.insert(signer_pubkey, signature) {
             if existing_sig != signature {
-                return Err(AppError::CombinationError(format!(
+                eyre::bail!(
                     "Conflicting signatures provided for the same signer: {}.",
                     signer_pubkey
-                )));
+                );
             }
         }
     }
 
     if signatures_map.is_empty() {
-        return Err(AppError::CombinationError(
-            "No valid signatures were loaded from the provided paths.".to_string(),
-        ));
+        eyre::bail!("No valid signatures were loaded from the provided paths.");
     }
     println!("Loaded {} unique signatures.", signatures_map.len());
 
@@ -103,20 +100,17 @@ pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> Result<
     }
 
     if !missing_signers.is_empty() {
-        return Err(AppError::CombinationError(format!(
-            "Missing required signatures for: {:?}",
-            missing_signers
-        )));
+        eyre::bail!("Missing required signatures for: {:?}", missing_signers);
     }
     println!("Validation OK: All required signers have provided signatures.");
 
     let message_bytes = hex::decode(&unsigned_tx.signable_message_hex)?;
     for (signer_pubkey, signature) in &signatures_map {
         if !signature.verify(signer_pubkey.as_ref(), &message_bytes) {
-            return Err(AppError::CombinationError(format!(
+            eyre::bail!(
                 "Signature verification failed for signer: {}",
                 signer_pubkey
-            )));
+            );
         }
     }
 

@@ -1,6 +1,6 @@
-use crate::error::{AppError, Result};
 use crate::types::{PartialSignature, SignArgs}; // Removed NetworkType import
 use crate::utils;
+use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
 use std::collections::HashSet;
@@ -10,7 +10,7 @@ fn get_required_signers_from_instructions(
     instructions: &[crate::types::SerializableInstruction],
     fee_payer: &Pubkey,
     nonce_authority: Option<&Pubkey>,
-) -> Result<HashSet<Pubkey>> {
+) -> eyre::Result<HashSet<Pubkey>> {
     let mut signers = HashSet::new();
     signers.insert(*fee_payer);
 
@@ -28,7 +28,7 @@ fn get_required_signers_from_instructions(
     Ok(signers)
 }
 
-pub fn sign_solana_transaction(args: &SignArgs) -> Result<()> {
+pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     println!("Starting Solana transaction signing...");
 
     let unsigned_tx = utils::load_unsigned_solana_transaction(&args.unsigned_tx_path)?;
@@ -38,10 +38,10 @@ pub fn sign_solana_transaction(args: &SignArgs) -> Result<()> {
     );
 
     let message_bytes = hex::decode(&unsigned_tx.signable_message_hex).map_err(|e| {
-        AppError::SigningError(format!(
+        eyre!(
             "Failed to decode signable_message_hex from unsigned tx file: {}",
             e
-        ))
+        )
     })?;
     println!(
         "Decoded message bytes ({} bytes) to sign.",
@@ -50,24 +50,16 @@ pub fn sign_solana_transaction(args: &SignArgs) -> Result<()> {
 
     println!("Loading signer from: {}", args.signer_key);
     let signer_context = clap::ArgMatches::default(); // Dummy context
-    let signer =
-        signer_from_path(&signer_context, &args.signer_key, "signer", &mut None).map_err(|e| {
-            AppError::SigningError(format!(
-                "Failed to load signer '{}': {}",
-                args.signer_key, e
-            ))
-        })?;
+    let signer = signer_from_path(&signer_context, &args.signer_key, "signer", &mut None)
+        .map_err(|e| eyre!("Failed to load signer '{}': {}", args.signer_key, e))?;
 
     let signer_pubkey = signer.pubkey();
     println!("Signer loaded successfully. Pubkey: {}", signer_pubkey);
 
     println!("Signing message with loaded signer...");
-    let signature = signer.try_sign_message(&message_bytes).map_err(|e| {
-        AppError::SigningError(format!(
-            "Failed to sign message using '{}': {}",
-            args.signer_key, e
-        ))
-    })?;
+    let signature = signer
+        .try_sign_message(&message_bytes)
+        .map_err(|e| eyre!("Failed to sign message using '{}': {}", args.signer_key, e))?;
     println!("Generated signature: {}", signature);
 
     let partial_signature = PartialSignature {
@@ -94,8 +86,6 @@ pub fn sign_solana_transaction(args: &SignArgs) -> Result<()> {
             "Warning: Signer {} provided a signature, but is not found in the list of required signers (Fee Payer, Nonce Authority, or Instruction Signers).",
             signer_pubkey
         );
-        // Consider making this an error:
-        // return Err(AppError::SigningError(format!("Signer {} is not required by the transaction", signer_pubkey)));
     } else {
         println!(
             "Validation OK: Signer {} is required by the transaction.",

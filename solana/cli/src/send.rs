@@ -1,4 +1,5 @@
 use axelar_solana_gateway::num_traits::FromPrimitive;
+use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_client::{
     client_error::ClientErrorKind, rpc_client::RpcClient, rpc_request::RpcResponseErrorData,
@@ -11,18 +12,17 @@ use solana_sdk::{
 };
 
 use crate::config::Config;
-use crate::error::{AppError, Result};
 use crate::types::{SendArgs, SerializableSolanaTransaction};
 use crate::utils::{
-    DEFAULT_COMPUTE_UNITS, DEFAULT_PRIORITY_FEE, create_compute_budget_instructions,
-    print_transaction_result,
+    create_compute_budget_instructions, print_transaction_result, DEFAULT_COMPUTE_UNITS,
+    DEFAULT_PRIORITY_FEE,
 };
 
 pub(crate) fn sign_and_send_transactions(
     send_args: &SendArgs,
     config: &Config,
     serializable_txs: Vec<SerializableSolanaTransaction>,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let rpc_client = RpcClient::new_with_commitment(&config.url, CommitmentConfig::confirmed());
     let mut results = Vec::new();
 
@@ -30,19 +30,15 @@ pub(crate) fn sign_and_send_transactions(
         let mut transaction = serializable_tx.transaction;
 
         if send_args.signers.len() < transaction.signatures.len() {
-            return Err(AppError::SigningError(
-                "Not enough signers provided".to_string(),
-            ));
+            eyre::bail!("Not enough signers provided");
         }
 
         let mut signers = Vec::with_capacity(transaction.signatures.len());
         let signer_context = clap::ArgMatches::default(); // Dummy context
 
         for signer in send_args.signers.iter() {
-            let signer =
-                signer_from_path(&signer_context, signer, "signer", &mut None).map_err(|e| {
-                    AppError::SigningError(format!("Failed to load signer '{}': {}", signer, e))
-                })?;
+            let signer = signer_from_path(&signer_context, signer, "signer", &mut None)
+                .map_err(|e| eyre!("Failed to load signer '{}': {}", signer, e))?;
 
             signers.push(signer);
         }
@@ -197,7 +193,7 @@ pub(crate) fn sign_and_send_transactions(
                     continue;
                 } else {
                     println!("Transaction error: {:?}", err);
-                    return Err(AppError::from(err));
+                    eyre::bail!("Transaction simulation error: {:?}", err);
                 }
             }
         }

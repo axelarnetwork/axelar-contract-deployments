@@ -1,3 +1,4 @@
+use eyre::eyre;
 use k256::elliptic_curve::FieldBytes;
 use k256::pkcs8::DecodePrivateKey;
 use k256::{Secp256k1, SecretKey};
@@ -15,7 +16,6 @@ use std::path::Path;
 use std::str::FromStr;
 
 use crate::config::Config;
-use crate::error::{AppError, Result};
 use crate::types::{
     ChainNameOnAxelar, NetworkType, PartialSignature, SignedSolanaTransaction,
     UnsignedSolanaTransaction,
@@ -61,46 +61,48 @@ pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetentio
 pub(crate) const ROUTER_KEY: &str = "Router";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 
-pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> Result<T> {
+pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
     let reader = std::io::BufReader::new(file);
-    serde_json::from_reader(reader).map_err(AppError::JsonError)
+    Ok(serde_json::from_reader(reader)?)
 }
 
-pub(crate) fn write_json_file<T: Serialize>(data: &T, file: &File) -> Result<()> {
+pub(crate) fn write_json_file<T: Serialize>(data: &T, file: &File) -> eyre::Result<()> {
     let writer = std::io::BufWriter::new(file);
-    serde_json::to_writer_pretty(writer, data).map_err(AppError::JsonError)
+    Ok(serde_json::to_writer_pretty(writer, data)?)
 }
 
-pub(crate) fn read_json_file_from_path<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    let file = File::open(path).map_err(AppError::IoError)?;
+pub(crate) fn read_json_file_from_path<T: DeserializeOwned>(path: &Path) -> eyre::Result<T> {
+    let file = File::open(path)?;
     read_json_file(&file)
 }
 
-pub(crate) fn write_json_to_file_path<T: Serialize>(data: &T, path: &Path) -> Result<()> {
-    let file = File::create(path).map_err(AppError::IoError)?;
+pub(crate) fn write_json_to_file_path<T: Serialize>(data: &T, path: &Path) -> eyre::Result<()> {
+    let file = File::create(path)?;
     write_json_file(data, &file)
 }
 
-pub(crate) fn load_unsigned_solana_transaction(path: &Path) -> Result<UnsignedSolanaTransaction> {
+pub(crate) fn load_unsigned_solana_transaction(
+    path: &Path,
+) -> eyre::Result<UnsignedSolanaTransaction> {
     read_json_file_from_path(path)
 }
 
 pub(crate) fn save_unsigned_solana_transaction(
     tx: &UnsignedSolanaTransaction,
     path: &Path,
-) -> Result<()> {
+) -> eyre::Result<()> {
     write_json_to_file_path(tx, path)
 }
 
-pub(crate) fn load_partial_signature(path: &Path) -> Result<PartialSignature> {
+pub(crate) fn load_partial_signature(path: &Path) -> eyre::Result<PartialSignature> {
     read_json_file_from_path(path)
 }
 
-pub(crate) fn save_partial_signature(sig: &PartialSignature, path: &Path) -> Result<()> {
+pub(crate) fn save_partial_signature(sig: &PartialSignature, path: &Path) -> eyre::Result<()> {
     write_json_to_file_path(sig, path)
 }
 
-pub(crate) fn load_signed_solana_transaction(path: &Path) -> Result<SignedSolanaTransaction> {
+pub(crate) fn load_signed_solana_transaction(path: &Path) -> eyre::Result<SignedSolanaTransaction> {
     // Try to read the file as a SignedSolanaTransaction first
     match read_json_file_from_path::<SignedSolanaTransaction>(path) {
         Ok(signed_tx) => Ok(signed_tx),
@@ -131,7 +133,7 @@ pub(crate) fn load_signed_solana_transaction(path: &Path) -> Result<SignedSolana
 pub(crate) fn save_signed_solana_transaction(
     tx: &SignedSolanaTransaction,
     path: &Path,
-) -> Result<()> {
+) -> eyre::Result<()> {
     write_json_to_file_path(tx, path)
 }
 
@@ -152,27 +154,27 @@ pub(crate) fn encode_its_destination(
 
 /// Parses a string representation of an AccountMeta.
 /// Format: "pubkey:is_signer:is_writable" (e.g., "SomePubkey...:false:true")
-pub fn parse_account_meta_string(s: &str) -> Result<AccountMeta> {
+pub fn parse_account_meta_string(s: &str) -> eyre::Result<AccountMeta> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
-        return Err(AppError::InvalidInput(format!(
+        eyre::bail!(
             "Invalid AccountMeta format: '{}'. Expected 'pubkey:is_signer:is_writable'",
             s
-        )));
+        );
     }
 
     let pubkey = Pubkey::from_str(parts[0])?;
     let is_signer = bool::from_str(parts[1]).map_err(|_| {
-        AppError::InvalidInput(format!(
+        eyre!(
             "Invalid is_signer value: '{}'. Expected 'true' or 'false'",
             parts[1]
-        ))
+        )
     })?;
     let is_writable = bool::from_str(parts[2]).map_err(|_| {
-        AppError::InvalidInput(format!(
+        eyre!(
             "Invalid is_writable value: '{}'. Expected 'true' or 'false'",
             parts[2]
-        ))
+        )
     })?;
 
     Ok(if is_writable {
@@ -182,7 +184,10 @@ pub fn parse_account_meta_string(s: &str) -> Result<AccountMeta> {
     })
 }
 
-pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature>) -> Result<()> {
+pub(crate) fn print_transaction_result(
+    config: &Config,
+    result: eyre::Result<Signature>,
+) -> eyre::Result<()> {
     match result {
         Ok(tx_signature) => {
             println!("------------------------------------------");
@@ -244,41 +249,41 @@ pub(crate) fn parse_secret_key(raw: &str) -> eyre::Result<SecretKey> {
         let bytes = std::fs::read(raw)?;
         return secret_from_bytes(&bytes)
             .or_else(|| secret_from_str(std::str::from_utf8(&bytes).ok()?))
-            .ok_or_else(|| eyre::eyre!("unrecognised key format in file".to_owned()));
+            .ok_or_else(|| eyre!("unrecognised key format in file"));
     }
 
-    secret_from_str(raw).ok_or_else(|| eyre::eyre!("unrecognised key format".to_owned()))
+    secret_from_str(raw).ok_or_else(|| eyre!("unrecognised key format"))
 }
 
-pub(crate) fn fetch_latest_blockhash(rpc_url: &str) -> Result<Hash> {
+pub(crate) fn fetch_latest_blockhash(rpc_url: &str) -> eyre::Result<Hash> {
     let rpc_client = RpcClient::new(rpc_url.to_string());
-    rpc_client.get_latest_blockhash().map_err(AppError::from)
+    Ok(rpc_client.get_latest_blockhash()?)
 }
 
 pub(crate) fn fetch_nonce_data_and_verify(
     rpc_url: &str,
     nonce_account_pubkey: &Pubkey,
     expected_nonce_authority: &Pubkey,
-) -> Result<Hash> {
+) -> eyre::Result<Hash> {
     let rpc_client = RpcClient::new(rpc_url.to_string());
     let nonce_account = rpc_client.get_account(nonce_account_pubkey)?;
 
     if !solana_sdk::system_program::check_id(&nonce_account.owner) {
-        return Err(AppError::InvalidInput(format!(
+        eyre::bail!(
             "Nonce account {} is not owned by the system program ({}), owner is {}",
             nonce_account_pubkey,
             solana_sdk::system_program::id(),
             nonce_account.owner
-        )));
+        );
     }
 
     // Try with regular bincode deserialization
     let nonce_state: solana_sdk::nonce::state::State = StateMut::<Versions>::state(&nonce_account)
         .map_err(|_| {
-            AppError::InvalidInput(format!(
+            eyre!(
                 "Failed to deserialize nonce account {}",
                 nonce_account_pubkey
-            ))
+            )
         })?
         .into();
 
@@ -290,20 +295,21 @@ pub(crate) fn fetch_nonce_data_and_verify(
 
             // If there's a mismatch, we'll print a warning but still proceed
             if data.authority != *expected_nonce_authority {
-                return Err(AppError::InvalidInput(format!(
+                return Err(eyre!(
                     "Nonce account authority mismatch: expected {}, found {}",
-                    expected_nonce_authority, data.authority
-                )));
+                    expected_nonce_authority,
+                    data.authority
+                ));
             }
 
             // Always return the blockhash, regardless of authority mismatch
             // This works around potential deserialization issues
             Ok(data.blockhash())
         }
-        solana_sdk::nonce::state::State::Uninitialized => Err(AppError::InvalidInput(format!(
+        solana_sdk::nonce::state::State::Uninitialized => Err(eyre!(
             "Nonce account {} is uninitialized",
             nonce_account_pubkey
-        ))),
+        )),
     }
 }
 

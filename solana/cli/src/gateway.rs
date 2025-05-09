@@ -13,6 +13,7 @@ use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use clap::{ArgGroup, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
+use eyre::eyre;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use multisig_prover::msg::ProofStatus;
@@ -30,10 +31,10 @@ use crate::types::{
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
-    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
+    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
 use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
@@ -261,15 +262,19 @@ async fn get_verifier_set(
     chains_info: &serde_json::Value,
 ) -> eyre::Result<VerifierSet> {
     if let Some(signer_key) = signer {
-        let key_bytes: [u8; 33] = hex::decode(signer_key.strip_prefix("0x").unwrap_or(signer_key))
-            .map_err(|_| eyre::eyre!("Failed to decode hex"))?
+        let key_bytes: [u8; 33] = hex::decode(signer_key.strip_prefix("0x").unwrap_or(signer_key))?
             .try_into()
-            .map_err(|_| eyre::eyre!("Invalid signer pubkey"))?;
+            .map_err(|_| eyre!("Invalid key length"))?;
 
         let pk = k256::PublicKey::from_sec1_bytes(&key_bytes)?;
-        let pubkey = PublicKey::Secp256k1(pk.to_encoded_point(true).as_bytes().try_into()?);
+        let pubkey = PublicKey::Secp256k1(
+            pk.to_encoded_point(true)
+                .as_bytes()
+                .try_into()
+                .map_err(|_| eyre!("Invalid encoded point conversion"))?,
+        );
         let signers = BTreeMap::from([(pubkey, 1_u128)]);
-        let nonce = nonce.ok_or(eyre::eyre!("Unexpected error: nonce is required"))?;
+        let nonce = nonce.ok_or_else(|| eyre!("Nonce is required"))?;
 
         Ok(VerifierSet {
             nonce,
@@ -343,11 +348,11 @@ async fn construct_execute_data(
                 Signature::EcdsaRecoverable(
                     signature_bytes
                         .try_into()
-                        .map_err(|_e| eyre::eyre!("Invalid signature"))?,
+                        .map_err(|_e| eyre!("Invalid signature"))?,
                 ),
             ))
         })
-        .collect::<Result<BTreeMap<_, _>, eyre::Report>>()?;
+        .collect::<eyre::Result<BTreeMap<_, _>>>()?;
     let execute_data_bytes = axelar_solana_encoding::encode(
         &signer_set.verifier_set(),
         &signatures,

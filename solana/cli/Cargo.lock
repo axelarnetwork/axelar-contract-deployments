@@ -1441,7 +1441,6 @@ dependencies = [
  "spl-token 8.0.0",
  "spl-token-2022 8.0.1",
  "tar",
- "thiserror 2.0.12",
  "tokio",
  "voting-verifier",
  "walkdir",
