@@ -224,9 +224,9 @@ async fn run() -> eyre::Result<()> {
                 None => {
                     let config_file = solana_cli_config::CONFIG_FILE
                         .as_ref()
-                        .ok_or_else(|| eyre::eyre!("Missing config file"))?;
+                        .ok_or_else(|| eyre::eyre!("Missing Solana config file"))?;
                     let cli_config = solana_cli_config::Config::load(config_file)?;
-                    let signer_context = clap::ArgMatches::default(); // Dummy context
+                    let signer_context = clap::ArgMatches::default();
                     let signer = signer_from_path(
                         &signer_context,
                         &cli_config.keypair_path,
@@ -308,3 +308,4 @@ async fn build_instruction(
 
     Ok(serializable_ix)
 }
+

@@ -14,6 +14,7 @@ use clap::{ArgGroup, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
+use multisig_prover::msg::ProofStatus;
 use serde::Deserialize;
 use serde_json::json;
 use solana_sdk::instruction::Instruction;
@@ -22,10 +23,10 @@ use solana_sdk::pubkey::Pubkey;
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, LocalSigner, SerializeableVerifierSet, SigningVerifierSet};
 use crate::utils::{
-    self, domain_separator, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
-    AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY,
-    MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY,
-    UPGRADE_AUTHORITY_KEY,
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
+    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
+    read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
@@ -44,6 +45,11 @@ pub(crate) enum Commands {
 
     #[clap(long_about = "Rotate the signers used by the Gateway program for message verification")]
     Rotate(RotateArgs),
+
+    #[clap(
+        long_about = "Submit a proof with either ApproveMessages or RotateSigners to the Gateway program"
+    )]
+    SubmitProof(SubmitProofArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -143,6 +149,12 @@ pub(crate) struct RotateArgs {
     new_nonce: Option<u64>,
 }
 
+#[derive(Parser, Debug)]
+pub(crate) struct SubmitProofArgs {
+    #[clap(long)]
+    multisig_session_id: u64,
+}
+
 pub(crate) async fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
@@ -158,6 +170,9 @@ pub(crate) async fn build_instruction(
         }
         Commands::Approve(approve_args) => approve(fee_payer, approve_args, config).await,
         Commands::Rotate(rotate_args) => rotate(fee_payer, rotate_args, config).await,
+        Commands::SubmitProof(submit_proof_args) => {
+            submit_proof(fee_payer, submit_proof_args, config).await
+        }
     }
 }
 
@@ -532,3 +547,86 @@ async fn rotate(
 
     Ok(instructions)
 }
+
+async fn submit_proof(
+    fee_payer: &Pubkey,
+    submit_proof_args: SubmitProofArgs,
+    config: &Config,
+) -> eyre::Result<Vec<Instruction>> {
+    let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+    let multisig_prover_address = {
+        let address = String::deserialize(
+            &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY]
+                [ChainNameOnAxelar::from(config.network_type).0][ADDRESS_KEY],
+        )?;
+
+        cosmrs::AccountId::from_str(&address).unwrap()
+    };
+    let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
+    let multisig_prover_response = query::<multisig_prover::msg::ProofResponse>(
+        axelar_grpc_endpoint,
+        multisig_prover_address,
+        serde_json::to_vec(&multisig_prover::msg::QueryMsg::Proof {
+            multisig_session_id: submit_proof_args.multisig_session_id.into(),
+        })?,
+    )
+    .await?;
+
+    let gateway_config_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
+    let execute_data: ExecuteData = match multisig_prover_response.status {
+        ProofStatus::Pending => eyre::bail!("Proof is not completed yet"),
+        ProofStatus::Completed { execute_data } => borsh::from_slice(&execute_data)?,
+    };
+
+    let mut instructions = Vec::new();
+    let verification_session_pda = append_verification_flow_instructions(
+        fee_payer,
+        &mut instructions,
+        &execute_data,
+        &gateway_config_pda,
+    )
+    .await?;
+
+    match execute_data.payload_items {
+        MerkleisedPayload::VerifierSetRotation {
+            new_verifier_set_merkle_root,
+        } => {
+            let (verifier_set_tracker_pda, _bump) =
+                axelar_solana_gateway::get_verifier_set_tracker_pda(
+                    execute_data.signing_verifier_set_merkle_root,
+                );
+            let (new_verifier_set_tracker_pda, _bump) =
+                axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
+            instructions.push(axelar_solana_gateway::instructions::rotate_signers(
+                gateway_config_pda,
+                verification_session_pda,
+                verifier_set_tracker_pda,
+                new_verifier_set_tracker_pda,
+                *fee_payer,
+                None,
+                new_verifier_set_merkle_root,
+            )?);
+        }
+        MerkleisedPayload::NewMessages { messages } => {
+            for message in messages {
+                let command_id = command_id(
+                    message.leaf.message.cc_id.chain.as_str(),
+                    message.leaf.message.cc_id.id.as_str(),
+                );
+                let (incoming_message_pda, _bump) =
+                    axelar_solana_gateway::get_incoming_message_pda(&command_id);
+                instructions.push(axelar_solana_gateway::instructions::approve_message(
+                    message,
+                    execute_data.payload_merkle_root,
+                    gateway_config_pda,
+                    *fee_payer,
+                    verification_session_pda,
+                    incoming_message_pda,
+                )?);
+            }
+        }
+    }
+
+    Ok(instructions)
+}
+
