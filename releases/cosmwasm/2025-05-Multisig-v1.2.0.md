@@ -3,13 +3,13 @@
 |  | **Owner** |
 |-----------|------------|
 | **Created By** | @cjcobb23 <cj@interoplabs.io> |
-| **Deployment** | TBD |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|
 | **Devnet Amplifier** | Deployed | 2025-05-06 |
 | **Stagenet** | - | TBD |
-| **Testnet** | - | TBD |
+| **Testnet** | Complete | 2025-05-06 |
 | **Mainnet** | - | TBD |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/interchain-token-service-v1.2.1)
