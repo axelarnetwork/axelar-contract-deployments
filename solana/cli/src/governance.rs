@@ -2,21 +2,18 @@ use axelar_solana_governance::instructions::builder::IxBuilder;
 use base64::Engine;
 use clap::{Args, Subcommand};
 use solana_sdk::{
-    instruction::AccountMeta,
-    instruction::Instruction,
-    message::Message,
-    pubkey::Pubkey,
-    transaction::Transaction as SolanaTransaction
+    instruction::AccountMeta, instruction::Instruction, pubkey::Pubkey,
+    transaction::Transaction as SolanaTransaction,
 };
 
 use crate::{
     config::Config,
     types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
     utils::{
-        fetch_latest_blockhash, parse_account_meta_string, read_json_file_from_path,
-        write_json_to_file_path, ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY,
-        GOVERNANCE_ADDRESS_KEY, GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY,
-        UPGRADE_AUTHORITY_KEY,
+        ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GOVERNANCE_ADDRESS_KEY,
+        GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY,
+        UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, parse_account_meta_string,
+        read_json_file_from_path, write_json_to_file_path,
     },
 };
 
@@ -134,7 +131,11 @@ pub(crate) async fn build_transaction(
 
     for instruction in instructions {
         // Build message and transaction with blockhash for a single instruction
-        let message = solana_sdk::message::Message::new_with_blockhash(&[instruction], Some(fee_payer), &blockhash);
+        let message = solana_sdk::message::Message::new_with_blockhash(
+            &[instruction],
+            Some(fee_payer),
+            &blockhash,
+        );
         let transaction = SolanaTransaction::new_unsigned(message);
 
         // Create the transaction parameters
@@ -185,9 +186,11 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![IxBuilder::new()
-        .initialize_config(fee_payer, config_pda, governance_config)
-        .build()])
+    Ok(vec![
+        IxBuilder::new()
+            .initialize_config(fee_payer, config_pda, governance_config)
+            .build(),
+    ])
 }
 
 async fn execute_proposal(
@@ -214,9 +217,9 @@ async fn execute_proposal(
         calldata_bytes,
     );
 
-    Ok(vec![builder
-        .execute_proposal(fee_payer, config_pda)
-        .build()])
+    Ok(vec![
+        builder.execute_proposal(fee_payer, config_pda).build(),
+    ])
 }
 
 async fn execute_operator_proposal(
@@ -240,7 +243,9 @@ async fn execute_operator_proposal(
         calldata_bytes,
     );
 
-    Ok(vec![builder
-        .execute_operator_proposal(fee_payer, config_pda, &args.operator)
-        .build()])
+    Ok(vec![
+        builder
+            .execute_operator_proposal(fee_payer, config_pda, &args.operator)
+            .build(),
+    ])
 }

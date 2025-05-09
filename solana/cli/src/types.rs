@@ -8,10 +8,7 @@ use clap::ArgEnum;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
 use solana_sdk::{
-    hash::Hash,
-    instruction::Instruction as SolanaInstruction,
-    message::Message,
-    pubkey::Pubkey,
+    instruction::Instruction as SolanaInstruction, pubkey::Pubkey,
     transaction::Transaction as SolanaTransaction,
 };
 
@@ -167,7 +164,10 @@ pub struct SerializableSolanaTransaction {
 
 impl SerializableSolanaTransaction {
     pub fn new(transaction: SolanaTransaction, params: SolanaTransactionParams) -> Self {
-        Self { transaction, params }
+        Self {
+            transaction,
+            params,
+        }
     }
 
     pub fn to_unsigned(&self) -> UnsignedSolanaTransaction {
@@ -176,11 +176,15 @@ impl SerializableSolanaTransaction {
         let signable_message_hex = hex::encode(&message_bytes);
 
         // Convert compiled instructions back to SerializableInstruction
-        let instructions = message.instructions.iter()
+        let instructions = message
+            .instructions
+            .iter()
             .map(|compiled_ix| {
                 let ix = SolanaInstruction {
                     program_id: message.account_keys[compiled_ix.program_id_index as usize],
-                    accounts: compiled_ix.accounts.iter()
+                    accounts: compiled_ix
+                        .accounts
+                        .iter()
                         .map(|account_idx| {
                             let pubkey = message.account_keys[*account_idx as usize];
                             solana_sdk::instruction::AccountMeta {
@@ -213,9 +217,8 @@ pub struct SendArgs {
 #[derive(Debug, Clone)]
 pub struct GenerateArgs {
     pub fee_payer: Pubkey,
-    pub nonce_account: Option<Pubkey>,
-    pub nonce_authority: Option<Pubkey>,
-    pub recent_blockhash: Option<String>,
+    pub nonce_account: Pubkey,
+    pub nonce_authority: Pubkey,
     pub output_file: String,
 }
 
@@ -234,22 +237,9 @@ pub struct CombineArgs {
 }
 
 #[derive(Debug, Clone)]
-pub struct CombineMultipleArgs {
-    pub unsigned_tx_paths: Vec<PathBuf>,
-    pub signature_paths_per_tx: Vec<Vec<PathBuf>>,
-    pub output_signed_tx_paths: Vec<PathBuf>,
-}
-
-#[derive(Debug, Clone)]
 pub struct BroadcastArgs {
     pub signed_tx_path: PathBuf,
 }
-
-#[derive(Debug, Clone)]
-pub struct BroadcastMultipleArgs {
-    pub signed_tx_paths: Vec<PathBuf>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SerializeableVerifierSet {
     pub signers: BTreeMap<String, u128>,

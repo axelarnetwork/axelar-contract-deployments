@@ -12,7 +12,7 @@ mod sign;
 mod types;
 mod utils;
 
-use clap::{ArgGroup, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use send::sign_and_send_transactions;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -115,23 +115,18 @@ struct SendCommandArgs {
 }
 
 #[derive(Parser, Debug)]
-#[clap(group(ArgGroup::new("blockhash_source").required(false).args(&["nonce-account", "recent-blockhash"])))]
 struct GenerateCommandArgs {
     /// Fee Payer Pubkey (Base58 encoded string)
     #[clap(long)]
     fee_payer: Pubkey,
 
-    /// Nonce account Pubkey (Base58). Requires --nonce-authority.
-    #[clap(long, requires = "nonce-authority")]
-    nonce_account: Option<Pubkey>,
+    /// Nonce account Pubkey (Base58).
+    #[clap(long)]
+    nonce_account: Pubkey,
 
     /// Nonce authority Pubkey (Base58). Must sign the transaction.
-    #[clap(long, requires = "nonce-account")]
-    nonce_authority: Option<Pubkey>,
-
-    /// Specify a recent blockhash (Base58) instead of fetching or using a nonce.
-    #[clap(long, global = true)]
-    recent_blockhash: Option<String>,
+    #[clap(long)]
+    nonce_authority: Pubkey,
 
     /// Base name for output files (e.g., 'my_tx' -> my_tx.unsigned.solana.json)
     #[clap(long = "output-name")]
@@ -253,7 +248,6 @@ async fn run() -> eyre::Result<()> {
                 fee_payer: args.fee_payer,
                 nonce_account: args.nonce_account,
                 nonce_authority: args.nonce_authority,
-                recent_blockhash: args.recent_blockhash,
                 output_file: args.output_file,
             };
 

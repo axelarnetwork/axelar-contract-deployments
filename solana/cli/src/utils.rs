@@ -11,7 +11,7 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Signature,
 };
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::str::FromStr;
 
 use crate::config::Config;
@@ -63,21 +63,21 @@ pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> Result<T> {
     let reader = std::io::BufReader::new(file);
-    serde_json::from_reader(reader).map_err(|e| AppError::JsonError(e))
+    serde_json::from_reader(reader).map_err(AppError::JsonError)
 }
 
 pub(crate) fn write_json_file<T: Serialize>(data: &T, file: &File) -> Result<()> {
     let writer = std::io::BufWriter::new(file);
-    serde_json::to_writer_pretty(writer, data).map_err(|e| AppError::JsonError(e))
+    serde_json::to_writer_pretty(writer, data).map_err(AppError::JsonError)
 }
 
 pub(crate) fn read_json_file_from_path<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    let file = File::open(path).map_err(|e| AppError::IoError(e))?;
+    let file = File::open(path).map_err(AppError::IoError)?;
     read_json_file(&file)
 }
 
 pub(crate) fn write_json_to_file_path<T: Serialize>(data: &T, path: &Path) -> Result<()> {
-    let file = File::create(path).map_err(|e| AppError::IoError(e))?;
+    let file = File::create(path).map_err(AppError::IoError)?;
     write_json_file(data, &file)
 }
 
@@ -133,56 +133,6 @@ pub(crate) fn save_signed_solana_transaction(
     path: &Path,
 ) -> Result<()> {
     write_json_to_file_path(tx, path)
-}
-
-pub(crate) fn create_offline_bundle(
-    bundle_name: &str,
-    output_dir: &Path,
-    files_to_include: &[(&str, &Path)],
-) -> Result<PathBuf> {
-    let target_path = output_dir.join(format!("{}.tar.gz", bundle_name));
-    let tar_gz_file = File::create(&target_path).unwrap();
-    let gz_encoder = flate2::write::GzEncoder::new(tar_gz_file, flate2::Compression::default());
-    let mut tar_builder = tar::Builder::new(gz_encoder);
-    tar_builder.follow_symlinks(true);
-
-    for (name_in_archive, path_on_disk) in files_to_include {
-        if !path_on_disk.exists() {
-            return Err(AppError::PackagingError(format!(
-                "File specified for packaging not found: {}",
-                path_on_disk.display()
-            )));
-        }
-        if path_on_disk.is_file() {
-            println!(
-                "Adding file to bundle: {} (from {})",
-                name_in_archive,
-                path_on_disk.display()
-            );
-            tar_builder
-                .append_path_with_name(path_on_disk, name_in_archive)
-                .unwrap();
-        } else if path_on_disk.is_dir() {
-            println!(
-                "Adding directory to bundle: {} (from {})",
-                name_in_archive,
-                path_on_disk.display()
-            );
-            tar_builder
-                .append_dir_all(name_in_archive, path_on_disk)
-                .unwrap();
-        } else {
-            return Err(AppError::PackagingError(format!(
-                "Path specified for packaging is not a file or directory: {}",
-                path_on_disk.display()
-            )));
-        }
-    }
-
-    let gz_encoder = tar_builder.into_inner().unwrap();
-    gz_encoder.finish().unwrap();
-
-    Ok(target_path)
 }
 
 pub(crate) fn encode_its_destination(
@@ -259,7 +209,7 @@ pub(crate) fn print_transaction_result(config: &Config, result: Result<Signature
             eprintln!("❌ Solana Transaction broadcast failed.");
             eprintln!("------------------------------------------");
 
-            Err(e.into())
+            Err(e)
         }
     }
 }
@@ -286,8 +236,7 @@ pub(crate) fn domain_separator(
         router_address.as_bytes(),
         chain_id.as_bytes(),
     ])
-    .to_bytes()
-    .try_into()?)
+    .to_bytes())
 }
 
 pub(crate) fn parse_secret_key(raw: &str) -> eyre::Result<SecretKey> {
@@ -362,7 +311,7 @@ fn secret_from_bytes(b: &[u8]) -> Option<SecretKey> {
     SecretKey::from_pkcs8_der(b)
         .ok()
         .or_else(|| SecretKey::from_sec1_der(b).ok())
-        .or_else(|| (b.len() == 32).then(|| SecretKey::from_bytes(b.try_into().ok()?).ok())?)
+        .or_else(|| (b.len() == 32).then(|| SecretKey::from_bytes(b.into()).ok())?)
 }
 
 fn secret_from_str(s: &str) -> Option<SecretKey> {

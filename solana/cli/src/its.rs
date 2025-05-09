@@ -5,15 +5,14 @@ use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::message::Message;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    encode_its_destination, fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY,
-    OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
+    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, encode_its_destination, fetch_latest_blockhash,
+    read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
@@ -674,7 +673,11 @@ pub(crate) async fn build_transaction(
 
     for instruction in instructions {
         // Build message and transaction with blockhash for a single instruction
-        let message = solana_sdk::message::Message::new_with_blockhash(&[instruction], Some(fee_payer), &blockhash);
+        let message = solana_sdk::message::Message::new_with_blockhash(
+            &[instruction],
+            Some(fee_payer),
+            &blockhash,
+        );
         let transaction = SolanaTransaction::new_unsigned(message);
 
         // Create the transaction parameters
@@ -1063,7 +1066,7 @@ async fn call_contract_with_interchain_token_offchain_data(
         )?;
 
     let mut file = File::create(config.output_dir.join("offchain_data_payload.bin"))?;
-    file.write(&payload)?;
+    file.write_all(&payload)?;
 
     Ok(vec![instruction])
 }

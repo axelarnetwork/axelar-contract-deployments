@@ -1,17 +1,14 @@
 use clap::{Parser, Subcommand};
 use solana_sdk::{
-    instruction::Instruction,
-    message::Message,
-    pubkey::Pubkey,
-    transaction::Transaction as SolanaTransaction
+    instruction::Instruction, pubkey::Pubkey, transaction::Transaction as SolanaTransaction,
 };
 
 use crate::{
     config::Config,
     types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
     utils::{
-        fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
-        CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+        ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+        fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
     },
 };
 
@@ -28,16 +25,6 @@ pub(crate) struct InitArgs {
 
     #[clap(short, long)]
     salt: String,
-}
-
-pub(crate) async fn build_instruction(
-    fee_payer: &Pubkey,
-    command: Commands,
-    config: &Config,
-) -> eyre::Result<Vec<Instruction>> {
-    match command {
-        Commands::Init(init_args) => init(fee_payer, init_args, config).await,
-    }
 }
 
 pub(crate) async fn build_transaction(
@@ -57,7 +44,11 @@ pub(crate) async fn build_transaction(
 
     for instruction in instructions {
         // Build message and transaction with blockhash for a single instruction
-        let message = solana_sdk::message::Message::new_with_blockhash(&[instruction], Some(fee_payer), &blockhash);
+        let message = solana_sdk::message::Message::new_with_blockhash(
+            &[instruction],
+            Some(fee_payer),
+            &blockhash,
+        );
         let transaction = SolanaTransaction::new_unsigned(message);
 
         // Create the transaction parameters

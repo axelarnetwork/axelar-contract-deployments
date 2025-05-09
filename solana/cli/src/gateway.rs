@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use std::sync::LazyLock;
 
 use axelar_solana_encoding::hash_payload;
 use axelar_solana_encoding::hasher::NativeHasher;
@@ -17,22 +18,23 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use multisig_prover::msg::ProofStatus;
 use serde::Deserialize;
 use serde_json::json;
+use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
+use solana_sdk::packet::PACKET_DATA_SIZE;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::transaction::Transaction;
 
 use crate::config::Config;
-use crate::error::AppError;
 use crate::types::{
     ChainNameOnAxelar, LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet,
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
-    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
+    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
-use solana_sdk::hash::Hash;
 use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
@@ -57,6 +59,9 @@ pub(crate) enum Commands {
         long_about = "Submit a proof with either ApproveMessages or RotateSigners to the Gateway program"
     )]
     SubmitProof(SubmitProofArgs),
+
+    #[clap(long_about = "Execute a cross-chain message with provided payload")]
+    Execute(ExecuteArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -162,25 +167,22 @@ pub(crate) struct SubmitProofArgs {
     multisig_session_id: u64,
 }
 
-pub(crate) async fn build_instruction(
-    fee_payer: &Pubkey,
-    command: Commands,
-    config: &Config,
-) -> eyre::Result<Vec<Instruction>> {
-    match command {
-        Commands::Init(init_args) => init(fee_payer, init_args, config).await,
-        Commands::CallContract(call_contract_args) => {
-            call_contract(fee_payer, call_contract_args).await
-        }
-        Commands::TransferOperatorship(transfer_operatorship_args) => {
-            transfer_operatorship(fee_payer, transfer_operatorship_args).await
-        }
-        Commands::Approve(approve_args) => approve(fee_payer, approve_args, config).await,
-        Commands::Rotate(rotate_args) => rotate(fee_payer, rotate_args, config).await,
-        Commands::SubmitProof(submit_proof_args) => {
-            submit_proof(fee_payer, submit_proof_args, config).await
-        }
-    }
+#[derive(Parser, Debug)]
+pub(crate) struct ExecuteArgs {
+    #[clap(long)]
+    source_chain: String,
+
+    #[clap(long)]
+    message_id: String,
+
+    #[clap(long)]
+    source_address: String,
+
+    #[clap(long)]
+    destination_address: String,
+
+    #[clap(long)]
+    payload: String,
 }
 
 pub(crate) async fn build_transaction(
@@ -201,28 +203,16 @@ pub(crate) async fn build_transaction(
         Commands::SubmitProof(submit_proof_args) => {
             submit_proof(fee_payer, submit_proof_args, config).await?
         }
+        Commands::Execute(execute_args) => execute(fee_payer, execute_args, config).await?,
     };
 
-    // Get blockhash
     let blockhash = fetch_latest_blockhash(&config.url)?;
-
-    // Create a transaction for each individual instruction
     let mut serializable_transactions = Vec::with_capacity(instructions.len());
 
     for instruction in instructions {
-        // Create transaction with only the program instruction
-        // Note: We're no longer adding compute budget instructions at this stage
-        // to prevent duplicate instructions. The compute budget will be added
-        // during the sign_and_send_transactions phase based on simulation results
-
-        // Build message and transaction with blockhash for a single instruction
         let message =
             SolanaMessage::new_with_blockhash(&[instruction], Some(fee_payer), &blockhash);
         let transaction = SolanaTransaction::new_unsigned(message);
-
-        // Create the transaction parameters
-        // Note: Nonce account handling is done in generate_from_transactions
-        // rather than here, so each transaction gets the nonce instruction prepended
         let params = SolanaTransactionParams {
             fee_payer: fee_payer.to_string(),
             recent_blockhash: Some(blockhash.to_string()),
@@ -231,7 +221,6 @@ pub(crate) async fn build_transaction(
             blockhash_for_message: blockhash.to_string(),
         };
 
-        // Create a serializable transaction
         let serializable_tx = SerializableSolanaTransaction::new(transaction, params);
         serializable_transactions.push(serializable_tx);
     }
@@ -407,7 +396,7 @@ async fn append_verification_flow_instructions(
     }
 
     let (verification_session_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
-        &gateway_config_pda,
+        gateway_config_pda,
         &execute_data.payload_merkle_root,
     );
 
@@ -689,6 +678,172 @@ async fn submit_proof(
             }
         }
     }
+
+    Ok(instructions)
+}
+
+/// Maximum number of bytes we can pack into each `GatewayInstruction::WriteMessagePayload`
+/// instruction.
+///
+/// Calculates the maximum payload size that can fit in a Solana transaction for the
+/// `WriteMessagePayload` instruction. This is done by creating a baseline transaction with empty
+/// payload, measuring its size, and subtracting it from the maximum Solana packet size.
+///
+/// The calculation is performed once on first access and cached, using random data since we only
+/// care about the structure size, not the actual values.
+///
+/// # Panics
+///
+/// Will panic during initialization if:
+/// - Fails to create the `WriteMessagePayload` instruction.
+/// - Fails to serialize the transaction with `bincode`.
+/// - Fails to convert the size from a u64 value to a usize.
+///
+/// Based on: `https://github.com/solana-labs/solana/pull/19654`
+static MAX_CHUNK_SIZE: LazyLock<usize> = LazyLock::new(|| {
+    // Generate a random pubkey for all fields since we only care about size
+    let random_pubkey = Pubkey::new_unique();
+
+    // Create baseline instruction with empty payload data
+    let instruction = axelar_solana_gateway::instructions::write_message_payload(
+        random_pubkey,
+        random_pubkey,
+        random_pubkey.to_bytes(),
+        &[], // empty data
+        0,
+    )
+    .expect("Failed to create baseline WriteMessagePayload instruction");
+
+    let baseline_msg =
+        SolanaMessage::new_with_blockhash(&[instruction], Some(&random_pubkey), &Hash::default());
+
+    let mut writer = bincode::enc::write::SizeWriter::default();
+    bincode::serde::encode_into_writer(
+        &Transaction {
+            signatures: vec![
+                solana_sdk::signature::Signature::default();
+                baseline_msg.header.num_required_signatures.into()
+            ],
+            message: baseline_msg,
+        },
+        &mut writer,
+        bincode::config::legacy(),
+    )
+    .expect("Failed to calculate transaction size");
+
+    // Subtract baseline size and 1 byte for shortvec encoding
+    PACKET_DATA_SIZE
+        .saturating_sub(writer.bytes_written)
+        .saturating_sub(1)
+});
+
+async fn execute(
+    fee_payer: &Pubkey,
+    execute_args: ExecuteArgs,
+    config: &Config,
+) -> eyre::Result<Vec<Instruction>> {
+    let message = Message {
+        cc_id: CrossChainId {
+            chain: execute_args.source_chain,
+            id: execute_args.message_id,
+        },
+        source_address: execute_args.source_address,
+        destination_chain: ChainNameOnAxelar::from(config.network_type).0,
+        destination_address: execute_args.destination_address,
+        payload_hash: solana_sdk::hash::hashv(&[&hex::decode(
+            execute_args
+                .payload
+                .strip_prefix("0x")
+                .unwrap_or(&execute_args.payload),
+        )?])
+        .to_bytes(),
+    };
+
+    let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
+    let gateway_config_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
+    let (incoming_message_pda, _) = axelar_solana_gateway::get_incoming_message_pda(&command_id);
+    let mut instructions = Vec::new();
+    let payload = hex::decode(
+        execute_args
+            .payload
+            .strip_prefix("0x")
+            .unwrap_or(&execute_args.payload),
+    )?;
+
+    instructions.push(
+        axelar_solana_gateway::instructions::initialize_message_payload(
+            gateway_config_pda,
+            *fee_payer,
+            command_id,
+            payload.len().try_into()?,
+        )?,
+    );
+
+    let chunks = payload
+        .chunks(*MAX_CHUNK_SIZE)
+        .enumerate()
+        .map(|(index, chunk)| (chunk, index * *MAX_CHUNK_SIZE));
+
+    for (chunk, offset) in chunks {
+        instructions.push(axelar_solana_gateway::instructions::write_message_payload(
+            gateway_config_pda,
+            *fee_payer,
+            command_id,
+            chunk,
+            offset.try_into()?,
+        )?);
+    }
+
+    instructions.push(axelar_solana_gateway::instructions::commit_message_payload(
+        gateway_config_pda,
+        *fee_payer,
+        command_id,
+    )?);
+
+    if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
+        let (message_payload_pda, _) = axelar_solana_gateway::find_message_payload_pda(
+            gateway_config_pda,
+            command_id,
+            *fee_payer,
+        );
+
+        // Handle special destination addresses
+        if destination_address == axelar_solana_its::id() {
+            let ix = its_instruction_builder::build_its_gmp_instruction(
+                *fee_payer,
+                incoming_message_pda,
+                message_payload_pda,
+                message.clone(),
+                payload.clone(),
+                &solana_client::nonblocking::rpc_client::RpcClient::new(config.url.clone()),
+            )
+            .await?;
+            instructions.push(ix);
+        } else if destination_address == axelar_solana_governance::id() {
+            let ix = axelar_solana_governance::instructions::builder::calculate_gmp_ix(
+                *fee_payer,
+                incoming_message_pda,
+                message_payload_pda,
+                &message,
+                &payload,
+            )?;
+            instructions.push(ix);
+        } else {
+            let ix = axelar_executable::construct_axelar_executable_ix(
+                &message,
+                &payload,
+                incoming_message_pda,
+                message_payload_pda,
+            )?;
+            instructions.push(ix);
+        }
+    }
+
+    instructions.push(axelar_solana_gateway::instructions::close_message_payload(
+        gateway_config_pda,
+        *fee_payer,
+        command_id,
+    )?);
 
     Ok(instructions)
 }

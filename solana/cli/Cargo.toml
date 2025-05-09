@@ -20,6 +20,7 @@ axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git",
 axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
 governance-gmp = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
 program-utils = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
+its-instruction-builder = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
 
 axelar-wasm-std = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec" }
 voting-verifier = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec", features = [

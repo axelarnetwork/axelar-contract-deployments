@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::error::{AppError, Result};
-use crate::types::{CombineArgs, CombineMultipleArgs, NetworkType, PartialSignature, SignedSolanaTransaction};
+use crate::types::{CombineArgs, NetworkType, PartialSignature, SignedSolanaTransaction};
 use crate::utils;
 use solana_sdk::{pubkey::Pubkey, signature::Signature as SolanaSignature};
 use std::collections::{HashMap, HashSet};
@@ -142,44 +142,6 @@ pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> Result<
     if config.network_type == NetworkType::Mainnet {
         println!(
             "-> Combined transaction file should be transferred to an online machine for broadcasting."
-        );
-    }
-
-    Ok(())
-}
-
-pub fn combine_multiple_signatures(args: &CombineMultipleArgs, config: &Config) -> Result<()> {
-    println!("Starting batch Solana signature combination...");
-
-    // Validate inputs
-    if args.unsigned_tx_paths.len() != args.signature_paths_per_tx.len() ||
-       args.unsigned_tx_paths.len() != args.output_signed_tx_paths.len() {
-        return Err(AppError::CombinationError(
-            "Mismatch in number of unsigned transactions, signature sets, and output paths".to_string(),
-        ));
-    }
-
-    for i in 0..args.unsigned_tx_paths.len() {
-        let unsigned_tx_path = &args.unsigned_tx_paths[i];
-        let signature_paths = &args.signature_paths_per_tx[i];
-        let output_signed_tx_path = &args.output_signed_tx_paths[i];
-
-        println!("\nProcessing transaction {} of {}...", i + 1, args.unsigned_tx_paths.len());
-
-        // Create a CombineArgs for this single transaction
-        let single_combine_args = CombineArgs {
-            unsigned_tx_path: unsigned_tx_path.clone(),
-            signature_paths: signature_paths.clone(),
-            output_signed_tx_path: output_signed_tx_path.clone(),
-        };
-
-        // Use the existing function to combine signatures for this transaction
-        combine_solana_signatures(&single_combine_args, config)?;
-    }
-
-    if config.network_type == NetworkType::Mainnet {
-        println!(
-            "-> All combined transaction files should be transferred to an online machine for broadcasting."
         );
     }
 
