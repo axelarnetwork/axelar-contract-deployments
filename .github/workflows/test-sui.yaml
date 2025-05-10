@@ -42,6 +42,9 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Add node_modules/.bin to PATH
+        run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+
       - name: Install dependencies
         shell: bash
         run: npm ci
@@ -130,94 +133,94 @@ jobs:
         run: cat ./axelar-chains-config/info/local.json
 
       - name: Request SUI from faucet
-        run: node sui/faucet.js
+        run: ts-node sui/faucet.js
 
       ###### Command: Deploy Contract ######
 
       - name: Deploy Utils
-        run: node sui/deploy-contract deploy Utils
+        run: ts-node sui/deploy-contract deploy Utils
 
       - name: Deploy VersionControl
-        run: node sui/deploy-contract deploy VersionControl
+        run: ts-node sui/deploy-contract deploy VersionControl
 
       - name: Deploy AxelarGateway
-        run: node sui/deploy-contract deploy AxelarGateway --signers wallet
+        run: ts-node sui/deploy-contract deploy AxelarGateway --signers wallet
 
       - name: Deploy Relayer Discovery
-        run: node sui/deploy-contract deploy RelayerDiscovery
+        run: ts-node sui/deploy-contract deploy RelayerDiscovery
 
       - name: Deploy GasService
-        run: node sui/deploy-contract deploy GasService
+        run: ts-node sui/deploy-contract deploy GasService
 
       - name: Deploy Operators
-        run: node sui/deploy-contract deploy Operators
+        run: ts-node sui/deploy-contract deploy Operators
 
       - name: Deploy ABI
-        run: node sui/deploy-contract deploy Abi
+        run: ts-node sui/deploy-contract deploy Abi
 
       - name: Deploy InterchainTokenService
-        run: node sui/deploy-contract deploy InterchainTokenService -y
+        run: ts-node sui/deploy-contract deploy InterchainTokenService -y
 
       - name: Deploy Example
-        run: node sui/deploy-contract deploy Example
+        run: ts-node sui/deploy-contract deploy Example
 
       ###### Command: Gas Service ######
 
       - name: Pay Gas
-        run: node sui/gas-service.js payGas --amount 100 ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+        run: ts-node sui/gas-service.js payGas --amount 100 ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 
       - name: Refund Gas
-        run: node sui/gas-service.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
+        run: ts-node sui/gas-service.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
 
       - name: Collect Gas
-        run: node sui/gas-service.js collectGas --amount 0.1
+        run: ts-node sui/gas-service.js collectGas --amount 0.1
 
       ###### Command: Gateway ######
       - name: Gateway Pause
-        run: node sui/contract.js pause AxelarGateway -y
+        run: ts-node sui/contract.js pause AxelarGateway -y
 
       - name: Gateway Unpause
-        run: node sui/contract.js unpause AxelarGateway -y
+        run: ts-node sui/contract.js unpause AxelarGateway -y
 
       - name: Gateway Pause All
-        run: node sui/contract.js pause AxelarGateway --functions all -y
+        run: ts-node sui/contract.js pause AxelarGateway --functions all -y
 
       - name: Gateway Unpause
-        run: node sui/contract.js unpause AxelarGateway -y
+        run: ts-node sui/contract.js unpause AxelarGateway -y
 
       - name: Gateway Approve
-        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+        run: ts-node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       - name: Gateway Call Contract
-        run: node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+        run: ts-node sui/gateway.js call-contract ethereum 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       - name: Gateway Rotate Signers
-        run: node sui/gateway.js rotate --signers wallet --proof wallet --newNonce test2
+        run: ts-node sui/gateway.js rotate --signers wallet --proof wallet --newNonce test2
 
       ###### Command: GMP Example ######
 
       - name: Execute Outgoing Call Contract
-        run: node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
+        run: ts-node sui/gmp.js sendCall ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0.1 0x1234
 
       - name: Execute Incoming Call Contract
         run: |
           channel_id=$(cat axelar-chains-config/info/local.json | jq '.chains.sui.contracts.Example.objects.GmpChannelId' | sed 's/"//g')
           echo "Channel ID: $channel_id"
-          node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
-          node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
+          ts-node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 $channel_id 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+          ts-node sui/gmp.js execute ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-3 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x1234
 
       ###### Command: ITS ######
       - name: ITS Pause
-        run: node sui/contract.js pause InterchainTokenService -y
+        run: ts-node sui/contract.js pause InterchainTokenService -y
 
       - name: ITS Unpause
-        run: node sui/contract.js unpause InterchainTokenService -y
+        run: ts-node sui/contract.js unpause InterchainTokenService -y
 
       - name: ITS Pause
-        run: node sui/contract.js pause InterchainTokenService --functions all -y
+        run: ts-node sui/contract.js pause InterchainTokenService --functions all -y
 
       - name: ITS Unpause
-        run: node sui/contract.js unpause InterchainTokenService -y
+        run: ts-node sui/contract.js unpause InterchainTokenService -y
 
       ###### Command: ITS Example ######
       - name: Prepare ITS Example Parameters
@@ -239,12 +242,12 @@ jobs:
 
       - name: Deploy Test Tokens
         run: |
-          node sui/its-example deploy-token --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
-          node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
+          ts-node sui/its-example deploy-token --origin ${{ env.symbol }} ${{ env.name }} ${{ env.decimals }}
+          ts-node sui/its-example deploy-token ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenName }} ${{ env.emptyTokenDecimals }}
 
           # Prepare additional parameters for the example:
-          transferInfo=$(node sui/its-example.js print-receive-transfer ${{ env.sourceChain }} ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
-          deploymentInfo=$(node sui/its-example.js print-receive-deployment ${{ env.sourceChain }} ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
+          transferInfo=$(ts-node sui/its-example.js print-receive-transfer ${{ env.sourceChain }} ${{ env.symbol }} ${{ env.sourceAddress }} ${{ env.amount }})
+          deploymentInfo=$(ts-node sui/its-example.js print-receive-deployment ${{ env.sourceChain }} ${{ env.emptyTokenName }} ${{ env.emptyTokenSymbol }} ${{ env.emptyTokenDecimals }})
 
           echo "transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)" >> $GITHUB_ENV
           echo "transferPayload=$(echo $transferInfo | jq -r .payload)" >> $GITHUB_ENV
@@ -253,53 +256,53 @@ jobs:
           echo "deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)" >> $GITHUB_ENV
 
       - name: ITS Flow Limit Set
-        run: node sui/its.js set-flow-limits $originTokenId 0 -y
+        run: ts-node sui/its.js set-flow-limits $originTokenId 0 -y
 
       - name: ITS Flow Limit Remove
-        run: node sui/its.js set-flow-limits $originTokenId none -y
+        run: ts-node sui/its.js set-flow-limits $originTokenId none -y
 
       - name: Setup Trusted Addresses
         run: |
-          node sui/its.js add-trusted-chains $sourceChain
+          ts-node sui/its.js add-trusted-chains $sourceChain
 
       - name: Send Token to another chain
         run: |
-          node sui/its-example send-token $symbol $sourceChain $sourceAddress 0.1 10
+          ts-node sui/its-example send-token $symbol $sourceChain $sourceAddress 0.1 10
 
       - name: Receive Token from another chain
         run: |
-          node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $transferPayloadHash
-          node sui/its-example receive-token ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $symbol $transferPayload
+          ts-node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $transferPayloadHash
+          ts-node sui/its-example receive-token ${{ env.ITS_HUB_CHAIN_NAME }} $transferMessageId ${{ env.ITS_HUB_ADDRESS }} $symbol $transferPayload
 
       - name: Send Token Deployment to another chain
         run: |
-          node sui/its-example send-deployment $symbol $sourceChain 0.1 10
+          ts-node sui/its-example send-deployment $symbol $sourceChain 0.1 10
 
       - name: Receive Token Deployment from another chain
         run: |
-          node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $deployPayloadHash
-          node sui/its-example receive-deployment ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $emptyTokenSymbol $deployPayload
+          ts-node sui/gateway.js approve --proof wallet ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $channelId $deployPayloadHash
+          ts-node sui/its-example receive-deployment ${{ env.ITS_HUB_CHAIN_NAME }} $deployMessageId ${{ env.ITS_HUB_ADDRESS }} $emptyTokenSymbol $deployPayload
 
       ###### Command: Operators ######
 
       - name: Store Capability Object in Operators
-        run: node sui/operators.js storeCap
+        run: ts-node sui/operators.js storeCap
 
       - name: Add Operator
-        run: node sui/operators.js add $SUI_ADDRESS
+        run: ts-node sui/operators.js add $SUI_ADDRESS
 
       - name: Collect Gas with Operator
-        run: node sui/operators.js collectGas --amount 1
+        run: ts-node sui/operators.js collectGas --amount 1
 
       - name: Refund Gas with Operator
-        run: node sui/operators.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
+        run: ts-node sui/operators.js refund 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-2 --amount 1
 
       - name: Remove Operator
-        run: node sui/operators.js remove $SUI_ADDRESS
+        run: ts-node sui/operators.js remove $SUI_ADDRESS
 
       ###### Command: Generate Keypair ######
       - name: Generate Keypair
-        run: node sui/generate-keypair.js
+        run: ts-node sui/generate-keypair.js
 
       ###### Command: Multisig ######
 
@@ -317,10 +320,10 @@ jobs:
           MULTISIG_ADDRESS=$(sui keytool multi-sig-address --pks $KEY_1 $KEY_2 --weights 1 1 --threshold 1 --json | jq -r .multisigAddress)
 
           # Initialize multisig
-          node sui/multisig.js init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
+          ts-node sui/multisig.js init --threshold 1 --base64PublicKeys $KEY_1 $KEY_2 --schemeTypes secp256k1 secp256k1
 
           # Faucet operations
-          node sui/faucet.js --recipient $MULTISIG_ADDRESS
+          ts-node sui/faucet.js --recipient $MULTISIG_ADDRESS
 
           # Set environment variables
           echo "MULTISIG_ADDRESS=$MULTISIG_ADDRESS" >> $GITHUB_ENV
@@ -328,18 +331,18 @@ jobs:
       - name: Transfer Upgrade Cap to Multisig Address
         run: |
           upgrade_cap=$(cat axelar-chains-config/info/local.json | jq -r '.chains.sui.contracts.AxelarGateway.objects.UpgradeCap')
-          node sui/transfer-object.js --objectId $upgrade_cap --recipient $MULTISIG_ADDRESS
+          ts-node sui/transfer-object.js --objectId $upgrade_cap --recipient $MULTISIG_ADDRESS
 
       - name: Generate Unsigned Tx File
         run: |
-          node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
+          ts-node sui/deploy-contract.js upgrade AxelarGateway any_upgrade --offline --txFilePath ./tx-upgrade.json --sender $MULTISIG_ADDRESS
 
       - name: Sign Tx File with Multisig Signer
         run: |
           pk_1=$(sui keytool export --key-identity multisig1 --json | jq .exportedPrivateKey | sed 's/"//g')
           pk_2=$(sui keytool export --key-identity multisig2 --json | jq .exportedPrivateKey | sed 's/"//g')
-          node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
-          node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
+          ts-node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-1.json --offline --privateKey $pk_1
+          ts-node sui/multisig.js sign --txBlockPath ./tx-upgrade.json --signatureFilePath signature-2.json --offline --privateKey $pk_2
 
       - name: Submit Signed Tx File
         run: |
@@ -347,7 +350,7 @@ jobs:
           output_file="./output.json"
 
           # Execute the upgrade transaction
-          node sui/multisig.js combine --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
+          ts-node sui/multisig.js combine --txBlockPath ./tx-upgrade.json --signatureFilePath ./combined.json --signatures signature-1.json signature-2.json --executeResultPath ${output_file}
 
           # Store the new package id in a variable
           new_package_id=$(jq '.objectChanges[] | select(.type == "published") | .packageId' $output_file | sed 's/"//g')
@@ -357,10 +360,10 @@ jobs:
           && mv temp.json axelar-chains-config/info/local.json
 
       - name: Post Upgrade Gateway Approval With New Package ID
-        run: node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
+        run: ts-node sui/gateway.js approve --proof wallet ethereum 0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-10 0x4F4495243837681061C4743b74B3eEdf548D56A5 0x6ce0d81b412abca2770eddb1549c9fcff721889c3aab1203dc93866db22ecc4b 0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432
 
       ###### Command: Transfer Object ######
       - name: Transfer Object
         run: |
           object_id=$(sui client objects --json | jq -r '.[-1].data.objectId')
-          node sui/transfer-object.js --objectId $object_id --recipient 0xdd7c964ff032273889eb6029a29314413b461629c45c0442c6f9cf8342450c12
+          ts-node sui/transfer-object.js --objectId $object_id --recipient 0xdd7c964ff032273889eb6029a29314413b461629c45c0442c6f9cf8342450c12

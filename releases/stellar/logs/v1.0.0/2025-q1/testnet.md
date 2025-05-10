@@ -3,12 +3,12 @@
 
 | Contract                  | TX                                                                                                          | CMD                                                                                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `AxelarGateway`           | https://stellar.expert/explorer/testnet/tx/6f9502c78a4ee9ae7299d3ab21da3c81ddfe1a30bd87bb0c2ffb057f532af31b | `node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0 --minimum-rotation-delay 3600 --previous-signers-retention 15` |
-| `AxelarOperators`         | https://stellar.expert/explorer/testnet/tx/1dcf9f86d789491bc309afbb1bf410e5ae31f57b07e1826449ef1fec76fdddde | `node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0`                                                             |
-| `AxelarGasService`        | https://stellar.expert/explorer/testnet/tx/86dca8168173ca1554ceb895bfcc9e0b5265a0ea99af9bdd672919e8dd64cfb5 | `node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0`                                                            |
-| `Upgrader`                | https://stellar.expert/explorer/testnet/tx/261741e64e56fe938365f651fb5c918d1d2ec172d1c148559cdfe3d31b163806 | `node stellar/deploy-contract.js deploy Upgrader --version v1.0.0`                                                                    |
-| `InterchainTokenService ` | https://stellar.expert/explorer/testnet/tx/4882c685c2da6ed45945a98c9eb3251a6e5149b82d48e17e1cd46b7df4510dac | `node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0`                                                      |
-| `AxelarExample`           | https://stellar.expert/explorer/testnet/tx/faee5419b86ab4bab3bab67400b79246da6b205226a17380ddecfc5d44579c8e | `node stellar/deploy-contract.js deploy AxelarExample --wasm-path artifacts/stellar_example-v1.0.0.optimized.wasm`                    |
+| `AxelarGateway`           | https://stellar.expert/explorer/testnet/tx/6f9502c78a4ee9ae7299d3ab21da3c81ddfe1a30bd87bb0c2ffb057f532af31b | `ts-node stellar/deploy-contract.js deploy AxelarGateway --version v1.0.0 --minimum-rotation-delay 3600 --previous-signers-retention 15` |
+| `AxelarOperators`         | https://stellar.expert/explorer/testnet/tx/1dcf9f86d789491bc309afbb1bf410e5ae31f57b07e1826449ef1fec76fdddde | `ts-node stellar/deploy-contract.js deploy AxelarOperators --version v1.0.0`                                                             |
+| `AxelarGasService`        | https://stellar.expert/explorer/testnet/tx/86dca8168173ca1554ceb895bfcc9e0b5265a0ea99af9bdd672919e8dd64cfb5 | `ts-node stellar/deploy-contract.js deploy AxelarGasService --version v1.0.0`                                                            |
+| `Upgrader`                | https://stellar.expert/explorer/testnet/tx/261741e64e56fe938365f651fb5c918d1d2ec172d1c148559cdfe3d31b163806 | `ts-node stellar/deploy-contract.js deploy Upgrader --version v1.0.0`                                                                    |
+| `InterchainTokenService ` | https://stellar.expert/explorer/testnet/tx/4882c685c2da6ed45945a98c9eb3251a6e5149b82d48e17e1cd46b7df4510dac | `ts-node stellar/deploy-contract.js deploy InterchainTokenService --version v1.0.0`                                                      |
+| `AxelarExample`           | https://stellar.expert/explorer/testnet/tx/faee5419b86ab4bab3bab67400b79246da6b205226a17380ddecfc5d44579c8e | `ts-node stellar/deploy-contract.js deploy AxelarExample --wasm-path artifacts/stellar_example-v1.0.0.optimized.wasm`                    |
 
 </details>
 
@@ -17,9 +17,9 @@
 
 | Contract         | TX                                                                                                      | CMD                                                                                                                                                     |
 | ---------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VotingVerifier` | https://testnet.axelarscan.io/account/axelar1a4wt84rllhuwpdvymj4tql6cugfsmdmau9ufmzcm329yx9st96eqx05uam | `node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"` |
-| `Gateway`        | https://testnet.axelarscan.io/account/axelar1h5mvyzjjara9a5jk4psayas6pg9c55llay02mmaprzmfk5r6epfqqadvs4 | `node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"`        |
-| `MultisigProver` | https://testnet.axelarscan.io/account/axelar1cypnpcqk4zpk32stl7dutv3cdnag0q2v5a7dzfxh4jukrzxagxpqgjl5sr | `node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"` |
+| `VotingVerifier` | https://testnet.axelarscan.io/account/axelar1a4wt84rllhuwpdvymj4tql6cugfsmdmau9ufmzcm329yx9st96eqx05uam | `ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"` |
+| `Gateway`        | https://testnet.axelarscan.io/account/axelar1h5mvyzjjara9a5jk4psayas6pg9c55llay02mmaprzmfk5r6epfqqadvs4 | `ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"`        |
+| `MultisigProver` | https://testnet.axelarscan.io/account/axelar1cypnpcqk4zpk32stl7dutv3cdnag0q2v5a7dzfxh4jukrzxagxpqgjl5sr | `ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9"` |
 
 </details>
 
@@ -27,7 +27,7 @@
 <summary>Register stellar gateway at the Router</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js execute \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for stellar" \
   -d "Register Gateway address for stellar at Router contract" \
@@ -65,7 +65,7 @@ Proposal submitted: 238
 <summary>Register Multisig Prover for stellar</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js execute \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for stellar" \
   -d "Register Multisig Prover address for stellar at Coordinator contract" \
@@ -101,7 +101,7 @@ Proposal submitted: 239
 <summary>Authorize Multisig Prover for stellar</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js execute \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for stellar" \
   -d "Authorize Multisig Prover address for stellar at Multisig contract" \
@@ -139,7 +139,7 @@ Proposal submitted: 240
 <summary>Create pool for stellar in stellar voting verifier</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js execute \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in stellar voting verifier" \
   -d "Create pool for stellar in stellar voting verifier" \
@@ -192,7 +192,7 @@ Proposal submitted: 241
 <summary>Create pool for stellar in axelar multisig</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js execute \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in axelar multisig" \
   -d "Create pool for stellar in axelar multisig" \
@@ -245,7 +245,7 @@ Proposal submitted: 242
 <summary>Register Stellar to ITSHub contract</summary>
 
 ```
-➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ node cosmwasm/submit-proposal.js \
+➜  axelar-contract-deployments git:(release/2025-q1-devnet) ✗ ts-node cosmwasm/submit-proposal.js \
     its-hub-register-chains $CHAIN \
     -t "Register $CHAIN on ITS Hub" \
     -d "Register $CHAIN on ITS Hub" \
@@ -295,7 +295,7 @@ https://testnet.axelarscan.io/proposal/243
 
 | Ops             | TX                                                                                                          | CMD                              |
 | --------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `Rotate Signer` | https://stellar.expert/explorer/testnet/tx/1826e00ce3856e9b25711d9168a4d43f4149b4f551d7b0a96ac961de2194f842 | `node stellar/gateway.js rotate` |
+| `Rotate Signer` | https://stellar.expert/explorer/testnet/tx/1826e00ce3856e9b25711d9168a4d43f4149b4f551d7b0a96ac961de2194f842 | `ts-node stellar/gateway.js rotate` |
 
 </details>
 
@@ -303,7 +303,7 @@ https://testnet.axelarscan.io/proposal/243
 <summary>Trust All EVM Chains on Stellar</summary>
 
 ```
-node stellar/its.js add-trusted-chains all
+ts-node stellar/its.js add-trusted-chains all
 Wallet address: GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3
 
 Wallet balances: 9962.4203987 XLM
@@ -513,7 +513,7 @@ Successfully added trusted chain: stellar-2025-q1
 <summary>Untrust previous Stellar chain</summary>
 
 ```
-node stellar/its.js remove-trusted-chains stellar-2024-q4
+ts-node stellar/its.js remove-trusted-chains stellar-2024-q4
 Wallet address: GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3
 
 Wallet balances: 9955.3214594 XLM

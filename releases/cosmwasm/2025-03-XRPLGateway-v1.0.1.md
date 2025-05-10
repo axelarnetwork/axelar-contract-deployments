@@ -81,7 +81,7 @@ shasum -a 256 $ARTIFACT_PATH/xrpl_gateway.wasm | grep $CHECKSUM
 4. Store `XRPLGateway` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js store \
+ts-node cosmwasm/submit-proposal.js store \
   -c XrplGateway \
   -t "Upload XRPLGateway contract v1.0.1" \
   -d "Upload XRPLGateway contract v1.0.1" \
@@ -93,7 +93,7 @@ node cosmwasm/submit-proposal.js store \
 6. Migrate `XRPLGateway` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c XrplGateway \
   -t "Migrate XrplGateway to v1.0.1" \
   -d "Migrate XrplGateway to v1.0.1" \

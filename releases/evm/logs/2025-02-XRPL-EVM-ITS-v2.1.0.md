@@ -1,5 +1,5 @@
 ```bash
-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ```text
@@ -131,5 +131,5 @@ Deployed Interchain Token Factory Proxy at 0x83a93500d23Fbc3e82B410aD07A6a9F7A06
 ```
 
 ```bash
-node evm/its.js set-trusted-chains xrpl-evm hub -n all --skipChains xrpl-evm
+ts-node evm/its.js set-trusted-chains xrpl-evm hub -n all --skipChains xrpl-evm
 ```

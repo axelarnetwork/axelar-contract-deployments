@@ -100,19 +100,19 @@ CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based 
 1. Instantiate `VotingVerifier`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 2. Instantiate `Gateway`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 3. Instantiate `MultisigProver`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 4. Set environment variables
@@ -150,7 +150,7 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 5. Register stellar gateway at the Router
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for stellar" \
   -d "Register Gateway address for stellar at Router contract" \
@@ -190,7 +190,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
 6. Register prover contract on coordinator
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for stellar" \
   -d "Register Multisig Prover address for stellar at Coordinator contract" \
@@ -207,7 +207,7 @@ node cosmwasm/submit-proposal.js execute \
 7. Authorize Stellar Multisig prover on Multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for stellar" \
   -d "Authorize Multisig Prover address for stellar at Multisig contract" \
@@ -243,7 +243,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `920000000`         |
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in stellar voting verifier" \
   -d "Create pool for stellar in stellar voting verifier" \
@@ -267,7 +267,7 @@ node cosmwasm/submit-proposal.js execute \
 9. Create reward pool for multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in axelar multisig" \
   -d "Create pool for stellar in axelar multisig" \
@@ -324,7 +324,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
 # Check reward pool to confirm funding worked
-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
 13. Create genesis verifier set

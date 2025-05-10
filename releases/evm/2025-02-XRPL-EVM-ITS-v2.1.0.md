@@ -46,13 +46,13 @@ CHAINS=xrpl-evm
 ### Devnet Amplifier
 
 ```bash
-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -64,7 +64,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [XRPL EVM GMP Amplifier](../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
 
 ```bash
-node cosmwasm/submit-proposal.js \
+ts-node cosmwasm/submit-proposal.js \
     its-hub-register-chains $CHAIN \
     -t "Register $CHAIN on ITS Hub" \
     -d "Register $CHAIN on ITS Hub" \
@@ -77,7 +77,7 @@ node cosmwasm/submit-proposal.js \
 Set XRPL EVM as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-node evm/its.js set-trusted-chains $CHAIN hub -n all
+ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
 ## Link XRP token
@@ -85,7 +85,7 @@ node evm/its.js set-trusted-chains $CHAIN hub -n all
 - Register XRP token metadata with ITS Hub.
 
 ```bash
-node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+ts-node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
 ```
 
 - Submit `linkToken` msg from XRPL to XRPL EVM with the XRP token address as the destination token address.
@@ -93,7 +93,7 @@ node evm/its.js register-token-metadata 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEE
 - Query the linked token manager address for the XRP token.
 
 ```bash
-node evm/its.js token-manager-address [tokenId]
+ts-node evm/its.js token-manager-address [tokenId]
 ```
 
 - The XRP token mint permission should then be transferred to the token manager.
@@ -105,21 +105,21 @@ The following checks should be performed after the rollout.
 - Run post-deployment checks.
 
 ```bash
-node evm/its.js checks -n $CHAIN -y
+ts-node evm/its.js checks -n $CHAIN -y
 ```
 
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
 # Create a token on chain. Substitute the `wallet` below with the deployer key
-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
- node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
+ ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
 
 # Transfer token to remote chain
-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
 
 # Transfer token back from remote chain
-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```
