@@ -26,23 +26,23 @@ async function processCommand(config, chain, options) {
     const argsAxelarDepositService = JSON.stringify({ wrappedSymbol, refundIssuer });
 
     const cmds = [
-        `node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
-        `node evm/deploy-contract.js -c Create3Deployer -m create2`,
-        `node evm/deploy-gateway-v6.2.x.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
-        `node evm/gateway.js --action params`,
-        `node evm/deploy-contract.js -c Operators -m create2`,
-        `node evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args '${argsAxelarGasService}'`,
-        `node evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --args '${argsMultisig}'`,
-        `node evm/deploy-contract.js -c InterchainGovernance -m create3 --args '${argsInterchainGovernance}'`,
-        `node evm/deploy-its.js -s "testSalt" --proxySalt 'testSalt'`,
-        `node evm/gateway.js --action transferMintLimiter`,
-        `node evm/gateway.js --action transferGovernance`,
+        `npm run script evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json`,
+        `npm run script evm/deploy-contract.js -c Create3Deployer -m create2`,
+        `npm run script evm/deploy-gateway-v6.2.x.js -m create3 --keyID ${wallet.address} --mintLimiter ${wallet.address} --governance ${wallet.address}`,
+        `npm run script evm/gateway.js --action params`,
+        `npm run script evm/deploy-contract.js -c Operators -m create2`,
+        `npm run script evm/deploy-upgradable.js -c AxelarGasService -m ${deploymentMethod} --args '${argsAxelarGasService}'`,
+        `npm run script evm/deploy-contract.js -c Multisig -m create3 -s 'testSalt' --args '${argsMultisig}'`,
+        `npm run script evm/deploy-contract.js -c InterchainGovernance -m create3 --args '${argsInterchainGovernance}'`,
+        `npm run script evm/deploy-its.js -s "testSalt" --proxySalt 'testSalt'`,
+        `npm run script evm/gateway.js --action transferMintLimiter`,
+        `npm run script evm/gateway.js --action transferGovernance`,
     ];
 
     if (options.deployDepositService) {
         cmds.push(
-            `node evm/deploy-test-gateway-token.js`,
-            `node evm/deploy-upgradable.js -c AxelarDepositService -m create --salt 'testSalt' --args '${argsAxelarDepositService}'`,
+            `npm run script evm/deploy-test-gateway-token.js`,
+            `npm run script evm/deploy-upgradable.js -c AxelarDepositService -m create --salt 'testSalt' --args '${argsAxelarDepositService}'`,
         );
     }
 

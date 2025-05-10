@@ -111,124 +111,124 @@ jobs:
       ###### Command: Deploy Latest Contract ######
 
       - name: Deploy AxelarOperators
-        run: node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarGasService
-        run: node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarGateway
-        run: node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy InterchainTokenService
-        run: node stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy AxelarExample
-        run: node stellar/deploy-contract deploy AxelarExample --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy AxelarExample --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy Upgrader
-        run: node stellar/deploy-contract deploy Upgrader --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy Upgrader --version ${{ steps.commit_hash.outputs.hash }}
 
       - name: Deploy Multicall
-        run: node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
+        run: npm run script stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
 
       ###### Command: AxelarGateway ######
 
       - name: Gateway Paused
-        run: node stellar/contract.js paused AxelarGateway
+        run: npm run script stellar/contract.js paused AxelarGateway
 
       - name: Gateway Pause
-        run: node stellar/contract.js pause AxelarGateway
+        run: npm run script stellar/contract.js pause AxelarGateway
 
       - name: Gateway Unpause
-        run: node stellar/contract.js unpause AxelarGateway
+        run: npm run script stellar/contract.js unpause AxelarGateway
 
       - name: Gateway Approve
-        run: node stellar/gateway.js approve ${{ steps.env_vars.outputs.sourceChain }} ${{ steps.env_vars.outputs.messageId }} ${{ steps.env_vars.outputs.sourceAddress }} ${{ steps.env_vars.outputs.accountAddress }} ${{ steps.env_vars.outputs.payload }}
+        run: npm run script stellar/gateway.js approve ${{ steps.env_vars.outputs.sourceChain }} ${{ steps.env_vars.outputs.messageId }} ${{ steps.env_vars.outputs.sourceAddress }} ${{ steps.env_vars.outputs.accountAddress }} ${{ steps.env_vars.outputs.payload }}
 
       - name: Gateway Call Contract
-        run: node stellar/gateway.js call-contract ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.data }}
+        run: npm run script stellar/gateway.js call-contract ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.data }}
 
       - name: Gateway Rotate Signers
-        run: node stellar/gateway.js rotate --new-nonce test --signers wallet
+        run: npm run script stellar/gateway.js rotate --new-nonce test --signers wallet
 
       ###### Command: InterchainTokenService ######
 
       - name: ITS Paused
-        run: node stellar/contract.js paused InterchainTokenService
+        run: npm run script stellar/contract.js paused InterchainTokenService
 
       - name: ITS Pause
-        run: node stellar/contract.js pause InterchainTokenService
+        run: npm run script stellar/contract.js pause InterchainTokenService
 
       - name: ITS Unpause
-        run: node stellar/contract.js unpause InterchainTokenService
+        run: npm run script stellar/contract.js unpause InterchainTokenService
 
       - name: Add Trusted Chain
-        run: node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+        run: npm run script stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Remove Trusted Chain
-        run: node stellar/its.js remove-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+        run: npm run script stellar/its.js remove-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Add All Trusted Chains
-        run: node stellar/its.js add-trusted-chains all
+        run: npm run script stellar/its.js add-trusted-chains all
 
       - name: Remove All Trusted Chains
-        run: node stellar/its.js remove-trusted-chains all
+        run: npm run script stellar/its.js remove-trusted-chains all
 
       ###### Command: ITS Example ######
 
       - name: Add Trusted Chains
-        run: node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+        run: npm run script stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Deploy Test Tokens
         run: |
-          node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
-          node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
+          npm run script stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
+          npm run script stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
       - name: Send Token to another chain
-        run: node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
+        run: npm run script stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
 
       ###### Command: ITS Flow Limit ######
 
       - name: ITS Flow Limit
-        run: node stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
+        run: npm run script stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
       - name: ITS Flow Limit Set
-        run: node stellar/its.js set-flow-limit ${{ steps.env_vars.outputs.tokenId }} 1
+        run: npm run script stellar/its.js set-flow-limit ${{ steps.env_vars.outputs.tokenId }} 1
 
       - name: ITS Flow Limit Remove
-        run: node stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
+        run: npm run script stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
       ###### Command: Operators ######
 
       - name: Operator
-        run: node stellar/operators is-operator ${{ steps.env_vars.outputs.accountAddress }}
+        run: npm run script stellar/operators is-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       - name: Add Operator
-        run: node stellar/operators add-operator ${{ steps.env_vars.outputs.accountAddress }}
+        run: npm run script stellar/operators add-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       - name: Remove Operator
-        run: node stellar/operators remove-operator ${{ steps.env_vars.outputs.accountAddress }}
+        run: npm run script stellar/operators remove-operator ${{ steps.env_vars.outputs.accountAddress }}
 
       ###### Command: Operator ######
 
       - name: Operator
-        run: node stellar/contract operator InterchainTokenService
+        run: npm run script stellar/contract operator InterchainTokenService
 
       - name: Transfer Operatorship
-        run: node stellar/contract transfer-operatorship InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
+        run: npm run script stellar/contract transfer-operatorship InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
 
       ###### Command: Owner ######
 
       - name: Owner
-        run: node stellar/contract owner InterchainTokenService
+        run: npm run script stellar/contract owner InterchainTokenService
 
       - name: Transfer Ownership
-        run: node stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
+        run: npm run script stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
 
       ###### Command: Upgrade Contract ######
 
       - name: Upgrade Contract
         run: |
-          node stellar/deploy-contract deploy AxelarOperators --version 1.1.0
-          node stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
+          npm run script stellar/deploy-contract deploy AxelarOperators --version 1.1.0
+          npm run script stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
 
