@@ -113,9 +113,9 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
 Contract wasm binary can be passed by specifiying the path to the contract artifact file or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
--   `npm run script deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-path [contract wasm path] -c [contract name] -e [environment] -n <chain name>`
+-   `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-path [contract wasm path] -c [contract name] -e [environment] -n <chain name>`
 
--   `npm run script deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
+-   `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
@@ -135,18 +135,18 @@ Some of the contracts depend on each other and need to be deployed in a specific
 
 Example deployments with order dependency:
 
-1.  `npm run script deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `npm run script deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "Router" --instantiate2 -e devnet`
-3.  `npm run script deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
-4.  `npm run script deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
-5.  `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "ServiceRegistry" -e devnet`
-6.  `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Rewards" -e devnet`
-7.  `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Coordinator" -e devnet`
-8.  `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Multisig" -e devnet`
-9.  `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "InterchainTokenService" -e devnet`
-10. `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "VotingVerifier" -e devnet -n "avalanche"`
-11. `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Gateway" -e devnet -n "avalanche"`
-12. `npm run script deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "MultisigProver" -e devnet -n "avalanche"`
+1.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "AxelarnetGateway" --instantiate2 -e devnet`
+2.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "Router" --instantiate2 -e devnet`
+3.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
+4.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
+5.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "ServiceRegistry" -e devnet`
+6.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Rewards" -e devnet`
+7.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Coordinator" -e devnet`
+8.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Multisig" -e devnet`
+9.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "InterchainTokenService" -e devnet`
+10. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "VotingVerifier" -e devnet -n "avalanche"`
+11. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Gateway" -e devnet -n "avalanche"`
+12. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "MultisigProver" -e devnet -n "avalanche"`
 
 ### Constant Address Deployment
 
@@ -159,7 +159,7 @@ A salt can be passed with `-s`. If no salt is passed but a salt is needed for co
 On networks where only governance is allowed to upload bytecode or instantiate, the script `submit-proposal` can be used to submit a governance proposal.
 
 ```
-npm run script submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal title> -d <proposal description> --deposit <deposit> [options]
+ts-node submit-proposal.js <command> -m <mnemonic> -e <environment> -t <proposal title> -d <proposal description> --deposit <deposit> [options]
 ```
 
 ### Uploading bytecode through governance
@@ -167,7 +167,7 @@ npm run script submit-proposal.js <command> -m <mnemonic> -e <environment> -t <p
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js store -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+ts-node cosmwasm/submit-proposal.js store -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
 ```
 
 By default, only governance will be able to instantiate the bytecode. To allow other addresses to instantiate the bytecode, pass `--instantiateAddresses [address1],[address2],[addressN]`.
@@ -188,7 +188,7 @@ Prerequisites: Submit a proposal to upload the bytecode as described in the prev
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js instantiate -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000  --fetchCodeId
+ts-node cosmwasm/submit-proposal.js instantiate -c ServiceRegistry -t "Proposal title" -d "Proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000  --fetchCodeId
 ```
 
 Use the option `--fetchCodeId` to retrieve and update the code id from the network by comparing the code hash of the uploaded bytecode with the code hash submitted through the store code proposal mentioned in the previous section.
@@ -199,17 +199,17 @@ Since the instantiation is not executed until the porposal passes, the contract 
 
 Order of execution to satisfy dependencies:
 
-1.  `npm run script cosmwasm/submit-proposal.js instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
-2.  `npm run script cosmwasm/submit-proposal.js instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
-3.  `npm run script cosmwasm/submit-proposal.js instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-4.  `npm run script cosmwasm/submit-proposal.js instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-5.  `npm run script cosmwasm/submit-proposal.js instantiate -c ServiceRegistry -t "ServiceRegistry roposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-6.  `npm run script cosmwasm/submit-proposal.js instantiate -c Rewards -t "Rewards roposal title" -d "Rewards proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-7.  `npm run script cosmwasm/submit-proposal.js instantiate -c Coordinator -t "Coordinator roposal title" -d "Coordinator proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-8.  `npm run script cosmwasm/submit-proposal.js instantiate -c Multisig -t "Multisig roposal title" -d "Multisig proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
-9.  `npm run script cosmwasm/submit-proposal.js instantiate -c VotingVerifier -t "VotingVerifier roposal title" -d "VotingVerifier proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
-10. `npm run script cosmwasm/submit-proposal.js instantiate -c Gateway -t "Gateway roposal title" -d "Gateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
-11. `npm run script cosmwasm/submit-proposal.js instantiate -c MultisigProver -t "MultisigProver roposal title" -d "MultisigProver proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
+1.  `ts-node cosmwasm/submit-proposal.js instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
+2.  `ts-node cosmwasm/submit-proposal.js instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2 --predictOnly`
+3.  `ts-node cosmwasm/submit-proposal.js instantiate -c NexusGateway -t "NexusGateway roposal title" -d "NexusGateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+4.  `ts-node cosmwasm/submit-proposal.js instantiate -c Router -t "Router roposal title" -d "Router proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+5.  `ts-node cosmwasm/submit-proposal.js instantiate -c ServiceRegistry -t "ServiceRegistry roposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+6.  `ts-node cosmwasm/submit-proposal.js instantiate -c Rewards -t "Rewards roposal title" -d "Rewards proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+7.  `ts-node cosmwasm/submit-proposal.js instantiate -c Coordinator -t "Coordinator roposal title" -d "Coordinator proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+8.  `ts-node cosmwasm/submit-proposal.js instantiate -c Multisig -t "Multisig roposal title" -d "Multisig proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y`
+9.  `ts-node cosmwasm/submit-proposal.js instantiate -c VotingVerifier -t "VotingVerifier roposal title" -d "VotingVerifier proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
+10. `ts-node cosmwasm/submit-proposal.js instantiate -c Gateway -t "Gateway roposal title" -d "Gateway proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
+11. `ts-node cosmwasm/submit-proposal.js instantiate -c MultisigProver -t "MultisigProver roposal title" -d "MultisigProver proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000 --instantiate2  --fetchCodeId -y -n "avalanche"`
 
 ### Uploading and instantiating in one step
 
@@ -222,7 +222,7 @@ The command `storeInstantiate` from the `submit-proposal` script, allows uploadi
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
+ts-node cosmwasm/submit-proposal.js storeInstantiate -c ServiceRegistry -t "ServiceRegistry proposal title" -d "ServiceRegistry proposal description" -r $RUN_AS_ACCOUNT --deposit 100000000
 ```
 
 ### Execute a contract through governance proposal
@@ -232,7 +232,7 @@ To submit a governance proposal to execute a contract, use the `submit-proposal`
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
+ts-node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
 ```
 
 ### Register chain on ITS Hub through governance proposal
@@ -269,7 +269,7 @@ Example configuration:
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
+ts-node cosmwasm/submit-proposal.js its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
 ```
 
 ### Submit a proposal to change a parameter
@@ -279,7 +279,7 @@ To submit a governance proposal to change a parameter, use the `submit-proposal`
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js paramChange \
+ts-node cosmwasm/submit-proposal.js paramChange \
 	-t "Set Gateway at Nexus Module" \
 	-d "Proposal to update nexus param gateway address." \
 	--deposit 100000000 \
@@ -299,7 +299,7 @@ To submit a governance proposal to migrate a contract, use the `submit-proposal`
 Example usage:
 
 ```
-npm run script cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c MultisigProver \
   -t "Proposal title" \
   -d "Proposal description" \
@@ -325,20 +325,20 @@ ampd deregister-chain-support <service-name> <chain-name>
 
 3. Update verifier set
 ```bash
-npm run script cosmwasm/rotate-signers.js update-verifier-set <chain-name>
+ts-node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
 ```
 
 4. Using multisig session id output in last command, submit proof on destination chain. For example:
 - Sui:
 ```bash
-npm run script sui/gateway.js submitProof <multisig-session-id>
+ts-node sui/gateway.js submitProof <multisig-session-id>
 ```
 - EVM:
 ```bash
-npm run script evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
+ts-node evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
 ```
 
 4. Confirm verifier rotation
 ```bash
-npm run script cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
+ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
 ```

@@ -23,7 +23,7 @@ Please note that this project currently supports both Javascript and Typescript.
 1. When touching a file or creating a new file, ensure the file's extension is `.ts`
 2. Complete your implementation, and ensure any relevant testing is also in TS
 3. Use types appropriately throughout your implementation. You may type code unrelated to your changes only as necessary
-4. Run `npm run build` to compile the project and ensure your new TS is valid via `npm run script <your_new_script>`
+4. Run `npm run build` to compile the project and ensure your new TS is valid via `ts-node <your_new_script>`
 
 ### Once migration is complete
 

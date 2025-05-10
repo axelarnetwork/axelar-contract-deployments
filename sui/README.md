@@ -27,7 +27,7 @@ sui keytool export --key-identity wallet
 2. Using the script
 
 ```bash
-npm run script sui/generate-keypair.js
+ts-node sui/generate-keypair.js
 ```
 
 Set `PRIVATE_KEY="suiprivkey..."` in your `.env` file. Other private key types are supported via `--privateKeyType` and `--signatureScheme` flags.
@@ -60,7 +60,7 @@ Use the `-e local` (or `ENV=local` in the `.env` config) flag with scripts to ru
 To get test SUI coins to your address via a faucet.
 
 ```bash
-npm run script sui/faucet.js
+ts-node sui/faucet.js
 ```
 
 The following packages need to be deployed in order because they are referenced by other packages.
@@ -68,7 +68,7 @@ The following packages need to be deployed in order because they are referenced 
 Command syntax:
 
 ```bash
-npm run script sui/deploy-contract.js deploy <package name> [--policy <policy>]
+ts-node sui/deploy-contract.js deploy <package name> [--policy <policy>]
 ```
 
 Where the policy can be one of the following:
@@ -81,13 +81,13 @@ Where the policy can be one of the following:
 #### Utils
 
 ```bash
-npm run script sui/deploy-contract.js deploy Utils
+ts-node sui/deploy-contract.js deploy Utils
 ```
 
 ### Version Control
 
 ```bash
-npm run script sui/deploy-contract.js deploy VersionControl
+ts-node sui/deploy-contract.js deploy VersionControl
 ```
 
 ### AxelarGateway
@@ -95,7 +95,7 @@ npm run script sui/deploy-contract.js deploy VersionControl
 -   By querying the signer set from the Amplifier contract (this only works if Amplifier contracts have been setup):
 
 ```bash
-npm run script sui/deploy-contract.js deploy AxelarGateway
+ts-node sui/deploy-contract.js deploy AxelarGateway
 ```
 
 Note: the `minimumRotationDelay` is in `seconds` unit. The default value is `24 * 60 * 60` (1 day).
@@ -105,31 +105,31 @@ Use `--help` flag to see other setup params that can be overridden.
 -   For testing convenience, you can use the secp256k1 wallet as the signer set for the gateway.
 
 ```bash
-npm run script sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
+ts-node sui/deploy-contract.js deploy AxelarGateway --signers wallet --nonce test
 ```
 
 -   You can also provide a JSON object with a full signer set:
 
 ```bash
-npm run script sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
+ts-node sui/deploy-contract.js deploy AxelarGateway -e testnet --signers '{"signers": [{"pub_key": "0x020194ead85b350d90472117e6122cf1764d93bf17d6de4b51b03d19afc4d6302b", "weight": 1}], "threshold": 1, "nonce": "0x0000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
 ### Gas Service
 
 ```bash
-npm run script sui/deploy-contract.js deploy GasService
+ts-node sui/deploy-contract.js deploy GasService
 ```
 
 ### Abi
 
 ```bash
-npm run script sui/deploy-contract.js deploy Abi
+ts-node sui/deploy-contract.js deploy Abi
 ```
 
 ### Operators
 
 ```bash
-npm run script sui/deploy-contract.js deploy Operators
+ts-node sui/deploy-contract.js deploy Operators
 ```
 
 #### Operators Post Deployment
@@ -139,7 +139,7 @@ npm run script sui/deploy-contract.js deploy Operators
 To allow the operator to collect or refund gas, the `GasCollector` cap must be stored in the `Operators` contract:
 
 ```bash
-npm run script sui/operators.js storeCap
+ts-node sui/operators.js storeCap
 ```
 
 ##### Operator Management
@@ -147,37 +147,37 @@ npm run script sui/operators.js storeCap
 Assign `Operator` role to given address:
 
 ```bash
-npm run script sui/operators.js add <operator address>
+ts-node sui/operators.js add <operator address>
 ```
 
 ### Governance
 
 ```bash
-npm run script sui/deploy-contract.js deploy Governance
+ts-node sui/deploy-contract.js deploy Governance
 ```
 
 ### Relayer Discovery
 
 ```bash
-npm run script sui/deploy-contract.js deploy RelayerDiscovery
+ts-node sui/deploy-contract.js deploy RelayerDiscovery
 ```
 
 ### ITS
 
 ```bash
-npm run script sui/deploy-contract.js deploy ITS
+ts-node sui/deploy-contract.js deploy ITS
 ```
 
 ### Squid
 
 ```bash
-npm run script sui/deploy-contract.js deploy Squid
+ts-node sui/deploy-contract.js deploy Squid
 ```
 
 ### Example
 
 ```bash
-npm run script sui/deploy-contract.js deploy Example
+ts-node sui/deploy-contract.js deploy Example
 ```
 
 ## Sync Packages
@@ -202,13 +202,13 @@ This is useful when:
 To deploy `InterchainTokenService`, which depends on other packages, and you don't have the up-to-date `Move.toml` files for all dependencies:
 
 ```bash
-npm run script sui/deploy-contract.js sync
+ts-node sui/deploy-contract.js sync
 ```
 
 This command copies all packages and updates their `Move.toml` files with correct package IDs. Then, you can deploy `InterchainTokenService`:
 
 ```bash
-npm run script sui/deploy-contract.js deploy InterchainTokenService
+ts-node sui/deploy-contract.js deploy InterchainTokenService
 ```
 
 ## Contract Upgrades
@@ -218,7 +218,7 @@ npm run script sui/deploy-contract.js deploy InterchainTokenService
 For example, to update the gateway run the following command:
 
 ```bash
-npm run script sui/deploy-contract.js upgrade AxelarGateway <policy>
+ts-node sui/deploy-contract.js upgrade AxelarGateway <policy>
 ```
 
 policy should be one of the following:
@@ -266,7 +266,7 @@ sui client gas <multisig address>
 Sign transaction block for multisig:
 
 ```bash
-npm run script sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store signature> --action sign --offline
+ts-node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store signature> --action sign --offline
 ```
 
 example txBlock file:
@@ -280,7 +280,7 @@ example txBlock file:
 Combine signature files:
 
 ```bash
-npm run script sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store combined signature> --action combine --offline --signatures <paths to files containing signatures>
+ts-node sui/multisig.js --txBlockPath <path to unsigned tx block> --signatureFilePath <path to store combined signature> --action combine --offline --signatures <paths to files containing signatures>
 ```
 
 Execute combined signature:
@@ -288,7 +288,7 @@ Execute combined signature:
 This command will broadcast the signature to the network
 
 ```bash
-npm run script sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute --combinedSignPath <path to combined signature>
+ts-node sui/multisig.js --txBlockPath <path to unsigned tx block> --action execute --combinedSignPath <path to combined signature>
 ```
 
 use --multisigKey `multisigKey` to override existing multisig info in chains config
@@ -328,21 +328,21 @@ example for adding multisig info to chains config:
 ### Call Contract
 
 ```bash
-npm run script sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+ts-node sui/gateway.js call-contract ethereum 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 ### Pay Gas
 
-The syntax is `npm run script sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
+The syntax is `ts-node sui/gas-service.js payGas --amount <amount> <destinationChain> <destinationAddress> <channelId> <payload>`
 
 ```bash
-npm run script sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
+ts-node sui/gas-service.js payGas --amount 0.1 ethereum 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05 0xba76c6980428A0b10CFC5d8ccb61949677A61233 0x1234
 ```
 
 ### Collect Gas
 
 ```bash
-npm run script sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
+ts-node sui/gas-service.js collectGas --amount 0.1 --receiver <receiver address>
 ```
 
 ### Approve Messages
@@ -350,7 +350,7 @@ npm run script sui/gas-service.js collectGas --amount 0.1 --receiver <receiver a
 If the gateway was deployed using the wallet, you can submit a message approval with it
 
 ```bash
-npm run script sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
+ts-node sui/gateway.js approve --proof wallet --currentNonce test ethereum 0x0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-1 0x4F4495243837681061C4743b74B3eEdf548D56A5 0xa84d27bd6c9680e52e93779b8977bbcb73273b88f52a84d8dd8af1c3301341d7 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
 ### Rotate Gateway Signers
@@ -358,13 +358,13 @@ npm run script sui/gateway.js approve --proof wallet --currentNonce test ethereu
 If gateway was deployed with the wallet as the verifier, and you want to rotate to the Amplifier verifiers, do
 
 ```bash
-npm run script sui/gateway.js rotate --proof wallet --currentNonce test
+ts-node sui/gateway.js rotate --proof wallet --currentNonce test
 ```
 
 If you want to rotate to the wallet again but with a new nonce, do
 
 ```bash
-npm run script sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
+ts-node sui/gateway.js rotate --signers wallet --proof wallet --currentNonce test --newNonce test2
 ```
 
 Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gateway.
@@ -372,7 +372,7 @@ Use the same nonce for `--currentNonce` as the `--nonce` when deploying the gate
 To submit a proof constructed on Amplifier, run the following with the multisig session id,
 
 ```bash
-npm run script sui/gateway.js submitProof [multisig session id]
+ts-node sui/gateway.js submitProof [multisig session id]
 ```
 
 ### Transfer Object
@@ -380,9 +380,9 @@ npm run script sui/gateway.js submitProof [multisig session id]
 Please note shared objects cannot be transferred via this script.
 
 ```bash
-npm run script sui/transfer-object.js --objectId <object id to be transferred> --recipient <recipient address>
+ts-node sui/transfer-object.js --objectId <object id to be transferred> --recipient <recipient address>
 
-npm run script sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
+ts-node sui/transfer-object.js --contractName <Can be checked from config> --objectName <picked from config> --recipient <recipient address>
 ```
 
 ### Coins Management
@@ -390,13 +390,13 @@ npm run script sui/transfer-object.js --contractName <Can be checked from config
 List of coins in the wallet:
 
 ```bash
-npm run script sui/tokens.js list
+ts-node sui/tokens.js list
 ```
 
 Merge the coins:
 
 ```bash
-npm run script sui/tokens.js merge --coin-type <coin type to merge>
+ts-node sui/tokens.js merge --coin-type <coin type to merge>
 ```
 
 If coin type is not provided, it will merge all the coins.
@@ -404,7 +404,7 @@ If coin type is not provided, it will merge all the coins.
 Split the coins:
 
 ```bash
-npm run script sui/tokens.js split --amount <amount> --coin-type <coin type to split> --transfer <recipient address>
+ts-node sui/tokens.js split --amount <amount> --coin-type <coin type to split> --transfer <recipient address>
 ```
 
 Note:
@@ -417,19 +417,19 @@ Note:
 Add trusted chains
 
 ```bash
-npm run script sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
+ts-node sui/its.js add-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 or Add all chains that have ITS contract deployed
 
 ```bash
-npm run script sui/its.js add-trusted-chains all
+ts-node sui/its.js add-trusted-chains all
 ```
 
 Remove trusted chains
 
 ```bash
-npm run script sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
+ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
 ## Examples

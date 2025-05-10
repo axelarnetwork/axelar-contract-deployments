@@ -23,15 +23,15 @@ This document will guide you through testing the ITS (Interchain Token Service) 
 Deploy the contracts with the following commands:
 
 ```bash
-npm run script sui/faucet
-npm run script sui/deploy-contract deploy Utils
-npm run script sui/deploy-contract deploy VersionControl
-npm run script sui/deploy-contract deploy AxelarGateway --signers wallet
-npm run script sui/deploy-contract deploy GasService
-npm run script sui/deploy-contract deploy Abi
-npm run script sui/deploy-contract deploy RelayerDiscovery
-npm run script sui/deploy-contract deploy ITS
-npm run script sui/deploy-contract deploy Example
+ts-node sui/faucet
+ts-node sui/deploy-contract deploy Utils
+ts-node sui/deploy-contract deploy VersionControl
+ts-node sui/deploy-contract deploy AxelarGateway --signers wallet
+ts-node sui/deploy-contract deploy GasService
+ts-node sui/deploy-contract deploy Abi
+ts-node sui/deploy-contract deploy RelayerDiscovery
+ts-node sui/deploy-contract deploy ITS
+ts-node sui/deploy-contract deploy Example
 ```
 
 ### Prepare Parameters
@@ -60,8 +60,8 @@ destinationContractAddress=$(echo $config | jq -r '.sui.contracts.Example.object
 ### Deploy Test Tokens
 
 ```bash
-npm run script sui/its-example deploy-token --origin $symbol $name $decimals
-npm run script sui/its-example deploy-token $emptyTokenSymbol $emptyTokenName $emptyTokenDecimals
+ts-node sui/its-example deploy-token --origin $symbol $name $decimals
+ts-node sui/its-example deploy-token $emptyTokenSymbol $emptyTokenName $emptyTokenDecimals
 ```
 
 This command modifies the token template in the `interchain_token.move` file with the given name, symbol, and decimals. It then deploys the modified token contract and stores the Metadata, TreasuryCap, and TokenId in the config. Finally, it registers the coin on the ITS contract.
@@ -69,10 +69,10 @@ This command modifies the token template in the `interchain_token.move` file wit
 After the token deployment, continue to run the following scripts to prepare additional parameters for the example:
 
 ```bash
-transferInfo=$(npm run script sui/its-example.js print-receive-transfer $symbol $sourceAddress $amount)
+transferInfo=$(ts-node sui/its-example.js print-receive-transfer $symbol $sourceAddress $amount)
 transferPayload=$(echo $transferInfo | jq -r .payload)
 transferPayloadHash=$(echo $transferInfo | jq -r .payloadHash)
-deploymentInfo=$(npm run script sui/its-example.js print-receive-deployment $emptyTokenName $emptyTokenSymbol $emptyTokenDecimals)
+deploymentInfo=$(ts-node sui/its-example.js print-receive-deployment $emptyTokenName $emptyTokenSymbol $emptyTokenDecimals)
 deployPayload=$(echo $deploymentInfo | jq -r .payload)
 deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)
 ```
@@ -82,7 +82,7 @@ deployPayloadHash=$(echo $deploymentInfo | jq -r .payloadHash)
 The trusted address is used to verify the message both incoming and outgoing directions.
 
 ```bash
-npm run script sui/its.js setup-trusted-address $sourceChain $sourceAddress
+ts-node sui/its.js setup-trusted-address $sourceChain $sourceAddress
 ```
 
 ## Token Transfer
@@ -90,7 +90,7 @@ npm run script sui/its.js setup-trusted-address $sourceChain $sourceAddress
 ### Send Token to Gateway
 
 ```bash
-npm run script sui/its-example send-token $symbol $sourceChain $sourceAddress $fee $amount
+ts-node sui/its-example send-token $symbol $sourceChain $sourceAddress $fee $amount
 ```
 
 ### Receive Token
@@ -98,13 +98,13 @@ npm run script sui/its-example send-token $symbol $sourceChain $sourceAddress $f
 1. Approve the gateway to execute the transfer:
 
 ```bash
-npm run script sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sourceAddress $channelId $transferPayloadHash
+ts-node sui/gateway.js approve --proof wallet $sourceChain $transferMessageId $sourceAddress $channelId $transferPayloadHash
 ```
 
 2. Receive the token:
 
 ```bash
-npm run script sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
+ts-node sui/its-example receive-token $sourceChain $transferMessageId $sourceAddress $symbol $transferPayload
 ```
 
 ## Token Deployment
@@ -112,7 +112,7 @@ npm run script sui/its-example receive-token $sourceChain $transferMessageId $so
 ### Send Token Deployment to Gateway
 
 ```bash
-npm run script sui/its-example send-deployment $symbol $sourceChain $fee
+ts-node sui/its-example send-deployment $symbol $sourceChain $fee
 ```
 
 ### Receive Token Deployment
@@ -122,12 +122,12 @@ In this example, we'll use the empty token to receive the deployment because the
 1. Approve the gateway to execute the deployment:
 
 ```bash
-npm run script sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $sourceAddress $channelId $deployPayloadHash
+ts-node sui/gateway.js approve --proof wallet $sourceChain $deployMessageId $sourceAddress $channelId $deployPayloadHash
 ```
 
 2. Receive the token deployment:
 
 ```bash
-npm run script sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
+ts-node sui/its-example receive-deployment $sourceChain $deployMessageId $sourceAddress $emptyTokenSymbol $deployPayload
 
 ```

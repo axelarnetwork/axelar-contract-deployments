@@ -22,16 +22,16 @@ A tutorial can be found [here](https://www.axelar.network/blog/same-address-cros
 Factories have already been deployed on Axelar connected EVM chains. You can deploy your own factories via the following:
 
 ```bash
-npm run script evm/deploy-contract.js -c Create2Deployer -m create
+ts-node evm/deploy-contract.js -c Create2Deployer -m create
 
-npm run script evm/deploy-contract.js -c Create3Deployer -m create2
+ts-node evm/deploy-contract.js -c Create3Deployer -m create2
 ```
 
 ## Axelar Amplifier Gateway
 
 Deploy the Axelar Amplifier Gateway contract. This is the required gateway contract for EVM chains connecting via Axelar's Amplifier protocol.
 
-`npm run script evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
+`ts-node evm/deploy-amplifier-gateway.js -e testnet -n ethereum`
 
 For debugging, you can deploy a gateway with the wallet set as the signer using `--keyID`. An owner can be set via `--owner` as well. It'll default to the deployer and can be transferred to governance later.
 
@@ -40,29 +40,29 @@ For debugging, you can deploy a gateway with the wallet set as the signer using 
 To submit proofs constructed on Amplifier to the gateway, use the following command:
 
 ```bash
-npm run script evm/gateway.js --action submitProof --multisigSessionId [session id]
+ts-node evm/gateway.js --action submitProof --multisigSessionId [session id]
 ```
 
 ## Axelar Gateway (legacy connection)
 
 Deploy the original Axelar gateway contract for legacy consensus-based connection. Set the governance and mint limiter via the `--governance` and `--mintLimiter` flags.
 
-`npm run script evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
+`ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum`
 
 ## Gateway Upgrade
 
 1. When upgrading the gateway, the proxy contract will be reused.
 2. Depending on the upgrade process, Axelar auth and token deployer helper contracts might be reused as well.
-3. `npm run script evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
-4. `npm run script evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
+3. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy` OR
+4. `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --reuseProxy --reuseHelpers`
 5. This sets the new `implementation` in the chain config.
 6. Upgrade to the new implementation contract
-   `npm run script evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
+   `ts-node evm/deploy-gateway-v6.2.x.js -e testnet -n ethereum --upgrade`
 
 ## AxelarGasService and AxelarDepositService
 
 1. Run the following depending on the service,
-   `npm run script evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
+   `ts-node evm/deploy-upgradable.js -e testnet -n ethereum -c AxelarGasService`
 2. Use the `--upgrade` flag to upgrade the contract instead
 
 ## InterchainTokenService
@@ -70,7 +70,7 @@ Deploy the original Axelar gateway contract for legacy consensus-based connectio
 To test the Interchain Token Service deployment
 
 ```bash
-npm run script evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
+ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -m create2
 ```
 
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
@@ -83,7 +83,7 @@ A governance contract is used to manage some contracts such as the AxelarGateway
 1. Generate the governance proposal for Axelar
 
 ```bash
-npm run script evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction schedule --date 2023-11-10T03:00:00 --file proposal.json
+ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction schedule --date 2023-11-10T03:00:00 --file proposal.json
 ```
 
 2. Submit the proposal on Axelar. A min deposit needs to be provided. This can be found via `axelard q gov params`, and `axelard q axelarnet params` (if a higher deposit override is set for the specific contract).
@@ -102,14 +102,14 @@ axelard tx gov vote [proposal-id] [vote-option] --from [wallet] --chain-id [chai
 5. This should be handled by relayers has executed the corresponding GMP calls. If it's not executed automatically, you can find the EVM batch to the chain via Axelarscan, and get the command ID from the batch,and submit the proposal.
 
 ```bash
-npm run script evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction submit --date 2023-12-11T08:45:00 --commandId [commandId]
+ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action [action] --proposalAction submit --date 2023-12-11T08:45:00 --commandId [commandId]
 ```
 
 6. Wait for timelock to pass on the proposal
 7. Execute the proposal
 
 ```bash
-npm run script evm/governance.js -n [chain] --targetContractName AxelarGateway --action upgrade --proposalAction execute
+ts-node evm/governance.js -n [chain] --targetContractName AxelarGateway --action upgrade --proposalAction execute
 ```
 
 8. Verify the governance command went through correctly.
@@ -123,7 +123,7 @@ To decode function calldata:
 1. Run the command below with the calldata being decoded
 
     ```bash
-    npm run script evm/decode.js -c [contractName] --calldata [calldata]
+    ts-node evm/decode.js -c [contractName] --calldata [calldata]
     ```
 
 2. Example output for multicall data with `deployInterchainToken` and `interchainTransfer` calls. `contractName` can be `InterchainTokenService` or `InterchainTokenFactory` depending on which contract the ITS related method is for.
@@ -161,25 +161,25 @@ To decode function calldata:
 ## InterchainGovernance
 
 To update the min deposit on Axelar with a param change proposal, you can generate the proposal via
-`npm run script evm/min-deposit-proposal.js -e mainnet -n all --deposit 1000000`
+`ts-node evm/min-deposit-proposal.js -e mainnet -n all --deposit 1000000`
 
 ## Mock Deployment of Contracts
 
 Test mock deployment of contracts using the `contracts-deployment-test.js` script:
 
 ```bash
-npm run script evm/contracts-deployment-test.js -e <environment> -n <chainNames>
+ts-node evm/contracts-deployment-test.js -e <environment> -n <chainNames>
 ```
 
 For example, to deploy contracts on the Famtom chain in the testnet environment:
 ```bash
-npm run script evm/contracts-deployment-test.js -e testnet -n fantom
+ts-node evm/contracts-deployment-test.js -e testnet -n fantom
 ```
 The script also supports optional flag parameters -y and --deployDepositService, which can also be specified in a .env file under the variables YES and DEPLOY_DEPOSIT_SERVICE.
 
 Example with optional flags
 ```bash
-npm run script evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositService
+ts-node evm/contracts-deployment-test.js -e testnet -n fantom -y --deployDepositService
 ```
 
 ## Contract Verification
@@ -217,26 +217,26 @@ const keys = readJSON(`../axelar-contract-deployments/keys.json`);
 Verify the Axelar gateway contract. `-a [address]` can be optionally specified to override the contract address to verify.
 
 ```bash
-npm run script evm/verify-contract.js -e mainnet -n [chain] -c AxelarGateway --dir /path/to/axelar-cgp-solidity
+ts-node evm/verify-contract.js -e mainnet -n [chain] -c AxelarGateway --dir /path/to/axelar-cgp-solidity
 ```
 
 Verify Axelar wrapped tokens deployed via the gateway (`BurnableMintableCappedERC20` contract) on the chain in appropriate environment. The address will be retrieved from the gateway by default but can be provided explicitly.
 
 ```bash
-npm run script evm/verify-contract.js -e mainnet -n [chain] -c BurnableMintableCappedERC20 --dir /path/to/axelar-cgp-solidity --args axlUSDC
+ts-node evm/verify-contract.js -e mainnet -n [chain] -c BurnableMintableCappedERC20 --dir /path/to/axelar-cgp-solidity --args axlUSDC
 ```
 
 Verify TokenManagerProxy contract for ITS. `--tokenId` must be specified and `--minter` can be optionally specified (otherwise will default to `0x`).
 
 ```bash
-npm run script evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
+ts-node evm/verify-contract.js -e [env] -n [chain] -c TokenManagerProxy --dir /path/to/interchain-token-service --tokenId [tokenId]
 ```
 
 ## Verify Token Ownership requests
 
 Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets/d/1zKH1DINTiz83iXbbZRNRurxxZTaU0r5JS4A1c8b9-9A/edit?resourcekey=&gid=1705825087#gid=1705825087) into a csv format.
 
-`npm run script evm/check-ownership-request.js -f sheet_path.csv`
+`ts-node evm/check-ownership-request.js -f sheet_path.csv`
 
 ## Verify AxelarAmplifierGateway contract.
 `--address` can be optionally specified (otherwise will default to the value from config).
@@ -247,7 +247,7 @@ Download the pending requests [spreadsheet](https://docs.google.com/spreadsheets
 4. Create a keys.json file in root of the folder and add in it: `{"chains": {"<chain_name>>": {"api": "API_KEY"}}}`
 
 ```bash
-npm run script evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGateway --dir /path/to/axelar-gmp-sdk-solidity
+ts-node evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGateway --dir /path/to/axelar-gmp-sdk-solidity
 ```
 
 #### Help
@@ -255,7 +255,7 @@ npm run script evm/verify-contract.js -e [env] -n [chain] -c AxelarAmplifierGate
 To get details of options provided in the command run:
 
 ```bash
-npm run script evm/verify-contract.js --help
+ts-node evm/verify-contract.js --help
 ```
 
 ## Interchain Token Service
@@ -267,7 +267,7 @@ npm run script evm/verify-contract.js --help
 Custom tokens that have already registered with ITS (via `deployTokenManager`) prior to ITS v2.1.0 release can continue being linked to new chains via the following approach. However, we do recommend registering them. Token manager type should be passed in via `--type` flag (e.g. `MINT_BURN`).
 
 ```bash
-npm run script evm/its.js link-token --salt [deploy-salt] [token-id] [destination-chain] [token-address] [type] [operator]
+ts-node evm/its.js link-token --salt [deploy-salt] [token-id] [destination-chain] [token-address] [type] [operator]
 ```
 
 The raw `bytes32` salt can be provided via `--rawSalt [raw-salt]` instead of hashing the provided salt string.

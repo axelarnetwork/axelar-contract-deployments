@@ -15,15 +15,15 @@ Deploy the contracts with the following commands:
 ### Contract Deployment
 
 ```bash
-npm run script sui/faucet
-npm run script sui/deploy-contract deploy Utils
-npm run script sui/deploy-contract deploy VersionControl
-npm run script sui/deploy-contract deploy AxelarGateway --signers wallet
-npm run script sui/deploy-contract deploy GasService
-npm run script sui/deploy-contract deploy Abi
-npm run script sui/deploy-contract deploy RelayerDiscovery
-npm run script sui/deploy-contract deploy ITS
-npm run script sui/deploy-contract deploy Example
+ts-node sui/faucet
+ts-node sui/deploy-contract deploy Utils
+ts-node sui/deploy-contract deploy VersionControl
+ts-node sui/deploy-contract deploy AxelarGateway --signers wallet
+ts-node sui/deploy-contract deploy GasService
+ts-node sui/deploy-contract deploy Abi
+ts-node sui/deploy-contract deploy RelayerDiscovery
+ts-node sui/deploy-contract deploy ITS
+ts-node sui/deploy-contract deploy Example
 ```
 
 ### Prepare Parameters
@@ -49,7 +49,7 @@ Send a messsage from SUI to the destination chain.
 Example:
 
 ```bash
-npm run script sui/gmp.js sendCall $sourceChain $sourceAddress $fee $payload
+ts-node sui/gmp.js sendCall $sourceChain $sourceAddress $fee $payload
 ```
 
 ## Execute Command (Incoming)
@@ -59,7 +59,7 @@ Execute a message from the source chain at SUI application module.
 1. Approve the incoming message
 
 ```bash
-npm run script sui/gateway.js approve --proof wallet $sourceChain $messageId $sourceAddress $destinationId $payloadHash
+ts-node sui/gateway.js approve --proof wallet $sourceChain $messageId $sourceAddress $destinationId $payloadHash
 ```
 
 2. Execute the incoming message
@@ -67,5 +67,5 @@ npm run script sui/gateway.js approve --proof wallet $sourceChain $messageId $so
 This command will execute the message to the deployed test contract.
 
 ```bash
-npm run script sui/gmp.js execute $sourceChain $messageId $sourceAddress $payload
+ts-node sui/gmp.js execute $sourceChain $messageId $sourceAddress $payload
 ```
