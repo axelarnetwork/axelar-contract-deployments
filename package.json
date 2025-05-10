@@ -40,7 +40,6 @@
     "csv-parser": "^3.0.0",
     "path": "^0.12.7",
     "toml": "^3.0.0",
-    "ts-node": "^10.9.2",
     "xrpl": "4.2.5"
   },
   "devDependencies": {
@@ -68,6 +67,7 @@
     "mocha": "^10.2.0",
     "prettier": "^3.3.2",
     "readline-sync": "^1.4.10",
+    "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.8.3"
   },
