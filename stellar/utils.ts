@@ -80,11 +80,11 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     command.addOption(new Option('-v, --verbose', 'verbose output').default(false));
     command.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
 
-    if (!options.ignorePrivateKey) {
+    if (options && !options.ignorePrivateKey) {
         command.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     }
 
-    if (options.address) {
+    if (options && options.address) {
         command.addOption(new Option('--address <address>', 'override contract address'));
     }
 
@@ -102,7 +102,7 @@ async function buildTransaction(operation, server, wallet, networkType, options:
         .setTimeout(options.timeout || 30)
         .build();
 
-    if (options.verbose) {
+    if (options && options.verbose) {
         printInfo('Tx', builtTransaction.toXDR());
     }
 
@@ -120,7 +120,7 @@ const prepareTransaction = async (operation, server, wallet, networkType, option
 
     preparedTransaction.sign(wallet);
 
-    if (options.verbose) {
+    if (options && options.verbose) {
         printInfo('Signed tx', preparedTransaction.toEnvelope().toXDR('base64'));
     }
 
@@ -135,7 +135,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         const sendResponse = await server.sendTransaction(tx);
         printInfo(`${action} tx`, sendResponse.hash);
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
         }
 
@@ -155,7 +155,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
             retries -= 1;
         }
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction response', JSON.stringify(getResponse));
         }
 
@@ -164,7 +164,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
-        if (options.nativePayment) return;
+        if (options && options.nativePayment) return;
 
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
@@ -175,7 +175,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         const transactionMeta = getResponse.resultMetaXdr;
         const returnValue = transactionMeta.v3().sorobanMeta().returnValue();
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction result', returnValue.value());
         }
 
@@ -189,13 +189,12 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
 async function broadcast(operation, wallet, chain, action, options: Options, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
-    if (options.nativePayment) {
+    if (options && options.nativePayment) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
-
-    if (options.estimateCost) {
+    if (options && options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
@@ -327,7 +326,7 @@ const getAmplifierVerifiers = async (config, chain) => {
 };
 
 const getNewSigners = async (wallet, config, chain, options) => {
-    if (options.signers === 'wallet') {
+    if (options && options.signers === 'wallet') {
         return {
             nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
             signers: [
@@ -452,7 +451,7 @@ function getContractArtifactPath(artifactPath, contractName) {
 }
 
 const getContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) {
+    if (options && options.artifactPath) {
         if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
             return getContractArtifactPath(options.artifactPath, contractName);
         }
@@ -460,7 +459,7 @@ const getContractCodePath = async (options, contractName) => {
         return options.artifactPath;
     }
 
-    if (options.version) {
+    if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
         return downloadContractCode(url, contractName, options.version);
     }
@@ -469,9 +468,9 @@ const getContractCodePath = async (options, contractName) => {
 };
 
 const getUploadContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) return options.artifactPath;
+    if (options && options.artifactPath) return options.artifactPath;
 
-    if (options.version) {
+    if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
         return downloadContractCode(url, contractName, options.version);
     }
