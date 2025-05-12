@@ -3,14 +3,14 @@
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
 | **Created By** | @cjcobb23 <cj@interoplabs.io>         |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io, @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | Deployed              | 2025-05-08 |
 | **Testnet**          | Deployed              | 2025-05-08 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Deployed              | 2025-05-12 |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v1.2.1)
 
@@ -25,7 +25,7 @@ Changes in this release:
 - This rollout upgrades the amplifier multisig contract from `v1.2.0` to `v1.2.1`
 - There is a no state migration involved
 
-1. Upload new ITS Hub contract
+1. Upload new Multisig contract
 
 | Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
