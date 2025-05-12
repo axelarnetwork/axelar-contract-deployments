@@ -1,19 +1,5 @@
 {
   "chains": {
-    "solana-devnet": {
-      "name": "Solana Devnet",
-      "axelarId": "solana-devnet",
-      "rpc": "https://api.devnet.solana.com",
-      "tokenSymbol": "SOL",
-      "decimals": 9,
-      "confirmations": 1,
-      "finality": "finalized",
-      "approxFinalityWaitTime": 13,
-      "chainType": "svm",
-      "explorer": {
-        "name": "solscan",
-        "url": "https://solscan.io/?cluster=devnet",
-      },
     "core-avalanche": {
       "name": "Avalanche Fuji",
       "axelarId": "core-avalanche",
