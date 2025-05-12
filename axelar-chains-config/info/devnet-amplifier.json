@@ -1783,6 +1783,36 @@
         "codeId": 1407,
         "instantiateProposalId": "991",
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
+      },
+      "StacksGateway": {
+        "stacks": {
+
+        }
+      },
+      "StacksVotingVerifier": {
+        "stacks": {
+          "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-storage",
+          "votingThreshold": ["2", "3"],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stacks",
+          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
+        }
+      },
+      "StacksMultisigProver": {
+        "stacks": {
+          "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "adminAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "signingThreshold": ["2", "3"],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 1,
+          "encoder": "stacks",
+          "keyType": "ecdsa",
+          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
+        }
       }
     },
     "axelarId": "axelar",
