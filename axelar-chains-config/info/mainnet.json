@@ -3159,8 +3159,8 @@
         "storeCodeProposalCodeHash": "36c758c8e36951369ff2b5f9590485edab6c302e7c1b385415ecc6e08185d738",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
-        "lastUploadedCodeId": 15,
-        "codeId": 25,
+        "lastUploadedCodeId": 29,
+        "codeId": 29,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
         "stellar": {
           "maxUintBits": 127,
