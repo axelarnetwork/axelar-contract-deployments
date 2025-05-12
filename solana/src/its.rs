@@ -18,207 +18,709 @@ use crate::utils::{
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    #[clap(long_about = "Initialize the ITS program")]
+    /// Initialize the Interchain Token Service (ITS) on Solana
     Init(InitArgs),
 
-    #[clap(long_about = "Pause ITS")]
+    /// Pause the Interchain Token Service on Solana, blocking incoming GMP calls and
+    /// custom/canonical token registration
     Pause,
 
-    #[clap(long_about = "Unpause ITS")]
+    /// Unpause the Interchain Token Service on Solana, allowing incoming GMP calls and
+    /// custom/canonical token registration
+    /// registration
     Unpause,
 
-    #[clap(long_about = "Add a new trusted chain to ITS")]
+    /// Whitelists a chain on the Interchain Token Service
     SetTrustedChain(TrustedChainArgs),
 
-    #[clap(long_about = "Remove an existing trusted chain from ITS")]
+    /// Removes a chain from the Interchain Token Service whitelist
     RemoveTrustedChain(TrustedChainArgs),
 
-    #[clap(long_about = "Approve deploying a remote interchain token with a specific minter")]
+    /// Approve deploying a remote interchain token with a specific minter
     ApproveDeployRemoteInterchainToken(ApproveDeployRemoteInterchainTokenArgs),
 
-    #[clap(long_about = "Revoke approval for deploying a remote interchain token")]
+    /// Revoke approval for deploying a remote interchain token
     RevokeDeployRemoteInterchainToken(RevokeDeployRemoteInterchainTokenArgs),
 
-    #[clap(long_about = "Register a canonical token as an interchain token")]
+    /// Register a canonical token as an interchain token
     RegisterCanonicalInterchainToken(RegisterCanonicalInterchainTokenArgs),
 
-    #[clap(long_about = "Deploy a canonical interchain token on a remote chain")]
+    /// Deploy a canonical interchain token on a remote chain
     DeployRemoteCanonicalInterchainToken(DeployRemoteCanonicalInterchainTokenArgs),
 
-    #[clap(long_about = "Deploy a new interchain token")]
+    /// Deploy a new interchain token on Solana
     DeployInterchainToken(DeployInterchainTokenArgs),
 
-    #[clap(long_about = "Deploy an existing interchain token to a remote chain")]
+    /// Deploy an existing interchain token to a remote chain
     DeployRemoteInterchainToken(DeployRemoteInterchainTokenArgs),
 
-    #[clap(
-        long_about = "Deploy an existing interchain token to a remote chain with a specific minter"
-    )]
+    /// Deploy an existing interchain token to a remote chain with a specific minter
     DeployRemoteInterchainTokenWithMinter(DeployRemoteInterchainTokenWithMinterArgs),
 
-    #[clap(long_about = "Register token metadata with the ITS hub")]
+    /// Register token metadata with the Interchain Token Service Hub
     RegisterTokenMetadata(RegisterTokenMetadataArgs),
 
-    #[clap(long_about = "Register a custom token with ITS")]
+    /// Register a custom token with the Interchain Token Service
     RegisterCustomToken(RegisterCustomTokenArgs),
 
-    #[clap(long_about = "Link a local token to a remote token")]
+    /// Link a local token to a remote token
     LinkToken(LinkTokenArgs),
 
-    #[clap(long_about = "Transfer interchain tokens to a remote chain")]
+    /// Transfer interchain tokens
     InterchainTransfer(InterchainTransferArgs),
 
-    #[clap(long_about = "Transfer interchain tokens and call a contract on the remote chain")]
+    /// Transfer interchain tokens to a contract and call it
     CallContractWithInterchainToken(CallContractWithInterchainTokenArgs),
 
-    #[clap(
-        long_about = "Transfer interchain tokens and call a contract on the remote chain using offchain data"
-    )]
+    /// Transfer interchain tokens to a contract and call it using offchain data (recommended for
+    /// payloads that exceed the Solana transaction size limit)
     CallContractWithInterchainTokenOffchainData(CallContractWithInterchainTokenOffchainDataArgs),
 
-    #[clap(long_about = "Set the flow limit for a token manager")]
+    /// Set the flow limit for an interchain token
     SetFlowLimit(SetFlowLimitArgs),
 
-    #[clap(long_about = "Transfer ITS operatorship")]
+    /// Transfer the Interchain Token Service operatorship to another account
     TransferOperatorship(TransferOperatorshipArgs),
 
-    #[clap(long_about = "Propose ITS operatorship transfer")]
+    /// Pose transfer of operatorship of the Interchain Token Service to another account
     ProposeOperatorship(TransferOperatorshipArgs), // Uses same args as transfer
 
-    #[clap(long_about = "Accept ITS operatorship transfer")]
+    /// Accept an existing proposal for the transfer of operatorship of the Interchain Token
+    /// Service from another account
     AcceptOperatorship(AcceptOperatorshipArgs),
 
-    #[clap(subcommand, long_about = "Manage Token Managers")]
+    /// TokenManager specific commands
+    #[clap(subcommand)]
     TokenManager(TokenManagerCommand),
 
-    #[clap(subcommand, long_about = "Manage Interchain Tokens")]
+    /// Interchain Token specific commands
+    #[clap(subcommand)]
     InterchainToken(InterchainTokenCommand),
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum TokenManagerCommand {
-    #[clap(long_about = "Set the flow limit for a token manager")]
+    /// Set the flow limit for an Interchain Token on a TokenManager
     SetFlowLimit(TokenManagerSetFlowLimitArgs),
-    #[clap(long_about = "Add a flow limiter role to an account for a token manager")]
+
+    /// Add the flow limiter role on a TokenManager to an account
     AddFlowLimiter(TokenManagerAddFlowLimiterArgs),
-    #[clap(long_about = "Remove a flow limiter role from an account for a token manager")]
+
+    /// Remove the flow limiter role on a TokenManager from an account
     RemoveFlowLimiter(TokenManagerRemoveFlowLimiterArgs),
-    #[clap(long_about = "Transfer operatorship of a token manager")]
+
+    /// Transfer operatorship of a TokenManager to another account
     TransferOperatorship(TokenManagerTransferOperatorshipArgs),
-    #[clap(long_about = "Propose operatorship transfer for a token manager")]
+
+    /// Porpose transfer of operatorship of a TokenManager to another account
     ProposeOperatorship(TokenManagerProposeOperatorshipArgs),
-    #[clap(long_about = "Accept operatorship transfer for a token manager")]
+
+    /// Accept an existing proposal for the transfer of operatorship of a TokenManager from another account
     AcceptOperatorship(TokenManagerAcceptOperatorshipArgs),
-    #[clap(long_about = "Hand over mint authority from payer to token manager")]
+
+    /// Handover mint authority of an SPL token to the TokenManager
     HandoverMintAuthority(TokenManagerHandoverMintAuthorityArgs),
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerSetFlowLimitArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The flow limit to set for the Interchain Token
     #[clap(long)]
     flow_limit: u64,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerAddFlowLimiterArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to add as a flow limiter
     #[clap(long)]
     flow_limiter: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerRemoveFlowLimiterArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to remove as a flow limiter
     #[clap(long)]
     flow_limiter: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerTransferOperatorshipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to transfer operatorship to
     #[clap(long)]
     to: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerProposeOperatorshipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to propose operatorship transfer to
     #[clap(long)]
     to: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerAcceptOperatorshipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to accept operatorship transfer from
     #[clap(long)]
     from: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct TokenManagerHandoverMintAuthorityArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The mint whose authority will be handed over to the TokenManager
     #[clap(long)]
     mint: Pubkey,
-    /// The token program used for the mint (spl_token or spl_token_2022).
+
+    /// The token program which owns the mint (spl_token or spl_token_2022).
     #[clap(long, value_parser = parse_token_program)]
     token_program: Pubkey,
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum InterchainTokenCommand {
-    #[clap(long_about = "Mint interchain tokens (requires minter role)")]
+    /// Mint interchain tokens (requires minter role)
     Mint(InterchainTokenMintArgs),
-    #[clap(long_about = "Transfer mintership for an interchain token")]
+
+    /// Transfer mintership of an interchain token (requires minter role)
     TransferMintership(InterchainTokenTransferMintershipArgs),
-    #[clap(long_about = "Propose mintership transfer for an interchain token")]
+
+    /// Propose mintership transfer for an interchain token (requires minter role)
     ProposeMintership(InterchainTokenProposeMintershipArgs),
-    #[clap(long_about = "Accept mintership transfer for an interchain token")]
+
+    /// Accept mintership transfer for an interchain token (requires minter role)
     AcceptMintership(InterchainTokenAcceptMintershipArgs),
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenMintArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The mint account associated with the Interchain Token
     #[clap(long)]
     mint: Pubkey,
+
+    /// The token account to which the tokens will be minted
     #[clap(long)]
     to: Pubkey,
-    /// The token program used for the mint (spl_token or spl_token_2022).
+
+    /// The token program which owns the the mint (spl_token or spl_token_2022).
     #[clap(long, value_parser = parse_token_program)]
     token_program: Pubkey,
+
+    /// The amount of tokens to mint
     #[clap(long)]
     amount: u64,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenTransferMintershipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to which the minter role will be transferred
     #[clap(long)]
     to: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenProposeMintershipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account to which the minter role transfer will be proposed
     #[clap(long)]
     to: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct InterchainTokenAcceptMintershipArgs {
+    /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
+
+    /// The account from which the minter role transfer proposal will be accepted
+    #[clap(long)]
+    from: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InitArgs {
+    /// The operator account for the Interchain Token Service
+    #[clap(short, long)]
+    operator: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct SetPauseStatusArgs {
+    /// The pause status to set for the Interchain Token Service
+    #[clap(short, long, required = true)]
+    paused: bool,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TrustedChainArgs {
+    /// The name of the chain to set as trusted
+    #[clap(short, long)]
+    chain_name: String,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct ApproveDeployRemoteInterchainTokenArgs {
+    /// The account authorized to deploy the remote interchain token
+    #[clap(long)]
+    deployer: Pubkey,
+
+    /// The salt for the approval
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The chain which the remote interchain token will be deployed on
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address to receive the minter role on the token deployed on destination chain
+    #[clap(long)]
+    destination_minter: String,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct RevokeDeployRemoteInterchainTokenArgs {
+    /// The account that was initially authorized to deploy the remote interchain token
+    #[clap(long)]
+    deployer: Pubkey,
+
+    /// The salt for the approval
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The chain which the remote interchain token would be deployed on
+    #[clap(long)]
+    destination_chain: String,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct RegisterCanonicalInterchainTokenArgs {
+    /// The mint account of the canonical token
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The token program which owns the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct DeployRemoteCanonicalInterchainTokenArgs {
+    /// The mint account of the canonical token
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The chain which the remote interchain token will be deployed on
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct DeployInterchainTokenArgs {
+    /// The salt used to derive the interchain token id
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The name of the interchain token
+    #[clap(long)]
+    name: String,
+
+    /// The symbol of the interchain token
+    #[clap(long)]
+    symbol: String,
+
+    /// The number of decimals for the interchain token
+    #[clap(long)]
+    decimals: u8,
+
+    /// Initial supply of the interchain token
+    #[clap(long)]
+    initial_supply: u64,
+
+    /// Optional mint account for the interchain token. Required if initial_supply is zero
+    #[clap(long)]
+    minter: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct DeployRemoteInterchainTokenArgs {
+    /// The salt used to derive the interchain token id
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The chain which the remote interchain token will be deployed on
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct DeployRemoteInterchainTokenWithMinterArgs {
+    /// The salt used to derive the interchain token id
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The account that has the minter role on the interchain token on Solana
+    #[clap(long)]
+    minter: Pubkey,
+
+    /// The chain which the remote interchain token will be deployed on
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address to receive the minter role on the token deployed on destination chain
+    #[clap(long)]
+    destination_minter: String,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct RegisterTokenMetadataArgs {
+    /// The mint account being registered whose metadata should be registered
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The token program which owns the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct RegisterCustomTokenArgs {
+    /// The salt used to derive the interchain token id
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The mint to register
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The TokenManager type to use for this token
+    #[clap(long, value_parser = parse_token_manager_type)]
+    token_manager_type: state::token_manager::Type,
+
+    /// The token program which owns the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+
+    /// An optional account to receive the operator role on the TokenManager associated with the token
+    #[clap(long)]
+    operator: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct LinkTokenArgs {
+    /// The salt used to derive the interchain token id
+    #[clap(long, value_parser = hash_salt)]
+    salt: [u8; 32],
+
+    /// The chain on which the token should be linked
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address of the token on the destination chain to link
+    #[clap(long, value_parser = parse_hex_vec)]
+    destination_token_address: Vec<u8>,
+
+    /// The TokenManager type to use for this token
+    #[clap(long, value_parser = parse_token_manager_type)]
+    token_manager_type: state::token_manager::Type,
+
+    /// Additional arguments for the link, depending on the chain specific implementation
+    #[clap(long, value_parser = parse_hex_vec)]
+    link_params: Vec<u8>,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct InterchainTransferArgs {
+    /// The token account from which tokens should transferred
+    #[clap(long)]
+    source_account: Pubkey,
+
+    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
+    /// set, tries to use the TokenManager PDA.
+    #[clap(long)]
+    authority: Option<Pubkey>,
+
+    /// The token id of the Interchain Token
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+
+    /// The chain to which the tokens should be transferred
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address on the destination chain to which the tokens should be transferred
+    #[clap(long)]
+    destination_address: String,
+
+    /// The amount of tokens to transfer
+    #[clap(long)]
+    amount: u64,
+
+    /// The mint account associated with the Interchain Token
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The token program which owns the mint (spl_token or spl_token_2022).
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+
+    /// Optional timestamp for the transaction. If not provided, the current time will be used.
+    /// This is used to track the token flow. Attention must be paid when generating the
+    /// transaction for offline signing, when this value should be set to the expected time the
+    /// transaction will be broadcasted.
+    #[clap(long)]
+    timestamp: Option<i64>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct CallContractWithInterchainTokenArgs {
+    /// The token account from which tokens should transferred
+    #[clap(long)]
+    source_account: Pubkey,
+
+    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
+    /// set, tries to use the TokenManager PDA.
+    #[clap(long)]
+    authority: Option<Pubkey>,
+
+    /// The token id of the Interchain Token
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+
+    /// The chain to which the tokens should be transferred
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address on the destination chain to which the tokens should be transferred and data
+    /// sent
+    #[clap(long)]
+    destination_address: String,
+
+    /// The amount of tokens to transfer
+    #[clap(long)]
+    amount: u64,
+
+    /// The mint account associated with the Interchain Token
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The call data to be sent to the contract on the destination chain
+    #[clap(long, value_parser = parse_hex_vec)]
+    data: Vec<u8>,
+
+    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+
+    /// Optional timestamp for the transaction. If not provided, the current time will be used.
+    /// This is used to track the token flow. Attention must be paid when generating the
+    /// transaction for offline signing, when this value should be set to the expected time the
+    /// transaction will be broadcasted.
+    #[clap(long)]
+    timestamp: Option<i64>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
+    /// The token account from which tokens should transferred
+    #[clap(long)]
+    source_account: Pubkey,
+
+    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
+    /// set, tries to use the TokenManager PDA.
+    #[clap(long)]
+    authority: Option<Pubkey>,
+
+    /// The token id of the Interchain Token
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+
+    /// The chain to which the tokens should be transferred
+    #[clap(long)]
+    destination_chain: String,
+
+    /// The address on the destination chain to which the tokens should be transferred and data
+    /// sent
+    #[clap(long)]
+    destination_address: String,
+
+    /// The amount of tokens to transfer
+    #[clap(long)]
+    amount: u64,
+
+    /// The mint account associated with the Interchain Token
+    #[clap(long)]
+    mint: Pubkey,
+
+    /// The call data to be sent to the contract on the destination chain
+    #[clap(long, value_parser = parse_hex_vec)]
+    data: Vec<u8>,
+
+    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
+    #[clap(long, value_parser = parse_token_program)]
+    token_program: Pubkey,
+
+    /// The amount of gas to pay for the cross-chain transaction
+    #[clap(long)]
+    gas_value: u64,
+
+    /// Optional AxelarGasService program id on Solana
+    #[clap(long)]
+    gas_service: Option<Pubkey>,
+
+    /// Optional AxelarGasService config account on Solana
+    #[clap(long)]
+    gas_config_account: Option<Pubkey>,
+
+    /// Optional timestamp for the transaction. If not provided, the current time will be used.
+    /// This is used to track the token flow. Attention must be paid when generating the
+    /// transaction for offline signing, when this value should be set to the expected time the
+    /// transaction will be broadcasted.
+    #[clap(long)]
+    timestamp: Option<i64>,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct SetFlowLimitArgs {
+    /// The token id of the Interchain Token
+    #[clap(long, value_parser = parse_hex_bytes32)]
+    token_id: [u8; 32],
+
+    /// The flow limit to set for the Interchain Token
+    #[clap(long)]
+    flow_limit: u64,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct TransferOperatorshipArgs {
+    /// The account to which the operatorship will be transferred
+    #[clap(long)]
+    to: Pubkey,
+}
+
+#[derive(Parser, Debug)]
+pub(crate) struct AcceptOperatorshipArgs {
+    /// The account from which the operatorship will be accepted
     #[clap(long)]
     from: Pubkey,
 }
@@ -292,283 +794,6 @@ fn try_infer_gas_service_config_account(
             Ok(id)
         }
     }
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct InitArgs {
-    #[clap(short, long)]
-    operator: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct SetPauseStatusArgs {
-    #[clap(short, long, required = true)]
-    paused: bool,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct TrustedChainArgs {
-    #[clap(short, long)]
-    chain_name: String,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct ApproveDeployRemoteInterchainTokenArgs {
-    #[clap(long)]
-    deployer: Pubkey,
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    destination_minter: String,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct RevokeDeployRemoteInterchainTokenArgs {
-    #[clap(long)]
-    deployer: Pubkey,
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct RegisterCanonicalInterchainTokenArgs {
-    #[clap(long)]
-    mint: Pubkey,
-
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct DeployRemoteCanonicalInterchainTokenArgs {
-    #[clap(long)]
-    mint: Pubkey,
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct DeployInterchainTokenArgs {
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    name: String,
-    #[clap(long)]
-    symbol: String,
-    #[clap(long)]
-    decimals: u8,
-    #[clap(long)]
-    initial_supply: u64,
-    #[clap(long)]
-    minter: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct DeployRemoteInterchainTokenArgs {
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct DeployRemoteInterchainTokenWithMinterArgs {
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    minter: Pubkey,
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    destination_minter: String,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct RegisterTokenMetadataArgs {
-    #[clap(long)]
-    mint: Pubkey,
-
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct RegisterCustomTokenArgs {
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    mint: Pubkey,
-    #[clap(long, value_parser = parse_token_manager_type)]
-    token_manager_type: state::token_manager::Type,
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-    #[clap(long)]
-    operator: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct LinkTokenArgs {
-    #[clap(long, value_parser = hash_salt)]
-    salt: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long, value_parser = parse_hex_vec)]
-    destination_token_address: Vec<u8>,
-    #[clap(long, value_parser = parse_token_manager_type)]
-    token_manager_type: state::token_manager::Type,
-    #[clap(long, value_parser = parse_hex_vec)]
-    link_params: Vec<u8>,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct InterchainTransferArgs {
-    #[clap(long)]
-    source_account: Pubkey,
-    #[clap(long)]
-    authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    destination_address: String,
-    #[clap(long)]
-    amount: u64,
-    #[clap(long)]
-    mint: Pubkey,
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-    #[clap(long)]
-    timestamp: Option<i64>, // Defaults to current time if not provided
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct CallContractWithInterchainTokenArgs {
-    #[clap(long)]
-    source_account: Pubkey,
-    #[clap(long)]
-    authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    destination_address: String,
-    #[clap(long)]
-    amount: u64,
-    #[clap(long)]
-    mint: Pubkey,
-    #[clap(long, value_parser = parse_hex_vec)]
-    data: Vec<u8>,
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-    #[clap(long)]
-    timestamp: Option<i64>, // Defaults to current time if not provided
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
-    #[clap(long)]
-    source_account: Pubkey,
-    #[clap(long)]
-    authority: Option<Pubkey>, // If None, uses TokenManager PDA
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-    #[clap(long)]
-    destination_chain: String,
-    #[clap(long)]
-    destination_address: String,
-    #[clap(long)]
-    amount: u64,
-    #[clap(long)]
-    mint: Pubkey,
-
-    /// Hex string with the calldata to be sent to the contract.
-    #[clap(long, value_parser = parse_hex_vec)]
-    data: Vec<u8>,
-
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-    #[clap(long)]
-    gas_value: u64,
-    #[clap(long)]
-    gas_service: Option<Pubkey>,
-    #[clap(long)]
-    gas_config_account: Option<Pubkey>,
-    #[clap(long)]
-    timestamp: Option<i64>, // Defaults to current time if not provided
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct SetFlowLimitArgs {
-    #[clap(long, value_parser = parse_hex_bytes32)]
-    token_id: [u8; 32],
-    #[clap(long)]
-    flow_limit: u64,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct TransferOperatorshipArgs {
-    #[clap(long)]
-    to: Pubkey,
-}
-
-#[derive(Parser, Debug)]
-pub(crate) struct AcceptOperatorshipArgs {
-    #[clap(long)]
-    from: Pubkey,
 }
 
 pub(crate) async fn build_instruction(

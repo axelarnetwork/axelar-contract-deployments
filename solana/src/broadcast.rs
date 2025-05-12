@@ -1,6 +1,7 @@
-use crate::config::Config;
-use crate::types::{BroadcastArgs, SignedSolanaTransaction};
-use crate::utils::{self, print_transaction_result};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::str::FromStr;
+
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use eyre::eyre;
 use solana_client::{
@@ -17,8 +18,15 @@ use solana_sdk::{
     signature::Signature,
     transaction::{Transaction, TransactionError},
 };
-use std::collections::HashMap;
-use std::str::FromStr;
+
+use crate::config::Config;
+use crate::types::SignedSolanaTransaction;
+use crate::utils::{self, print_transaction_result};
+
+#[derive(Debug, Clone)]
+pub struct BroadcastArgs {
+    pub signed_tx_path: PathBuf,
+}
 
 fn submit_solana_transaction(
     url: &str,

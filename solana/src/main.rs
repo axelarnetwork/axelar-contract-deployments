@@ -12,15 +12,20 @@ mod sign;
 mod types;
 mod utils;
 
+use std::path::PathBuf;
+use std::process::exit;
+
+use broadcast::BroadcastArgs;
 use clap::{Parser, Subcommand};
+use combine::CombineArgs;
 use eyre::eyre;
-use send::sign_and_send_transactions;
+use generate::GenerateArgs;
+use send::{sign_and_send_transactions, SendArgs};
+use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::pubkey::Pubkey;
-use std::path::PathBuf;
-use std::process::exit;
-use types::{SendArgs, SerializableSolanaTransaction};
+use types::SerializableSolanaTransaction;
 
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
@@ -28,26 +33,22 @@ use crate::config::Config;
 use crate::generate::generate_from_transactions;
 use crate::misc::build_message;
 use crate::sign::sign_solana_transaction;
-use crate::types::{BroadcastArgs, CombineArgs, GenerateArgs, SignArgs};
 
+/// A CLI tool to generate, sign (offline/Ledger), combine, and broadcast Solana transactions
+/// related to the Axelar protocol, supporting durable nonces for delayed signing scenarios.
 #[derive(Parser, Debug)]
-#[clap(
-    author,
-    version,
-    about = "Solana Key Management Tool for Offline/Multisig Workflows",
-    long_about = "A CLI tool to generate, sign (offline/Ledger), combine, and broadcast Solana transactions, supporting durable nonces for delayed signing scenarios."
-)]
+#[clap(author, version, about = "Solana Axelar CLI")]
 struct Cli {
     #[clap(subcommand)]
     command: Command,
 
+    /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
+    /// devnet, localhost]",
     #[clap(
         short,
         long,
         env = "URL_OR_MONIKER",
         value_parser = parse_url_or_moniker,
-        help = "URL for Solana's JSON RPC or moniker (or their first letter): \
-                [mainnet-beta, testnet, devnet, localhost]",
     )]
     url: String,
 
@@ -56,52 +57,35 @@ struct Cli {
         short = 'o',
         long = "output-dir",
         default_value = "./output",
-        parse(from_os_str),
-        help = "Directory for output files"
+        parse(from_os_str)
     )]
     output_dir: PathBuf,
 
     /// Directory containing the JSON files for Axelar chains configuration info
     /// (devnet-amplifier.json, mainnet.json, testnet.json, etc)
-    #[clap(short, long, default_value = ".", parse(from_os_str))]
+    #[clap(short, long, default_value = ".", parse(from_os_str), hide(true))]
     chains_info_dir: PathBuf,
 }
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    #[clap(long_about = "")]
+    /// Build and send a transaction to the Solana network.
     Send(SendCommandArgs),
 
-    #[clap(long_about = "Generates an unsigned Solana transaction JSON file. \
-    Use --nonce-account and --nonce-authority for durable nonces, otherwise fetches the latest blockhash. \
-    On mainnet, also creates a *.tar.gz bundle for offline signing.")]
+    /// Generates an unsigned Solana transaction JSON file. Uses --nonce-account and
+    /// --nonce-authority for durable nonces
     Generate(GenerateCommandArgs),
 
     /// Sign an unsigned transaction using a local keypair file or Ledger.
-    #[clap(
-        long_about = "Signs the message bytes from an unsigned transaction JSON file. \
-    Requires a keypair file path (for testnet/devnet) or the signer's public key (for mainnet/Ledger). \
-    Outputs a partial signature JSON file."
-    )]
     Sign(SignCommandArgs),
 
     /// Combine multiple partial signatures into a single file.
-    #[clap(
-        long_about = "Combines multiple partial signature JSON files corresponding to an unsigned transaction. \
-    Validates that all required signers (including fee payer and nonce authority if applicable) have provided signatures. \
-    Outputs a combined signed transaction JSON file."
-    )]
     Combine(CombineCommandArgs),
 
     /// Broadcast a combined signed transaction to the Solana network.
-    #[clap(
-        long_about = "Reconstructs a Solana transaction from a combined signed transaction JSON file \
-    and broadcasts it to the specified network via RPC. Waits for confirmation."
-    )]
     Broadcast(BroadcastCommandArgs),
 
     /// Miscellaneous utilities.
-    #[clap(long_about = "Miscellaneous utilities for working with Axelar payloads and messages.")]
     Misc(MiscCommandArgs),
 }
 
@@ -113,7 +97,6 @@ struct SendCommandArgs {
 
     /// List of signers (Base58 encoded strings). Fee payer should also be added here in case it's
     /// not the default from Solana CLI config.
-    #[clap(long, help = "List of signers (Base58 encoded strings)")]
     signer_keys: Vec<String>,
 
     #[clap(subcommand)]
@@ -144,16 +127,20 @@ struct GenerateCommandArgs {
 
 #[derive(Subcommand, Debug)]
 enum InstructionSubcommand {
-    #[clap(long_about = "Commands for Gateway program", subcommand)]
+    /// Commands to interface with the AxelarGateway program on Solana
+    #[clap(subcommand)]
     Gateway(gateway::Commands),
 
-    #[clap(long_about = "Commands for GasService program", subcommand)]
+    /// Commands to interface with the AxelarGasService program on Solana
+    #[clap(subcommand)]
     GasService(gas_service::Commands),
 
-    #[clap(long_about = "Commands for InterchainTokenService program", subcommand)]
+    /// Commands to interface with the InterchainTokenService program on Solana
+    #[clap(subcommand)]
     Its(its::Commands),
 
-    #[clap(long_about = "Commands for Governance program", subcommand)]
+    /// Commands to interface with the InterchainGovernance program on Solana
+    #[clap(subcommand)]
     Governance(governance::Commands),
 }
 

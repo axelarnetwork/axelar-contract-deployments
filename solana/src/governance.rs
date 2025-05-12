@@ -19,27 +19,31 @@ use crate::{
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    #[clap(long_about = "Initialize the Governance program")]
+    /// Initialize the InterchainGovernance program on Solana
     Init(InitArgs),
 
-    #[clap(long_about = "Execute a scheduled proposal after its ETA")]
+    /// Execute a scheduled proposal after its ETA has elapsed
     ExecuteProposal(ExecuteProposalArgs),
 
-    #[clap(long_about = "Execute an operator-approved proposal (bypasses ETA)")]
+    /// Execute an operator-approved proposal (bypasses ETA)
     ExecuteOperatorProposal(ExecuteOperatorProposalArgs),
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct InitArgs {
+    /// The name of the chain in charge of the governance
     #[clap(short, long)]
     governance_chain: String,
 
+    /// The address of the governance contract on the governance chain
     #[clap(short, long)]
     governance_address: String,
 
+    /// Minimum value (in seconds) for a proposal ETA
     #[clap(short, long)]
     minimum_proposal_eta_delay: u32,
 
+    /// The account to receive the operator role on the Interchain Governance program on Solana
     #[clap(short, long)]
     operator: Pubkey,
 }
@@ -47,29 +51,21 @@ pub(crate) struct InitArgs {
 // Common arguments for proposal execution
 #[derive(Args, Debug, Clone)]
 struct ProposalExecutionBaseArgs {
-    #[clap(long, help = "Target program ID for the proposal's instruction")]
+    /// Target program ID for the proposal's instruction
     target: Pubkey,
 
-    #[clap(
-        long,
-        help = "Amount of native value (lamports) to transfer with the proposal"
-    )]
+    /// The amount of native value (lamports) to transfer with the proposal
     native_value: u64,
 
-    #[clap(
-        long,
-        help = "Base64 encoded call data for the target program instruction"
-    )]
+    /// Call data for the target program instruction
     calldata: String,
 
-    #[clap(
-        long,
-        help = "Account metas required by the target program instruction. Format: 'pubkey:is_signer:is_writable'",
-        value_parser = parse_account_meta_string,
-    )]
+    /// Account metas required by the target program instruction. Format: 'pubkey:is_signer:is_writable'
+    #[clap(long, value_parser = parse_account_meta_string)]
     target_accounts: Vec<AccountMeta>,
 
-    #[clap(long, help = "Optional account to receive the native value transfer")]
+    /// Optional receiver of native value (lamports) for the proposal
+    #[clap(long)]
     native_value_receiver: Option<Pubkey>,
 }
 
@@ -84,19 +80,19 @@ pub(crate) struct ExecuteOperatorProposalArgs {
     #[clap(flatten)]
     base: ProposalExecutionBaseArgs,
 
-    #[clap(long, help = "Operator pubkey (must be a signer of the transaction)")]
+    /// Operator account, must be a signer of the transaction
+    #[clap(long)]
     operator: Pubkey,
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct TransferOperatorshipArgs {
-    #[clap(long, help = "Pubkey of the new operator")]
+    /// The account to receive the operator role on the Interchain Governance program on Solana
+    #[clap(long)]
     new_operator: Pubkey,
 
-    #[clap(
-        long,
-        help = "Pubkey of the current operator (must be a signer of the transaction)"
-    )]
+    /// The account from which the operator role is being transferred
+    #[clap(long)]
     operator: Pubkey,
 }
 

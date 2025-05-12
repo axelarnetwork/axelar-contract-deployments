@@ -1,10 +1,20 @@
-use crate::types::{PartialSignature, SignArgs}; // Removed NetworkType import
-use crate::utils;
+use std::collections::HashSet;
+use std::path::PathBuf;
+use std::str::FromStr;
+
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
-use std::collections::HashSet;
-use std::str::FromStr;
+
+use crate::types::PartialSignature;
+use crate::utils;
+
+#[derive(Debug, Clone)]
+pub struct SignArgs {
+    pub unsigned_tx_path: PathBuf,
+    pub signer_key: String,
+    pub output_signature_path: PathBuf,
+}
 
 fn get_required_signers_from_instructions(
     instructions: &[crate::types::SerializableInstruction],

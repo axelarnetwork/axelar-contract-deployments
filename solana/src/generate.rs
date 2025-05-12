@@ -1,6 +1,16 @@
+use solana_sdk::pubkey::Pubkey;
+
 use crate::config::Config;
-use crate::types::{GenerateArgs, SerializableSolanaTransaction};
+use crate::types::SerializableSolanaTransaction;
 use crate::utils::{self, fetch_nonce_data_and_verify};
+
+#[derive(Debug, Clone)]
+pub struct GenerateArgs {
+    pub fee_payer: Pubkey,
+    pub nonce_account: Pubkey,
+    pub nonce_authority: Pubkey,
+    pub output_file: String,
+}
 
 pub fn generate_from_transactions(
     args: &GenerateArgs,

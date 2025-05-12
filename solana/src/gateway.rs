@@ -31,73 +31,89 @@ use crate::types::{
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
-    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
+    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
 use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    #[clap(long_about = "Initialize the Gateway program")]
+    /// Initialize the AxelarGateway program on Solana
     Init(InitArgs),
 
-    #[clap(long_about = "Call contract on an Axelar enabled destination chain")]
+    /// Call a contract on another chain
     CallContract(CallContractArgs),
 
-    #[clap(long_about = "Transfer operatorship of the Gateway program")]
+    /// Transfer the AxelarGateway program's operatorship to another address
     TransferOperatorship(TransferOperatorshipArgs),
 
-    #[clap(long_about = "Approve a message for test deployment")]
+    /// Approve a message using a local SignerSet (required to be the current VerifierSet registered
+    /// with the AxelarGateway)
     Approve(ApproveArgs),
 
-    #[clap(long_about = "Rotate the signers used by the Gateway program for message verification")]
+    /// Rotate the VerifierSet on the AxelarGateway program. Omit `new_signer` and `new_signer_set`
+    /// to query the MultisigProver for the current VerifierSet
     Rotate(RotateArgs),
 
-    #[clap(
-        long_about = "Submit a proof with either ApproveMessages or RotateSigners to the Gateway program"
-    )]
+    /// Submit a proof to the AxelarGateway program, triggering VerifierSet rotation or message
+    /// approvals
     SubmitProof(SubmitProofArgs),
 
-    #[clap(long_about = "Execute a cross-chain message with provided payload")]
+    /// Execute a cross-chain message on Solana
     Execute(ExecuteArgs),
 }
 
 #[derive(Parser, Debug)]
-#[clap(group(ArgGroup::new("signers_source").args(&["signer", "signer-set"]).multiple(false).requires("nonce").required(false)))]
+#[clap(
+    group(
+        ArgGroup::new("signers_source")
+        .args(&["signer", "signer-set"])
+        .multiple(false)
+        .requires("nonce")
+        .required(false)
+        )
+    )
+]
 pub(crate) struct InitArgs {
-    #[clap(short = 'r', long)]
+    /// Previous SignerSet retention
+    #[clap(long)]
     previous_signers_retention: u128,
 
+    /// Minimum delay between SignerSet rotations
     #[clap(long)]
     minimum_rotation_delay: RotationDelaySecs,
 
-    /// Hex string with secp256k1 compressed public key used to create the initial SignerSet
+    /// Optional hex string with secp256k1 compressed public key used to create the initial SignerSet
     #[clap(long)]
     signer: Option<String>,
 
-    /// Nonce to be used for the SignerSet, required if `signer` or `signers` is set.
+    /// Nonce to be used for the SignerSet, required if `signer` or `signers` is set
     #[clap(long)]
     nonce: Option<u64>,
 
-    /// A JSON containing a SignerSet
+    /// An optional JSON containing a SignerSet
     #[clap(long)]
     signer_set: Option<String>,
 
+    /// Address of the AxelarGateway program operator
     #[clap(long)]
     operator: Pubkey,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct CallContractArgs {
-    #[clap(short = 'd', long)]
+    /// The chain where the message has to be sent to
+    #[clap(long)]
     destination_chain: String,
 
-    #[clap(short = 'a', long)]
-    destination_contract_address: String,
+    /// The destination contract address on the destination chain that should receive the message
+    #[clap(long)]
+    destination_address: String,
 
+    /// The payload as expected by the destination contract as a hex encoded string
     #[clap(long)]
     payload: String,
 }
@@ -123,24 +139,37 @@ pub(crate) struct ApproveArgs {
     #[clap(long)]
     nonce: u64,
 
+    /// The chain where the message originated from
     #[clap(long)]
     source_chain: String,
 
+    /// The Axelar message identifier
     #[clap(long)]
     message_id: String,
 
+    /// The address of the contract where the message originated from
     #[clap(long)]
     source_address: String,
 
+    /// The destination contract address on Solana that should receive the message
     #[clap(long)]
     destination_address: String,
 
+    /// The payload as expected by the destination contract as a hex encoded string
     #[clap(long)]
     payload: String,
 }
 
 #[derive(Parser, Debug)]
-#[clap(group(ArgGroup::new("signers_source").args(&["new-signer", "new-signer-set"]).multiple(false).requires("nonce").required(false)))]
+#[clap(
+    group(
+        ArgGroup::new("signers_source")
+        .args(&["new-signer", "new-signer-set"])
+        .multiple(false)
+        .requires("nonce")
+        .required(false))
+    )
+]
 pub(crate) struct RotateArgs {
     /// Hex string with secp256k1 private key of the signer used to generate the proof
     #[clap(long, value_parser=utils::parse_secret_key, value_hint=clap::ValueHint::AnyPath)]
@@ -150,7 +179,7 @@ pub(crate) struct RotateArgs {
     #[clap(long)]
     nonce: u64,
 
-    /// Hex string with secp256k1 compressed public key used to create the new SignerSet
+    /// Hex string with secp256k1 compressed public key used to create the new SignerSet.
     #[clap(long)]
     new_signer: Option<String>,
 
@@ -158,12 +187,14 @@ pub(crate) struct RotateArgs {
     #[clap(long)]
     new_signer_set: Option<String>,
 
+    /// The new nonce to be used for the new SignerSet, required if `new_signer` or `new_signers` is set
     #[clap(long)]
     new_nonce: Option<u64>,
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct SubmitProofArgs {
+    /// The session id associated with the proof, used o query the MultisigProver
     #[clap(long)]
     multisig_session_id: u64,
 }
@@ -174,7 +205,7 @@ pub(crate) struct ExecuteArgs {
     #[clap(long)]
     source_chain: String,
 
-    /// Message ID of the message
+    /// The Axelar message identifier
     #[clap(long)]
     message_id: String,
 
@@ -182,12 +213,11 @@ pub(crate) struct ExecuteArgs {
     #[clap(long)]
     source_address: String,
 
-    /// The address on the Solana chain where the message should be sent to
+    /// The destination contract address on Solana that should receive the message
     #[clap(long)]
     destination_address: String,
 
-    /// The hex encoded string of the AxelarExecutable payload (which contains the raw payload plus
-    /// accounts required by the destination program).
+    /// The payload as expected by the destination contract as a hex encoded string
     #[clap(long)]
     payload: String,
 }
@@ -446,7 +476,7 @@ async fn init(
         OPERATOR_KEY: init_args.operator.to_string(),
         MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
         PREVIOUS_SIGNERS_RETENTION_KEY: init_args.previous_signers_retention,
-        DOMAIN_SEPARATOR_KEY: domain_separator,
+        DOMAIN_SEPARATOR_KEY: hex::encode(domain_separator),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
@@ -480,7 +510,7 @@ async fn call_contract(
         signing_pda,
         signing_pda_bump,
         call_contract_args.destination_chain,
-        call_contract_args.destination_contract_address,
+        call_contract_args.destination_address,
         payload,
     )?])
 }

@@ -1,9 +1,19 @@
-use crate::config::Config;
-use crate::types::{CombineArgs, NetworkType, PartialSignature, SignedSolanaTransaction};
-use crate::utils;
-use solana_sdk::{pubkey::Pubkey, signature::Signature as SolanaSignature};
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::str::FromStr;
+
+use solana_sdk::{pubkey::Pubkey, signature::Signature as SolanaSignature};
+
+use crate::config::Config;
+use crate::types::{NetworkType, PartialSignature, SignedSolanaTransaction};
+use crate::utils;
+
+#[derive(Debug, Clone)]
+pub struct CombineArgs {
+    pub unsigned_tx_path: PathBuf,
+    pub signature_paths: Vec<PathBuf>,
+    pub output_signed_tx_path: PathBuf,
+}
 
 fn get_required_signers_from_instructions(
     instructions: &[crate::types::SerializableInstruction],

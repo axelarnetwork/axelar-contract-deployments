@@ -1,10 +1,11 @@
+use std::str::FromStr;
+
 use axelar_executable::AxelarMessagePayload;
 use axelar_executable::EncodingScheme;
 use clap::{Args, Subcommand};
 use eyre::Result;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
-use std::str::FromStr;
 
 /// Commands for miscellaneous utilities
 #[derive(Subcommand, Debug)]

@@ -14,15 +14,18 @@ use crate::{
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    #[clap(long_about = "Initialize the Gateway program")]
+    /// Initialize the AxelarGasService program on Solana
     Init(InitArgs),
 }
 
 #[derive(Parser, Debug)]
 pub(crate) struct InitArgs {
+    /// The account to set as authority of the AxelarGasService program. This account will be able
+    /// to withdraw funds from the AxelarGasService program and update the configuration.
     #[clap(short, long)]
     authority: Pubkey,
 
+    /// The salt used to derive the config PDA. This should be a unique value for each deployment.
     #[clap(short, long)]
     salt: String,
 }

@@ -8,15 +8,22 @@ use solana_client::{
 use solana_sdk::{
     commitment_config::CommitmentConfig,
     instruction::InstructionError,
+    pubkey::Pubkey,
     transaction::{Transaction, TransactionError},
 };
 
 use crate::config::Config;
-use crate::types::{SendArgs, SerializableSolanaTransaction};
+use crate::types::SerializableSolanaTransaction;
 use crate::utils::{
     create_compute_budget_instructions, print_transaction_result, DEFAULT_COMPUTE_UNITS,
     DEFAULT_PRIORITY_FEE,
 };
+
+#[derive(Debug, Clone)]
+pub struct SendArgs {
+    pub fee_payer: Pubkey,
+    pub signers: Vec<String>,
+}
 
 pub(crate) fn sign_and_send_transactions(
     send_args: &SendArgs,

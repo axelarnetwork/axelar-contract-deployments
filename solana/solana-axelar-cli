@@ -1,0 +1,6 @@
+#! /bin/env bash
+
+project_dir="$(dirname ${0})"
+chains_info_dir="${project_dir}/../axelar-chains-config/info/"
+
+cargo run --manifest-path="${project_dir}/Cargo.toml" -- --chains-info-dir="${chains_info_dir}" ${@}

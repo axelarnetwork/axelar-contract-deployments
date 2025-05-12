@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 use std::str::FromStr;
 
 use axelar_solana_encoding::types::pubkey::PublicKey;
@@ -207,38 +206,6 @@ impl SerializableSolanaTransaction {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct SendArgs {
-    pub fee_payer: Pubkey,
-    pub signers: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct GenerateArgs {
-    pub fee_payer: Pubkey,
-    pub nonce_account: Pubkey,
-    pub nonce_authority: Pubkey,
-    pub output_file: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct SignArgs {
-    pub unsigned_tx_path: PathBuf,
-    pub signer_key: String,
-    pub output_signature_path: PathBuf,
-}
-
-#[derive(Debug, Clone)]
-pub struct CombineArgs {
-    pub unsigned_tx_path: PathBuf,
-    pub signature_paths: Vec<PathBuf>,
-    pub output_signed_tx_path: PathBuf,
-}
-
-#[derive(Debug, Clone)]
-pub struct BroadcastArgs {
-    pub signed_tx_path: PathBuf,
-}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SerializeableVerifierSet {
     pub signers: BTreeMap<String, u128>,
