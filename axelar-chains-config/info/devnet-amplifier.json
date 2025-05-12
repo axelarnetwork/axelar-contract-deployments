@@ -1113,7 +1113,7 @@
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
-        "name": "Hyperliquid-testnet Explorer",
+        "name": "Hyperliquid Explorer",
         "url": "https://app.hyperliquid-testnet.xyz/explorer"
       },
       "contracts": {
