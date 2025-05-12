@@ -6,6 +6,7 @@ mod gateway;
 mod generate;
 mod governance;
 mod its;
+mod misc;
 mod send;
 mod sign;
 mod types;
@@ -25,6 +26,7 @@ use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
 use crate::generate::generate_from_transactions;
+use crate::misc::build_message;
 use crate::sign::sign_solana_transaction;
 use crate::types::{BroadcastArgs, CombineArgs, GenerateArgs, SignArgs};
 
@@ -97,6 +99,10 @@ enum Command {
     and broadcasts it to the specified network via RPC. Waits for confirmation."
     )]
     Broadcast(BroadcastCommandArgs),
+
+    /// Miscellaneous utilities.
+    #[clap(long_about = "Miscellaneous utilities for working with Axelar payloads and messages.")]
+    Misc(MiscCommandArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -196,10 +202,16 @@ struct BroadcastCommandArgs {
     signed_tx_path: PathBuf,
 }
 
+#[derive(Parser, Debug)]
+struct MiscCommandArgs {
+    #[clap(subcommand)]
+    instruction: misc::Commands,
+}
+
 #[tokio::main]
 async fn main() {
     if let Err(e) = run().await {
-        eprintln!("\nError: {}", e);
+        eprintln!("\nError: {:?}", e);
         exit(1);
     }
 }
@@ -278,6 +290,10 @@ async fn run() -> eyre::Result<()> {
                 signed_tx_path: args.signed_tx_path,
             };
             broadcast_solana_transaction(&broadcast_args, &config)?;
+        }
+        Command::Misc(args) => {
+            let result = build_message(args.instruction)?;
+            println!("{}", result);
         }
     }
     Ok(())
