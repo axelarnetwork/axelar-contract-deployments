@@ -25,7 +25,7 @@ Changes in this release:
 - This rollout upgrades the amplifier multisig contract from `v1.2.1` to `v2.0.0`
 - There is a no state migration involved
 
-1. Upload new ITS Hub contract
+1. Upload new Multisig contract
 
 | environment | INIT_ADDRESSES    |  RUN_AS_ACCOUNT |
 | :-----: | :---: | :---: |
