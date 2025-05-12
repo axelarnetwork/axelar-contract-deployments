@@ -18,7 +18,7 @@
 
 Changes in this release:
 
-1. Change custom signarture verification to use an execute msg instead of a query.
+1. Change custom signature verification to use an execute msg instead of a query.
 
 ## Deployment
 
