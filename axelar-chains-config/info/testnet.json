@@ -3266,14 +3266,14 @@
           "codeId": 47,
           "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
         },
-        "storeCodeProposalId": "281",
+        "storeCodeProposalId": "290",
         "storeCodeProposalCodeHash": "5d94ddb7d9581be6a1a40fed1d3f90e4818a70b5fb4fe09ff6f5f1e378dc54e8",
         "lastUploadedCodeId": 47
       }
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "https://tm.axelar-testnet.lava.build",
+    "rpc": "http://testnet.rpc.axelarscan.io:80",
     "lcd": "https://rest.axelar-testnet.lava.build",
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
