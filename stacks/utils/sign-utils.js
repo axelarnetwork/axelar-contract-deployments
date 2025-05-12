@@ -22,7 +22,9 @@ async function getWallet(chain, options) {
 
     return {
         mnemonic,
+        privateKey,
         stacksAddress: privateKeyToAddress(privateKey, chain.networkType),
+        networkType: chain.networkType,
     };
 }
 

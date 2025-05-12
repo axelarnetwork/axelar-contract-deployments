@@ -38,7 +38,6 @@ if (require.main === module) {
 
     program
         .name('faucet')
-        .addOption(new Option('--recipient <recipient>', 'recipient to request funds for'))
         .description('Query the faucet for funds.')
         .action((options) => {
             mainProcessor(options, processCommand);

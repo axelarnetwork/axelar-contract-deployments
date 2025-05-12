@@ -1273,7 +1273,53 @@
         "name": "Stacks Explorer",
         "url": "https://explorer.hiro.so/?chain=testnet"
       },
-      "contracts": {},
+      "contracts": {
+        "ClarityStacks": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.clarity-stacks"
+        },
+        "GasStorage": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-storage"
+        },
+        "Traits": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.traits"
+        },
+        "GasImpl": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-impl"
+        },
+        "GatewayStorage": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-storage"
+        },
+        "GasService": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-service"
+        },
+        "GatewayImpl": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-impl"
+        },
+        "Gateway": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway"
+        },
+        "Governance": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.governance"
+        },
+        "InterchainTokenServiceStorage": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service-storage"
+        },
+        "InterchainTokenService": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service"
+        },
+        "InterchainTokenFactory": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-factory"
+        },
+        "InterchainTokenFactoryImpl": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-factory-impl"
+        },
+        "VerifyOnchain": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.verify-onchain"
+        },
+        "InterchainTokenServiceImpl": {
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service-impl"
+        }
+      },
       "initialContractsDeployer": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ"
     }
   },
