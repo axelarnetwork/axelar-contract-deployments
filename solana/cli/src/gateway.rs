@@ -31,10 +31,10 @@ use crate::types::{
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
-    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
+    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
 use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
@@ -170,18 +170,24 @@ pub(crate) struct SubmitProofArgs {
 
 #[derive(Parser, Debug)]
 pub(crate) struct ExecuteArgs {
+    /// Chain where the message originated from
     #[clap(long)]
     source_chain: String,
 
+    /// Message ID of the message
     #[clap(long)]
     message_id: String,
 
+    /// Source address of the message in the source chain
     #[clap(long)]
     source_address: String,
 
+    /// The address on the Solana chain where the message should be sent to
     #[clap(long)]
     destination_address: String,
 
+    /// The hex encoded string of the AxelarExecutable payload (which contains the raw payload plus
+    /// accounts required by the destination program).
     #[clap(long)]
     payload: String,
 }
@@ -508,7 +514,7 @@ async fn approve(
             .strip_prefix("0x")
             .unwrap_or(&approve_args.payload),
     )?;
-    let payload_hash = solana_sdk::hash::hashv(&[&payload_bytes]).to_bytes();
+    let payload_hash = solana_sdk::keccak::hashv(&[&payload_bytes]).to_bytes();
     let message = Message {
         cc_id: CrossChainId {
             chain: approve_args.source_chain,
@@ -755,7 +761,7 @@ async fn execute(
         source_address: execute_args.source_address,
         destination_chain: ChainNameOnAxelar::from(config.network_type).0,
         destination_address: execute_args.destination_address,
-        payload_hash: solana_sdk::hash::hashv(&[&hex::decode(
+        payload_hash: solana_sdk::keccak::hashv(&[&hex::decode(
             execute_args
                 .payload
                 .strip_prefix("0x")
