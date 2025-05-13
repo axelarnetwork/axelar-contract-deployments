@@ -10,10 +10,10 @@ use crate::{
     config::Config,
     types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
     utils::{
-        fetch_latest_blockhash, parse_account_meta_string, read_json_file_from_path,
-        write_json_to_file_path, ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY,
-        GOVERNANCE_ADDRESS_KEY, GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY,
-        MINIMUM_PROPOSAL_ETA_DELAY_KEY, UPGRADE_AUTHORITY_KEY,
+        ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GOVERNANCE_ADDRESS_KEY,
+        GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY,
+        UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, parse_account_meta_string,
+        read_json_file_from_path, write_json_to_file_path,
     },
 };
 
@@ -182,9 +182,11 @@ async fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![IxBuilder::new()
-        .initialize_config(fee_payer, config_pda, governance_config)
-        .build()])
+    Ok(vec![
+        IxBuilder::new()
+            .initialize_config(fee_payer, config_pda, governance_config)
+            .build(),
+    ])
 }
 
 async fn execute_proposal(
@@ -211,9 +213,9 @@ async fn execute_proposal(
         calldata_bytes,
     );
 
-    Ok(vec![builder
-        .execute_proposal(fee_payer, config_pda)
-        .build()])
+    Ok(vec![
+        builder.execute_proposal(fee_payer, config_pda).build(),
+    ])
 }
 
 async fn execute_operator_proposal(
@@ -237,7 +239,9 @@ async fn execute_operator_proposal(
         calldata_bytes,
     );
 
-    Ok(vec![builder
-        .execute_operator_proposal(fee_payer, config_pda, &args.operator)
-        .build()])
+    Ok(vec![
+        builder
+            .execute_operator_proposal(fee_payer, config_pda, &args.operator)
+            .build(),
+    ])
 }

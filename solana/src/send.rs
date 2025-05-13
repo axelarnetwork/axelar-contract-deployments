@@ -15,8 +15,8 @@ use solana_sdk::{
 use crate::config::Config;
 use crate::types::SerializableSolanaTransaction;
 use crate::utils::{
-    create_compute_budget_instructions, print_transaction_result, DEFAULT_COMPUTE_UNITS,
-    DEFAULT_PRIORITY_FEE,
+    DEFAULT_COMPUTE_UNITS, DEFAULT_PRIORITY_FEE, create_compute_budget_instructions,
+    print_transaction_result,
 };
 
 #[derive(Debug, Clone)]

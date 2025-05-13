@@ -11,9 +11,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    encode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
-    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
+    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, encode_its_destination, fetch_latest_blockhash,
+    read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
