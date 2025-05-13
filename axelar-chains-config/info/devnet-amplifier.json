@@ -1290,22 +1290,57 @@
           "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-storage"
         },
         "GasService": {
-          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-service"
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-service",
+          "gasCollector": "ST3ASWHNH5G542F1V58CQAND5GFN4ZDGXAJHC2VR0"
         },
         "GatewayImpl": {
           "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-impl"
         },
         "Gateway": {
-          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway"
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway",
+          "signers": {
+            "weightedSigners": [
+              {
+                "signer": "0x026e4a6fc3a6988c4cd7d3bc02e07bac8b72a9f5342d92f42161e7b6e57dd47e18",
+                "weight": 1
+              },
+              {
+                "signer": "0x02d19c406d763c98d98554c980ae03543b936aad0c3f1289a367a0c2aafb71e8c1",
+                "weight": 1
+              },
+              {
+                "signer": "0x03ea531f69879b3b15b6e3fe262250d5ceca6217e03e4def6919d4bdce3a7ec389",
+                "weight": 1
+              }
+            ],
+            "threshold": 2,
+            "nonce": "0x000000000000000000000000000000000000000000000000000000000038d32c"
+          },
+          "claritySigners": "0c00000003056e6f6e63650200000020000000000000000000000000000000000000000000000000000000000038d32c077369676e6572730b000000030c00000002067369676e65720200000021026e4a6fc3a6988c4cd7d3bc02e07bac8b72a9f5342d92f42161e7b6e57dd47e180677656967687401000000000000000000000000000000010c00000002067369676e6572020000002102d19c406d763c98d98554c980ae03543b936aad0c3f1289a367a0c2aafb71e8c10677656967687401000000000000000000000000000000010c00000002067369676e6572020000002103ea531f69879b3b15b6e3fe262250d5ceca6217e03e4def6919d4bdce3a7ec389067765696768740100000000000000000000000000000001097468726573686f6c640100000000000000000000000000000002",
+          "operator": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ",
+          "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
+          "minimumRotationDelay": 0,
+          "previousSignerRetention": 15
         },
         "Governance": {
-          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.governance"
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.governance",
+          "governanceChain": "avalanche-fuji",
+          "governanceAddress": "0x9279Da42329a01D4bf1229FCFA5cABF7B3c9D383"
         },
         "InterchainTokenServiceStorage": {
           "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service-storage"
         },
         "InterchainTokenService": {
-          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service"
+          "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service",
+          "itsContractAddressName": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-service",
+          "gasServiceAddress": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gas-service",
+          "operator": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ",
+          "trustedChains": [
+            "avalanche-fuji",
+            "sui-2"
+          ],
+          "itsHubChainName": "axelar",
+          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
         },
         "InterchainTokenFactory": {
           "address": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.interchain-token-factory"
