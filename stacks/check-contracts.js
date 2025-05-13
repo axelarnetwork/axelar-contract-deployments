@@ -48,7 +48,7 @@ async function processCommand(config, chain) {
     }
 
     if (!hasError) {
-        printInfo(`Finished checking contracts`);
+        printInfo(`Finished checking contracts, everything was OK!`);
     } else {
         printError('There has been an error while checking one or more contracts!');
     }

@@ -1784,35 +1784,54 @@
         "instantiateProposalId": "991",
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
       },
-      "StacksGateway": {
-        "stacks": {
-
-        }
-      },
       "StacksVotingVerifier": {
         "stacks": {
           "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
           "serviceName": "validators",
           "sourceGatewayAddress": "ST1E6KF17F9J2RB3ZJBCK5Y1BFBCCWD7278YXW1MJ.gateway-storage",
-          "votingThreshold": ["2", "3"],
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stacks",
-          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
-        }
+          "codeId": 1230,
+          "address": "axelar1mjlvl44v8er50nxjxcuugd4prafzxj4r84q84pf3ntgte6crnywsrk0s5e"
+        },
+        "storeCodeProposalId": "573",
+        "storeCodeProposalCodeHash": "e2db56111c000c7f9be4cc98ccae3ba504133fff29b05619e9433569737823b8",
+        "lastUploadedCodeId": 1230
+      },
+      "StacksGateway": {
+        "stacks": {
+          "codeId": 1228,
+          "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
+        },
+        "storeCodeProposalId": "574",
+        "storeCodeProposalCodeHash": "a9ac6c640f1655aea31874d1a8d1f90e4a395fc52430719d2805e2047dc140f8",
+        "lastUploadedCodeId": 1228
       },
       "StacksMultisigProver": {
         "stacks": {
           "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
           "adminAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
-          "signingThreshold": ["2", "3"],
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "encoder": "stacks",
           "keyType": "ecdsa",
-          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
-        }
+          "codeId": 1229,
+          "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
+          "address": "axelar1az8gj559csay9am80dj04xtr2l5027qw4h0hxgspsrm5u09zey4sptt4mq"
+        },
+        "storeCodeProposalId": "575",
+        "storeCodeProposalCodeHash": "2f802e3abff11ca183e6fa5a25c4de361b49d628c64b3e174409929fa98f7e89",
+        "lastUploadedCodeId": 1229
       }
     },
     "axelarId": "axelar",

@@ -367,7 +367,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     };
 };
 
-const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
+const makeVotingVerifierInstantiateMsg = (config, options, contractConfig, contract = 'VotingVerifier') => {
     const { chainName } = options;
     const {
         axelar: { contracts },
@@ -403,15 +403,15 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     }
 
     if (!validateAddress(governanceAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].governanceAddress in axelar info`);
     }
 
     if (!isString(serviceName)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].serviceName in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].serviceName in axelar info`);
     }
 
     if (!isString(sourceGatewayAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].sourceGatewayAddress in axelar info`);
     }
 
     if (gatewayAddress !== undefined && gatewayAddress !== sourceGatewayAddress) {
@@ -423,23 +423,23 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     }
 
     if (!isStringArray(votingThreshold)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].votingThreshold in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].votingThreshold in axelar info`);
     }
 
     if (!isNumber(blockExpiry)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].blockExpiry in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].blockExpiry in axelar info`);
     }
 
     if (!isNumber(confirmationHeight)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].confirmationHeight in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].confirmationHeight in axelar info`);
     }
 
     if (!isString(msgIdFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].msgIdFormat in axelar info`);
     }
 
     if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
+        throw new Error(`Missing or invalid ${contract}[${chainName}].addressFormat in axelar info`);
     }
 
     return {
@@ -454,6 +454,26 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         source_chain: chainName,
         msg_id_format: msgIdFormat,
         address_format: addressFormat,
+    };
+};
+
+const makeStacksVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
+    const votingVerifierInstantiateMsg = makeVotingVerifierInstantiateMsg(config, options, contractConfig, 'StacksVotingVerifier');
+
+    const {
+        axelar: { contracts },
+    } = config;
+    const {
+        InterchainTokenService: { address: itsHubAddress },
+    } = contracts;
+
+    if (!validateAddress(itsHubAddress)) {
+        throw new Error('Missing or invalid InterchainTokenService.address in axelar info');
+    }
+
+    return {
+        ...votingVerifierInstantiateMsg,
+        its_hub_address: itsHubAddress,
     };
 };
 
@@ -535,6 +555,30 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
 
     if (!validateAddress(verifierAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
+    }
+
+    return { router_address: routerAddress, verifier_address: verifierAddress };
+};
+
+const makeStacksGatewayInstantiateMsg = (config, options, _contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: {
+            contracts: {
+                Router: { address: routerAddress },
+                StacksVotingVerifier: {
+                    [chainName]: { address: verifierAddress },
+                },
+            },
+        },
+    } = config;
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid StacksVotingVerifier[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -761,6 +805,113 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         verifier_set_diff_threshold: verifierSetDiffThreshold,
         encoder,
         key_type: keyType,
+    };
+};
+
+const makeStacksMultisigProverInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
+    const {
+        axelar: { contracts, chainId: axelarChainId },
+    } = config;
+    const {
+        Router: { address: routerAddress },
+        Coordinator: { address: coordinatorAddress },
+        Multisig: { address: multisigAddress },
+        ServiceRegistry: { address: serviceRegistryAddress },
+        StacksVotingVerifier: {
+            [chainName]: { address: verifierAddress },
+        },
+        StacksGateway: {
+            [chainName]: { address: gatewayAddress },
+        },
+        InterchainTokenService: { address: itsHubAddress },
+    } = contracts;
+    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+        contractConfig;
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+    contractConfig.domainSeparator = separator;
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
+    if (!validateAddress(governanceAddress)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].governanceAddress in axelar info`);
+    }
+
+    if (!validateAddress(gatewayAddress)) {
+        throw new Error(`Missing or invalid StacksGateway[${chainName}].address in axelar info`);
+    }
+
+    if (!validateAddress(itsHubAddress)) {
+        throw new Error('Missing or invalid InterchainTokenService.address in axelar info');
+    }
+
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    if (!validateAddress(multisigAddress)) {
+        throw new Error('Missing or invalid Multisig.address in axelar info');
+    }
+
+    if (!validateAddress(serviceRegistryAddress)) {
+        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(verifierAddress)) {
+        throw new Error(`Missing or invalid StacksVotingVerifier[${chainName}].address in axelar info`);
+    }
+
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid StacksMultisigProver[${chainName}].domainSeparator in axelar info`);
+    }
+
+    if (!isStringArray(signingThreshold)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].signingThreshold in axelar info`);
+    }
+
+    if (!isString(serviceName)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].serviceName in axelar info`);
+    }
+
+    if (!isNumber(verifierSetDiffThreshold)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
+    }
+
+    if (!isString(encoder)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].encoder in axelar info`);
+    }
+
+    if (!isString(keyType)) {
+        throw new Error(`Missing or invalid StacksMultisigProver[${chainName}].keyType in axelar info`);
+    }
+
+    return {
+        admin_address: adminAddress,
+        governance_address: governanceAddress,
+        gateway_address: gatewayAddress,
+        coordinator_address: coordinatorAddress,
+        multisig_address: multisigAddress,
+        service_registry_address: serviceRegistryAddress,
+        voting_verifier_address: verifierAddress,
+        domain_separator: separator.replace('0x', ''),
+        signing_threshold: signingThreshold,
+        service_name: serviceName,
+        chain_name: chainName,
+        verifier_set_diff_threshold: verifierSetDiffThreshold,
+        encoder,
+        key_type: keyType,
+        its_hub_address: itsHubAddress,
     };
 };
 
@@ -1147,6 +1298,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
+    StacksVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeStacksVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1155,6 +1310,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
     },
+    StacksGateway: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeStacksGatewayInstantiateMsg,
+    },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
@@ -1162,6 +1321,10 @@ const CONTRACTS = {
     XrplMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
+    },
+    StacksMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeStacksMultisigProverInstantiateMsg,
     },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
