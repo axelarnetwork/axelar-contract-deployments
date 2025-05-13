@@ -50,39 +50,29 @@ pub(crate) fn sign_and_send_transactions(
             signers.push(signer);
         }
 
-        // Get the latest blockhash
         let blockhash = rpc_client.get_latest_blockhash()?;
 
-        // Check if the transaction already has compute budget instructions
         let has_compute_budget = transaction.message.instructions.iter().any(|ix| {
             let program_id = transaction.message.account_keys[ix.program_id_index as usize];
             program_id == solana_sdk::compute_budget::id()
         });
 
-        // First, we'll make a transaction with just the original instructions
         transaction.sign(&signers, blockhash);
 
-        // Only try to optimize if there are no compute budget instructions already
         if !has_compute_budget {
-            // Try to simulate the transaction to see if it might exceed compute limits
             println!("Simulating transaction before sending...");
             match rpc_client.simulate_transaction(&transaction) {
                 Ok(sim_result) => {
                     if let Some(units) = sim_result.value.units_consumed {
                         println!("Simulation used {} compute units", units);
 
-                        // If we're using a significant portion of the compute limit, add a compute budget
                         if units > 150_000 {
-                            // Create a new transaction with compute budget instructions
                             println!(
                                 "Transaction needs significant compute units, adding compute budget"
                             );
 
-                            // Extract original instructions from the transaction message
-                            // Use the transaction's message instructions directly
                             let message = &transaction.message;
 
-                            // Convert CompiledInstructions to regular Instructions
                             let original_instructions: Vec<solana_sdk::instruction::Instruction> =
                                 message
                                     .instructions
@@ -111,31 +101,25 @@ pub(crate) fn sign_and_send_transactions(
                                     })
                                     .collect();
 
-                            // Create compute budget instructions
                             let compute_budget_instructions = create_compute_budget_instructions(
                                 DEFAULT_COMPUTE_UNITS,
                                 DEFAULT_PRIORITY_FEE,
                             );
 
-                            // Combine compute budget instructions with original instructions
                             let mut all_instructions = compute_budget_instructions;
                             all_instructions.extend(original_instructions);
 
-                            // Get the fee payer
                             let fee_payer = transaction.message.account_keys[0];
 
-                            // Create a new message with all instructions
                             let message = solana_sdk::message::Message::new_with_blockhash(
                                 &all_instructions,
                                 Some(&fee_payer),
                                 &blockhash,
                             );
 
-                            // Create and sign a new transaction
                             let mut optimized_tx = Transaction::new_unsigned(message);
                             optimized_tx.sign(&signers, blockhash);
 
-                            // Use the optimized transaction instead
                             transaction = optimized_tx;
                             println!(
                                 "Added compute budget: {} units with {} micro-lamports priority fee",
@@ -149,7 +133,6 @@ pub(crate) fn sign_and_send_transactions(
                         "Simulation failed: {:?}, proceeding with regular transaction",
                         err
                     );
-                    // If simulation fails, just use the original transaction
                     transaction.sign(&signers, blockhash);
                 }
             };
@@ -157,7 +140,6 @@ pub(crate) fn sign_and_send_transactions(
             println!("Transaction already has compute budget instructions, skipping optimization");
         }
 
-        // Now send the transaction (either original or optimized)
         match rpc_client.send_and_confirm_transaction(&transaction) {
             Ok(signature) => {
                 results.push(signature);
@@ -206,7 +188,6 @@ pub(crate) fn sign_and_send_transactions(
         }
     }
 
-    // Print results
     for (i, signature) in results.iter().enumerate() {
         println!("Transaction {}: {}", i + 1, signature);
         print_transaction_result(config, Ok(*signature))?;

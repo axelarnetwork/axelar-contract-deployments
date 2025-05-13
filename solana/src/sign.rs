@@ -13,7 +13,7 @@ use crate::utils;
 pub struct SignArgs {
     pub unsigned_tx_path: PathBuf,
     pub signer_key: String,
-    pub output_signature_path: PathBuf,
+    pub output_dir: Option<PathBuf>,
 }
 
 fn get_required_signers_from_instructions(
@@ -59,7 +59,7 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     );
 
     println!("Loading signer from: {}", args.signer_key);
-    let signer_context = clap::ArgMatches::default(); // Dummy context
+    let signer_context = clap::ArgMatches::default();
     let signer = signer_from_path(&signer_context, &args.signer_key, "signer", &mut None)
         .map_err(|e| eyre!("Failed to load signer '{}': {}", args.signer_key, e))?;
 
@@ -107,12 +107,30 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     println!("  Signer Pubkey: {}", partial_signature.signer_pubkey);
     println!("  Signature: {}", partial_signature.signature);
 
-    utils::save_partial_signature(&partial_signature, &args.output_signature_path)?;
+    let output_dir = args.output_dir.clone().unwrap_or_else(|| {
+        args.unsigned_tx_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+    });
 
-    println!(
-        "Partial signature saved to: {}",
-        args.output_signature_path.display()
-    );
+    std::fs::create_dir_all(&output_dir)?;
+
+    let unsigned_file_stem = args
+        .unsigned_tx_path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown");
+
+    let tx_name = unsigned_file_stem.replace(".unsigned", "");
+
+    let pubkey_str = signer_pubkey.to_string();
+    let sig_filename = format!("{}.{}.partial.sig", tx_name, pubkey_str);
+    let sig_path = output_dir.join(sig_filename);
+
+    utils::save_partial_signature(&partial_signature, &sig_path)?;
+
+    println!("Partial signature saved to: {}", sig_path.display());
 
     Ok(())
 }

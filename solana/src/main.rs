@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use broadcast::BroadcastArgs;
-use clap::{Parser, Subcommand};
+use clap::{FromArgMatches, IntoApp, Parser, Subcommand};
 use combine::CombineArgs;
 use eyre::eyre;
 use generate::GenerateArgs;
@@ -117,9 +117,9 @@ struct GenerateCommandArgs {
     #[clap(long)]
     nonce_authority: Pubkey,
 
-    /// Base name for output files (e.g., 'my_tx' -> my_tx.unsigned.solana.json)
-    #[clap(long = "output-name")]
-    output_file: String,
+    /// Directory to store unsigned transaction files
+    #[clap(long = "output-dir", parse(from_os_str))]
+    output_dir: Option<PathBuf>,
 
     #[clap(subcommand)]
     instruction: InstructionSubcommand,
@@ -146,7 +146,7 @@ enum InstructionSubcommand {
 
 #[derive(Parser, Debug)]
 struct SignCommandArgs {
-    /// Path to the unsigned Solana transaction JSON file (*.unsigned.solana.json)
+    /// Path to the unsigned Solana transaction JSON file (*.unsigned.json)
     #[clap(parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 
@@ -154,19 +154,19 @@ struct SignCommandArgs {
     #[clap(long = "signer", short = 'k')]
     signer_key: String,
 
-    /// Output file path for the generated partial signature JSON (*.sig.json)
-    #[clap(long = "output-sig", short = 's', parse(from_os_str))]
-    // Changed from arg(value_parser = ...)
-    output_signature_path: PathBuf,
+    /// Output directory for signature files
+    /// If not specified, signatures will be placed in the same directory as the unsigned transaction
+    #[clap(long = "output-dir", parse(from_os_str))]
+    output_dir: Option<PathBuf>,
 }
 
 #[derive(Parser, Debug)]
 struct CombineCommandArgs {
-    /// Path to the original unsigned Solana transaction JSON file (*.unsigned.solana.json)
+    /// Path to the original unsigned Solana transaction JSON file (*.unsigned.json)
     #[clap(long, parse(from_os_str))]
     unsigned_tx_path: PathBuf,
 
-    /// Paths to the partial signature JSON files (*.sig.json) to combine (provide at least one)
+    /// Paths to the partial signature JSON files (*.partial.sig) to combine (provide at least one)
     #[clap(
         long = "signatures",
         short = 's',
@@ -177,14 +177,15 @@ struct CombineCommandArgs {
     )]
     signature_paths: Vec<PathBuf>,
 
-    /// Output file path for the combined signed transaction JSON (*.signed.solana.json)
-    #[clap(long = "output-signed", short = 'f', parse(from_os_str))]
-    output_signed_tx_path: PathBuf,
+    /// Output directory for the combined signed transaction JSON
+    /// If not specified, will use the same directory as the unsigned transaction
+    #[clap(long = "output-dir", parse(from_os_str))]
+    output_dir: Option<PathBuf>,
 }
 
 #[derive(Parser, Debug)]
 struct BroadcastCommandArgs {
-    /// Path to the combined signed Solana transaction JSON file (*.signed.solana.json)
+    /// Path to the combined signed Solana transaction JSON file (*.signed.json)
     #[clap(parse(from_os_str))]
     signed_tx_path: PathBuf,
 }
@@ -204,7 +205,8 @@ async fn main() {
 }
 
 async fn run() -> eyre::Result<()> {
-    let cli = Cli::parse();
+    let matches = Cli::command().get_matches();
+    let cli = Cli::from_arg_matches(&matches)?;
 
     let config = Config::new(cli.url, cli.output_dir, cli.chains_info_dir)?;
 
@@ -219,14 +221,9 @@ async fn run() -> eyre::Result<()> {
                         .as_ref()
                         .ok_or_else(|| eyre!("Missing Solana config file"))?;
                     let cli_config = solana_cli_config::Config::load(config_file)?;
-                    let signer_context = clap::ArgMatches::default();
-                    let signer = signer_from_path(
-                        &signer_context,
-                        &cli_config.keypair_path,
-                        "signer",
-                        &mut None,
-                    )
-                    .map_err(|e| eyre!("Failed to load fee payer: {}", e))?;
+                    let signer =
+                        signer_from_path(&matches, &cli_config.keypair_path, "signer", &mut None)
+                            .map_err(|e| eyre!("Failed to load fee payer: {}", e))?;
 
                     signer_keys.push(cli_config.keypair_path);
                     signer.pubkey()
@@ -243,24 +240,29 @@ async fn run() -> eyre::Result<()> {
             sign_and_send_transactions(&send_args, &config, transactions)?;
         }
         Command::Generate(args) => {
+            // Determine output directory - use provided dir or default to config.output_dir
+            let output_dir = args.output_dir.unwrap_or_else(|| config.output_dir.clone());
+
             let gen_args = GenerateArgs {
                 fee_payer: args.fee_payer,
                 nonce_account: args.nonce_account,
                 nonce_authority: args.nonce_authority,
-                output_file: args.output_file,
+                output_dir,
             };
 
             // Use the transaction-based approach
             let transactions =
                 build_transaction(&gen_args.fee_payer, args.instruction, &config).await?;
             println!("Generating transactions...");
-            generate_from_transactions(&gen_args, &config, transactions)?;
+
+            let filename = utils::serialized_transactions_filename_from_arg_matches(&matches);
+            generate_from_transactions(&gen_args, &config, transactions, &filename)?;
         }
         Command::Sign(args) => {
             let sign_args = SignArgs {
                 unsigned_tx_path: args.unsigned_tx_path,
                 signer_key: args.signer_key,
-                output_signature_path: args.output_signature_path,
+                output_dir: args.output_dir,
             };
             sign_solana_transaction(&sign_args)?;
         }
@@ -268,7 +270,7 @@ async fn run() -> eyre::Result<()> {
             let combine_args = CombineArgs {
                 unsigned_tx_path: args.unsigned_tx_path,
                 signature_paths: args.signature_paths,
-                output_signed_tx_path: args.output_signed_tx_path,
+                output_dir: args.output_dir,
             };
             combine_solana_signatures(&combine_args, &config)?;
         }

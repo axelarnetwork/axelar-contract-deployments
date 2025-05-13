@@ -405,44 +405,45 @@ solana/solana-axelar-cli generate \
   --fee-payer <FEE_PAYER_PUBKEY> \
   --nonce-account <NONCE_ACCOUNT_PUBKEY> \
   --nonce-authority <NONCE_AUTHORITY_PUBKEY> \
-  --output-name my_transaction \
   gateway call-contract \
   --destination-chain avalanche \
   --destination-address 0x4F4495243837681061C4743b74B3eEdf548D56A5 \
   --payload 0x1234
 ```
 
+This will generate a file like `./output/gateway_init.unsigned.json` in the default output directory. You can specify a custom output directory with `--output-dir /path/to/directory`.
+
 #### 2. Sign the transaction (on each signing device)
 
 ```sh
 solana/solana-axelar-cli sign \
-  --unsigned-tx-path ./output/my_transaction.unsigned.solana.json \
-  --signer /path/to/keypair.json \
-  --output-sig ./output/signature1.sig.json
+  ./output/gateway_init.unsigned.json \
+  --signer /path/to/keypair.json
 ```
 
 For Ledger:
 
 ```sh
 solana/solana-axelar-cli sign \
-  --unsigned-tx-path ./output/my_transaction.unsigned.solana.json \
-  --signer usb://ledger \
-  --output-sig ./output/signature2.sig.json
+  ./output/gateway_init.unsigned.json \
+  --signer usb://ledger
 ```
+
+This will generate signature files like `./output/gateway_init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig` where the signer's full public key is included in the filename for uniqueness.
 
 #### 3. Combine all signatures
 
 ```sh
 solana/solana-axelar-cli combine \
-  --unsigned-tx-path ./output/my_transaction.unsigned.solana.json \
-  --signatures ./output/signature1.sig.json ./output/signature2.sig.json \
-  --output-signed ./output/my_transaction.signed.solana.json
+  --unsigned-tx-path ./output/gateway_init.unsigned.json \
+  --signatures ./output/gateway_init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig ./output/gateway_init.DL6NBsMvnEMbUJ5XHeLMyfGpmEukV2i7ZVukGCfxWvP5.partial.sig
 ```
+
+This will generate a file like `./output/gateway_init.signed.json`.
 
 #### 4. Broadcast the transaction
 
 ```sh
 solana/solana-axelar-cli broadcast \
-  --url mainnet-beta \
-  ./output/my_transaction.signed.solana.json
+  ./output/gateway_init.signed.json
 ```

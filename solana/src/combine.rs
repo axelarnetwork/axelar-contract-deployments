@@ -12,7 +12,7 @@ use crate::utils;
 pub struct CombineArgs {
     pub unsigned_tx_path: PathBuf,
     pub signature_paths: Vec<PathBuf>,
-    pub output_signed_tx_path: PathBuf,
+    pub output_dir: Option<PathBuf>,
 }
 
 fn get_required_signers_from_instructions(
@@ -137,10 +137,30 @@ pub fn combine_solana_signatures(args: &CombineArgs, config: &Config) -> eyre::R
         signatures: partial_signatures_vec,
     };
 
-    utils::save_signed_solana_transaction(&signed_tx, &args.output_signed_tx_path)?;
+    let output_dir = args.output_dir.clone().unwrap_or_else(|| {
+        args.unsigned_tx_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+    });
+
+    std::fs::create_dir_all(&output_dir)?;
+
+    let unsigned_file_stem = args
+        .unsigned_tx_path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown");
+
+    let tx_name = unsigned_file_stem.replace(".unsigned", "");
+
+    let signed_filename = format!("{}.signed.json", tx_name);
+    let signed_tx_path = output_dir.join(signed_filename);
+
+    utils::save_signed_solana_transaction(&signed_tx, &signed_tx_path)?;
     println!(
         "Combined signed Solana transaction data saved to: {}",
-        args.output_signed_tx_path.display()
+        signed_tx_path.display()
     );
 
     if config.network_type == NetworkType::Mainnet {

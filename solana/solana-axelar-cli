@@ -1,4 +1,4 @@
-#! /bin/env bash
+#!/bin/env bash
 
 project_dir="$(dirname ${0})"
 chains_info_dir="${project_dir}/../axelar-chains-config/info/"
