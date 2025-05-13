@@ -31,8 +31,6 @@ impl Config {
         let chains_info_filename: String = ChainsInfoFile::from(network_type).into();
         let chains_info_file = chains_info_dir.join(chains_info_filename);
 
-        dbg!(&chains_info_file);
-
         Ok(Self {
             url,
             output_dir,
