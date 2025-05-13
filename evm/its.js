@@ -25,6 +25,7 @@ const {
     getChainConfig,
     parseTrustedChains,
     encodeITSDestination,
+    INTERCHAIN_TRANSFER,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -302,12 +303,11 @@ async function processCommand(config, chain, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue, metadata } = options;
+            const { gasValue } = options;
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue },
-                isValidCalldata: { metadata },
+                isValidNumber: { amount, gasValue }
             });
 
             if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
@@ -348,17 +348,11 @@ async function processCommand(config, chain, action, options) {
             printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
 
-            printInfo('ahram test config', config);
-            printInfo('ahram test interchainTokenService', interchainTokenService);
-
-
-            const tx = await interchainTokenService.interchainTransfer(
+            const tx = await interchainTokenService[INTERCHAIN_TRANSFER](
                 tokenIdBytes32,
                 destinationChain,
                 itsDestinationAddress,
                 amountInUnits,
-                metadata,
-                gasValue,
                 { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');

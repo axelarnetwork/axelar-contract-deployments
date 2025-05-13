@@ -1042,6 +1042,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256)';
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1082,4 +1084,5 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    INTERCHAIN_TRANSFER,
 };
