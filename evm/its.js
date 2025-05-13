@@ -348,6 +348,10 @@ async function processCommand(config, chain, action, options) {
             printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
 
+            printInfo('ahram test config', config);
+            printInfo('ahram test interchainTokenService', interchainTokenService);
+
+
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
                 destinationChain,
