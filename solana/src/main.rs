@@ -7,6 +7,7 @@ mod generate;
 mod governance;
 mod its;
 mod misc;
+mod multisig_prover_types;
 mod send;
 mod sign;
 mod types;

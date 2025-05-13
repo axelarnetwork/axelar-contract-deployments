@@ -26,11 +26,7 @@ axelar-wasm-std = { git = "https://github.com/eigerco/axelar-amplifier.git", rev
 voting-verifier = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec", features = [
     "library",
 ] }
-multisig-prover = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec", features = [
-    "library",
-] }
 
-# libsecp256k1 = "0.7.2"
 alloy-sol-types = "0.7.6"
 anyhow = "1.0.98"
 base64 = "0.22.1"

@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
+use crate::multisig_prover_types::msg::ProofStatus;
+use crate::multisig_prover_types::Uint128Extensions;
 use axelar_solana_encoding::hash_payload;
 use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::execute_data::{ExecuteData, MerkleisedPayload};
@@ -16,7 +18,6 @@ use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-use multisig_prover::msg::ProofStatus;
 use serde::Deserialize;
 use serde_json::json;
 use solana_sdk::hash::Hash;
@@ -331,10 +332,10 @@ async fn get_verifier_set(
             cosmrs::AccountId::from_str(&address).unwrap()
         };
         let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
-        let multisig_prover_response = query::<multisig_prover::msg::VerifierSetResponse>(
+        let multisig_prover_response = query::<crate::multisig_prover_types::VerifierSetResponse>(
             axelar_grpc_endpoint,
             multisig_prover_address,
-            serde_json::to_vec(&multisig_prover::msg::QueryMsg::CurrentVerifierSet)?,
+            serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
         )
         .await?;
         let mut signers = BTreeMap::new();
@@ -656,11 +657,11 @@ async fn submit_proof(
         cosmrs::AccountId::from_str(&address).unwrap()
     };
     let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
-    let multisig_prover_response = query::<multisig_prover::msg::ProofResponse>(
+    let multisig_prover_response = query::<crate::multisig_prover_types::ProofResponse>(
         axelar_grpc_endpoint,
         multisig_prover_address,
-        serde_json::to_vec(&multisig_prover::msg::QueryMsg::Proof {
-            multisig_session_id: submit_proof_args.multisig_session_id.into(),
+        serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::Proof {
+            multisig_session_id: submit_proof_args.multisig_session_id,
         })?,
     )
     .await?;
