@@ -41,6 +41,7 @@ enum Commands {
         #[clap(last = true)]
         args: Vec<String>,
     },
+    UpdateIds,
 }
 
 fn main() -> eyre::Result<()> {
@@ -174,6 +175,75 @@ fn main() -> eyre::Result<()> {
             println!("cargo deny");
             cmd!(sh, "cargo +nightly install cargo-deny").run()?;
             cmd!(sh, "cargo deny check {args...}").run()?;
+        }
+        Commands::UpdateIds => {
+            println!("Updating program IDs");
+            let program_prefixes = [
+                ("axelar-solana-gateway", "gtw"),
+                ("axelar-solana-its", "its"),
+                ("axelar-solana-gas-service", "gas"),
+                ("axelar-solana-multicall", "mc"),
+                ("axelar-solana-memo-program", "mem"),
+                ("axelar-solana-governance", "gov"),
+            ];
+
+            let (solana_programs, _) = workspace_crates_by_category(&sh)?;
+
+            for (program_name, program_path) in solana_programs {
+                if let Some((_, prefix)) = program_prefixes
+                    .iter()
+                    .find(|(name, _)| program_name == *name)
+                {
+                    println!("Regenerating ID for {program_name} with prefix {prefix}");
+                    let lib_rs_path = program_path.join("src/lib.rs");
+
+                    if !lib_rs_path.exists() {
+                        println!("Warning: {lib_rs_path:?} not found, skipping");
+                        continue;
+                    }
+
+                    // Generate new program ID using solana-keygen grind
+                    let output =
+                        cmd!(sh, "solana-keygen grind --starts-with {prefix}:1").output()?;
+
+                    // Parse the output to extract the pubkey
+                    let output_str = String::from_utf8(output.stdout)?;
+                    let mut new_id = String::new();
+                    for line in output_str.lines() {
+                        if line.contains(".json") {
+                            if let Some(filename) = line.split_whitespace().last() {
+                                if let Some(pubkey) = filename.split('.').next() {
+                                    new_id = pubkey.to_string();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if new_id.is_empty() {
+                        println!("Failed to generate new ID for {program_name}");
+                        continue;
+                    }
+
+                    println!("Generated new ID for {program_name}: {new_id}");
+
+                    // Update the declare_id! macro in lib.rs
+                    // Read the current lib.rs content
+                    let lib_content = std::fs::read_to_string(&lib_rs_path)?;
+                    let updated_content = lib_content.replace(
+                        lib_content
+                            .lines()
+                            .find(|line| line.contains("solana_program::declare_id!("))
+                            .unwrap_or("declare_id!(\"NoMatch\");"),
+                        &format!("solana_program::declare_id!(\"{}\");", new_id),
+                    );
+
+                    std::fs::write(&lib_rs_path, updated_content)?;
+                    println!("Updated declare_id! macro in {lib_rs_path:?}");
+                }
+            }
+
+            println!("Program IDs regenerated and successfully updated");
         }
     }
 
