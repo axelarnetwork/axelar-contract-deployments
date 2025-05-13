@@ -38,7 +38,7 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `<chain name>`.
+- Create an `.env` config
 
 ```yaml
 MNEMONIC=<cosm wasm deployer key mnemonic>
