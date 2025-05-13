@@ -25,7 +25,6 @@ describe("Ping Memo Program", () => {
         .initialize(bump)
         .accounts({
           payer: payer.publicKey,
-          gatewayRootPda: gatewayRootPdaPublicKey,
           counterPda: counterPdaPublicKey,
         })
         .rpc();

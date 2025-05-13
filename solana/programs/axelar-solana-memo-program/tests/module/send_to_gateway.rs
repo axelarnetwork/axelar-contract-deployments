@@ -21,10 +21,9 @@ async fn test_successfully_send_to_gateway() {
     let memo = "🐪🐪🐪🐪";
     let destination_address = ethers_core::types::Address::random().encode_hex();
     let destination_chain = "ethereum".to_string();
-    let (counter_pda, counter_bump) = get_counter_pda(&solana_chain.gateway_root_pda);
+    let (counter_pda, counter_bump) = get_counter_pda();
     let initialize = axelar_solana_memo_program::instruction::initialize(
         &solana_chain.fixture.payer.pubkey().clone(),
-        &solana_chain.gateway_root_pda.clone(),
         &(counter_pda, counter_bump),
     )
     .unwrap();
@@ -84,10 +83,9 @@ async fn test_successfully_send_to_gateway_with_offchain_data() {
         .replace(['\n', ' '], "");
     let destination_address = ethers_core::types::Address::random().encode_hex();
     let destination_chain = "ethereum".to_string();
-    let (counter_pda, counter_bump) = get_counter_pda(&solana_chain.gateway_root_pda);
+    let (counter_pda, counter_bump) = get_counter_pda();
     let initialize = axelar_solana_memo_program::instruction::initialize(
         &solana_chain.fixture.payer.pubkey().clone(),
-        &solana_chain.gateway_root_pda.clone(),
         &(counter_pda, counter_bump),
     )
     .unwrap();

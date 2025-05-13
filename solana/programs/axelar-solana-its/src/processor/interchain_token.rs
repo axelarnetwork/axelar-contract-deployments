@@ -33,7 +33,6 @@ use crate::{
 };
 
 pub(crate) struct DeployInterchainTokenAccounts<'a> {
-    pub(crate) gateway_root_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -62,7 +61,6 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
     {
         let accounts_iter = &mut accounts.iter();
         Ok(Self {
-            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -85,7 +83,6 @@ impl<'a> FromAccountInfoSlice<'a> for DeployInterchainTokenAccounts<'a> {
 impl<'a> From<DeployInterchainTokenAccounts<'a>> for DeployTokenManagerAccounts<'a> {
     fn from(value: DeployInterchainTokenAccounts<'a>) -> Self {
         Self {
-            gateway_root_pda: value.gateway_root_pda,
             system_account: value.system_account,
             its_root_pda: value.its_root_pda,
             token_manager_pda: value.token_manager_pda,
@@ -154,11 +151,7 @@ pub(crate) fn process_inbound_deploy<'a>(
 ) -> ProgramResult {
     msg!("Instruction: InboundDeploy");
     let its_root_pda_bump = InterchainTokenService::load(accounts.its_root_pda)?.bump;
-    assert_valid_its_root_pda(
-        accounts.its_root_pda,
-        accounts.gateway_root_pda.key,
-        its_root_pda_bump,
-    )?;
+    assert_valid_its_root_pda(accounts.its_root_pda, its_root_pda_bump)?;
 
     let (interchain_token_pda, interchain_token_pda_bump) =
         crate::find_interchain_token_pda(accounts.its_root_pda.key, &token_id);

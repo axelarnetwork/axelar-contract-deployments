@@ -43,14 +43,12 @@ async fn axelar_solana_setup() -> TestContext {
         .setup()
         .await;
 
-    let (counter_pda, counter_bump) =
-        axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+    let (counter_pda, counter_bump) = axelar_solana_memo_program::get_counter_pda();
 
     solana_chain
         .fixture
         .send_tx(&[axelar_solana_memo_program::instruction::initialize(
             &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
             &(counter_pda, counter_bump),
         )
         .unwrap()])

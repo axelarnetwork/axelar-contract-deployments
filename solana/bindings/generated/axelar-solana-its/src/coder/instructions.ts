@@ -895,9 +895,9 @@ LAYOUT.addVariant(
       [
         ((p: string) => {
           const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
           return U;
         })("roles"),
         B.u8("destinationRolesPdaBump"),
@@ -915,9 +915,9 @@ LAYOUT.addVariant(
       [
         ((p: string) => {
           const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
+          U.addVariant(1, B.struct([]), "minter");
+          U.addVariant(2, B.struct([]), "operator");
+          U.addVariant(4, B.struct([]), "flowLimiter");
           return U;
         })("roles"),
         B.u8("destinationRolesPdaBump"),

@@ -76,7 +76,6 @@ const ITS_HUB_TRUSTED_CONTRACT_ADDRESS: &str =
 pub struct ItsTestContext {
     pub solana_chain: SolanaAxelarIntegrationMetadata,
     pub solana_wallet: Pubkey,
-    pub solana_gateway_root_config: Pubkey,
     pub solana_gas_utils: GasServiceUtils,
     pub evm_chain: TestBlockchain,
     pub solana_chain_name: String,
@@ -103,12 +102,10 @@ impl AsyncTestContext for ItsTestContext {
             .unwrap();
 
         let solana_wallet = solana_chain.fixture.payer.pubkey();
-        let solana_gateway_root_config = solana_chain.gateway_root_pda;
 
         let mut this = Self {
             solana_chain,
             solana_wallet,
-            solana_gateway_root_config,
             solana_gas_utils,
             evm_chain,
             solana_chain_name: SOLANA_CHAIN_NAME.to_string(),
@@ -484,14 +481,12 @@ async fn axelar_solana_setup() -> (SolanaAxelarIntegrationMetadata, Pubkey) {
         .setup()
         .await;
 
-    let (counter_pda, counter_bump) =
-        axelar_solana_memo_program::get_counter_pda(&solana_chain.gateway_root_pda);
+    let (counter_pda, counter_bump) = axelar_solana_memo_program::get_counter_pda();
 
     let _metadata = solana_chain
         .fixture
         .send_tx(&[axelar_solana_memo_program::instruction::initialize(
             &solana_chain.fixture.payer.pubkey(),
-            &solana_chain.gateway_root_pda,
             &(counter_pda, counter_bump),
         )
         .unwrap()])
@@ -508,7 +503,6 @@ async fn axelar_solana_setup() -> (SolanaAxelarIntegrationMetadata, Pubkey) {
                 ),
                 axelar_solana_its::instruction::initialize(
                     solana_chain.upgrade_authority.pubkey(),
-                    solana_chain.gateway_root_pda,
                     solana_chain.fixture.payer.pubkey(),
                     SOLANA_CHAIN_NAME.to_owned(),
                     ITS_HUB_TRUSTED_CONTRACT_ADDRESS.to_owned(),

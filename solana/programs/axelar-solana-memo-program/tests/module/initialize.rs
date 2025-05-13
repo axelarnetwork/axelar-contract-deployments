@@ -13,10 +13,9 @@ async fn test_initialize() {
     let mut solana_chain = program_test().await;
 
     // Action
-    let (counter_pda, counter_bump) = get_counter_pda(&solana_chain.gateway_root_pda);
+    let (counter_pda, counter_bump) = get_counter_pda();
     let initialize = axelar_solana_memo_program::instruction::initialize(
         &solana_chain.fixture.payer.pubkey().clone(),
-        &solana_chain.gateway_root_pda.clone(),
         &(counter_pda, counter_bump),
     )
     .unwrap();

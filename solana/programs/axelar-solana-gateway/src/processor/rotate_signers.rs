@@ -93,7 +93,6 @@ impl Processor {
         // Check: Verification PDA can be derived from seeds stored into the account
         // data itself.
         assert_valid_signature_verification_pda(
-            gateway_root_pda.key,
             &payload_merkle_root,
             session.bump,
             verification_session_account.key,

@@ -1,11 +1,9 @@
 #![allow(clippy::too_many_arguments)]
 //! Program state processor
-use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::state::GatewayConfig;
 use borsh::BorshDeserialize;
 use event_utils::Event as _;
 use interchain_token::process_mint;
-use program_utils::{BorshPda, BytemuckedPda, ValidPDA};
+use program_utils::{BorshPda, ValidPDA};
 use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
     ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
@@ -293,7 +291,6 @@ fn process_initialize(
     let account_info_iter = &mut accounts.iter();
     let payer = next_account_info(account_info_iter)?;
     let program_data_account = next_account_info(account_info_iter)?;
-    let gateway_root_pda_account = next_account_info(account_info_iter)?;
     let its_root_pda_account = next_account_info(account_info_iter)?;
     let system_account = next_account_info(account_info_iter)?;
     let operator = next_account_info(account_info_iter)?;
@@ -311,16 +308,7 @@ fn process_initialize(
     // Check: PDA Account is not initialized
     its_root_pda_account.check_uninitialized_pda()?;
 
-    // Check: Gateway Root PDA Account is valid.
-    let gateway_config_data = gateway_root_pda_account.try_borrow_data()?;
-    let gateway_config =
-        GatewayConfig::read(&gateway_config_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
-    axelar_solana_gateway::assert_valid_gateway_root_pda(
-        gateway_config.bump,
-        gateway_root_pda_account.key,
-    )?;
-
-    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda(gateway_root_pda_account.key);
+    let (its_root_pda, its_root_pda_bump) = crate::find_its_root_pda();
     let its_root_config =
         InterchainTokenService::new(its_root_pda_bump, chain_name, its_hub_address);
     its_root_config.init(
@@ -328,11 +316,7 @@ fn process_initialize(
         system_account,
         payer,
         its_root_pda_account,
-        &[
-            crate::seed_prefixes::ITS_SEED,
-            gateway_root_pda_account.key.as_ref(),
-            &[its_root_pda_bump],
-        ],
+        &[crate::seed_prefixes::ITS_SEED, &[its_root_pda_bump]],
     )?;
 
     let (_user_roles_pda, user_roles_pda_bump) =
@@ -409,16 +393,11 @@ fn process_operator_accounts<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> Result<RoleManagementAccounts<'a>, ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let gateway_root_pda = next_account_info(accounts_iter)?;
 
     let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
     msg!("Instruction: Operator");
     let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
-    assert_valid_its_root_pda(
-        role_management_accounts.resource,
-        gateway_root_pda.key,
-        its_config.bump,
-    )?;
+    assert_valid_its_root_pda(role_management_accounts.resource, its_config.bump)?;
 
     Ok(role_management_accounts)
 }
@@ -428,6 +407,7 @@ fn process_tm_add_flow_limiter<'a>(
     inputs: &RoleManagementInstructionInputs<Roles>,
 ) -> ProgramResult {
     if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
+        msg!("Invalid role: {:?}", inputs.roles);
         return Err(ProgramError::InvalidInstructionData);
     }
     let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
@@ -559,18 +539,13 @@ fn process_set_pause_status(accounts: &[AccountInfo<'_>], paused: bool) -> Progr
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
     msg!("Instruction: SetPauseStatus");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        gateway_root_pda_account.key,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
     its_root_config.paused = paused;
     its_root_config.store(payer, its_root_pda, system_account)?;
 
@@ -581,18 +556,13 @@ fn process_set_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: String) -
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
     msg!("Instruction: SetTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        gateway_root_pda_account.key,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     let trusted_chain_event = event::TrustedChainSet { chain_name };
     trusted_chain_event.emit();
@@ -606,18 +576,13 @@ fn process_remove_trusted_chain(accounts: &[AccountInfo<'_>], chain_name: &str) 
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
-    let gateway_root_pda_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
     msg!("Instruction: RemoveTrustedChain");
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
-    assert_valid_its_root_pda(
-        its_root_pda,
-        gateway_root_pda_account.key,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
     event::TrustedChainRemoved {
         chain_name: chain_name.to_owned(),

@@ -23,7 +23,7 @@ use crate::{retrieve_evm_log_with_filter, ItsTestContext};
 async fn test_incoming_interchain_transfer_within_limit(
     ctx: &mut ItsTestContext,
 ) -> anyhow::Result<()> {
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
     let token_program_id = spl_token_2022::id();
@@ -102,7 +102,7 @@ async fn test_incoming_interchain_transfer_within_limit(
 #[should_panic]
 #[tokio::test]
 async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext) {
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
     let token_program_id = spl_token_2022::id();
@@ -189,7 +189,7 @@ async fn test_outgoing_interchain_transfer_within_limit(
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 
@@ -276,7 +276,7 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
 
     ctx.send_solana_tx(&[flow_limit_ix]).await;
 
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (interchain_token_pda, _) =
         axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
 

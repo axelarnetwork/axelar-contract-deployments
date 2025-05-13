@@ -18,28 +18,18 @@ use state::Counter;
 solana_program::declare_id!("mem7LhKWbKydCPk1TwNzeCvVSpoVx2mqxNuvjGgWAbG");
 
 /// Derives interchain token service root PDA
-pub(crate) fn get_counter_pda_internal(
-    gateway_root_pda: &Pubkey,
-    program_id: &Pubkey,
-) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[gateway_root_pda.as_ref()], program_id)
+pub(crate) fn get_counter_pda_internal(program_id: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[], program_id)
 }
 
 /// Derives interchain token service root PDA
-pub fn get_counter_pda(gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
-    get_counter_pda_internal(gateway_root_pda, &crate::id())
+pub fn get_counter_pda() -> (Pubkey, u8) {
+    get_counter_pda_internal(&crate::ID)
 }
 
 /// Assert counter PDA seeds
-fn assert_counter_pda_seeds(
-    counter_account: &Counter,
-    counter_pda: &Pubkey,
-    gateway_root_pda: &Pubkey,
-) {
-    let derived = Pubkey::create_program_address(
-        &[gateway_root_pda.as_ref(), &[counter_account.bump]],
-        &crate::ID,
-    )
-    .expect("failed to derive PDA");
+fn assert_counter_pda_seeds(counter_account: &Counter, counter_pda: &Pubkey) {
+    let derived = Pubkey::create_program_address(&[&[counter_account.bump]], &crate::ID)
+        .expect("failed to derive PDA");
     assert_eq!(&derived, counter_pda, "invalid pda for memo counter");
 }

@@ -72,7 +72,6 @@ impl Processor {
         let session = SignatureVerificationSessionData::read(&data)
             .ok_or(GatewayError::BytemuckDataLenInvalid)?;
         assert_valid_signature_verification_pda(
-            gateway_root_pda.key,
             &payload_merkle_root,
             session.bump,
             verification_session_account.key,

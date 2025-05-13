@@ -447,8 +447,7 @@ pub fn initialize_payload_verification_session(
     gateway_config_pda: Pubkey,
     payload_merkle_root: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (verification_session_pda, _) =
-        crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
+    let (verification_session_pda, _) = crate::get_signature_verification_pda(&payload_merkle_root);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -481,7 +480,7 @@ pub fn verify_signature(
     verifier_info: SigningVerifierSetInfo,
 ) -> Result<Instruction, ProgramError> {
     let (verification_session_pda, _bump) =
-        crate::get_signature_verification_pda(&gateway_config_pda, &payload_merkle_root);
+        crate::get_signature_verification_pda(&payload_merkle_root);
 
     let accounts = vec![
         AccountMeta::new_readonly(gateway_config_pda, false),
@@ -536,8 +535,7 @@ pub fn initialize_message_payload(
     command_id: [u8; 32],
     buffer_size: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) =
-        crate::find_message_payload_pda(gateway_root_pda, command_id, payer);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, payer);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -570,8 +568,7 @@ pub fn write_message_payload(
     bytes: &[u8],
     offset: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) =
-        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
     let accounts = vec![
         AccountMeta::new(authority, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
@@ -599,8 +596,7 @@ pub fn commit_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) =
-        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
 
     let accounts = vec![
         AccountMeta::new(authority, true),
@@ -626,8 +622,7 @@ pub fn close_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) =
-        crate::find_message_payload_pda(gateway_root_pda, command_id, authority);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
     let accounts = vec![
         AccountMeta::new(authority, false),
         AccountMeta::new_readonly(gateway_root_pda, false),

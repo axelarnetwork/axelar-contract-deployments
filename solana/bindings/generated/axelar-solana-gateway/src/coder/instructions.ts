@@ -175,6 +175,7 @@ function encodeVerifySignature({
   payloadMerkleRoot,
   verifierInfo,
 }: any): Buffer {
+  
   const signatureKey = Object.keys(verifierInfo.signature)[0];
   const signatureValue = verifierInfo.signature[signatureKey];
   verifierInfo.signature[signatureKey] = signatureValue['0'];

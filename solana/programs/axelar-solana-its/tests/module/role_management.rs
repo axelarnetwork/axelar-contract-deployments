@@ -17,7 +17,7 @@ use crate::ItsTestContext;
 #[test_context(ItsTestContext)]
 #[tokio::test]
 async fn test_successful_operator_transfer(ctx: &mut ItsTestContext) {
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let bob = Keypair::new();
 
     let transfer_role_ix =
@@ -91,7 +91,7 @@ async fn test_fail_transfer_when_not_holder(ctx: &mut ItsTestContext) {
 #[test_context(ItsTestContext)]
 #[tokio::test]
 async fn test_successful_proposal_acceptance(ctx: &mut ItsTestContext) {
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let bob = Keypair::new();
 
     let roles_to_transfer = Roles::OPERATOR;
@@ -173,7 +173,7 @@ async fn test_successful_proposal_acceptance(ctx: &mut ItsTestContext) {
 #[tokio::test]
 async fn test_successful_add_and_remove_flow_limiter(ctx: &mut ItsTestContext) {
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let bob = Keypair::new();
@@ -233,7 +233,7 @@ async fn test_successful_add_and_remove_flow_limiter(ctx: &mut ItsTestContext) {
 async fn test_successful_token_manager_operator_transfer(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -305,7 +305,7 @@ async fn test_successful_token_manager_operator_transfer(ctx: &mut ItsTestContex
 async fn test_successful_token_manager_operator_proposal_acceptance(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -402,7 +402,7 @@ async fn test_successful_token_manager_operator_proposal_acceptance(ctx: &mut It
 async fn test_successful_token_manager_minter_transfer(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -462,7 +462,7 @@ async fn test_successful_token_manager_minter_transfer(ctx: &mut ItsTestContext)
 async fn test_successful_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -553,7 +553,7 @@ async fn test_successful_token_manager_minter_proposal_acceptance(ctx: &mut ItsT
 async fn test_fail_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -615,8 +615,7 @@ async fn test_fail_token_manager_minter_proposal_acceptance(ctx: &mut ItsTestCon
 async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
     let bob = Keypair::new();
     let token_id = ctx.deployed_interchain_token;
-    let (its_root_config_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_config_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(
         &its_root_config_pda,
         &ctx.deployed_interchain_token,

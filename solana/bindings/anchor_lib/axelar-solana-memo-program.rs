@@ -39,7 +39,6 @@ pub mod axelar_solana_memo_program {
 pub struct Initialize<'info> {
     #[account(mut)]
     payer: AccountInfo<'info>,
-    gateway_root_pda: AccountInfo<'info>,
     #[account(mut)]
     counter_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,

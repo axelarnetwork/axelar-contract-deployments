@@ -30,53 +30,13 @@ Additionally, logs could be added in separate terminal.
 solana logs
 ```
 
-## 2. Run Gateway on local node
+## 2. Deploy Programs on local node
 
-From the `root` of the repository build `gateway`:
-
-```bash
-cd solana/programs/axelar-solana-gateway && cargo build-sbf 
-```
-
-And deploy it:
+Use the `./prepare_test.sh` script from bindings folder.
 
 ```bash
-cd ../../../ && solana program deploy solana/target/deploy/axelar_solana_gateway.so --program-id solana/target/deploy/axelar_solana_gateway-keypair.json
+./prepare_test.sh
 ```
-
-CAUTION: Different Program Id could be provided when deployed. In that case, it is necessary to update this newly created Id in `solana/programs/axelar-solana-gateway/src/lib.rs`, rebuild it and redeploy it. Additionally in `bindings/generated/axelar-solana-gateway/program.ts`, value `AXELAR_SOLANA_GATEWAY_PROGRAM_ID` has to be updated with the same value.
-
-## 2. Run ITS on local node
-
-From the `root` of the repository build `its`:
-
-```bash
-cd solana/programs/axelar-solana-its && cargo build-sbf 
-```
-
-And deploy it:
-
-```bash
-cd ../../../ && solana program deploy solana/target/deploy/axelar_solana_its.so --program-id solana/target/deploy/axelar_solana_its-keypair.json
-```
-
-CAUTION: Different Program Id could be provided when deployed. In that case, it is necessary to update this newly created Id in `solana/programs/axelar-solana-its/src/lib.rs`, rebuild it and redeploy it. Additionally in `bindings/generated/axelar-solana-its/program.ts`, value `AXELAR_SOLANA_ITS_PROGRAM_ID` has to be updated with the same value.
-
-## 2. Run Memo Program on local node
-
-From the `root` of the repository build `memo-program`:
-
-```bash
-cd solana/programs/axelar-solana-memo-program && cargo build-sbf
-```
-
-And deploy it:
-
-```bash
-cd ../../../ && solana program deploy solana/target/deploy/axelar_solana_memo_program.so --program-id solana/target/deploy/axelar_solana_memo_program-keypair.json
-```
-
-CAUTION: Different Program Id could be provided when deployed. In that case, it is necessary to update this newly created Id in `solana/programs/axelar-solana-memo-program/src/lib.rs`, rebuild it and redeploy it. Additionally in `bindings/generated/axelar-solana-memo-program/program.ts`, value `AXELAR_SOLANA_MEMO_PROGRAM_PROGRAM_ID` has to be updated with the same value.
 
 ## 3. Invoke tests
 
@@ -172,6 +132,11 @@ cargo xtask create-bindings gateway -u
 ## 3. Checking changes
 
 It is vital to check changes that have been provided from regenerating bindings. Post generating modifications have been done due to the limitations of the `native-to-anchor` binary. Therefore, comparing with the help of versioning system, re-running tests and detailed code review is necessary so that the bindings functionality remains on point.
+
+### Current hacks that need to be respected
+
+* The current import paths, which `native-to-anchor` tries to fix. Current ones need to be respected.
+* The Roles enum. This struct has encoding issues if we allow `native-to-anchor` to generate it, as we need to respect the value bits in the original enum.
 
 # Additional things to be checked
 

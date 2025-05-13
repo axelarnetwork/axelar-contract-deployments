@@ -16,7 +16,7 @@ use crate::ItsTestContext;
 #[test_context(ItsTestContext)]
 #[tokio::test]
 async fn test_its_gmp_payload_fail_when_paused(ctx: &mut ItsTestContext) {
-    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
 
     ctx.solana_chain
         .fixture
@@ -85,8 +85,7 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         )
         .await;
 
-    let (its_root_config_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_gateway_root_config);
+    let (its_root_config_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(
         &its_root_config_pda,
         &ctx.deployed_interchain_token,

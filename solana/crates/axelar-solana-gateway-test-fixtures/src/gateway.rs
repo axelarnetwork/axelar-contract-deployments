@@ -164,7 +164,6 @@ impl SolanaAxelarIntegrationMetadata {
 
         // Check that the PDA contains the expected data
         let (verification_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
-            &gateway_config_pda,
             &execute_data.payload_merkle_root,
         );
         Ok(verification_pda)
@@ -398,11 +397,8 @@ impl SolanaAxelarIntegrationMetadata {
             .await?;
         self.commit_message_payload(msg_command_id).await?;
 
-        let (message_payload_account, _bump) = axelar_solana_gateway::find_message_payload_pda(
-            self.gateway_root_pda,
-            msg_command_id,
-            self.payer.pubkey(),
-        );
+        let (message_payload_account, _bump) =
+            axelar_solana_gateway::find_message_payload_pda(msg_command_id, self.payer.pubkey());
 
         Ok(message_payload_account)
     }

@@ -107,7 +107,6 @@ export class ItsInstructions {
       .accounts({
         payer: params.payer,
         programDataAddress: this.programDataAddress,
-        gatewayRootPda: this.gatewayRootPda,
         itsRootPda: this.itsRootPda,
         systemProgram: SystemProgram.programId,
         operator: params.operator,
@@ -122,7 +121,6 @@ export class ItsInstructions {
     return this.program.methods.setPauseStatus(params.paused).accounts({
       payer: params.payer,
       programDataAddress: this.programDataAddress,
-      gatewayRootPda: this.gatewayRootPda,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
     });
@@ -135,7 +133,6 @@ export class ItsInstructions {
     return this.program.methods.setTrustedChain(params.chainName).accounts({
       payer: params.payer,
       programDataAddress: this.programDataAddress,
-      gatewayRootPda: this.gatewayRootPda,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
     });
@@ -148,7 +145,6 @@ export class ItsInstructions {
     return this.program.methods.removeTrustedChain(params.chainName).accounts({
       payer: params.payer,
       programDataAddress: this.programDataAddress,
-      gatewayRootPda: this.gatewayRootPda,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
     });
@@ -236,7 +232,6 @@ export class ItsInstructions {
     return this.program.methods.registerCanonicalInterchainToken().accounts({
       payer: params.payer,
       tokenMetadataAccount,
-      gatewayRootPda: this.gatewayRootPda,
       systemProgram: SystemProgram.programId,
       itsRootPda: this.itsRootPda,
       tokenManagerPda,
@@ -274,7 +269,6 @@ export class ItsInstructions {
         metadataAccount: tokenMetadataAccount,
         sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -336,7 +330,6 @@ export class ItsInstructions {
       )
       .accounts({
         payer: params.payer,
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         itsRootPda: this.itsRootPda,
         tokenManagerPda,
@@ -385,7 +378,6 @@ export class ItsInstructions {
         metadataAccount: tokenMetadataAccount,
         sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -440,7 +432,6 @@ export class ItsInstructions {
         tokenManagerPda,
         sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -468,7 +459,6 @@ export class ItsInstructions {
         payer: params.payer,
         mint: params.mint,
         tokenProgram: params.tokenProgram,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -514,7 +504,6 @@ export class ItsInstructions {
       .accounts({
         payer: params.payer,
         tokenMetadataAccount,
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         itsRootPda: this.itsRootPda,
         tokenManagerPda,
@@ -558,7 +547,6 @@ export class ItsInstructions {
       .accounts({
         payer: params.payer,
         tokenManagerPda,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -620,7 +608,6 @@ export class ItsInstructions {
         tokenManagerAta,
         tokenProgram: params.tokenProgram,
         flowSlotPda,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -685,7 +672,6 @@ export class ItsInstructions {
         tokenManagerAta,
         tokenProgram: params.tokenProgram,
         flowSlotPda,
-        gatewayRootPda: this.gatewayRootPda,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -773,7 +759,6 @@ export class ItsInstructions {
           tokenManagerAta,
           tokenProgram: params.tokenProgram,
           flowSlotPda,
-          gatewayRootPda: this.gatewayRootPda,
           axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
           gasConfigPda: params.gasConfigPda,
           gasService: params.gasService,
@@ -828,7 +813,6 @@ export class ItsInstructions {
         proposalPdaBump: null,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -862,7 +846,6 @@ export class ItsInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -900,7 +883,6 @@ export class ItsInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -981,7 +963,6 @@ export class InterchainTokenInstructions {
         proposalPdaBump: null,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -1020,7 +1001,6 @@ export class InterchainTokenInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -1063,7 +1043,6 @@ export class InterchainTokenInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -1114,7 +1093,6 @@ export class TokenManagerInstructions {
       .accounts({
         payer: params.payer,
         mint: params.mint,
-        gatewayRootPda: this.gatewayRootPda,
         itsRootPda: this.itsRootPda,
         tokenManagerPda,
         minterRolesPda,
@@ -1233,7 +1211,6 @@ export class TokenManagerInstructions {
         proposalPdaBump: null,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -1272,7 +1249,6 @@ export class TokenManagerInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,
@@ -1315,7 +1291,6 @@ export class TokenManagerInstructions {
         proposalPdaBump,
       })
       .accounts({
-        gatewayRootPda: this.gatewayRootPda,
         systemProgram: SystemProgram.programId,
         payer: params.payer,
         payerRolesAccount: payerRolesPda,

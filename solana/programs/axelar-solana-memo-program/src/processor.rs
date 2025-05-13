@@ -56,7 +56,6 @@ pub fn process_message_from_axelar_with_token<'a>(
     payload: &AxelarInterchainTokenExecutablePayload,
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let _gateway_root_pda = next_account_info(accounts_iter)?;
     let _its_root_pda = next_account_info(accounts_iter)?;
     let _message_payload_account = next_account_info(accounts_iter)?;
     let _token_program = next_account_info(accounts_iter)?;
@@ -129,7 +128,7 @@ pub fn process_native_ix(
 
             let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
             let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key, gateway_root_pda.key);
+            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
             if &signing_pda.0 != signing_pda_acc.key {
                 msg!("invalid signing PDA");
                 return Err(ProgramError::InvalidAccountData);
@@ -169,7 +168,7 @@ pub fn process_native_ix(
             let gateway_program = next_account_info(account_info_iter)?;
 
             let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
-            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key, gateway_root_pda.key);
+            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
             let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
             if &signing_pda.0 != signing_pda_acc.key {
                 msg!("invalid signing PDA");
@@ -259,7 +258,6 @@ pub fn process_initialize_memo_program_counter(
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
-    let gateway_root_pda = next_account_info(accounts_iter)?;
     let counter_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
@@ -272,7 +270,7 @@ pub fn process_initialize_memo_program_counter(
     // Check: Memo counter PDA Account is not initialized
     counter_pda.check_uninitialized_pda()?;
     // Check: counter PDA account uses the canonical bump.
-    assert_counter_pda_seeds(&counter, counter_pda.key, gateway_root_pda.key);
+    assert_counter_pda_seeds(&counter, counter_pda.key);
 
     program_utils::init_pda(
         payer,
@@ -280,6 +278,6 @@ pub fn process_initialize_memo_program_counter(
         program_id,
         system_account,
         counter,
-        &[gateway_root_pda.key.as_ref(), &[bump]],
+        &[&[bump]],
     )
 }

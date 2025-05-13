@@ -32,10 +32,8 @@ async fn test_initialize_payload_verification_session() {
     let _tx_result = metadata.send_tx(&[ix]).await.unwrap();
 
     // Check PDA contains the expected data
-    let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
-        &gateway_config_pda,
-        &payload_merkle_root,
-    );
+    let (verification_pda, bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&payload_merkle_root);
 
     let verification_session_account = metadata
         .try_get_account_no_checks(&verification_pda)

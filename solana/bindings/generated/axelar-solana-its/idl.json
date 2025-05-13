@@ -16,11 +16,6 @@
           "isSigner": false
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "itsRootPda",
           "isMut": true,
           "isSigner": false
@@ -66,11 +61,6 @@
           "isSigner": false
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "itsRootPda",
           "isMut": true,
           "isSigner": false
@@ -102,11 +92,6 @@
           "isSigner": false
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "itsRootPda",
           "isMut": true,
           "isSigner": false
@@ -134,11 +119,6 @@
         },
         {
           "name": "programDataAddress",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "gatewayRootPda",
           "isMut": false,
           "isSigner": false
         },
@@ -266,11 +246,6 @@
           "isSigner": false
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -343,11 +318,6 @@
         },
         {
           "name": "mplTokenMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "gatewayRootPda",
           "isMut": false,
           "isSigner": false
         },
@@ -527,11 +497,6 @@
           "isSigner": true
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -666,11 +631,6 @@
           "isSigner": false
         },
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -775,11 +735,6 @@
         },
         {
           "name": "mplTokenMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "gatewayRootPda",
           "isMut": false,
           "isSigner": false
         },
@@ -927,11 +882,6 @@
         },
         {
           "name": "tokenMetadataAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "gatewayRootPda",
           "isMut": false,
           "isSigner": false
         },
@@ -1399,11 +1349,6 @@
       "name": "operatorTransferOperatorship",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1462,11 +1407,6 @@
       "name": "operatorProposeOperatorship",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1524,11 +1464,6 @@
     {
       "name": "operatorAcceptOperatorship",
       "accounts": [
-        {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
         {
           "name": "systemProgram",
           "isMut": false,
@@ -1745,11 +1680,6 @@
       "name": "tokenManagerTransferOperatorship",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1808,11 +1738,6 @@
       "name": "tokenManagerProposeOperatorship",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1870,11 +1795,6 @@
     {
       "name": "tokenManagerAcceptOperatorship",
       "accounts": [
-        {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
         {
           "name": "systemProgram",
           "isMut": false,
@@ -1941,11 +1861,6 @@
         {
           "name": "mint",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "gatewayRootPda",
-          "isMut": false,
           "isSigner": false
         },
         {
@@ -2036,11 +1951,6 @@
       "name": "interchainTokenTransferMintership",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2099,11 +2009,6 @@
       "name": "interchainTokenProposeMintership",
       "accounts": [
         {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2161,11 +2066,6 @@
     {
       "name": "interchainTokenAcceptMintership",
       "accounts": [
-        {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        },
         {
           "name": "systemProgram",
           "isMut": false,

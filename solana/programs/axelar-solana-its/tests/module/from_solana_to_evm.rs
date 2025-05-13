@@ -147,8 +147,7 @@ async fn custom_token(
     assert_eq!(log.token_id, token_id);
     assert_eq!(log.token_manager_type, token_manager_type as u8);
 
-    let (its_root_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 
@@ -269,8 +268,7 @@ async fn canonical_token(
     assert_eq!(log.name, token_name);
     assert_eq!(log.decimals, 9);
 
-    let (its_root_pda, _) =
-        axelar_solana_its::find_its_root_pda(&ctx.solana_chain.gateway_root_pda);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
 

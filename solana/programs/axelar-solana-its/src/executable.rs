@@ -15,15 +15,14 @@ use crate::state::InterchainTokenService;
 /// The index of the first account that is expected to be passed to the
 /// destination program. The prepended accounts are:
 ///
-/// 0. [] The Gateway Root Config PDA
-/// 1. [signer] The Interchain Token Service Root PDA.
-/// 2. [] The Message Payload PDA.
-/// 3. [] The token program (spl-token or spl-token-2022).
-/// 4. [writable] The token mint.
-/// 5. [writable] The Destination Program Associated Token Account.
-/// 6. [] The Metaplex Metadata Program account.
-/// 7. [writable] The Metaplex Metadata account associated with the mint.
-pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 8;
+/// 0. [signer] The Interchain Token Service Root PDA.
+/// 1. [] The Message Payload PDA.
+/// 2. [] The token program (spl-token or spl-token-2022).
+/// 3. [writable] The token mint.
+/// 4. [writable] The Destination Program Associated Token Account.
+/// 5. [] The Metaplex Metadata Program account.
+/// 6. [writable] The Metaplex Metadata account associated with the mint.
+pub const PROGRAM_ACCOUNTS_START_INDEX: usize = 7;
 
 /// This is the payload that the `executeWithInterchainToken` processor on the destinatoin program
 /// must expect
@@ -107,7 +106,6 @@ fn extract_interchain_token_execute_call_data<'a>(
 ) -> Result<Vec<u8>, ProgramError> {
     let (protocol_accounts, program_accounts) = accounts.split_at(PROGRAM_ACCOUNTS_START_INDEX);
     let account_iter = &mut protocol_accounts.iter();
-    let gateway_root_account = next_account_info(account_iter)?;
     let signing_pda_account = next_account_info(account_iter)?;
     let message_payload_account = next_account_info(account_iter)?;
     let message_payload_account_data = message_payload_account.try_borrow_data()?;
@@ -122,11 +120,7 @@ fn extract_interchain_token_execute_call_data<'a>(
     }
 
     let its_root_config = InterchainTokenService::load(signing_pda_account)?;
-    assert_valid_its_root_pda(
-        signing_pda_account,
-        gateway_root_account.key,
-        its_root_config.bump,
-    )?;
+    assert_valid_its_root_pda(signing_pda_account, its_root_config.bump)?;
 
     let GMPPayload::ReceiveFromHub(inner) = GMPPayload::decode(message_payload.raw_payload)
         .map_err(|_err| ProgramError::InvalidInstructionData)?

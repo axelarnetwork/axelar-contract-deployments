@@ -57,11 +57,7 @@ pub(crate) fn process_inbound<'a>(
     let parsed_accounts = DeployTokenManagerAccounts::from_account_info_slice(accounts, &())?;
     let its_root_pda_bump = InterchainTokenService::load(parsed_accounts.its_root_pda)?.bump;
 
-    assert_valid_its_root_pda(
-        parsed_accounts.its_root_pda,
-        parsed_accounts.gateway_root_pda.key,
-        its_root_pda_bump,
-    )?;
+    assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_root_pda_bump)?;
 
     let (_, token_manager_pda_bump) =
         crate::find_token_manager_pda(parsed_accounts.its_root_pda.key, payload.token_id.as_ref());

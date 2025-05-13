@@ -120,7 +120,6 @@ pub(crate) fn process_inbound_transfer<'a>(
 
         let account_infos = [
             &[
-                axelar_executable_accounts.gateway_root_pda.clone(),
                 axelar_executable_accounts.its_root_pda.clone(),
                 axelar_executable_accounts.message_payload_pda.clone(),
                 axelar_executable_accounts.token_program.clone(),
@@ -151,11 +150,7 @@ pub(crate) fn process_inbound_transfer<'a>(
         invoke_signed(
             &its_execute_instruction,
             &account_infos,
-            &[&[
-                seed_prefixes::ITS_SEED,
-                axelar_executable_accounts.gateway_root_pda.key.as_ref(),
-                &[its_root_bump],
-            ]],
+            &[&[seed_prefixes::ITS_SEED, &[its_root_bump]]],
         )?;
     }
 
@@ -176,7 +171,6 @@ fn build_axelar_interchain_token_execute(
     let token = axelar_its_executable_accounts.token_mint.key.to_bytes();
 
     let mut accounts = vec![
-        AccountMeta::new_readonly(*axelar_its_executable_accounts.gateway_root_pda.key, false),
         AccountMeta::new_readonly(*axelar_its_executable_accounts.its_root_pda.key, true),
         AccountMeta::new_readonly(
             *axelar_its_executable_accounts.message_payload_pda.key,
@@ -732,7 +726,6 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
 
 struct GiveTokenAccounts<'a> {
     payer: &'a AccountInfo<'a>,
-    gateway_root_pda: &'a AccountInfo<'a>,
     system_account: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
     message_payload_pda: &'a AccountInfo<'a>,
@@ -762,7 +755,6 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
         Ok(GiveTokenAccounts {
             payer: payer_and_payload.0,
             message_payload_pda: payer_and_payload.1,
-            gateway_root_pda: next_account_info(accounts_iter)?,
             system_account: next_account_info(accounts_iter)?,
             its_root_pda: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
@@ -782,7 +774,6 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
 }
 
 struct AxelarInterchainTokenExecutableAccounts<'a> {
-    gateway_root_pda: &'a AccountInfo<'a>,
     its_root_pda: &'a AccountInfo<'a>,
     message_payload_pda: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
@@ -815,7 +806,6 @@ impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a
             .ok_or(ProgramError::NotEnoughAccountKeys)?;
 
         Ok(Self {
-            gateway_root_pda: give_token_accounts.gateway_root_pda,
             its_root_pda: give_token_accounts.its_root_pda,
             message_payload_pda: give_token_accounts.message_payload_pda,
             token_program: give_token_accounts.token_program,

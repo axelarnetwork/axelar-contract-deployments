@@ -121,14 +121,11 @@ pub fn check_program_account(program_id: Pubkey) -> ProgramResult {
 /// # Errors
 ///
 /// If the bump is invalid.
-pub fn its_root_pda(
-    gateway_root_pda: &Pubkey,
-    maybe_bump: Option<u8>,
-) -> Result<(Pubkey, u8), ProgramError> {
+pub fn its_root_pda(maybe_bump: Option<u8>) -> Result<(Pubkey, u8), ProgramError> {
     if let Some(bump) = maybe_bump {
-        create_its_root_pda(gateway_root_pda, bump).map(|pubkey| (pubkey, bump))
+        create_its_root_pda(bump).map(|pubkey| (pubkey, bump))
     } else {
-        Ok(find_its_root_pda(gateway_root_pda))
+        Ok(find_its_root_pda())
     }
 }
 
@@ -138,9 +135,9 @@ pub fn its_root_pda(
 /// # Errors
 ///
 /// If the bump is invalid.
-pub fn create_its_root_pda(gateway_root_pda: &Pubkey, bump: u8) -> Result<Pubkey, ProgramError> {
+pub fn create_its_root_pda(bump: u8) -> Result<Pubkey, ProgramError> {
     Ok(Pubkey::create_program_address(
-        &[seed_prefixes::ITS_SEED, gateway_root_pda.as_ref(), &[bump]],
+        &[seed_prefixes::ITS_SEED, &[bump]],
         &crate::id(),
     )?)
 }
@@ -148,19 +145,15 @@ pub fn create_its_root_pda(gateway_root_pda: &Pubkey, bump: u8) -> Result<Pubkey
 /// Derives interchain token service root PDA
 #[inline]
 #[must_use]
-pub fn find_its_root_pda(gateway_root_pda: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[seed_prefixes::ITS_SEED, gateway_root_pda.as_ref()],
-        &crate::id(),
-    )
+pub fn find_its_root_pda() -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[seed_prefixes::ITS_SEED], &crate::id())
 }
 
 pub(crate) fn assert_valid_its_root_pda(
     its_root_pda_account: &AccountInfo<'_>,
-    gateway_root_pda: &Pubkey,
     canonical_bump: u8,
 ) -> ProgramResult {
-    let expected_its_root_pda = create_its_root_pda(gateway_root_pda, canonical_bump)?;
+    let expected_its_root_pda = create_its_root_pda(canonical_bump)?;
 
     if expected_its_root_pda.ne(its_root_pda_account.key) {
         msg!("Invalid ITS root PDA provided");

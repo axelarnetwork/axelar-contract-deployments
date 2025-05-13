@@ -74,18 +74,13 @@ pub enum AxelarMemoInstruction {
 }
 
 /// Creates a [`AxelarMemoInstruction::Initialize`] instruction.
-pub fn initialize(
-    payer: &Pubkey,
-    gateway_root_pda: &Pubkey,
-    counter_pda: &(Pubkey, u8),
-) -> Result<Instruction, ProgramError> {
+pub fn initialize(payer: &Pubkey, counter_pda: &(Pubkey, u8)) -> Result<Instruction, ProgramError> {
     let data = to_vec(&AxelarMemoInstruction::Initialize {
         counter_pda_bump: counter_pda.1,
     })?;
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
         AccountMeta::new(counter_pda.0, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];

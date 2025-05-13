@@ -28,7 +28,6 @@ describe("Ping ITS", () => {
           itsRootPda: payer.publicKey,
           operator: payer.publicKey,
           userRolesPda: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
         })
         .rpc();
@@ -45,7 +44,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           itsRootPda: payer.publicKey,
         })
         .rpc();
@@ -62,7 +60,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           itsRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
         })
@@ -80,7 +77,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           itsRootPda: payer.publicKey,
         })
         .rpc();
@@ -134,7 +130,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -161,7 +156,6 @@ describe("Ping ITS", () => {
           metadataAccount: payer.publicKey,
           sysvarInstructions: payer.publicKey,
           mplTokenMetadata: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -219,7 +213,6 @@ describe("Ping ITS", () => {
         .deployInterchainToken([1, 2], "name", "symbol", 2, new BN(0))
         .accounts({
           payer: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -232,6 +225,7 @@ describe("Ping ITS", () => {
           sysvarInstructions: payer.publicKey,
           mplTokenMetadata: payer.publicKey,
           metadataAccount: payer.publicKey,
+          payerAta: payer.publicKey,
           minter: payer.publicKey,
           minterRolesPda: payer.publicKey,
         })
@@ -252,7 +246,6 @@ describe("Ping ITS", () => {
           metadataAccount: payer.publicKey,
           sysvarInstructions: payer.publicKey,
           mplTokenMetadata: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -288,7 +281,6 @@ describe("Ping ITS", () => {
           tokenManagerPda: payer.publicKey,
           sysvarInstructions: payer.publicKey,
           mplTokenMetadata: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
@@ -335,7 +327,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -487,7 +478,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -514,7 +504,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -541,7 +530,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -639,7 +627,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -666,7 +653,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -693,7 +679,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -718,7 +703,6 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           mint: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           minterRolesPda: payer.publicKey,
@@ -761,7 +745,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -788,7 +771,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
@@ -815,7 +797,6 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          gatewayRootPda: payer.publicKey,
           systemProgram: payer.publicKey,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,

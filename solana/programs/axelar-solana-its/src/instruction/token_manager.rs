@@ -20,8 +20,7 @@ pub fn set_flow_limit(
     token_id: [u8; 32],
     flow_limit: u64,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) =
-        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (token_manager_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
@@ -56,8 +55,7 @@ pub fn add_flow_limiter(
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) =
-        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (accounts, inputs) = role_management::instructions::add_roles(
         crate::id(),
@@ -87,8 +85,7 @@ pub fn remove_flow_limiter(
     token_id: [u8; 32],
     flow_limiter: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (its_root_pda, _) =
-        crate::find_its_root_pda(&axelar_solana_gateway::get_gateway_root_config_pda().0);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (accounts, inputs) = role_management::instructions::remove_roles(
         crate::id(),
@@ -120,8 +117,7 @@ pub fn transfer_operatorship(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -155,8 +151,7 @@ pub fn propose_operatorship(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -190,8 +185,7 @@ pub fn accept_operatorship(
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, operator_instruction) =
@@ -225,8 +219,7 @@ pub fn handover_mint_authority(
     mint: Pubkey,
     token_program: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &payer);
@@ -234,7 +227,6 @@ pub fn handover_mint_authority(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new(minter_roles_pda, false),

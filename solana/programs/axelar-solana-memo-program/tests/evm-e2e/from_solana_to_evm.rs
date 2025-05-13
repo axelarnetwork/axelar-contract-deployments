@@ -161,7 +161,7 @@ async fn call_solana_gateway(
 ) -> CallContractEvent {
     let destination_address = destination_address.encode_hex();
 
-    let (counter, ..) = get_counter_pda(gateway_root_pda);
+    let (counter, ..) = get_counter_pda();
     let tx = solana_fixture
         .send_tx(&[call_gateway_with_memo(
             gateway_root_pda,

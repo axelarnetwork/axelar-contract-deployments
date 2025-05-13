@@ -36,11 +36,6 @@ type AxelarSolanaMemoProgram = {
           isSigner: false;
         },
         {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "counterPda";
           isMut: true;
           isSigner: false;
@@ -195,11 +190,6 @@ const IDL: AxelarSolanaMemoProgram = {
         {
           name: "payer",
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "gatewayRootPda",
-          isMut: false,
           isSigner: false,
         },
         {

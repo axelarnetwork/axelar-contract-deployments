@@ -46,8 +46,7 @@ pub fn mint(
     token_program: Pubkey,
     amount: u64,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &minter);
@@ -80,8 +79,7 @@ pub fn transfer_mintership(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
@@ -114,8 +112,7 @@ pub fn propose_mintership(
     token_id: [u8; 32],
     to: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =
@@ -148,8 +145,7 @@ pub fn accept_mintership(
     token_id: [u8; 32],
     from: Pubkey,
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
-    let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
-    let (its_root_pda, _) = crate::find_its_root_pda(&gateway_root_pda);
+    let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
     let (accounts, minter_instruction) =

@@ -57,10 +57,8 @@ async fn test_verify_one_signature(
         .unwrap();
 
     // Check that the PDA contains the expected data
-    let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
-        &metadata.gateway_root_pda,
-        &execute_data.payload_merkle_root,
-    );
+    let (verification_pda, bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     let session = metadata
         .signature_verification_session(verification_pda)
@@ -118,10 +116,8 @@ async fn test_verify_all_signatures() {
     }
 
     // Check that the PDA contains the expected data
-    let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
-        &metadata.gateway_root_pda,
-        &execute_data.payload_merkle_root,
-    );
+    let (verification_pda, bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     let session = metadata
         .signature_verification_session(verification_pda)
@@ -304,10 +300,8 @@ async fn test_large_weight_will_validate_whole_batch() {
         .unwrap();
 
     // Check that the PDA contains the expected data
-    let (verification_pda, bump) = axelar_solana_gateway::get_signature_verification_pda(
-        &metadata.gateway_root_pda,
-        &execute_data.payload_merkle_root,
-    );
+    let (verification_pda, bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     let session = metadata
         .signature_verification_session(verification_pda)

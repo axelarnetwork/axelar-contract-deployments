@@ -47,12 +47,8 @@ impl Processor {
             (*message_payload_account_data).try_into()?;
 
         // Check: Message Payload PDA can be derived from provided seeds.
-        let message_payload_pda = crate::create_message_payload_pda(
-            *gateway_root_pda.key,
-            command_id,
-            *payer.key,
-            *message_payload.bump,
-        )?;
+        let message_payload_pda =
+            crate::create_message_payload_pda(command_id, *payer.key, *message_payload.bump)?;
 
         if &message_payload_pda != message_payload_account.key {
             solana_program::msg!("Error: failed to derive message payload account address");
