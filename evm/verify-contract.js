@@ -227,7 +227,6 @@ async function processCommand(config, chain, options) {
 
             const tokenManager = await its.tokenManager();
             const tokenHandler = await its.tokenHandler();
-            const gatewayCaller = await its.gatewayCaller();
 
             const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
             const trustedChains = await getTrustedChains(config, its);
@@ -245,7 +244,6 @@ async function processCommand(config, chain, options) {
             await verifyContract(
                 env,
                 chain.axelarId,
-                gatewayCaller,
                 [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
                 verifyOptions,
             );
@@ -263,7 +261,6 @@ async function processCommand(config, chain, options) {
                     itsHubAddress,
                     tokenManager,
                     tokenHandler,
-                    gatewayCaller,
                 ],
                 verifyOptions,
             );

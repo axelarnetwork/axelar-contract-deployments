@@ -253,22 +253,6 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        gatewayCaller: {
-            name: 'Gateway Caller',
-            contractName: 'GatewayCaller',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('GatewayCaller', artifactPath),
-                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
@@ -283,7 +267,6 @@ async function deployAll(config, wallet, chain, options) {
                     itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
-                    contractConfig.gatewayCaller,
                 ];
 
                 printInfo('ITS Implementation args', args);
