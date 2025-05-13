@@ -23,7 +23,7 @@ These are the instructions for deploying Amplifier contracts for `<ChainName>` c
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/link-to-GMP-release-doc) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/path-to-GMP-release-doc) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -367,4 +367,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [GMP checklist for $CHAIN](../evm/llink-to-GMP-release-doc) will test GMP calls.
+The [GMP checklist for $CHAIN](../evm/path-to-GMP-release-doc) will test GMP calls.

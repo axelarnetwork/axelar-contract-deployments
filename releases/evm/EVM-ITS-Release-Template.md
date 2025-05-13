@@ -20,18 +20,18 @@ Describe release content here
 
 ## Deployment
 
-Ensure that [`<Chain's GMP>`] is deployed first. - `add link to GMP release doc i.e.` (../evm/2025-02-XRPL-EVM-GMP-v6.0.4.md)
+Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first. 
 
 ```bash
 # Clone latest main and update deps
 npm ci
 ```
 
-Create an `.env` config. `CHAIN` should be set to `<chain name>`.
+Create an `.env` config
 
 ```yaml
-PRIVATE_KEY=xyz
-ENV=xyz
+PRIVATE_KEY=<deployer private key>
+ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 CHAIN=<chain name>
 ```
 
@@ -60,7 +60,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register &lt;ChainName&gt; ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [&lt;ChainName&gt; EVM GMP Amplifier] - `add link to CosmWasm release doc i.e.` (../cosmwasm/2025-02-XRPL-EVM-GMP-v6.0.4.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [&lt;ChainName&gt; EVM GMP Amplifier](../cosmwasm/path-to-cosmwasm-GMP-release-doc). Ideally, this step should be run at the same time as governance proposal submissions for the CosmWasm deployments.
 
 ```bash
 node cosmwasm/submit-proposal.js \
@@ -92,7 +92,7 @@ node evm/its.js checks -n $CHAIN -y
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
-# Create a token on chain. Substitute the `wallet` below with the deployer key
+# Create a token on chain. Substitute the `minter-address` below with the deployer key
 node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain

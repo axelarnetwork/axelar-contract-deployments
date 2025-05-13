@@ -128,6 +128,8 @@ node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0
 node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amount 0.0001 # burn nonce 1
 ```
 
+Note that since we only get one chance with the official deployer key nonce, the entire deployment flow should be run from a test account first.
+
 5. Deploy Gateway contract
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
