@@ -353,6 +353,8 @@ async function processCommand(config, chain, action, options) {
                 destinationChain,
                 itsDestinationAddress,
                 amountInUnits,
+                metadata,
+                gasValue,
                 { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
