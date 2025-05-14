@@ -13,9 +13,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, encode_its_destination, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -985,7 +985,7 @@ fn approve_deploy_remote_interchain_token(
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = encode_its_destination(
+    let destination_minter = decode_its_destination(
         &chains_info,
         &args.destination_chain,
         args.destination_minter,
@@ -1098,7 +1098,7 @@ fn deploy_remote_interchain_token_with_minter(
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_minter = encode_its_destination(
+    let destination_minter = decode_its_destination(
         &chains_info,
         &args.destination_chain,
         args.destination_minter,
@@ -1187,7 +1187,7 @@ fn interchain_transfer(
         .try_into()?;
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = encode_its_destination(
+    let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
         args.destination_address,
@@ -1222,7 +1222,7 @@ fn call_contract_with_interchain_token(
         .as_secs()
         .try_into()?;
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = encode_its_destination(
+    let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
         args.destination_address,
@@ -1259,7 +1259,7 @@ fn call_contract_with_interchain_token_offchain_data(
         .as_secs()
         .try_into()?;
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let destination_address = encode_its_destination(
+    let destination_address = decode_its_destination(
         &chains_info,
         &args.destination_chain,
         args.destination_address,

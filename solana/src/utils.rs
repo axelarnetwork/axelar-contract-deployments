@@ -129,7 +129,7 @@ pub(crate) fn save_signed_solana_transaction(
     write_json_to_file_path(tx, path)
 }
 
-pub(crate) fn encode_its_destination(
+pub(crate) fn decode_its_destination(
     chains_info: &serde_json::Value,
     destination_chain: &str,
     destination_address: String,
