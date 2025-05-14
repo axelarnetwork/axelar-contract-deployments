@@ -219,18 +219,16 @@ async function broadcast(
 
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
     const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+    const response = await server.simulateTransaction(tx);
 
-    if (simulateTransaction) {
-        const response = await server.simulateTransaction(tx);
-        if (isReadOnly(response)) {
-            if (rpc.Api.isSimulationError(response)) {
-                printError('Failed to simulate transaction');
-                throw new Error(response.error);
-            }
-
-            printInfo('Successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
-            return response;
+    if (simulateTransaction && isReadOnly(response)) {
+        if (rpc.Api.isSimulationError(response)) {
+            printError('Failed to simulate transaction');
+            throw new Error(response.error);
         }
+
+        printInfo('Successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
+        return response;
     }
 
     if (options && options.nativePayment) {
