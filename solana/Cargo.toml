@@ -40,3 +40,20 @@ solana-sdk = "2"
 spl-token = { version = "6", features = ["no-entrypoint"] }
 spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
 tokio = { version = "1", features = ["full"] }
+
+[workspace.lints.clippy]
+cargo = { priority = -1, level = "deny" }
+complexity = { priority = -2, level = "deny" }
+correctness = { priority = -4, level = "deny" }
+nursery = { priority = -9, level = "deny" }
+pedantic = { priority = -8, level = "deny" }
+perf = { priority = -3, level = "deny" }
+restriction = { priority = -5, level = "deny" }
+style = { priority = -6, level = "deny" }
+suspicious = { priority = -7, level = "deny" }
+
+[workspace.lints.rust]
+rust_2018_idioms = { level = "allow", priority = 0 }
+unreachable_pub = { level = "warn", priority = -1 }
+unused_imports = { level = "warn", priority = -1 }
+unused_must_use = { level = "deny", priority = -1 }
