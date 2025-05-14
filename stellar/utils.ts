@@ -11,7 +11,7 @@ import {
     xdr,
     nativeToScVal,
 } from '@stellar/stellar-sdk';
-import { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } from '../common/utils';
+import { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX, printError } from '../common/utils';
 import { printInfo, sleep, addEnvOption, getCurrentVerifierSet } from '../common';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
@@ -95,7 +95,13 @@ const addBaseOptions = (command: Command, options: Options = {}) => {
     return command;
 };
 
-async function buildTransaction(operation, server, wallet, networkType, options: Options = {}) {
+async function buildTransaction(
+    operation: xdr.Operation,
+    server: rpc.Server,
+    wallet: Keypair,
+    networkType: NetworkType,
+    options: Options = {},
+) {
     const account = await server.getAccount(wallet.publicKey());
     const networkPassphrase = getNetworkPassphrase(networkType);
     const builtTransaction = new TransactionBuilder(account, {
@@ -131,7 +137,7 @@ const prepareTransaction = async (operation, server, wallet, networkType, option
     return preparedTransaction;
 };
 
-async function sendTransaction(tx, server, action, options: Options = {}) {
+async function sendTransaction(tx, server: rpc.Server, action, options: Options = {}) {
     // Submit the transaction to the Soroban-RPC server. The RPC server will
     // then submit the transaction into the network for us. Then we will have to
     // wait, polling `getTransaction` until the transaction completes.
@@ -190,7 +196,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         const returnValue = transactionMeta.v3().sorobanMeta().returnValue();
 
         if (options && options.verbose) {
-            printInfo('Transaction result', returnValue.value());
+            printInfo('Transaction result', JSON.stringify(returnValue.value()));
         }
 
         return returnValue;
@@ -200,34 +206,56 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options: Options, simulateTransaction = false) {
+async function broadcast(
+    operation: xdr.Operation,
+    wallet: Keypair,
+    chain,
+    action: string,
+    options: Options,
+    simulateTransaction?: boolean,
+): Promise<xdr.ScVal | rpc.Api.SimulateTransactionSuccessResponse> {
+    /* Allows user to require or disallow simulation. Will always attempt if not specified. */
+    if (simulateTransaction === undefined) simulateTransaction = true;
+
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+
+    if (simulateTransaction) {
+        const response = await server.simulateTransaction(tx);
+        if (isReadOnly(response)) {
+            if (rpc.Api.isSimulationError(response)) {
+                printError('Failed to simulate transaction');
+                throw new Error(response.error);
+            }
+
+            printInfo('Successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
+            return response;
+        }
+    }
 
     if (options && options.nativePayment) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
+
     if (options && options.estimateCost) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
     }
 
-    if (simulateTransaction) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        try {
-            const response = await server.simulateTransaction(tx);
-            printInfo('successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
-            return response;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
+    const preparedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
+    return sendTransaction(preparedTx, server, action, options);
+}
 
-    const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
-    return sendTransaction(tx, server, action, options);
+function isReadOnly(response: rpc.Api.SimulateTransactionResponse): boolean {
+    if (!rpc.Api.isSimulationSuccess(response)) return false;
+    if (response.transactionData.getReadWrite().length > 0) return false;
+    if (response.result && response.result.auth.length > 0) return false;
+    if (response.stateChanges && response.stateChanges.length > 0) return false;
+
+    printInfo('Transaction is read-only.');
+    return true;
 }
 
 function getAssetCode(balance, chain) {
@@ -455,7 +483,7 @@ const getContractR2Url = (contractName, version) => {
         return `${AXELAR_R2_BASE_URL}/releases/stellar/${dirPath}/${version}/wasm/${fileName}.wasm`;
     }
 
-    throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
+    throw new Error(`Invalid version format: ${version}. Must be a semantic version (omit prefix v) or a commit hash`);
 };
 
 function getContractArtifactPath(artifactPath, contractName) {
