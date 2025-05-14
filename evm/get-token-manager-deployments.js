@@ -32,7 +32,7 @@ const queryLimit = {
     "arbitrum-sepolia": 500000,
     celo: 50000,
     kava: 10000,
-    filecoin: 0,
+    filecoin: 2880,
     optimism: 10000,
     "optimism-sepolia": 10000,
     linea: 500000,
@@ -58,7 +58,8 @@ async function getTokenManagers(name) {
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         console.log('processing... ', name);
 
-        const rpc = RPCs[chain];
+        const rpc = RPCs[name];
+        console.log(RPCs, rpc);
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -115,6 +116,8 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
+    getTokenManagers('flow');
+    return;
     let results = {};
     for (const name of Object.keys(info.chains)) {
         results[name] = 0;

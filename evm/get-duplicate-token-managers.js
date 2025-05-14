@@ -20,7 +20,6 @@ async function getTokens(name) {
     const tokenManagers = tokenManagerInfo[name].tokenManagers;
     const chain = info.chains[name];
     if (chain.contracts.InterchainTokenService.skip) return;
-
     const rpc = RPCs[chain];
     const provider = getDefaultProvider(rpc);
     const service = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -60,6 +59,8 @@ async function getTokens(name) {
 }
 
 (async () => {
+    await getTokens('filecoin');
+    return;
     for (const name of Object.keys(info.chains)) {
         printInfo('Chain Name', name);
 

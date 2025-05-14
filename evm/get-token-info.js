@@ -29,7 +29,7 @@ async function getTokens(name) {
 
         console.log('processing... ', name);
 
-        const rpc = RPCs[chain];
+        const rpc = RPCs[name];
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -86,6 +86,8 @@ async function getTokens(name) {
 }
 
 (async () => {
+    getTokens('filecoin');
+    return;
     for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokens(name).then((success) => console.log(name, 'returned', success));
