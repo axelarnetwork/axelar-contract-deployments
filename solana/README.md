@@ -139,23 +139,45 @@ Main commands:
 
 ### Network Configuration
 
-Specify the Solana network to connect to:
+There are a few different ways you can specify the Solana network to connect to:
+
+By exporting the `ENV` variable in your shell:
 
 ```sh
-export URL_OR_MONIKER=<value>
+export ENV=<URL_OR_MONIKER>
 ```
 
-or, on every command:
+By creating a `.env` file in the root of the project with the `ENV=<URL_OR_MONIKER>` entry or, on every command:
 
 ```sh
 solana/solana-axelar-cli --url <URL_OR_MONIKER> <COMMAND> [OPTIONS]
 ```
 
-The URL can be a full RPC URL or a moniker:
+The value can be a full RPC URL or a moniker:
 - `mainnet-beta`: Solana mainnet
 - `testnet`: Solana testnet
 - `devnet`: Solana devnet
 - `localhost`: Local Solana validator
+
+If none of these options are provided, the value set in the default Solana CLI config file will be used (if available).
+
+### Wallet configuration
+
+Similarly to the network configuration, you can specify the wallet to use in a few different ways:
+
+By exporting the `PRIVATE_KEY` variable in your shell:
+
+```sh
+export PRIVATE_KEY=<PATH_TO_KEYPAIR>
+```
+
+By creating a `.env` file in the root of the project with the `PRIVATE_KEY=<PATH_TO_KEYPAIR>` entry or, on every use of the `send` command:
+
+```sh
+solana/solana-axelar-cli send --fee-payer <PATH_TO_KEYPAIR> [OPTIONS]
+```
+
+The value can be a path to a solana keypair JSON file (generated with `solana-keypair new`) or the USB path to a Ledger device (e.g.: usb://ledger).
 
 ### Gateway
 
@@ -411,39 +433,28 @@ solana/solana-axelar-cli generate \
   --payload <MESSAGE_PAYLOAD_HEX>
 ```
 
-This will generate a file like `./output/gateway_init.unsigned.json` in the default output directory. You can specify a custom output directory with `--output-dir /path/to/directory`.
+This will generate a file like `./output/gateway-init.unsigned.json` in the default output directory. You can specify a custom output directory with `--output-dir /path/to/directory`.
 
 #### 2. Sign the transaction (on each signing device)
 
 ```sh
-solana/solana-axelar-cli sign \
-  <PATH_TO_UNSIGNED_TX_JSON> \
-  --signer <PATH_TO_SIGNER_KEYPAIR>
+solana/solana-axelar-cli sign <PATH_TO_SIGNER_KEYPAIR> <PATH_TO_UNSIGNED_TX_JSON> 
 ```
-
-For Ledger:
-
+`PATH_TO_SIGNER_KEYPAIR` can be a local keypair file or a Ledger device.
 ```sh
-solana/solana-axelar-cli sign \
-  <PATH_TO_UNSIGNED_TX_JSON> \
-  --signer usb://ledger
-```
 
-This will generate signature files like `./output/gateway_init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig` where the signer's full public key is included in the filename for uniqueness.
+This will generate signature files like `./output/gateway-init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig` where the signer's full public key is included in the filename.
 
 #### 3. Combine all signatures
 
 ```sh
-solana/solana-axelar-cli combine \
-  --unsigned-tx-path <PATH_TO_UNSIGNED_TX_JSON> \
-  --signatures <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
+solana/solana-axelar-cli combine <PATH_TO_UNSIGNED_TX_JSON> <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
 ```
 
-This will generate a file like `./output/gateway_init.signed.json`.
+This will generate a file like `./output/gateway-init.signed.json`.
 
 #### 4. Broadcast the transaction
 
 ```sh
-solana/solana-axelar-cli broadcast \
-  <PATH_TO_SIGNED_TX_JSON>
+solana/solana-axelar-cli broadcast <PATH_TO_SIGNED_TX_JSON>
 ```

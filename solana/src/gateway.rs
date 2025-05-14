@@ -26,17 +26,17 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
-use crate::multisig_prover_types::Uint128Extensions;
 use crate::multisig_prover_types::msg::ProofStatus;
+use crate::multisig_prover_types::Uint128Extensions;
 use crate::types::{
     ChainNameOnAxelar, LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet,
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
-    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
+    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]

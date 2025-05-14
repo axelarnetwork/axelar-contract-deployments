@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -7,19 +9,19 @@ use solana_client::rpc_request::RpcResponseErrorData;
 use solana_client::rpc_response::RpcSimulateTransactionResult;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::instruction::InstructionError;
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
 use solana_sdk::transaction::{Transaction, TransactionError};
 
 use crate::config::Config;
 use crate::types::SerializableSolanaTransaction;
 use crate::utils::{
-    DEFAULT_COMPUTE_UNITS, DEFAULT_PRIORITY_FEE, create_compute_budget_instructions,
-    print_transaction_result,
+    create_compute_budget_instructions, print_transaction_result, DEFAULT_COMPUTE_UNITS,
+    DEFAULT_PRIORITY_FEE,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct SendArgs {
-    pub(crate) fee_payer: Pubkey,
+    pub(crate) fee_payer: Box<dyn Signer>,
     pub(crate) signers: Vec<String>,
 }
 
@@ -176,18 +178,22 @@ fn handle_transaction_error(err: solana_client::client_error::ClientError) -> ey
 }
 
 pub(crate) fn sign_and_send_transactions(
-    send_args: &SendArgs,
+    send_args: SendArgs,
     config: &Config,
     serializable_txs: Vec<SerializableSolanaTransaction>,
 ) -> eyre::Result<()> {
     let rpc_client = RpcClient::new_with_commitment(&config.url, CommitmentConfig::confirmed());
     let mut results = Vec::new();
 
+    let SendArgs { fee_payer, signers } = send_args;
+    let shared_payer: Rc<dyn Signer> = Rc::from(fee_payer);
+
     for serializable_tx in serializable_txs {
         let transaction = serializable_tx.transaction;
-        let signers = load_signers(&send_args.signers, &transaction)?;
-        let blockhash = rpc_client.get_latest_blockhash()?;
+        let mut signers = load_signers(&signers, &transaction)?;
+        signers.push(Box::new(shared_payer.clone()));
 
+        let blockhash = rpc_client.get_latest_blockhash()?;
         let optimized_tx = optimize_transaction(&transaction, &signers, &rpc_client, &blockhash)?;
 
         match rpc_client.send_and_confirm_transaction(&optimized_tx) {
