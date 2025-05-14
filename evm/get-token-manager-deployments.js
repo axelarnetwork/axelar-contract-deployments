@@ -45,7 +45,7 @@ const queryLimit = {
     "blast-sepolia": 1000000,
     fraxtal: 50000,
     scroll: 10000,
-    flow: 500000,
+    flow: 10000,
     immutable: 5000,
 };
 
@@ -116,8 +116,6 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
-    getTokenManagers('flow');
-    return;
     let results = {};
     for (const name of Object.keys(info.chains)) {
         results[name] = 0;

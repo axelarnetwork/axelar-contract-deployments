@@ -86,8 +86,6 @@ async function getTokens(name) {
 }
 
 (async () => {
-    getTokens('filecoin');
-    return;
     for (const name of Object.keys(info.chains)) {
         // add an await to run in sequence, which is slower.
         getTokens(name).then((success) => console.log(name, 'returned', success));
