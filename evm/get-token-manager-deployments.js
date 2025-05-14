@@ -10,7 +10,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/rpcs/info/${env}.toml`, 'utf-8'));
+const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
 
 // This is before the its was deployed on mainnet.
 // const startTimestamp = 1702800000;
@@ -58,7 +58,7 @@ async function getTokenManagers(name) {
         const eventsLength = queryLimit[name.toLowerCase()] || 2048;
         console.log('processing... ', name);
 
-        const rpc = env === 'mainnet' || env === 'testnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
+        const rpc = RPCs[chain];
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);

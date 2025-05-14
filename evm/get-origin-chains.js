@@ -7,7 +7,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/rpcs/info/${env}.toml`, 'utf-8'));
+const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
 
 (async () => {
     const tokens = {};

@@ -11,6 +11,8 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
+const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
+
 async function getTokens(name) {
     const chainName = name.toLowerCase();
 
@@ -19,7 +21,7 @@ async function getTokens(name) {
     const chain = info.chains[name];
     if (chain.contracts.InterchainTokenService.skip) return;
 
-    const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === chainName).rpc_addr : chain.rpc;
+    const rpc = RPCs[chain];
     const provider = getDefaultProvider(rpc);
     const service = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
 

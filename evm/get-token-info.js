@@ -12,7 +12,7 @@ const fs = require('fs');
 const toml = require('toml');
 const { printInfo } = require('../common');
 
-const RPCs = toml.parse(fs.readFileSync(`./axelar-chains-config/rpcs/info/${env}.toml`, 'utf-8'));
+const RPCs = require(`../axelar-chains-config/rpcs/${env}.json`);
 
 async function getTokens(name) {
     try {
@@ -29,7 +29,7 @@ async function getTokens(name) {
 
         console.log('processing... ', name);
 
-        const rpc = env === 'mainnet' ? RPCs.axelar_bridge_evm.find((chain) => chain.name.toLowerCase() === name).rpc_addr : chain.rpc;
+        const rpc = RPCs[chain];
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
