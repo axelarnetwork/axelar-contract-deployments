@@ -437,10 +437,8 @@ async fn append_verification_flow_instructions(
         )?);
     }
 
-    let (verification_session_pda, _bump) = axelar_solana_gateway::get_signature_verification_pda(
-        gateway_config_pda,
-        &execute_data.payload_merkle_root,
-    );
+    let (verification_session_pda, _bump) =
+        axelar_solana_gateway::get_signature_verification_pda(&execute_data.payload_merkle_root);
 
     Ok(verification_session_pda)
 }
@@ -843,11 +841,8 @@ async fn execute(
     )?);
 
     if let Ok(destination_address) = Pubkey::from_str(&message.destination_address) {
-        let (message_payload_pda, _) = axelar_solana_gateway::find_message_payload_pda(
-            gateway_config_pda,
-            command_id,
-            *fee_payer,
-        );
+        let (message_payload_pda, _) =
+            axelar_solana_gateway::find_message_payload_pda(command_id, *fee_payer);
 
         // Handle special destination addresses
         if destination_address == axelar_solana_its::id() {

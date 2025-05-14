@@ -11,9 +11,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, encode_its_destination, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    encode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -933,10 +933,7 @@ async fn init(
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let its_hub_address =
         String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
-    let its_root_config = axelar_solana_its::find_its_root_pda(
-        &axelar_solana_gateway::get_gateway_root_config_pda().0,
-    )
-    .0;
+    let its_root_config = axelar_solana_its::find_its_root_pda().0;
 
     chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
         [ITS_KEY] = serde_json::json!({
@@ -950,7 +947,6 @@ async fn init(
 
     Ok(vec![axelar_solana_its::instruction::initialize(
         *fee_payer,
-        axelar_solana_gateway::get_gateway_root_config_pda().0,
         init_args.operator,
         ChainNameOnAxelar::from(config.network_type).0,
         its_hub_address,
