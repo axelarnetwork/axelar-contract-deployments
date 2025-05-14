@@ -166,7 +166,7 @@ async function sendTransaction(tx, server: rpc.Server, action, options: Options 
         }
 
         if (getResponse.status !== 'SUCCESS') {
-            throw Error(`Transaction failed: ${getResponse.txHash}`);
+            throw Error(`Transaction failed (${getResponse.txHash}): ${sendResponse.errorResult ? sendResponse.errorResult.result : 'No error result'}`);
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
