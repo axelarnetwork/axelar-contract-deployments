@@ -2,7 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use solana_sdk::{pubkey::Pubkey, signature::Signature as SolanaSignature};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Signature as SolanaSignature;
 
 use crate::config::Config;
 use crate::types::{NetworkType, PartialSignature, SignedSolanaTransaction};

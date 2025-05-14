@@ -7,10 +7,9 @@ use clap::ArgEnum;
 use eyre::eyre;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::{Deserialize, Serialize};
-use solana_sdk::{
-    instruction::Instruction as SolanaInstruction, pubkey::Pubkey,
-    transaction::Transaction as SolanaTransaction,
-};
+use solana_sdk::instruction::Instruction as SolanaInstruction;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum NetworkType {

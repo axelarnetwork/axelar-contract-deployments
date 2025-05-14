@@ -1,15 +1,13 @@
 use clap::{Parser, Subcommand};
-use solana_sdk::{
-    instruction::Instruction, pubkey::Pubkey, transaction::Transaction as SolanaTransaction,
-};
+use solana_sdk::instruction::Instruction;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::transaction::Transaction as SolanaTransaction;
 
-use crate::{
-    config::Config,
-    types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
-    utils::{
-        fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
-        CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    },
+use crate::config::Config;
+use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
+use crate::utils::{
+    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]

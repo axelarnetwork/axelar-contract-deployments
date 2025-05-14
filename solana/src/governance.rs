@@ -1,20 +1,18 @@
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use base64::Engine;
 use clap::{Args, Subcommand};
-use solana_sdk::{
-    instruction::AccountMeta, instruction::Instruction, pubkey::Pubkey,
-    transaction::Transaction as SolanaTransaction,
-};
+use solana_sdk::instruction::AccountMeta;
+use solana_sdk::instruction::Instruction;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::transaction::Transaction as SolanaTransaction;
 
-use crate::{
-    config::Config,
-    types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams},
-    utils::{
-        ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GOVERNANCE_ADDRESS_KEY,
-        GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY,
-        UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, parse_account_meta_string,
-        read_json_file_from_path, write_json_to_file_path,
-    },
+use crate::config::Config;
+use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
+use crate::utils::{
+    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GOVERNANCE_ADDRESS_KEY,
+    GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY, UPGRADE_AUTHORITY_KEY,
+    fetch_latest_blockhash, parse_account_meta_string, read_json_file_from_path,
+    write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]

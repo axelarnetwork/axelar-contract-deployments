@@ -21,7 +21,7 @@ use clap::{FromArgMatches, IntoApp, Parser, Subcommand};
 use combine::CombineArgs;
 use eyre::eyre;
 use generate::GenerateArgs;
-use send::{sign_and_send_transactions, SendArgs};
+use send::{SendArgs, sign_and_send_transactions};
 use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;

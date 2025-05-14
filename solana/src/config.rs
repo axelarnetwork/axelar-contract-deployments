@@ -1,6 +1,7 @@
 use eyre::eyre;
+use std::fs;
 use std::path::PathBuf;
-use std::{fs, str::FromStr};
+use std::str::FromStr;
 
 use crate::types::ChainsInfoFile;
 use crate::types::NetworkType;

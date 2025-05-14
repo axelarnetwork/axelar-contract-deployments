@@ -4,20 +4,18 @@ use std::str::FromStr;
 
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use eyre::eyre;
-use solana_client::{
-    client_error::ClientErrorKind, rpc_client::RpcClient, rpc_request::RpcResponseErrorData,
-    rpc_response::RpcSimulateTransactionResult,
-};
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    hash::Hash,
-    instruction::Instruction as SolanaInstruction,
-    instruction::InstructionError,
-    message::Message,
-    pubkey::Pubkey,
-    signature::Signature,
-    transaction::{Transaction, TransactionError},
-};
+use solana_client::client_error::ClientErrorKind;
+use solana_client::rpc_client::RpcClient;
+use solana_client::rpc_request::RpcResponseErrorData;
+use solana_client::rpc_response::RpcSimulateTransactionResult;
+use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::hash::Hash;
+use solana_sdk::instruction::Instruction as SolanaInstruction;
+use solana_sdk::instruction::InstructionError;
+use solana_sdk::message::Message;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Signature;
+use solana_sdk::transaction::{Transaction, TransactionError};
 
 use crate::config::Config;
 use crate::types::SignedSolanaTransaction;

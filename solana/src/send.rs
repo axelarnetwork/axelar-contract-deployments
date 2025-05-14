@@ -1,16 +1,14 @@
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
-use solana_client::{
-    client_error::ClientErrorKind, rpc_client::RpcClient, rpc_request::RpcResponseErrorData,
-    rpc_response::RpcSimulateTransactionResult,
-};
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    instruction::InstructionError,
-    pubkey::Pubkey,
-    transaction::{Transaction, TransactionError},
-};
+use solana_client::client_error::ClientErrorKind;
+use solana_client::rpc_client::RpcClient;
+use solana_client::rpc_request::RpcResponseErrorData;
+use solana_client::rpc_response::RpcSimulateTransactionResult;
+use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::instruction::InstructionError;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::transaction::{Transaction, TransactionError};
 
 use crate::config::Config;
 use crate::types::SerializableSolanaTransaction;

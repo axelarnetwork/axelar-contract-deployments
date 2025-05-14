@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
-use crate::multisig_prover_types::msg::ProofStatus;
-use crate::multisig_prover_types::Uint128Extensions;
 use axelar_solana_encoding::hash_payload;
 use axelar_solana_encoding::hasher::NativeHasher;
 use axelar_solana_encoding::types::execute_data::{ExecuteData, MerkleisedPayload};
@@ -22,23 +20,24 @@ use serde::Deserialize;
 use serde_json::json;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
+use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::packet::PACKET_DATA_SIZE;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::transaction::Transaction;
+use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
+use crate::multisig_prover_types::Uint128Extensions;
+use crate::multisig_prover_types::msg::ProofStatus;
 use crate::types::{
     ChainNameOnAxelar, LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet,
     SigningVerifierSet, SolanaTransactionParams,
 };
 use crate::utils::{
-    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
-    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
+    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
-use solana_sdk::message::Message as SolanaMessage;
-use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
@@ -759,7 +758,7 @@ static MAX_CHUNK_SIZE: LazyLock<usize> = LazyLock::new(|| {
 
     let mut writer = bincode::enc::write::SizeWriter::default();
     bincode::serde::encode_into_writer(
-        &Transaction {
+        &SolanaTransaction {
             signatures: vec![
                 solana_sdk::signature::Signature::default();
                 baseline_msg.header.num_required_signatures.into()

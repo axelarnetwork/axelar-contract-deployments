@@ -13,10 +13,6 @@ pub trait Uint128Extensions {
 // Implement the trait for Uint128
 impl Uint128Extensions for Uint128 {
     fn u128(&self) -> u128 {
-        // Since we can't access the internal value directly,
-        // For our use case, we just need a value > 0
-        // Our implementation is intended to be simple and functional
-        // rather than correct for all cases
         self.into_inner().u128()
     }
 }

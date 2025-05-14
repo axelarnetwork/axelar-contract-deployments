@@ -4,7 +4,8 @@ use std::str::FromStr;
 
 use eyre::eyre;
 use solana_clap_v3_utils::keypair::signer_from_path;
-use solana_sdk::{pubkey::Pubkey, signer::Signer};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
 
 use crate::types::PartialSignature;
 use crate::utils;
