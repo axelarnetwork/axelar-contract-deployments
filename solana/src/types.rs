@@ -12,7 +12,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum NetworkType {
+pub(crate) enum NetworkType {
     Mainnet,
     Testnet,
     Devnet,
@@ -28,11 +28,11 @@ impl FromStr for NetworkType {
             .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
             .or_else(|| s.contains("local").then_some(NetworkType::Localnet))
-            .ok_or_else(|| eyre!("Invalid network type: {}", s))
+            .ok_or_else(|| eyre!("Invalid network type: {s}"))
     }
 }
 
-pub struct ChainsInfoFile(pub String);
+pub(crate) struct ChainsInfoFile(pub(crate) String);
 impl From<ChainsInfoFile> for String {
     fn from(value: ChainsInfoFile) -> Self {
         value.0
@@ -50,7 +50,7 @@ impl From<NetworkType> for ChainsInfoFile {
     }
 }
 
-pub struct ChainNameOnAxelar(pub String);
+pub(crate) struct ChainNameOnAxelar(pub(crate) String);
 
 impl From<NetworkType> for ChainNameOnAxelar {
     fn from(value: NetworkType) -> Self {
@@ -64,30 +64,30 @@ impl From<NetworkType> for ChainNameOnAxelar {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SolanaTransactionParams {
-    pub fee_payer: String,
+pub(crate) struct SolanaTransactionParams {
+    pub(crate) fee_payer: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub recent_blockhash: Option<String>,
+    pub(crate) recent_blockhash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub nonce_account: Option<String>,
+    pub(crate) nonce_account: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub nonce_authority: Option<String>,
-    pub blockhash_for_message: String,
+    pub(crate) nonce_authority: Option<String>,
+    pub(crate) blockhash_for_message: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SerializableInstruction {
-    pub program_id: String,
-    pub accounts: Vec<SerializableAccountMeta>,
+pub(crate) struct SerializableInstruction {
+    pub(crate) program_id: String,
+    pub(crate) accounts: Vec<SerializableAccountMeta>,
     #[serde(with = "hex::serde")]
-    pub data: Vec<u8>,
+    pub(crate) data: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SerializableAccountMeta {
-    pub pubkey: String,
-    pub is_signer: bool,
-    pub is_writable: bool,
+pub(crate) struct SerializableAccountMeta {
+    pub(crate) pubkey: String,
+    pub(crate) is_signer: bool,
+    pub(crate) is_writable: bool,
 }
 
 impl TryFrom<&SerializableInstruction> for SolanaInstruction {
@@ -134,40 +134,40 @@ impl From<&SolanaInstruction> for SerializableInstruction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UnsignedSolanaTransaction {
-    pub params: SolanaTransactionParams,
-    pub instructions: Vec<SerializableInstruction>,
-    pub signable_message_hex: String,
+pub(crate) struct UnsignedSolanaTransaction {
+    pub(crate) params: SolanaTransactionParams,
+    pub(crate) instructions: Vec<SerializableInstruction>,
+    pub(crate) signable_message_hex: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PartialSignature {
-    pub signer_pubkey: String,
-    pub signature: String,
+pub(crate) struct PartialSignature {
+    pub(crate) signer_pubkey: String,
+    pub(crate) signature: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SignedSolanaTransaction {
-    pub unsigned_tx_data: UnsignedSolanaTransaction,
-    pub signatures: Vec<PartialSignature>,
+pub(crate) struct SignedSolanaTransaction {
+    pub(crate) unsigned_tx_data: UnsignedSolanaTransaction,
+    pub(crate) signatures: Vec<PartialSignature>,
 }
 
 /// A wrapper around SolanaTransaction that can be serialized and deserialized
 #[derive(Debug, Clone)]
-pub struct SerializableSolanaTransaction {
-    pub transaction: SolanaTransaction,
-    pub params: SolanaTransactionParams,
+pub(crate) struct SerializableSolanaTransaction {
+    pub(crate) transaction: SolanaTransaction,
+    pub(crate) params: SolanaTransactionParams,
 }
 
 impl SerializableSolanaTransaction {
-    pub fn new(transaction: SolanaTransaction, params: SolanaTransactionParams) -> Self {
+    pub(crate) fn new(transaction: SolanaTransaction, params: SolanaTransactionParams) -> Self {
         Self {
             transaction,
             params,
         }
     }
 
-    pub fn to_unsigned(&self) -> UnsignedSolanaTransaction {
+    pub(crate) fn to_unsigned(&self) -> UnsignedSolanaTransaction {
         let message = self.transaction.message.clone();
         let message_bytes = message.serialize();
         let signable_message_hex = hex::encode(&message_bytes);
@@ -206,10 +206,10 @@ impl SerializableSolanaTransaction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SerializeableVerifierSet {
-    pub signers: BTreeMap<String, u128>,
-    pub nonce: u64,
-    pub threshold: u128,
+pub(crate) struct SerializeableVerifierSet {
+    pub(crate) signers: BTreeMap<String, u128>,
+    pub(crate) nonce: u64,
+    pub(crate) threshold: u128,
 }
 
 impl From<SerializeableVerifierSet> for VerifierSet {
@@ -236,13 +236,13 @@ impl From<SerializeableVerifierSet> for VerifierSet {
 
 /// Uitility verifier set representation that has access to the signing keys
 #[derive(Clone, Debug)]
-pub struct SigningVerifierSet {
+pub(crate) struct SigningVerifierSet {
     /// signers that have access to the given verifier set
-    pub signers: Vec<LocalSigner>,
+    pub(crate) signers: Vec<LocalSigner>,
     /// the nonce for the verifier set
-    pub nonce: u64,
+    pub(crate) nonce: u64,
     /// quorum for the verifier set
-    pub quorum: u128,
+    pub(crate) quorum: u128,
 }
 
 impl SigningVerifierSet {
@@ -250,7 +250,7 @@ impl SigningVerifierSet {
     ///
     /// # Panics
     /// if the calculated quorum is larger than u128
-    pub fn new(signers: Vec<LocalSigner>, nonce: u64) -> Self {
+    pub(crate) fn new(signers: Vec<LocalSigner>, nonce: u64) -> Self {
         let quorum = signers
             .iter()
             .map(|signer| signer.weight)
@@ -261,7 +261,11 @@ impl SigningVerifierSet {
 
     /// Create a new `SigningVerifierSet` with a custom quorum
     #[must_use]
-    pub const fn new_with_quorum(signers: Vec<LocalSigner>, nonce: u64, quorum: u128) -> Self {
+    pub(crate) const fn new_with_quorum(
+        signers: Vec<LocalSigner>,
+        nonce: u64,
+        quorum: u128,
+    ) -> Self {
         Self {
             signers,
             nonce,
@@ -271,7 +275,7 @@ impl SigningVerifierSet {
 
     /// Transform into the verifier set that the gateway expects to operate on
     #[must_use]
-    pub fn verifier_set(&self) -> VerifierSet {
+    pub(crate) fn verifier_set(&self) -> VerifierSet {
         let signers = self
             .signers
             .iter()
@@ -300,8 +304,8 @@ impl SigningVerifierSet {
 
 /// Single test signer
 #[derive(Clone, Debug)]
-pub struct LocalSigner {
-    pub secret: k256::SecretKey,
+pub(crate) struct LocalSigner {
+    pub(crate) secret: k256::SecretKey,
     /// associated weight
-    pub weight: u128,
+    pub(crate) weight: u128,
 }

@@ -11,10 +11,10 @@ use crate::types::PartialSignature;
 use crate::utils;
 
 #[derive(Debug, Clone)]
-pub struct SignArgs {
-    pub unsigned_tx_path: PathBuf,
-    pub signer_key: String,
-    pub output_dir: Option<PathBuf>,
+pub(crate) struct SignArgs {
+    pub(crate) unsigned_tx_path: PathBuf,
+    pub(crate) signer_key: String,
+    pub(crate) output_dir: Option<PathBuf>,
 }
 
 fn get_required_signers_from_instructions(
@@ -39,7 +39,7 @@ fn get_required_signers_from_instructions(
     Ok(signers)
 }
 
-pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
+pub(crate) fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     println!("Starting Solana transaction signing...");
 
     let unsigned_tx = utils::load_unsigned_solana_transaction(&args.unsigned_tx_path)?;
@@ -48,12 +48,8 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
         args.unsigned_tx_path.display()
     );
 
-    let message_bytes = hex::decode(&unsigned_tx.signable_message_hex).map_err(|e| {
-        eyre!(
-            "Failed to decode signable_message_hex from unsigned tx file: {}",
-            e
-        )
-    })?;
+    let message_bytes = hex::decode(&unsigned_tx.signable_message_hex)
+        .map_err(|e| eyre!("Failed to decode signable_message_hex from unsigned tx file: {e}"))?;
     println!(
         "Decoded message bytes ({} bytes) to sign.",
         message_bytes.len()
@@ -65,13 +61,13 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
         .map_err(|e| eyre!("Failed to load signer '{}': {}", args.signer_key, e))?;
 
     let signer_pubkey = signer.pubkey();
-    println!("Signer loaded successfully. Pubkey: {}", signer_pubkey);
+    println!("Signer loaded successfully. Pubkey: {signer_pubkey}");
 
     println!("Signing message with loaded signer...");
     let signature = signer
         .try_sign_message(&message_bytes)
         .map_err(|e| eyre!("Failed to sign message using '{}': {}", args.signer_key, e))?;
-    println!("Generated signature: {}", signature);
+    println!("Generated signature: {signature}");
 
     let partial_signature = PartialSignature {
         signer_pubkey: signer_pubkey.to_string(),
@@ -92,15 +88,11 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
         nonce_authority_pubkey.as_ref(),
     )?;
 
-    if !required_signers.contains(&signer_pubkey) {
-        println!(
-            "Warning: Signer {} provided a signature, but is not found in the list of required signers (Fee Payer, Nonce Authority, or Instruction Signers).",
-            signer_pubkey
-        );
+    if required_signers.contains(&signer_pubkey) {
+        println!("Validation OK: Signer {signer_pubkey} is required by the transaction.");
     } else {
         println!(
-            "Validation OK: Signer {} is required by the transaction.",
-            signer_pubkey
+            "Warning: Signer {signer_pubkey} provided a signature, but is not found in the list of required signers (Fee Payer, Nonce Authority, or Instruction Signers)."
         );
     }
 
@@ -109,10 +101,10 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     println!("  Signature: {}", partial_signature.signature);
 
     let output_dir = args.output_dir.clone().unwrap_or_else(|| {
-        args.unsigned_tx_path
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
+        args.unsigned_tx_path.parent().map_or_else(
+            || std::path::PathBuf::from("."),
+            std::path::Path::to_path_buf,
+        )
     });
 
     std::fs::create_dir_all(&output_dir)?;
@@ -126,7 +118,7 @@ pub fn sign_solana_transaction(args: &SignArgs) -> eyre::Result<()> {
     let tx_name = unsigned_file_stem.replace(".unsigned", "");
 
     let pubkey_str = signer_pubkey.to_string();
-    let sig_filename = format!("{}.{}.partial.sig", tx_name, pubkey_str);
+    let sig_filename = format!("{tx_name}.{pubkey_str}.partial.sig");
     let sig_path = output_dir.join(sig_filename);
 
     utils::save_partial_signature(&partial_signature, &sig_path)?;

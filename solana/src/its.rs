@@ -747,7 +747,7 @@ fn parse_token_program(s: &str) -> Result<Pubkey, String> {
     match s.to_lowercase().as_str() {
         "spl_token" => Ok(spl_token::id()),
         "spl_token_2022" => Ok(spl_token_2022::id()),
-        _ => Err(format!("Invalid token program: {}", s)),
+        _ => Err(format!("Invalid token program: {s}")),
     }
 }
 
@@ -757,24 +757,23 @@ fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, Strin
         "mintburn" | "mint_burn" => Ok(state::token_manager::Type::MintBurn),
         "mintburnfrom" | "mint_burn_from" => Ok(state::token_manager::Type::MintBurnFrom),
         "lockunlockfee" | "lock_unlock_fee" => Ok(state::token_manager::Type::LockUnlockFee),
-        _ => Err(format!("Invalid token manager type: {}", s)),
+        _ => Err(format!("Invalid token manager type: {s}")),
     }
 }
 
 fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre::Result<Pubkey> {
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    match maybe_arg {
-        Some(id) => Ok(id),
-        None => {
-            let id = Pubkey::deserialize(
-                &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
-                    [GAS_SERVICE_KEY][ADDRESS_KEY],
-            ).map_err(|_| eyre!(
-                "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
-                Please update the file or pass a value to --gas-service"))?;
+    if let Some(id) = maybe_arg {
+        Ok(id)
+    } else {
+        let id = Pubkey::deserialize(
+            &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+                [GAS_SERVICE_KEY][ADDRESS_KEY],
+        ).map_err(|_| eyre!(
+            "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
+            Please update the file or pass a value to --gas-service"))?;
 
-            Ok(id)
-        }
+        Ok(id)
     }
 }
 
@@ -783,115 +782,110 @@ fn try_infer_gas_service_config_account(
     config: &Config,
 ) -> eyre::Result<Pubkey> {
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    match maybe_arg {
-        Some(id) => Ok(id),
-        None => {
-            let id = Pubkey::deserialize(
-                &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
-                    [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
-            ).map_err(|_| eyre!(
-                "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
-                Please update the file or pass a value to --gas-config-account"))?;
+    if let Some(id) = maybe_arg {
+        Ok(id)
+    } else {
+        let id = Pubkey::deserialize(
+            &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+                [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
+        ).map_err(|_| eyre!(
+            "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
+            Please update the file or pass a value to --gas-config-account"))?;
 
-            Ok(id)
-        }
+        Ok(id)
     }
 }
 
-pub(crate) async fn build_instruction(
+pub(crate) fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     match command {
-        Commands::Init(init_args) => init(fee_payer, init_args, config).await,
-        Commands::Pause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: true }).await,
-        Commands::Unpause => {
-            set_pause_status(fee_payer, SetPauseStatusArgs { paused: false }).await
-        }
+        Commands::Init(init_args) => init(fee_payer, init_args, config),
+        Commands::Pause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: true }),
+        Commands::Unpause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: false }),
         Commands::SetTrustedChain(set_trusted_chain_args) => {
-            set_trusted_chain(fee_payer, set_trusted_chain_args).await
+            set_trusted_chain(fee_payer, set_trusted_chain_args)
         }
-        Commands::RemoveTrustedChain(args) => remove_trusted_chain(fee_payer, args).await,
+        Commands::RemoveTrustedChain(args) => remove_trusted_chain(fee_payer, args),
         Commands::ApproveDeployRemoteInterchainToken(args) => {
-            approve_deploy_remote_interchain_token(fee_payer, args, config).await
+            approve_deploy_remote_interchain_token(fee_payer, args, config)
         }
         Commands::RevokeDeployRemoteInterchainToken(args) => {
-            revoke_deploy_remote_interchain_token(fee_payer, args).await
+            revoke_deploy_remote_interchain_token(fee_payer, args)
         }
         Commands::RegisterCanonicalInterchainToken(args) => {
-            register_canonical_interchain_token(fee_payer, args).await
+            register_canonical_interchain_token(fee_payer, args)
         }
         Commands::DeployRemoteCanonicalInterchainToken(args) => {
-            deploy_remote_canonical_interchain_token(fee_payer, args, config).await
+            deploy_remote_canonical_interchain_token(fee_payer, args, config)
         }
-        Commands::DeployInterchainToken(args) => deploy_interchain_token(fee_payer, args).await,
+        Commands::DeployInterchainToken(args) => deploy_interchain_token(fee_payer, args),
         Commands::DeployRemoteInterchainToken(args) => {
-            deploy_remote_interchain_token(fee_payer, args, config).await
+            deploy_remote_interchain_token(fee_payer, args, config)
         }
         Commands::DeployRemoteInterchainTokenWithMinter(args) => {
-            deploy_remote_interchain_token_with_minter(fee_payer, args, config).await
+            deploy_remote_interchain_token_with_minter(fee_payer, args, config)
         }
-        Commands::RegisterTokenMetadata(args) => {
-            register_token_metadata(fee_payer, args, config).await
-        }
-        Commands::RegisterCustomToken(args) => register_custom_token(fee_payer, args).await,
-        Commands::LinkToken(args) => link_token(fee_payer, args, config).await,
-        Commands::InterchainTransfer(args) => interchain_transfer(fee_payer, args, config).await,
+        Commands::RegisterTokenMetadata(args) => register_token_metadata(fee_payer, args, config),
+        Commands::RegisterCustomToken(args) => register_custom_token(fee_payer, args),
+        Commands::LinkToken(args) => link_token(fee_payer, args, config),
+        Commands::InterchainTransfer(args) => interchain_transfer(fee_payer, args, config),
         Commands::CallContractWithInterchainToken(args) => {
-            call_contract_with_interchain_token(fee_payer, args, config).await
+            call_contract_with_interchain_token(fee_payer, args, config)
         }
         Commands::CallContractWithInterchainTokenOffchainData(args) => {
-            call_contract_with_interchain_token_offchain_data(fee_payer, args, config).await
+            call_contract_with_interchain_token_offchain_data(fee_payer, args, config)
         }
-        Commands::SetFlowLimit(args) => set_flow_limit(fee_payer, args).await,
-        Commands::TransferOperatorship(args) => transfer_operatorship(fee_payer, args).await,
-        Commands::ProposeOperatorship(args) => propose_operatorship(fee_payer, args).await,
-        Commands::AcceptOperatorship(args) => accept_operatorship(fee_payer, args).await,
+        Commands::SetFlowLimit(args) => set_flow_limit(fee_payer, args),
+        Commands::TransferOperatorship(args) => transfer_operatorship(fee_payer, args),
+        Commands::ProposeOperatorship(args) => propose_operatorship(fee_payer, args),
+        Commands::AcceptOperatorship(args) => accept_operatorship(fee_payer, args),
         Commands::TokenManager(command) => match command {
             TokenManagerCommand::SetFlowLimit(args) => {
-                token_manager_set_flow_limit(fee_payer, args).await
+                token_manager_set_flow_limit(fee_payer, args)
             }
             TokenManagerCommand::AddFlowLimiter(args) => {
-                token_manager_add_flow_limiter(fee_payer, args).await
+                token_manager_add_flow_limiter(fee_payer, args)
             }
             TokenManagerCommand::RemoveFlowLimiter(args) => {
-                token_manager_remove_flow_limiter(fee_payer, args).await
+                token_manager_remove_flow_limiter(fee_payer, args)
             }
             TokenManagerCommand::TransferOperatorship(args) => {
-                token_manager_transfer_operatorship(fee_payer, args).await
+                token_manager_transfer_operatorship(fee_payer, args)
             }
             TokenManagerCommand::ProposeOperatorship(args) => {
-                token_manager_propose_operatorship(fee_payer, args).await
+                token_manager_propose_operatorship(fee_payer, args)
             }
             TokenManagerCommand::AcceptOperatorship(args) => {
-                token_manager_accept_operatorship(fee_payer, args).await
+                token_manager_accept_operatorship(fee_payer, args)
             }
             TokenManagerCommand::HandoverMintAuthority(args) => {
-                token_manager_handover_mint_authority(fee_payer, args).await
+                token_manager_handover_mint_authority(fee_payer, args)
             }
         },
         Commands::InterchainToken(command) => match command {
-            InterchainTokenCommand::Mint(args) => interchain_token_mint(fee_payer, args).await,
+            InterchainTokenCommand::Mint(args) => interchain_token_mint(fee_payer, args),
             InterchainTokenCommand::TransferMintership(args) => {
-                interchain_token_transfer_mintership(fee_payer, args).await
+                interchain_token_transfer_mintership(fee_payer, args)
             }
             InterchainTokenCommand::ProposeMintership(args) => {
-                interchain_token_propose_mintership(fee_payer, args).await
+                interchain_token_propose_mintership(fee_payer, args)
             }
             InterchainTokenCommand::AcceptMintership(args) => {
-                interchain_token_accept_mintership(fee_payer, args).await
+                interchain_token_accept_mintership(fee_payer, args)
             }
         },
     }
 }
 
-pub(crate) async fn build_transaction(
+pub(crate) fn build_transaction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
-    let instructions = build_instruction(fee_payer, command, config).await?;
+    let instructions = build_instruction(fee_payer, command, config)?;
 
     // Get blockhash
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -927,7 +921,7 @@ pub(crate) async fn build_transaction(
     Ok(serializable_transactions)
 }
 
-async fn init(
+fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,
@@ -955,7 +949,7 @@ async fn init(
     )?])
 }
 
-async fn set_pause_status(
+fn set_pause_status(
     fee_payer: &Pubkey,
     set_pause_args: SetPauseStatusArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -965,7 +959,7 @@ async fn set_pause_status(
     )?])
 }
 
-async fn set_trusted_chain(
+fn set_trusted_chain(
     fee_payer: &Pubkey,
     set_trusted_chain_args: TrustedChainArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -975,7 +969,7 @@ async fn set_trusted_chain(
     )?])
 }
 
-async fn remove_trusted_chain(
+fn remove_trusted_chain(
     fee_payer: &Pubkey,
     remove_trusted_chain_args: TrustedChainArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -985,7 +979,7 @@ async fn remove_trusted_chain(
     )?])
 }
 
-async fn approve_deploy_remote_interchain_token(
+fn approve_deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: ApproveDeployRemoteInterchainTokenArgs,
     config: &Config,
@@ -1008,7 +1002,7 @@ async fn approve_deploy_remote_interchain_token(
     ])
 }
 
-async fn revoke_deploy_remote_interchain_token(
+fn revoke_deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: RevokeDeployRemoteInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1022,7 +1016,7 @@ async fn revoke_deploy_remote_interchain_token(
     ])
 }
 
-async fn register_canonical_interchain_token(
+fn register_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1038,7 +1032,7 @@ async fn register_canonical_interchain_token(
     ])
 }
 
-async fn deploy_remote_canonical_interchain_token(
+fn deploy_remote_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteCanonicalInterchainTokenArgs,
     config: &Config,
@@ -1057,7 +1051,7 @@ async fn deploy_remote_canonical_interchain_token(
     ])
 }
 
-async fn deploy_interchain_token(
+fn deploy_interchain_token(
     fee_payer: &Pubkey,
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1077,7 +1071,7 @@ async fn deploy_interchain_token(
     ])
 }
 
-async fn deploy_remote_interchain_token(
+fn deploy_remote_interchain_token(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenArgs,
     config: &Config,
@@ -1096,7 +1090,7 @@ async fn deploy_remote_interchain_token(
     ])
 }
 
-async fn deploy_remote_interchain_token_with_minter(
+fn deploy_remote_interchain_token_with_minter(
     fee_payer: &Pubkey,
     args: DeployRemoteInterchainTokenWithMinterArgs,
     config: &Config,
@@ -1123,7 +1117,7 @@ async fn deploy_remote_interchain_token_with_minter(
     ])
 }
 
-async fn register_token_metadata(
+fn register_token_metadata(
     fee_payer: &Pubkey,
     args: RegisterTokenMetadataArgs,
     config: &Config,
@@ -1142,7 +1136,7 @@ async fn register_token_metadata(
     ])
 }
 
-async fn register_custom_token(
+fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1159,7 +1153,7 @@ async fn register_custom_token(
     )?])
 }
 
-async fn link_token(
+fn link_token(
     fee_payer: &Pubkey,
     args: LinkTokenArgs,
     config: &Config,
@@ -1180,7 +1174,7 @@ async fn link_token(
     )?])
 }
 
-async fn interchain_transfer(
+fn interchain_transfer(
     fee_payer: &Pubkey,
     args: InterchainTransferArgs,
     config: &Config,
@@ -1216,7 +1210,7 @@ async fn interchain_transfer(
     )?])
 }
 
-async fn call_contract_with_interchain_token(
+fn call_contract_with_interchain_token(
     fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenArgs,
     config: &Config,
@@ -1253,7 +1247,7 @@ async fn call_contract_with_interchain_token(
     ])
 }
 
-async fn call_contract_with_interchain_token_offchain_data(
+fn call_contract_with_interchain_token_offchain_data(
     fee_payer: &Pubkey,
     args: CallContractWithInterchainTokenOffchainDataArgs,
     config: &Config,
@@ -1295,10 +1289,7 @@ async fn call_contract_with_interchain_token_offchain_data(
     Ok(vec![instruction])
 }
 
-async fn set_flow_limit(
-    fee_payer: &Pubkey,
-    args: SetFlowLimitArgs,
-) -> eyre::Result<Vec<Instruction>> {
+fn set_flow_limit(fee_payer: &Pubkey, args: SetFlowLimitArgs) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![axelar_solana_its::instruction::set_flow_limit(
         *fee_payer,
         args.token_id,
@@ -1306,7 +1297,7 @@ async fn set_flow_limit(
     )?])
 }
 
-async fn transfer_operatorship(
+fn transfer_operatorship(
     fee_payer: &Pubkey,
     args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1315,7 +1306,7 @@ async fn transfer_operatorship(
     )?])
 }
 
-async fn propose_operatorship(
+fn propose_operatorship(
     fee_payer: &Pubkey,
     args: TransferOperatorshipArgs, // Reuses args from transfer
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1324,7 +1315,7 @@ async fn propose_operatorship(
     )?])
 }
 
-async fn accept_operatorship(
+fn accept_operatorship(
     fee_payer: &Pubkey,
     args: AcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1333,7 +1324,7 @@ async fn accept_operatorship(
     )?])
 }
 
-async fn token_manager_set_flow_limit(
+fn token_manager_set_flow_limit(
     fee_payer: &Pubkey,
     args: TokenManagerSetFlowLimitArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1346,7 +1337,7 @@ async fn token_manager_set_flow_limit(
     ])
 }
 
-async fn token_manager_add_flow_limiter(
+fn token_manager_add_flow_limiter(
     fee_payer: &Pubkey,
     args: TokenManagerAddFlowLimiterArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1359,7 +1350,7 @@ async fn token_manager_add_flow_limiter(
     ])
 }
 
-async fn token_manager_remove_flow_limiter(
+fn token_manager_remove_flow_limiter(
     fee_payer: &Pubkey,
     args: TokenManagerRemoveFlowLimiterArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1372,7 +1363,7 @@ async fn token_manager_remove_flow_limiter(
     ])
 }
 
-async fn token_manager_transfer_operatorship(
+fn token_manager_transfer_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerTransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1385,7 +1376,7 @@ async fn token_manager_transfer_operatorship(
     ])
 }
 
-async fn token_manager_propose_operatorship(
+fn token_manager_propose_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerProposeOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1398,7 +1389,7 @@ async fn token_manager_propose_operatorship(
     ])
 }
 
-async fn token_manager_accept_operatorship(
+fn token_manager_accept_operatorship(
     fee_payer: &Pubkey,
     args: TokenManagerAcceptOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1411,7 +1402,7 @@ async fn token_manager_accept_operatorship(
     ])
 }
 
-async fn token_manager_handover_mint_authority(
+fn token_manager_handover_mint_authority(
     fee_payer: &Pubkey,
     args: TokenManagerHandoverMintAuthorityArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1425,13 +1416,13 @@ async fn token_manager_handover_mint_authority(
     ])
 }
 
-async fn interchain_token_mint(
+fn interchain_token_mint(
     fee_payer: &Pubkey,
     args: InterchainTokenMintArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::mint(
-            args.token_id, // Note: payer is not the first argument here
+            args.token_id,
             args.mint,
             args.to,
             *fee_payer, // Payer is the minter in this context
@@ -1441,7 +1432,7 @@ async fn interchain_token_mint(
     ])
 }
 
-async fn interchain_token_transfer_mintership(
+fn interchain_token_transfer_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenTransferMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1454,7 +1445,7 @@ async fn interchain_token_transfer_mintership(
     ])
 }
 
-async fn interchain_token_propose_mintership(
+fn interchain_token_propose_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenProposeMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -1467,7 +1458,7 @@ async fn interchain_token_propose_mintership(
     ])
 }
 
-async fn interchain_token_accept_mintership(
+fn interchain_token_accept_mintership(
     fee_payer: &Pubkey,
     args: InterchainTokenAcceptMintershipArgs,
 ) -> eyre::Result<Vec<Instruction>> {

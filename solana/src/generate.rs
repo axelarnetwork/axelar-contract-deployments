@@ -5,14 +5,14 @@ use crate::types::SerializableSolanaTransaction;
 use crate::utils::{self, fetch_nonce_data_and_verify};
 
 #[derive(Debug, Clone)]
-pub struct GenerateArgs {
-    pub fee_payer: Pubkey,
-    pub nonce_account: Pubkey,
-    pub nonce_authority: Pubkey,
-    pub output_dir: std::path::PathBuf,
+pub(crate) struct GenerateArgs {
+    pub(crate) fee_payer: Pubkey,
+    pub(crate) nonce_account: Pubkey,
+    pub(crate) nonce_authority: Pubkey,
+    pub(crate) output_dir: std::path::PathBuf,
 }
 
-pub fn generate_from_transactions(
+pub(crate) fn generate_from_transactions(
     args: &GenerateArgs,
     config: &Config,
     mut transactions: Vec<SerializableSolanaTransaction>,
@@ -28,7 +28,7 @@ pub fn generate_from_transactions(
 
     let blockhash =
         fetch_nonce_data_and_verify(&config.url, &args.nonce_account, &args.nonce_authority)?;
-    println!("Using Nonce (Blockhash) from account: {}", blockhash);
+    println!("Using Nonce (Blockhash) from account: {blockhash}");
 
     for tx in &mut transactions {
         tx.params.nonce_account = Some(args.nonce_account.to_string());
@@ -84,9 +84,9 @@ pub fn generate_from_transactions(
         let unsigned_tx = tx.to_unsigned();
 
         let unsigned_tx_filename = if transactions.len() > 1 {
-            format!("{}.{}.unsigned.json", filename, i)
+            format!("{filename}.{i}.unsigned.json")
         } else {
-            format!("{}.unsigned.json", filename)
+            format!("{filename}.unsigned.json")
         };
 
         let unsigned_tx_path = args.output_dir.join(&unsigned_tx_filename);

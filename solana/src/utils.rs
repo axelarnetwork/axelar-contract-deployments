@@ -146,13 +146,10 @@ pub(crate) fn encode_its_destination(
 
 /// Parses a string representation of an AccountMeta.
 /// Format: "pubkey:is_signer:is_writable" (e.g., "SomePubkey...:false:true")
-pub fn parse_account_meta_string(s: &str) -> eyre::Result<AccountMeta> {
+pub(crate) fn parse_account_meta_string(s: &str) -> eyre::Result<AccountMeta> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
-        eyre::bail!(
-            "Invalid AccountMeta format: '{}'. Expected 'pubkey:is_signer:is_writable'",
-            s
-        );
+        eyre::bail!("Invalid AccountMeta format: '{s}'. Expected 'pubkey:is_signer:is_writable'");
     }
 
     let pubkey = Pubkey::from_str(parts[0])?;
@@ -183,8 +180,8 @@ pub(crate) fn print_transaction_result(
     match result {
         Ok(tx_signature) => {
             println!("------------------------------------------");
-            println!("✅ Solana Transaction successfully broadcast and confirmed!");
-            println!("   Transaction Signature (ID): {}", tx_signature);
+            println!("\u{2705} Solana Transaction successfully broadcast and confirmed!");
+            println!("   Transaction Signature (ID): {tx_signature}");
             println!("   RPC Endpoint: {}", config.url);
             let explorer_base_url = "https://explorer.solana.com/tx/";
             let cluster_param = match config.network_type {
@@ -193,17 +190,14 @@ pub(crate) fn print_transaction_result(
                 NetworkType::Devnet => "?cluster=devnet",
                 NetworkType::Localnet => "?cluster=custom",
             };
-            println!(
-                "   Explorer Link: {}{}{}",
-                explorer_base_url, tx_signature, cluster_param
-            );
+            println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
             println!("------------------------------------------");
 
             Ok(())
         }
         Err(e) => {
             eprintln!("------------------------------------------");
-            eprintln!("❌ Solana Transaction broadcast failed.");
+            eprintln!("\u{274c} Solana Transaction broadcast failed.");
             eprintln!("------------------------------------------");
 
             Err(e)
@@ -248,7 +242,7 @@ pub(crate) fn parse_secret_key(raw: &str) -> eyre::Result<SecretKey> {
 }
 
 pub(crate) fn fetch_latest_blockhash(rpc_url: &str) -> eyre::Result<Hash> {
-    let rpc_client = RpcClient::new(rpc_url.to_string());
+    let rpc_client = RpcClient::new(rpc_url.to_owned());
     Ok(rpc_client.get_latest_blockhash()?)
 }
 
@@ -257,7 +251,7 @@ pub(crate) fn fetch_nonce_data_and_verify(
     nonce_account_pubkey: &Pubkey,
     expected_nonce_authority: &Pubkey,
 ) -> eyre::Result<Hash> {
-    let rpc_client = RpcClient::new(rpc_url.to_string());
+    let rpc_client = RpcClient::new(rpc_url.to_owned());
     let nonce_account = rpc_client.get_account(nonce_account_pubkey)?;
 
     if !solana_sdk::system_program::check_id(&nonce_account.owner) {
@@ -270,12 +264,7 @@ pub(crate) fn fetch_nonce_data_and_verify(
     }
 
     let nonce_state: solana_sdk::nonce::state::State = StateMut::<Versions>::state(&nonce_account)
-        .map_err(|_| {
-            eyre!(
-                "Failed to deserialize nonce account {}",
-                nonce_account_pubkey
-            )
-        })?
+        .map_err(|_| eyre!("Failed to deserialize nonce account {nonce_account_pubkey}"))?
         .into();
 
     match nonce_state {
@@ -295,8 +284,7 @@ pub(crate) fn fetch_nonce_data_and_verify(
             Ok(data.blockhash())
         }
         solana_sdk::nonce::state::State::Uninitialized => Err(eyre!(
-            "Nonce account {} is uninitialized",
-            nonce_account_pubkey
+            "Nonce account {nonce_account_pubkey} is uninitialized"
         )),
     }
 }

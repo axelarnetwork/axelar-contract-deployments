@@ -229,13 +229,11 @@ pub(crate) async fn build_transaction(
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
     let instructions = match command {
         Commands::Init(init_args) => init(fee_payer, init_args, config).await?,
-        Commands::CallContract(call_contract_args) => {
-            call_contract(fee_payer, call_contract_args).await?
-        }
+        Commands::CallContract(call_contract_args) => call_contract(fee_payer, call_contract_args)?,
         Commands::TransferOperatorship(transfer_operatorship_args) => {
-            transfer_operatorship(fee_payer, transfer_operatorship_args).await?
+            transfer_operatorship(fee_payer, transfer_operatorship_args)?
         }
-        Commands::Approve(approve_args) => approve(fee_payer, approve_args, config).await?,
+        Commands::Approve(approve_args) => approve(fee_payer, approve_args, config)?,
         Commands::Rotate(rotate_args) => rotate(fee_payer, rotate_args, config).await?,
         Commands::SubmitProof(submit_proof_args) => {
             submit_proof(fee_payer, submit_proof_args, config).await?
@@ -271,11 +269,11 @@ async fn query<T: serde::de::DeserializeOwned>(
     query_data: Vec<u8>,
 ) -> eyre::Result<T> {
     if !endpoint.starts_with("https://") {
-        endpoint = format!("https://{}", endpoint);
+        endpoint = format!("https://{endpoint}");
     }
 
-    let mut c = query_client::QueryClient::connect(endpoint).await?;
-    let res = c
+    let res = query_client::QueryClient::connect(endpoint)
+        .await?
         .smart_contract_state(
             cosmrs::proto::cosmwasm::wasm::v1::QuerySmartContractStateRequest {
                 address: address.to_string(),
@@ -291,8 +289,8 @@ async fn query<T: serde::de::DeserializeOwned>(
 }
 
 async fn get_verifier_set(
-    signer: &Option<String>,
-    signer_set: &Option<String>,
+    signer: Option<&String>,
+    signer_set: Option<&String>,
     nonce: Option<u64>,
     config: &Config,
     chains_info: &serde_json::Value,
@@ -309,13 +307,13 @@ async fn get_verifier_set(
                 .try_into()
                 .map_err(|_| eyre!("Invalid encoded point conversion"))?,
         );
-        let signers = BTreeMap::from([(pubkey, 1_u128)]);
+        let signers = BTreeMap::from([(pubkey, 1u128)]);
         let nonce = nonce.ok_or_else(|| eyre!("Nonce is required"))?;
 
         Ok(VerifierSet {
             nonce,
             signers,
-            quorum: 1_u128,
+            quorum: 1u128,
         })
     } else if let Some(signer_set) = signer_set {
         let signer_set: SerializeableVerifierSet = serde_json::from_str(signer_set)?;
@@ -353,7 +351,7 @@ async fn get_verifier_set(
     }
 }
 
-async fn construct_execute_data(
+fn construct_execute_data(
     signer_set: &SigningVerifierSet,
     payload: Payload,
     domain_separator: [u8; 32],
@@ -400,16 +398,16 @@ async fn construct_execute_data(
     Ok(execute_data)
 }
 
-async fn build_signing_verifier_set(secret: k256::SecretKey, nonce: u64) -> SigningVerifierSet {
+fn build_signing_verifier_set(secret: k256::SecretKey, nonce: u64) -> SigningVerifierSet {
     let signer = LocalSigner {
         secret,
-        weight: 1_u128,
+        weight: 1u128,
     };
 
     SigningVerifierSet::new(vec![signer], nonce)
 }
 
-async fn append_verification_flow_instructions(
+fn append_verification_flow_instructions(
     fee_payer: &Pubkey,
     instructions: &mut Vec<Instruction>,
     execute_data: &ExecuteData,
@@ -451,8 +449,8 @@ async fn init(
         read_json_file_from_path(&config.chains_info_file).unwrap_or_default();
     let (gateway_config_pda, _bump) = axelar_solana_gateway::get_gateway_root_config_pda();
     let verifier_set = get_verifier_set(
-        &init_args.signer,
-        &init_args.signer_set,
+        init_args.signer.as_ref(),
+        init_args.signer_set.as_ref(),
         init_args.nonce,
         config,
         &chains_info,
@@ -493,7 +491,7 @@ async fn init(
     ])
 }
 
-async fn call_contract(
+fn call_contract(
     fee_payer: &Pubkey,
     call_contract_args: CallContractArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -513,7 +511,7 @@ async fn call_contract(
     )?])
 }
 
-async fn transfer_operatorship(
+fn transfer_operatorship(
     fee_payer: &Pubkey,
     transfer_operatorship_args: TransferOperatorshipArgs,
 ) -> eyre::Result<Vec<Instruction>> {
@@ -526,15 +524,14 @@ async fn transfer_operatorship(
     ])
 }
 
-async fn approve(
+fn approve(
     fee_payer: &Pubkey,
     approve_args: ApproveArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let mut instructions = vec![];
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let signer_set =
-        build_signing_verifier_set(approve_args.signer.clone(), approve_args.nonce).await;
+    let signer_set = build_signing_verifier_set(approve_args.signer.clone(), approve_args.nonce);
     let domain_separator = domain_separator(&chains_info, config.network_type)?;
     let payload_bytes = hex::decode(
         approve_args
@@ -555,14 +552,13 @@ async fn approve(
     };
     let gateway_config_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
     let gmp_payload = Payload::Messages(Messages(vec![message]));
-    let execute_data = construct_execute_data(&signer_set, gmp_payload, domain_separator).await?;
+    let execute_data = construct_execute_data(&signer_set, gmp_payload, domain_separator)?;
     let verification_session_pda = append_verification_flow_instructions(
         fee_payer,
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
-    )
-    .await?;
+    )?;
     let MerkleisedPayload::NewMessages { mut messages } = execute_data.payload_items else {
         eyre::bail!("Expected Messages payload");
     };
@@ -595,10 +591,10 @@ async fn rotate(
 ) -> eyre::Result<Vec<Instruction>> {
     let mut instructions = vec![];
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    let signer_set = build_signing_verifier_set(rotate_args.signer, rotate_args.nonce).await;
+    let signer_set = build_signing_verifier_set(rotate_args.signer, rotate_args.nonce);
     let new_verifier_set = get_verifier_set(
-        &rotate_args.new_signer,
-        &rotate_args.new_signer_set,
+        rotate_args.new_signer.as_ref(),
+        rotate_args.new_signer_set.as_ref(),
         rotate_args.new_nonce,
         config,
         &chains_info,
@@ -617,14 +613,13 @@ async fn rotate(
         axelar_solana_gateway::get_verifier_set_tracker_pda(new_verifier_set_hash);
     let gateway_config_pda = axelar_solana_gateway::get_gateway_root_config_pda().0;
     let payload = Payload::NewVerifierSet(new_verifier_set.clone());
-    let execute_data = construct_execute_data(&signer_set, payload, domain_separator).await?;
+    let execute_data = construct_execute_data(&signer_set, payload, domain_separator)?;
     let verification_session_pda = append_verification_flow_instructions(
         fee_payer,
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
-    )
-    .await?;
+    )?;
 
     instructions.push(axelar_solana_gateway::instructions::rotate_signers(
         gateway_config_pda,
@@ -675,8 +670,7 @@ async fn submit_proof(
         &mut instructions,
         &execute_data,
         &gateway_config_pda,
-    )
-    .await?;
+    )?;
 
     match execute_data.payload_items {
         MerkleisedPayload::VerifierSetRotation {

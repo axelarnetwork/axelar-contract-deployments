@@ -22,19 +22,13 @@ use crate::types::SignedSolanaTransaction;
 use crate::utils::{self, print_transaction_result};
 
 #[derive(Debug, Clone)]
-pub struct BroadcastArgs {
-    pub signed_tx_path: PathBuf,
+pub(crate) struct BroadcastArgs {
+    pub(crate) signed_tx_path: PathBuf,
 }
 
-fn submit_solana_transaction(
-    url: &str,
+fn construct_transaction(
     signed_tx_data: &SignedSolanaTransaction,
-) -> eyre::Result<Signature> {
-    println!(
-        "Reconstructing Solana transaction for broadcasting via RPC: {}",
-        url
-    );
-
+) -> eyre::Result<(Transaction, bool)> {
     let fee_payer = Pubkey::from_str(&signed_tx_data.unsigned_tx_data.params.fee_payer)?;
     let recent_blockhash =
         Hash::from_str(&signed_tx_data.unsigned_tx_data.params.blockhash_for_message)?;
@@ -63,18 +57,14 @@ fn submit_solana_transaction(
     let mut missing_sig_for_required_signer = false;
     for (index, key) in message.account_keys.iter().enumerate() {
         if message.is_signer(index) {
-            match signatures_map.remove(key) {
-                Some(signature) => {
-                    ordered_signatures.push(signature);
-                }
-                None => {
-                    eprintln!(
-                        "Critical Error during broadcast reconstruction: Missing signature for required signer {} (index {}).",
-                        key, index
-                    );
-                    ordered_signatures.push(Signature::default());
-                    missing_sig_for_required_signer = true;
-                }
+            if let Some(signature) = signatures_map.remove(key) {
+                ordered_signatures.push(signature);
+            } else {
+                eprintln!(
+                    "Critical Error during broadcast reconstruction: Missing signature for required signer {key} (index {index})."
+                );
+                ordered_signatures.push(Signature::default());
+                missing_sig_for_required_signer = true;
             }
         }
     }
@@ -85,15 +75,18 @@ fn submit_solana_transaction(
         );
     }
 
-    if !signatures_map.is_empty() {
+    let has_unused_signatures = if signatures_map.is_empty() {
+        false
+    } else {
         println!(
             "Warning: The following signatures were provided but not required by the transaction message: {:?}",
             signatures_map
                 .keys()
-                .map(|pk| pk.to_string())
+                .map(std::string::ToString::to_string)
                 .collect::<Vec<_>>()
         );
-    }
+        true
+    };
 
     let mut transaction = Transaction::new_unsigned(message);
 
@@ -107,39 +100,93 @@ fn submit_solana_transaction(
     transaction.signatures = ordered_signatures;
     transaction.message.recent_blockhash = recent_blockhash;
 
-    println!(
-        "Transaction reconstructed with blockhash: {}",
-        recent_blockhash
-    );
+    println!("Transaction reconstructed with blockhash: {recent_blockhash}");
 
     if let Err(e) = transaction.verify() {
-        eyre::bail!(
-            "Constructed transaction failed structural verification: {}",
-            e
-        );
+        eyre::bail!("Constructed transaction failed structural verification: {e}");
     }
 
-    println!("Connecting to RPC client at {}", url);
-    let rpc_client = RpcClient::new_with_commitment(url.to_string(), CommitmentConfig::confirmed());
-    let tx_to_send = transaction;
+    Ok((transaction, has_unused_signatures))
+}
 
-    match rpc_client.simulate_transaction(&tx_to_send) {
+fn simulate_transaction(rpc_client: &RpcClient, tx: &Transaction) {
+    match rpc_client.simulate_transaction(tx) {
         Ok(sim_result) => {
             if let Some(units) = sim_result.value.units_consumed {
-                println!("Transaction simulation used {} compute units", units);
-                // If we're using significant compute units (>70% of default), we should log this
-                if units > 150_000 {
-                    println!(
-                        "WARNING: Transaction using significant compute units ({}). If this transaction fails with 'exceeded CUs meter', you'll need to add compute budget.",
-                        units
-                    );
-                }
+                println!("Transaction simulation used {units} compute units");
             }
         }
         Err(err) => {
-            println!("Simulation warning: {:?}", err);
+            println!("Simulation warning: {err:?}");
         }
+    }
+}
+
+fn handle_transaction_error(
+    client_err: solana_client::client_error::ClientError,
+) -> eyre::Result<Signature> {
+    let should_continue = if let ClientErrorKind::RpcError(
+        solana_client::rpc_request::RpcError::RpcResponseError {
+            data:
+                RpcResponseErrorData::SendTransactionPreflightFailure(RpcSimulateTransactionResult {
+                    err:
+                        Some(TransactionError::InstructionError(_, InstructionError::Custom(err_code))),
+                    ..
+                }),
+            ..
+        },
+    ) = client_err.kind()
+    {
+        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
+            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
+    } else if let ClientErrorKind::TransactionError(TransactionError::InstructionError(
+        _,
+        InstructionError::Custom(err_code),
+    )) = client_err.kind()
+    {
+        axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
+            .is_some_and(|gw_err| gw_err.should_relayer_proceed())
+    } else {
+        false
     };
+
+    if should_continue {
+        println!(
+            "Transaction error: GatewayError, but it's a recoverable error - continuing with next transaction"
+        );
+        Ok(Signature::default())
+    } else {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match client_err.kind() {
+            ClientErrorKind::RpcError(solana_client::rpc_request::RpcError::RpcResponseError {
+                data: RpcResponseErrorData::SendTransactionPreflightFailure(sim_result),
+                ..
+            }) => {
+                eprintln!(" -> Preflight Simulation Failure Result: {sim_result:?}");
+            }
+            ClientErrorKind::TransactionError(tx_err) => {
+                eprintln!(" -> Transaction Error Detail: {tx_err:?}");
+            }
+            _ => { /* Don't need to print any detail */ }
+        }
+
+        Err(eyre!("RPC client error: {client_err}"))
+    }
+}
+
+fn submit_solana_transaction(
+    url: &str,
+    signed_tx_data: &SignedSolanaTransaction,
+) -> eyre::Result<Signature> {
+    println!("Reconstructing Solana transaction for broadcasting via RPC: {url}");
+
+    let (transaction, _) = construct_transaction(signed_tx_data)?;
+
+    println!("Connecting to RPC client at {url}");
+    let rpc_client = RpcClient::new_with_commitment(url.to_owned(), CommitmentConfig::confirmed());
+    let tx_to_send = transaction;
+
+    simulate_transaction(&rpc_client, &tx_to_send);
 
     println!("Broadcasting transaction...");
     match rpc_client.send_and_confirm_transaction_with_spinner(&tx_to_send) {
@@ -148,63 +195,16 @@ fn submit_solana_transaction(
             Ok(tx_signature)
         }
         Err(client_err) => {
-            eprintln!("Error during RPC broadcast/confirmation: {}", client_err);
-
-            let should_continue = if let ClientErrorKind::RpcError(
-                solana_client::rpc_request::RpcError::RpcResponseError {
-                    data:
-                        RpcResponseErrorData::SendTransactionPreflightFailure(
-                            RpcSimulateTransactionResult {
-                                err:
-                                    Some(TransactionError::InstructionError(
-                                        _,
-                                        InstructionError::Custom(err_code),
-                                    )),
-                                ..
-                            },
-                        ),
-                    ..
-                },
-            ) = client_err.kind()
-            {
-                axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-                    .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-            } else if let ClientErrorKind::TransactionError(TransactionError::InstructionError(
-                _,
-                InstructionError::Custom(err_code),
-            )) = client_err.kind()
-            {
-                axelar_solana_gateway::error::GatewayError::from_u32(*err_code)
-                    .is_some_and(|gw_err| gw_err.should_relayer_proceed())
-            } else {
-                false
-            };
-
-            if should_continue {
-                println!(
-                    "Transaction error: GatewayError, but it's a recoverable error - continuing with next transaction"
-                );
-                Ok(Signature::default())
-            } else {
-                if let ClientErrorKind::RpcError(
-                    solana_client::rpc_request::RpcError::RpcResponseError {
-                        data: RpcResponseErrorData::SendTransactionPreflightFailure(sim_result),
-                        ..
-                    },
-                ) = client_err.kind()
-                {
-                    eprintln!(" -> Preflight Simulation Failure Result: {:?}", sim_result);
-                } else if let ClientErrorKind::TransactionError(tx_err) = client_err.kind() {
-                    eprintln!(" -> Transaction Error Detail: {:?}", tx_err);
-                }
-
-                Err(eyre!("RPC client error: {}", client_err))
-            }
+            eprintln!("Error during RPC broadcast/confirmation: {client_err}");
+            handle_transaction_error(client_err)
         }
     }
 }
 
-pub fn broadcast_solana_transaction(args: &BroadcastArgs, config: &Config) -> eyre::Result<()> {
+pub(crate) fn broadcast_solana_transaction(
+    args: &BroadcastArgs,
+    config: &Config,
+) -> eyre::Result<()> {
     println!("Starting Solana transaction broadcast...");
 
     let signed_tx_data = match utils::load_signed_solana_transaction(&args.signed_tx_path) {
@@ -213,8 +213,7 @@ pub fn broadcast_solana_transaction(args: &BroadcastArgs, config: &Config) -> ey
             eyre::bail!(
                 "Failed to parse transaction file. Make sure you're using a signed transaction file (*.signed.json) \
                 generated by the 'combine' command, not directly from 'sign' or 'generate'. \
-                If you've only signed with one key, run 'combine' first: {}",
-                e
+                If you've only signed with one key, run 'combine' first: {e}",
             );
         }
         Err(e) => return Err(e),

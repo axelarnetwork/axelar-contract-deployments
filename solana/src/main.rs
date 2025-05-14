@@ -200,7 +200,7 @@ struct MiscCommandArgs {
 #[tokio::main]
 async fn main() {
     if let Err(e) = run().await {
-        eprintln!("\nError: {:?}", e);
+        eprintln!("\nError: {e:?}");
         exit(1);
     }
 }
@@ -214,21 +214,21 @@ async fn run() -> eyre::Result<()> {
     match cli.command {
         Command::Send(args) => {
             let mut signer_keys = args.signer_keys;
-            let fee_payer = match args.fee_payer {
-                Some(fee_payer) => fee_payer,
-                None => {
-                    let config_file = solana_cli_config::CONFIG_FILE
-                        .as_ref()
-                        .ok_or_else(|| eyre!("Missing Solana config file"))?;
-                    let cli_config = solana_cli_config::Config::load(config_file)?;
-                    let signer =
-                        signer_from_path(&matches, &cli_config.keypair_path, "signer", &mut None)
-                            .map_err(|e| eyre!("Failed to load fee payer: {}", e))?;
+            let fee_payer = if let Some(fee_payer) = args.fee_payer {
+                fee_payer
+            } else {
+                let config_file = solana_cli_config::CONFIG_FILE
+                    .as_ref()
+                    .ok_or_else(|| eyre!("Missing Solana config file"))?;
+                let cli_config = solana_cli_config::Config::load(config_file)?;
+                let signer =
+                    signer_from_path(&matches, &cli_config.keypair_path, "signer", &mut None)
+                        .map_err(|e| eyre!("Failed to load fee payer: {e}"))?;
 
-                    signer_keys.push(cli_config.keypair_path);
-                    signer.pubkey()
-                }
+                signer_keys.push(cli_config.keypair_path);
+                signer.pubkey()
             };
+
             let send_args = SendArgs {
                 fee_payer,
                 signers: signer_keys,
@@ -292,13 +292,11 @@ async fn build_transaction(
             gateway::build_transaction(fee_payer, command, config).await
         }
         InstructionSubcommand::GasService(command) => {
-            gas_service::build_transaction(fee_payer, command, config).await
+            gas_service::build_transaction(fee_payer, command, config)
         }
-        InstructionSubcommand::Its(command) => {
-            its::build_transaction(fee_payer, command, config).await
-        }
+        InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
-            governance::build_transaction(fee_payer, command, config).await
+            governance::build_transaction(fee_payer, command, config)
         }
     }
 }

@@ -28,13 +28,13 @@ pub(crate) struct InitArgs {
     salt: String,
 }
 
-pub(crate) async fn build_transaction(
+pub(crate) fn build_transaction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
     let instructions = match command {
-        Commands::Init(init_args) => init(fee_payer, init_args, config).await?,
+        Commands::Init(init_args) => init(fee_payer, init_args, config)?,
     };
 
     // Get blockhash
@@ -71,7 +71,7 @@ pub(crate) async fn build_transaction(
     Ok(serializable_transactions)
 }
 
-async fn init(
+fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,

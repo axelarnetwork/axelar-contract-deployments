@@ -94,7 +94,7 @@ pub(crate) struct TransferOperatorshipArgs {
     operator: Pubkey,
 }
 
-pub(crate) async fn build_instruction(
+pub(crate) fn build_instruction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
@@ -102,20 +102,20 @@ pub(crate) async fn build_instruction(
     let (config_pda, _) = axelar_solana_governance::state::GovernanceConfig::pda();
 
     match command {
-        Commands::Init(init_args) => init(fee_payer, init_args, config, &config_pda).await,
-        Commands::ExecuteProposal(args) => execute_proposal(fee_payer, args, &config_pda).await,
+        Commands::Init(init_args) => init(fee_payer, init_args, config, &config_pda),
+        Commands::ExecuteProposal(args) => execute_proposal(fee_payer, args, &config_pda),
         Commands::ExecuteOperatorProposal(args) => {
-            execute_operator_proposal(fee_payer, args, &config_pda).await
+            execute_operator_proposal(fee_payer, args, &config_pda)
         }
     }
 }
 
-pub(crate) async fn build_transaction(
+pub(crate) fn build_transaction(
     fee_payer: &Pubkey,
     command: Commands,
     config: &Config,
 ) -> eyre::Result<Vec<SerializableSolanaTransaction>> {
-    let instructions = build_instruction(fee_payer, command, config).await?;
+    let instructions = build_instruction(fee_payer, command, config)?;
 
     // Get blockhash
     let blockhash = fetch_latest_blockhash(&config.url)?;
@@ -151,7 +151,7 @@ pub(crate) async fn build_transaction(
     Ok(serializable_transactions)
 }
 
-async fn init(
+fn init(
     fee_payer: &Pubkey,
     init_args: InitArgs,
     config: &Config,
@@ -187,7 +187,7 @@ async fn init(
     ])
 }
 
-async fn execute_proposal(
+fn execute_proposal(
     fee_payer: &Pubkey,
     args: ExecuteProposalArgs,
     config_pda: &Pubkey,
@@ -216,7 +216,7 @@ async fn execute_proposal(
     ])
 }
 
-async fn execute_operator_proposal(
+fn execute_operator_proposal(
     fee_payer: &Pubkey,
     args: ExecuteOperatorProposalArgs,
     config_pda: &Pubkey,

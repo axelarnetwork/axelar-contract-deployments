@@ -9,13 +9,13 @@ use solana_sdk::pubkey::Pubkey;
 
 /// Commands for miscellaneous utilities
 #[derive(Subcommand, Debug)]
-pub enum Commands {
+pub(crate) enum Commands {
     /// Build an axelar-executable message
     BuildAxelarMessage(BuildAxelarMessageArgs),
 }
 
 #[derive(Args, Debug)]
-pub struct BuildAxelarMessageArgs {
+pub(crate) struct BuildAxelarMessageArgs {
     /// Accounts in the format of "pubkey:is_signer:is_writable" (e.g., "HQ57JcVZEMkpfEYJRJqnoH6wQdrNqNP6TDvzqnpPYBXQ:true:false"). The order should be the same as expected by the destination program.
     #[clap(long, multiple_values = true)]
     accounts: Vec<String>,
@@ -30,7 +30,7 @@ pub struct BuildAxelarMessageArgs {
 }
 
 /// Build a message for miscellaneous utilities
-pub fn do_misc(args: Commands) -> Result<()> {
+pub(crate) fn do_misc(args: Commands) -> Result<()> {
     match args {
         Commands::BuildAxelarMessage(args) => build_axelar_message(args),
     }
@@ -74,7 +74,7 @@ fn build_axelar_message(args: BuildAxelarMessageArgs) -> Result<()> {
     // Encode the payload
     let encoded = axelar_message
         .encode()
-        .map_err(|e| eyre::eyre!("Failed to encode message: {}", e))?;
+        .map_err(|e| eyre::eyre!("Failed to encode message: {e}"))?;
 
     // Print the encoded payload as a hex string
     println!("{}", hex::encode(encoded));
