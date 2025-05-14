@@ -38,9 +38,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Hardcoded to ensure consistency.
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "18" # Hardcoded to ensure consistency.
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Add node_modules/.bin to PATH
         run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
@@ -85,7 +85,7 @@ jobs:
       - name: Wait for Sui network
         uses: nev7n/wait_for_response@v1
         with:
-          url: 'http://localhost:9123'
+          url: "http://localhost:9123"
           responseCode: 200
           timeout: 60000
           interval: 1000

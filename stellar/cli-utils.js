@@ -1,3 +1,3 @@
-'use strict';
+"use strict";
 
-require('../common/cli-utils');
+require("../common/cli-utils");

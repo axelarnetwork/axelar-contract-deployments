@@ -27,9 +27,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-ethereum-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-ethereum-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1093,9 +1091,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-immutable-genesis"
-          ],
+          "startingKeyIDs": ["evm-immutable-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1206,9 +1202,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-arbitrum-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-arbitrum-sepolia-genesis"],
           "address": "0xe1cE95479C84e9809269227C7F8524aE051Ae77a",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xb9902bc55605b8b80c8347c46fda6b3831ab006e33907a17f8aa67ab451deca6",
@@ -1318,9 +1312,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-centrifuge-2-genesis"
-          ],
+          "startingKeyIDs": ["evm-centrifuge-2-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1440,9 +1432,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-fraxtal-genesis"
-          ],
+          "startingKeyIDs": ["evm-fraxtal-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1536,9 +1526,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-optimism-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-optimism-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1652,9 +1640,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-base-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-base-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1768,9 +1754,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-blast-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-blast-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -1906,9 +1890,7 @@
         },
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-mantle-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-mantle-sepolia-genesis"],
           "address": "0xC8D18F85cB0Cee5C95eC29c69DeaF6cea972349c",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0x262d347314eb56d4331930c08d038205062766c5783f6e34809b1da803d01bf9",
@@ -1969,9 +1951,7 @@
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-polygon-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-polygon-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -2080,9 +2060,7 @@
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "startingKeyIDs": [
-            "evm-linea-sepolia-genesis"
-          ],
+          "startingKeyIDs": ["evm-linea-sepolia-genesis"],
           "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
           "implementation": "0xc1712652326E87D193Ac11910934085FF45C2F48",
           "implementationCodehash": "0xd0e057031b5acbd22b8e98686f6cda19dcbcac6495bd7297cff31dcb22ddcbae",
@@ -2590,14 +2568,7 @@
           "transferRate": 0,
           "tickSize": 6,
           "domain": "axelar.foundation",
-          "flags": [
-            4,
-            12,
-            13,
-            14,
-            8,
-            6
-          ]
+          "flags": [4, 12, 13, 14, 8, 6]
         },
         "AxelarGateway": {
           "address": "rNrjh1KGZk2jBR3wPfAQnoidtFFYQKbQn2",
@@ -2605,14 +2576,7 @@
           "transferRate": 0,
           "tickSize": 6,
           "domain": "axelar.foundation",
-          "flags": [
-            4,
-            12,
-            13,
-            14,
-            8,
-            6
-          ],
+          "flags": [4, 12, 13, 14, 8, 6],
           "connectionType": "amplifier"
         }
       }
@@ -2937,10 +2901,7 @@
         "params": {
           "epoch_duration": "14400",
           "rewards_per_epoch": "10000000",
-          "participation_threshold": [
-            "7",
-            "10"
-          ]
+          "participation_threshold": ["7", "10"]
         },
         "codeId": 23,
         "lastUploadedCodeId": 23,
@@ -2975,10 +2936,7 @@
         "flow": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
@@ -2990,10 +2948,7 @@
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
@@ -3005,10 +2960,7 @@
         "sui": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "bcs",
@@ -3020,10 +2972,7 @@
         "xrpl-evm-test-1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
@@ -3035,10 +2984,7 @@
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
@@ -3050,10 +2996,7 @@
         "stellar-2025-q1": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 0,
           "encoder": "stellar_xdr",
@@ -3100,10 +3043,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -3115,10 +3055,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 100000,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -3130,10 +3067,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0x6ddfcdd14a1019d13485a724db892fa0defe580f19c991eaabd690140abb21e4",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 100000,
           "msgIdFormat": "base58_tx_digest_and_event_index",
@@ -3145,10 +3079,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xA1eBb6A4b856dF8bf6c3aCa88a9115a9ab3b2E02",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -3160,10 +3091,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -3175,10 +3103,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
           "sourceGatewayAddress": "CCSNWHMQSPTW4PS7L32OIMH7Z6NFNCKYZKNFSWRSYX7MK64KHBDZDT5I",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -3227,10 +3152,7 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
+          "signingThreshold": ["51", "100"],
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 1,
           "xrplTransactionFee": 5000,
@@ -3246,10 +3168,7 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
+          "votingThreshold": ["51", "100"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "codeId": 31,

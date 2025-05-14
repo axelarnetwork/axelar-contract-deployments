@@ -19,9 +19,7 @@
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "startingKeyIDs": [
-            "core-avalanche-genesis"
-          ],
+          "startingKeyIDs": ["core-avalanche-genesis"],
           "address": "0xb7879887ec7e85a5C757D7ccF5E3AB15007152e2",
           "implementation": "0x56c9De44D10324Acf5EfE3a808aF9F2A49EE4958",
           "implementationCodehash": "0xe6100fc234ca2fac16c1b82b55efb20e03c230931bf9d0b66a7bcee99859f415",
@@ -104,9 +102,7 @@
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "startingKeyIDs": [
-            "core-ethereum-genesis"
-          ],
+          "startingKeyIDs": ["core-ethereum-genesis"],
           "address": "0x7C60aA56482c2e78D75Fd6B380e1AdC537B97319",
           "implementation": "0x80b70F5f8c8018ff919AcfdcF1026cf28D2c81bc",
           "implementationCodehash": "0xa07791a112c34c715c6c883967223b5c56374a99fe71d91c465cfc0be3d7f03d",
@@ -189,9 +185,7 @@
       "contracts": {
         "AxelarGateway": {
           "deployer": "0xC5C73C3032e0577662000887D60d279B5Cc1C1AB",
-          "startingKeyIDs": [
-            "core-optimism-genesis"
-          ],
+          "startingKeyIDs": ["core-optimism-genesis"],
           "address": "0xdb6711cFc97e13E4aF6EEEe5f4923A9c2FBf0721",
           "implementation": "0x6BB7937D233e3Ea48C231114cEc91739aAfa2021",
           "implementationCodehash": "0xfa1b1e1e8e971ce57ab86a74fbd8a92b15b3bd8832c300db0fae6e688a4c6a59",
@@ -987,12 +981,7 @@
           "transferRate": 0,
           "tickSize": 6,
           "domain": "axelar.foundation",
-          "flags": [
-            4,
-            12,
-            13,
-            14
-          ],
+          "flags": [4, 12, 13, 14],
           "connectionType": "amplifier"
         },
         "InterchainTokenService": {
@@ -1001,12 +990,7 @@
           "transferRate": 0,
           "tickSize": 6,
           "domain": "axelar.foundation",
-          "flags": [
-            4,
-            12,
-            13,
-            14
-          ]
+          "flags": [4, 12, 13, 14]
         }
       }
     },
@@ -1154,10 +1138,7 @@
         "params": {
           "epoch_duration": "10",
           "rewards_per_epoch": "100",
-          "participation_threshold": [
-            "9",
-            "10"
-          ]
+          "participation_threshold": ["9", "10"]
         },
         "codeId": 849,
         "lastUploadedCodeId": 849,
@@ -1199,10 +1180,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1215,10 +1193,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1230,10 +1205,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1245,10 +1217,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1262,10 +1231,7 @@
           "sourceGatewayAddress": "0x988bbe6e98f653887e78912f529247675030334ae4b0fbc1d1f512f0f95b71e4",
           "msgIdFormat": "base58_tx_digest_and_event_index",
           "addressFormat": "sui",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "codeId": 854,
@@ -1275,10 +1241,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "CDWXQAUFE26XOYFWW2M3RSZPBOXHWCGLUTR5NZTFEGOV6YZQJPVARUKX",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1290,10 +1253,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "0xA7938970ebF2E35E2789dc8C3019754c2ed762A8",
-          "votingThreshold": [
-            "6",
-            "10"
-          ],
+          "votingThreshold": ["6", "10"],
           "blockExpiry": 10,
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
@@ -1341,10 +1301,7 @@
         "xrpl-dev": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1lsasewgqj7698e9a25v3c9kkzweee9cvejq5cs",
-          "signingThreshold": [
-            "2",
-            "3"
-          ],
+          "signingThreshold": ["2", "3"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "address": "axelar1ys83sedjffmqh70aksejmx3fy3q2d7twm3msurk7wn3l6nkwxp0sfelzhl",
@@ -1357,10 +1314,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "43113",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
@@ -1374,10 +1328,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "11155111",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
@@ -1390,10 +1341,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "11155420",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
@@ -1406,10 +1354,7 @@
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "destinationChainID": "545",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
@@ -1421,10 +1366,7 @@
         "sui-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "bcs",
@@ -1436,10 +1378,7 @@
         "stellar-2025-q1": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "stellar_xdr",
@@ -1451,10 +1390,7 @@
         "plume-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
-          "signingThreshold": [
-            "6",
-            "10"
-          ],
+          "signingThreshold": ["6", "10"],
           "serviceName": "validators",
           "verifierSetDiffThreshold": 0,
           "encoder": "abi",
@@ -1471,10 +1407,7 @@
           "address": "axelar1w0cwqtytmjuhak4v0rd4fy65pugqcxz4g48n6puw55zcy896e6ksn9gkj2",
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "votingThreshold": [
-            "2",
-            "3"
-          ],
+          "votingThreshold": ["2", "3"],
           "blockExpiry": 5,
           "confirmationHeight": 1
         }
