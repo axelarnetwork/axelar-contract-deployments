@@ -66,7 +66,7 @@ popd
 Deploy the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
 
 ```sh
-solana program-v4 deploy --program-keypair path/to/gateway-program-keypair.json --authority <base58 pubkey> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gateway.so
+solana program-v4 deploy --program-keypair <PATH_TO_GATEWAY_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gateway.so
 ```
 
 ### Gas Service
@@ -74,7 +74,7 @@ solana program-v4 deploy --program-keypair path/to/gateway-program-keypair.json 
 Deploy the gas service program
 
 ```sh
-solana program-v4 deploy --program-keypair path/to/gas-service-program-keypair.json --authority <base58 pubkey> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gas_service.so
+solana program-v4 deploy --program-keypair <PATH_TO_GAS_SERVICE_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gas_service.so
 ```
 
 ### Interchain Token Service
@@ -82,7 +82,7 @@ solana program-v4 deploy --program-keypair path/to/gas-service-program-keypair.j
 Deploy the ITS program
 
 ```sh
-solana program-v4 deploy --program-keypair path/to/its-program-keypair.json --authority <base58 pubkey> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_its.so
+solana program-v4 deploy --program-keypair <PATH_TO_ITS_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_its.so
 ```
 
 ### Governance
@@ -90,7 +90,7 @@ solana program-v4 deploy --program-keypair path/to/its-program-keypair.json --au
 Deploy the governance program
 
 ```sh
-solana program-v4 deploy --program-keypair path/to/governance-program-keypair.json --authority <base58 pubkey> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_governance.so
+solana program-v4 deploy --program-keypair <PATH_TO_GOVERNANCE_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_governance.so
 ```
 
 ### Multicall
@@ -98,7 +98,7 @@ solana program-v4 deploy --program-keypair path/to/governance-program-keypair.js
 Deploy the multicall program
 
 ```sh
-solana program-v4 deploy --program-keypair path/to/multicall-program-keypair.json --authority <base58 pubkey> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_multicall.so
+solana program-v4 deploy --program-keypair <PATH_TO_MULTICALL_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_multicall.so
 ```
 
 ## Upgrades
@@ -107,7 +107,7 @@ To upgrade a program, a similar command is used as for the initial deployment, b
 
 
 ```sh
-solana program-v4 deploy --program-id <base58 pubkey> <path/to/program.so>
+solana program-v4 deploy --program-id <PROGRAM_ID_PUBKEY> <PATH_TO_PROGRAM_SO>
 ```
 
 For upgrades with offline signing, recovery of failed deployments, and other information about Solana program deployment, please check the [official docs](https://solana.com/docs/programs/deploying).
@@ -170,9 +170,9 @@ solana/solana-axelar-cli send gateway --help
 
 ```sh
 solana/solana-axelar-cli send gateway init \
-  --previous-signers-retention 3 \
-  --minimum-rotation-delay 86400 \
-  --operator <PUBKEY>
+  --previous-signers-retention <RETENTION_COUNT> \
+  --minimum-rotation-delay <DELAY_IN_SECONDS> \
+  --operator <OPERATOR_PUBKEY>
 ```
 
 #### Call Contract
@@ -181,9 +181,9 @@ Send a message to another chain:
 
 ```sh
 solana/solana-axelar-cli send gateway call-contract \
-  --destination-chain avalanche \
-  --destination-address 0x4F4495243837681061C4743b74B3eEdf548D56A5 \
-  --payload 0x1234
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --destination-address <DESTINATION_ADDRESS> \
+  --payload <MESSAGE_PAYLOAD_HEX>
 ```
 
 #### Submit Proof
@@ -192,7 +192,7 @@ Submit a proof constructed on Amplifier to the Solana gateway contract:
 
 ```sh
 solana/solana-axelar-cli send gateway submit-proof \
-  --multisig-session-id 123456
+  --multisig-session-id <MULTISIG_SESSION_ID>
 ```
 
 #### Execute Message
@@ -201,20 +201,20 @@ Execute a cross-chain message that was approved on the Solana gateway:
 
 ```sh
 solana/solana-axelar-cli send gateway execute \
-  --source-chain avalanche \
-  --message-id '0x0bcbbfc9b006db6958f3fce75f11fdc306b45e8e43396211f414f40d2d6db7c5-0' \
-  --source-address 0xba76c6980428A0b10CFC5d8ccb61949677A61233 \
-  --destination-address <PUBKEY> \
-  --payload 0x1234
+  --source-chain <SOURCE_CHAIN_NAME> \
+  --message-id <MESSAGE_ID> \
+  --source-address <SOURCE_ADDRESS> \
+  --destination-address <DESTINATION_PUBKEY> \
+  --payload <MESSAGE_PAYLOAD_HEX>
 ```
 
 #### Rotate Signers
 
 ```sh
 solana/solana-axelar-cli send gateway rotate \
-  --signer <PRIVATE_KEY_HEX> \
-  --nonce 123 \
-  --new-nonce 456
+  --signer <SIGNER_PRIVATE_KEY_HEX> \
+  --nonce <CURRENT_NONCE> \
+  --new-nonce <NEW_NONCE>
 ```
 
 #### Transfer Operatorship
@@ -237,17 +237,17 @@ solana/solana-axelar-cli send its --help
 #### Initialize ITS
 
 ```sh
-solana/solana-axelar-cli send its init --operator <PUBKEY>
+solana/solana-axelar-cli send its init --operator <OPERATOR_PUBKEY>
 ```
 
 #### Set/Remove Trusted Chain
 
 ```sh
 # Add a trusted chain
-solana/solana-axelar-cli send its set-trusted-chain --chain-name avalanche
+solana/solana-axelar-cli send its set-trusted-chain --chain-name <CHAIN_NAME>
 
 # Remove a trusted chain
-solana/solana-axelar-cli send its remove-trusted-chain --chain-name avalanche
+solana/solana-axelar-cli send its remove-trusted-chain --chain-name <CHAIN_NAME>
 ```
 
 #### Deploy Interchain Token
@@ -255,10 +255,10 @@ solana/solana-axelar-cli send its remove-trusted-chain --chain-name avalanche
 ```sh
 solana/solana-axelar-cli send its deploy-interchain-token \
   --salt <SALT_STRING> \
-  --name "My Token" \
-  --symbol "MTK" \
-  --decimals 8 \
-  --initial-supply 1000000000
+  --name <TOKEN_NAME> \
+  --symbol <TOKEN_SYMBOL> \
+  --decimals <DECIMALS> \
+  --initial-supply <INITIAL_SUPPLY>
 ```
 
 #### Deploy Remote Interchain Token
@@ -266,8 +266,8 @@ solana/solana-axelar-cli send its deploy-interchain-token \
 ```sh
 solana/solana-axelar-cli send its deploy-remote-interchain-token \
   --salt <SALT_STRING> \
-  --destination-chain avalanche \
-  --gas-value 500000
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --gas-value <GAS_VALUE>
 ```
 
 #### Register Canonical Token
@@ -275,7 +275,7 @@ solana/solana-axelar-cli send its deploy-remote-interchain-token \
 ```sh
 solana/solana-axelar-cli send its register-canonical-interchain-token \
   --mint <MINT_ADDRESS> \
-  --token-program spl_token
+  --token-program <TOKEN_PROGRAM>
 ```
 
 #### Deploy Remote Canonical Token
@@ -283,37 +283,37 @@ solana/solana-axelar-cli send its register-canonical-interchain-token \
 ```sh
 solana/solana-axelar-cli send its deploy-remote-canonical-interchain-token \
   --mint <MINT_ADDRESS> \
-  --destination-chain avalanche \
-  --gas-value 500000
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --gas-value <GAS_VALUE>
 ```
 
 #### Interchain Transfer
 
 ```sh
 solana/solana-axelar-cli send its interchain-transfer \
-  --source-account <ACCOUNT_ADDRESS> \
+  --source-account <SOURCE_ACCOUNT_ADDRESS> \
   --token-id <TOKEN_ID_HEX> \
-  --destination-chain avalanche \
-  --destination-address 0x4F4495243837681061C4743b74B3eEdf548D56A5 \
-  --amount 1000000 \
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --destination-address <DESTINATION_ADDRESS> \
+  --amount <AMOUNT> \
   --mint <MINT_ADDRESS> \
-  --token-program spl_token \
-  --gas-value 500000
+  --token-program <TOKEN_PROGRAM> \
+  --gas-value <GAS_VALUE>
 ```
 
 #### Call Contract With Interchain Token
 
 ```sh
 solana/solana-axelar-cli send its call-contract-with-interchain-token \
-  --source-account <ACCOUNT_ADDRESS> \
+  --source-account <SOURCE_ACCOUNT_ADDRESS> \
   --token-id <TOKEN_ID_HEX> \
-  --destination-chain avalanche \
-  --destination-address 0x4F4495243837681061C4743b74B3eEdf548D56A5 \
-  --amount 1000000 \
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --destination-address <DESTINATION_ADDRESS> \
+  --amount <AMOUNT> \
   --mint <MINT_ADDRESS> \
-  --data 0x1234 \
-  --token-program spl_token \
-  --gas-value 500000
+  --data <PAYLOAD_DATA> \
+  --token-program <TOKEN_PROGRAM> \
+  --gas-value <GAS_VALUE>
 ```
 
 #### Set Flow Limit
@@ -321,7 +321,7 @@ solana/solana-axelar-cli send its call-contract-with-interchain-token \
 ```sh
 solana/solana-axelar-cli send its set-flow-limit \
   --token-id <TOKEN_ID_HEX> \
-  --flow-limit 1000000
+  --flow-limit <FLOW_LIMIT>
 ```
 
 #### Pausable Functionality
@@ -343,12 +343,12 @@ solana/solana-axelar-cli send its unpause
 # Set flow limit on a token manager
 solana/solana-axelar-cli send its token-manager set-flow-limit \
   --token-id <TOKEN_ID_HEX> \
-  --flow-limit 1000000
+  --flow-limit <FLOW_LIMIT>
 
 # Add flow limiter to a token manager
 solana/solana-axelar-cli send its token-manager add-flow-limiter \
   --token-id <TOKEN_ID_HEX> \
-  --flow-limiter <PUBKEY>
+  --flow-limiter <FLOW_LIMITER_PUBKEY>
 ```
 
 #### InterchainToken Operations
@@ -359,8 +359,8 @@ solana/solana-axelar-cli send its interchain-token mint \
   --token-id <TOKEN_ID_HEX> \
   --mint <MINT_ADDRESS> \
   --to <DESTINATION_ACCOUNT> \
-  --token-program spl_token \
-  --amount 1000000
+  --token-program <TOKEN_PROGRAM> \
+  --amount <AMOUNT>
 ```
 
 #### Transfer Operatorship
@@ -395,7 +395,7 @@ Durable nonces are necessary for offline signing to ensure transactions remain v
 
 ```sh
 # Create a nonce account (requires SOL for rent exemption)
-solana create-nonce-account <KEYPAIR_PATH> <AMOUNT_SOL> --nonce-authority <AUTHORITY_PUBKEY>
+solana create-nonce-account <NONCE_ACCOUNT_KEYPAIR_PATH> <AMOUNT_SOL> --nonce-authority <AUTHORITY_PUBKEY>
 ```
 
 #### 1. Generate the unsigned transaction
@@ -406,9 +406,9 @@ solana/solana-axelar-cli generate \
   --nonce-account <NONCE_ACCOUNT_PUBKEY> \
   --nonce-authority <NONCE_AUTHORITY_PUBKEY> \
   gateway call-contract \
-  --destination-chain avalanche \
-  --destination-address 0x4F4495243837681061C4743b74B3eEdf548D56A5 \
-  --payload 0x1234
+  --destination-chain <DESTINATION_CHAIN_NAME> \
+  --destination-address <DESTINATION_ADDRESS> \
+  --payload <MESSAGE_PAYLOAD_HEX>
 ```
 
 This will generate a file like `./output/gateway_init.unsigned.json` in the default output directory. You can specify a custom output directory with `--output-dir /path/to/directory`.
@@ -417,15 +417,15 @@ This will generate a file like `./output/gateway_init.unsigned.json` in the defa
 
 ```sh
 solana/solana-axelar-cli sign \
-  ./output/gateway_init.unsigned.json \
-  --signer /path/to/keypair.json
+  <PATH_TO_UNSIGNED_TX_JSON> \
+  --signer <PATH_TO_SIGNER_KEYPAIR>
 ```
 
 For Ledger:
 
 ```sh
 solana/solana-axelar-cli sign \
-  ./output/gateway_init.unsigned.json \
+  <PATH_TO_UNSIGNED_TX_JSON> \
   --signer usb://ledger
 ```
 
@@ -435,8 +435,8 @@ This will generate signature files like `./output/gateway_init.5hW1cNgX6N8RhvHHi
 
 ```sh
 solana/solana-axelar-cli combine \
-  --unsigned-tx-path ./output/gateway_init.unsigned.json \
-  --signatures ./output/gateway_init.5hW1cNgX6N8RhvHHiX6nAnKbZftG1K3ckNBuJdRSPFPK.partial.sig ./output/gateway_init.DL6NBsMvnEMbUJ5XHeLMyfGpmEukV2i7ZVukGCfxWvP5.partial.sig
+  --unsigned-tx-path <PATH_TO_UNSIGNED_TX_JSON> \
+  --signatures <PATH_TO_SIGNATURE_1> <PATH_TO_SIGNATURE_2> [...]
 ```
 
 This will generate a file like `./output/gateway_init.signed.json`.
@@ -445,5 +445,5 @@ This will generate a file like `./output/gateway_init.signed.json`.
 
 ```sh
 solana/solana-axelar-cli broadcast \
-  ./output/gateway_init.signed.json
+  <PATH_TO_SIGNED_TX_JSON>
 ```
