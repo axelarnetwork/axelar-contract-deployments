@@ -30,13 +30,13 @@ pub struct BuildAxelarMessageArgs {
 }
 
 /// Build a message for miscellaneous utilities
-pub fn build_message(args: Commands) -> Result<String> {
+pub fn do_misc(args: Commands) -> Result<()> {
     match args {
         Commands::BuildAxelarMessage(args) => build_axelar_message(args),
     }
 }
 
-fn build_axelar_message(args: BuildAxelarMessageArgs) -> Result<String> {
+fn build_axelar_message(args: BuildAxelarMessageArgs) -> Result<()> {
     // Parse accounts
     let mut account_metas = Vec::with_capacity(args.accounts.len());
     for account_str in args.accounts {
@@ -76,6 +76,8 @@ fn build_axelar_message(args: BuildAxelarMessageArgs) -> Result<String> {
         .encode()
         .map_err(|e| eyre::eyre!("Failed to encode message: {}", e))?;
 
-    // Return the encoded payload as a hex string
-    Ok(hex::encode(encoded))
+    // Print the encoded payload as a hex string
+    println!("{}", hex::encode(encoded));
+
+    Ok(())
 }

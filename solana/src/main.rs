@@ -32,7 +32,7 @@ use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
 use crate::generate::generate_from_transactions;
-use crate::misc::build_message;
+use crate::misc::do_misc;
 use crate::sign::sign_solana_transaction;
 
 /// A CLI tool to generate, sign (offline/Ledger), combine, and broadcast Solana transactions
@@ -211,7 +211,6 @@ async fn run() -> eyre::Result<()> {
 
     let config = Config::new(cli.url, cli.output_dir, cli.chains_info_dir)?;
 
-    // Proceed with building and potentially sending/signing/broadcasting a Solana transaction
     match cli.command {
         Command::Send(args) => {
             let mut signer_keys = args.signer_keys;
@@ -235,13 +234,11 @@ async fn run() -> eyre::Result<()> {
                 signers: signer_keys,
             };
 
-            // Use the transaction-based approach
             let transactions =
                 build_transaction(&send_args.fee_payer, args.instruction, &config).await?;
             sign_and_send_transactions(&send_args, &config, transactions)?;
         }
         Command::Generate(args) => {
-            // Determine output directory - use provided dir or default to config.output_dir
             let output_dir = args.output_dir.unwrap_or_else(|| config.output_dir.clone());
 
             let gen_args = GenerateArgs {
@@ -251,11 +248,8 @@ async fn run() -> eyre::Result<()> {
                 output_dir,
             };
 
-            // Use the transaction-based approach
             let transactions =
                 build_transaction(&gen_args.fee_payer, args.instruction, &config).await?;
-            println!("Generating transactions...");
-
             let filename = utils::serialized_transactions_filename_from_arg_matches(&matches);
             generate_from_transactions(&gen_args, &config, transactions, &filename)?;
         }
@@ -282,8 +276,7 @@ async fn run() -> eyre::Result<()> {
             broadcast_solana_transaction(&broadcast_args, &config)?;
         }
         Command::Misc(args) => {
-            let result = build_message(args.instruction)?;
-            println!("{}", result);
+            do_misc(args.instruction)?;
         }
     }
     Ok(())
