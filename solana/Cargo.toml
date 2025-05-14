@@ -4,56 +4,39 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axelar-solana-gateway = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24", features = [
+axelar-solana-gateway = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
     "no-entrypoint",
 ] }
-axelar-solana-gas-service = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24", features = [
+axelar-solana-gas-service = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
     "no-entrypoint",
 ] }
-axelar-solana-governance = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24", features = [
+axelar-solana-governance = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
     "no-entrypoint",
 ] }
-axelar-solana-its = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24", features = [
+axelar-solana-its = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
     "no-entrypoint"
 ] }
-axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
-axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
-governance-gmp = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
-program-utils = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
-its-instruction-builder = { git = "https://github.com/eigerco/solana-axelar.git", rev = "1c97f24" }
+axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
+axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
+its-instruction-builder = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
 
-axelar-wasm-std = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec" }
-voting-verifier = { git = "https://github.com/eigerco/axelar-amplifier.git", rev = "3f036ec", features = [
-    "library",
-] }
+axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
 
-alloy-sol-types = "0.7.6"
-anyhow = "1.0.98"
 base64 = "0.22.1"
 bincode = { version = "2.0.1", features = ["serde"] }
 borsh = "1.5.1"
-bs58 = "0.5.1"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
-cosmwasm-schema = "2"
 cosmwasm-std = "1.5"
 eyre = "0.6.11"
-flate2 = { version = "1.1.1", default-features = false, features = ["zlib"] }
 hex = { version = "0.4.3", features = ["serde"] }
 k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
-rand = "0.9.1"
-reqwest = { version = "0.12", features = ["json", "stream"] }
-rust_decimal = "1.37.1"
-rust_decimal_macros = "1.37.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
-solana-clap-v3-utils = "2.2.7" 
-solana-cli-config = "2.2.7"
-solana-client = "2.2.7"
-solana-sdk = "2.2.2"
-spl-associated-token-account = { version = "6.0.0", features = ["no-entrypoint"] }
-spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
-spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
-tar = "0.4.44"
+solana-clap-v3-utils = "2"
+solana-cli-config = "2"
+solana-client = "2"
+solana-sdk = "2"
+spl-token = { version = "6", features = ["no-entrypoint"] }
+spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
 tokio = { version = "1", features = ["full"] }
-walkdir = "2.5.0"
