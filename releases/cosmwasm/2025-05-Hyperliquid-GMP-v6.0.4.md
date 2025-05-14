@@ -1,14 +1,14 @@
-# Plume GMP v6.0.4
+# Hyperliquid GMP v6.0.4
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+| **Created By** | @isi8787 <isaac@interoplabs.io> |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | Completed             | 2025-05-06 |
+| **Devnet Amplifier** | TBD             | TBD |
+| **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -19,11 +19,11 @@
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for the Plume connection.
+These are the instructions for deploying Amplifier contracts for the Hyperliquid connection.
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-05-Hyperliquid-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -38,7 +38,7 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `plume`.
+- Create an `.env` config. `CHAIN` should be set to `hyperliquid`.
 
 ```yaml
 MNEMONIC=xyz
@@ -165,8 +165,8 @@ EPOCH_DURATION=[epoch duration according to the environment]
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 ### Create proposals
-
 Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Plume-ITS-v2.1.0.md) if possible.
+
 
 5. Register Gateway at the Router
 
@@ -319,10 +319,10 @@ node cosmwasm/query.js rewards -n $CHAIN
 
 | Network              | `http_url`                    |
 | -------------------- | ----------------------------- |
-| **Devnet-amplifier** | https://testnet-rpc.plume.org |
-| **Stagenet**         | https://testnet-rpc.plume.org |
-| **Testnet**          | https://testnet-rpc.plume.org |
-| **Mainnet**          | TBD                           |
+| **Devnet-amplifier** | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Stagenet**         | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Testnet**          | https://rpc.hyperliquid-testnet.xyz/evm |
+| **Mainnet**          | https://rpc.hyperliquid.xyz/evm                           |
 
 ```bash
 [[handlers]]
@@ -345,6 +345,7 @@ type="EvmVerifierSetVerifier"
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
+
 
 13. Create genesis verifier set
 
@@ -369,4 +370,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [Plume GMP checklist](../evm/2025-05-Plume-GMP-v6.0.4.md) will test GMP.
+The [Hyperliquid GMP checklist](../evm/2025-05-Hyperliquid-GMP-v6.0.4.md) will test GMP.
