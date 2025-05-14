@@ -12,6 +12,9 @@
     "test": "mocha -r ts-node/register 'test/**/*.ts'",
     "prepare": "husky"
   },
+  "prettier": {
+    "configPath": ".prettierrc.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/axelarnetwork/axelar-contract-deployments.git"

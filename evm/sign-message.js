@@ -1,50 +1,59 @@
-'use strict';
+"use strict";
 
-const { ethers } = require('hardhat');
+const { ethers } = require("hardhat");
 const {
-    utils: { isHexString, arrayify },
+  utils: { isHexString, arrayify },
 } = ethers;
-const { Command, Option } = require('commander');
-const { getWallet } = require('./sign-utils');
-const { printInfo, validateParameters } = require('./utils');
-const { addBaseOptions } = require('./cli-utils');
+const { Command, Option } = require("commander");
+const { getWallet } = require("./sign-utils");
+const { printInfo, validateParameters } = require("./utils");
+const { addBaseOptions } = require("./cli-utils");
 
 async function processCommand(options) {
-    const { message, privateKey } = options;
+  const { message, privateKey } = options;
 
-    validateParameters({ isValidPrivateKey: { privateKey }, isNonEmptyString: { message } });
+  validateParameters({
+    isValidPrivateKey: { privateKey },
+    isNonEmptyString: { message },
+  });
 
-    const wallet = await getWallet(privateKey);
-    printInfo('Wallet address', await wallet.getAddress());
-    let sig;
+  const wallet = await getWallet(privateKey);
+  printInfo("Wallet address", await wallet.getAddress());
+  let sig;
 
-    if (isHexString(message) && message.length === 66) {
-        const messageHashBytes = arrayify(message);
-        // Sign the binary data
-        sig = await wallet.signMessage(messageHashBytes);
-    } else {
-        // Sign the string message
-        sig = await wallet.signMessage(message);
-    }
+  if (isHexString(message) && message.length === 66) {
+    const messageHashBytes = arrayify(message);
+    // Sign the binary data
+    sig = await wallet.signMessage(messageHashBytes);
+  } else {
+    // Sign the string message
+    sig = await wallet.signMessage(message);
+  }
 
-    printInfo('The signed message is:', sig);
+  printInfo("The signed message is:", sig);
 }
 
 async function main(options) {
-    await processCommand(options);
+  await processCommand(options);
 }
 
 if (require.main === module) {
-    const program = new Command();
+  const program = new Command();
 
-    program.name('sign-message').description('sign a message from the user wallet');
+  program
+    .name("sign-message")
+    .description("sign a message from the user wallet");
 
-    addBaseOptions(program, { ignoreChainNames: true });
-    program.addOption(new Option('-m, --message <message>', 'the message to be signed').makeOptionMandatory(true).env('MESSAGE'));
+  addBaseOptions(program, { ignoreChainNames: true });
+  program.addOption(
+    new Option("-m, --message <message>", "the message to be signed")
+      .makeOptionMandatory(true)
+      .env("MESSAGE"),
+  );
 
-    program.action((options) => {
-        main(options);
-    });
+  program.action((options) => {
+    main(options);
+  });
 
-    program.parse();
+  program.parse();
 }
