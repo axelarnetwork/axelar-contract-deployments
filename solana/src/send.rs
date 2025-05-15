@@ -29,7 +29,8 @@ fn load_signers(
     signers_paths: &[String],
     transaction: &Transaction,
 ) -> eyre::Result<Vec<Box<dyn solana_sdk::signer::Signer>>> {
-    if signers_paths.len() < transaction.signatures.len() {
+    // We relax one signer as it is the fee payer
+    if signers_paths.len() < transaction.signatures.len() - 1 {
         eyre::bail!("Not enough signers provided");
     }
 
