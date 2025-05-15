@@ -440,7 +440,7 @@ Where `<functionCallsJson>` is a JSON array of function calls, each containing:
 
 Multicall to add multiple trusted chains
 
-```
+```bash
 node stellar/multicall.js multicall '[{
   "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
   "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
@@ -460,13 +460,14 @@ node stellar/multicall.js multicall '[{
   "args": ["binance"]
 }]' --chain-name stellar
 ```
+
 Multicall to get flow limit
 
-```
+```bash
 node stellar/multicall.js multicall '[{
     "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
     "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
     "function": "flow_limit",
-    "args": ["0xabcd1234"]
+    "args": ["0x96efc3f5494b452964196fa62dd5a3a3b6b895d317f8f0172ce55c8286ef9fe7"]
 }]' --chain-name stellar
 ```

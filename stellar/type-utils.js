@@ -1,6 +1,10 @@
 'use strict';
 
 const { Address, nativeToScVal } = require('@stellar/stellar-sdk');
+const { ethers } = require('hardhat');
+const {
+    utils: { hexZeroPad, isHexString },
+} = ethers;
 
 function weightedSignersToScVal(signers) {
     return nativeToScVal(
@@ -121,8 +125,8 @@ function functionCallsToScVal(functionCalls) {
                 approver: Address.fromString(approver),
                 function: nativeToScVal(fn, { type: 'symbol' }),
                 args: args.map(arg =>
-                    typeof arg === 'string' && /^0x[0-9a-fA-F]+$/.test(arg)
-                        ? Buffer.from(arg.slice(2).padStart(64, '0'), 'hex')
+                    isHexString(arg)
+                        ? Buffer.from(arg.slice(2), 'hex')
                         : arg
                 )
             },
