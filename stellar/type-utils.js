@@ -112,39 +112,30 @@ function itsCustomMigrationDataToScValV112(migrationData) {
 }
 
 function functionCallsToScVal(functionCalls) {
-    return nativeToScVal(
-        functionCalls.map((call) => {
-            // Process arguments to convert strings to bytes if needed
-            const processedArgs = call.args
-                ? call.args.map((arg) => {
-                      if (typeof arg === 'string' && /^0x[0-9a-fA-F]+$/.test(arg)) {
-                          const hexValue = arg.slice(2);
-                          const buf = Buffer.from(hexValue.padStart(64, '0'), 'hex');
-                          return buf;
-                      }
+    if (!functionCalls.length) return nativeToScVal([]);
 
-                      return arg;
-                  })
-                : [];
-
-            return nativeToScVal(
-                {
-                    contract: Address.fromString(call.contract),
-                    approver: Address.fromString(call.approver),
-                    function: nativeToScVal(call.function, { type: 'symbol' }),
-                    args: processedArgs,
+    return nativeToScVal(functionCalls.map(({ contract, approver, function: fn, args = [] }) =>
+        nativeToScVal(
+            {
+                contract: Address.fromString(contract),
+                approver: Address.fromString(approver),
+                function: nativeToScVal(fn, { type: 'symbol' }),
+                args: args.map(arg =>
+                    typeof arg === 'string' && /^0x[0-9a-fA-F]+$/.test(arg)
+                        ? Buffer.from(arg.slice(2).padStart(64, '0'), 'hex')
+                        : arg
+                )
+            },
+            {
+                type: {
+                    contract: ['symbol'],
+                    approver: ['symbol'],
+                    function: ['symbol'],
+                    args: ['symbol'],
                 },
-                {
-                    type: {
-                        contract: ['symbol'],
-                        approver: ['symbol'],
-                        function: ['symbol'],
-                        args: ['symbol'],
-                    },
-                },
-            );
-        }),
-    );
+            }
+        )
+    ));
 }
 
 module.exports = {
