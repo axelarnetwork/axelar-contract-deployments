@@ -131,7 +131,6 @@ const addStoreProposalOptions = (program) => {
     );
     program.addOption(
         new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate')
-            .default([])
             .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
     );
 };
@@ -171,9 +170,9 @@ const addMigrateOptions = (program) => {
 };
 
 const addProposalOptions = (program) => {
-    program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
+    program.addOption(new Option('-t, --title <title>', 'title of proposal'));
+    program.addOption(new Option('-d, --description <description>', 'description of proposal'));
+    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
 module.exports = {
