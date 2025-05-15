@@ -6,42 +6,38 @@ const { getWallet, broadcast, addBaseOptions } = require('./utils');
 const { loadConfig, printInfo, prompt, validateParameters, saveConfig, addOptionsToCommands, getChainConfig } = require('../common');
 const { functionCallsToScVal } = require('./type-utils');
 
+const validateFunctionCalls = (functionCalls) => {
+    if (!Array.isArray(functionCalls) || functionCalls.length === 0) {
+        throw new Error('Function calls must be a non-empty array');
+    }
+
+    functionCalls.forEach(({ contract, approver, function: fn }) =>
+        validateParameters({
+            isValidStellarAddress: { contract, approver },
+            isNonEmptyString: { function: fn }
+        })
+    );
+};
+
 async function multicall(wallet, _, chain, contract, args, options) {
     const [functionCallsJson] = args;
     const functionCalls = JSON.parse(functionCallsJson);
 
-    if (!Array.isArray(functionCalls)) {
-        throw new Error('Function calls must be an array');
-    }
+    validateFunctionCalls(functionCalls);
 
-    if (functionCalls.length === 0) {
-        throw new Error('Function calls array cannot be empty');
-    }
-
-    functionCalls.forEach((functionCall) => {
-        validateParameters({
-            isValidStellarAddress: { contract: functionCall.contract, approver: functionCall.approver },
-            isNonEmptyString: { function: functionCall.function },
-        });
-    });
-
-    const functionCallsScVal = functionCallsToScVal(functionCalls);
-    const operation = contract.call('multicall', functionCallsScVal);
+    const operation = contract.call('multicall', functionCallsToScVal(functionCalls));
     const result = await broadcast(operation, wallet, chain, 'Multicall executed', options);
 
     printInfo('Multicall results:');
-    const results = result.value();
-    results.forEach((result, i) => {
-        printInfo(`Result ${i + 1}:`, '_value' in result ? result._value : 'Call executed successfully');
-    });
+    result.value().forEach((result, i) => printInfo(`Result ${i + 1}:`, result._value ?? 'Call executed successfully'));
 
-    return results;
+    return result.value();
 }
 
 async function mainProcessor(processor, args, options) {
-    const { yes } = options;
-    const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const { yes, env, chainName } = options;
+    const config = loadConfig(env);
+    const chain = getChainConfig(config, chainName);
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {
@@ -58,7 +54,7 @@ async function mainProcessor(processor, args, options) {
 
     await processor(wallet, config, chain, contract, args, options);
 
-    saveConfig(config, options.env);
+    saveConfig(config, env);
 }
 
 if (require.main === module) {

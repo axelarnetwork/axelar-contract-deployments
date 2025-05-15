@@ -441,30 +441,32 @@ Where `<functionCallsJson>` is a JSON array of function calls, each containing:
 Multicall to add multiple trusted chains
 
 ```
-node stellar/multicall.js multicall '[
-  {
-    "contract": "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB",
-    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
-    "function": "add_trusted_chain",
-    "args": ["avalanche"]
-  },
-  {
-    "contract": "CBZ5GOFR5EJGES5IOV3PK4D27TZRFBA2KTHL5UFCNAHCT5774NSG3RQB",
-    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
-    "function": "add_trusted_chain",
-    "args": ["sui"]
-  }
-]'
+node stellar/multicall.js multicall '[{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["avalanche"]
+},
+{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["sui"]
+},
+{
+  "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+  "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
+  "function": "set_trusted_chain",
+  "args": ["binance"]
+}]' --chain-name stellar
 ```
 Multicall to get flow limit
 
 ```
-node stellar/multicall.js multicall '[
-  {
-    "contract": "CBF4KPQTQLOLIAIDVLZA6FKL6LK5VHRJSPXP7OREAPM4XIJMMNUERJSB",
-    "approver": "GC2T7TY5VHYS5J7FUXX6SYLD6BZSOGXOC7N2B65SXNRVESTHNMQLKBLK",
+node stellar/multicall.js multicall '[{
+    "contract": "CA7QTCCATD5CSA3DFDDEWLOWHDHNKHKBUYWPFXFH6THFOIW2CIWTEVFP",
+    "approver": "GAOQIUT5UJKLSI75YX2KLYM2IDAFSYYND2YYPLJLBSQBWVLN4EMDQUFL",
     "function": "flow_limit",
     "args": ["0xabcd1234"]
-  }
-]' --chain-name stellar-2025-q1 
+}]' --chain-name stellar
 ```
