@@ -806,7 +806,7 @@ pub(crate) fn build_instruction(
         Commands::Pause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: true }),
         Commands::Unpause => set_pause_status(fee_payer, SetPauseStatusArgs { paused: false }),
         Commands::SetTrustedChain(set_trusted_chain_args) => {
-            set_trusted_chain(fee_payer, set_trusted_chain_args)
+            set_trusted_chain(fee_payer, set_trusted_chain_args, config)
         }
         Commands::RemoveTrustedChain(args) => remove_trusted_chain(fee_payer, args),
         Commands::ApproveDeployRemoteInterchainToken(args) => {
@@ -962,11 +962,35 @@ fn set_pause_status(
 fn set_trusted_chain(
     fee_payer: &Pubkey,
     set_trusted_chain_args: TrustedChainArgs,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    Ok(vec![axelar_solana_its::instruction::set_trusted_chain(
-        *fee_payer,
-        set_trusted_chain_args.chain_name,
-    )?])
+    if set_trusted_chain_args.chain_name.is_empty() {
+        eyre::bail!("Chain name cannot be empty");
+    }
+
+    let mut instructions = Vec::new();
+    if set_trusted_chain_args.chain_name == "all" {
+        let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
+
+        if let serde_json::Value::Object(ref chains) = chains_info[CHAINS_KEY] {
+            for chain in chains.keys() {
+                println!("Creating instruction to set {chain} as trusted on Solana ITS");
+                instructions.push(axelar_solana_its::instruction::set_trusted_chain(
+                    *fee_payer,
+                    chain.clone(),
+                )?);
+            }
+        } else {
+            eyre::bail!("Failed to load all chains from chains info JSON file");
+        }
+    } else {
+        instructions.push(axelar_solana_its::instruction::set_trusted_chain(
+            *fee_payer,
+            set_trusted_chain_args.chain_name,
+        )?);
+    }
+
+    Ok(instructions)
 }
 
 fn remove_trusted_chain(
