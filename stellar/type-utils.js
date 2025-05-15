@@ -3,7 +3,7 @@
 const { Address, nativeToScVal } = require('@stellar/stellar-sdk');
 const { ethers } = require('hardhat');
 const {
-    utils: { hexZeroPad, isHexString },
+    utils: { isHexString },
 } = ethers;
 
 function weightedSignersToScVal(signers) {
