@@ -713,8 +713,8 @@
         "InterchainTokenService": {
           "address": "CATNQHWMG4VOWPSWF4HXVW7ASDJNX7M7F6JLFC544T7ZMMXXAE2HUDTY",
           "deployer": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
-          "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
-          "version": "1.1.2",
+          "wasmHash": "cd078e4d495a61a113a6ba457f5efa4579c5bc41a396779fd82f164aa75e9942",
+          "version": "1.2.0",
           "initializeArgs": {
             "owner": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
             "operator": "GCRN3JXRVXHQTFQFM7NR4TTTORGZDCJWPIOLPQQHL6WMAQGVMWSXJL3Q",
@@ -1128,12 +1128,12 @@
       "Multisig": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "blockExpiry": 10,
-        "codeId": 1268,
-        "lastUploadedCodeId": 1268,
+        "codeId": 1273,
+        "lastUploadedCodeId": 1273,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
-        "storeCodeProposalId": "561",
-        "storeCodeProposalCodeHash": "6898517f95da74cbc8c59223cc0f0f6b89e95911c321cf3be87e999935366687"
+        "storeCodeProposalId": "571",
+        "storeCodeProposalCodeHash": "9b0d47bb3c780594e5ef1e649d8ec12842aa3592f5dce4223150967e14ac380e"
       },
       "Coordinator": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
