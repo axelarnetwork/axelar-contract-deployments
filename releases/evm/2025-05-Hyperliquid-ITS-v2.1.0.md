@@ -1,14 +1,14 @@
-## Plume ITS v2.1.0
+## Hyperliquid ITS v2.1.0
 
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+| **Created By** | @isi8787 <isaac@interoplabs.io> |
+| **Deployment** | @isi8787 <isaac@interoplabs.io>  |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | Completed             | 2025-05-07 |
+| **Devnet Amplifier** | TBD             | TBD |
+| **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -16,18 +16,18 @@
 
 ## Background
 
-- This is the Plume ITS release.
+- This is the Hyperliquid ITS release.
 
 ## Deployment
 
-Ensure that [Plume GMP](../evm/2025-05-Plume-GMP-v6.0.4.md) is deployed first.
+Ensure that [Hyperliquid GMP](../evm/2025-03-Hyperliquid-GMP-v6.0.4.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
 npm ci
 ```
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `plume`.
+Create an `.env` config. Local environment variable `CHAIN` should be set to `hyperliquid`.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -58,9 +58,9 @@ node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register Plume ITS on ITS Hub
+## Register Hyperliquid ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-05-Plume-GMP-v6.0.4.md).
+Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Hyperliquid GMP Amplifier](../cosmwasm/2025-04-Hyperliquid-GMP-v6.0.4.md).
 
 ```bash
 node cosmwasm/submit-proposal.js \
@@ -71,9 +71,9 @@ node cosmwasm/submit-proposal.js \
     --runAs $RUN_AS_ACCOUNT
 ```
 
-## Set Plume as trusted chain on remote ITS contracts
+## Set Hyperliquid as trusted chain on remote ITS contracts
 
-Set Plume as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+Set Hyperliquid as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
 node evm/its.js set-trusted-chains $CHAIN hub -n all
@@ -92,7 +92,7 @@ node evm/its.js checks -n $CHAIN -y
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
-# Create a token on chain. Substitute the `minter-address` below with the deployer key
+# Create a token on chain. Substitute the `wallet` below with the deployer key
 node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
