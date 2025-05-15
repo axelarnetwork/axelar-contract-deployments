@@ -3,6 +3,4 @@
 echo "Running 'npm run build' pre-commit..."
 npm run build
 
-chmod +x ./.husky/scripts/detect-private-rpc.sh 
 bash ./.husky/scripts/detect-private-rpc.sh
-

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Patterns to search for
 SENSITIVE_RPC_PATTERNS=(
   'https:\/\/[a-z0-9-]+\.quiknode\.pro\/[a-f0-9]{32,}'
   'https:\/\/blastapi\.io\/dashboard\/project\/[a-f0-9\-]{36}'
@@ -15,19 +14,23 @@ FOUND=0
 FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 for file in $FILES; do
-  # Skip if file is in .gitignore
-  if git check-ignore "$file" > /dev/null; then
-    continue
+  # --- EOL Check ---
+  if [ -f "$file" ]; then
+    last_byte=$(tail -c 1 "$file" | od -An -t u1 | tr -d ' ')
+    if [ "$last_byte" != "10" ]; then
+      echo "File '$file' does not end with a newline (EOL)."
+      FOUND=1
+    fi
   fi
 
-  # Get added lines in the file
+  # -- Private RPC Check --
   while IFS= read -r line; do
     # Skip empty lines or lines starting with '+'
     if [[ -z "$line" || "$line" =~ ^\+[^+] ]]; then
       # Extract the actual content (remove leading '+')
       line_content=$(echo "$line" | sed 's/^+//')
       # Skip bypassable lines
-      if echo "$line_content" | grep -q 'no-check'; then
+      if echo "$line_content" | grep -q 'skip-check'; then
         continue
       fi
 
@@ -36,8 +39,8 @@ for file in $FILES; do
           echo "Sensitive pattern detected: $pattern"
           echo "File: $file"
           echo "Line: $line_content"
-          echo "Add '# no-check' if intentional"
-          echo "-------------------"
+          echo "Add '# skip-check' if intentional"
+          echo ""
           FOUND=1
         fi
       done
@@ -46,7 +49,7 @@ for file in $FILES; do
 done
 
 if [[ "$FOUND" -eq 1 ]]; then
-  echo "🚫 Commit blocked due to potential secrets or private RPCs."
+  echo "Commit blocked."
   exit 1
 fi
 
