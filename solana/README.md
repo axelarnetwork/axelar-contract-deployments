@@ -266,10 +266,10 @@ solana/solana-axelar-cli send its init --operator <OPERATOR_PUBKEY>
 
 ```sh
 # Add a trusted chain
-solana/solana-axelar-cli send its set-trusted-chain --chain-name <CHAIN_NAME>
+solana/solana-axelar-cli send its set-trusted-chain <CHAIN_NAME>
 
 # Remove a trusted chain
-solana/solana-axelar-cli send its remove-trusted-chain --chain-name <CHAIN_NAME>
+solana/solana-axelar-cli send its remove-trusted-chain <CHAIN_NAME>
 ```
 
 #### Deploy Interchain Token

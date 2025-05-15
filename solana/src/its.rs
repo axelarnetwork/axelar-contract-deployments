@@ -293,7 +293,6 @@ pub(crate) struct SetPauseStatusArgs {
 #[derive(Parser, Debug)]
 pub(crate) struct TrustedChainArgs {
     /// The name of the chain to set as trusted
-    #[clap(short, long)]
     chain_name: String,
 }
 
