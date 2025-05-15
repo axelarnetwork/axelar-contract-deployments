@@ -10,8 +10,8 @@
 | **Devnet Amplifier** | -                     | TBD        |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**(staging) | Completed             | 2025-02-19 |
-| **Testnet**          | In Progress           | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-03-13 |
+| **Mainnet**          | Completed             | 2025-05-05 |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
@@ -36,7 +36,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 Update npm dependencies (including contracts)
 
 ```bash
-npm ci
+npm ci && npm run build
 ```
 
 #### Devnet-Amplifier / Stagenet / Testnet
@@ -90,7 +90,7 @@ npm ci
 | Network              | Addresses                                                                                                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                                                                                                                           |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
@@ -170,7 +170,7 @@ node evm/deploy-contract.js -c Operators -m create2
 node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 6)
+8. Deploy GasService (set the `collector` to `Operators` address from step 6)
 
 | Network              | `deployer address`                           | `deployMethod` |
 | -------------------- | -------------------------------------------- | -------------- |
@@ -183,11 +183,22 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
+8. Transfer ownership for contracts on mainnet and testnet.
+
+For Mainnet
 
 ```bash
-# Only for mainnet and official testnet connection
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
+
+For Testnet
+
+```bash
+node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist

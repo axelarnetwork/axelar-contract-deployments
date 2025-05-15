@@ -149,7 +149,7 @@ async function sendTransaction(tx, server, action, options = {}) {
         }
 
         if (getResponse.status !== 'SUCCESS') {
-            throw Error(`Transaction failed: ${getResponse.resultXdr}`);
+            throw Error(`Transaction failed: ${getResponse.txHash}`);
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
@@ -586,6 +586,7 @@ function isFriendbotSupported(networkType) {
 }
 
 module.exports = {
+    ...require('ts-node/register') /* enable node during migration */,
     stellarCmd,
     ASSET_TYPE_NATIVE,
     buildTransaction,

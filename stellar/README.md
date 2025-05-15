@@ -7,7 +7,7 @@ Install `libsodium` for faster signing operations optionally. Install npm depend
 ```sh
 brew install libsodium
 
-npm ci
+npm ci && npm run build
 ```
 
 Install Stellar CLI

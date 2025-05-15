@@ -1,6 +1,7 @@
 'use strict';
 
-require('dotenv').config();
+require('../common/cli-utils');
+
 const { ethers } = require('hardhat');
 const {
     utils: { Interface },
