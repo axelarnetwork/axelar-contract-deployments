@@ -134,7 +134,9 @@ c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to pr
     - Provision USDC on Arbitrum
     - Use their trading app https://app.hyperliquid.xyz/trade and connect wallet.
     - Buy HYPE with USDC balance
-    - Under `balances` section connect wallet again to perform an EVM transfer.  
+    - Under `balances` section connect wallet again to perform an EVM transfer.
+
+    Note: Above flow has been tested. In order to preserve nonces do not transfer funds from EVM to Hypercore
 
 d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
@@ -229,7 +231,7 @@ node evm/deploy-contract.js -c Operators -m create2
 node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-9. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 6)
+9. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 7)
 
 | Network              | `deployer address`                           | `deployMethod` |
 | -------------------- | -------------------------------------------- | -------------- |
