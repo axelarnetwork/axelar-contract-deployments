@@ -61,7 +61,10 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 ## Register &lt;ChainName&gt; ITS on ITS Hub
 
 ```bash
-node cosmwasm/submit-proposal.js its-hub-register-chains $CHAIN 
+node cosmwasm/submit-proposal.js \
+    its-hub-register-chains $CHAIN \
+    -t "Register $CHAIN on ITS Hub" \
+    -d "Register $CHAIN on ITS Hub" 
 ```
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
