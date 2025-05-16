@@ -2942,6 +2942,12 @@
     "axelarscanApi": "https://api.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
+    "govProposalDepositAmount": "2000000000",
+    "govProposalInstantiateAddresses": [
+      "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
+      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am"
+    ],
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
