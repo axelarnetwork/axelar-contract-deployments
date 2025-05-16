@@ -225,7 +225,7 @@ function addGovProposalDefaults(options, config, env, commandName) {
     if (!instantiateAddresses)
         options.instantiateAddresses = getProposalConfig(config, env, 'govProposalInstantiateAddresses');
 
-    if ((['execute', 'paramChange'].includes(commandName)) && (!title || !description)) {
+    if ((['execute', 'paramChange', 'its-hub-register-chains'].includes(commandName)) && (!title || !description)) {
         printError(`Missing options: --title and --description are required with ${commandName} command.`);
         process.exit(1);
     }
@@ -317,9 +317,9 @@ const programHandler = () => {
         .command('its-hub-register-chains')
         .description('Submit an execute wasm contract proposal to register an InterchainTokenService chain')
         .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
-        .action((chains, options) => {
+        .action((chains, options, cmd) => {
             options.chains = chains;
-            mainProcessor(registerItsChain, options);
+            mainProcessor(registerItsChain, options, cmd.name());
         });
     addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
 
