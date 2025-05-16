@@ -4,7 +4,7 @@ require('../common/cli-utils');
 
 const { isNumber, addEnvOption } = require('../common');
 const { addStoreOptions } = require('../common/cli-utils');
-const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, governanceAddress, getContractCodePath } = require('./utils');
+const { CONTRACT_SCOPE_CHAIN, CONTRACT_SCOPE_GLOBAL, CONTRACTS, getContractCodePath } = require('./utils');
 
 const { Option, InvalidArgumentError } = require('commander');
 
@@ -79,11 +79,7 @@ const addAmplifierOptions = (program, options) => {
     }
 
     if (options.runAs) {
-        program.addOption(
-            new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address').default(
-                governanceAddress,
-            ),
-        );
+        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
     }
 };
 

@@ -26,6 +26,7 @@ const {
     encodeParameterChangeProposal,
     encodeMigrateContractProposal,
     submitProposal,
+    governanceAddress,
 } = require('./utils');
 const { saveConfig, loadConfig, printInfo, printError, prompt, getChainConfig, itsEdgeContract, readContractCode, getProposalConfig, camelToTitle } = require('../common');
 const {
@@ -213,7 +214,10 @@ const migrate = async (client, wallet, config, options) => {
 };
 
 function addGovProposalDefaults(options, config, env, commandName) {
-    const { deposit, instantiateAddresses, title, contractName, version, description} = options;
+    const { runAs, deposit, instantiateAddresses, title, contractName, version, description} = options;
+
+    if (!runAs)
+        options.runAs = env == 'devnet-amplifier'? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
 
     if (!deposit)
         options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
