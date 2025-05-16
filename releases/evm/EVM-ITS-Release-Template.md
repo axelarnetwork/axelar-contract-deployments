@@ -60,15 +60,8 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register &lt;ChainName&gt; ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [&lt;ChainName&gt; EVM GMP Amplifier](../cosmwasm/path-to-cosmwasm-GMP-release-doc). Ideally, this step should be run at the same time as governance proposal submissions for the CosmWasm deployments.
-
 ```bash
-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" \
-    --deposit $DEPOSIT_VALUE \
-    --runAs $RUN_AS_ACCOUNT
+node cosmwasm/submit-proposal.js its-hub-register-chains $CHAIN 
 ```
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
