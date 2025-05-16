@@ -710,8 +710,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
             if (
                 chainsToSkip.includes(chain.name.toLowerCase()) ||
-                chain.status === 'deactive' ||
-                (chain.contracts && chain.contracts[options.contractName]?.skip)
+                chain.status === 'deactive'
             ) {
                 printWarn('Skipping chain', chain.name);
                 return Promise.resolve();
@@ -754,8 +753,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
         if (
             chainsToSkip.includes(chain.name.toLowerCase()) ||
-            chain.status === 'deactive' ||
-            (chain.contracts && chain.contracts[options.contractName]?.skip)
+            chain.status === 'deactive'
         ) {
             printWarn('Skipping chain', chain.name);
             continue;
