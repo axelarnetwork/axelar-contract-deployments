@@ -3,14 +3,14 @@
 |  | **Owner** |
 |-----------|------------|
 | **Created By** | @cjcobb23 <cj@interoplabs.io> |
-| **Deployment** | TBD |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
 
 | **Network** | **Deployment Status** | **Date** |
 |-------------|----------------------|----------|
 | **Devnet Amplifier** | Deployed | 05-10-2025 |
 | **Stagenet** | - | TBD |
 | **Testnet** | - | TBD |
-| **Mainnet** | - | TBD |
+| **Mainnet** | In progress | 05-16-2025 |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v2.1.0)
 
