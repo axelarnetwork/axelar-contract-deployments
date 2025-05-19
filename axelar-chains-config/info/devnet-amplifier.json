@@ -1128,12 +1128,12 @@
       "Multisig": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
         "blockExpiry": 10,
-        "codeId": 1273,
-        "lastUploadedCodeId": 1273,
+        "codeId": 1302,
+        "lastUploadedCodeId": 1302,
         "address": "axelar19jxy26z0qnnspa45y5nru0l5rmy9d637z5km2ndjxthfxf5qaswst9290r",
         "executeProposalId": "55",
-        "storeCodeProposalId": "571",
-        "storeCodeProposalCodeHash": "9b0d47bb3c780594e5ef1e649d8ec12842aa3592f5dce4223150967e14ac380e"
+        "storeCodeProposalId": "580",
+        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec"
       },
       "Coordinator": {
         "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",

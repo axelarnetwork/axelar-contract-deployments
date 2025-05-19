@@ -237,6 +237,8 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         ServiceRegistry: { address: registryAddress },
+        Multisig: { address: multisigAddress },
+        Router: { address: routerAddress },
     } = contracts;
     const { governanceAddress } = contractConfig;
 
@@ -248,7 +250,7 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
 
-    return { governance_address: governanceAddress, service_registry: registryAddress };
+    return { governance_address: governanceAddress, service_registry: registryAddress, router_address: routerAddress, multisig_address: multisigAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
