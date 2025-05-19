@@ -15,8 +15,10 @@ const addBaseOptions = (program, options = {}) => {
 
     if (!options.ignorePrivateKey) {
         program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic')
-          .makeOptionMandatory(true)
           .env('STACKS_MNEMONIC')
+        );
+        program.addOption(new Option('-p, --privateKey <privateKey>', 'privateKey')
+            .env('STACKS_PRIVATE_KEY')
         );
     }
 

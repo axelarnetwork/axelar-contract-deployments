@@ -15,7 +15,7 @@ A Stacks contracts deployer account can be created as follows. (if you don't hav
 node stacks/generate-wallet.js
 ```
 
-Set `STACKS_MNEMONIC="stacksmnemonic..."` in your `.env` file.
+Set `STACKS_MNEMONIC="stacksmnemonic..."` in your `.env` file. If you have a private key you can set `STACKS_PRIVATE_KEY` instead.
 
 ## Deployment
 

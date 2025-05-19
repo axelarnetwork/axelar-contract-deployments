@@ -4,24 +4,31 @@ const { generateSecretKey, generateWallet } = require('@stacks/wallet-sdk');
 const { privateKeyToAddress } = require('@stacks/transactions');
 
 async function getWallet(chain, options) {
-    if (!options.mnemonic) {
-        throw new Error('Mnemonic is required');
+    if (!options.mnemonic && !options.privateKey) {
+        throw new Error('Mnemonic or private key is required');
+    }
+    if (options.mnemonic && options.privateKey) {
+        throw new Error('Can only use one of Stacks mnemonic or private key');
     }
     if (!chain.networkType) {
         throw new Error('Stacks config is invalid, networkType is missing');
     }
 
-    const mnemonic = options.mnemonic
+    let privateKey;
+    if (options.mnemonic) {
+        const mnemonic = options.mnemonic
 
-    const wallet = await generateWallet({
-        secretKey: mnemonic,
-        password: '',
-    });
+        const wallet = await generateWallet({
+            secretKey: mnemonic,
+            password: '',
+        });
 
-    const privateKey = wallet.accounts[0].stxPrivateKey;
+        privateKey = wallet.accounts[0].stxPrivateKey;
+    } else {
+        privateKey = options.privateKey;
+    }
 
     return {
-        mnemonic,
         privateKey,
         stacksAddress: privateKeyToAddress(privateKey, chain.networkType),
         networkType: chain.networkType,
