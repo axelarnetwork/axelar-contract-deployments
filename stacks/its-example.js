@@ -12,8 +12,6 @@ const {
     broadcastTransaction,
     Cl,
     fetchCallReadOnlyFunction,
-    ResponseOkCV,
-    BufferCV,
 } = require('@stacks/transactions');
 const { getVerificationParams, getTokenTxId } = require('./utils/its-utils');
 const { validateParameters } = require('../common');
@@ -158,15 +156,6 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
         network: networkType,
     });
 
-    // Update chain configuration
-    contracts[contractName] = {
-        ...contracts[contractName],
-        remoteChains: [
-            ...(contracts[contractName].remoteChains || []),
-            options.destinationChain,
-        ],
-    };
-
     printInfo(`Finished deploying remote canonical interchain token ${contracts[contractName].token} on destination chain ${options.destinationChain}`, result.txid);
 }
 
@@ -231,15 +220,6 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
         transaction: registerTransaction,
         network: networkType,
     });
-
-    // Update chain configuration
-    contracts[contractName] = {
-        ...contracts[contractName],
-        remoteChains: [
-            ...(contracts[contractName].remoteChains || []),
-            options.destinationChain,
-        ],
-    };
 
     printInfo(`Finished transferring interchain token ${contracts[contractName].token} to destination chain ${options.destinationChain}`, result.txid);
 }

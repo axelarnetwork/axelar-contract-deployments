@@ -146,7 +146,6 @@ async function getItsFunctionArgs(config, chain, options) {
             itsContractAddressName,
             gasServiceAddress,
             operator: options.operator,
-            trustedChains,
             itsHubChainName,
             itsHubAddress,
         },

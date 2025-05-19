@@ -1275,29 +1275,29 @@
       },
       "contracts": {
         "ClarityStacks": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.clarity-stacks"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.clarity-stacks"
         },
         "GasStorage": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gas-storage"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-storage"
         },
         "Traits": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.traits"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.traits"
         },
         "GasImpl": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gas-impl"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-impl"
         },
         "GatewayStorage": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gateway-storage"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-storage"
         },
         "GasService": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gas-service",
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-service",
           "gasCollector": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83"
         },
         "GatewayImpl": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gateway-impl"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-impl"
         },
         "Gateway": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gateway",
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway",
           "signers": {
             "weightedSigners": [
               {
@@ -1317,60 +1317,52 @@
             "nonce": "0x000000000000000000000000000000000000000000000000000000000038d32c"
           },
           "claritySigners": "0c00000003056e6f6e63650200000020000000000000000000000000000000000000000000000000000000000038d32c077369676e6572730b000000030c00000002067369676e65720200000021026e4a6fc3a6988c4cd7d3bc02e07bac8b72a9f5342d92f42161e7b6e57dd47e180677656967687401000000000000000000000000000000010c00000002067369676e6572020000002102d19c406d763c98d98554c980ae03543b936aad0c3f1289a367a0c2aafb71e8c10677656967687401000000000000000000000000000000010c00000002067369676e6572020000002103ea531f69879b3b15b6e3fe262250d5ceca6217e03e4def6919d4bdce3a7ec389067765696768740100000000000000000000000000000001097468726573686f6c640100000000000000000000000000000002",
-          "operator": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N",
+          "operator": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
           "minimumRotationDelay": 0,
           "previousSignerRetention": 15
         },
         "Governance": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.governance",
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.governance",
           "governanceChain": "avalanche-fuji",
           "governanceAddress": "0x9279Da42329a01D4bf1229FCFA5cABF7B3c9D383"
         },
         "InterchainTokenServiceStorage": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-service-storage"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service-storage"
         },
         "InterchainTokenFactory": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-factory"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-factory"
         },
         "InterchainTokenService": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-service",
-          "itsContractAddressName": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-service",
-          "gasServiceAddress": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.gas-service",
-          "operator": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N",
-          "trustedChains": [
-            "avalanche-fuji",
-            "sui-2"
-          ],
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service",
+          "itsContractAddressName": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service",
+          "gasServiceAddress": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-service",
+          "operator": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "itsHubChainName": "axelar",
           "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
         },
         "InterchainTokenFactoryImpl": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-factory-impl"
+          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-factory-impl-2"
         },
         "VerifyOnchain": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.verify-onchain"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.verify-onchain"
         },
         "InterchainTokenServiceImpl": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.interchain-token-service-impl"
+          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-service-impl-2"
         },
         "NativeInterchainToken": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.native-interchain-token"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.native-interchain-token"
         },
         "SampleSip010": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.sample-sip-010"
+          "address": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10"
         },
         "TokenManagerSample": {
-          "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.token-manager-sample2",
-          "token": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.sample-sip-010",
-          "interchainTokenId": "0x48b433ef60401a13d13ba1ef6f3424b58b27cc08ee7a3f2e1e5ad2226ebdf0b5",
-          "remoteChains": [
-            "avalanche-fuji",
-            "avalanche-fuji"
-          ]
+          "address": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83.tm-smpl2",
+          "token": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10",
+          "interchainTokenId": "0x8fa3abdb6289970a569ab61d3bd93db89d21f7b99f98864a12d254230173c6e6"
         }
       },
-      "initialContractsDeployer": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N"
+      "initialContractsDeployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
     }
   },
   "axelar": {
