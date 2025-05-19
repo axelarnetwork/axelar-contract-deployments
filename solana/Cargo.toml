@@ -22,6 +22,7 @@ style = { priority = -6, level = "deny" }
 suspicious = { priority = -7, level = "deny" }
 
 absolute_paths = "allow"
+arbitrary_source_item_ordering = "allow"
 assertions_on_result_states = "allow"
 blanket_clippy_restriction_lints = "allow"
 cargo_common_metadata = "allow"
@@ -84,10 +85,12 @@ precedence = "allow"
 redundant_clone = "allow"
 std_instead_of_core = "allow"
 renamed_function_params = "allow"
+too_long_first_doc_paragraph = "allow"
 transmute_ptr_to_ptr = "allow"
 undocumented_unsafe_blocks = "allow"
 unnecessary_wraps = "allow"
 unseparated_literal_suffix = "allow"
+unused_trait_names = "allow"
 unwrap_used = "allow"
 use_self = "allow"
 

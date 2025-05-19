@@ -82,7 +82,7 @@ impl Processor {
         // Check: the signer matches either the current operator or the upgrade
         // authority
         if !(gateway_config.operator == *operator_or_upgrade_authority.key
-            || upgrade_authority_address.map_or(false, |x| x == *operator_or_upgrade_authority.key))
+            || upgrade_authority_address == Some(*operator_or_upgrade_authority.key))
         {
             return Err(GatewayError::InvalidOperatorOrAuthorityAccount.into());
         }

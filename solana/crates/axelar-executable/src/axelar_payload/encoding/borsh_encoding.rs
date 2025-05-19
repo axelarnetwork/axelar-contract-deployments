@@ -144,7 +144,9 @@ mod tests {
     #[test]
     fn test_decode_multiple_accounts() {
         let payload = random_payload_bytes(100);
-        let accounts: Vec<SolanaAccountRepr> = (0_u8..12).map(|_| create_test_account()).collect();
+        let accounts: Vec<SolanaAccountRepr> = std::iter::repeat_with(create_test_account)
+            .take(12)
+            .collect();
 
         let encoded = borsh::to_vec(&(payload.clone(), accounts.clone())).unwrap();
         let (payload_ref, decoded_accounts) = AxelarMessagePayload::decode_borsh(&encoded).unwrap();

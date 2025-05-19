@@ -1,3 +1,2 @@
 [toolchain]
-# Same one that is used on the Solana repo
-channel = "1.81.0"
+channel = "1.85.1"

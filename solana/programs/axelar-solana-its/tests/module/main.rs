@@ -19,6 +19,7 @@
     unused_must_use
 )]
 
+mod deploy_interchain_token;
 mod flow_limits;
 mod from_evm_to_solana;
 mod from_solana_to_evm;

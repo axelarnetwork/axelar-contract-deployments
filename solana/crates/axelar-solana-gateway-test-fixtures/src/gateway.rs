@@ -682,7 +682,9 @@ pub fn make_verifiers_with_quorum(
 /// Make new random messages
 #[must_use]
 pub fn make_messages(num_messages: usize) -> Vec<Message> {
-    (0..num_messages).map(|_| random_message()).collect()
+    std::iter::repeat_with(random_message)
+        .take(num_messages)
+        .collect()
 }
 
 /// Random GMP Message

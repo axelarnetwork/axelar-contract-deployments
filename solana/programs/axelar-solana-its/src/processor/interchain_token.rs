@@ -18,7 +18,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 use solana_program::{msg, system_instruction};
-use spl_token_2022::instruction::{initialize_mint, AuthorityType};
+use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
 
 use super::gmp::{self, GmpAccounts};
@@ -185,31 +185,6 @@ pub(crate) fn process_inbound_deploy<'a>(
         String::new(),
         token_manager_pda_bump,
     )?;
-
-    // Fixed supply token, remove mint authority. This needs to be done after setting up the
-    // metadata as metaplex doesn't allow metadata creation without mint authority.
-    if accounts.minter.is_none() && initial_supply > 0 {
-        invoke_signed(
-            &spl_token_2022::instruction::set_authority(
-                accounts.token_program.key,
-                accounts.token_mint.key,
-                None,
-                AuthorityType::MintTokens,
-                accounts.token_manager_pda.key,
-                &[],
-            )?,
-            &[
-                accounts.token_mint.clone(),
-                accounts.token_manager_pda.clone(),
-            ],
-            &[&[
-                seed_prefixes::TOKEN_MANAGER_SEED,
-                accounts.its_root_pda.key.as_ref(),
-                &token_id,
-                &[token_manager_pda_bump],
-            ]],
-        )?;
-    }
 
     // The minter passed in the DeployInterchainToken call is used as the
     // `TokenManager` operator as well, see:
@@ -494,16 +469,26 @@ fn setup_mint<'a>(
     )?;
 
     if initial_supply > 0 {
+        crate::create_associated_token_account(
+            payer,
+            accounts.token_mint,
+            accounts.payer_ata,
+            payer,
+            accounts.system_account,
+            accounts.token_program,
+        )?;
+
         invoke_signed(
             &spl_token_2022::instruction::mint_to(
                 accounts.token_program.key,
                 accounts.token_mint.key,
                 accounts.payer_ata.key,
-                payer.key,
+                accounts.token_manager_pda.key,
                 &[],
                 initial_supply,
             )?,
             &[
+                payer.clone(),
                 accounts.token_mint.clone(),
                 accounts.payer_ata.clone(),
                 accounts.token_manager_pda.clone(),
