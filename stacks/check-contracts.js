@@ -21,6 +21,7 @@ const CONTRACTS_TO_CHECK = [
     'interchain-token-factory-impl',
     'verify-onchain',
     'interchain-token-service-impl',
+    'native-interchain-token',
 ]
 
 async function processCommand(config, chain) {

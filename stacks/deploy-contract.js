@@ -10,17 +10,28 @@ const {
     PostConditionMode,
     AnchorMode,
     ClarityVersion,
-    broadcastTransaction,
+    broadcastTransaction, fetchCallReadOnlyFunction,
 } = require('@stacks/transactions');
 
-async function processCommand(config, chain, options) {
-    const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
+async function getContractSource(chain, options, networkType) {
+    // If deploying a token manager, we need to get the code from the verify-onchain contract
+    if (options.contract === 'token-manager') {
+        if (!chain.contracts.VerifyOnchain?.address) {
+            throw new Error(`Contract VerifyOnchain is not deployed`);
+        }
 
-    if (chain.contracts[kebabToPascal(options.contract)]?.address) {
-        throw new Error(`Contract ${options.contract} already exists`);
+        const verifyOnchainAddress = chain.contracts.VerifyOnchain.address.split('.');
+        const source = await fetchCallReadOnlyFunction({
+            contractAddress: verifyOnchainAddress[0],
+            contractName: verifyOnchainAddress[1],
+            functionName: "get-token-manager-source",
+            functionArgs: [],
+            senderAddress: verifyOnchainAddress[0],
+            network: networkType,
+        });
+
+        return source.value;
     }
-
-    printInfo('Deploying contracts using address', stacksAddress);
 
     const contractBasePath = path.resolve('./stacks/contracts');
     const filePath = path.join(contractBasePath, `${options.contract}.clar`);
@@ -29,9 +40,23 @@ async function processCommand(config, chain, options) {
         throw new Error(`Warning: File not found: ${filePath}`);
     }
 
-    const source = fs.readFileSync(filePath, 'utf8');
+    return fs.readFileSync(filePath, 'utf8');
+}
+
+async function processCommand(config, chain, options) {
+    const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
+
+    const contractName = options.name || options.contract;
+
+    if (chain.contracts[kebabToPascal(contractName)]?.address) {
+        throw new Error(`Contract ${contractName} already exists`);
+    }
+
+    printInfo('Deploying contracts using address', stacksAddress);
+
+    const source = await getContractSource(chain, options, networkType);
     const deployTx = await makeContractDeploy({
-        contractName: options.contract,
+        contractName,
         codeBody: source,
         senderKey: privateKey,
         network: networkType,
@@ -45,8 +70,8 @@ async function processCommand(config, chain, options) {
         network: networkType,
     });
 
-    chain.contracts[kebabToPascal(options.contract)] = {
-        address: `${stacksAddress}.${options.contract}`,
+    chain.contracts[kebabToPascal(contractName)] = {
+        address: `${stacksAddress}.${contractName}`,
     };
 
     printInfo(`Finished deploying contract`, result.txid);
@@ -65,7 +90,8 @@ if (require.main === module) {
     program
         .name('deploy-contract')
         .description('Deploy a contract')
-        .addOption(new Option('-c, --contract <contract>', 'The contract to deploy'))
+        .addOption(new Option('-c, --contract <contract>', 'The contract to deploy').makeOptionMandatory(true))
+        .addOption(new Option('-n, --name <name>', 'The name of the contract'))
         .action((options) => {
             mainProcessor(options, processCommand);
         });

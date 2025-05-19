@@ -11,8 +11,6 @@
 
 ## Prerequisites
 
-Make sure to have [Clarinet](https://docs.hiro.so/stacks/clarinet) installed to be able to interact with the Stacks network.
-
 A Stacks contracts deployer account can be created as follows.
 
 ```bash

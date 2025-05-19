@@ -1,7 +1,7 @@
 'use strict';
 
 const { saveConfig, loadConfig, printInfo, getChainConfig, getCurrentVerifierSet } = require('../common/utils');
-const { getWallet, addBaseOptions } = require('./utils');
+const { getWallet, addBaseOptions, encodeAmplifierVerifiersForStacks } = require('./utils');
 const { Command, Option } = require('commander');
 const {
     PostConditionMode,
@@ -13,7 +13,6 @@ const {
 } = require('@stacks/transactions');
 const { addOptionsToCommands } = require('../sui/utils');
 const { getDomainSeparator, validateParameters } = require('../common');
-const { encodeAmplifierVerifiersForStacks } = require('./utils/utils');
 
 const GAS_SERVICE_CMD_OPTIONS = [
     new Option('--gasCollector <gasCollector>', 'the gas collector address'),
@@ -41,6 +40,10 @@ const ITS_CMD_OPTIONS = [
 const GOVERNANCE_CMD_OPTIONS = [
     new Option('--governanceChain <governanceChain>', 'the address of the governance chain'),
     new Option('--governanceAddress <governanceAddress>', 'the address of the governance contract on the respective chain'),
+];
+
+const TOKEN_MANAGER_CMD_OPTIONS = [
+    new Option('--token <token>', 'the token'),
 ];
 
 function getGasServiceFunctionArgs(config, chain, options) {
@@ -167,18 +170,37 @@ function getGovernanceFunctionArgs(config, chain, options) {
     };
 }
 
+function getTokenManagerFunctionArgs(config, chain, options) {
+    validateParameters({
+        isNonEmptyString: { token: options.token },
+    });
+
+    return {
+        functionArgs: [
+            Cl.address(options.token),
+            Cl.uint(2), // lock/unlock manager type
+            Cl.none(), // no operator
+        ],
+        updateConfigArgs: {
+            token: options.token,
+        },
+    };
+}
+
 const CONTRACT_CONFIGS = {
     cmdOptions: {
         GasService: GAS_SERVICE_CMD_OPTIONS,
         Gateway: GATEWAY_CMD_OPTIONS,
         InterchainTokenService: ITS_CMD_OPTIONS,
         Governance: GOVERNANCE_CMD_OPTIONS,
+        TokenManager: TOKEN_MANAGER_CMD_OPTIONS,
     },
     preDeployFunctionArgs: {
         GasService: getGasServiceFunctionArgs,
         Gateway: getGatewayFunctionArgs,
         InterchainTokenService: getItsFunctionArgs,
         Governance: getGovernanceFunctionArgs,
+        TokenManager: getTokenManagerFunctionArgs,
     },
 };
 
@@ -196,8 +218,10 @@ const addDeployOptions = (program) => {
     return program;
 };
 
-async function processCommand(contractName, config, chain, options) {
-    const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
+async function processCommand(commandContractName, config, chain, options) {
+    const { privateKey, networkType } = await getWallet(chain, options);
+
+    const contractName = options.name || commandContractName;
 
     if (!chain.contracts[contractName]?.address) {
         throw new Error(`Contract ${contractName} not yet deployed`);
@@ -208,7 +232,7 @@ async function processCommand(contractName, config, chain, options) {
     const {
         functionArgs,
         updateConfigArgs,
-    } = await CONTRACT_CONFIGS.preDeployFunctionArgs[contractName](config, chain, options);
+    } = await CONTRACT_CONFIGS.preDeployFunctionArgs[commandContractName](config, chain, options);
 
     const address = chain.contracts[contractName].address.split('.');
     const setupTx = await makeContractCall({
@@ -251,7 +275,8 @@ if (require.main === module) {
         .description('Setup a contract');
 
     const deployContractCmds = Object.keys(CONTRACT_CONFIGS.preDeployFunctionArgs).map((supportedContract) => {
-        const command = new Command(supportedContract).description(`Deploy ${supportedContract} contract`);
+        const command = new Command(supportedContract).description(`Deploy ${supportedContract} contract`)
+            .addOption(new Option('--name <name>', 'the name of the contract in config'));
 
         return addDeployOptions(command).action((options) => {
             mainProcessor(supportedContract, options, processCommand);

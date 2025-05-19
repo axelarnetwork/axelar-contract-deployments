@@ -7,11 +7,36 @@ const fs = require('fs');
 const path = require('path');
 
 const PLACEHOLDER_TEXT = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
-const CONTRACTS_TO_PROCESS_WITH_TIMES = {
+const CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES = {
     'native-interchain-token.clar': 3,
     'token-manager.clar': 3,
     'verify-onchain.clar': 6,
 };
+
+function processClarityStacksContract(contractBasePath, config, chain) {
+    const filename = 'clarity-stacks.clar';
+
+    const filePath = path.join(contractBasePath, filename);
+
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Warning: File not found: ${filePath}`);
+    }
+
+    printInfo(`Reading file: ${filePath}`);
+    const originalContent = fs.readFileSync(filePath, 'utf8');
+
+    // Make sure debug mode is set to false
+    const debugModeText = '\\(define-constant debug-mode \\(not is-in-mainnet\\)\\)';
+
+    if ([...originalContent.matchAll(new RegExp(debugModeText, 'g'))].length !== 1) {
+        throw new Error(`Error finding correct placeholders in contract ${filename}. Re-download the contracts and try again`);
+    }
+
+    const newContent = originalContent.replaceAll(new RegExp(debugModeText, 'g'), '(define-constant debug-mode false)');
+
+    printInfo(`Replacing placeholder in and saving file: ${filePath}`);
+    fs.writeFileSync(filePath, newContent, 'utf8');
+}
 
 async function processCommand(config, chain, options) {
     const { stacksAddress } = await getWallet(chain, options);
@@ -20,8 +45,8 @@ async function processCommand(config, chain, options) {
 
     const contractBasePath = path.resolve('./stacks/contracts');
 
-    for (const filename in CONTRACTS_TO_PROCESS_WITH_TIMES) {
-        const times = CONTRACTS_TO_PROCESS_WITH_TIMES[filename];
+    for (const filename in CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES) {
+        const times = CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES[filename];
 
         const filePath = path.join(contractBasePath, filename);
 
@@ -41,6 +66,8 @@ async function processCommand(config, chain, options) {
         printInfo(`Replacing placeholder in and saving file: ${filePath}`);
         fs.writeFileSync(filePath, newContent, 'utf8');
     }
+
+    processClarityStacksContract(contractBasePath, config, chain);
 
     printInfo(`Finished preparing contracts`);
 }
