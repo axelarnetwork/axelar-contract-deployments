@@ -34,7 +34,7 @@ const refillAccounts = async (wallet, options, addressesToFund, decimals, token)
 
         printInfo('Current balance', ethers.utils.formatUnits(balance, decimals));
 
-        if (balance.gte(minThresholdUnits)) {
+        if (balance.gt(minThresholdUnits)) {
             printInfo('Account has sufficient balance. Skipping...');
             continue;
         }
