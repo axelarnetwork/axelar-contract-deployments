@@ -8,6 +8,7 @@ workspace = true
 
 
 [lib]
+name = "axelar_solana_gateway"
 crate-type = ["cdylib", "lib"]
 
 [features]

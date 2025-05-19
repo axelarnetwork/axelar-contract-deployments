@@ -13,7 +13,6 @@ concurrency:
 
 defaults:
   run:
-    working-directory: solana
     shell: bash    
 
 

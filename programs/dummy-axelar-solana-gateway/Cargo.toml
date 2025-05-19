@@ -7,6 +7,7 @@ edition = "2021"
 workspace = true
 
 [lib]
+name = "dummy_axelar_solana_gateway"
 crate-type = ["cdylib", "lib"]
 
 [features]

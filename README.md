@@ -19,13 +19,25 @@ This repository contains the integration work between Solana and Axelar, enablin
 
 The Solana-Axelar integration contains on-chain and off-chain components.
 
+
+### Development setup:
+
+1. [install rust](https://www.rust-lang.org/tools/install)
+2. [install solana tool suite](https://docs.solanalabs.com/cli/install)
+3. [install foundry & build EVM contracts](evm-contracts/README.md)
+
+```bash
+# list all available commands
+cargo xtask --help
+```
 ### Solana contracts
-- [**Gateway**](solana/programs/axelar-solana-gateway/README.md): The core contract responsible for authenticating GMP messages.
-- [**Gas Service**](solana/programs/axelar-solana-gas-service/README.md): Used for gas payments for the relayer.
-- [**Interchain Token Service**](solana/programs/axelar-solana-its/README.md): Bridge tokens between chains.
-- [**Multicall**](solana/programs/axelar-solana-multicall): Execute multiple actions from a single GMP message.
-- [**Governance**](solana/programs/axelar-solana-governance/README.md): The governing entity over on-chain programs, responsible for program upgrades.
-- [**Memo**](solana/programs/axelar-solana-memo-program): An example program that sends and receives GMP messages.
+
+- [**Gateway**](programs/axelar-solana-gateway/README.md): The core contract responsible for authenticating GMP messages.
+- [**Gas Service**](programs/axelar-solana-gas-service/README.md): Used for gas payments for the relayer.
+- [**Interchain Token Service**](programs/axelar-solana-its/README.md): Bridge tokens between chains.
+- [**Multicall**](programs/axelar-solana-multicall): Execute multiple actions from a single GMP message.
+- [**Governance**](programs/axelar-solana-governance/README.md): The governing entity over on-chain programs, responsible for program upgrades.
+- [**Memo**](programs/axelar-solana-memo-program): An example program that sends and receives GMP messages.
 
 
 #### Utility crates

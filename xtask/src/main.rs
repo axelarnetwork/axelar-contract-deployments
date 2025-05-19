@@ -265,7 +265,7 @@ fn workspace_crates_by_category(
     let all_crate_data = all_crate_data
         .filter(|item| !item.starts_with('[') && !item.contains("proc-macro")) // filters "[dev-dependencies]" and "(proc-macro)"
         .tuples()
-        .group_by(|(_, _, path)| path.contains("solana/programs"));
+        .group_by(|(_, _, path)| path.contains("programs"));
     let mut solana_programs = vec![];
     let mut auxiliary_crates = vec![];
     for (is_solana_program, group) in &all_crate_data {

@@ -16,79 +16,79 @@ fn main() {
     let contracts = [
         (
             "ExampleEncoder",
-            "../../../evm-contracts/out/ExampleEncoder.sol/ExampleSolanaGatewayEncoder.json",
+            "../../evm-contracts/out/ExampleEncoder.sol/ExampleSolanaGatewayEncoder.json",
         ),
         (
             "AxelarMemo",
-            "../../../evm-contracts/out/AxelarMemo.sol/AxelarMemo.json",
+            "../../evm-contracts/out/AxelarMemo.sol/AxelarMemo.json",
         ),
         (
             "AxelarAmplifierGateway",
-            "../../../evm-contracts/out/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json",
+            "../../evm-contracts/out/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json",
         ),
         (
             "AxelarAmplifierGatewayProxy",
-            "../../../evm-contracts/out/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json",
+            "../../evm-contracts/out/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json",
         ),
         (
             "AxelarSolanaMultiCall",
-            "../../../evm-contracts/out/AxelarSolanaMultiCall.sol/AxelarSolanaMultiCall.json",
+            "../../evm-contracts/out/AxelarSolanaMultiCall.sol/AxelarSolanaMultiCall.json",
         ),
         (
             "CustomTestToken",
-            "../../../evm-contracts/out/CustomTestToken.sol/CustomTestToken.json",
+            "../../evm-contracts/out/CustomTestToken.sol/CustomTestToken.json",
         ),
         (
             "InterchainTokenService",
-            "../../../evm-contracts/out/InterchainTokenService.sol/InterchainTokenService.json",
+            "../../evm-contracts/out/InterchainTokenService.sol/InterchainTokenService.json",
         ),
         (
             "InterchainTokenFactory",
-            "../../../evm-contracts/out/InterchainTokenFactory.sol/InterchainTokenFactory.json",
+            "../../evm-contracts/out/InterchainTokenFactory.sol/InterchainTokenFactory.json",
         ),
         (
             "GatewayCaller",
-            "../../../evm-contracts/out/GatewayCaller.sol/GatewayCaller.json",
+            "../../evm-contracts/out/GatewayCaller.sol/GatewayCaller.json",
         ),
         (
             "InterchainTokenDeployer",
-            "../../../evm-contracts/out/InterchainTokenDeployer.sol/InterchainTokenDeployer.json",
+            "../../evm-contracts/out/InterchainTokenDeployer.sol/InterchainTokenDeployer.json",
         ),
         (
             "InterchainToken",
-            "../../../evm-contracts/out/InterchainToken.sol/InterchainToken.json",
+            "../../evm-contracts/out/InterchainToken.sol/InterchainToken.json",
         ),
         (
             "TokenHandler",
-            "../../../evm-contracts/out/TokenHandler.sol/TokenHandler.json",
+            "../../evm-contracts/out/TokenHandler.sol/TokenHandler.json",
         ),
         (
             "TokenManagerDeployer",
-            "../../../evm-contracts/out/TokenManagerDeployer.sol/TokenManagerDeployer.json",
+            "../../evm-contracts/out/TokenManagerDeployer.sol/TokenManagerDeployer.json",
         ),
         (
             "TokenManager",
-            "../../../evm-contracts/out/TokenManager.sol/TokenManager.json",
+            "../../evm-contracts/out/TokenManager.sol/TokenManager.json",
         ),
         (
             "AxelarGasService",
-            "../../../evm-contracts/out/AxelarGasService.sol/AxelarGasService.json",
+            "../../evm-contracts/out/AxelarGasService.sol/AxelarGasService.json",
         ),
         (
             "Create3Deployer",
-            "../../../evm-contracts/out/Create3Deployer.sol/Create3Deployer.json",
+            "../../evm-contracts/out/Create3Deployer.sol/Create3Deployer.json",
         ),
         (
             "InterchainProxy",
-            "../../../evm-contracts/out/InterchainProxy.sol/InterchainProxy.json",
+            "../../evm-contracts/out/InterchainProxy.sol/InterchainProxy.json",
         ),
         (
             "AxelarGateway",
-            "../../../evm-contracts/out/AxelarGateway.sol/AxelarGateway.json",
+            "../../evm-contracts/out/AxelarGateway.sol/AxelarGateway.json",
         ),
         (
             "AxelarAuthWeighted",
-            "../../../evm-contracts/out/AxelarAuthWeighted.sol/AxelarAuthWeighted.json",
+            "../../evm-contracts/out/AxelarAuthWeighted.sol/AxelarAuthWeighted.json",
         ),
     ];
 
@@ -113,12 +113,7 @@ fn main() {
 
 fn build_contract() {
     let root_dir = workspace_root_dir();
-    let contract_dir = root_dir
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("evm-contracts");
+    let contract_dir = root_dir.parent().unwrap().join("evm-contracts");
     let sh = xshell::Shell::new().unwrap();
     sh.change_dir(contract_dir);
     xshell::cmd!(sh, "forge build")

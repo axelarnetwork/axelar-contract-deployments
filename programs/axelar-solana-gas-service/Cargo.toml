@@ -27,6 +27,7 @@ rstest.workspace = true
 workspace = true
 
 [lib]
+name = "axelar_solana_gas_service"
 crate-type = ["cdylib", "lib"]
 
 [features]

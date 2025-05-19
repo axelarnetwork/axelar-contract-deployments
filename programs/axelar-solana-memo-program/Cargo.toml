@@ -5,6 +5,7 @@ description = "Utility program to test Axelar Gateway and other integrations"
 edition = "2021"
 
 [lib]
+name = "axelar_solana_memo_program"
 crate-type = ["cdylib", "lib"]
 
 [features]
