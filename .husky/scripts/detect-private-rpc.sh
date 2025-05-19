@@ -4,6 +4,7 @@ SENSITIVE_RPC_PATTERNS=(
   'https:\/\/[a-z0-9-]+\.quiknode\.pro\/[a-f0-9]{32,}'
   'https:\/\/blastapi\.io\/dashboard\/project\/[a-f0-9\-]{36}'
   'https:\/\/[a-z0-9-]+\.infura\.io\/v3\/[a-f0-9]{32}'
+  'https:\/\/\d+\.rpc\.thirdweb\.com\/[a-f0-9]{32}'
   'https:\/\/[^ ]*\/[a-f0-9]{32,}\/?'
   'https:\/\/[^ ]*\?(.*key|token|auth)=.+'
   'https:\/\/[^ ]+:[^ @]+@[^ ]+'
