@@ -17,8 +17,8 @@ const refillAccounts = async (wallet, options, addressesToFund, decimals, token)
         targetBalanceUnits = ethers.BigNumber.from(targetBalance);
         minThresholdUnits = ethers.BigNumber.from(minThreshold);
     } else {
-        targetBalanceUnits = ethers.utils.parseUnits(targetBalance.toString(), decimals);
-        minThresholdUnits = ethers.utils.parseUnits(minThreshold.toString(), decimals);
+        targetBalanceUnits = ethers.utils.parseUnits(targetBalance, decimals);
+        minThresholdUnits = ethers.utils.parseUnits(minThreshold, decimals);
     }
 
     printInfo('Target balance', ethers.utils.formatUnits(targetBalanceUnits, decimals));

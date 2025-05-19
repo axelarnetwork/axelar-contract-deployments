@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
     BigNumber,
     Contract,
 } = ethers;
@@ -332,8 +332,10 @@ async function processCommand(config, chain, action, options) {
 
             const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();
-            const amountInUnits = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
+            const amountInUnits = parseUnits(amount, decimals);
             const balance = await token.balanceOf(wallet.address);
+
+            printInfo(`Account ${wallet.address} ITS token balance`, formatUnits(balance, decimals));
 
             if (balance.lt(amountInUnits)) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
@@ -948,4 +950,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { main, getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };

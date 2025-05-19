@@ -4,10 +4,9 @@ const { loadConfig, printInfo, printWarn } = require('../common/index.js');
 const { Command, Option } = require('commander');
 const { addBaseOptions } = require('../common/cli-utils.js');
 
-const { getWallet } = require('./sign-utils.js');
-const { httpPost, getContractJSON, deriveAccounts } = require('./utils.js');
+const { httpPost, deriveAccounts } = require('./utils.js');
 
-const { main: its } = require('./its.js');
+const { its } = require('./its.js');
 
 const ethers = require('ethers');
 
@@ -31,7 +30,7 @@ const estimateGas = async (config, options) => {
 };
 
 const start = async (config, options) => {
-    const { time, delay, env, sourceChain, destinationChain, destinationAddress, tokenId, transferAmount, mnemonic } = options;
+    const { time, delay, env, sourceChain, destinationChain, destinationAddress, tokenId, transferAmount, addressesToDerive, mnemonic } = options;
 
     const args = [
         destinationChain,
@@ -48,7 +47,7 @@ const start = async (config, options) => {
         yes: true,
     };
 
-    const accounts = await deriveAccounts(mnemonic, 1);
+    const accounts = await deriveAccounts(mnemonic, addressesToDerive);
     const privateKeys = accounts.map((account) => account.privateKey);
 
     const startTime = performance.now();
@@ -114,12 +113,9 @@ const programHandler = () => {
         .option('-d, --destination-chain <destinationChain>', 'destination chain')
         .option('--destination-address <destinationAddress>', 'destination address')
         .option('--token-id <tokenId>', 'token id')
-        .option('--transfer-amount <transferAmount>', 'transfer amount')
-        .option('--native-amount <nativeAmount>', 'native amount to fund accounts with if min-native-funds is not met')
-        .option('--token-amount <tokenAmount>', 'token amount to fund accounts with if min-token-funds is not met')
-        .option('--min-native-funds <minNativeFunds>', 'minimum native funds required')
-        .option('--min-token-funds <minTokenFunds>', 'minimum token funds required')
+        .option('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
         .option('--executionGasLimit <executionGasLimit>', 'execution gas limit')
+        .addOption(new Option('--addresses-to-derive <addresses-to-derive>', 'quantity of accounts to derive from mnemonic, used as source addresses to execute parallel transfers').env('DERIVE_ACCOUNTS'))
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'))
         .action((options) => {
             mainProcessor(start, options);
