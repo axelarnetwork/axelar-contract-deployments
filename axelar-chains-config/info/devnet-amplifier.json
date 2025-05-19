@@ -1099,6 +1099,24 @@
           "address": "0x9186233C327329408a9034F22407244421cADbEF"
         }
       }
+    },
+    "berachain": {
+      "name": "Berachain",
+      "axelarId": "berachain",
+      "chainId": 80069,
+      "rpc": "https://bepolia.rpc.berachain.com",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
