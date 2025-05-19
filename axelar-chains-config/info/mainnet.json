@@ -2942,6 +2942,12 @@
     "axelarscanApi": "https://api.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
+    "govProposalDepositAmount": "2000000000",
+    "govProposalInstantiateAddresses": [
+      "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
+      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am"
+    ],
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -2997,11 +3003,12 @@
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "261",
-        "storeCodeProposalCodeHash": "765929ba3060cdfa5573ec621cb91b3a77f7d9fbc8d1b953f545876bb5abb05e",
-        "codeId": 14,
+        "storeCodeProposalId": "316",
+        "storeCodeProposalCodeHash": "6898517f95da74cbc8c59223cc0f0f6b89e95911c321cf3be87e999935366687",
+        "codeId": 30,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
-        "executeProposalId": "244"
+        "executeProposalId": "244",
+        "lastUploadedCodeId": 30
       },
       "MultisigProver": {
         "flow": {
