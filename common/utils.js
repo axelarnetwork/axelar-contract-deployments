@@ -68,6 +68,14 @@ const printError = (msg, info = '') => {
     console.log(`${chalk.bold.red(msg)}\n`);
 };
 
+const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
+    if (info) {
+        msg = `${msg}: ${info}`;
+    }
+
+    console.log(`${colour(msg)}\n`);
+};
+
 function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
@@ -621,6 +629,7 @@ module.exports = {
     printInfo,
     printWarn,
     printError,
+    printHighlight,
     printLog,
     isKeccak256Hash,
     isNonEmptyString,

@@ -363,7 +363,7 @@ async function processCommand(config, chain, action, options) {
                 { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
-            break;
+            return tx.hash;
         }
 
         case 'register-token-metadata': {
@@ -732,7 +732,7 @@ async function processCommand(config, chain, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    await mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options) );
 }
 
 if (require.main === module) {
