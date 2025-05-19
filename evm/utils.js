@@ -5,10 +5,11 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad },
+    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad, HDNode },
     constants: { AddressZero, HashZero },
     getDefaultProvider,
     BigNumber,
+    Wallet
 } = ethers;
 const fs = require('fs');
 const path = require('path');
@@ -1041,6 +1042,27 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+const deriveAccounts = async (mnemonic, quantity) => {
+    const hdNode = HDNode.fromMnemonic(mnemonic);
+    const accounts = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const path = `m/44'/60'/0'/0/${i}`;
+        const derivedNode = hdNode.derivePath(path);
+
+        const wallet = new Wallet(derivedNode.privateKey);
+
+        accounts.push({
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+            index: i,
+            path,
+        });
+    }
+
+    return accounts;
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1081,4 +1103,5 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    deriveAccounts,
 };
