@@ -1,10 +1,10 @@
 .DS_Store
-solana/.anchor
-solana/target
-solana/node_modules
-solana/dist
-solana/build
-solana/test-ledger
+.anchor
+target
+node_modules
+dist
+build
+test-ledger
 
 axelar/target
 axelar/artifacts
@@ -25,9 +25,9 @@ rustc-ice-*
 **/borsh_encoding_message_limits_report.csv
 **/abi_encoding_message_limits_report.csv
 
-solana/bindings/dist
-solana/bindings/generated/.anchor
-solana/bindings/generated/pnpm-lock.yaml
-solana/bindings/generated/temp
-solana/bindings/generated/dist
-solana/bindings/axelar-solana-its/dist
+bindings/dist
+bindings/generated/.anchor
+bindings/generated/pnpm-lock.yaml
+bindings/generated/temp
+bindings/generated/dist
+bindings/axelar-solana-its/dist
