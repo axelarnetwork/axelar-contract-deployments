@@ -143,22 +143,31 @@ const appendToFile = (stream, content) => {
 };
 
 const verify = async (config, options) => {
-    const { inputFile, delay, failOutput, successOutput } = options;
+    const { inputFile, delay, failOutput, successOutput, resumeFrom } = options;
 
-    const failStream = fs.createWriteStream(failOutput, { flags: 'w' });
-    const successStream = fs.createWriteStream(successOutput, { flags: 'w' });
+    let transactions = fs.readFileSync(inputFile, 'UTF8').split('\n');
+    const totalTransactions = transactions.length - 1; // -1 because of the empty line at the end of the file
 
-    const transactions = fs.readFileSync(inputFile, 'UTF8').split('\n');
+    let streamFlags = 'w';
+    if (resumeFrom > 0) {
+        streamFlags = 'a'
+        transactions = transactions.slice(resumeFrom);
+    }
+
+    const failStream = fs.createWriteStream(failOutput, { flags: streamFlags });
+    const successStream = fs.createWriteStream(successOutput, { flags: streamFlags });
+
+    
 
     let failed = 0;
     let successful = 0;
 
-    for (const txHash of transactions) {
+    for (const [index, txHash] of transactions.entries()) {
         if (!txHash || txHash.trim() === '') {
             continue; // Skip empty transaction hashes
         }
 
-        printInfo('Verifying transaction', txHash);
+        printInfo(`Verifying transaction ${index + resumeFrom} of ${totalTransactions}`, txHash);
 
         const first = await callAxelarscanApi(config, 'gmp/searchGMP', {
             txHash: txHash
@@ -166,8 +175,8 @@ const verify = async (config, options) => {
 
         const messageId = first?.data[0]?.callback?.id;
         if (!messageId) {
-            printWarn('First GMP not complete', txHash);
             appendToFile(failStream, txHash);
+            printInfo('Verification status', 'failed', chalk.bgRed);
             failed++;
             continue;
         }
@@ -178,13 +187,14 @@ const verify = async (config, options) => {
 
         const status = second?.data[0]?.status;
         if (status !== 'executed') {
-            printWarn('Second GMP not complete', txHash);
             appendToFile(failStream, txHash);
+            printInfo('Verification status', 'failed', chalk.bgRed);
             failed++;
             continue;
         }
 
         appendToFile(successStream, txHash);
+        printInfo('Verification status', 'successful', chalk.bgGreen);
         successful++;
         await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -231,6 +241,7 @@ const programHandler = () => {
     const verifyCmd = program
         .command('verify')
         .description('Verify a load test')
+        .addOption(new Option('--resume-from <resumeFrom>', 'resume from index (inclusive), this will append to the output files instead of overwriting them').default(0).argParser((value) => parseInt(value)))
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between transaction verifications').default(100))
         .addOption(new Option('-i, --input-file <inputFile>', 'input file with transactions to verify').default('/tmp/load-test.txt'))
         .addOption(new Option('-f, --fail-output <failOutput>', 'output file to save the failed transactions').default('/tmp/load-test-fail.txt'))
