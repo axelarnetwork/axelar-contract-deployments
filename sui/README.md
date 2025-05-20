@@ -448,6 +448,11 @@ Note:
 node sui/verify-contract.js <all/contractName> 
 ```
 
+Post-Command Cleanup Steps:
+
+- Navigate to the `move` folder within the `sui` directory.
+- Carefully delete the sub-folder named `verification`, ensuring no other folders are modified.
+
 ## Examples
 
 -   [GMP Example Guide](docs/gmp.md)
