@@ -5,7 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
 const JSZip = require('jszip');
-const { printInfo, printError, pascalToSnake } = require('../common/utils');
+const { printInfo, printError, pascalToSnake, printWarn } = require('../common/utils');
 
 const { addBaseOptions } = require('./utils');
 
@@ -326,10 +326,11 @@ async function verifyContracts(contractName, options) {
     }
 
     if (verificationFailed) {
-        printInfo('Contract verification process completed with some failures');
+        printWarn('Contract verification process completed with some failures');
     } else {
         printInfo('All contracts successfully verified');
     }
+    printWarn('!! Please complete `Post-Command Cleanup Steps` outlined in the README before retrying.')
 }
 
 if (require.main === module) {
