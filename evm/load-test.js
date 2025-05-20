@@ -142,11 +142,34 @@ const appendToFile = (stream, content) => {
     stream.write(content.concat('\n'));
 };
 
+const handleIncompleteTransaction = (failStream, pendingStream, txHash, result) => {
+    const status = result?.data[0]?.status;
+
+    let message = status;
+    let color = chalk.bgYellow;
+    let stream = pendingStream;
+
+    if (status === 'error') {
+        message = message.concat(`: ${result?.data[0]?.error?.error?.message}`);
+        color = chalk.bgRed;
+        stream = failStream;
+    }
+
+    appendToFile(stream, `${txHash} : ${message}`);
+    printInfo('Verification status', message, color);
+}
+
 const verify = async (config, options) => {
-    const { inputFile, delay, failOutput, successOutput, resumeFrom } = options;
+    const { inputFile, delay, failOutput, pendingOutput, successOutput, resumeFrom } = options;
 
     let transactions = fs.readFileSync(inputFile, 'UTF8').split('\n');
-    const totalTransactions = transactions.length - 1; // -1 because of the empty line at the end of the file
+
+    if (transactions[transactions.length - 1] === '') {
+        transactions = transactions.slice(0, -1);
+    }
+
+    // Get the total number of transactions before slicing the array when resuming from a specific transaction
+    const totalTransactions = transactions.length;
 
     let streamFlags = 'w';
     if (resumeFrom > 0) {
@@ -155,19 +178,21 @@ const verify = async (config, options) => {
     }
 
     const failStream = fs.createWriteStream(failOutput, { flags: streamFlags });
+    const pendingStream = fs.createWriteStream(pendingOutput, { flags: streamFlags });
     const successStream = fs.createWriteStream(successOutput, { flags: streamFlags });
-
-    
 
     let failed = 0;
     let successful = 0;
 
-    for (const [index, txHash] of transactions.entries()) {
-        if (!txHash || txHash.trim() === '') {
+    for (const [index, line] of transactions.entries()) {
+        if (!line || line.trim() === '') {
             continue; // Skip empty transaction hashes
         }
 
-        printInfo(`Verifying transaction ${index + resumeFrom} of ${totalTransactions}`, txHash);
+        // Extract the tx hash from the line in case it contains a message, e.g. "0x1234567890123456789012345678901234567890 : error: message"
+        const txHash = line.split(':')[0].trim();
+
+        printInfo(`Verifying transaction ${index + 1 + resumeFrom} of ${totalTransactions}`, txHash);
 
         const first = await callAxelarscanApi(config, 'gmp/searchGMP', {
             txHash: txHash
@@ -175,8 +200,7 @@ const verify = async (config, options) => {
 
         const messageId = first?.data[0]?.callback?.id;
         if (!messageId) {
-            appendToFile(failStream, txHash);
-            printInfo('Verification status', 'failed', chalk.bgRed);
+            handleIncompleteTransaction(failStream, pendingStream, txHash, first);
             failed++;
             continue;
         }
@@ -185,10 +209,10 @@ const verify = async (config, options) => {
             messageId
         });
 
+
         const status = second?.data[0]?.status;
         if (status !== 'executed') {
-            appendToFile(failStream, txHash);
-            printInfo('Verification status', 'failed', chalk.bgRed);
+            handleIncompleteTransaction(failStream, pendingStream, txHash, second);
             failed++;
             continue;
         }
@@ -200,6 +224,7 @@ const verify = async (config, options) => {
     }
 
     failStream.end();
+    pendingStream.end();
     successStream.end();
 
     printInfo('Failed or incomplete transactions', failed);
@@ -241,10 +266,11 @@ const programHandler = () => {
     const verifyCmd = program
         .command('verify')
         .description('Verify a load test')
-        .addOption(new Option('--resume-from <resumeFrom>', 'resume from index (inclusive), this will append to the output files instead of overwriting them').default(0).argParser((value) => parseInt(value)))
+        .addOption(new Option('--resume-from <resumeFrom>', 'resume from transaction number (inclusive, one-based index), this will append to the output files instead of overwriting them').default(0).argParser((value) => parseInt(value) - 1))
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between transaction verifications').default(100))
         .addOption(new Option('-i, --input-file <inputFile>', 'input file with transactions to verify').default('/tmp/load-test.txt'))
         .addOption(new Option('-f, --fail-output <failOutput>', 'output file to save the failed transactions').default('/tmp/load-test-fail.txt'))
+        .addOption(new Option('-p, --pending-output <pendingOutput>', 'output file to save the pending transactions').default('/tmp/load-test-pending.txt'))
         .addOption(new Option('-s, --success-output <successOutput>', 'output file to save the successful transactions').default('/tmp/load-test-success.txt'))
         .action((options) => {
             mainProcessor(verify, options);
