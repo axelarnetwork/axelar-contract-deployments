@@ -185,6 +185,14 @@ const httpPost = async (url, data) => {
     return response.json();
 };
 
+const callAxelarscanApi = async (config, method, data, time = 10000) => {
+    return timeout(
+        httpPost(`${config.axelar.axelarscanApi}/${method}`, data),
+        time,
+        new Error(`Timeout calling Axelarscan API: ${method}`)
+    );
+};
+
 /**
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
@@ -645,6 +653,7 @@ module.exports = {
     copyObject,
     httpGet,
     httpPost,
+    callAxelarscanApi,
     parseArgs,
     sleep,
     dateToEta,
