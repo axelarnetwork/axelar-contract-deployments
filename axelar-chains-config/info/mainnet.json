@@ -1433,7 +1433,11 @@
         "gasPrice": 10000000000
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 25
+      "approxFinalityWaitTime": 25,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      }
     },
     "linea": {
       "name": "Linea",
@@ -1693,7 +1697,11 @@
         "l1FeeScalar": 1101
       },
       "finality": "finalized",
-      "approxFinalityWaitTime": 30
+      "approxFinalityWaitTime": 30,
+      "onchainGasEstimate": {
+        "l1ChainName": "ethereum",
+        "gasEstimationType": 1
+      }
     },
     "mantle": {
       "name": "Mantle",
