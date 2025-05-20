@@ -27,15 +27,8 @@ Changes in this release:
 
 1. Upload new Multisig contract
 
-| environment      | INIT_ADDRESSES                                                                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               |
-| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
-| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
-| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
-
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.0.0" -d "Upload Multisig contract v2.0.0" --instantiateAddresses $INIT_ADDRESSES --version 2.0.0
+node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.0.0" -d "Upload Multisig contract v2.0.0" --version 2.0.0
 ```
 
 2. Upgrade Multisig contract
@@ -63,5 +56,3 @@ Expected output
 ```bash
 {"contract":"multisig","version":"2.0.0"}
 ```
-
-
