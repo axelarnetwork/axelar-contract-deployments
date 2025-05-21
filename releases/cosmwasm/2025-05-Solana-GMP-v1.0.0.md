@@ -27,7 +27,7 @@ Ensure that the [External Gateway](../solana/2025-05-GMP-v1.0.0.md) is deployed 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `Solana`.
+- Create an `.env` config. `CHAIN` should be set to `solana`.
 
 ```yaml
 MNEMONIC=xyz
@@ -54,10 +54,10 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 | Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
 | -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
-| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
-| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `1`                  |
+| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `31`                  |
+| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `31`                  |
+| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `31`                  |
+| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `31`                  |
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
@@ -67,9 +67,9 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": 1,
-  "msgIdFormat": "hex_tx_hash_and_event_index",
-  "addressFormat": "stellar"
+  "confirmationHeight": 31,
+  "msgIdFormat": "base58_tx_signature_and_log_index",
+  "addressFormat": "solana"
 }
 
 # Add under `config.axelar.contracts.MultisigProver` based on Network
@@ -79,8 +79,8 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
   "signingThreshold": "[signing threshold]",
   "serviceName": "[service name]",
   "verifierSetDiffThreshold": 0,
-  "encoder": "stellar_xdr",
-  "keyType": "ed25519"
+  "encoder": "borsh",
+  "keyType": "ecdsa"
 }
 ```
 
@@ -147,7 +147,7 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 - `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
-5. Register stellar gateway at the Router
+5. Register Solana gateway at the Router
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -160,7 +160,7 @@ node cosmwasm/submit-proposal.js execute \
     \"register_chain\": {
       \"chain\": \"$CHAIN\",
       \"gateway_address\": \"$GATEWAY\",
-      \"msg_id_format\": \"hex_tx_hash_and_event_index\"
+      \"msg_id_format\": \"base58_tx_signature_and_log_index\"
       }
     }"
 ```
@@ -182,7 +182,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
       "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
     },
     "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
+    "msg_id_format": "base58_tx_signature_and_log_index",
   }
 }
 ```
@@ -292,9 +292,9 @@ node cosmwasm/submit-proposal.js execute \
 
 | Network              | `http_url`                             |
 | -------------------- | -------------------------------------- |
-| **Devnet-amplifier** | `https://api.testnet.solana.com`       |
-| **Stagenet**         | `https://api.testnet.solana.com`       |
-| **Testnet**          | `https://api.testnet.solana.com`       |
+| **Devnet-amplifier** | `https://api.devnet.solana.com`       |
+| **Stagenet**         | `https://api.devnet.solana.com`       |
+| **Testnet**          | `https://api.devnet.solana.com`       |
 | **Mainnet**          | `https://api.mainnet-beta.solana.com`  |
 
 ```bash
@@ -312,7 +312,7 @@ cosmwasm_contract="$VOTING_VERIFIER"
 11. Update ampd with the Solana chain configuration.
 
 ```bash
-ampd register-public-key ed25519
+ampd register-public-key ecdsa
 
 ampd register-chain-support "[service name]" $CHAIN
 ```
