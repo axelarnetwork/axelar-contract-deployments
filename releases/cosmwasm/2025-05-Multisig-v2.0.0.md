@@ -1,16 +1,16 @@
 # Cosmwasm Multisig v2.0.0
 
-|                | **Owner**                             |
-| -------------- | ------------------------------------- |
-| **Created By** | @cjcobb23 <cj@interoplabs.io>         |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @cjcobb23 <cj@interoplabs.io>          |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Deployed              | 05-10-2025 |
+| **Devnet Amplifier** | Deployed              | 2025-05-10 |
 | **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Deployed              | 2025-05-20 |
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v1.2.1)
 
