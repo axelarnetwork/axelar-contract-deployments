@@ -31,7 +31,11 @@ fn load_signers(
 ) -> eyre::Result<Vec<Box<dyn solana_sdk::signer::Signer>>> {
     // We relax one signer as it is the fee payer
     if signers_paths.len() < transaction.signatures.len() - 1 {
-        eyre::bail!("Not enough signers provided");
+        eyre::bail!(
+            "Not enough signers provided: {}/{}",
+            signers_paths.len(),
+            transaction.signatures.len() - 1
+        );
     }
 
     let mut signers = Vec::with_capacity(transaction.signatures.len());
@@ -192,7 +196,7 @@ pub(crate) fn sign_and_send_transactions(
     for serializable_tx in serializable_txs {
         let transaction = serializable_tx.transaction;
         let mut signers = load_signers(&signers, &transaction)?;
-        signers.push(Box::new(shared_payer.clone()));
+        signers.push(Box::new(Rc::clone(&shared_payer)));
 
         let blockhash = rpc_client.get_latest_blockhash()?;
         let optimized_tx = optimize_transaction(&transaction, &signers, &rpc_client, &blockhash)?;
