@@ -2699,12 +2699,12 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "codeId": 31,
+          "codeId": 44,
           "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
         },
-        "storeCodeProposalId": "125",
-        "storeCodeProposalCodeHash": "2de0624fa2ba2fbd9e97da61a832a471f3cfd0a4d333286fe248e36938ecb5f2",
-        "lastUploadedCodeId": 31
+        "storeCodeProposalId": "169",
+        "storeCodeProposalCodeHash": "806cdb054e7576f8d8591c9278d3909f0a937d9dfd8259d92a68a4b7b756212c",
+        "lastUploadedCodeId": 44
       },
       "XrplVotingVerifier": {
         "xrpl": {
@@ -2716,12 +2716,12 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "codeId": 30,
+          "codeId": 45,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6"
         },
-        "storeCodeProposalId": "124",
-        "storeCodeProposalCodeHash": "bd408b0d152ab460e53f2ca4107153df7a169cec9e501fc058f242abaaf0e23e",
-        "lastUploadedCodeId": 30
+        "storeCodeProposalId": "171",
+        "storeCodeProposalCodeHash": "63af81c145dca0b5961ef9361a2f1a32019f97ed818a321035b614ea7dfbba9d",
+        "lastUploadedCodeId": 45
       },
       "XrplMultisigProver": {
         "xrpl": {
@@ -2735,12 +2735,12 @@
           "verifierSetDiffThreshold": 0,
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
-          "codeId": 32,
+          "codeId": 43,
           "address": "axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k"
         },
-        "storeCodeProposalId": "126",
-        "storeCodeProposalCodeHash": "5bfc4d78765c25c85b1e93fb9d693b7ff2805620db8987d8181cc9600caec912",
-        "lastUploadedCodeId": 32
+        "storeCodeProposalId": "168",
+        "storeCodeProposalCodeHash": "0468518d4a3f0fe7033a0baad99ca0057685bd2c607c51ce9d341caacabb3462",
+        "lastUploadedCodeId": 43
       }
     },
     "axelarId": "axelar",
