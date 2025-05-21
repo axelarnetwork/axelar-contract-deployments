@@ -20,7 +20,7 @@ const {
     verifyContractByName,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getTrustedChainsAndAddresses } = require('./its');
+const { getTrustedChains } = require('./its');
 
 async function verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options) {
     const contractJson = getContractJSON('AxelarGateway');
@@ -227,13 +227,13 @@ async function processCommand(config, chain, options) {
 
             const tokenManager = await its.tokenManager();
             const tokenHandler = await its.tokenHandler();
-            const gatewayCaller = await its.gatewayCaller();
 
-            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, its);
+            const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+            const trustedChains = await getTrustedChains(config, its);
 
             const setupParams = defaultAbiCoder.encode(
-                ['address', 'string', 'string[]', 'string[]'],
-                [contractConfig.deployer, chain.axelarId, trustedChains, trustedAddresses],
+                ['address', 'string', 'string[]'],
+                [contractConfig.deployer, chain.axelarId, trustedChains],
             );
 
             await verifyContract(env, chain.axelarId, tokenManagerDeployer, [], verifyOptions);
@@ -244,7 +244,6 @@ async function processCommand(config, chain, options) {
             await verifyContract(
                 env,
                 chain.axelarId,
-                gatewayCaller,
                 [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
                 verifyOptions,
             );
@@ -259,9 +258,9 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
+                    itsHubAddress,
                     tokenManager,
                     tokenHandler,
-                    gatewayCaller,
                 ],
                 verifyOptions,
             );

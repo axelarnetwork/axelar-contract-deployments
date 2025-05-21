@@ -882,7 +882,6 @@ function getQualifiedContractName(contractName) {
  */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline, gasOptions: gasOptionsCli } = options;
-
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
     let gasOptions;
@@ -1041,6 +1040,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256)';
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1081,4 +1082,5 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    INTERCHAIN_TRANSFER,
 };
