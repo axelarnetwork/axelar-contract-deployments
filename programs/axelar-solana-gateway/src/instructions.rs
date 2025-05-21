@@ -322,9 +322,8 @@ pub fn rotate_signers(
 pub fn call_contract(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
-    sender_program_id: Pubkey,
-    sender_call_contract_pda: Pubkey,
-    sender_call_contract_bump: u8,
+    sender: Pubkey,
+    sender_call_contract_pda: Option<(Pubkey, u8)>,
     destination_chain: String,
     destination_contract_address: String,
     payload: Vec<u8>,
@@ -333,12 +332,15 @@ pub fn call_contract(
         destination_chain,
         destination_contract_address,
         payload,
-        signing_pda_bump: sender_call_contract_bump,
+        signing_pda_bump: sender_call_contract_pda.map_or(0, |(_, bump)| bump),
     })?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender_program_id, false),
-        AccountMeta::new_readonly(sender_call_contract_pda, true),
+        AccountMeta::new_readonly(sender, sender_call_contract_pda.is_none()),
+        AccountMeta::new_readonly(
+            sender_call_contract_pda.map_or(crate::ID, |(pda, _)| pda),
+            sender_call_contract_pda.is_some(),
+        ),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
@@ -358,9 +360,8 @@ pub fn call_contract(
 pub fn call_contract_offchain_data(
     gateway_program_id: Pubkey,
     gateway_root_pda: Pubkey,
-    sender_program_id: Pubkey,
-    sender_call_contract_pda: Pubkey,
-    sender_call_contract_bump: u8,
+    sender: Pubkey,
+    sender_call_contract_pda: Option<(Pubkey, u8)>,
     destination_chain: String,
     destination_contract_address: String,
     payload_hash: [u8; 32],
@@ -369,12 +370,15 @@ pub fn call_contract_offchain_data(
         destination_chain,
         destination_contract_address,
         payload_hash,
-        signing_pda_bump: sender_call_contract_bump,
+        signing_pda_bump: sender_call_contract_pda.map_or(0, |(_, bump)| bump),
     })?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(sender_program_id, false),
-        AccountMeta::new_readonly(sender_call_contract_pda, true),
+        AccountMeta::new_readonly(sender, sender_call_contract_pda.is_none()),
+        AccountMeta::new_readonly(
+            sender_call_contract_pda.map_or(crate::ID, |(pda, _)| pda),
+            sender_call_contract_pda.is_some(),
+        ),
         AccountMeta::new_readonly(gateway_root_pda, false),
     ];
 
