@@ -27,7 +27,7 @@ use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
 use solana_sdk::pubkey::Pubkey;
-use types::SerializableSolanaTransaction;
+use types::{AxelarNetwork, SerializableSolanaTransaction};
 
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
@@ -44,12 +44,15 @@ struct Cli {
     #[clap(subcommand)]
     command: Command,
 
+    /// Axelar environment to use. Options: [mainnet, testnet, devnet-amplifier, local].
+    #[clap(long, env = "ENV", arg_enum)]
+    env: AxelarNetwork,
     /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
-    /// devnet, localhost]". Defaults to the Solana CLI config URL.
+    /// devnet, localhost]". Defaults to the value set in the Solana CLI config.
     #[clap(
         short,
         long,
-        env = "ENV",
+        env = "CLUSTER",
         value_parser = parse_url_or_moniker,
     )]
     url: Option<String>,
@@ -197,7 +200,7 @@ struct MiscCommandArgs {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
+    let _ = dotenv().ok();
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
@@ -218,7 +221,7 @@ async fn run() -> eyre::Result<()> {
         .or_else(|| maybe_solana_config.as_ref().map(|c| c.json_rpc_url.clone()))
         .ok_or_else(|| eyre!("No URL provided and no Solana CLI config found"))?;
 
-    let config = Config::new(url, cli.output_dir, cli.chains_info_dir)?;
+    let config = Config::new(url, cli.output_dir, cli.chains_info_dir, cli.env)?;
 
     match cli.command {
         Command::Send(args) => {

@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use crate::types::ChainsInfoFile;
 use crate::types::NetworkType;
+use crate::AxelarNetwork;
 
 #[derive(Debug)]
 pub(crate) struct Config {
@@ -19,8 +20,8 @@ impl Config {
         url: String,
         output_dir: PathBuf,
         chains_info_dir: PathBuf,
+        axelar_network: AxelarNetwork,
     ) -> eyre::Result<Self> {
-        println!("URL: {url}");
         if !output_dir.exists() {
             fs::create_dir_all(&output_dir)
                 .map_err(|e| eyre!("Failed to create output directory: {}", e))?;
@@ -35,7 +36,7 @@ impl Config {
         }
 
         let network_type = NetworkType::from_str(&url)?;
-        let chains_info_filename: String = ChainsInfoFile::from(network_type).into();
+        let chains_info_filename: String = ChainsInfoFile::from(axelar_network).into();
         let chains_info_file = chains_info_dir.join(chains_info_filename);
 
         Ok(Self {

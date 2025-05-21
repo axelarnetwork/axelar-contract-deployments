@@ -11,11 +11,11 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
-use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
+use crate::types::{ChainAxelarId, SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
     write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
-    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, SOLANA_CHAIN_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -766,7 +766,7 @@ fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre:
         Ok(id)
     } else {
         let id = Pubkey::deserialize(
-            &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+            &chains_info[SOLANA_CHAIN_KEY][CONTRACTS_KEY]
                 [GAS_SERVICE_KEY][ADDRESS_KEY],
         ).map_err(|_| eyre!(
             "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
@@ -785,7 +785,7 @@ fn try_infer_gas_service_config_account(
         Ok(id)
     } else {
         let id = Pubkey::deserialize(
-            &chains_info[ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
+            &chains_info[SOLANA_CHAIN_KEY][CONTRACTS_KEY]
                 [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
         ).map_err(|_| eyre!(
             "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
@@ -930,8 +930,7 @@ fn init(
         String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
     let its_root_config = axelar_solana_its::find_its_root_pda().0;
 
-    chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
-        [ITS_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
         CONFIG_ACCOUNT_KEY: its_root_config.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
@@ -943,7 +942,7 @@ fn init(
     Ok(vec![axelar_solana_its::instruction::initialize(
         *fee_payer,
         init_args.operator,
-        ChainNameOnAxelar::from(config.network_type).0,
+        ChainAxelarId::from(config.network_type).0,
         its_hub_address,
     )?])
 }

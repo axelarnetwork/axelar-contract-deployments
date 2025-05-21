@@ -4,10 +4,10 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
-use crate::types::{ChainNameOnAxelar, SerializableSolanaTransaction, SolanaTransactionParams};
+use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
+    CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, SOLANA_CHAIN_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -82,8 +82,7 @@ fn init(
         axelar_solana_gas_service::get_config_pda(&program_id, &salt_hash, &init_args.authority);
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][ChainNameOnAxelar::from(config.network_type).0][CONTRACTS_KEY]
-        [GAS_SERVICE_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
     });

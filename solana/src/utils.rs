@@ -21,8 +21,7 @@ use solana_sdk::signature::Signature;
 
 use crate::config::Config;
 use crate::types::{
-    ChainNameOnAxelar, NetworkType, PartialSignature, SignedSolanaTransaction,
-    UnsignedSolanaTransaction,
+    NetworkType, PartialSignature, SignedSolanaTransaction, UnsignedSolanaTransaction,
 };
 pub(crate) use solana_sdk::instruction::AccountMeta;
 
@@ -61,6 +60,7 @@ pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
 pub(crate) const ROUTER_KEY: &str = "Router";
+pub(crate) const SOLANA_CHAIN_KEY: &str = "solana";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
@@ -185,10 +185,10 @@ pub(crate) fn print_transaction_result(
             println!("   RPC Endpoint: {}", config.url);
             let explorer_base_url = "https://explorer.solana.com/tx/";
             let cluster_param = match config.network_type {
-                NetworkType::Mainnet => "",
-                NetworkType::Testnet => "?cluster=testnet",
+                NetworkType::Local => "?cluster=custom",
                 NetworkType::Devnet => "?cluster=devnet",
-                NetworkType::Localnet => "?cluster=custom",
+                NetworkType::Testnet => "?cluster=testnet",
+                NetworkType::Mainnet => "",
             };
             println!("   Explorer Link: {explorer_base_url}{tx_signature}{cluster_param}");
             println!("------------------------------------------");
@@ -209,13 +209,11 @@ pub(crate) fn domain_separator(
     chains_info: &serde_json::Value,
     network_type: NetworkType,
 ) -> eyre::Result<[u8; 32]> {
-    if network_type == NetworkType::Localnet {
+    if network_type == NetworkType::Local {
         return Ok([0; 32]);
     }
 
-    let axelar_id = String::deserialize(
-        &chains_info[CHAINS_KEY][ChainNameOnAxelar::from(network_type).0][AXELAR_ID_KEY],
-    )?;
+    let axelar_id = String::deserialize(&chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][AXELAR_ID_KEY])?;
     let router_address = String::deserialize(
         &chains_info[CHAINS_KEY][AXELAR_KEY][CONTRACTS_KEY][ROUTER_KEY][ADDRESS_KEY],
     )?;

@@ -13,21 +13,41 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum NetworkType {
-    Mainnet,
-    Testnet,
+    Local,
     Devnet,
-    Localnet,
+    Testnet,
+    Mainnet,
+}
+
+#[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) enum AxelarNetwork {
+    DevnetAmplifier,
+    Testnet,
+    Mainnet,
+    None,
+}
+
+impl FromStr for AxelarNetwork {
+    type Err = eyre::Error;
+
+    fn from_str(s: &str) -> eyre::Result<Self> {
+        s.contains("devnet-amplifier")
+            .then_some(AxelarNetwork::DevnetAmplifier)
+            .or_else(|| s.contains("testnet").then_some(AxelarNetwork::Testnet))
+            .or_else(|| s.contains("mainnet").then_some(AxelarNetwork::Mainnet))
+            .ok_or_else(|| eyre!("Invalid Axelar network type: {s}"))
+    }
 }
 
 impl FromStr for NetworkType {
     type Err = eyre::Error;
 
     fn from_str(s: &str) -> eyre::Result<Self> {
-        s.contains("mainnet")
-            .then_some(NetworkType::Mainnet)
-            .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
+        s.contains("local")
+            .then_some(NetworkType::Local)
             .or_else(|| s.contains("devnet").then_some(NetworkType::Devnet))
-            .or_else(|| s.contains("local").then_some(NetworkType::Localnet))
+            .or_else(|| s.contains("testnet").then_some(NetworkType::Testnet))
+            .or_else(|| s.contains("mainnet").then_some(NetworkType::Mainnet))
             .ok_or_else(|| eyre!("Invalid network type: {s}"))
     }
 }
@@ -39,26 +59,26 @@ impl From<ChainsInfoFile> for String {
     }
 }
 
-impl From<NetworkType> for ChainsInfoFile {
-    fn from(value: NetworkType) -> Self {
+impl From<AxelarNetwork> for ChainsInfoFile {
+    fn from(value: AxelarNetwork) -> Self {
         match value {
-            NetworkType::Mainnet => Self("mainnet.json".to_owned()),
-            NetworkType::Testnet => Self("testnet.json".to_owned()),
-            NetworkType::Devnet => Self("devnet-amplifier.json".to_owned()),
-            NetworkType::Localnet => Self("local.json".to_owned()),
+            AxelarNetwork::Mainnet => Self("mainnet.json".to_owned()),
+            AxelarNetwork::Testnet => Self("testnet.json".to_owned()),
+            AxelarNetwork::DevnetAmplifier => Self("devnet-amplifier.json".to_owned()),
+            AxelarNetwork::None => Self("local.json".to_owned()),
         }
     }
 }
 
-pub(crate) struct ChainNameOnAxelar(pub(crate) String);
+pub(crate) struct ChainAxelarId(pub(crate) String);
 
-impl From<NetworkType> for ChainNameOnAxelar {
+impl From<NetworkType> for ChainAxelarId {
     fn from(value: NetworkType) -> Self {
         match value {
-            NetworkType::Mainnet => Self("solana".to_owned()),
-            NetworkType::Testnet => Self("solana-testnet".to_owned()),
+            NetworkType::Local => Self("solana-localnet".to_owned()),
             NetworkType::Devnet => Self("solana-devnet".to_owned()),
-            NetworkType::Localnet => Self("solana-localnet".to_owned()),
+            NetworkType::Testnet => Self("solana-testnet".to_owned()),
+            NetworkType::Mainnet => Self("solana".to_owned()),
         }
     }
 }
