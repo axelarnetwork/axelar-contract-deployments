@@ -4,21 +4,22 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axelar-solana-gateway = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
+axelar-solana-gateway = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db", features = [
     "no-entrypoint",
 ] }
-axelar-solana-gas-service = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
+axelar-solana-gas-service = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db", features = [
     "no-entrypoint",
 ] }
-axelar-solana-governance = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
+axelar-solana-governance = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db", features = [
     "no-entrypoint",
 ] }
-axelar-solana-its = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328", features = [
+axelar-solana-its = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db", features = [
     "no-entrypoint"
 ] }
-axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
-axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
-its-instruction-builder = { git = "https://github.com/eigerco/solana-axelar.git", rev = "52a8328" }
+axelar-solana-encoding = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db" }
+axelar-executable = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db" }
+gateway-event-stack = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db" }
+its-instruction-builder = { git = "https://github.com/eigerco/solana-axelar.git", rev = "660f0db" }
 
 axelar-wasm-std = { git = "https://github.com/axelarnetwork/axelar-amplifier.git", rev = "voting-verifier-v1.1.0" }
 
@@ -28,6 +29,7 @@ borsh = "1.5.1"
 clap = { version = "3.2", features = ["derive", "env"] }
 cosmrs = { version = "0.16", features = ["cosmwasm", "rpc", "grpc"] }
 cosmwasm-std = "1.5"
+dotenvy = { version = "0.15.7", features = ["cli"] }
 eyre = "0.6.11"
 hex = { version = "0.4.3", features = ["serde"] }
 k256     = { version = "0.13", features = ["pkcs8", "pem", "ecdsa"] }
@@ -37,10 +39,10 @@ solana-clap-v3-utils = "2"
 solana-cli-config = "2"
 solana-client = "2"
 solana-sdk = "2"
+solana-transaction-status = "2"
 spl-token = { version = "6", features = ["no-entrypoint"] }
 spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
 tokio = { version = "1", features = ["full"] }
-dotenvy = { version = "0.15.7", features = ["cli"] }
 
 [lints.clippy]
 cargo = { priority = -1, level = "deny" }

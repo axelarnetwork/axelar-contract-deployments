@@ -47,6 +47,7 @@ struct Cli {
     /// Axelar environment to use. Options: [mainnet, testnet, devnet-amplifier, local].
     #[clap(long, env = "ENV", arg_enum)]
     env: AxelarNetwork,
+
     /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
     /// devnet, localhost]". Defaults to the value set in the Solana CLI config.
     #[clap(
@@ -92,6 +93,9 @@ enum Command {
 
     /// Miscellaneous utilities.
     Misc(MiscCommandArgs),
+
+    /// Query data from Solana.
+    Query(QueryCommandArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -198,6 +202,19 @@ struct MiscCommandArgs {
     instruction: misc::Commands,
 }
 
+#[derive(Parser, Debug)]
+struct QueryCommandArgs {
+    #[clap(subcommand)]
+    instruction: QueryInstructionSubcommand,
+}
+
+#[derive(Subcommand, Debug)]
+enum QueryInstructionSubcommand {
+    /// Commands to query data from the AxelarGateway program on Solana
+    #[clap(subcommand)]
+    Gateway(gateway::QueryCommands),
+}
+
 #[tokio::main]
 async fn main() {
     let _ = dotenv().ok();
@@ -280,8 +297,13 @@ async fn run() -> eyre::Result<()> {
             broadcast_solana_transaction(&broadcast_args, &config)?;
         }
         Command::Misc(args) => {
-            do_misc(args.instruction)?;
+            do_misc(args.instruction, &config)?;
         }
+        Command::Query(args) => match args.instruction {
+            QueryInstructionSubcommand::Gateway(command) => {
+                gateway::query(command, &config)?;
+            }
+        },
     }
     Ok(())
 }

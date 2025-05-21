@@ -11,19 +11,24 @@ use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use clap::{ArgGroup, Parser, Subcommand};
+use axelar_solana_gateway::BytemuckedPda;
+use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
+use gateway_event_stack::{MatchContext, ProgramInvocationState};
 use k256::ecdsa::SigningKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 use serde::Deserialize;
 use serde_json::json;
+use solana_client::rpc_client::RpcClient;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::message::Message as SolanaMessage;
 use solana_sdk::packet::PACKET_DATA_SIZE;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Signature as SolanaSignature;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
+use solana_transaction_status::UiTransactionEncoding;
 
 use crate::config::Config;
 use crate::multisig_prover_types::msg::ProofStatus;
@@ -64,6 +69,35 @@ pub(crate) enum Commands {
 
     /// Execute a cross-chain message on Solana
     Execute(ExecuteArgs),
+}
+
+/// Commands for querying gateway related data
+#[derive(Subcommand, Debug)]
+pub(crate) enum QueryCommands {
+    /// Get GatewayEvents from a transaction
+    Events(EventsArgs),
+
+    /// Query message status on Gateway
+    MessageStatus(MessageStatusArgs),
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct EventsArgs {
+    /// The transaction signature to get events from
+    signature: String,
+
+    /// Print all event data
+    #[clap(long)]
+    full: bool,
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct MessageStatusArgs {
+    /// The name of the chain from which the message was sent as it is registered with Axelar
+    source_chain: String,
+
+    /// Message ID
+    full: String,
 }
 
 #[derive(Parser, Debug)]
@@ -263,7 +297,7 @@ pub(crate) async fn build_transaction(
     Ok(serializable_transactions)
 }
 
-async fn query<T: serde::de::DeserializeOwned>(
+async fn query_axelar<T: serde::de::DeserializeOwned>(
     mut endpoint: String,
     address: cosmrs::AccountId,
     query_data: Vec<u8>,
@@ -329,12 +363,13 @@ async fn get_verifier_set(
             cosmrs::AccountId::from_str(&address).unwrap()
         };
         let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
-        let multisig_prover_response = query::<crate::multisig_prover_types::VerifierSetResponse>(
-            axelar_grpc_endpoint,
-            multisig_prover_address,
-            serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
-        )
-        .await?;
+        let multisig_prover_response =
+            query_axelar::<crate::multisig_prover_types::VerifierSetResponse>(
+                axelar_grpc_endpoint,
+                multisig_prover_address,
+                serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::CurrentVerifierSet)?,
+            )
+            .await?;
         let mut signers = BTreeMap::new();
 
         for signer in multisig_prover_response.verifier_set.signers.values() {
@@ -495,16 +530,13 @@ fn call_contract(
     fee_payer: &Pubkey,
     call_contract_args: CallContractArgs,
 ) -> eyre::Result<Vec<Instruction>> {
-    let (signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(*fee_payer);
     let payload = hex::decode(call_contract_args.payload)?;
 
     Ok(vec![axelar_solana_gateway::instructions::call_contract(
         axelar_solana_gateway::id(),
         axelar_solana_gateway::get_gateway_root_config_pda().0,
         *fee_payer,
-        signing_pda,
-        signing_pda_bump,
+        None,
         call_contract_args.destination_chain,
         call_contract_args.destination_address,
         payload,
@@ -571,6 +603,11 @@ fn approve(
     );
     let (incoming_message_pda, _bump) =
         axelar_solana_gateway::get_incoming_message_pda(&command_id);
+
+    println!(
+        "Building instruction to approve message from {} with id: {}",
+        merkleised_message.leaf.message.cc_id.chain, merkleised_message.leaf.message.cc_id.id
+    );
 
     instructions.push(axelar_solana_gateway::instructions::approve_message(
         merkleised_message,
@@ -649,7 +686,7 @@ async fn submit_proof(
         cosmrs::AccountId::from_str(&address).unwrap()
     };
     let axelar_grpc_endpoint = String::deserialize(&chains_info[AXELAR_KEY][GRPC_KEY])?;
-    let multisig_prover_response = query::<crate::multisig_prover_types::ProofResponse>(
+    let multisig_prover_response = query_axelar::<crate::multisig_prover_types::ProofResponse>(
         axelar_grpc_endpoint,
         multisig_prover_address,
         serde_json::to_vec(&crate::multisig_prover_types::QueryMsg::Proof {
@@ -676,6 +713,7 @@ async fn submit_proof(
         MerkleisedPayload::VerifierSetRotation {
             new_verifier_set_merkle_root,
         } => {
+            println!("Building instruction to rotate signers");
             let (verifier_set_tracker_pda, _bump) =
                 axelar_solana_gateway::get_verifier_set_tracker_pda(
                     execute_data.signing_verifier_set_merkle_root,
@@ -694,6 +732,10 @@ async fn submit_proof(
         }
         MerkleisedPayload::NewMessages { messages } => {
             for message in messages {
+                println!(
+                    "Building instruction to approve message from {} with id: {}",
+                    message.leaf.message.cc_id.chain, message.leaf.message.cc_id.id
+                );
                 let command_id = command_id(
                     message.leaf.message.cc_id.chain.as_str(),
                     message.leaf.message.cc_id.id.as_str(),
@@ -876,4 +918,89 @@ async fn execute(
     )?);
 
     Ok(instructions)
+}
+
+pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
+    match command {
+        QueryCommands::Events(args) => events(args, config),
+        QueryCommands::MessageStatus(args) => message_status(args, config),
+    }
+}
+
+fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
+    let rpc_client = RpcClient::new(config.url.clone());
+    let signature = SolanaSignature::from_str(&args.signature)?;
+    let transaction = rpc_client.get_transaction(&signature, UiTransactionEncoding::Base58)?;
+
+    let log_messages = transaction
+        .transaction
+        .meta
+        .ok_or_else(|| eyre!("Transaction missing metadata"))?
+        .log_messages
+        .ok_or_else(|| eyre!("Transaction missing log messages"))?;
+
+    let gateway_id_string = axelar_solana_gateway::id().to_string();
+    let gateway_match_ctx = MatchContext::new(&gateway_id_string);
+
+    let invocations = gateway_event_stack::build_program_event_stack(
+        &gateway_match_ctx,
+        &log_messages,
+        gateway_event_stack::parse_gateway_logs,
+    );
+
+    for (i, invocation) in invocations.into_iter().enumerate() {
+        println!("\u{2728} Invocation index [{i}]: ");
+        let events = match invocation {
+            ProgramInvocationState::InProgress(items)
+            | ProgramInvocationState::Failed(items)
+            | ProgramInvocationState::Succeeded(items) => items,
+        };
+
+        if events.is_empty() {
+            println!("\t\u{1F4EA} No gateway events found");
+        }
+
+        for event in events {
+            print!("\t\u{1F4EC} Event index [{}]: ", event.0);
+            let raw_output = format!("{:#?}", event.1);
+
+            let output = if args.full {
+                &raw_output
+            } else {
+                raw_output.split_once('(').unwrap().0
+            };
+
+            println!("{output}");
+        }
+    }
+
+    Ok(())
+}
+
+fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> {
+    let rpc_client = RpcClient::new(config.url.clone());
+    let command_id = command_id(&args.source_chain, &args.full);
+    let (incoming_message_pda, _) = axelar_solana_gateway::get_incoming_message_pda(&command_id);
+    let raw_incoming_message =
+        rpc_client
+            .get_account_data(&incoming_message_pda)
+            .map_err(|_| {
+                eyre!("Couldn't fetch information about given message. Are the details correct?")
+            })?;
+
+    match axelar_solana_gateway::state::incoming_message::IncomingMessage::read(
+        &raw_incoming_message,
+    ) {
+        Some(incoming_message) => {
+            let status = if incoming_message.status.is_approved() {
+                String::from("Approved")
+            } else {
+                String::from("Executed")
+            };
+            println!("Message status: {status}");
+        }
+        None => eyre::bail!("Failed to deserialize message data"),
+    };
+
+    Ok(())
 }

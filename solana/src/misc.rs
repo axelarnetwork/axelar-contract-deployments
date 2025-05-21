@@ -7,6 +7,8 @@ use eyre::Result;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 
+use crate::Config;
+
 /// Commands for miscellaneous utilities
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
@@ -30,7 +32,7 @@ pub(crate) struct BuildAxelarMessageArgs {
 }
 
 /// Build a message for miscellaneous utilities
-pub(crate) fn do_misc(args: Commands) -> Result<()> {
+pub(crate) fn do_misc(args: Commands, _config: &Config) -> Result<()> {
     match args {
         Commands::BuildAxelarMessage(args) => build_axelar_message(args),
     }
