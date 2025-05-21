@@ -191,7 +191,7 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     return timeout(
         httpPost(`${config.axelar.axelarscanApi}/${method}`, data),
         time,
-        new Error(`Timeout calling Axelarscan API: ${method}`)
+        new Error(`Timeout calling Axelarscan API: ${method}`),
     );
 };
 

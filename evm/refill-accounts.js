@@ -28,9 +28,7 @@ const refillAccounts = async (wallet, options, addressesToFund, decimals, token)
         console.log('='.repeat(20));
         printInfo(`Funding account with ${token ? 'ERC20' : 'native'} tokens`, address);
 
-        const balance = token 
-            ? await token.balanceOf(address) 
-            : await wallet.provider.getBalance(address);
+        const balance = token ? await token.balanceOf(address) : await wallet.provider.getBalance(address);
 
         printInfo('Current balance', ethers.utils.formatUnits(balance, decimals));
 
@@ -47,12 +45,13 @@ const refillAccounts = async (wallet, options, addressesToFund, decimals, token)
                 .then((tx) => tx.wait())
                 .then(() => printInfo(`Funded account with ERC20 tokens`, ethers.utils.formatUnits(amount, decimals)));
         } else {
-            await wallet.sendTransaction({
-                to: address,
-                value: amount,
-            })
-            .then((tx) => tx.wait())
-            .then(() => printInfo('Funded account with native tokens', ethers.utils.formatUnits(amount, decimals)));
+            await wallet
+                .sendTransaction({
+                    to: address,
+                    value: amount,
+                })
+                .then((tx) => tx.wait())
+                .then(() => printInfo('Funded account with native tokens', ethers.utils.formatUnits(amount, decimals)));
         }
     }
 };
@@ -64,8 +63,8 @@ const refillNative = async (wallet, options, addressesToFund) => {
 const refillErc20 = async (wallet, options, addressesToFund) => {
     const { tokenAddress, decimals } = options;
     const token = new ethers.Contract(tokenAddress, getContractJSON('ERC20').abi, wallet);
-    const tokenDecimals = decimals || await token.decimals();
-    
+    const tokenDecimals = decimals || (await token.decimals());
+
     refillAccounts(wallet, options, addressesToFund, tokenDecimals, token);
 };
 
@@ -91,8 +90,17 @@ const mainProcessor = async (processor, options) => {
 const addOptions = (program) => {
     program.addOption(new Option('-t, --target-balance <target-balance>', 'desired balance after refill'));
     program.addOption(new Option('-u, --in-decimal-units', 'amounts are in decimal units'));
-    program.addOption(new Option('--addresses-to-derive <addresses-to-derive>', 'quantity of addresses to derive from mnemonic. Cannot be used with --addresses').env('DERIVE_ACCOUNTS'));
-    program.addOption(new Option('--addresses <addresses>', 'comma separated list of addresses to fund').argParser((addresses) => addresses.split(',').map((address) => address.trim())));
+    program.addOption(
+        new Option(
+            '--addresses-to-derive <addresses-to-derive>',
+            'quantity of addresses to derive from mnemonic. Cannot be used with --addresses',
+        ).env('DERIVE_ACCOUNTS'),
+    );
+    program.addOption(
+        new Option('--addresses <addresses>', 'comma separated list of addresses to fund').argParser((addresses) =>
+            addresses.split(',').map((address) => address.trim()),
+        ),
+    );
     program.addOption(new Option('--min-threshold <min-threshold>', 'refills accounts only if the balance is below this threshold'));
     program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
 
@@ -110,19 +118,23 @@ const programHandler = () => {
     const program = new Command();
     program.name('refill-accounts').description('Refill multiple accounts funds with native tokens or ERC20 tokens from a single wallet');
 
-    const refillNativeCmd = program.command('native').description('Refill with native tokens from a single wallet')
+    const refillNativeCmd = program
+        .command('native')
+        .description('Refill with native tokens from a single wallet')
         .action((options) => {
             mainProcessor(refillNative, options);
-        });;
+        });
     addBaseOptions(refillNativeCmd, {});
     addOptions(refillNativeCmd);
 
-    const refillErc20Cmd = program.command('erc20').description('Refill with ERC20 tokens from a single wallet')
+    const refillErc20Cmd = program
+        .command('erc20')
+        .description('Refill with ERC20 tokens from a single wallet')
         .option('--token-address <token-address>', 'Token address')
         .option('-d, --decimals <decimals>', 'token decimals')
         .action((options) => {
             mainProcessor(refillErc20, options);
-        });;
+        });
     addBaseOptions(refillErc20Cmd, {});
     addOptions(refillErc20Cmd);
 

@@ -5,11 +5,21 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad, HDNode },
+    utils: {
+        computeAddress,
+        getContractAddress,
+        keccak256,
+        isAddress,
+        getCreate2Address,
+        defaultAbiCoder,
+        isHexString,
+        hexZeroPad,
+        HDNode,
+    },
     constants: { AddressZero, HashZero },
     getDefaultProvider,
     BigNumber,
-    Wallet
+    Wallet,
 } = ethers;
 const fs = require('fs');
 const path = require('path');
@@ -709,10 +719,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         const executeChain = (chainName) => {
             const chain = config.chains[chainName.toLowerCase()];
 
-            if (
-                chainsToSkip.includes(chain.name.toLowerCase()) ||
-                chain.status === 'deactive'
-            ) {
+            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
                 printWarn('Skipping chain', chain.name);
                 return Promise.resolve();
             }
@@ -753,10 +760,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (
-            chainsToSkip.includes(chain.name.toLowerCase()) ||
-            chain.status === 'deactive'
-        ) {
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
             printWarn('Skipping chain', chain.name);
             continue;
         }

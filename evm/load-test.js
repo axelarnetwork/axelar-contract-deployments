@@ -22,7 +22,7 @@ let stream = null;
 const estimateGas = async (config, options) => {
     const { sourceChain, destinationChain, tokenId, privateKey, env } = options;
 
-    const tokenAddress = await its(ITS_ACTION_TOKEN_ADDRESS, [ tokenId ], {
+    const tokenAddress = await its(ITS_ACTION_TOKEN_ADDRESS, [tokenId], {
         chainNames: sourceChain,
         env,
         yes: true,
@@ -33,7 +33,7 @@ const estimateGas = async (config, options) => {
         sourceChain,
         destinationChain,
         sourceTokenAddress: tokenAddress,
-        event: 'InterchainTransfer'
+        event: 'InterchainTransfer',
     });
 
     return gasFee.toString();
@@ -52,19 +52,26 @@ const writeTransactions = async () => {
     stream.write(content);
 
     writing = false;
-}
+};
 
 const startTest = async (config, options) => {
-    const { time, delay, env, sourceChain, destinationChain, destinationAddress, tokenId, transferAmount, addressesToDerive, mnemonic, output } = options;
+    const {
+        time,
+        delay,
+        env,
+        sourceChain,
+        destinationChain,
+        destinationAddress,
+        tokenId,
+        transferAmount,
+        addressesToDerive,
+        mnemonic,
+        output,
+    } = options;
 
     stream = fs.createWriteStream(output, { flags: 'w' });
 
-    const args = [
-        destinationChain,
-        tokenId,
-        destinationAddress,
-        transferAmount
-    ];
+    const args = [destinationChain, tokenId, destinationAddress, transferAmount];
 
     const itsOptions = {
         chainNames: sourceChain,
@@ -162,7 +169,7 @@ const handleIncompleteTransaction = (failStream, pendingStream, txHash, result) 
 
     appendToFile(stream, `${txHash} : ${message}`);
     printInfo('Verification status', message, color);
-}
+};
 
 const verify = async (config, options) => {
     const { inputFile, delay, failOutput, pendingOutput, successOutput, resumeFrom } = options;
@@ -178,7 +185,7 @@ const verify = async (config, options) => {
 
     let streamFlags = 'w';
     if (resumeFrom > 0) {
-        streamFlags = 'a'
+        streamFlags = 'a';
         transactions = transactions.slice(resumeFrom);
     }
 
@@ -200,7 +207,7 @@ const verify = async (config, options) => {
         printInfo(`Verifying transaction ${index + 1 + resumeFrom} of ${totalTransactions}`, txHash);
 
         const first = await callAxelarscanApi(config, 'gmp/searchGMP', {
-            txHash: txHash
+            txHash: txHash,
         });
 
         const messageId = first?.data[0]?.callback?.id;
@@ -211,9 +218,8 @@ const verify = async (config, options) => {
         }
 
         const second = await callAxelarscanApi(config, 'gmp/searchGMP', {
-            messageId
+            messageId,
         });
-
 
         const status = second?.data[0]?.status;
         if (status !== 'executed') {
@@ -246,8 +252,7 @@ const mainProcessor = async (processor, options) => {
 const programHandler = () => {
     const program = new Command();
 
-    program.name('load-test')
-        .description('Load testing tools')
+    program.name('load-test').description('Load testing tools');
 
     const loadTestCmd = program
         .command('test')
@@ -259,7 +264,12 @@ const programHandler = () => {
         .option('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
         .addOption(new Option('-t, --time <time>', 'time limit in minutes to run the test').argParser((value) => parseInt(value) * 60))
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between calls').default(10))
-        .addOption(new Option('--addresses-to-derive <addresses-to-derive>', 'quantity of accounts to derive from mnemonic, used as source addresses to execute parallel transfers').env('DERIVE_ACCOUNTS'))
+        .addOption(
+            new Option(
+                '--addresses-to-derive <addresses-to-derive>',
+                'quantity of accounts to derive from mnemonic, used as source addresses to execute parallel transfers',
+            ).env('DERIVE_ACCOUNTS'),
+        )
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'))
         .addOption(new Option('-o, --output <output>', 'output file to save the transactions generated').default('/tmp/load-test.txt'))
         .action((options) => {
@@ -270,12 +280,29 @@ const programHandler = () => {
     const verifyCmd = program
         .command('verify')
         .description('Verify a load test')
-        .addOption(new Option('--resume-from <resumeFrom>', 'resume from transaction number (inclusive, one-based index), this will append to the output files instead of overwriting them').default(0).argParser((value) => parseInt(value) - 1))
+        .addOption(
+            new Option(
+                '--resume-from <resumeFrom>',
+                'resume from transaction number (inclusive, one-based index), this will append to the output files instead of overwriting them',
+            )
+                .default(0)
+                .argParser((value) => parseInt(value) - 1),
+        )
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between transaction verifications').default(100))
         .addOption(new Option('-i, --input-file <inputFile>', 'input file with transactions to verify').default('/tmp/load-test.txt'))
-        .addOption(new Option('-f, --fail-output <failOutput>', 'output file to save the failed transactions').default('/tmp/load-test-fail.txt'))
-        .addOption(new Option('-p, --pending-output <pendingOutput>', 'output file to save the pending transactions').default('/tmp/load-test-pending.txt'))
-        .addOption(new Option('-s, --success-output <successOutput>', 'output file to save the successful transactions').default('/tmp/load-test-success.txt'))
+        .addOption(
+            new Option('-f, --fail-output <failOutput>', 'output file to save the failed transactions').default('/tmp/load-test-fail.txt'),
+        )
+        .addOption(
+            new Option('-p, --pending-output <pendingOutput>', 'output file to save the pending transactions').default(
+                '/tmp/load-test-pending.txt',
+            ),
+        )
+        .addOption(
+            new Option('-s, --success-output <successOutput>', 'output file to save the successful transactions').default(
+                '/tmp/load-test-success.txt',
+            ),
+        )
         .action((options) => {
             mainProcessor(verify, options);
         });
