@@ -243,6 +243,11 @@ fn pay_gas<'a>(
     its_hub_address: String,
     gas_value: u64,
 ) -> ProgramResult {
+    if gas_service.key != &axelar_solana_gas_service::id() {
+        msg!("Invalid gas service account");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
     let gas_payment_ix =
         axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
             gas_service.key,

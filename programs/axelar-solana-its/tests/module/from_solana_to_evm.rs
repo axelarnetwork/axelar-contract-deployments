@@ -1,8 +1,11 @@
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 use borsh::BorshDeserialize;
+use evm_contracts_test_suite::ethers::signers::Signer;
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
 use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
+use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer as _;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
@@ -478,4 +481,61 @@ async fn fail_when_chain_not_trusted(ctx: &mut ItsTestContext) {
         .await;
 
     let _ = custom_token(ctx, TokenManagerType::MintBurn).await.unwrap();
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (token_id, _evm_token, solana_token) = canonical_token(ctx).await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let create_ata_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    let initial_balance = 300;
+    let mint_ix = spl_token_2022::instruction::mint_to(
+        &spl_token_2022::id(),
+        &solana_token,
+        &token_account,
+        &ctx.solana_wallet,
+        &[],
+        initial_balance,
+    )?;
+
+    ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
+    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
+        token_account,
+        Some(ctx.solana_wallet),
+        token_id,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        initial_balance,
+        solana_token,
+        spl_token_2022::id(),
+        1000,                 // gas_value needs to be greater than 0 for pay_gas to be called
+        Pubkey::new_unique(), // Invalid gas service id
+        ctx.solana_gas_utils.config_pda,
+        clock_sysvar.unix_timestamp,
+    )
+    .unwrap();
+
+    assert!(ctx
+        .send_solana_tx(&[transfer_ix])
+        .await
+        .unwrap_err()
+        .find_log("Invalid gas service account")
+        .is_some());
+
+    Ok(())
 }
