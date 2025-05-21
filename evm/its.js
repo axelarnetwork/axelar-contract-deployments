@@ -202,7 +202,7 @@ async function processCommand(config, chain, action, options) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
-            break;
+            return interchainTokenAddress;
         }
 
         case 'interchain-token-id': {

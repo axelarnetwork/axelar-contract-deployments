@@ -4,7 +4,7 @@ const { loadConfig, printInfo, printWarn, printHighlight, callAxelarscanApi } = 
 const { Command, Option } = require('commander');
 const { addBaseOptions } = require('../common/cli-utils.js');
 
-const { httpPost, deriveAccounts } = require('./utils.js');
+const { deriveAccounts } = require('./utils.js');
 
 const { its } = require('./its.js');
 
@@ -12,23 +12,28 @@ const ethers = require('ethers');
 const fs = require('fs');
 const chalk = require('chalk');
 
-const ITS_EXAMPLE_PAYLOAD =
-        '0x0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000047872706c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000ba5a21ca88ef6bba2bfff5088994f90e1077e2a1cc3dcc38bd261f00fce2824f00000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000014ba76c6980428a0b10cfc5d8ccb61949677a6123300000000000000000000000000000000000000000000000000000000000000000000000000000000000000227277577142334d3352694c634c724c6d754e34524e5964594c507239544e384831430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
-const ITS_ACTION = 'interchain-transfer';
+const ITS_ACTION_INTERCHAIN_TRANSFER = 'interchain-transfer';
+const ITS_ACTION_TOKEN_ADDRESS = 'interchain-token-address';
 
 let writing = false;
 let transactions = [];
 let stream = null;
 
 const estimateGas = async (config, options) => {
-    const { sourceChain, destinationChain, executionGasLimit, tokenId } = options;
+    const { sourceChain, destinationChain, tokenId, privateKey, env } = options;
 
-    const gasFee = await callAxelarscanApi(config, 'gmp/estimateGasFee', {
+    const tokenAddress = await its(ITS_ACTION_TOKEN_ADDRESS, [ tokenId ], {
+        chainNames: sourceChain,
+        env,
+        yes: true,
+        privateKey,
+    })[0];
+
+    const gasFee = await callAxelarscanApi(config, 'gmp/estimateITSFee', {
         sourceChain,
         destinationChain,
-        sourceTokenAddress: ethers.constants.AddressZero,
-        gasLimit: executionGasLimit,
-        executeData: ITS_EXAMPLE_PAYLOAD,
+        sourceTokenAddress: tokenAddress,
+        event: 'InterchainTransfer'
     });
 
     return gasFee.toString();
@@ -88,7 +93,7 @@ const startTest = async (config, options) => {
         if (pk) {
             const promiseId = promiseCounter++;
 
-            const promise = its(ITS_ACTION, args, { ...itsOptions, privateKey: pk })
+            const promise = its(ITS_ACTION_INTERCHAIN_TRANSFER, args, { ...itsOptions, privateKey: pk })
                 .then((txHash) => {
                     txCount++;
 
@@ -100,17 +105,17 @@ const startTest = async (config, options) => {
                 .finally(() => {
                     elapsedTime = (performance.now() - startTime) / 1000;
 
+                    privateKeys.push(pk);
+                    printWarning = true;
+
+                    pendingPromises.delete(promiseId);
+
                     console.log('='.repeat(20).concat('\n'));
                     printInfo('Txs count', txCount.toString());
                     printInfo('Elapsed time (min)', elapsedTime / 60);
                     printInfo('Tx per second', txCount / elapsedTime);
                     printInfo('Private keys length', privateKeys.length);
                     console.log('='.repeat(20).concat('\n'));
-
-                    privateKeys.push(pk);
-                    printWarning = true;
-
-                    pendingPromises.delete(promiseId);
                 });
 
             pendingPromises.set(promiseId, promise);
@@ -252,7 +257,6 @@ const programHandler = () => {
         .option('--destination-address <destinationAddress>', 'destination address')
         .option('--token-id <tokenId>', 'token id')
         .option('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
-        .option('--executionGasLimit <executionGasLimit>', 'execution gas limit')
         .addOption(new Option('-t, --time <time>', 'time limit in minutes to run the test').argParser((value) => parseInt(value) * 60))
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between calls').default(10))
         .addOption(new Option('--addresses-to-derive <addresses-to-derive>', 'quantity of accounts to derive from mnemonic, used as source addresses to execute parallel transfers').env('DERIVE_ACCOUNTS'))
