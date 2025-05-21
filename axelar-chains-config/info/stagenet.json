@@ -1955,7 +1955,8 @@
             14,
             8,
             6
-          ]
+          ],
+          "connectionType": "amplifier"
         }
       }
     },
