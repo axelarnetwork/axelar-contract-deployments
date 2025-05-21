@@ -3160,12 +3160,12 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "codeId": 32,
+          "codeId": 55,
           "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
         },
         "storeCodeProposalId": "310",
         "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
-        "lastUploadedCodeId": 34
+        "lastUploadedCodeId": 55
       }
     },
     "axelarId": "axelar",
