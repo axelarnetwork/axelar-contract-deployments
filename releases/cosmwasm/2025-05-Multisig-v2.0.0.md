@@ -71,5 +71,3 @@ Expected output
 ```bash
 {"contract":"multisig","version":"2.0.0"}
 ```
-
-
