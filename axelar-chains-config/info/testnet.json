@@ -3152,9 +3152,9 @@
           "codeId": 31,
           "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy"
         },
-        "storeCodeProposalCodeHash": "bd408b0d152ab460e53f2ca4107153df7a169cec9e501fc058f242abaaf0e23e",
+        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
         "lastUploadedCodeId": 31,
-        "storeCodeProposalId": "245"
+        "storeCodeProposalId": "311"
       },
       "XrplGateway": {
         "xrpl": {
