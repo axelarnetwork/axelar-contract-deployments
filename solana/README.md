@@ -2,19 +2,29 @@
 
 ## Instalation
 
-Install Solana CLI
+1. Ensure you have Rust installed. If you don't:
 
 ```sh
-sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-For more info on how to install the Solana tooling, check the official documentation [here](https://solana.com/docs/intro/installation).
+2. Install Solana CLI:
 
-Create a new  Solana keypair
+```sh
+sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.14/install)"
+```
+
+3. Install `solana-verify`, for verifiable builds:
+
+```sh
+cargo install solana-verify --locked 0.4.4
+```
+
+4. Create a new  Solana keypair
 
 ```sh
 # Set default cluster
-solana config set --url testnet 
+solana config set --url devnet
 
 # Generate a new keypair
 solana-keygen new 
@@ -27,7 +37,7 @@ solana-keygen new --force
 
 ```
 
-Testnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
+5. Devnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
 
 ```sh
 solana airdrop 2
@@ -41,7 +51,7 @@ Setup
 2. Compile the Solana programs.
 
 > [!IMPORTANT]
-> For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar/solana` directory by invoking:
+> For the initial deployment of Solana programs to any of the clusters (devnet, testnet, and mainnet-beta), the program keypairs are required. The pubkey is the program ID and is hardcoded in the program using the `declare_id` macro. In case a new set of keypairs is required, a new release of the crates needs to happen afterwards (due to the id being hardcoded). Updating the ids can be done within the `solana-axelar` directory by invoking:
 > ```sh
 > cargo xtask update-ids
 > ```
@@ -50,55 +60,99 @@ Setup
 > [!NOTE]
 > Initial deployment of Solana programs doesn't support offline signing, the process needs to be done online. When deploying, an `upgrade-authority` can be set, which will later be able to perform program upgrades — upgrades support offline signing.
 
+In order to get verifiable builds, we use `solana-verify` tool. For more information on how to use the tool - including when multisig is used (which is expected as upgrade authority for mainnet deployments) - visit the [Solana guide for verifiable builds](https://solana.com/developers/guides/advanced/verified-builds).
+
+Set the `BASE_IMAGE` variable:
+
+```sh
+export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
+```
+
 ```sh
 # Go to the solana directory within the cloned repo
-pushd solana-axelar/solana/
+pushd solana-axelar
 
 # Compile the Solana programs
-cargo xtask build
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gas_service
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_gateway
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_governance
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_its
+solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multicall
 
 # Go back
 popd
 ```
 
-### Gateway
-
-Deploy the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
+3. Declare enviroment variables:
 
 ```sh
-solana program-v4 deploy --program-keypair <PATH_TO_GATEWAY_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gateway.so
+GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
+GATEWAY_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gateway.so"
+
+GAS_SERVICE_PROGRAM_KEYPAIR_PATH=<path/to/gas_service_program_keypair.json>
+GAS_SERVICE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_gas_service.so"
+
+GOVERNANCE_PROGRAM_KEYPAIR_PATH=<path/to/governance_program_keypair.json>
+GOVERNANCE_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_governance.so"
+
+MULTICALL_PROGRAM_KEYPAIR_PATH=<path/to/multicall_program_keypair.json>
+MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
+
+ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
+ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
+
+UPGRADE_AUTHORITY_PUBKEY=<base58 pubkey to set as upgrade authority>
+```
+
+### Gateway
+
+Deploy and verify the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
+
+```sh
+solana program-v4 deploy --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GATEWAY_PROGRAM_PATH
+
+
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
 ```
 
 ### Gas Service
 
-Deploy the gas service program
+Deploy and verify the gas service program
 
 ```sh
-solana program-v4 deploy --program-keypair <PATH_TO_GAS_SERVICE_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_gas_service.so
-```
+solana program-v4 deploy --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GAS_SERVICE_PROGRAM_PATH
 
-### Interchain Token Service
-
-Deploy the ITS program
-
-```sh
-solana program-v4 deploy --program-keypair <PATH_TO_ITS_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_its.so
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
 ```
 
 ### Governance
 
-Deploy the governance program
+Deploy and verify the governance program
 
 ```sh
-solana program-v4 deploy --program-keypair <PATH_TO_GOVERNANCE_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_governance.so
+solana program-v4 deploy --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GOVERNANCE_PROGRAM_PATH
+
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
 ```
 
 ### Multicall
 
-Deploy the multicall program
+Deploy and verify the multicall program
 
 ```sh
-solana program-v4 deploy --program-keypair <PATH_TO_MULTICALL_PROGRAM_KEYPAIR> --authority <AUTHORITY_PUBKEY> solana-axelar/solana/target/sbf-solana-solana/release/axelar_solana_multicall.so
+solana program-v4 deploy --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $MULTICALL_PROGRAM_PATH
+
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+```
+
+### Interchain Token Service
+
+Deploy and verify the ITS program
+
+```sh
+solana program-v4 deploy --program-keypair $ITS_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $ITS_PROGRAM_PATH
+
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
 ```
 
 ## Upgrades
@@ -134,20 +188,21 @@ Main commands:
 - `combine`: Combine multiple partial signatures into a single file
 - `broadcast`: Broadcast a combined signed transaction to the Solana network
 - `misc`: Miscellaneous utilities
+- `query`: Commands used to query accounts or emitted events
 
-`send` and `generate` have associated subcommands for specific contract interactions.
+`send`, `generate`, and `query` have associated subcommands for specific contract interactions.
 
 ### Network Configuration
 
 There are a few different ways you can specify the Solana network to connect to:
 
-By exporting the `ENV` variable in your shell:
+By exporting the `CLUSTER` variable in your shell:
 
 ```sh
-export ENV=<URL_OR_MONIKER>
+export CLUSTER=<URL_OR_MONIKER>
 ```
 
-By creating a `.env` file in the root of the project with the `ENV=<URL_OR_MONIKER>` entry or, on every command:
+By creating a `.env` file in the root of the project with the `CLUSTEr=<URL_OR_MONIKER>` entry or, on every command:
 
 ```sh
 solana/solana-axelar-cli --url <URL_OR_MONIKER> <COMMAND> [OPTIONS]
