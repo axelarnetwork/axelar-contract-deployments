@@ -126,3 +126,5 @@ sui/move
 .idea
 
 .stellar/
+
+signatures/
