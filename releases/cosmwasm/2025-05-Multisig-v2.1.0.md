@@ -31,7 +31,7 @@ Changes in this release:
 node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.1.0" -d "Upload Multisig contract v2.1.0" --version 2.1.0
 ```
 
-1. Upgrade Multisig contract
+2. Upgrade Multisig contract
 
 There is no state migration needed during upgrade.
 
