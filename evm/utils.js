@@ -759,6 +759,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
@@ -774,7 +775,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            await processCommand(config, chain, options);
+            const result = await processCommand(config, chain, options);
+
+            if (result) {
+                results.push(result);
+            }
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
@@ -791,6 +796,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             }
         }
     }
+
+    return results;
 };
 
 function getConfigByChainId(chainId, config) {
