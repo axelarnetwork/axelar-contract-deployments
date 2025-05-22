@@ -2716,12 +2716,12 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "codeId": 48,
+          "codeId": 50,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6"
         },
         "storeCodeProposalId": "184",
         "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
-        "lastUploadedCodeId": 48
+        "lastUploadedCodeId": 50
       },
       "XrplMultisigProver": {
         "xrpl": {
