@@ -1,4 +1,5 @@
 use borsh::BorshDeserialize;
+use solana_program::instruction::AccountMeta;
 use solana_program_test::tokio;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -9,7 +10,9 @@ use spl_associated_token_account::{
 use test_context::test_context;
 
 use axelar_solana_gateway_test_fixtures::base::FindLog;
-use axelar_solana_its::{state::token_manager::TokenManager, Roles};
+use axelar_solana_its::{
+    instruction::InterchainTokenServiceInstruction, state::token_manager::TokenManager, Roles,
+};
 use role_management::state::UserRoles;
 
 use crate::ItsTestContext;
@@ -671,4 +674,191 @@ async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
     assert!(tx_metadata
         .find_log("User doesn't have the required roles")
         .is_some());
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut ItsTestContext) {
+    // Alice is our ctx.solana_chain.fixture.payer
+    // Create Bob who will be the Flow Limiter
+    let bob = Keypair::new();
+    let token_a_id = ctx.deployed_interchain_token;
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_a_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_a_id);
+
+    // Fund Bob's account so he can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &bob.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Alice gives Bob Flow Limiter role on TokenA
+    let add_flow_limiter_ix = axelar_solana_its::instruction::token_manager::add_flow_limiter(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        token_a_id,
+        bob.pubkey(),
+    )
+    .unwrap();
+
+    ctx.send_solana_tx(&[add_flow_limiter_ix]).await.unwrap();
+
+    // Assert that Bob has Flow Limiter role on TokenA
+    let (bob_roles_pda_token_a, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_a_manager_pda,
+        &bob.pubkey(),
+    );
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&bob_roles_pda_token_a, &axelar_solana_its::id())
+        .await
+        .data;
+    let bob_roles_token_a = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+    assert!(bob_roles_token_a.contains(Roles::FLOW_LIMITER));
+
+    // Verify Bob does NOT have Minter role on TokenA yet
+    assert!(!bob_roles_token_a.contains(Roles::MINTER));
+
+    // Bob deploys TokenB to become its operator
+    let token_b_salt = solana_sdk::keccak::hashv(&[b"salt"]).0;
+    let token_b_id = axelar_solana_its::interchain_token_id(&bob.pubkey(), &token_b_salt);
+    // Bob attempts to deploy a new token as himself
+    let deploy_token_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        bob.pubkey(),
+        token_b_salt,
+        "Token B".to_string(),
+        "TOKB".to_string(),
+        8,
+        0,
+        Some(bob.pubkey()), // Bob is the initial minter
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[deploy_token_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    let (token_b_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_b_id);
+
+    // Verify Bob is now an operator on TokenB
+    let (bob_roles_pda_token_b, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_b_manager_pda,
+        &bob.pubkey(),
+    );
+
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&bob_roles_pda_token_b, &axelar_solana_its::id())
+        .await
+        .data;
+    let bob_roles_token_b = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+    assert!(bob_roles_token_b.contains(Roles::OPERATOR));
+
+    // Bob attempts to exploit the vulnerability to make himself a minter on TokenA
+    // The exploit relies on constructing a custom transaction where:
+    // - Bob uses his Operator role on TokenB (where he has authority)
+    // - But modifies the transfer to target TokenA where he only has Flow Limiter role
+    let exploit_ix = {
+        let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+
+        // Bob's roles on TokenB (where he is Operator)
+        let (bob_roles_pda_token_b, _) = role_management::find_user_roles_pda(
+            &axelar_solana_its::id(),
+            &token_b_manager_pda,
+            &bob.pubkey(),
+        );
+
+        // Alice's roles on TokenA (where she is Minter)
+        let (alice_roles_pda_token_a, _) = role_management::find_user_roles_pda(
+            &axelar_solana_its::id(),
+            &token_a_manager_pda,
+            &ctx.solana_chain.fixture.payer.pubkey(),
+        );
+
+        // Bob's roles on TokenA (where he's only Flow Limiter)
+        let (bob_roles_pda_token_a, bob_roles_pda_token_a_bump) =
+            role_management::find_user_roles_pda(
+                &axelar_solana_its::id(),
+                &token_a_manager_pda,
+                &bob.pubkey(),
+            );
+
+        // Create exploit instruction that uses:
+        // - TokenB as the resource/context for authorization (where Bob is Operator)
+        // - But transfers Minter role on TokenA from Alice to Bob
+        let inputs = role_management::instructions::RoleManagementInstructionInputs {
+            roles: Roles::MINTER,
+            destination_roles_pda_bump: bob_roles_pda_token_a_bump,
+            proposal_pda_bump: None,
+        };
+
+        // Create a custom instruction mimicking transfer_mintership instruction
+        // with mismatched resource and role accounts
+        solana_program::instruction::Instruction {
+            program_id: axelar_solana_its::id(),
+            accounts: vec![
+                AccountMeta::new_readonly(its_root_pda, false),
+                AccountMeta::new_readonly(solana_program::system_program::id(), false),
+                AccountMeta::new(bob.pubkey(), true),
+                // This is where the exploit happens - Bob's roles on TokenB, not TokenA
+                AccountMeta::new_readonly(bob_roles_pda_token_b, false),
+                // We use resource as TokenB but target roles on TokenA
+                AccountMeta::new_readonly(token_b_manager_pda, false),
+                AccountMeta::new_readonly(bob.pubkey(), false),
+                AccountMeta::new(bob_roles_pda_token_a, false),
+                AccountMeta::new_readonly(ctx.solana_chain.fixture.payer.pubkey(), false),
+                AccountMeta::new(alice_roles_pda_token_a, false),
+            ],
+            data: borsh::to_vec(
+                &InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs },
+            )
+            .unwrap(),
+        }
+    };
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[exploit_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(), // This is just due to how our
+                                                                  // testing fixtures work,
+                                                                  // normally Alice wouldn't need
+                                                                  // to sign the transaction here.
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with an error about derived PDA not matching
+    // This validates that the fix works and Bob cannot escalate privileges
+    assert!(tx_metadata.find_log("Derived PDA").is_some());
+
+    // Ensure that Bob still does not have Minter role on TokenA
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&bob_roles_pda_token_a, &axelar_solana_its::id())
+        .await
+        .data;
+    let bob_roles_token_a = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+    assert!(!bob_roles_token_a.contains(Roles::MINTER));
 }

@@ -40,6 +40,14 @@ pub fn propose<F: RolesFlags>(
         inputs.roles,
     )?;
 
+    ensure_proper_account(
+        program_id,
+        transfer_accounts.resource,
+        transfer_accounts.destination_user_account,
+        transfer_accounts.destination_roles_account,
+        None,
+    )?;
+
     let proposal = RoleProposal {
         roles: inputs.roles,
     };
@@ -76,31 +84,15 @@ pub fn accept<F: RolesFlags>(
     inputs: &RoleManagementInstructionInputs<F>,
     required_payer_roles: F,
 ) -> ProgramResult {
-    let transfer_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
+    let transfer_with_proposal_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
 
     ensure_signer_roles(
         program_id,
-        transfer_accounts.resource,
-        transfer_accounts.payer,
-        transfer_accounts.payer_roles_account,
+        transfer_with_proposal_accounts.resource,
+        transfer_with_proposal_accounts.payer,
+        transfer_with_proposal_accounts.payer_roles_account,
         required_payer_roles,
     )?;
-
-    if !transfer_accounts.payer.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let (derived_pda, _) = crate::create_user_roles_pda(
-        program_id,
-        transfer_accounts.resource.key,
-        transfer_accounts.destination_user_account.key,
-        inputs.destination_roles_pda_bump,
-    );
-
-    if *transfer_accounts.destination_roles_account.key != derived_pda {
-        msg!("Derived PDA doesn't match destination roles account");
-        return Err(ProgramError::InvalidArgument);
-    }
 
     let Some(proposal_pda_bump) = inputs.proposal_pda_bump else {
         return Err(ProgramError::InvalidArgument);
@@ -108,34 +100,34 @@ pub fn accept<F: RolesFlags>(
 
     let (derived_proposal_pda, _) = crate::create_roles_proposal_pda(
         program_id,
-        transfer_accounts.resource.key,
-        transfer_accounts.origin_user_account.key,
-        transfer_accounts.destination_user_account.key,
+        transfer_with_proposal_accounts.resource.key,
+        transfer_with_proposal_accounts.origin_user_account.key,
+        transfer_with_proposal_accounts.destination_user_account.key,
         proposal_pda_bump,
     );
 
-    if derived_proposal_pda != *transfer_accounts.proposal_account.key {
+    if derived_proposal_pda != *transfer_with_proposal_accounts.proposal_account.key {
         msg!("Derived PDA doesn't match given  proposal account address");
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal = RoleProposal::<F>::load(transfer_accounts.proposal_account)?;
+    let proposal = RoleProposal::<F>::load(transfer_with_proposal_accounts.proposal_account)?;
     if !proposal.roles.contains(inputs.roles) {
         msg!("Trying to accept a role that hasn't been proposed");
         return Err(ProgramError::InvalidArgument);
     }
 
-    close_pda(
-        transfer_accounts.origin_user_account,
-        transfer_accounts.proposal_account,
-    )?;
+    let proposal_account = transfer_with_proposal_accounts.proposal_account;
+    let transfer_accounts: RoleTransferAccounts<'_> = transfer_with_proposal_accounts.into();
 
     transfer_roles(
         program_id,
-        &transfer_accounts.into(),
+        &transfer_accounts,
         inputs.roles,
         inputs.destination_roles_pda_bump,
     )?;
+
+    close_pda(transfer_accounts.origin_user_account, proposal_account)?;
 
     Ok(())
 }
@@ -152,6 +144,14 @@ fn transfer_roles<F: RolesFlags>(
         accounts.origin_user_account,
         accounts.origin_roles_account,
         roles,
+    )?;
+
+    ensure_proper_account(
+        program_id,
+        accounts.resource,
+        accounts.destination_user_account,
+        accounts.destination_roles_account,
+        Some(destination_roles_pda_bump),
     )?;
 
     let mut origin_user_roles = UserRoles::load(accounts.origin_roles_account)?;
@@ -240,6 +240,14 @@ pub fn add<F: RolesFlags>(
         required_payer_roles,
     )?;
 
+    ensure_proper_account(
+        program_id,
+        add_accounts.resource,
+        add_accounts.destination_user_account,
+        add_accounts.destination_roles_account,
+        None,
+    )?;
+
     if let Ok(mut destination_user_roles) = UserRoles::load(add_accounts.destination_roles_account)
     {
         destination_user_roles.add(inputs.roles);
@@ -288,6 +296,14 @@ pub fn remove<F: RolesFlags>(
         required_payer_roles,
     )?;
 
+    ensure_proper_account(
+        program_id,
+        remove_accounts.resource,
+        remove_accounts.destination_user_account,
+        remove_accounts.destination_roles_account,
+        None,
+    )?;
+
     if let Ok(mut destination_user_roles) =
         UserRoles::load(remove_accounts.destination_roles_account)
     {
@@ -330,13 +346,14 @@ pub fn ensure_roles<F: RolesFlags>(
         msg!("User doesn't have the required roles");
         return Err(ProgramError::InvalidArgument);
     }
-    let (derived_pda, _) =
-        crate::create_user_roles_pda(program_id, resource.key, user.key, user_roles.bump());
 
-    if *roles_account.key != derived_pda {
-        msg!("Derived PDA doesn't match given roles account address");
-        return Err(ProgramError::InvalidArgument);
-    }
+    ensure_proper_account(
+        program_id,
+        resource,
+        user,
+        roles_account,
+        Some(user_roles.bump()),
+    )?;
 
     Ok(())
 }
@@ -413,6 +430,33 @@ pub fn ensure_upgrade_authority(
     Ok(())
 }
 
+/// Ensure the account passed is a role account for the given user and resource.
+///
+/// # Errors
+///
+/// If the PDA derived from the user and resource keys is different than the passed role account
+/// key.
+pub fn ensure_proper_account(
+    program_id: &Pubkey,
+    resource: &AccountInfo<'_>,
+    user: &AccountInfo<'_>,
+    user_roles: &AccountInfo<'_>,
+    maybe_bump: Option<u8>,
+) -> ProgramResult {
+    let (derived_pda, _) = crate::user_roles_pda(program_id, resource.key, user.key, maybe_bump);
+
+    if *user_roles.key != derived_pda {
+        msg!(
+            "Derived PDA ({}) doesn't match given roles account address ({})",
+            user_roles.key,
+            derived_pda
+        );
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    Ok(())
+}
+
 /// Accounts used by role management instructions.
 pub struct RoleManagementAccounts<'a> {
     /// System account.
@@ -448,6 +492,7 @@ impl<'a> TryFrom<&'a [AccountInfo<'a>]> for RoleManagementAccounts<'a> {
 
     fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
         let account_iter = &mut value.iter();
+
         Ok(Self {
             system_account: next_account_info(account_iter)?,
             payer: next_account_info(account_iter)?,
