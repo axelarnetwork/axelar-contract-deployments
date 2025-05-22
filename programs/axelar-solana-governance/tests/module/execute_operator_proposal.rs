@@ -164,7 +164,7 @@ async fn test_non_previously_approved_operator_proposal_execution_fails() {
     assert!(res.is_err());
     assert_msg_present_in_logs(
         res.err().unwrap(),
-        "An account required by the instruction is missing",
+        "Operator has no approval rights for this proposal",
     );
 }
 

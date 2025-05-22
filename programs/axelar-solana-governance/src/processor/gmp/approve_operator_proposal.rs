@@ -43,7 +43,7 @@ pub(crate) fn process(
         operator_proposal_pda,
         program_id,
         system_account,
-        0,
+        1,
         &[
             seed_prefixes::OPERATOR_MANAGED_PROPOSAL,
             &ctx.proposal_hash,

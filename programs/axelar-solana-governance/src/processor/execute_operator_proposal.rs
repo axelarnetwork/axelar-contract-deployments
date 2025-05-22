@@ -50,6 +50,13 @@ pub(crate) fn process(
         &hash,
     )?;
 
+    // Check that the proposal is executable by the operator by checking the operator_pda_marker_account
+    // account is initialized.
+    if !operator_pda_marker_account.is_initialized_pda(&crate::id()) {
+        msg!("Operator has no approval rights for this proposal");
+        return Err(ProgramError::UninitializedAccount);
+    }
+
     let proposal = ExecutableProposal::load_from(program_id, proposal_account)?;
 
     // Only invoke with target program accounts.
