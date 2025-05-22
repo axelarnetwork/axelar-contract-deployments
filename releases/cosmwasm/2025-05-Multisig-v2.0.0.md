@@ -27,15 +27,8 @@ Changes in this release:
 
 1. Upload new Multisig contract
 
-| Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
-| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
-
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.0.0" -d "Upload Multisig contract v2.0.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.0.0
+node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.0.0" -d "Upload Multisig contract v2.0.0" --version 2.0.0
 ```
 
 2. Upgrade Multisig contract
@@ -48,8 +41,7 @@ node cosmwasm/submit-proposal.js migrate \
   -t "Migrate Multisig to v2.0.0" \
   -d "Multisig to v2.0.0" \
   --msg '{}' \
-  --fetchCodeId \
-  --deposit $DEPOSIT_VALUE
+  --fetchCodeId
 ```
 
 ## Checklist
