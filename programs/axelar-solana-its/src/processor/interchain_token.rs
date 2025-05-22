@@ -298,7 +298,7 @@ pub(crate) fn process_outbound_deploy<'a>(
         payer,
         &gmp_accounts,
         &message,
-        destination_chain,
+        destination_chain.clone(),
         gas_value,
         signing_pda_bump,
         None,
@@ -308,7 +308,13 @@ pub(crate) fn process_outbound_deploy<'a>(
     // This closes the account and transfers lamports back, thus, this needs to happen after all
     // CPIs
     if let Some((destination_minter, deploy_approval, minter)) = destination_minter_data {
-        use_deploy_approval(minter, deploy_approval, &destination_minter)?;
+        use_deploy_approval(
+            minter,
+            deploy_approval,
+            &destination_minter,
+            &token_id,
+            &destination_chain,
+        )?;
     }
 
     Ok(())
@@ -638,8 +644,19 @@ pub(crate) fn use_deploy_approval(
     minter: &AccountInfo<'_>,
     deploy_approval_account: &AccountInfo<'_>,
     destination_minter: &[u8],
+    token_id: &[u8; 32],
+    destination_chain: &str,
 ) -> ProgramResult {
     let approval = DeployApproval::load(deploy_approval_account)?;
+
+    assert_valid_deploy_approval_pda(
+        deploy_approval_account,
+        minter.key,
+        token_id,
+        destination_chain,
+        approval.bump,
+    )?;
+
     if approval.approved_destination_minter != solana_program::keccak::hash(destination_minter).0 {
         return Err(ProgramError::InvalidArgument);
     }

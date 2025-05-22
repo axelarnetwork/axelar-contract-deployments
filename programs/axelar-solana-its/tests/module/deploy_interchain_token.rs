@@ -1,9 +1,14 @@
 use anyhow::anyhow;
 use event_utils::Event as _;
 use solana_program_test::tokio;
-use solana_sdk::program_pack::Pack as _;
+use solana_sdk::program_pack::Pack;
+use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use test_context::test_context;
+
+use axelar_solana_gateway_test_fixtures::base::FindLog;
 
 use crate::ItsTestContext;
 
@@ -286,6 +291,146 @@ async fn test_deploy_interchain_token_with_no_minter_but_initial_supply(
         result.is_err(),
         "Expected minting to fail for fixed supply token"
     );
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let destination_chain = "ethereum";
+    let destination_minter = vec![1, 2, 3, 4, 5];
+
+    // Alice is our ctx.solana_chain.fixture.payer who has deployed TokenA
+    let token_a_id = ctx.deployed_interchain_token;
+    let token_a_salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
+
+    // Create Bob who will deploy TokenB
+    let bob = Keypair::new();
+
+    // Fund Bob's account so he can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &bob.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Bob deploys TokenB
+    let token_b_salt = [1u8; 32];
+    let deploy_token_b_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        bob.pubkey(),
+        token_b_salt,
+        "Token B".to_string(),
+        "TOKB".to_string(),
+        8,
+        0,
+        Some(bob.pubkey()),
+    )?;
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[deploy_token_b_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    let token_b_id = axelar_solana_its::interchain_token_id(&bob.pubkey(), &token_b_salt);
+
+    // Alice creates an approval for deploying TokenA to a remote chain
+    let approve_deploy_a_ix =
+        axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_a_salt,
+            destination_chain.to_string(),
+            destination_minter.clone(),
+        )?;
+
+    ctx.send_solana_tx(&[approve_deploy_a_ix]).await.unwrap();
+
+    // Find approval PDA for TokenA
+    let (approval_pda, _) = axelar_solana_its::find_deployment_approval_pda(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &token_a_id,
+        destination_chain,
+    );
+
+    // Verify approval account was created correctly
+    let approval_account = ctx
+        .solana_chain
+        .try_get_account_no_checks(&approval_pda)
+        .await?
+        .ok_or_else(|| anyhow!("approval account not found"))?;
+
+    assert_eq!(
+        approval_account.owner,
+        axelar_solana_its::id(),
+        "Approval account has wrong owner"
+    );
+
+    // Now try to exploit by using TokenA's approval to deploy TokenB remotely
+    // First, build the proper instruction for deploying TokenB
+    let deploy_token_b_remote_ix =
+        axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            bob.pubkey(),
+            token_b_salt,
+            bob.pubkey(),
+            destination_chain.to_string(),
+            destination_minter.clone(),
+            0, // gas value
+            axelar_solana_gas_service::id(),
+            ctx.solana_gas_utils.config_pda,
+        )?;
+
+    let (token_b_approval_pda, _) = axelar_solana_its::find_deployment_approval_pda(
+        &bob.pubkey(),
+        &token_b_id,
+        destination_chain,
+    );
+
+    // Get the accounts from the legitimate instruction
+    let mut accounts = deploy_token_b_remote_ix.accounts.clone();
+
+    // Find the approval account in the accounts list (usually the 4th account)
+    // and replace it with Alice's approval for TokenA
+    for account in accounts.iter_mut() {
+        if account.pubkey == token_b_approval_pda {
+            account.pubkey = approval_pda; // Replace with Alice's approval for TokenA
+            break;
+        }
+    }
+
+    // Create an exploitative instruction that uses TokenA's approval for TokenB deployment
+    let exploit_ix = solana_program::instruction::Instruction {
+        program_id: axelar_solana_its::id(),
+        accounts,
+        data: deploy_token_b_remote_ix.data,
+    };
+
+    let result = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[exploit_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await;
+
+    // Transaction should fail due to proper validation in use_deploy_approval
+    assert!(result
+        .unwrap_err()
+        .find_log("Invalid DeploymentApproval PDA provided")
+        .is_some());
 
     Ok(())
 }
