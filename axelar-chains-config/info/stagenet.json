@@ -2699,12 +2699,12 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "codeId": 47,
+          "codeId": 49,
           "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
         },
-        "storeCodeProposalId": "176",
-        "storeCodeProposalCodeHash": "5d94ddb7d9581be6a1a40fed1d3f90e4818a70b5fb4fe09ff6f5f1e378dc54e8",
-        "lastUploadedCodeId": 47
+        "storeCodeProposalId": "182",
+        "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
+        "lastUploadedCodeId": 49
       },
       "XrplVotingVerifier": {
         "xrpl": {
