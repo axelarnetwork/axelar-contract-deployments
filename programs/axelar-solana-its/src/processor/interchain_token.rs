@@ -229,7 +229,7 @@ pub(crate) fn process_outbound_deploy<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    const OUTBOUND_MESSAGE_ACCOUNTS_INDEX: usize = 5;
+    const OUTBOUND_MESSAGE_ACCOUNTS_INDEX: usize = 3;
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;

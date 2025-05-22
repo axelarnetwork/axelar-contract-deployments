@@ -76,7 +76,7 @@ To create new bindings, following procedure has to be done:
 
 First of all, proper version of `native-to-anchor` has to be used.
 
-From the `root` of the folder, clone the following repo in a folder above:
+From the parent directory of the project `root` directory, clone the following repo in a folder above:
 
 ```bash
 cd ..
@@ -100,7 +100,7 @@ Initially, folder `generated` has been built just by calling `native-to-anchor` 
 To generate `memo-program`, `gateway` or `its` program bindings, it should be run in the following way:
 
 ```bash
-cd <repo_root>/solana
+cd <repo_root>/
 ```
 
 To generate `memo-program`:

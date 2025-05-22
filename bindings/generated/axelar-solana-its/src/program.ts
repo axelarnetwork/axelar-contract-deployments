@@ -331,16 +331,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -634,16 +624,6 @@ type AxelarSolanaIts = {
           isSigner: false;
         },
         {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "axelarSolanaGateway";
           isMut: false;
           isSigner: false;
@@ -735,16 +715,6 @@ type AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "sysvarInstructions";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "mplTokenMetadata";
           isMut: false;
           isSigner: false;
         },
@@ -2487,16 +2457,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -2790,16 +2750,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: false,
         },
         {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "axelarSolanaGateway",
           isMut: false,
           isSigner: false,
@@ -2891,16 +2841,6 @@ const IDL: AxelarSolanaIts = {
         },
         {
           name: "tokenManagerPda",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "sysvarInstructions",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "mplTokenMetadata",
           isMut: false,
           isSigner: false,
         },

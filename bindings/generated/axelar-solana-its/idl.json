@@ -312,16 +312,6 @@
           "isSigner": false
         },
         {
-          "name": "sysvarInstructions",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mplTokenMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -621,16 +611,6 @@
           "isSigner": false
         },
         {
-          "name": "sysvarInstructions",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mplTokenMetadata",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -725,16 +705,6 @@
         },
         {
           "name": "tokenManagerPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "sysvarInstructions",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mplTokenMetadata",
           "isMut": false,
           "isSigner": false
         },

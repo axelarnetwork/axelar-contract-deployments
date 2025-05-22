@@ -141,7 +141,7 @@ fn main() -> eyre::Result<()> {
             }
             cmd!(
                 sh,
-                "../../native-to-anchor/generator/target/debug/native-to-anchor package
+                "../native-to-anchor/generator/target/debug/native-to-anchor package
                 programs/{program}
                 -o bindings/generated/temp
                 -d bindings/anchor_lib/{program}.rs

@@ -354,8 +354,6 @@ pub struct DeployRemoteCanonicalInterchainToken<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     metadata_account: AccountInfo<'info>,
-    sysvar_instructions: AccountInfo<'info>,
-    mpl_token_metadata: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -425,8 +423,6 @@ pub struct DeployRemoteInterchainToken<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     metadata_account: AccountInfo<'info>,
-    sysvar_instructions: AccountInfo<'info>,
-    mpl_token_metadata: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -448,8 +444,6 @@ pub struct DeployRemoteInterchainTokenWithMinter<'info> {
     deploy_approval: AccountInfo<'info>,
     minter_roles_pda: AccountInfo<'info>,
     token_manager_pda: AccountInfo<'info>,
-    sysvar_instructions: AccountInfo<'info>,
-    mpl_token_metadata: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,

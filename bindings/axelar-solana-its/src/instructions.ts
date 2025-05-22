@@ -30,7 +30,7 @@ import { utils } from "ethers";
 import { AXELAR_SOLANA_GATEWAY_PROGRAM_ID } from "../../generated/axelar-solana-gateway/src";
 
 const BPF_UPGRADE_LOADER_ID = new PublicKey(
-  "BPFLoaderUpgradeab1e11111111111111111111111"
+  "BPFLoaderUpgradeab1e11111111111111111111111",
 );
 const MESSAGE_TYPE_INTERCHAIN_TRANSFER = 0;
 const MESSAGE_TYPE_SEND_TO_HUB = 3;
@@ -74,24 +74,24 @@ export class ItsInstructions {
   constructor(
     itsId: PublicKey,
     gatewayRootPda: PublicKey,
-    provider: AnchorProvider
+    provider: AnchorProvider,
   ) {
     this.program = axelarSolanaItsProgram({ programId: itsId, provider });
     this.gatewayRootPda = gatewayRootPda;
     this.itsRootPda = findItsRootPda(gatewayRootPda)[0];
     this.programDataAddress = PublicKey.findProgramAddressSync(
       [this.program.programId.toBytes()],
-      BPF_UPGRADE_LOADER_ID
+      BPF_UPGRADE_LOADER_ID,
     )[0];
     this.interchainToken = new InterchainTokenInstructions(
       itsId,
       gatewayRootPda,
-      provider
+      provider,
     );
     this.tokenManager = new TokenManagerInstructions(
       itsId,
       gatewayRootPda,
-      provider
+      provider,
     );
   }
 
@@ -159,21 +159,21 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["approveDeployRemoteInterchainToken"]> {
     const tokenId = interchainTokenId(
       params.deployer,
-      Buffer.from(params.salt)
+      Buffer.from(params.salt),
     );
     const [tokenManagerPda] = findTokenManagerPda(this.itsRootPda, tokenId);
     const [rolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [deployApprovalPda] = findDeploymentApprovalPda(
       params.payer,
       tokenId,
-      params.destinationChain
+      params.destinationChain,
     );
     return this.program.methods
       .approveDeployRemoteInterchainToken(
         params.deployer,
         params.salt,
         params.destinationChain,
-        Buffer.from(params.destinationMinter)
+        Buffer.from(params.destinationMinter),
       )
       .accounts({
         payer: params.payer,
@@ -192,18 +192,18 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["approveDeployRemoteInterchainToken"]> {
     const tokenId = interchainTokenId(
       params.deployer,
-      Buffer.from(params.salt)
+      Buffer.from(params.salt),
     );
     const [deployApprovalPda] = findDeploymentApprovalPda(
       params.payer,
       tokenId,
-      params.destinationChain
+      params.destinationChain,
     );
     return this.program.methods
       .revokeDeployRemoteInterchainToken(
         params.deployer,
         params.salt,
-        params.destinationChain
+        params.destinationChain,
       )
       .accounts({
         payer: params.payer,
@@ -224,7 +224,7 @@ export class ItsInstructions {
       tokenManagerPda,
       true,
       params.tokenProgram,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     const [tokenMetadataAccount] = findMetadataPda(params.mint);
     const [userRolesPda] = findUserRolesPda(tokenManagerPda, this.itsRootPda);
@@ -261,14 +261,12 @@ export class ItsInstructions {
       .deployRemoteCanonicalInterchainToken(
         params.destinationChain,
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
         mint: params.mint,
         metadataAccount: tokenMetadataAccount,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -292,26 +290,26 @@ export class ItsInstructions {
     const [tokenManagerPda] = findTokenManagerPda(this.itsRootPda, tokenId);
     const [interchainTokenPda] = findInterchainTokenPda(
       this.itsRootPda,
-      tokenId
+      tokenId,
     );
     const tokenManagerAta = getAssociatedTokenAddressSync(
       interchainTokenPda,
       tokenManagerPda,
       true,
       TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     const payerAta = getAssociatedTokenAddressSync(
       interchainTokenPda,
       params.payer,
       true,
       TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
     const [itsUserRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      this.itsRootPda
+      this.itsRootPda,
     );
     const [tokenMetadataAccount] = findMetadataPda(interchainTokenPda);
     let minterRolesPda;
@@ -326,7 +324,7 @@ export class ItsInstructions {
         params.name,
         params.symbol,
         params.decimals,
-        params.initialSupply
+        params.initialSupply,
       )
       .accounts({
         payer: params.payer,
@@ -359,7 +357,7 @@ export class ItsInstructions {
     const tokenId = interchainTokenId(params.payer, Buffer.from(params.salt));
     const [interchainTokenPda] = findInterchainTokenPda(
       this.itsRootPda,
-      tokenId
+      tokenId,
     );
     const [callContractSigningPda, signingPdaBump] =
       findCallContractSigningPda();
@@ -370,14 +368,12 @@ export class ItsInstructions {
         params.salt,
         params.destinationChain,
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
         mint: interchainTokenPda,
         metadataAccount: tokenMetadataAccount,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -401,7 +397,7 @@ export class ItsInstructions {
     const tokenId = interchainTokenId(params.payer, Buffer.from(params.salt));
     const [interchainTokenPda] = findInterchainTokenPda(
       this.itsRootPda,
-      tokenId
+      tokenId,
     );
     const [callContractSigningPda, signingPdaBump] =
       findCallContractSigningPda();
@@ -409,7 +405,7 @@ export class ItsInstructions {
     const [deployApprovalPda] = findDeploymentApprovalPda(
       params.minter,
       tokenId,
-      params.destinationChain
+      params.destinationChain,
     );
     const [tokenManagerPda] = findTokenManagerPda(this.itsRootPda, tokenId);
     const [minterRolesPda] = findUserRolesPda(tokenManagerPda, params.minter);
@@ -420,7 +416,7 @@ export class ItsInstructions {
         params.destinationChain,
         Buffer.from(params.destinationMinter),
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
@@ -430,8 +426,6 @@ export class ItsInstructions {
         deployApproval: deployApprovalPda,
         minterRolesPda,
         tokenManagerPda,
-        sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
         axelarSolanaGateway: AXELAR_SOLANA_GATEWAY_PROGRAM_ID,
         gasConfigPda: params.gasConfigPda,
         gasService: params.gasService,
@@ -484,12 +478,12 @@ export class ItsInstructions {
       tokenManagerPda,
       true,
       params.tokenProgram,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     const [tokenMetadataAccount] = findMetadataPda(params.mint);
     const [itsUserRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      this.itsRootPda
+      this.itsRootPda,
     );
     const operatorRolesPda = params.operator
       ? findUserRolesPda(tokenManagerPda, params.operator)[0]
@@ -499,7 +493,7 @@ export class ItsInstructions {
       .registerCustomToken(
         params.salt,
         tokenManagerTypeToInternalRepr(params.tokenManagerType),
-        params.operator
+        params.operator,
       )
       .accounts({
         payer: params.payer,
@@ -542,7 +536,7 @@ export class ItsInstructions {
         tokenManagerTypeToInternalRepr(params.tokenManagerType),
         Buffer.from(params.linkParams),
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
@@ -573,7 +567,7 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["interchainTransfer"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
 
     const timestamp = Math.floor(Date.now() / 1000);
@@ -585,7 +579,7 @@ export class ItsInstructions {
       params.mint,
       tokenManagerPda,
       true,
-      params.tokenProgram
+      params.tokenProgram,
     );
     const [callContractSigningPda, signingPdaBump] =
       findCallContractSigningPda();
@@ -597,7 +591,7 @@ export class ItsInstructions {
         Buffer.from(params.destinationAddress),
         params.amount,
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
@@ -635,7 +629,7 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["callContractWithInterchainToken"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
 
     const timestamp = Math.floor(Date.now() / 1000);
@@ -648,7 +642,7 @@ export class ItsInstructions {
       tokenManagerPda,
       true,
       params.tokenProgram,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     const [callContractSigningPda, signingPdaBump] =
       findCallContractSigningPda();
@@ -661,7 +655,7 @@ export class ItsInstructions {
         params.amount,
         Buffer.from(params.data),
         params.gasValue,
-        signingPdaBump
+        signingPdaBump,
       )
       .accounts({
         payer: params.payer,
@@ -698,11 +692,11 @@ export class ItsInstructions {
     gasConfigPda: PublicKey;
   }): [
     ReturnType<Program["methods"]["callContractWithInterchainToken"]>,
-    Uint8Array
+    Uint8Array,
   ] {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
 
     const timestamp = Math.floor(Date.now() / 1000);
@@ -715,7 +709,7 @@ export class ItsInstructions {
       tokenManagerPda,
       true,
       params.tokenProgram,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     const [callContractSigningPda, signingPdaBump] =
       findCallContractSigningPda();
@@ -729,12 +723,12 @@ export class ItsInstructions {
         params.destinationAddress,
         params.amount,
         params.data,
-      ]
+      ],
     );
 
     const hubPayload = utils.defaultAbiCoder.encode(
       ["uint256", "string", "bytes"],
-      [MESSAGE_TYPE_SEND_TO_HUB, params.destinationChain, transferPayload]
+      [MESSAGE_TYPE_SEND_TO_HUB, params.destinationChain, transferPayload],
     );
 
     const payloadHash = utils.arrayify(utils.keccak256(hubPayload));
@@ -748,7 +742,7 @@ export class ItsInstructions {
           params.amount,
           Array.from(payloadHash),
           params.gasValue,
-          signingPdaBump
+          signingPdaBump,
         )
         .accounts({
           payer: params.payer,
@@ -778,12 +772,12 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["setFlowLimit"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [itsUserRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
     const [tokenManagerUserRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      this.itsRootPda
+      this.itsRootPda,
     );
 
     return this.program.methods.setFlowLimit(params.flowLimit).accounts({
@@ -802,7 +796,7 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["operatorTransferOperatorship"]> {
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       this.itsRootPda,
-      params.newOperator
+      params.newOperator,
     );
     const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
 
@@ -830,13 +824,13 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["operatorProposeOperatorship"]> {
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       this.itsRootPda,
-      params.newOperator
+      params.newOperator,
     );
     const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
     const [proposalPda, proposalPdaBump] = findProposalPda(
       this.itsRootPda,
       params.payer,
-      params.newOperator
+      params.newOperator,
     );
 
     return this.program.methods
@@ -864,16 +858,16 @@ export class ItsInstructions {
   }): ReturnType<Program["methods"]["operatorAcceptOperatorship"]> {
     const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
       this.itsRootPda,
-      params.payer
+      params.payer,
     );
     const [oldOperatorRolesPda] = findUserRolesPda(
       this.itsRootPda,
-      params.oldOperator
+      params.oldOperator,
     );
     const [proposalPda, proposalPdaBump] = findProposalPda(
       this.itsRootPda,
       params.oldOperator,
-      params.payer
+      params.payer,
     );
 
     return this.program.methods
@@ -905,14 +899,14 @@ export class InterchainTokenInstructions {
   constructor(
     itsId: PublicKey,
     gatewayRootPda: PublicKey,
-    provider: AnchorProvider
+    provider: AnchorProvider,
   ) {
     this.program = axelarSolanaItsProgram({ programId: itsId, provider });
     this.gatewayRootPda = gatewayRootPda;
     this.itsRootPda = findItsRootPda(gatewayRootPda)[0];
     this.programDataAddress = PublicKey.findProgramAddressSync(
       [this.program.programId.toBytes()],
-      BPF_UPGRADE_LOADER_ID
+      BPF_UPGRADE_LOADER_ID,
     )[0];
   }
 
@@ -926,7 +920,7 @@ export class InterchainTokenInstructions {
   }): ReturnType<Program["methods"]["mint"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [minterRolesPda] = findUserRolesPda(tokenManagerPda, params.minter);
 
@@ -948,11 +942,11 @@ export class InterchainTokenInstructions {
   }): ReturnType<Program["methods"]["interchainTokenTransferMintership"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.newMinter
+      params.newMinter,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
@@ -981,17 +975,17 @@ export class InterchainTokenInstructions {
   }): ReturnType<Program["methods"]["interchainTokenProposeMintership"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.newMinter
+      params.newMinter,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [proposalPda, proposalPdaBump] = findProposalPda(
       tokenManagerPda,
       params.payer,
-      params.newMinter
+      params.newMinter,
     );
 
     return this.program.methods
@@ -1020,20 +1014,20 @@ export class InterchainTokenInstructions {
   }): ReturnType<Program["methods"]["interchainTokenAcceptMintership"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.payer
+      params.payer,
     );
     const [oldMinterRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      params.oldMinter
+      params.oldMinter,
     );
     const [proposalPda, proposalPdaBump] = findProposalPda(
       tokenManagerPda,
       params.oldMinter,
-      params.payer
+      params.payer,
     );
 
     return this.program.methods
@@ -1065,14 +1059,14 @@ export class TokenManagerInstructions {
   constructor(
     itsId: PublicKey,
     gatewayRootPda: PublicKey,
-    provider: AnchorProvider
+    provider: AnchorProvider,
   ) {
     this.program = axelarSolanaItsProgram({ programId: itsId, provider });
     this.gatewayRootPda = gatewayRootPda;
     this.itsRootPda = findItsRootPda(gatewayRootPda)[0];
     this.programDataAddress = PublicKey.findProgramAddressSync(
       [this.program.programId.toBytes()],
-      BPF_UPGRADE_LOADER_ID
+      BPF_UPGRADE_LOADER_ID,
     )[0];
   }
 
@@ -1084,7 +1078,7 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerHandOverMintAuthority"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [minterRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
@@ -1108,11 +1102,11 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerSetFlowLimit"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [tokenManagerUserRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      params.payer
+      params.payer,
     );
     const [itsUserRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
 
@@ -1135,11 +1129,11 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerAddFlowLimiter"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.flowLimiter
+      params.flowLimiter,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
@@ -1166,11 +1160,11 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerRemoveFlowLimiter"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.flowLimiter
+      params.flowLimiter,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     return this.program.methods
@@ -1196,11 +1190,11 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerTransferOperatorship"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.newOperator
+      params.newOperator,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
 
@@ -1229,17 +1223,17 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerProposeOperatorship"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [destinationUserRolesPda, destinationRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.newOperator
+      params.newOperator,
     );
     const [payerRolesPda] = findUserRolesPda(tokenManagerPda, params.payer);
     const [proposalPda, proposalPdaBump] = findProposalPda(
       tokenManagerPda,
       params.payer,
-      params.newOperator
+      params.newOperator,
     );
 
     return this.program.methods
@@ -1268,20 +1262,20 @@ export class TokenManagerInstructions {
   }): ReturnType<Program["methods"]["tokenManagerAcceptOperatorship"]> {
     const [tokenManagerPda] = findTokenManagerPda(
       this.itsRootPda,
-      Buffer.from(params.tokenId)
+      Buffer.from(params.tokenId),
     );
     const [payerRolesPda, payerRolesPdaBump] = findUserRolesPda(
       tokenManagerPda,
-      params.payer
+      params.payer,
     );
     const [oldOperatorRolesPda] = findUserRolesPda(
       tokenManagerPda,
-      params.oldOperator
+      params.oldOperator,
     );
     const [proposalPda, proposalPdaBump] = findProposalPda(
       tokenManagerPda,
       params.oldOperator,
-      params.payer
+      params.payer,
     );
 
     return this.program.methods
