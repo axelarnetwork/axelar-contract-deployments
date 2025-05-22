@@ -317,7 +317,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const { governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+    const { adminAddress, governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -325,6 +325,10 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].adminAddress in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
@@ -352,6 +356,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     }
 
     return {
+        admin_address: adminAddress,
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
         governance_address: governanceAddress,
