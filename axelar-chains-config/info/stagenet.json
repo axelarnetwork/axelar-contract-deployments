@@ -2735,12 +2735,12 @@
           "verifierSetDiffThreshold": 0,
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
-          "codeId": 51,
+          "codeId": 52,
           "address": "axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k"
         },
-        "storeCodeProposalId": "190",
-        "storeCodeProposalCodeHash": "3e8d8f416b230db6810f04aa7c9badd8d5fe183c00916ab24f953de365d4a7f8",
-        "lastUploadedCodeId": 51
+        "storeCodeProposalId": "192",
+        "storeCodeProposalCodeHash": "bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a",
+        "lastUploadedCodeId": 52
       }
     },
     "axelarId": "axelar",
