@@ -203,7 +203,7 @@ node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A
 
 The following checks should be performed after the rollout
 
-### XRPL EVM -> EVM GMP call
+### Berachain -> EVM GMP call
 
 1. Send a GMP call
 
@@ -227,7 +227,7 @@ node evm/gateway.js -n [destination-chain] --action submitProof --multisigSessio
 node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
 ```
 
-### EVM -> XRPL GMP Call
+### EVM -> Berachain GMP Call
 
 1. Send a GMP call
 
