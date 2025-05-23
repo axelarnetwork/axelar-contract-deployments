@@ -426,11 +426,18 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
         )
         .await;
 
-    // Transaction should fail due to proper validation in use_deploy_approval
-    assert!(result
-        .unwrap_err()
-        .find_log("Invalid DeploymentApproval PDA provided")
-        .is_some());
+    // Transaction should fail due to proper validation in use_deploy_approval. Since we're
+    // tempering with the accounts, sometimes the error returned is due to invalid seeds deriving
+    // the PDA within `assert_valid_deploy_approval_pda`->`create_deployment_approval_pda` function
+    // call.
+    let err = result.as_ref().expect_err("Expected transaction to fail");
+    assert!(
+        err.find_log("Invalid DeploymentApproval PDA provided")
+            .is_some()
+            || err
+                .find_log("Provided seeds do not result in a valid address")
+                .is_some()
+    );
 
     Ok(())
 }

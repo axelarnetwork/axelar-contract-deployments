@@ -447,21 +447,6 @@ fn handle_take_token_transfer(
         amount,
         FlowDirection::Out,
     )?;
-    let token_id = token_manager.token_id;
-    let token_manager_pda_bump = token_manager.bump;
-
-    let token_manager_pda_seeds = &[
-        seed_prefixes::TOKEN_MANAGER_SEED,
-        accounts.its_root_pda.key.as_ref(),
-        &token_id,
-        &[token_manager_pda_bump],
-    ];
-
-    let signers_seeds: &[&[u8]] = if accounts.authority.key == accounts.token_manager_pda.key {
-        token_manager_pda_seeds
-    } else {
-        &[]
-    };
 
     let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
@@ -471,26 +456,21 @@ fn handle_take_token_transfer(
                 accounts.token_mint,
                 accounts.source_account,
                 amount,
-                signers_seeds,
+                &[],
             )?;
             amount
         }
         LockUnlock => {
             let decimals = get_mint_decimals(accounts.token_mint)?;
             let transfer_info =
-                create_take_token_transfer_info(accounts, amount, decimals, None, signers_seeds);
+                create_take_token_transfer_info(accounts, amount, decimals, None, &[]);
             transfer_to(&transfer_info)?;
             amount
         }
         LockUnlockFee => {
             let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
-            let transfer_info = create_take_token_transfer_info(
-                accounts,
-                amount,
-                decimals,
-                Some(fee),
-                signers_seeds,
-            );
+            let transfer_info =
+                create_take_token_transfer_info(accounts, amount, decimals, Some(fee), &[]);
             transfer_with_fee_to(&transfer_info)?;
             amount
                 .checked_sub(fee)
