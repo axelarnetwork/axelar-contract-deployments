@@ -41,8 +41,29 @@ const addEvmOptions = (program, options = {}) => {
     return program;
 };
 
+const addTopUpOptions = (program) => {
+    program.addOption(new Option('-t, --target <target>', 'target balance for each account').makeOptionMandatory(true));
+    program.addOption(
+        new Option('--threshold <threshold>', 'top up accounts only if the balance is below this threshold').makeOptionMandatory(true),
+    );
+    program.addOption(new Option('-u, --units', 'amounts are set in smallest unit'));
+    program.addOption(
+        new Option(
+            '--addresses-to-derive <addresses-to-derive>',
+            'number of addresses to derive from mnemonic. Derived addresses will be added to the list of addresses to fund set by using --addresses option',
+        ).env('DERIVE_ACCOUNTS'),
+    );
+    program.addOption(
+        new Option('--addresses <addresses>', 'comma separated list of addresses to top up')
+            .default([])
+            .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
+    );
+    program.addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'));
+};
+
 module.exports = {
     ...exportedCliUtils,
     addBaseOptions,
     addEvmOptions,
+    addTopUpOptions,
 };
