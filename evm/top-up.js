@@ -44,20 +44,10 @@ const topUpAccounts = async (wallet, options, addressesToFund, decimals, token) 
 
         const amount = targetUnits.sub(balance);
 
-        if (token) {
-            await token
-                .transfer(address, amount)
-                .then((tx) => tx.wait())
-                .then(() => printInfo(`Funded account with ERC20 tokens`, ethers.utils.formatUnits(amount, decimals)));
-        } else {
-            await wallet
-                .sendTransaction({
-                    to: address,
-                    value: amount,
-                })
-                .then((tx) => tx.wait())
-                .then(() => printInfo('Funded account with native cryptocurrency', ethers.utils.formatUnits(amount, decimals)));
-        }
+        const tx = token ? await token.transfer(address, amount) : await wallet.sendTransaction({ to: address, value: amount });
+        await tx.wait();
+
+        printInfo('Amount transferred', ethers.utils.formatUnits(amount, decimals));
     }
 };
 
