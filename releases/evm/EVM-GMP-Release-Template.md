@@ -179,10 +179,12 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
+OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
+
+node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-8. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
+9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
 
 ```bash
 # Only for mainnet and official testnet connection
