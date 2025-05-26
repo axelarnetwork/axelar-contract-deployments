@@ -335,6 +335,11 @@
           "isSigner": false
         },
         {
+          "name": "incomingMessagePda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "messagePayloadPda",
           "isMut": true,
           "isSigner": false
@@ -371,6 +376,11 @@
         },
         {
           "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "incomingMessagePda",
           "isMut": false,
           "isSigner": false
         },
@@ -414,6 +424,11 @@
           "isSigner": false
         },
         {
+          "name": "incomingMessagePda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "messagePayloadPda",
           "isMut": true,
           "isSigner": false
@@ -441,6 +456,11 @@
         },
         {
           "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "incomingMessagePda",
           "isMut": false,
           "isSigner": false
         },

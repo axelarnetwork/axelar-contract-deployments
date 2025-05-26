@@ -35,8 +35,9 @@ async fn successfully_commit_message_payload_pda() {
 
     // Setup: Build and send an instruction to write the message payload bytes
     let command_id = message_to_command_id(&message);
+    let (incoming_message_pda, _) = axelar_solana_gateway::get_incoming_message_pda(&command_id);
     let (message_payload_pda, _) =
-        axelar_solana_gateway::find_message_payload_pda(command_id, runner.payer.pubkey());
+        axelar_solana_gateway::find_message_payload_pda(incoming_message_pda);
     let write_ix = axelar_solana_gateway::instructions::write_message_payload(
         gateway_root_pda,
         runner.payer.pubkey(),

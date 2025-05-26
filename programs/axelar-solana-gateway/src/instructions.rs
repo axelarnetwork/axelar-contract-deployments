@@ -128,8 +128,9 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [WRITE, SIGNER] Funding account, which becomes the authority for the Message Payload account.
     /// 1. [] Gateway Root PDA account
-    /// 2. [WRITE] Message Payload PDA account
-    /// 3. [] System Program account
+    /// 2. [] Incoming Message PDA account
+    /// 3. [WRITE] Message Payload PDA account
+    /// 4. [] System Program account
     InitializeMessagePayload {
         /// The number of bytes to allocate for the new message payload account
         buffer_size: u64,
@@ -147,7 +148,8 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [SIGNER] Funding account and authority for the Message Payload account.
     /// 1. [] Gateway Root PDA account
-    /// 2. [WRITE] Message Payload PDA account
+    /// 2. [] Incoming Message PDA account
+    /// 3. [WRITE] Message Payload PDA account
     WriteMessagePayload {
         /// Offset at which to write the given bytes.
         offset: u64,
@@ -170,7 +172,8 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [SIGNER] Funding account and authority for the Message Payload account.
     /// 1. [] Gateway Root PDA account
-    /// 2. [WRITE] Message Payload PDA account
+    /// 2. [] Incoming Message PDA account
+    /// 3. [WRITE] Message Payload PDA account
     CommitMessagePayload {
         /// Message's command id
         command_id: [u8; 32],
@@ -184,7 +187,8 @@ pub enum GatewayInstruction {
     /// Accounts expected by this instruction:
     /// 0. [SIGNER] Funding account and authority for the Message Payload account.
     /// 1. [] Gateway Root PDA account
-    /// 2. [WRITE] Message Payload PDA account
+    /// 2. [] Incoming Message PDA account
+    /// 3. [WRITE] Message Payload PDA account
     CloseMessagePayload {
         /// Message's command id
         command_id: [u8; 32],
@@ -539,11 +543,13 @@ pub fn initialize_message_payload(
     command_id: [u8; 32],
     buffer_size: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, payer);
+    let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
     ];
@@ -572,10 +578,12 @@ pub fn write_message_payload(
     bytes: &[u8],
     offset: u64,
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
     let accounts = vec![
         AccountMeta::new(authority, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
     ];
     let instruction = GatewayInstruction::WriteMessagePayload {
@@ -600,11 +608,13 @@ pub fn commit_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
 
     let accounts = vec![
         AccountMeta::new(authority, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
     ];
 
@@ -626,10 +636,12 @@ pub fn close_message_payload(
     authority: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
-    let (message_payload_pda, _) = crate::find_message_payload_pda(command_id, authority);
+    let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
     let accounts = vec![
         AccountMeta::new(authority, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
+        AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
     ];
     let instruction = GatewayInstruction::CloseMessagePayload { command_id };

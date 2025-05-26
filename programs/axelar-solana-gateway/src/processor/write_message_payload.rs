@@ -1,6 +1,7 @@
 use super::Processor;
+use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
-use program_utils::ValidPDA;
+use program_utils::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -32,6 +33,7 @@ impl Processor {
         let accounts_iter = &mut accounts.iter();
         let payer = next_account_info(accounts_iter)?;
         let gateway_root_pda = next_account_info(accounts_iter)?;
+        let incoming_message_account = next_account_info(accounts_iter)?;
         let message_payload_account = next_account_info(accounts_iter)?;
 
         // Check: Payer is the signer
@@ -50,9 +52,25 @@ impl Processor {
         let mut account_data = message_payload_account.try_borrow_mut_data()?;
         let mut message_payload: MutMessagePayload<'_> = (*account_data).try_into()?;
 
+        // Check: Incoming Message PDA account is initialized and validate it
+        incoming_message_account.check_initialized_pda_without_deserialization(program_id)?;
+        let incoming_message_data = incoming_message_account.try_borrow_data()?;
+        let incoming_message = IncomingMessage::read(&incoming_message_data).ok_or_else(|| {
+            solana_program::msg!("Error: failed to read incoming message account data");
+            ProgramError::InvalidAccountData
+        })?;
+
+        // Validate the IncomingMessage PDA using the stored bump
+        crate::assert_valid_incoming_message_pda(
+            &command_id,
+            incoming_message.bump,
+            incoming_message_account.key,
+        )?;
+
         // Check: Message Payload PDA can be derived from provided seeds.
+        let incoming_message_pda = *incoming_message_account.key;
         let message_payload_pda =
-            crate::create_message_payload_pda(command_id, *payer.key, *message_payload.bump)?;
+            crate::create_message_payload_pda(incoming_message_pda, *message_payload.bump)?;
         if message_payload_account.key != &message_payload_pda {
             solana_program::msg!("Error: failed to derive message payload account address");
             return Err(ProgramError::InvalidArgument);

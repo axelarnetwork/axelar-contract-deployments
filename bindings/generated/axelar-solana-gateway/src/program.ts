@@ -339,6 +339,11 @@ type AxelarSolanaGateway = {
           isSigner: false;
         },
         {
+          name: "incomingMessagePda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "messagePayloadPda";
           isMut: true;
           isSigner: false;
@@ -372,6 +377,11 @@ type AxelarSolanaGateway = {
         },
         {
           name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "incomingMessagePda";
           isMut: false;
           isSigner: false;
         },
@@ -412,6 +422,11 @@ type AxelarSolanaGateway = {
           isSigner: false;
         },
         {
+          name: "incomingMessagePda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "messagePayloadPda";
           isMut: true;
           isSigner: false;
@@ -436,6 +451,11 @@ type AxelarSolanaGateway = {
         },
         {
           name: "gatewayRootPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "incomingMessagePda";
           isMut: false;
           isSigner: false;
         },
@@ -1197,6 +1217,11 @@ const IDL: AxelarSolanaGateway = {
           isSigner: false,
         },
         {
+          name: "incomingMessagePda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "messagePayloadPda",
           isMut: true,
           isSigner: false,
@@ -1230,6 +1255,11 @@ const IDL: AxelarSolanaGateway = {
         },
         {
           name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "incomingMessagePda",
           isMut: false,
           isSigner: false,
         },
@@ -1270,6 +1300,11 @@ const IDL: AxelarSolanaGateway = {
           isSigner: false,
         },
         {
+          name: "incomingMessagePda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "messagePayloadPda",
           isMut: true,
           isSigner: false,
@@ -1294,6 +1329,11 @@ const IDL: AxelarSolanaGateway = {
         },
         {
           name: "gatewayRootPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "incomingMessagePda",
           isMut: false,
           isSigner: false,
         },

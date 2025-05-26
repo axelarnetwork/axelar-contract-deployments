@@ -204,6 +204,7 @@ describe("Ping Gateway", () => {
         .accounts({
           payer: payer.publicKey,
           gatewayRootPda: payer.publicKey,
+          incomingMessagePda: payer.publicKey,
           messagePayloadPda: payer.publicKey,
         })
         .rpc();
@@ -220,6 +221,7 @@ describe("Ping Gateway", () => {
         .accounts({
           authority: payer.publicKey,
           gatewayRootPda: payer.publicKey,
+          incomingMessagePda: payer.publicKey,
           messagePayloadPda: payer.publicKey,
         })
         .rpc();
@@ -240,6 +242,7 @@ describe("Ping Gateway", () => {
         .accounts({
           authority: payer.publicKey,
           gatewayRootPda: gatewayRootPdaPublicKey,
+          incomingMessagePda: payer.publicKey,
           messagePayloadPda: gatewayRootPdaPublicKey,
         })
         .rpc();
@@ -256,6 +259,7 @@ describe("Ping Gateway", () => {
         .accounts({
           authority: payer.publicKey,
           gatewayRootPda: payer.publicKey,
+          incomingMessagePda: payer.publicKey,
           messagePayloadPda: payer.publicKey,
         })
         .rpc();

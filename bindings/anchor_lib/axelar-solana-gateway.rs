@@ -183,6 +183,7 @@ pub struct InitializeMessagePayload<'info> {
     #[account(mut)]
     payer: Signer<'info>,
     gateway_root_pda: AccountInfo<'info>,
+    incoming_message_pda: AccountInfo<'info>,
     #[account(mut)]
     message_payload_pda: AccountInfo<'info>,
     system_program: Program<'info, System>,
@@ -193,6 +194,7 @@ pub struct WriteMessagePayload<'info> {
     #[account(mut)]
     authority: Signer<'info>,
     gateway_root_pda: AccountInfo<'info>,
+    incoming_message_pda: AccountInfo<'info>,
     #[account(mut)]
     message_payload_pda: AccountInfo<'info>,
 }
@@ -202,6 +204,7 @@ pub struct CommitMessagePayload<'info> {
     #[account(mut)]
     authority: Signer<'info>,
     gateway_root_pda: AccountInfo<'info>,
+    incoming_message_pda: AccountInfo<'info>,
     #[account(mut)]
     message_payload_pda: AccountInfo<'info>,
 }
@@ -211,6 +214,7 @@ pub struct CloseMessagePayload<'info> {
     #[account(mut)]
     authority: AccountInfo<'info>,
     gateway_root_pda: AccountInfo<'info>,
+    incoming_message_pda: AccountInfo<'info>,
     #[account(mut)]
     message_payload_pda: AccountInfo<'info>,
 }
