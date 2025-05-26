@@ -14,9 +14,124 @@ const chalk = require('chalk');
 const ITS_ACTION_INTERCHAIN_TRANSFER = 'interchain-transfer';
 const ITS_ACTION_TOKEN_ADDRESS = 'interchain-token-address';
 
-let writing = false;
-let transactions = [];
-let stream = null;
+class LoadTestRunner {
+    constructor() {
+        this.writing = false;
+        this.transactions = [];
+        this.stream = null;
+    }
+
+    async writeTransactions() {
+        if (this.writing || this.transactions.length === 0) {
+            return;
+        }
+
+        this.writing = true;
+
+        printHighlight(`Writing ${this.transactions.length} transactions to file ${this.stream.path}`);
+
+        const content = this.transactions.splice(0).join('\n').concat('\n');
+        this.stream.write(content);
+
+        this.writing = false;
+    }
+
+    async run(config, options) {
+        const {
+            time,
+            delay,
+            env,
+            sourceChain,
+            destinationChain,
+            destinationAddress,
+            tokenId,
+            transferAmount,
+            addressesToDerive,
+            mnemonic,
+            output,
+        } = options;
+
+        this.stream = fs.createWriteStream(output, { flags: 'w' });
+
+        const args = [destinationChain, tokenId, destinationAddress, transferAmount];
+
+        const itsOptions = {
+            chainNames: sourceChain,
+            gasValue: await estimateGas(config, options),
+            metadata: '0x',
+            env,
+            yes: true,
+        };
+
+        const accounts = await deriveAccounts(mnemonic, addressesToDerive);
+        const privateKeys = accounts.map((account) => account.privateKey);
+
+        const startTime = performance.now();
+        let elapsedTime = 0;
+        let txCount = 0;
+        let printWarning = true;
+
+        const pendingPromises = new Map();
+        let promiseCounter = 0;
+
+        const writeInterval = setInterval(() => this.writeTransactions(), 5000);
+
+        do {
+            const pk = privateKeys.shift();
+
+            if (pk) {
+                const promiseId = promiseCounter++;
+
+                const promise = its(ITS_ACTION_INTERCHAIN_TRANSFER, args, { ...itsOptions, privateKey: pk })
+                    .then((txHash) => {
+                        txCount++;
+
+                        this.transactions.push(txHash);
+                    })
+                    .catch((error) => {
+                        printError(`Error while executing transaction ${txCount + 1}`, error);
+                    })
+                    .finally(() => {
+                        elapsedTime = (performance.now() - startTime) / 1000;
+
+                        privateKeys.push(pk);
+                        printWarning = true;
+
+                        pendingPromises.delete(promiseId);
+
+                        console.log('='.repeat(20).concat('\n'));
+                        printInfo('Txs count', txCount.toString());
+                        printInfo('Elapsed time (min)', elapsedTime / 60);
+                        printInfo('Tx per second', txCount / elapsedTime);
+                        printInfo('Private keys in queue to be processed', privateKeys.length);
+                        console.log('='.repeat(20).concat('\n'));
+                    });
+
+                pendingPromises.set(promiseId, promise);
+
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            } else {
+                if (printWarning) {
+                    printWarn('No more private keys to use, waiting for delay', delay);
+                    printWarning = false;
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+        } while (elapsedTime < time);
+
+        if (pendingPromises.size > 0) {
+            await Promise.all(pendingPromises.values());
+        }
+
+        clearInterval(writeInterval);
+        await this.writeTransactions();
+        this.stream.end();
+
+        const endTime = performance.now();
+        printInfo('Execution time (minutes)', (endTime - startTime) / 1000 / 60);
+    }
+}
 
 const estimateGas = async (config, options) => {
     const { sourceChain, destinationChain, tokenId, privateKey, env } = options;
@@ -38,115 +153,9 @@ const estimateGas = async (config, options) => {
     return gasFee.toString();
 };
 
-const writeTransactions = async () => {
-    if (writing || transactions.length === 0) {
-        return;
-    }
-
-    writing = true;
-
-    printHighlight(`Writing ${transactions.length} transactions to file ${stream.path}`);
-
-    const content = transactions.splice(0).join('\n').concat('\n');
-    stream.write(content);
-
-    writing = false;
-};
-
 const startTest = async (config, options) => {
-    const {
-        time,
-        delay,
-        env,
-        sourceChain,
-        destinationChain,
-        destinationAddress,
-        tokenId,
-        transferAmount,
-        addressesToDerive,
-        mnemonic,
-        output,
-    } = options;
-
-    stream = fs.createWriteStream(output, { flags: 'w' });
-
-    const args = [destinationChain, tokenId, destinationAddress, transferAmount];
-
-    const itsOptions = {
-        chainNames: sourceChain,
-        gasValue: await estimateGas(config, options),
-        metadata: '0x',
-        env,
-        yes: true,
-    };
-
-    const accounts = await deriveAccounts(mnemonic, addressesToDerive);
-    const privateKeys = accounts.map((account) => account.privateKey);
-
-    const startTime = performance.now();
-    let elapsedTime = 0;
-    let txCount = 0;
-    let printWarning = true;
-
-    const pendingPromises = new Map();
-    let promiseCounter = 0;
-
-    const writeInterval = setInterval(writeTransactions, 5000);
-
-    do {
-        const pk = privateKeys.shift();
-
-        if (pk) {
-            const promiseId = promiseCounter++;
-
-            const promise = its(ITS_ACTION_INTERCHAIN_TRANSFER, args, { ...itsOptions, privateKey: pk })
-                .then((txHash) => {
-                    txCount++;
-
-                    transactions.push(txHash);
-                })
-                .catch((error) => {
-                    printError(`Error while executing transaction ${txCount + 1}`, error);
-                })
-                .finally(() => {
-                    elapsedTime = (performance.now() - startTime) / 1000;
-
-                    privateKeys.push(pk);
-                    printWarning = true;
-
-                    pendingPromises.delete(promiseId);
-
-                    console.log('='.repeat(20).concat('\n'));
-                    printInfo('Txs count', txCount.toString());
-                    printInfo('Elapsed time (min)', elapsedTime / 60);
-                    printInfo('Tx per second', txCount / elapsedTime);
-                    printInfo('Private keys length', privateKeys.length);
-                    console.log('='.repeat(20).concat('\n'));
-                });
-
-            pendingPromises.set(promiseId, promise);
-
-            await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-            if (printWarning) {
-                printWarn('No more private keys to use, waiting for delay', delay);
-                printWarning = false;
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-    } while (elapsedTime < time);
-
-    if (pendingPromises.size > 0) {
-        await Promise.all(pendingPromises.values());
-    }
-
-    clearInterval(writeInterval);
-    await writeTransactions();
-    stream.end();
-
-    const endTime = performance.now();
-    printInfo('Execution time (minutes)', (endTime - startTime) / 1000 / 60);
+    const runner = new LoadTestRunner();
+    await runner.run(config, options);
 };
 
 const appendToFile = (stream, content) => {
