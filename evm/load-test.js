@@ -106,7 +106,7 @@ const startTest = async (config, options) => {
                     transactions.push(txHash);
                 })
                 .catch((error) => {
-                    console.error('Error while running script:', error);
+                    printError(`Error while executing transaction ${txCount + 1}`, error);
                 })
                 .finally(() => {
                     elapsedTime = (performance.now() - startTime) / 1000;
@@ -153,7 +153,7 @@ const appendToFile = (stream, content) => {
     stream.write(content.concat('\n'));
 };
 
-const handleIncompleteTransaction = (failStream, pendingStream, txHash, result) => {
+const handleFailedOrPendingTransaction = (failStream, pendingStream, txHash, result) => {
     const status = result?.data[0]?.status;
 
     let message = status;
@@ -183,6 +183,8 @@ const verify = async (config, options) => {
     const totalTransactions = transactions.length;
 
     let streamFlags = 'w';
+
+    // append to the output files instead of overwriting them if resuming from a specific transaction
     if (resumeFrom > 0) {
         streamFlags = 'a';
         transactions = transactions.slice(resumeFrom);
@@ -211,7 +213,7 @@ const verify = async (config, options) => {
 
         const messageId = first?.data[0]?.callback?.id;
         if (!messageId) {
-            handleIncompleteTransaction(failStream, pendingStream, txHash, first);
+            handleFailedOrPendingTransaction(failStream, pendingStream, txHash, first);
             failed++;
             continue;
         }
@@ -222,7 +224,7 @@ const verify = async (config, options) => {
 
         const status = second?.data[0]?.status;
         if (status !== 'executed') {
-            handleIncompleteTransaction(failStream, pendingStream, txHash, second);
+            handleFailedOrPendingTransaction(failStream, pendingStream, txHash, second);
             failed++;
             continue;
         }
@@ -256,18 +258,24 @@ const programHandler = () => {
     const loadTestCmd = program
         .command('test')
         .description('Start a load test')
-        .option('-s, --source-chain <sourceChain>', 'source chain')
-        .option('-d, --destination-chain <destinationChain>', 'destination chain')
-        .option('--destination-address <destinationAddress>', 'destination address')
-        .option('--token-id <tokenId>', 'token id')
-        .option('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
-        .addOption(new Option('-t, --time <time>', 'time limit in minutes to run the test').argParser((value) => parseInt(value) * 60))
+        .requiredOption('-s, --source-chain <sourceChain>', 'source chain')
+        .requiredOption('-d, --destination-chain <destinationChain>', 'destination chain')
+        .requiredOption('--destination-address <destinationAddress>', 'destination address')
+        .requiredOption('--token-id <tokenId>', 'token id')
+        .requiredOption('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
+        .addOption(
+            new Option('-t, --time <time>', 'time limit in minutes to run the test')
+                .makeOptionMandatory(true)
+                .argParser((value) => parseInt(value) * 60),
+        )
         .addOption(new Option('--delay <delay>', 'delay in milliseconds between calls').default(10))
         .addOption(
             new Option(
                 '--addresses-to-derive <addresses-to-derive>',
-                'quantity of accounts to derive from mnemonic, used as source addresses to execute parallel transfers',
-            ).env('DERIVE_ACCOUNTS'),
+                'number of addresses to derive from mnemonic, used as source addresses to generate load in parallel',
+            )
+                .makeOptionMandatory(true)
+                .env('DERIVE_ACCOUNTS'),
         )
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'))
         .addOption(new Option('-o, --output <output>', 'output file to save the transactions generated').default('/tmp/load-test.txt'))
@@ -278,7 +286,7 @@ const programHandler = () => {
 
     const verifyCmd = program
         .command('verify')
-        .description('Verify a load test')
+        .description('Verify the results of a load test')
         .addOption(
             new Option(
                 '--resume-from <resumeFrom>',
@@ -305,7 +313,7 @@ const programHandler = () => {
         .action((options) => {
             mainProcessor(verify, options);
         });
-    addBaseOptions(verifyCmd, { ignoreChainNames: true });
+    addBaseOptions(verifyCmd, { ignoreChainNames: true, ignorePrivateKey: true });
 
     program.parse();
 };
