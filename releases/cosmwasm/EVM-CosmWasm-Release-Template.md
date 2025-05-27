@@ -28,7 +28,7 @@ Predict the [External Gateway](../evm/path-to-GMP-release-doc) address, as `Voti
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
@@ -179,21 +179,6 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
-
 6. Register prover contract on coordinator
 
 ```bash
@@ -209,7 +194,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig Prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -223,14 +208,6 @@ node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
-```
-
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
 ```
 
 8. Create reward pool for voting verifier
@@ -294,13 +271,48 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-Check reward pool to confirm funding worked:
+11. Confirm proposals have passed
+
+- Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
+  - "Register Gateway for `$CHAIN`"
+  - "Register Multisig Prover for `$CHAIN`"
+  - "Authorize Multisig Prover for `$CHAIN`"
+  - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+  - "Create pool for `$CHAIN` in axelar multisig"
+  - (optional) "Register `$CHAIN` on ITS Hub"
+
+- Check Gateway registered at Router
+```bash
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+# You should see something like this:
+{
+  "data": {
+    "name": \"$CHAIN\",
+    "gateway": {
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+    },
+    "frozen_status": 0,
+    "msg_id_format": "hex_tx_hash_and_event_index"
+  }
+}
+```
+
+- Check Multisig Prover authorized on Multisig
+```bash
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+# Result should look like:
+{
+  "data": true
+}
+```
+
+- Check reward pool to confirm funding worked:
 
 ```bash
 node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+12. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
