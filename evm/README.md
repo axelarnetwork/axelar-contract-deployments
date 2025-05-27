@@ -158,6 +158,28 @@ To decode function calldata:
     Function: Unrecognized function call
     ```
 
+### Top Up Accounts
+
+To top up multiple accounts from a single wallet with native cryptocurrency or ERC20 tokens, you can use the following command:
+
+```bash
+node evm/top-up.js [native|token] -n <chain> --target <target-balance> --threshold <threshold> --addresses-to-derive [number-of-accounts]
+```
+
+Example usage:
+
+```bash
+# For native crypto
+node evm/top-up.js native -n xrpl-evm -t 50 --threshold 0 --addresses-to-derive 3
+
+# For ERC20 tokens
+node evm/top-up.js token -n xrpl-evm -t 10000 --threshold 0 --addresses-to-derive 3 --contract 0x02D0f033d365d0D1b6a4377bfc6cB9D87bE16Ab7 --decimals 0
+```
+
+You can use `--addresses-to-derive` to derive multiple accounts from a mnemonic set in the MNEMONIC environment variable, or use `--addresses` to specify a list of addresses to top up.
+
+For ERC20 token top ups, you must specify the contract address using `--contract` option.
+
 ## InterchainGovernance
 
 To update the min deposit on Axelar with a param change proposal, you can generate the proposal via
