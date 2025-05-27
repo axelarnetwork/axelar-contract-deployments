@@ -204,8 +204,8 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         ServiceRegistry: { address: registryAddress },
-        Multisig: { address: multisigAddress },
         Router: { address: routerAddress },
+        Multisig: { address: multisigAddress },
     } = contracts;
     const { governanceAddress } = contractConfig;
 
@@ -215,6 +215,14 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
 
     if (!validateAddress(registryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error('Missing or invalid Router.address in axelar info');
+    }
+
+    if (!validateAddress(multisigAddress)) {
+        throw new Error('Missing or invalid Multisig.address in axelar info');
     }
 
     return { governance_address: governanceAddress, service_registry: registryAddress, router_address: routerAddress, multisig_address: multisigAddress };
@@ -283,6 +291,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         AxelarnetGateway: { address: axelarnetGateway },
+        Coordinator: { address: coordinatorAddress },
     } = contracts;
     const { adminAddress, governanceAddress } = contractConfig;
 
@@ -298,7 +307,11 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway, coordinator_address: coordinatorAddress, };
 };
 
 const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
