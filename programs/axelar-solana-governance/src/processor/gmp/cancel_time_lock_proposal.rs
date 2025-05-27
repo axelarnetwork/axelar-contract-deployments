@@ -2,6 +2,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L18).
 
+use program_utils::validate_system_account_key;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
 
@@ -19,10 +20,12 @@ pub(crate) fn process(
     accounts: &[AccountInfo<'_>],
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let _payer = next_account_info(accounts_iter)?;
     let root_pda = next_account_info(accounts_iter)?;
     let proposal_pda = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     ExecutableProposal::load_and_ensure_correct_proposal_pda(proposal_pda, &ctx.proposal_hash)?;
 

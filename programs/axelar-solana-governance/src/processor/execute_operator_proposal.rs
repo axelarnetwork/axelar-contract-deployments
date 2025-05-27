@@ -2,7 +2,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L75).
 use borsh::to_vec;
-use program_utils::ValidPDA;
+use program_utils::{validate_system_account_key, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -23,12 +23,14 @@ pub(crate) fn process(
     execute_proposal_data: &ExecuteProposalData,
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let _payer = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
     let operator_account = next_account_info(accounts_iter)?;
     let operator_pda_marker_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     let config_data = config_pda.check_initialized_pda::<GovernanceConfig>(&crate::id())?;
 

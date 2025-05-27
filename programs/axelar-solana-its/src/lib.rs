@@ -20,6 +20,10 @@ solana_program::declare_id!("itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd");
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
+pub(crate) trait Validate {
+    fn validate(&self) -> Result<(), ProgramError>;
+}
+
 pub(crate) trait FromAccountInfoSlice<'a> {
     type Context;
 
@@ -28,7 +32,19 @@ pub(crate) trait FromAccountInfoSlice<'a> {
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized;
+        Self: Sized + Validate,
+    {
+        let obj = Self::extract_accounts(accounts, context)?;
+        obj.validate()?;
+        Ok(obj)
+    }
+
+    fn extract_accounts(
+        accounts: &'a [AccountInfo<'a>],
+        context: &Self::Context,
+    ) -> Result<Self, ProgramError>
+    where
+        Self: Sized + Validate;
 }
 
 /// Seed prefixes for different PDAs initialized by the program

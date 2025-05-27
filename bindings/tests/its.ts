@@ -1,9 +1,13 @@
 import { getKeypairFromFile } from "@solana-developers/node-helpers";
 import { axelarSolanaItsProgram } from "../generated/axelar-solana-its/src";
 import { BN } from "@coral-xyz/anchor";
+import { SystemProgram, SYSVAR_INSTRUCTIONS_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_METADATA_PROGRAM_ID } from "../axelar-solana-its/src/pda";
 
 describe("Ping ITS", () => {
   const program = axelarSolanaItsProgram();
+  const systemAccount = SystemProgram.programId.toBase58();
   const processError = (error: any, functionName: string) => {
     const errorMessage = "Program log: Instruction: " + functionName;
     if (error.logs.includes(errorMessage)) {
@@ -28,7 +32,7 @@ describe("Ping ITS", () => {
           itsRootPda: payer.publicKey,
           operator: payer.publicKey,
           userRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -61,7 +65,7 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -78,6 +82,7 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -115,6 +120,7 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           deployApprovalPda: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -130,18 +136,19 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
         })
         .rpc();
     } catch (error) {
-      processError(error, "RegisterCanonicalInterchainToken");
+      processError(error, "RegisterToken");
     }
   });
 
@@ -154,12 +161,11 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           mint: payer.publicKey,
           metadataAccount: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -195,7 +201,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -213,17 +219,17 @@ describe("Ping ITS", () => {
         .deployInterchainToken([1, 2], "name", "symbol", 2, new BN(0))
         .accounts({
           payer: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
-          rent: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
+          sysvarInstructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+          mplTokenMetadata: TOKEN_METADATA_PROGRAM_ID,
           metadataAccount: payer.publicKey,
           payerAta: payer.publicKey,
           minter: payer.publicKey,
@@ -244,12 +250,11 @@ describe("Ping ITS", () => {
           payer: payer.publicKey,
           mint: payer.publicKey,
           metadataAccount: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -279,12 +284,11 @@ describe("Ping ITS", () => {
           deployApproval: payer.publicKey,
           minterRolesPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
-          sysvarInstructions: payer.publicKey,
-          mplTokenMetadata: payer.publicKey,
+          gatewayRootPda: payer.publicKey,
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -308,7 +312,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -327,15 +331,15 @@ describe("Ping ITS", () => {
         .accounts({
           payer: payer.publicKey,
           tokenMetadataAccount: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           tokenManagerPda: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          splAssociatedTokenAccount: payer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          splAssociatedTokenAccount: ASSOCIATED_TOKEN_PROGRAM_ID,
           itsUserRolesPda: payer.publicKey,
-          rent: payer.publicKey,
+          rent: SYSVAR_RENT_PUBKEY,
           operator: payer.publicKey,
           operatorRolesPda: payer.publicKey,
         })
@@ -365,7 +369,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -402,7 +406,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -439,7 +443,7 @@ describe("Ping ITS", () => {
           axelarSolanaGateway: payer.publicKey,
           gasConfigPda: payer.publicKey,
           gasService: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           itsRootPda: payer.publicKey,
           callContractSigningPda: payer.publicKey,
           id: payer.publicKey,
@@ -478,7 +482,7 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -504,7 +508,7 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -530,7 +534,7 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -556,7 +560,7 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -582,7 +586,7 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -609,7 +613,7 @@ describe("Ping ITS", () => {
           tokenManagerPda: payer.publicKey,
           tokenManagerUserRolesPda: payer.publicKey,
           itsUserRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -627,7 +631,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -653,7 +658,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -679,7 +685,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -707,7 +714,7 @@ describe("Ping ITS", () => {
           tokenManagerPda: payer.publicKey,
           minterRolesPda: payer.publicKey,
           tokenProgram: payer.publicKey,
-          systemProgram: payer.publicKey,
+          systemProgram: systemAccount,
         })
         .rpc();
     } catch (error) {
@@ -727,7 +734,7 @@ describe("Ping ITS", () => {
           tokenManagerPda: payer.publicKey,
           minter: payer.publicKey,
           minterRolesPda: payer.publicKey,
-          systemProgram: payer.publicKey,
+          tokenProgram: payer.publicKey,
         })
         .rpc();
     } catch (error) {
@@ -745,7 +752,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -771,7 +779,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,
@@ -797,7 +806,8 @@ describe("Ping ITS", () => {
           proposalPdaBump: null,
         })
         .accounts({
-          systemProgram: payer.publicKey,
+          itsRootPda: payer.publicKey,
+          systemProgram: systemAccount,
           payer: payer.publicKey,
           payerRolesAccount: payer.publicKey,
           resource: payer.publicKey,

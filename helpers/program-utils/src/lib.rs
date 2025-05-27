@@ -20,7 +20,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{msg, system_instruction, system_program};
+use solana_program::{msg, system_instruction, system_program, sysvar};
 
 /// mini helper to log from native Rust or to the program log
 /// Very useful for debugging when you have to run some code on Solana and via
@@ -528,5 +528,98 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
         }
         data.copy_from_slice(self_bytes);
         Some(())
+    }
+}
+
+/// Checks if the key is from system account
+pub fn validate_system_account_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if !system_program::check_id(key) {
+        msg!("Wrong system account key");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+/// Checks if the key is from spl associated token account
+pub fn validate_spl_associated_token_account_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if !spl_associated_token_account::check_id(key) {
+        msg!("Wrong spl associated token account key");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+/// Checks if the key is from rent
+pub fn validate_rent_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if !sysvar::rent::check_id(key) {
+        msg!("Wrong rent key");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+/// Checks if the key is from sysvar instructions
+pub fn validate_sysvar_instructions_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if !sysvar::instructions::check_id(key) {
+        msg!("Wrong sysvar instructions key");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+/// Checks if the key is from sysvar instructions
+pub fn validate_mpl_token_metadata_key(key: &Pubkey) -> Result<(), ProgramError> {
+    if *key != mpl_token_metadata::ID {
+        msg!("Wrong mpl token metadata key");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use solana_program::{system_program, sysvar};
+
+    use crate::{
+        validate_mpl_token_metadata_key, validate_rent_key,
+        validate_spl_associated_token_account_key, validate_system_account_key,
+        validate_sysvar_instructions_key,
+    };
+
+    #[test]
+    fn test_validate_system_account_key() {
+        assert!(validate_system_account_key(&system_program::ID).is_ok());
+        assert!(validate_system_account_key(&sysvar::instructions::ID).is_err());
+        assert!(validate_system_account_key(&sysvar::rent::ID).is_err());
+    }
+
+    #[test]
+    fn test_validate_spl_associated_token_account_key() {
+        assert!(
+            validate_spl_associated_token_account_key(&spl_associated_token_account::ID).is_ok()
+        );
+        assert!(validate_spl_associated_token_account_key(&sysvar::instructions::ID).is_err());
+        assert!(validate_spl_associated_token_account_key(&sysvar::rent::ID).is_err());
+    }
+
+    #[test]
+    fn test_validate_rent_key() {
+        assert!(validate_rent_key(&sysvar::rent::ID).is_ok());
+        assert!(validate_rent_key(&system_program::ID).is_err());
+        assert!(validate_rent_key(&spl_associated_token_account::ID).is_err());
+    }
+
+    #[test]
+    fn test_sysvar_instructions_key() {
+        assert!(validate_sysvar_instructions_key(&sysvar::instructions::ID).is_ok());
+        assert!(validate_sysvar_instructions_key(&system_program::ID).is_err());
+        assert!(validate_sysvar_instructions_key(&spl_associated_token_account::ID).is_err());
+    }
+
+    #[test]
+    fn test_mpl_token_metadata_key() {
+        assert!(validate_mpl_token_metadata_key(&mpl_token_metadata::ID).is_ok());
+        assert!(validate_mpl_token_metadata_key(&system_program::ID).is_err());
+        assert!(validate_mpl_token_metadata_key(&spl_associated_token_account::ID).is_err());
     }
 }

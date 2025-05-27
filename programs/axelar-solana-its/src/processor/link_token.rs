@@ -209,7 +209,6 @@ pub(crate) fn register_custom_token<'a>(
 pub(crate) fn register_canonical_interchain_token<'a>(
     accounts: &'a [AccountInfo<'a>],
 ) -> ProgramResult {
-    msg!("Instruction: RegisterCanonicalInterchainToken");
     register_token(accounts, &TokenRegistration::Canonical)
 }
 

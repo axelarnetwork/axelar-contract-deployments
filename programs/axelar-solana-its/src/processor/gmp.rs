@@ -4,7 +4,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::{self, Itertools};
-use program_utils::BorshPda;
+use program_utils::{validate_system_account_key, BorshPda};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -19,7 +19,7 @@ use crate::processor::interchain_transfer::process_inbound_transfer;
 use crate::processor::link_token;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_its_not_paused, assert_valid_its_root_pda, ITS_HUB_CHAIN_NAME};
+use crate::{assert_its_not_paused, assert_valid_its_root_pda, Validate, ITS_HUB_CHAIN_NAME};
 use crate::{instruction, FromAccountInfoSlice};
 
 pub(crate) fn process_inbound<'a>(
@@ -39,8 +39,10 @@ pub(crate) fn process_inbound<'a>(
     let payload_account = next_account_info(accounts_iter)?;
     let _signing_pda = next_account_info(accounts_iter)?;
     let _gateway_program_id = next_account_info(accounts_iter)?;
-    let _system_program = next_account_info(accounts_iter)?;
+    let system_program = next_account_info(accounts_iter)?;
     let its_root_pda_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_program.key)?;
 
     let its_root_config = InterchainTokenService::load(its_root_pda_account)?;
     assert_valid_its_root_pda(its_root_pda_account, its_root_config.bump)?;
@@ -102,6 +104,7 @@ pub(crate) fn process_inbound<'a>(
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct GmpAccounts<'a> {
     pub(crate) gateway_root_account: &'a AccountInfo<'a>,
     pub(crate) _gateway_program_id: &'a AccountInfo<'a>,
@@ -113,15 +116,22 @@ pub(crate) struct GmpAccounts<'a> {
     pub(crate) program_account: &'a AccountInfo<'a>,
 }
 
+impl Validate for GmpAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_program.key)?;
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
     type Context = ();
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let accounts_iter = &mut accounts.iter();
 

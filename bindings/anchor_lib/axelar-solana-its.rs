@@ -212,21 +212,21 @@ pub mod axelar_solana_its {
     }
 
     pub fn token_manager_transfer_operatorship(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
     }
 
     pub fn token_manager_propose_operatorship(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
     }
 
     pub fn token_manager_accept_operatorship(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
@@ -244,21 +244,21 @@ pub mod axelar_solana_its {
     }
 
     pub fn interchain_token_transfer_mintership(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
     }
 
     pub fn interchain_token_propose_mintership(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
     }
 
     pub fn interchain_token_accept_mintership(
-        ctx: Context<Operator>,
+        ctx: Context<TMOperator>,
         inputs: RoleManagementInstructionInputs,
     ) -> Result<()> {
         Ok(())
@@ -354,6 +354,7 @@ pub struct DeployRemoteCanonicalInterchainToken<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     metadata_account: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -423,6 +424,7 @@ pub struct DeployRemoteInterchainToken<'info> {
     payer: Signer<'info>,
     mint: AccountInfo<'info>,
     metadata_account: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -444,6 +446,7 @@ pub struct DeployRemoteInterchainTokenWithMinter<'info> {
     deploy_approval: AccountInfo<'info>,
     minter_roles_pda: AccountInfo<'info>,
     token_manager_pda: AccountInfo<'info>,
+    gateway_root_pda: AccountInfo<'info>,
     axelar_solana_gateway: AccountInfo<'info>,
     #[account(mut)]
     gas_config_pda: AccountInfo<'info>,
@@ -589,6 +592,23 @@ pub struct Operator<'info> {
 }
 
 #[derive(Accounts)]
+pub struct TMOperator<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_account: AccountInfo<'info>,
+    resource: AccountInfo<'info>,
+    destination_user_account: AccountInfo<'info>,
+    destination_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    origin_user_account: AccountInfo<'info>,
+    origin_roles_account: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_account: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
 pub struct TokenManagerFlowLimiter<'info> {
     system_program: Program<'info, System>,
     #[account(mut)]
@@ -638,7 +658,7 @@ pub struct InterchainTokenMint<'info> {
     token_manager_pda: AccountInfo<'info>,
     minter: AccountInfo<'info>,
     minter_roles_pda: AccountInfo<'info>,
-    system_program: Program<'info, System>,
+    token_program: AccountInfo<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

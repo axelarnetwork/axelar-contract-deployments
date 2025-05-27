@@ -3,7 +3,7 @@
 //! Only this program can call this instruction via a previous scheduled GMP
 //! proposal, coming from the Axelar governance infrastructure.
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/InterchainGovernance.sol#L118).
-use program_utils::ValidPDA;
+use program_utils::{validate_system_account_key, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -27,9 +27,11 @@ pub(crate) fn process(
     amount: u64,
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
-    let _system_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
     let receiver = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
 
     if !config_pda.is_signer {
         msg!("Only the contract itself can call this instruction");

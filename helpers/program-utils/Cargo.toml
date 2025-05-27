@@ -13,6 +13,8 @@ crate-type = ["cdylib", "lib"]
 rkyv = { workspace = true, features = ["validation"] }
 borsh.workspace = true
 bytemuck.workspace = true
+mpl-token-metadata.workspace = true
 solana-program.workspace = true
+spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]

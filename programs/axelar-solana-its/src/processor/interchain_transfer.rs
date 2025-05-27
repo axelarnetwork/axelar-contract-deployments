@@ -5,7 +5,10 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
-use program_utils::BorshPda;
+use program_utils::{
+    validate_mpl_token_metadata_key, validate_rent_key, validate_spl_associated_token_account_key,
+    validate_system_account_key, BorshPda,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -27,7 +30,7 @@ use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
 use crate::{
     assert_valid_flow_slot_pda, assert_valid_token_manager_pda, event, seed_prefixes,
-    FromAccountInfoSlice,
+    FromAccountInfoSlice, Validate,
 };
 
 use super::gmp::{self, GmpAccounts};
@@ -662,6 +665,7 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
     Ok(())
 }
 
+#[derive(Debug)]
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
     pub(crate) authority: &'a AccountInfo<'a>,
@@ -675,9 +679,16 @@ pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
 }
 
+impl Validate for TakeTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     type Context = ();
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         _context: &Self::Context,
     ) -> Result<Self, ProgramError> {
@@ -704,6 +715,7 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
     }
 }
 
+#[derive(Debug)]
 struct GiveTokenAccounts<'a> {
     payer: &'a AccountInfo<'a>,
     system_account: &'a AccountInfo<'a>,
@@ -713,9 +725,9 @@ struct GiveTokenAccounts<'a> {
     token_mint: &'a AccountInfo<'a>,
     token_manager_ata: &'a AccountInfo<'a>,
     token_program: &'a AccountInfo<'a>,
-    _ata_program: &'a AccountInfo<'a>,
+    ata_program: &'a AccountInfo<'a>,
     _its_roles_pda: &'a AccountInfo<'a>,
-    _rent_sysvar: &'a AccountInfo<'a>,
+    rent_sysvar: &'a AccountInfo<'a>,
     destination_account: &'a AccountInfo<'a>,
     flow_slot_pda: &'a AccountInfo<'a>,
     program_ata: Option<&'a AccountInfo<'a>>,
@@ -723,10 +735,22 @@ struct GiveTokenAccounts<'a> {
     mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
 }
 
+impl Validate for GiveTokenAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_system_account_key(self.system_account.key)?;
+        validate_spl_associated_token_account_key(self.ata_program.key)?;
+        validate_rent_key(self.rent_sysvar.key)?;
+        if let Some(val) = self.mpl_token_metadata_program {
+            validate_mpl_token_metadata_key(val.key)?;
+        }
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
     type Context = (&'a AccountInfo<'a>, &'a AccountInfo<'a>);
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         payer_and_payload: &Self::Context,
     ) -> Result<Self, ProgramError> {
@@ -741,9 +765,9 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             token_mint: next_account_info(accounts_iter)?,
             token_manager_ata: next_account_info(accounts_iter)?,
             token_program: next_account_info(accounts_iter)?,
-            _ata_program: next_account_info(accounts_iter)?,
+            ata_program: next_account_info(accounts_iter)?,
             _its_roles_pda: next_account_info(accounts_iter)?,
-            _rent_sysvar: next_account_info(accounts_iter)?,
+            rent_sysvar: next_account_info(accounts_iter)?,
             destination_account: next_account_info(accounts_iter)?,
             flow_slot_pda: next_account_info(accounts_iter)?,
             program_ata: next_account_info(accounts_iter).ok(),
@@ -764,15 +788,22 @@ struct AxelarInterchainTokenExecutableAccounts<'a> {
     destination_program_accounts: &'a [AccountInfo<'a>],
 }
 
+impl Validate for AxelarInterchainTokenExecutableAccounts<'_> {
+    fn validate(&self) -> Result<(), ProgramError> {
+        validate_mpl_token_metadata_key(self.mpl_token_metadata_program.key)?;
+        Ok(())
+    }
+}
+
 impl<'a> FromAccountInfoSlice<'a> for AxelarInterchainTokenExecutableAccounts<'a> {
     type Context = (GiveTokenAccounts<'a>, usize);
 
-    fn from_account_info_slice(
+    fn extract_accounts(
         accounts: &'a [AccountInfo<'a>],
         context: &Self::Context,
     ) -> Result<Self, ProgramError>
     where
-        Self: Sized,
+        Self: Sized + Validate,
     {
         let give_token_accounts = &context.0;
         let destination_accounts_len = context.1;

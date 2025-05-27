@@ -931,7 +931,7 @@ export class InterchainTokenInstructions {
       tokenManagerPda,
       minter: params.minter,
       minterRolesPda,
-      systemProgram: params.tokenProgram, // TODO: Fix the name, it's not systemProgram.
+      tokenProgram: params.tokenProgram,
     });
   }
 

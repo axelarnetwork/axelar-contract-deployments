@@ -312,6 +312,11 @@
           "isSigner": false
         },
         {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -611,6 +616,11 @@
           "isSigner": false
         },
         {
+          "name": "gatewayRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "axelarSolanaGateway",
           "isMut": false,
           "isSigner": false
@@ -705,6 +715,11 @@
         },
         {
           "name": "tokenManagerPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "gatewayRootPda",
           "isMut": false,
           "isSigner": false
         },
@@ -1650,6 +1665,11 @@
       "name": "tokenManagerTransferOperatorship",
       "accounts": [
         {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1708,6 +1728,11 @@
       "name": "tokenManagerProposeOperatorship",
       "accounts": [
         {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1765,6 +1790,11 @@
     {
       "name": "tokenManagerAcceptOperatorship",
       "accounts": [
+        {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "systemProgram",
           "isMut": false,
@@ -1905,7 +1935,7 @@
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -1920,6 +1950,11 @@
     {
       "name": "interchainTokenTransferMintership",
       "accounts": [
+        {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "systemProgram",
           "isMut": false,
@@ -1979,6 +2014,11 @@
       "name": "interchainTokenProposeMintership",
       "accounts": [
         {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2036,6 +2076,11 @@
     {
       "name": "interchainTokenAcceptMintership",
       "accounts": [
+        {
+          "name": "itsRootPda",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "systemProgram",
           "isMut": false,

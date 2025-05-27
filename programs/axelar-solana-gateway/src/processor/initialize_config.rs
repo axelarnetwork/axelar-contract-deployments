@@ -2,7 +2,7 @@ use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use itertools::Itertools;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
 use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -63,6 +63,8 @@ impl Processor {
         let program_data = next_account_info(core_accounts)?;
         let gateway_root_pda = next_account_info(core_accounts)?;
         let system_account = next_account_info(core_accounts)?;
+
+        validate_system_account_key(system_account.key)?;
 
         // Check: Upgrade authority
         ensure_upgrade_authority(program_id, upgrade_authority, program_data)?;
