@@ -1,5 +1,4 @@
-// ton/common.js
-const { TonClient, WalletContractV5R1 } = require('@ton/ton');
+const { TonClient, WalletContractV5R1, beginCell } = require('@ton/ton');
 const { mnemonicToWalletKey } = require('@ton/crypto');
 require('dotenv').config();
 
@@ -46,10 +45,33 @@ async function waitForTransaction(contract, seqno) {
     console.log('Transaction confirmed!');
 }
 
+const BYTES_PER_CELL = 96;
+
+function bufferToCell(buffer) {
+    function buildCellChain(startIndex) {
+        const builder = beginCell();
+        const endIndex = Math.min(startIndex + BYTES_PER_CELL, buffer.length);
+
+        for (let i = startIndex; i < endIndex; i++) {
+            builder.storeUint(buffer[i], 8);
+        }
+
+        if (endIndex < buffer.length) {
+            const nextCell = buildCellChain(endIndex);
+            builder.storeRef(nextCell);
+        }
+
+        return builder.endCell();
+    }
+
+    return buildCellChain(0);
+}
+
 module.exports = {
     getTonClient,
     loadWallet,
     waitForTransaction,
+    bufferToCell,
     TONCENTER_ENDPOINT,
     GATEWAY_ADDRESS,
 };

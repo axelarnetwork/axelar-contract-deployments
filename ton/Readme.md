@@ -27,3 +27,10 @@ Run this to execute an approve message
 ```bash
 node ton/relayerExecute.js "0x05cca7a140b1d3863cc4ab842570aa862d857e9d224739e0ba233d9d497f040c-0" "avalanche-fuji" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "48656c6c6f2066726f6d204176616c616e63686521" "0:4a1a80a7b0326b22310dced59d8b52efddf313e77f9b48f226b69b8efedbe24d" "ton" "0x35d25b76a49eebc07a7419b922fc11bd7bba1970b579d2a380ddd6606c5a1ff8"
 ```
+
+
+## Sending a message from ton
+
+```bash
+node ton/callContract.js "eth-sepolia" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "48656c6c6f2066726f6d204176616c616e63686521"
+```

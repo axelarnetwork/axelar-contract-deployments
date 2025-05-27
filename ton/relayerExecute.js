@@ -5,27 +5,6 @@ const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = requir
 // Constants
 const RELAYER_EXECUTE_COST = '0.3';
 const OP_RELAYER_EXECUTE = 0x00000008;
-const BYTES_PER_CELL = 96;
-
-function bufferToCell(buffer) {
-    function buildCellChain(startIndex) {
-        const builder = beginCell();
-        const endIndex = Math.min(startIndex + BYTES_PER_CELL, buffer.length);
-
-        for (let i = startIndex; i < endIndex; i++) {
-            builder.storeUint(buffer[i], 8);
-        }
-
-        if (endIndex < buffer.length) {
-            const nextCell = buildCellChain(endIndex);
-            builder.storeRef(nextCell);
-        }
-
-        return builder.endCell();
-    }
-
-    return buildCellChain(0);
-}
 
 function buildRelayerExecuteMessageBody(
     messageString,
