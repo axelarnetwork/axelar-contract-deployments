@@ -10,7 +10,8 @@
 | **Devnet Amplifier** | Deployed              | 2025-05-10 |
 | **Stagenet**         | Deployed              | 2025-05-20 |
 | **Testnet**          | Deployed              | 2025-05-19 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Deployed              | 2025-05-19 |
+
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v2.1.0)
 
