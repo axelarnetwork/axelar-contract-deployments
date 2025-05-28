@@ -58,7 +58,7 @@ async function migrateTokens(name) {
                     
                     printInfo(`Migrating token with tokenId: ${tokenId}. | ${Number(index) + 1} out of ${tokenManagers.length}`);
 
-                    await (await service.migrateInterchainToken(tokenId, gasOptions)).wait();
+                    //await (await service.migrateInterchainToken(tokenId, gasOptions)).wait();
                     tokenIds.push(tokenId);
                 } else {
                     tokenData.skip = true;
@@ -76,7 +76,6 @@ async function migrateTokens(name) {
 
         fs.writeFileSync(`./axelar-chains-config/info/tokenManagers-${env}.json`, JSON.stringify(tokenManagerInfo, null, 2));
     }
-    return;
     while(tokenIds.length > 0) {
         const data = [];
         const migrating = tokenIds.splice(0, N);

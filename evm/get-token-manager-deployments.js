@@ -29,7 +29,7 @@ const queryLimit = {
     moonbeam: 2000,
     binance: 10000,
     arbitrum: 500000,
-    "arbitrum-sepolia": 500000,
+    "arbitrum-sepolia": 10000,
     celo: 50000,
     kava: 10000,
     filecoin: 2880,
@@ -42,7 +42,7 @@ const queryLimit = {
     mantle: 10000,
     "mantle-sepolia": 10000,
     blast: 10000,
-    "blast-sepolia": 1000000,
+    "blast-sepolia": 10000,
     fraxtal: 50000,
     scroll: 10000,
     flow: 10000,
@@ -59,7 +59,8 @@ async function getTokenManagers(name) {
         console.log('processing... ', name);
 
         const rpc = RPCs[name];
-        console.log(RPCs, rpc);
+        console.log(name, rpc);
+        if(!rpc) return false;
         const provider = getDefaultProvider(rpc);
 
         const its = new Contract(chain.contracts.InterchainTokenService.address, IInterchainTokenService.abi, provider);
@@ -116,6 +117,8 @@ async function getTokenManagers(name) {
 }
 
 (async () => {
+    getTokenManagers('blast-sepolia');
+    return;
     let results = {};
     for (const name of Object.keys(info.chains)) {
         results[name] = 0;
