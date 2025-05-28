@@ -271,6 +271,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         AxelarnetGateway: { address: axelarnetGateway },
+        Coordinator: { address: coordinator }
     } = contracts;
     const { adminAddress, governanceAddress } = contractConfig;
 
@@ -286,7 +287,11 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
+    if (!validateAddress(coordinator)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway, coordinator_address: coordinator };
 };
 
 const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
