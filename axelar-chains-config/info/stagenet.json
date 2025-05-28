@@ -2404,10 +2404,10 @@
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "156",
-        "storeCodeProposalCodeHash": "a031928989cca91d7b3f673969b397856edfea67a52d8ee4a9f4fedd6f0b5121",
-        "codeId": 40,
-        "lastUploadedCodeId": 40,
+        "storeCodeProposalId": "166",
+        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "codeId": 42,
+        "lastUploadedCodeId": 42,
         "address": "axelar143vjln56ke4pjmj5ut7u3358ywyfl7h5rg58js8gprr39664wcqs72vs3u",
         "executeProposalId": "18",
         "flow": {
@@ -2699,12 +2699,12 @@
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
-          "codeId": 44,
+          "codeId": 49,
           "address": "axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57"
         },
-        "storeCodeProposalId": "169",
-        "storeCodeProposalCodeHash": "806cdb054e7576f8d8591c9278d3909f0a937d9dfd8259d92a68a4b7b756212c",
-        "lastUploadedCodeId": 44
+        "storeCodeProposalId": "182",
+        "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
+        "lastUploadedCodeId": 49
       },
       "XrplVotingVerifier": {
         "xrpl": {
@@ -2716,12 +2716,12 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "codeId": 45,
+          "codeId": 50,
           "address": "axelar1ecj3spvgkkmngslmvlft25cpws836x5t9y45qyzl5ezh2ny60fes4h2kq6"
         },
-        "storeCodeProposalId": "171",
-        "storeCodeProposalCodeHash": "63af81c145dca0b5961ef9361a2f1a32019f97ed818a321035b614ea7dfbba9d",
-        "lastUploadedCodeId": 45
+        "storeCodeProposalId": "184",
+        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
+        "lastUploadedCodeId": 50
       },
       "XrplMultisigProver": {
         "xrpl": {
@@ -2735,12 +2735,12 @@
           "verifierSetDiffThreshold": 0,
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
-          "codeId": 43,
+          "codeId": 52,
           "address": "axelar17mnfwue8mw5t2q9gmndz3m50070fmm0ffa0tunh2dujmuy398rtsrjyw2k"
         },
-        "storeCodeProposalId": "168",
-        "storeCodeProposalCodeHash": "0468518d4a3f0fe7033a0baad99ca0057685bd2c607c51ce9d341caacabb3462",
-        "lastUploadedCodeId": 43
+        "storeCodeProposalId": "192",
+        "storeCodeProposalCodeHash": "bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a",
+        "lastUploadedCodeId": 52
       }
     },
     "axelarId": "axelar",
@@ -2752,7 +2752,7 @@
     "axelarscanApi": "https://stagenet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
     "gasLimit": "auto",
-    "govProposalDepositAmount": "2000000000",
+    "govProposalDepositAmount": "100000000",
     "govProposalInstantiateAddresses": [
       "axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm",
       "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",

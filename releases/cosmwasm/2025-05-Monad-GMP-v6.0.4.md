@@ -1,29 +1,29 @@
-# &lt; ChainName &gt; GMP Amplifier vX.X.X
+# MonadGMP Amplifier v6.0.4
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @AttissNgo <attiss@interoplabs.io> |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
+| **Devnet Amplifier** | Completed             | 2025-05-22      |
 | **Stagenet**         | -                     | TBD      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
-- [Gateway vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
-- [MultisigProver vX.X.X](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
+- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
+- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
+- [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for `<ChainName>` connection.
+These are the instructions for deploying Amplifier contracts for `Monad` connection.
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/path-to-GMP-release-doc) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-05-Monad-GMP-v6.0.4.md) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -179,6 +179,21 @@ node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
+```bash
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+# You should see something like this:
+{
+  "data": {
+    "name": \"$CHAIN\",
+    "gateway": {
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+    },
+    "frozen_status": 0,
+    "msg_id_format": "hex_tx_hash_and_event_index"
+  }
+}
+```
+
 6. Register prover contract on coordinator
 
 ```bash
@@ -194,7 +209,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Authorize `$CHAIN` Multisig Prover on Multisig
+7. Authorize `$CHAIN` Multisig prover on Multisig
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
@@ -208,6 +223,14 @@ node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
+```
+
+```bash
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+# Result should look like:
+{
+  "data": true
+}
 ```
 
 8. Create reward pool for voting verifier
@@ -271,48 +294,13 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-11. Confirm proposals have passed
-
-- Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
-  - "Register Gateway for `$CHAIN`"
-  - "Register Multisig Prover for `$CHAIN`"
-  - "Authorize Multisig Prover for `$CHAIN`"
-  - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
-  - "Create pool for `$CHAIN` in axelar multisig"
-  - (optional) "Register `$CHAIN` on ITS Hub"
-
-- Check Gateway registered at Router
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
-
-- Check Multisig Prover authorized on Multisig
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
-```
-
-- Check reward pool to confirm funding worked:
+Check reward pool to confirm funding worked:
 
 ```bash
 node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-12. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
@@ -351,8 +339,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 21                  |
-| **Mainnet**          | 25                  |
+| **Testnet**          | 5                   |
+| **Mainnet**          | 5                   |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
@@ -366,4 +354,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [GMP checklist for $CHAIN](../evm/path-to-GMP-release-doc) will test GMP calls.
+The [GMP checklist for $CHAIN](../evm/2025-05-Monad-GMP-v6.0.4.md) will test GMP calls.

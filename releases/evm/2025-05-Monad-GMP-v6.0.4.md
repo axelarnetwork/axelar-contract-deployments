@@ -1,13 +1,13 @@
-# &lt; ChainName &gt; GMP vX.X.X
+# Monad GMP v6.0.4
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @AttissNgo <attiss@interoplabs.io>        |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>        |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
+| **Devnet Amplifier** | Completed             | 2025-05-23      |
 | **Stagenet**         | -                     | TBD      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
@@ -20,12 +20,12 @@ Describe release content here
 
 ## Deployment
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `<chain name>`.
+Create an `.env` config. Local environment variable `CHAIN` should be set to `monad`.
 
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAINS=<chain name>
+CHAINS=monad
 ```
 
 An initial chain config needs to be added to `${ENV}.json` file under `CHAIN` key.
@@ -40,20 +40,19 @@ npm ci
 
 ```bash
 "$CHAIN": {
-    "name": "<chain name>",
-    "axelarId": "$CHAIN",
-    "chainId": <chain id>,
-    "rpc": "<RPC URL>",
-    "tokenSymbol": "<token symbol>",
-    "confirmations": <confirmations>,
-    "finality": "finalized", # if no custom finality mechanism, use "confirmationHeight"
-    "decimals": <decimals>,
-    "approxFinalityWaitTime": <finality wait time>,
+    "name": "Monad",
+    "axelarId": "monad",
+    "chainId": 10143,
+    "rpc": "https://testnet-rpc.monad.xyz",
+    "tokenSymbol": "MON",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "<explorer name>",
-      "url": "<explorer URL>",
-      "api": "<explorer API (optional)>"
+      "name": "MonVision",
+      "url": "https://testnet.monadexplorer.com"
     },
   "contracts": {}
   }
@@ -63,20 +62,20 @@ npm ci
 
 ```bash
 "$CHAIN": {
-    "name": "<chain name",
-    "axelarId": "$CHAIN",
-    "chainId": <chain id>,
-    "rpc": "<RPC URL>",
-    "tokenSymbol": "<token symbol>",
-    "confirmations": <confirmations>,
-    "finality": "finalized", # if no custom finality mechanism, use "confirmationHeight"
-    "decimals": <decimals>,
-    "approxFinalityWaitTime": <finality wait time>,
+    "name": "Monad",
+    "axelarId": "monad",
+    "chainId": TBD,
+    "rpc": "TBD",
+    "tokenSymbol": "MON",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "<explorer name>",
-      "url": "<explorer URL>",
-      "api": "<explorer API (optional)>"
+      "name": "TBD",
+      "url": "TBD",
+      "api": "TBD"
     },
   "contracts": {}
   }
@@ -179,18 +178,10 @@ node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
-OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
-
-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
+node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownership for Operators contract
-
-```bash
-node evm/ownership.js -c Operators --action transferOwnership  --newOwner 0xa1c5B285bFE159d9eFc7359d7938767cF9936186
-```
-
-9. Transfer ownership for Gateway and Gas Service contracts on `mainnet` and `testnet`
+9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
 
 ```bash
 # Only for mainnet and official testnet connection
