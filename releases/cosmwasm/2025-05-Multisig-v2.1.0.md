@@ -1,16 +1,17 @@
 # Cosmwasm Multisig v2.1.0
 
-|  | **Owner** |
-|-----------|------------|
-| **Created By** | @cjcobb23 <cj@interoplabs.io> |
-| **Deployment** | TBD |
+|                | **Owner**                             |
+| -------------- | ------------------------------------- |
+| **Created By** | @cjcobb23 <cj@interoplabs.io>         |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io |
 
-| **Network** | **Deployment Status** | **Date** |
-|-------------|----------------------|----------|
-| **Devnet Amplifier** | Deployed | 05-10-2025 |
-| **Stagenet** | - | TBD |
-| **Testnet** | - | TBD |
-| **Mainnet** | - | TBD |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | Deployed              | 2025-05-10 |
+| **Stagenet**         | Deployed              | 2025-05-20 |
+| **Testnet**          | Deployed              | 2025-05-19 |
+| **Mainnet**          | Deployed              | 2025-05-19 |
+
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v2.1.0)
 
@@ -27,15 +28,8 @@ Changes in this release:
 
 1. Upload new Multisig contract
 
-| environment | INIT_ADDRESSES    |  RUN_AS_ACCOUNT |
-| :-----: | :---: | :---: |
-| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`  | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
-| stagenet | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky`    | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
-| testnet | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7`   | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
-| mainnet | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2,axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj,axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am`   | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`   |
-
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.1.0" -d "Upload Multisig contract v2.1.0" -r $RUN_AS_ACCOUNT --deposit 2000000000 --instantiateAddresses $INIT_ADDRESSES --version 2.1.0
+node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.1.0" -d "Upload Multisig contract v2.1.0" --version 2.1.0
 ```
 
 2. Upgrade Multisig contract
@@ -48,8 +42,7 @@ node cosmwasm/submit-proposal.js migrate \
   -t "Migrate Multisig to v2.1.0" \
   -d "Multisig to v2.1.0" \
   --msg '{}' \
-  --fetchCodeId \
-  --deposit 2000000000
+  --fetchCodeId
 ```
 
 ## Checklist
@@ -64,5 +57,3 @@ Expected output
 ```bash
 {"contract":"multisig","version":"2.1.0"}
 ```
-
-
