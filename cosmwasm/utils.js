@@ -204,6 +204,8 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         ServiceRegistry: { address: registryAddress },
+        Multisig: { address: multisigAddress },
+        Router: { address: routerAddress },
     } = contracts;
     const { governanceAddress } = contractConfig;
 
@@ -215,7 +217,7 @@ const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
 
-    return { governance_address: governanceAddress, service_registry: registryAddress };
+    return { governance_address: governanceAddress, service_registry: registryAddress, router_address: routerAddress, multisig_address: multisigAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
@@ -829,36 +831,6 @@ const fetchCodeIdFromContract = async (client, contractConfig) => {
     return codeId;
 };
 
-const addDefaultInstantiateAddresses = async (client, config, options) => {
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    if (!contractConfig.address) {
-        return;
-    }
-
-    const contract = await client.getContract(contractConfig.address);
-
-    let { instantiateAddresses } = options;
-
-    if (!instantiateAddresses) {
-        instantiateAddresses = [];
-    }
-
-    if (contract.admin && !instantiateAddresses.includes(contract.admin)) {
-        instantiateAddresses.push(contract.admin);
-        printWarn(
-            `Contract ${contractConfig.address} admin address ${contract.admin} was not included in instantiateAddresses list. Adding it by default.`,
-        );
-    }
-
-    if (contract.creator && !instantiateAddresses.includes(contract.creator)) {
-        instantiateAddresses.push(contract.creator);
-        printWarn(
-            `Contract ${contractConfig.address} creator address ${contract.creator} was not included in instantiateAddresses list. Adding it by default.`,
-        );
-    }
-};
-
 const getChainTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
@@ -1199,7 +1171,6 @@ module.exports = {
     migrateContract,
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
-    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
