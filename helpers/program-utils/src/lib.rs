@@ -8,10 +8,6 @@ use std::io::Write;
 
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use bytemuck::{AnyBitPattern, NoUninit};
-use rkyv::de::deserializers::SharedDeserializeMap;
-use rkyv::ser::serializers::AllocSerializer;
-use rkyv::validation::validators::DefaultValidator;
-use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
 use solana_program::account_info::AccountInfo;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
@@ -137,45 +133,6 @@ pub fn init_pda_raw<'a, 'b>(
     Ok(())
 }
 
-/// Initialize an associated account
-pub fn init_rkyv_pda<'a, 'b, const N: usize, T>(
-    funder_info: &'a AccountInfo<'b>,
-    to_create: &'a AccountInfo<'b>,
-    program_id: &Pubkey,
-    system_program_info: &'a AccountInfo<'b>,
-    rkyv_type: T,
-    signer_seeds: &[&[u8]],
-) -> Result<(), ProgramError>
-where
-    T: Serialize<AllocSerializer<N>>,
-{
-    let data = rkyv::to_bytes::<_, N>(&rkyv_type).map_err(|err| {
-        msg!("Cannot serialize rkyv account data: {}", err);
-        ProgramError::InvalidArgument
-    })?;
-
-    let rent = Rent::get()?;
-    let ix = &system_instruction::create_account(
-        funder_info.key,
-        to_create.key,
-        rent.minimum_balance(data.len()).max(1),
-        data.len() as u64,
-        program_id,
-    );
-    invoke_signed(
-        ix,
-        &[
-            funder_info.clone(),
-            to_create.clone(),
-            system_program_info.clone(),
-        ],
-        &[signer_seeds],
-    )?;
-    let mut account_data = to_create.try_borrow_mut_data()?;
-    account_data.write_all(&data)?;
-    Ok(())
-}
-
 /// Close an associated account
 pub fn close_pda(
     lamport_destination: &AccountInfo<'_>,
@@ -227,35 +184,6 @@ pub trait ValidPDA {
 
     /// Check if the account is an initialized PDA with a data check
     fn is_initialized_pda(&self, expected_owner_program_id: &Pubkey) -> bool;
-}
-
-/// Checks the rkyv encoded account program is initialised and
-/// returns it's content.
-pub fn check_rkyv_initialized_pda<'a, T: Archive>(
-    expected_owner_program_id: &Pubkey,
-    acc_info: &'a AccountInfo,
-    acc_data: &'a [u8],
-) -> Result<&'a T::Archived, ProgramError> {
-    acc_info.check_initialized_pda_without_deserialization(expected_owner_program_id)?;
-    Ok(unsafe { rkyv::archived_root::<T>(acc_data) })
-}
-
-/// Checks the rkyv encoded account program is initialised and
-/// returns it's non-archived content.
-pub fn check_rkyv_initialized_pda_non_archived<'a, T>(
-    expected_owner_program_id: &Pubkey,
-    acc_info: &'a AccountInfo,
-    acc_data: &'a [u8],
-) -> Result<T, ProgramError>
-where
-    T: Archive,
-    T::Archived: 'a + CheckBytes<DefaultValidator<'a>> + Deserialize<T, SharedDeserializeMap>,
-{
-    acc_info.check_initialized_pda_without_deserialization(expected_owner_program_id)?;
-    rkyv::from_bytes::<T>(acc_data).map_err(|err| {
-        msg!("Cannot deserialize rkyv account data: {}", err);
-        ProgramError::InvalidArgument
-    })
 }
 
 impl<'a> ValidPDA for &AccountInfo<'a> {
