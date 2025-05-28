@@ -198,26 +198,14 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
-    const {
-        axelar: { contracts },
-    } = config;
-    const {
-        ServiceRegistry: { address: registryAddress },
-        Multisig: { address: multisigAddress },
-        Router: { address: routerAddress },
-    } = contracts;
+const makeCoordinatorInstantiateMsg = (_config, _options, contractConfig) => {
     const { governanceAddress } = contractConfig;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
 
-    if (!validateAddress(registryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    return { governance_address: governanceAddress, service_registry: registryAddress, router_address: routerAddress, multisig_address: multisigAddress };
+    return { governance_address: governanceAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
