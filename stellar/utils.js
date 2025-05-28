@@ -16,7 +16,7 @@ const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require
 const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
 const { Option } = require('commander');
 const { ethers } = require('hardhat');
-const { itsCustomMigrationDataToScValV110 } = require('./type-utils');
+const { itsCustomMigrationDataToScValV112 } = require('./type-utils');
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -39,18 +39,18 @@ const SUPPORTED_CONTRACTS = new Set([
     'Multicall',
 ]);
 
-const CustomMigrationDataTypeToScValV111 = {
-    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV110(migrationData),
+const CustomMigrationDataTypeToScValV112 = {
+    InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV112(migrationData),
 };
 
 const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
-    '1.1.1': CustomMigrationDataTypeToScValV111,
+    '1.1.2': CustomMigrationDataTypeToScValV112,
 };
 
 function getNetworkPassphrase(networkType) {
     switch (networkType) {
         case 'local':
-            return Networks.SANDBOX;
+            return Networks.STANDALONE;
         case 'futurenet':
             return Networks.FUTURENET;
         case 'testnet':
@@ -149,8 +149,11 @@ async function sendTransaction(tx, server, action, options = {}) {
         }
 
         if (getResponse.status !== 'SUCCESS') {
-            throw Error(`Transaction failed: ${getResponse.resultXdr}`);
+            throw Error(`Transaction failed: ${getResponse.txHash}`);
         }
+
+        // Native payment — sorobanMeta is not present, so skip parsing.
+        if (options.nativePayment) return;
 
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
@@ -173,7 +176,13 @@ async function sendTransaction(tx, server, action, options = {}) {
 }
 
 async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
-    const server = new rpc.Server(chain.rpc);
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+
+    if (options.nativePayment) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        tx.sign(wallet);
+        return sendTransaction(tx, server, action, options);
+    }
 
     if (options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
@@ -202,11 +211,21 @@ function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
 
+/*
+ * To enable connecting to the local network, allowHttp needs to be set to true.
+ * This is necessary because the local network does not accept HTTPS requests.
+ */
+function getRpcOptions(chain) {
+    return {
+        allowHttp: chain.networkType === 'local',
+    };
+}
+
 async function getWallet(chain, options) {
     const keypair = Keypair.fromSecret(options.privateKey);
     const address = keypair.publicKey();
-    const provider = new rpc.Server(chain.rpc);
-    const horizonServer = new Horizon.Server(chain.horizonRpc);
+    const provider = new rpc.Server(chain.rpc, getRpcOptions(chain));
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
     const balances = await getBalances(horizonServer, address);
 
     printInfo('Wallet address', address);
@@ -229,6 +248,13 @@ async function getBalances(horizonServer, address) {
             throw error;
         });
     return response.balances;
+}
+
+async function getNativeBalance(chain, address) {
+    const horizonServer = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+    const balances = await getBalances(horizonServer, address);
+    const native = balances.find((balance) => balance.asset_type === ASSET_TYPE_NATIVE);
+    return native ? parseFloat(native.balance) : 0;
 }
 
 async function estimateCost(tx, server) {
@@ -535,7 +561,32 @@ function customMigrationData(migrationDataObj, version, contractName) {
     }
 }
 
+async function generateKeypair(options) {
+    switch (options.signatureScheme) {
+        case 'ed25519':
+            return Keypair.random();
+
+        default: {
+            throw new Error(`Unsupported scheme: ${options.signatureScheme}`);
+        }
+    }
+}
+
+function isFriendbotSupported(networkType) {
+    switch (networkType) {
+        case 'local':
+        case 'futurenet':
+        case 'testnet':
+            return true;
+        case 'mainnet':
+            return false;
+        default:
+            throw new Error(`Unknown network type: ${networkType}`);
+    }
+}
+
 module.exports = {
+    ...require('ts-node/register') /* enable node during migration */,
     stellarCmd,
     ASSET_TYPE_NATIVE,
     buildTransaction,
@@ -549,6 +600,7 @@ module.exports = {
     getNewSigners,
     serializeValue,
     getBalances,
+    getNativeBalance,
     createAuthorizedFunc,
     addressToScVal,
     hexToScVal,
@@ -562,4 +614,6 @@ module.exports = {
     BytesToScVal,
     pascalToKebab,
     sanitizeMigrationData,
+    generateKeypair,
+    isFriendbotSupported,
 };

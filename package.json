@@ -3,11 +3,14 @@
   "type": "commonjs",
   "version": "1.4.0",
   "description": "Axelar contract deployment scripts",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "lint": "eslint --fix '**/*.js'",
-    "prettier": "prettier --write '**/*.js' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
-    "test:sui": "mocha sui"
+    "build": "tsc",
+    "lint": "eslint --fix '**/*.{js,ts}'",
+    "prettier": "prettier --write '**/*.{js,ts}' 'axelar-chains-config/info/*.json' 'package.json' 'evm/**/*.json' '.github/**/*.yaml'",
+    "test": "mocha -r ts-node/register 'test/**/*.ts'",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -37,23 +40,38 @@
     "csv-parser": "^3.0.0",
     "path": "^0.12.7",
     "toml": "^3.0.0",
-    "xrpl": "^4.2.0"
+    "xrpl": "4.2.5"
   },
   "devDependencies": {
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/defender-relay-client": "^1.54.1",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@typechain/ethers-v5": "^10.2.1",
+    "@typechain/hardhat": "^6.1.6",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.14.1",
+    "@types/prettier": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.30.1",
+    "@typescript-eslint/parser": "^8.30.1",
     "chai": "^4.3.7",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "dotenv": "^16.0.1",
     "eslint": "^8.57.0",
-    "eslint-config-richardpringle": "^2.0.0",
     "fs-extra": "^11.1.1",
     "hardhat": "~2.19.5",
+    "husky": "^9.1.7",
     "mocha": "^10.2.0",
     "prettier": "^3.3.2",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.8.3",
+    "form-data": "^4.0.0",
+    "jszip": "^3.10.1"
   },
   "engines": {
     "node": ">=18"

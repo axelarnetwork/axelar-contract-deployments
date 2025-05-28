@@ -20,6 +20,8 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
+const camelToTitle = (str) => str.replace(/([A-Z])/g, (group) => ` ${group}`).replace(/^./, (firstChar) => firstChar.toUpperCase());
+
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
@@ -258,17 +260,25 @@ function isValidTimeFormat(timeString) {
 }
 
 /**
- * Validate if the given address is a Stellar address.
+ * Validate if the given address or array of addresses are valid Stellar addresses.
  *
  * A valid Stellar address is either:
  * - a valid Stellar account address (starts with 'G')
  * - a valid Stellar contract address (starts with 'C')
  *
- * @param {string} address - The input Stellar address.
- * @returns {boolean} - True if the address is valid, otherwise false.
+ * @param {string|string[]} addresses - A single Stellar address or an array of Stellar addresses.
+ * @returns {boolean} - True if the address or all addresses are valid, otherwise false.
  */
-function isValidStellarAddress(address) {
-    return isValidStellarAccount(address) || isValidStellarContract(address);
+function isValidStellarAddress(addresses) {
+    if (typeof addresses === 'string') {
+        return isValidStellarAccount(addresses) || isValidStellarContract(addresses);
+    }
+
+    if (Array.isArray(addresses)) {
+        return addresses.every((address) => isValidStellarAccount(address) || isValidStellarContract(address));
+    }
+
+    return false;
 }
 
 /**
@@ -606,6 +616,16 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
     }
 }
 
+const getProposalConfig = (config, env, key) => {
+    try {
+        const value = config.axelar?.[key];
+        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
+        return value;
+    } catch (error) {
+        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
+    }
+};
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -648,6 +668,7 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
+    camelToTitle,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
@@ -660,4 +681,5 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
+    getProposalConfig,
 };

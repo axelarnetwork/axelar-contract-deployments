@@ -51,7 +51,13 @@ const governanceAddress = 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const DUMMY_MNEMONIC = 'test test test test test test test test test test test junk';
+
 const prepareWallet = async ({ mnemonic }) => await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'axelar' });
+
+const prepareDummyWallet = async () => {
+    return await DirectSecp256k1HdWallet.fromMnemonic(DUMMY_MNEMONIC, { prefix: 'axelar' });
+};
 
 const prepareClient = async ({ axelar: { rpc, gasPrice } }, wallet) =>
     await SigningCosmWasmClient.connectWithSigner(rpc, wallet, { gasPrice });
@@ -192,24 +198,14 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
-    const {
-        axelar: { contracts },
-    } = config;
-    const {
-        ServiceRegistry: { address: registryAddress },
-    } = contracts;
+const makeCoordinatorInstantiateMsg = (_config, _options, contractConfig) => {
     const { governanceAddress } = contractConfig;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
 
-    if (!validateAddress(registryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    return { governance_address: governanceAddress, service_registry: registryAddress };
+    return { governance_address: governanceAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
@@ -275,6 +271,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         AxelarnetGateway: { address: axelarnetGateway },
+        Coordinator: { address: coordinator }
     } = contracts;
     const { adminAddress, governanceAddress } = contractConfig;
 
@@ -290,7 +287,11 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
+    if (!validateAddress(coordinator)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway, coordinator_address: coordinator };
 };
 
 const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
@@ -309,7 +310,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const { governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+    const { adminAddress, governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -317,6 +318,10 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid XrplVotingVerifier[${chainName}].adminAddress in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
@@ -344,6 +349,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
     }
 
     return {
+        admin_address: adminAddress,
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
         governance_address: governanceAddress,
@@ -823,36 +829,6 @@ const fetchCodeIdFromContract = async (client, contractConfig) => {
     return codeId;
 };
 
-const addDefaultInstantiateAddresses = async (client, config, options) => {
-    const { contractConfig } = getAmplifierContractConfig(config, options);
-
-    if (!contractConfig.address) {
-        return;
-    }
-
-    const contract = await client.getContract(contractConfig.address);
-
-    let { instantiateAddresses } = options;
-
-    if (!instantiateAddresses) {
-        instantiateAddresses = [];
-    }
-
-    if (contract.admin && !instantiateAddresses.includes(contract.admin)) {
-        instantiateAddresses.push(contract.admin);
-        printWarn(
-            `Contract ${contractConfig.address} admin address ${contract.admin} was not included in instantiateAddresses list. Adding it by default.`,
-        );
-    }
-
-    if (contract.creator && !instantiateAddresses.includes(contract.creator)) {
-        instantiateAddresses.push(contract.creator);
-        printWarn(
-            `Contract ${contractConfig.address} creator address ${contract.creator} was not included in instantiateAddresses list. Adding it by default.`,
-        );
-    }
-};
-
 const getChainTruncationParams = (config, chainConfig) => {
     const key = chainConfig.axelarId.toLowerCase();
     const chainTruncationParams = config.axelar.contracts.InterchainTokenService[key];
@@ -1179,6 +1155,7 @@ module.exports = {
     CONTRACTS,
     governanceAddress,
     prepareWallet,
+    prepareDummyWallet,
     prepareClient,
     fromHex,
     getSalt,
@@ -1192,7 +1169,6 @@ module.exports = {
     migrateContract,
     fetchCodeIdFromCodeHash,
     fetchCodeIdFromContract,
-    addDefaultInstantiateAddresses,
     getChainTruncationParams,
     decodeProposalAttributes,
     encodeStoreCodeProposal,
