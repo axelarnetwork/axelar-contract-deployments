@@ -2952,6 +2952,7 @@
         },
         "AxelarGateway": {
           "address": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+          "connectionType": "amplifier",
           "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
           "transferRate": 0,
           "tickSize": 6,
