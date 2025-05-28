@@ -28,7 +28,18 @@ const {
     submitProposal,
     governanceAddress,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, printError, prompt, getChainConfig, itsEdgeContract, readContractCode, getProposalConfig, camelToTitle } = require('../common');
+const {
+    saveConfig,
+    loadConfig,
+    printInfo,
+    printError,
+    prompt,
+    getChainConfig,
+    itsEdgeContract,
+    readContractCode,
+    getProposalConfig,
+    camelToTitle,
+} = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -198,7 +209,13 @@ const registerProtocol = async (client, wallet, config, options) => {
     await execute(client, wallet, config, {
         ...options,
         contractName: 'Coordinator',
-        msg: `{ "register_protocol": { "service_registry_address": ${JSON.stringify(serviceRegistry)}, "router_address": ${JSON.stringify(router)}, "multisig_address": ${JSON.stringify(multisig)} } }`,
+        msg: JSON.stringify({
+            'register_protocol': {
+                'service_registry_address': serviceRegistry,
+                'router_address': router,
+                'multisig_address': multisig,
+            },
+        }),
     });
 };
 
@@ -226,10 +243,10 @@ const migrate = async (client, wallet, config, options) => {
 };
 
 function addGovProposalDefaults(options, config, env, commandName) {
-    const { runAs, deposit, instantiateAddresses, title, contractName, version, description} = options;
+    const { runAs, deposit, instantiateAddresses, title, contractName, version, description } = options;
 
     if (!runAs)
-        options.runAs = env == 'devnet-amplifier'? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
+        options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
 
     if (!deposit)
         options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
@@ -254,7 +271,7 @@ function addGovProposalDefaults(options, config, env, commandName) {
 const mainProcessor = async (processor, options, commandName) => {
     const { env } = options;
     const config = loadConfig(env);
-    addGovProposalDefaults(options, config, env, commandName)
+    addGovProposalDefaults(options, config, env, commandName);
 
     initContractConfig(config, options);
 
