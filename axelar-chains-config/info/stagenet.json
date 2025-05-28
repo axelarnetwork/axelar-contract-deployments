@@ -1928,19 +1928,7 @@
       },
       "contracts": {
         "InterchainTokenService": {
-          "address": "rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR",
-          "initialSigner": "r4sGKptWj2nEjgYUh2pccVrPmfzZvNfANu",
-          "transferRate": 0,
-          "tickSize": 6,
-          "domain": "axelar.foundation",
-          "flags": [
-            4,
-            12,
-            13,
-            14,
-            8,
-            6
-          ]
+          "address": "rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR"
         },
         "AxelarGateway": {
           "address": "rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR",
