@@ -2845,7 +2845,7 @@
       "approxFinalityWaitTime": 53,
       "chainType": "evm",
       "explorer": {
-        "name": "Plume-testnet Explorer",
+        "name": "Plume Explorer",
         "url": "https://testnet-explorer.plumenetwork.xyz/"
       },
       "contracts": {
