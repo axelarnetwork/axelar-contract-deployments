@@ -2930,6 +2930,43 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       }
+    },
+    "xrpl": {
+      "name": "XRPL",
+      "axelarId": "xrpl",
+      "rpc": "https://s1.ripple.com:51234",
+      "wssRpc": "wss://s1.ripple.com",
+      "tokenSymbol": "XRP",
+      "decimals": 6,
+      "networkType": "mainnet",
+      "chainType": "xrpl",
+      "finality": "1",
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "XRPL Explorer",
+        "url": "https://livenet.xrpl.org"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw"
+        },
+        "AxelarGateway": {
+          "address": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+          "connectionType": "amplifier",
+          "initialSigner": "rJJAmTa5f9rNmBtvUMmFKn2KoX2o8QhiQ9",
+          "transferRate": 0,
+          "tickSize": 6,
+          "domain": "axelar.foundation",
+          "flags": [
+            4,
+            12,
+            13,
+            14,
+            8,
+            6
+          ]
+        }
+      }
     }
   },
   "axelar": {
@@ -3003,12 +3040,12 @@
         "adminAddress": "axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "316",
-        "storeCodeProposalCodeHash": "6898517f95da74cbc8c59223cc0f0f6b89e95911c321cf3be87e999935366687",
-        "codeId": 30,
+        "storeCodeProposalId": "322",
+        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "codeId": 33,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "244",
-        "lastUploadedCodeId": 30
+        "lastUploadedCodeId": 33
       },
       "MultisigProver": {
         "flow": {
@@ -3172,6 +3209,10 @@
         "stellar": {
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
+        },
+        "xrpl": {
+          "maxUintBits": 256,
+          "maxDecimalsWhenTruncating": 255
         }
       },
       "AxelarnetGateway": {
@@ -3182,6 +3223,54 @@
         "codeId": 22,
         "address": "axelar18vsne7lns36uvm8gv2cv5jl2lghts0xm7dvzpqzn70dl56gk9hvsgu9sqg"
       }
+    },
+    "XrplVotingVerifier": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+        "serviceName": "amplifier",
+        "votingThreshold": [
+          "2",
+          "3"
+        ],
+        "blockExpiry": 10,
+        "confirmationHeight": 1,
+        "address": "axelar14rd4uyrqyl0tw75gjn8zqfppmy08t3x3wrsujeqp37l0hghduanscfvkz6",
+        "codeId": 34
+      },
+      "storeCodeProposalId": "323",
+      "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
+      "lastUploadedCodeId": 34
+    },
+    "XrplGateway": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+        "address": "axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd",
+        "codeId": 35
+      },
+      "storeCodeProposalId": "324",
+      "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
+      "lastUploadedCodeId": 35
+    },
+    "XrplMultisigProver": {
+      "xrpl": {
+        "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+        "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+        "signingThreshold": [
+          "2",
+          "3"
+        ],
+        "serviceName": "amplifier",
+        "verifierSetDiffThreshold": 0,
+        "xrplTransactionFee": 5000,
+        "ticketCountThreshold": 50,
+        "address": "axelar15mhhuf887t6nfx2t0vuc6kx9w2uk65h939awmz6n7r6ggzyf659st25hff",
+        "codeId": 36
+      },
+      "storeCodeProposalId": "325",
+      "storeCodeProposalCodeHash": "bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a",
+      "lastUploadedCodeId": 36
     }
   }
 }
