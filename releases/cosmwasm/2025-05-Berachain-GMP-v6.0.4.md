@@ -1,14 +1,14 @@
-# Plume GMP v6.0.4
+# Berachain GMP v6.0.4
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | Completed             | 2025-05-06 |
+| **Devnet Amplifier** | Deployed              | 2025-05-20 |
+| **Stagenet**         | -                     | TBD        |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -19,16 +19,16 @@
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for the Plume connection.
+These are the instructions for deploying Amplifier contracts for the Berachain connection.
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-05-Berachain-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
@@ -38,7 +38,7 @@ node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay 
 
 ## Deployment
 
-- Create an `.env` config. `CHAIN` should be set to `plume`.
+- Create an `.env` config. `CHAIN` should be set to `berachain`.
 
 ```yaml
 MNEMONIC=xyz
@@ -146,37 +146,33 @@ ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router
 
 - Gov proposal environment variables. Update these for each network
 
-| Network              | `PROVER_ADMIN`                                  | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
-| -------------------- | ----------------------------------------------- | --------------- | ------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `100000000`     | `1000000uamplifier` |
-| **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `100000000`     | `1000000uaxl`       |
-| **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `2000000000`    | `1000000uaxl`       |
-| **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `2000000000`    | `1000000uaxl`       |
+| Network              | `PROVER_ADMIN`                                  | `REWARD_AMOUNT`     |
+| -------------------- | ----------------------------------------------- | ------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `1000000uamplifier` |
+| **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `1000000uaxl`       |
+| **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
+| **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
 
 ```bash
 PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
-DEPOSIT_VALUE=[deposit value]
 REWARD_AMOUNT=[reward amount]
-RUN_AS_ACCOUNT=[wasm deployer/governance address]
 EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
+- `--runAs $RUN_AS_ACCOUNT` & `--runAs` are not required.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 ### Create proposals
+Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Berachain-ITS-v2.1.0.md) if possible.
 
-Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Plume-ITS-v2.1.0.md) if possible.
 
-5. Register Gateway at the Router
+1. Register Gateway at the Router
 
 ```bash
 node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for $CHAIN" \
   -d "Register Gateway address for $CHAIN at Router contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_chain\": {
       \"chain\": \"$CHAIN\",
@@ -208,8 +204,6 @@ node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for $CHAIN" \
   -d "Register Multisig Prover address for $CHAIN at Coordinator contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
       \"chain_name\": \"$CHAIN\",
@@ -225,8 +219,6 @@ node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for $CHAIN" \
   -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"authorize_callers\": {
       \"contracts\": {
@@ -260,8 +252,6 @@ node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in $CHAIN voting verifier" \
   -d "Create pool for $CHAIN in $CHAIN voting verifier" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
       \"params\": {
@@ -284,8 +274,6 @@ node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in axelar multisig" \
   -d "Create pool for $CHAIN in axelar multisig" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
       \"params\": {
@@ -317,12 +305,12 @@ node cosmwasm/query.js rewards -n $CHAIN
 
 11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
-| Network              | `http_url`                    |
-| -------------------- | ----------------------------- |
-| **Devnet-amplifier** | https://testnet-rpc.plume.org |
-| **Stagenet**         | https://testnet-rpc.plume.org |
-| **Testnet**          | https://testnet-rpc.plume.org |
-| **Mainnet**          | TBD                           |
+| Network              | `http_url`                        |
+| -------------------- | --------------------------------- |
+| **Devnet-amplifier** | https://bepolia.rpc.berachain.com |
+| **Stagenet**         | https://bepolia.rpc.berachain.com |
+| **Testnet**          | https://bepolia.rpc.berachain.com |
+| **Mainnet**          | https://rpc.berachain.com/        |
 
 ```bash
 [[handlers]]
@@ -345,6 +333,7 @@ type="EvmVerifierSetVerifier"
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
+
 
 13. Create genesis verifier set
 
@@ -369,4 +358,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [Plume GMP checklist](../evm/2025-05-Plume-GMP-v6.0.4.md) will test GMP.
+The [Berachain GMP checklist](../evm/2025-05-Berachain-GMP-v6.0.4.md) will test GMP.

@@ -1,17 +1,16 @@
-# XRPL EVM Sidechain GMP v6.0.4
+# Berachain GMP v6.0.4
 
-|                | **Owner**                                                                   |
-| -------------- | --------------------------------------------------------------------------- |
-| **Created By** | @blockchainguyy <ayush@interoplabs.io>                                      |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
+| **Devnet Amplifier** | Deployed              | 2025-05-23 |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**(staging) | Completed             | 2025-02-19 |
-| **Testnet**          | Completed             | 2025-03-13 |
-| **Mainnet**          | Completed             | 2025-05-05 |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
@@ -19,11 +18,10 @@
 
 Changes in the release:
 
-This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for XRPL Sidechain.
-
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Berachain.
 ## Deployment
 
-Create an `.env` config. `CHAIN` should be set to `xrpl-evm`.
+Create an `.env` config. `CHAIN` should be set to `berachain`.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -43,22 +41,22 @@ npm ci && npm run build
 
 ```json
 "$CHAIN": {
-    "name": "XRPL EVM Sidechain",
+    "name": "Berachain",
     "axelarId": "$CHAIN",
-    "chainId": 1449000,
-    "rpc": "https://rpc.testnet.xrplevm.org",
-    "tokenSymbol": "XRP",
+    "chainId": 80069,
+    "rpc": "https://bepolia.rpc.berachain.com",
+    "tokenSymbol": "BERA",
     "confirmations": 1,
     "finality": "finalized",
     "decimals": 18,
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "Blockscout",
-      "url": "https://explorer.testnet.xrplevm.org/",
-      "api": "https://explorer.testnet.xrplevm.org/api/"
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
     },
-  "contracts": {}
+    "contracts": {}
   }
 ```
 
@@ -66,22 +64,22 @@ npm ci && npm run build
 
 ```json
 "$CHAIN": {
-    "name": "XRPL EVM",
+    "name": "Berachain",
     "axelarId": "$CHAIN",
-    "chainId": "TBD",
-    "rpc": "TBD",
-    "tokenSymbol": "XRP",
+    "chainId": 80094,
+    "rpc": "https://rpc.berachain.com/",
+    "tokenSymbol": "BERA",
     "confirmations": 1,
     "finality": "finalized",
     "decimals": 18,
     "approxFinalityWaitTime": 1,
     "chainType": "evm",
     "explorer": {
-      "name": "Blockscout",
-      "url": "TBD",
-      "api": "TBD"
+        "name": "Berascan",
+        "url": "https://berascan.com/",
+        "api": "https://rpc.berachain.com/"
     },
-  "contracts": {}
+    "contracts": {}
   }
 ```
 
@@ -205,7 +203,7 @@ node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A
 
 The following checks should be performed after the rollout
 
-### XRPL EVM -> EVM GMP call
+### Berachain -> EVM GMP call
 
 1. Send a GMP call
 
@@ -229,7 +227,7 @@ node evm/gateway.js -n [destination-chain] --action submitProof --multisigSessio
 node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
 ```
 
-### EVM -> XRPL GMP Call
+### EVM -> Berachain GMP Call
 
 1. Send a GMP call
 
