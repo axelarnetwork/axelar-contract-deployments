@@ -305,7 +305,7 @@ node cosmwasm/query.js rewards -n $CHAIN
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
 | **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
-| **Stagenet**         | https://wispy-evocative-cloud.monad-testnet.quiknode.pro/d2509f608a15af5f0ae610a2b4d0c34ec7f9b99d/ | # skip-check
+| **Stagenet**         | https://testnet-rpc.monad.xyz |
 | **Testnet**          | [testnet RPC URL] |
 | **Mainnet**          | [mainnet RPC URL] |
 
