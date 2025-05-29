@@ -28,7 +28,18 @@ const {
     submitProposal,
     governanceAddress,
 } = require('./utils');
-const { saveConfig, loadConfig, printInfo, printError, prompt, getChainConfig, itsEdgeContract, readContractCode, getProposalConfig, camelToTitle } = require('../common');
+const {
+    saveConfig,
+    loadConfig,
+    printInfo,
+    printError,
+    prompt,
+    getChainConfig,
+    itsEdgeContract,
+    readContractCode,
+    getProposalConfig,
+    camelToTitle,
+} = require('../common');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -190,6 +201,24 @@ const registerItsChain = async (client, wallet, config, options) => {
     });
 };
 
+const registerProtocol = async (client, wallet, config, options) => {
+    const serviceRegistry = config.axelar?.contracts?.ServiceRegistry?.address;
+    const router = config.axelar?.contracts?.Router?.address;
+    const multisig = config.axelar?.contracts?.Multisig?.address;
+
+    await execute(client, wallet, config, {
+        ...options,
+        contractName: 'Coordinator',
+        msg: JSON.stringify({
+            'register_protocol': {
+                'service_registry_address': serviceRegistry,
+                'router_address': router,
+                'multisig_address': multisig,
+            },
+        }),
+    });
+};
+
 const paramChange = async (client, wallet, config, options) => {
     const proposal = encodeParameterChangeProposal(options);
 
@@ -214,10 +243,10 @@ const migrate = async (client, wallet, config, options) => {
 };
 
 function addGovProposalDefaults(options, config, env, commandName) {
-    const { runAs, deposit, instantiateAddresses, title, contractName, version, description} = options;
+    const { runAs, deposit, instantiateAddresses, title, contractName, version, description } = options;
 
     if (!runAs)
-        options.runAs = env == 'devnet-amplifier'? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
+        options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
 
     if (!deposit)
         options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
@@ -235,14 +264,14 @@ function addGovProposalDefaults(options, config, env, commandName) {
 
     if (!description)
         options.description = options.title;
-    
+
     return options;
 }
 
 const mainProcessor = async (processor, options, commandName) => {
     const { env } = options;
     const config = loadConfig(env);
-    addGovProposalDefaults(options, config, env, commandName)
+    addGovProposalDefaults(options, config, env, commandName);
 
     initContractConfig(config, options);
 
@@ -262,9 +291,7 @@ const programHandler = () => {
     const storeCmd = program
         .command('store')
         .description('Submit a wasm binary proposal')
-        .action((options, cmd) => {
-            mainProcessor(storeCode, options, cmd.name());
-        });
+        .action((options, cmd) => mainProcessor(storeCode, options, cmd.name()));
     addAmplifierOptions(storeCmd, {
         contractOptions: true,
         storeOptions: true,
@@ -276,9 +303,7 @@ const programHandler = () => {
     const storeInstantiateCmd = program
         .command('storeInstantiate')
         .description('Submit and instantiate a wasm contract proposal')
-        .action((options, cmd) => {
-            mainProcessor(storeInstantiate, options, cmd.name());
-        });
+        .action((options, cmd) => mainProcessor(storeInstantiate, options, cmd.name()));
     addAmplifierOptions(storeInstantiateCmd, {
         contractOptions: true,
         storeOptions: true,
@@ -291,9 +316,7 @@ const programHandler = () => {
     const instantiateCmd = program
         .command('instantiate')
         .description('Submit an instantiate wasm contract proposal')
-        .action((options, cmd) => {
-            mainProcessor(instantiate, options, cmd.name());
-        });
+        .action((options, cmd) => mainProcessor(instantiate, options, cmd.name()));
     addAmplifierOptions(instantiateCmd, {
         contractOptions: true,
         instantiateOptions: true,
@@ -308,10 +331,13 @@ const programHandler = () => {
     const executeCmd = program
         .command('execute')
         .description('Submit an execute wasm contract proposal')
-        .action((options, cmd) => {
-            mainProcessor(execute, options, cmd.name());
-        });
-    addAmplifierOptions(executeCmd, { contractOptions: true, executeProposalOptions: true, proposalOptions: true, runAs: true });
+        .action((options, cmd) => mainProcessor(execute, options, cmd.name()));
+    addAmplifierOptions(executeCmd, {
+        contractOptions: true,
+        executeProposalOptions: true,
+        proposalOptions: true,
+        runAs: true,
+    });
 
     const registerItsChainCmd = program
         .command('its-hub-register-chains')
@@ -319,24 +345,26 @@ const programHandler = () => {
         .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
         .action((chains, options, cmd) => {
             options.chains = chains;
-            mainProcessor(registerItsChain, options, cmd.name());
+            return mainProcessor(registerItsChain, options, cmd.name());
         });
     addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
+
+    const registerProtocolCmd = program
+        .command('register-protocol-contracts')
+        .description('Submit an execute wasm contract proposal to register the main protocol contracts (e.g. Router)')
+        .action((options, cmd) => mainProcessor(registerProtocol, options, cmd.name()));
+    addAmplifierOptions(registerProtocolCmd, { proposalOptions: true, runAs: true });
 
     const paramChangeCmd = program
         .command('paramChange')
         .description('Submit a parameter change proposal')
-        .action((options, cmd) => {
-            mainProcessor(paramChange, options, cmd.name());
-        });
+        .action((options, cmd) => mainProcessor(paramChange, options, cmd.name()));
     addAmplifierOptions(paramChangeCmd, { paramChangeProposalOptions: true, proposalOptions: true });
 
     const migrateCmd = program
         .command('migrate')
         .description('Submit a migrate contract proposal')
-        .action((options, cmd) => {
-            mainProcessor(migrate, options, cmd.name());
-        });
+        .action((options, cmd) => mainProcessor(migrate, options, cmd.name()));
     addAmplifierOptions(migrateCmd, {
         contractOptions: true,
         migrateOptions: true,
