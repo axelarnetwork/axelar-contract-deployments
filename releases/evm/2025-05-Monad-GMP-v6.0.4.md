@@ -3,12 +3,12 @@
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io>        |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io>        |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io>        |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Completed             | 2025-05-23      |
-| **Stagenet**         | -                     | TBD      |
+| **Stagenet**         | Completed             | 2025-05-29      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
