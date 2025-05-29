@@ -12,11 +12,11 @@
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-- [Releases] add link to Github release here
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
 ## Background
 
-Describe release content here
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Monad.
 
 ## Deployment
 

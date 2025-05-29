@@ -2331,6 +2331,25 @@
           "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
         }
       }
+    },
+    "monad": {
+      "name": "Monad",
+      "axelarId": "monad",
+      "chainId": 10143,
+      "rpc": "https://testnet-rpc.monad.xyz",
+      "tokenSymbol": "MON",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "MonVision",
+        "url": "https://testnet.monadexplorer.com"
+      },
+      "contracts": {
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -2523,6 +2542,21 @@
           "domainSeparator": "0x55effa6536498e73caa573e7ad8326d3d4628878a9e4dc8b461ed5706ad585c2",
           "address": "axelar12cmpmynpn38tvg0t57lc8wd8cvw724sz95kr80a08mhghztex5lqfk2yv5"
         },
+        "monad": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0xc2cf3ea0ca094471edf3b8d4c6d31799069863a0181f5ff3801644796310d0e6",
+          "address": "axelar1xvqw6ts27k74ak0av7rszmedcz2rprqenayqk2gptfjhnl7rw3lqylln83"
+        },
         "storeCodeProposalId": "69",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 21
@@ -2558,6 +2592,10 @@
         "hyperliquid": {
           "codeId": 22,
           "address": "axelar1um4eyzmkpxhkpv3ytzaawqjzjxfddv2cjlep936glj87jg24zccqw86q2w"
+        },
+        "monad": {
+          "codeId": 22,
+          "address": "axelar1em05zd725semt9hu58fu47vuc5lcv8z35vn5dg3auclsd8u5j6qq6rrn4v"
         }
       },
       "VotingVerifier": {
@@ -2665,6 +2703,21 @@
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar1n72sdsdclpffc0jw5mf7vc97zpy6czqw9glmcqhm8sp73nczu57sn3kplc"
+        },
+        "monad": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1v72l84ar9nhl7xt44hn374xm60a7huhfnulh65aagtk55x8uzpsqfdr6tq"
         },
         "storeCodeProposalId": "72",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
