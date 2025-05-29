@@ -34,7 +34,7 @@ pub(crate) fn process(
         &ctx.proposal_hash,
     )?;
 
-    program_utils::close_pda(root_pda, operator_proposal_pda)?;
+    program_utils::pda::close_pda(root_pda, operator_proposal_pda)?;
 
     // Send event
     let event = GovernanceEvent::OperatorProposalCancelled {

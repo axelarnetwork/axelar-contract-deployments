@@ -8,8 +8,9 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1CpiBuilder;
 use mpl_token_metadata::types::TokenStandard;
 use program_utils::{
-    validate_mpl_token_metadata_key, validate_rent_key, validate_spl_associated_token_account_key,
-    validate_system_account_key, validate_sysvar_instructions_key, BorshPda,
+    pda::BorshPda, validate_mpl_token_metadata_key, validate_rent_key,
+    validate_spl_associated_token_account_key, validate_system_account_key,
+    validate_sysvar_instructions_key,
 };
 use role_management::processor::{ensure_roles, ensure_signer_roles};
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -660,7 +661,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     }
     .emit();
 
-    program_utils::close_pda(payer, deploy_approval_account)
+    program_utils::pda::close_pda(payer, deploy_approval_account)
 }
 
 pub(crate) fn use_deploy_approval(
@@ -684,5 +685,5 @@ pub(crate) fn use_deploy_approval(
         return Err(ProgramError::InvalidArgument);
     }
 
-    program_utils::close_pda(minter, deploy_approval_account)
+    program_utils::pda::close_pda(minter, deploy_approval_account)
 }

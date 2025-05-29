@@ -3,7 +3,7 @@
 //! Only this program can call this instruction via a previous scheduled GMP
 //! proposal, coming from the Axelar governance infrastructure.
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/InterchainGovernance.sol#L118).
-use program_utils::{validate_system_account_key, ValidPDA};
+use program_utils::{pda::ValidPDA, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;

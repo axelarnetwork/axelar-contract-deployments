@@ -3,7 +3,7 @@
 //!
 //! It can be executed only by the current operator or the program root PDA. See original implementation [here](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L96).
 
-use program_utils::{validate_system_account_key, ValidPDA};
+use program_utils::{pda::ValidPDA, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;

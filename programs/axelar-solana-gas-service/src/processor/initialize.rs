@@ -1,6 +1,6 @@
 use core::mem::size_of;
 
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -37,7 +37,7 @@ pub(crate) fn process_initialize_config(
     assert_valid_config_pda(bump, &salt, authority.key, config_pda.key)?;
 
     // Initialize the account
-    program_utils::init_pda_raw(
+    program_utils::pda::init_pda_raw(
         payer,
         config_pda,
         program_id,

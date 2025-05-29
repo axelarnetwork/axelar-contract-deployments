@@ -1,7 +1,7 @@
 //! Initialize Governance Config Account with the provided Governance Config
 //! data.
 
-use program_utils::ValidPDA;
+use program_utils::pda::ValidPDA;
 use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
@@ -50,7 +50,7 @@ pub(crate) fn process(
     // Check: PDA Account is not initialized
     root_pda.check_uninitialized_pda()?;
 
-    program_utils::init_pda::<GovernanceConfig>(
+    program_utils::pda::init_pda::<GovernanceConfig>(
         payer,
         root_pda,
         program_id,

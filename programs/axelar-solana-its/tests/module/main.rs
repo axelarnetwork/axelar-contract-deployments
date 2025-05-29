@@ -66,7 +66,7 @@ use evm_contracts_test_suite::{
     evm_weighted_signers, get_domain_separator, EvmSigner, ItsContracts,
 };
 use interchain_token_transfer_gmp::{GMPPayload, ReceiveFromHub};
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 
 const SOLANA_CHAIN_NAME: &str = "solana-localnet";
 const EVM_CHAIN_NAME: &str = "ethereum";

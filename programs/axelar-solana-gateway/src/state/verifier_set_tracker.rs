@@ -2,7 +2,7 @@
 
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 
 /// Ever-incrementing counter for keeping track of the sequence of signer sets
 pub type Epoch = U256;

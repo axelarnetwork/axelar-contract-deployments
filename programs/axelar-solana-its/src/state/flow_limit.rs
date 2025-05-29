@@ -6,7 +6,7 @@ use core::mem::size_of;
 use core::time::Duration;
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;

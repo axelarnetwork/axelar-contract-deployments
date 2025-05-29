@@ -1,5 +1,5 @@
 use event_utils::{read_array, read_string, EventParseError};
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;

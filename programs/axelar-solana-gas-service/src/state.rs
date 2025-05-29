@@ -1,7 +1,7 @@
 //! State module for the Axelar Solana Gas Service
 
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 use solana_program::pubkey::Pubkey;
 
 /// Keep track of the authority for aggregating gas payments

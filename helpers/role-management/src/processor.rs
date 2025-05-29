@@ -1,5 +1,6 @@
 //! This module provides logic to handle user role management instructions.
-use program_utils::{close_pda, validate_system_account_key, BorshPda};
+use program_utils::pda::{close_pda, BorshPda};
+use program_utils::validate_system_account_key;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;

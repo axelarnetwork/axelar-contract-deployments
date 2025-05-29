@@ -2,7 +2,10 @@ use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::execute_data::MerkleisedMessage;
 use axelar_solana_encoding::{rs_merkle, LeafHash};
 use core::str::FromStr;
-use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
+use program_utils::{
+    pda::{BytemuckedPda, ValidPDA},
+    validate_system_account_key,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -121,7 +124,7 @@ impl Processor {
             &command_id,
             &[incoming_message_pda_bump],
         ];
-        program_utils::init_pda_raw(
+        program_utils::pda::init_pda_raw(
             funder,
             incoming_message_pda,
             program_id,

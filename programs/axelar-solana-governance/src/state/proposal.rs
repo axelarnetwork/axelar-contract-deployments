@@ -12,7 +12,7 @@ use crate::{seed_prefixes, ID};
 use borsh::{BorshDeserialize, BorshSerialize};
 use core::any::type_name;
 use core::mem::size_of;
-use program_utils::ValidPDA;
+use program_utils::pda::ValidPDA;
 use program_utils::{checked_from_u256_le_bytes_to_u64, current_time, transfer_lamports};
 use solana_program::account_info::AccountInfo;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -195,7 +195,7 @@ impl ExecutableProposal {
         hash: &[u8; 32],
         bump: u8,
     ) -> Result<(), ProgramError> {
-        program_utils::init_pda::<Self>(
+        program_utils::pda::init_pda::<Self>(
             payer,
             proposal_pda,
             &ID,
@@ -398,7 +398,7 @@ impl ExecutableProposal {
         pda_to_close: &AccountInfo<'_>,
         lamport_destination: &AccountInfo<'_>,
     ) -> Result<(), ProgramError> {
-        program_utils::close_pda(lamport_destination, pda_to_close)
+        program_utils::pda::close_pda(lamport_destination, pda_to_close)
     }
 
     /// Returns the proposal bump seed.

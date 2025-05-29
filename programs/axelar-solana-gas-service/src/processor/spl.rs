@@ -1,5 +1,5 @@
 use axelar_solana_gas_service_events::event_prefixes;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::Instruction;

@@ -41,7 +41,7 @@ pub(crate) fn process(
         &ctx.proposal_hash,
     )?;
 
-    program_utils::init_pda_raw(
+    program_utils::pda::init_pda_raw(
         payer,
         operator_proposal_pda,
         program_id,

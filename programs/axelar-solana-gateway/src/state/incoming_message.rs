@@ -1,7 +1,7 @@
 //! Module for the `IncomingMessage` account type.
 
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 
 /// Data for the incoming message (from Axelar to Solana) PDA.
 #[repr(C)]

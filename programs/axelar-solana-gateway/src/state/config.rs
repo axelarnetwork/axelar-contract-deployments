@@ -2,7 +2,7 @@
 
 use axelar_message_primitives::U256;
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 use solana_program::pubkey::Pubkey;
 
 use crate::error::GatewayError;

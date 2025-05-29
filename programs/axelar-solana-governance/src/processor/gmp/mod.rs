@@ -24,7 +24,7 @@ use governance_gmp::GovernanceCommand::{
     ScheduleTimeLockProposal,
 };
 use governance_gmp::GovernanceCommandPayload;
-use program_utils::ValidPDA;
+use program_utils::pda::ValidPDA;
 use solana_program::account_info::next_account_info;
 use solana_program::account_info::AccountInfo;
 use solana_program::keccak::hash;

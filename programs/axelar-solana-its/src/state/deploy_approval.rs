@@ -3,7 +3,7 @@ use core::any::type_name;
 use core::mem::size_of;
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};

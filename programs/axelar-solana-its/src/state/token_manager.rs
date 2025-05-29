@@ -7,7 +7,7 @@ use core::mem::size_of;
 use alloy_primitives::{Bytes, FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::{Pack, Sealed};

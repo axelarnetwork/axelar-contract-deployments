@@ -1,7 +1,7 @@
 //! Module for the signature verification session PDA data layout type.
 
 use bytemuck::{Pod, Zeroable};
-use program_utils::BytemuckedPda;
+use program_utils::pda::BytemuckedPda;
 
 use super::signature_verification::SignatureVerification;
 

@@ -3,7 +3,7 @@ use crate::state::incoming_message::IncomingMessage;
 use crate::state::message_payload::MutMessagePayload;
 
 use super::Processor;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;

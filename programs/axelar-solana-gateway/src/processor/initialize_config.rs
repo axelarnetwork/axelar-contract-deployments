@@ -2,7 +2,10 @@ use core::mem::size_of;
 
 use axelar_message_primitives::U256;
 use itertools::Itertools;
-use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
+use program_utils::{
+    pda::{BytemuckedPda, ValidPDA},
+    validate_system_account_key,
+};
 use role_management::processor::ensure_upgrade_authority;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
@@ -95,7 +98,7 @@ impl Processor {
             verifier_set_pda.check_uninitialized_pda()?;
 
             // Initialize the tracker account
-            program_utils::init_pda_raw(
+            program_utils::pda::init_pda_raw(
                 payer,
                 verifier_set_pda,
                 program_id,
@@ -127,7 +130,7 @@ impl Processor {
         assert_valid_gateway_root_pda(bump, gateway_root_pda.key)?;
 
         // Initialize the account
-        program_utils::init_pda_raw(
+        program_utils::pda::init_pda_raw(
             payer,
             gateway_root_pda,
             program_id,

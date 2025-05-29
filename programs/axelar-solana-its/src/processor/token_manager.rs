@@ -2,8 +2,8 @@
 
 use event_utils::Event as _;
 use program_utils::{
+    pda::{BorshPda, ValidPDA},
     validate_rent_key, validate_spl_associated_token_account_key, validate_system_account_key,
-    BorshPda, ValidPDA,
 };
 use role_management::processor::ensure_roles;
 use role_management::state::UserRoles;

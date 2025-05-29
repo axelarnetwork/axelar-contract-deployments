@@ -5,7 +5,7 @@ use core::mem::size_of;
 
 use bitflags::Flags;
 use borsh::{BorshDeserialize, BorshSerialize};
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 use solana_program::{
     msg,
     program_error::ProgramError,

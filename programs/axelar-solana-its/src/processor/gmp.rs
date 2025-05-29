@@ -4,7 +4,7 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use interchain_token_transfer_gmp::{GMPPayload, SendToHub};
 use itertools::{self, Itertools};
-use program_utils::{validate_system_account_key, BorshPda};
+use program_utils::{pda::BorshPda, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;
 use solana_program::entrypoint::ProgramResult;

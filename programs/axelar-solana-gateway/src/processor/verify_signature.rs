@@ -1,5 +1,5 @@
 use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;

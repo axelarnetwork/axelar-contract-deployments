@@ -1,5 +1,5 @@
 use event_utils::{read_array, EventParseError};
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
 use solana_program::entrypoint::ProgramResult;

@@ -1,5 +1,5 @@
 use core::mem::size_of;
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
@@ -106,7 +106,7 @@ impl Processor {
         ];
 
         // Prepare the `create_account` instruction
-        program_utils::init_pda_raw(
+        program_utils::pda::init_pda_raw(
             payer,
             verification_session_account,
             program_id,

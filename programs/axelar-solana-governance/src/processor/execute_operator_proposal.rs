@@ -2,7 +2,7 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L75).
 use borsh::to_vec;
-use program_utils::{validate_system_account_key, ValidPDA};
+use program_utils::{pda::ValidPDA, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -88,5 +88,5 @@ pub(crate) fn process(
     };
     event.emit()?;
     ExecutableProposal::remove(proposal_account, config_pda)?;
-    program_utils::close_pda(config_pda, operator_pda_marker_account)
+    program_utils::pda::close_pda(config_pda, operator_pda_marker_account)
 }

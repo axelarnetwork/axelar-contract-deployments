@@ -6,8 +6,8 @@ use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};
 use program_utils::{
-    validate_mpl_token_metadata_key, validate_rent_key, validate_spl_associated_token_account_key,
-    validate_system_account_key, BorshPda,
+    pda::BorshPda, validate_mpl_token_metadata_key, validate_rent_key,
+    validate_spl_associated_token_account_key, validate_system_account_key,
 };
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::clock::Clock;

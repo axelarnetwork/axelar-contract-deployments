@@ -6,7 +6,7 @@ use crate::events::GovernanceEvent;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
 use crate::state::GovernanceConfig;
 use borsh::to_vec;
-use program_utils::{from_u64_to_u256_le_bytes, validate_system_account_key, ValidPDA};
+use program_utils::{from_u64_to_u256_le_bytes, pda::ValidPDA, validate_system_account_key};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;

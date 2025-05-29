@@ -4,7 +4,7 @@ use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_encoding::LeafHash;
 use event_utils::{read_array, read_string, EventParseError};
-use program_utils::{BytemuckedPda, ValidPDA};
+use program_utils::pda::{BytemuckedPda, ValidPDA};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::log::sol_log_data;
 use solana_program::msg;

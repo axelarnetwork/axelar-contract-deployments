@@ -4,7 +4,10 @@ use core::mem::size_of;
 use axelar_message_primitives::U256;
 use axelar_solana_encoding::hasher::SolanaSyscallHasher;
 use event_utils::{read_array, EventParseError};
-use program_utils::{validate_system_account_key, BytemuckedPda, ValidPDA};
+use program_utils::{
+    pda::{BytemuckedPda, ValidPDA},
+    validate_system_account_key,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::log::sol_log_data;
@@ -198,7 +201,7 @@ fn rotate_signers<'a>(
 
     // Initialize thethe new verifier set tracker PDA account
     let (_, new_verifier_set_bump) = get_verifier_set_tracker_pda(new_verifier_set_merkle_root);
-    program_utils::init_pda_raw(
+    program_utils::pda::init_pda_raw(
         payer,
         new_empty_verifier_set,
         program_id,

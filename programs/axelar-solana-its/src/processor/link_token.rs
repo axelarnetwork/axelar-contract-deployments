@@ -3,7 +3,7 @@
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, LinkToken, RegisterTokenMetadata};
 use mpl_token_metadata::accounts::Metadata;
-use program_utils::BorshPda;
+use program_utils::pda::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
