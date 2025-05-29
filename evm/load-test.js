@@ -48,6 +48,8 @@ class LoadTestRunner {
             transferAmount,
             addressesToDerive,
             mnemonic,
+            privateKey,
+            gasValue,
             output,
         } = options;
 
@@ -57,14 +59,19 @@ class LoadTestRunner {
 
         const itsOptions = {
             chainNames: sourceChain,
-            gasValue: await estimateGas(config, options),
+            gasValue: gasValue || (await estimateGas(config, options)),
             metadata: '0x',
             env,
             yes: true,
         };
 
-        const accounts = await deriveAccounts(mnemonic, addressesToDerive);
-        const privateKeys = accounts.map((account) => account.privateKey);
+        let privateKeys = [];
+        if (mnemonic) {
+            const accounts = await deriveAccounts(mnemonic, addressesToDerive);
+            privateKeys = accounts.map((account) => account.privateKey);
+        } else {
+            privateKeys = [privateKey];
+        }
 
         const startTime = performance.now();
         let elapsedTime = 0;
@@ -94,8 +101,10 @@ class LoadTestRunner {
                     .finally(() => {
                         elapsedTime = (performance.now() - startTime) / 1000;
 
-                        privateKeys.push(pk);
-                        printWarning = true;
+                        setTimeout(() => {
+                            privateKeys.push(pk);
+                            printWarning = true;
+                        }, delay);
 
                         pendingPromises.delete(promiseId);
 
@@ -272,6 +281,7 @@ const programHandler = () => {
         .requiredOption('--destination-address <destinationAddress>', 'destination address')
         .requiredOption('--token-id <tokenId>', 'token id')
         .requiredOption('--transfer-amount <transferAmount>', 'transfer amount, e.g. 0.001')
+        .option('--gas-value <gasValue>', 'gas value')
         .addOption(
             new Option('-t, --time <time>', 'time limit in minutes to run the test')
                 .makeOptionMandatory(true)
@@ -282,11 +292,9 @@ const programHandler = () => {
             new Option(
                 '--addresses-to-derive <addresses-to-derive>',
                 'number of addresses to derive from mnemonic, used as source addresses to generate load in parallel',
-            )
-                .makeOptionMandatory(true)
-                .env('DERIVE_ACCOUNTS'),
+            ).env('DERIVE_ACCOUNTS'),
         )
-        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').makeOptionMandatory(true).env('MNEMONIC'))
+        .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .addOption(new Option('-o, --output <output>', 'output file to save the transactions generated').default('/tmp/load-test.txt'))
         .action((options) => {
             mainProcessor(startTest, options);
