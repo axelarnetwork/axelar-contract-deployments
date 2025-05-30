@@ -8,14 +8,14 @@
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Completed             | 2025-05-22      |
-| **Stagenet**         | -                     | TBD      |
+| **Stagenet**         | Completed             | 2025-05-29      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) `add link to Voting Verifier release`
-- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) `add link to Gateway release`
-- [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1) `add link to Multisig Prover release`
+- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) 
+- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) 
+- [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
 
 ## Background
 
@@ -304,8 +304,8 @@ node cosmwasm/query.js rewards -n $CHAIN
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
-| **Devnet-amplifier** | [testnet RPC URL] |
-| **Stagenet**         | [testnet RPC URL] |
+| **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
+| **Stagenet**         | https://testnet-rpc.monad.xyz |
 | **Testnet**          | [testnet RPC URL] |
 | **Mainnet**          | [mainnet RPC URL] |
 
