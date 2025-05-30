@@ -303,6 +303,11 @@ pub(crate) fn handover_mint_authority(
         token_manager_config.bump,
     )?;
 
+    if token_manager_config.token_address != *mint.key {
+        msg!("TokenManager PDA does not match the provided Mint account");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let mint_authority = {
         let mint_data = mint.try_borrow_data()?;
         let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
