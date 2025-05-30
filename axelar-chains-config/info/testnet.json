@@ -2920,6 +2920,24 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       }
+    },
+    "berachain": {
+      "name": "Berachain",
+      "axelarId": "berachain",
+      "chainId": 80069,
+      "rpc": "https://bepolia.rpc.berachain.com",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
@@ -3082,6 +3100,21 @@
           "domainSeparator": "0xecb35aaefd4f374fa1ea62bc6280f4150361977ad6ecad5f2ef878a89feb214e",
           "address": "axelar1ll4yhqtldlgqwqthyffqln3cyr2f8ydzhv0djpjyp6sk4v5k4kqqrs60s7"
         },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 18,
+          "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
+          "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw"
+        },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 18
@@ -3113,6 +3146,10 @@
         "plume": {
           "codeId": 24,
           "address": "axelar163ee8p7xne8een7v3hwz6zxh339v6s8js3v5c9520mlnzd7nxneq5eq86v"
+        },
+        "berachain": {
+          "codeId": 24,
+          "address": "axelar1yedkcrlaf479vcu3xk47emzryc89kwm2m06zmecrd7ruqu4wguuqk0z0vg"
         }
       },
       "VotingVerifier": {
@@ -3205,6 +3242,21 @@
           "addressFormat": "eip55",
           "codeId": 26,
           "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t"
+        },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 26,
+          "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal"
         },
         "storeCodeProposalId": "183",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",

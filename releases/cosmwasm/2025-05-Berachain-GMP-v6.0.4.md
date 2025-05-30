@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-05-20 |
 | **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
+| **Testnet**          | Deployed              | 2025-05-30 |
 | **Mainnet**          | -                     | TBD        |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
