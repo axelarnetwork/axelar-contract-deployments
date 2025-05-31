@@ -125,8 +125,8 @@ async function sendTransaction(tx, server, action, options = {}) {
     // then submit the transaction into the network for us. Then we will have to
     // wait, polling `getTransaction` until the transaction completes.
     try {
-        let retries = MAX_RETRIES;
         let sendResponse, getResponse;
+        let retries = MAX_RETRIES;
 
         while (retries > 0) {
             sendResponse = await server.sendTransaction(tx);
@@ -135,10 +135,6 @@ async function sendTransaction(tx, server, action, options = {}) {
 
             await sleep(RETRY_WAIT);
             retries--;
-        }
-
-        if (sendResponse.status !== 'PENDING') {
-            throw Error(sendResponse.errorResultXdr);
         }
 
         printInfo(`${action} tx`, sendResponse.hash);
