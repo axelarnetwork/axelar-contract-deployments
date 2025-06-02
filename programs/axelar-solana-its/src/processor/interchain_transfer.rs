@@ -361,7 +361,8 @@ fn track_token_flow(
             return Err(ProgramError::InvalidArgument);
         }
 
-        let flow_slot = FlowSlot::new(flow_limit, 0, amount, flow_slot_pda_bump)?;
+        let mut flow_slot = FlowSlot::new(flow_slot_pda_bump);
+        flow_slot.add_flow(flow_limit, amount, direction)?;
         flow_slot.init(
             &crate::id(),
             accounts.system_account,
