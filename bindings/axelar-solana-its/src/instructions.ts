@@ -130,8 +130,11 @@ export class ItsInstructions {
     payer: PublicKey;
     chainName: string;
   }): ReturnType<Program["methods"]["setTrustedChain"]> {
+    const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
+
     return this.program.methods.setTrustedChain(params.chainName).accounts({
       payer: params.payer,
+      payerRolesPda,
       programDataAddress: this.programDataAddress,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,
@@ -142,8 +145,10 @@ export class ItsInstructions {
     payer: PublicKey;
     chainName: string;
   }): ReturnType<Program["methods"]["removeTrustedChain"]> {
+    const [payerRolesPda] = findUserRolesPda(this.itsRootPda, params.payer);
     return this.program.methods.removeTrustedChain(params.chainName).accounts({
       payer: params.payer,
+      payerRolesPda,
       programDataAddress: this.programDataAddress,
       itsRootPda: this.itsRootPda,
       systemProgram: SystemProgram.programId,

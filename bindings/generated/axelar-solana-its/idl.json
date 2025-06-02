@@ -87,6 +87,11 @@
           "isSigner": true
         },
         {
+          "name": "payerRolesPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "programDataAddress",
           "isMut": false,
           "isSigner": false
@@ -116,6 +121,11 @@
           "name": "payer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "payerRolesPda",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "programDataAddress",

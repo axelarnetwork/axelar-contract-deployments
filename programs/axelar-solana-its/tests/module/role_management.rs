@@ -678,6 +678,395 @@ async fn test_fail_mint_without_minter_role(ctx: &mut ItsTestContext) {
 
 #[test_context(ItsTestContext)]
 #[tokio::test]
+async fn test_set_trusted_chain_with_upgrade_authority(ctx: &mut ItsTestContext) {
+    let chain_name = "new-chain".to_string();
+
+    // Transfer funds to upgrade authority so they can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &ctx.solana_chain.upgrade_authority.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify the chain was added as trusted
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_set_trusted_chain_with_operator_role(ctx: &mut ItsTestContext) {
+    let chain_name = "operator-chain".to_string();
+    let bob = Keypair::new();
+
+    // Transfer funds to bob so he can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &bob.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Give bob operator role
+    let transfer_operatorship_ix =
+        axelar_solana_its::instruction::transfer_operatorship(ctx.solana_wallet, bob.pubkey())
+            .unwrap();
+
+    ctx.send_solana_tx(&[transfer_operatorship_ix])
+        .await
+        .unwrap();
+
+    // Bob sets trusted chain using operator role
+    let set_trusted_chain_ix =
+        axelar_solana_its::instruction::set_trusted_chain(bob.pubkey(), chain_name.clone())
+            .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify the chain was added as trusted
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_set_trusted_chain_failure_without_authority(ctx: &mut ItsTestContext) {
+    let chain_name = "unauthorized-chain".to_string();
+    let charlie = Keypair::new();
+
+    // Transfer funds to charlie so he can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &charlie.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Charlie has neither upgrade authority nor operator role
+    let set_trusted_chain_ix =
+        axelar_solana_its::instruction::set_trusted_chain(charlie.pubkey(), chain_name.clone())
+            .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &charlie.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with proper error
+    assert!(tx_metadata
+        .find_log("Payer is neither upgrade authority nor operator")
+        .is_some());
+
+    // Verify the chain was NOT added as trusted
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(!its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_remove_trusted_chain_with_upgrade_authority(ctx: &mut ItsTestContext) {
+    let chain_name = "removable-chain".to_string();
+
+    // Transfer funds to upgrade authority
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &ctx.solana_chain.upgrade_authority.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // First add the chain as trusted
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify the chain was added
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+    assert!(its_root.trusted_chains.contains(&chain_name));
+
+    // Now remove the chain using upgrade authority
+    let remove_trusted_chain_ix = axelar_solana_its::instruction::remove_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[remove_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify the chain was removed
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(!its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_remove_trusted_chain_with_operator_role(ctx: &mut ItsTestContext) {
+    let chain_name = "operator-removable-chain".to_string();
+    let bob = Keypair::new();
+
+    // Transfer funds to both upgrade authority and bob
+    ctx.send_solana_tx(&[
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &ctx.solana_chain.upgrade_authority.pubkey(),
+            u32::MAX.into(),
+        ),
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &bob.pubkey(),
+            u32::MAX.into(),
+        ),
+    ])
+    .await
+    .unwrap();
+
+    // First add the chain as trusted using upgrade authority
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Give bob operator role
+    let transfer_operatorship_ix =
+        axelar_solana_its::instruction::transfer_operatorship(ctx.solana_wallet, bob.pubkey())
+            .unwrap();
+
+    ctx.send_solana_tx(&[transfer_operatorship_ix])
+        .await
+        .unwrap();
+
+    // Bob removes the chain using operator role
+    let remove_trusted_chain_ix =
+        axelar_solana_its::instruction::remove_trusted_chain(bob.pubkey(), chain_name.clone())
+            .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[remove_trusted_chain_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify the chain was removed
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(!its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_remove_trusted_chain_failure_without_authority(ctx: &mut ItsTestContext) {
+    let chain_name = "protected-chain".to_string();
+    let charlie = Keypair::new();
+
+    // Transfer funds to upgrade authority and charlie
+    ctx.send_solana_tx(&[
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &ctx.solana_chain.upgrade_authority.pubkey(),
+            u32::MAX.into(),
+        ),
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &charlie.pubkey(),
+            u32::MAX.into(),
+        ),
+    ])
+    .await
+    .unwrap();
+
+    // First add the chain as trusted using upgrade authority
+    let set_trusted_chain_ix = axelar_solana_its::instruction::set_trusted_chain(
+        ctx.solana_chain.upgrade_authority.pubkey(),
+        chain_name.clone(),
+    )
+    .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[set_trusted_chain_ix],
+            &[
+                &ctx.solana_chain.upgrade_authority.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Charlie has neither upgrade authority nor operator role
+    let remove_trusted_chain_ix =
+        axelar_solana_its::instruction::remove_trusted_chain(charlie.pubkey(), chain_name.clone())
+            .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[remove_trusted_chain_ix],
+            &[
+                &charlie.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed with proper error
+    assert!(tx_metadata
+        .find_log("Payer is neither upgrade authority nor operator")
+        .is_some());
+
+    // Verify the chain was NOT removed
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&its_root_pda, &axelar_solana_its::id())
+        .await
+        .data;
+
+    let its_root = axelar_solana_its::state::InterchainTokenService::try_from_slice(&data).unwrap();
+
+    assert!(its_root.trusted_chains.contains(&chain_name));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
 async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut ItsTestContext) {
     // Alice is our ctx.solana_chain.fixture.payer
     // Create Bob who will be the Flow Limiter

@@ -112,6 +112,11 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
+          name: "payerRolesPda";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "programDataAddress";
           isMut: false;
           isSigner: false;
@@ -141,6 +146,11 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: true;
           isSigner: true;
+        },
+        {
+          name: "payerRolesPda";
+          isMut: false;
+          isSigner: false;
         },
         {
           name: "programDataAddress";
@@ -2026,6 +2036,11 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
+          name: "payerRolesPda",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "programDataAddress",
           isMut: false,
           isSigner: false,
@@ -2055,6 +2070,11 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: true,
           isSigner: true,
+        },
+        {
+          name: "payerRolesPda",
+          isMut: false,
+          isSigner: false,
         },
         {
           name: "programDataAddress",

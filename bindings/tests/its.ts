@@ -70,6 +70,7 @@ describe("Ping ITS", () => {
         .setTrustedChain("chain")
         .accounts({
           payer: payer.publicKey,
+          payerRolesPda: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
           systemProgram: systemAccount,
@@ -87,6 +88,7 @@ describe("Ping ITS", () => {
         .removeTrustedChain("chain")
         .accounts({
           payer: payer.publicKey,
+          payerRolesPda: payer.publicKey,
           programDataAddress: payer.publicKey,
           itsRootPda: payer.publicKey,
           systemProgram: systemAccount,

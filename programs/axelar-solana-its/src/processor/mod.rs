@@ -456,8 +456,14 @@ fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramRe
 }
 
 fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) =
-        get_trusted_chain_accounts(accounts)?;
+    let accounts_iter = &mut accounts.iter();
+    let payer = next_account_info(accounts_iter)?;
+    let program_data_account = next_account_info(accounts_iter)?;
+    let its_root_pda = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+
+    validate_system_account_key(system_account.key)?;
+
     msg!("Instruction: SetPauseStatus");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
@@ -475,11 +481,23 @@ fn process_set_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: String,
 ) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) =
+    let (payer, payer_roles, program_data_account, its_root_pda, system_account) =
         get_trusted_chain_accounts(accounts)?;
     msg!("Instruction: SetTrustedChain");
 
-    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+    if ensure_upgrade_authority(&crate::id(), payer, program_data_account).is_err()
+        && ensure_signer_roles(
+            &crate::id(),
+            its_root_pda,
+            payer,
+            payer_roles,
+            Roles::OPERATOR,
+        )
+        .is_err()
+    {
+        msg!("Payer is neither upgrade authority nor operator");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
 
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
@@ -496,13 +514,24 @@ fn process_remove_trusted_chain<'a>(
     accounts: &'a [AccountInfo<'a>],
     chain_name: &str,
 ) -> ProgramResult {
-    let (payer, program_data_account, its_root_pda, system_account) =
+    let (payer, payer_roles, program_data_account, its_root_pda, system_account) =
         get_trusted_chain_accounts(accounts)?;
 
     msg!("Instruction: RemoveTrustedChain");
 
-    ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
-
+    if ensure_upgrade_authority(&crate::id(), payer, program_data_account).is_err()
+        && ensure_signer_roles(
+            &crate::id(),
+            its_root_pda,
+            payer,
+            payer_roles,
+            Roles::OPERATOR,
+        )
+        .is_err()
+    {
+        msg!("Payer is neither upgrade authority nor operator");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
@@ -525,15 +554,23 @@ fn get_trusted_chain_accounts<'a>(
         &'a AccountInfo<'a>,
         &'a AccountInfo<'a>,
         &'a AccountInfo<'a>,
+        &'a AccountInfo<'a>,
     ),
     ProgramError,
 > {
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
+    let roles_account = next_account_info(accounts_iter)?;
     let program_data_account = next_account_info(accounts_iter)?;
     let its_root_pda = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
 
     validate_system_account_key(system_account.key)?;
-    Ok((payer, program_data_account, its_root_pda, system_account))
+    Ok((
+        payer,
+        roles_account,
+        program_data_account,
+        its_root_pda,
+        system_account,
+    ))
 }

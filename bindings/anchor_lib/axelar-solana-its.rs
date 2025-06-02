@@ -273,6 +273,7 @@ pub struct SetPauseStatus<'info> {
 pub struct SetTrustedChain<'info> {
     #[account(mut)]
     payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
     program_data_address: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,
@@ -283,6 +284,7 @@ pub struct SetTrustedChain<'info> {
 pub struct RemoveTrustedChain<'info> {
     #[account(mut)]
     payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
     program_data_address: AccountInfo<'info>,
     #[account(mut)]
     its_root_pda: AccountInfo<'info>,

@@ -809,11 +809,14 @@ pub fn set_trusted_chain(payer: Pubkey, chain_name: String) -> Result<Instructio
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
 
     let (its_root_pda, _) = crate::find_its_root_pda();
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
 
     let data = to_vec(&InterchainTokenServiceInstruction::SetTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
@@ -838,11 +841,14 @@ pub fn remove_trusted_chain(
     let (program_data_address, _) =
         Pubkey::find_program_address(&[crate::ID.as_ref()], &bpf_loader_upgradeable::ID);
     let (its_root_pda, _) = crate::find_its_root_pda();
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::ID, &its_root_pda, &payer);
 
     let data = to_vec(&InterchainTokenServiceInstruction::RemoveTrustedChain { chain_name })?;
 
     let accounts = vec![
         AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
         AccountMeta::new_readonly(program_data_address, false),
         AccountMeta::new(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
