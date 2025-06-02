@@ -3,20 +3,20 @@
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io>        |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io>        |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io>        |
 
 | **Network**          | **Deployment Status** | **Date** |
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Completed             | 2025-05-23      |
-| **Stagenet**         | -                     | TBD      |
+| **Stagenet**         | Completed             | 2025-05-29      |
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-- [Releases] add link to Github release here
+- [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
 ## Background
 
-Describe release content here
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Monad.
 
 ## Deployment
 
