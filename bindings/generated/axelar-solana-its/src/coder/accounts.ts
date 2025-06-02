@@ -1,7 +1,7 @@
 // @ts-nocheck
 import * as B from "@native-to-anchor/buffer-layout";
 import { AccountsCoder, Idl } from "@coral-xyz/anchor";
-import { IdlTypeDef } from "@project-serum/anchor/dist/cjs/idl";
+import { IdlTypeDef } from "@coral-xyz/anchor/dist/cjs/idl";
 
 export class AxelarSolanaItsAccountsCoder<A extends string = string>
   implements AccountsCoder

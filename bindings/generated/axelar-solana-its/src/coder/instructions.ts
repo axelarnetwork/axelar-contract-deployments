@@ -1,6 +1,6 @@
 // @ts-nocheck
 import * as B from "@native-to-anchor/buffer-layout";
-import { Idl, InstructionCoder } from "@project-serum/anchor";
+import { Idl, InstructionCoder } from "@coral-xyz/anchor";
 
 export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
   constructor(_idl: Idl) {}
@@ -61,47 +61,47 @@ export class AxelarSolanaItsInstructionCoder implements InstructionCoder {
       case "setFlowLimit": {
         return encodeSetFlowLimit(ix);
       }
-      case "operatorTransferOperatorship": {
-        return encodeOperatorTransferOperatorship(ix);
+      case "transferOperatorship": {
+        return encodeTransferOperatorship(ix);
       }
-      case "operatorProposeOperatorship": {
-        return encodeOperatorProposeOperatorship(ix);
+      case "proposeOperatorship": {
+        return encodeProposeOperatorship(ix);
       }
-      case "operatorAcceptOperatorship": {
-        return encodeOperatorAcceptOperatorship(ix);
+      case "acceptOperatorship": {
+        return encodeAcceptOperatorship(ix);
       }
-      case "tokenManagerAddFlowLimiter": {
-        return encodeTokenManagerAddFlowLimiter(ix);
+      case "addTokenManagerFlowLimiter": {
+        return encodeAddTokenManagerFlowLimiter(ix);
       }
-      case "tokenManagerRemoveFlowLimiter": {
-        return encodeTokenManagerRemoveFlowLimiter(ix);
+      case "removeTokenManagerFlowLimiter": {
+        return encodeRemoveTokenManagerFlowLimiter(ix);
       }
-      case "tokenManagerSetFlowLimit": {
-        return encodeTokenManagerSetFlowLimit(ix);
+      case "setTokenManagerFlowLimit": {
+        return encodeSetTokenManagerFlowLimit(ix);
       }
-      case "tokenManagerTransferOperatorship": {
-        return encodeTokenManagerTransferOperatorship(ix);
+      case "transferTokenManagerOperatorship": {
+        return encodeTransferTokenManagerOperatorship(ix);
       }
-      case "tokenManagerProposeOperatorship": {
-        return encodeTokenManagerProposeOperatorship(ix);
+      case "proposeTokenManagerOperatorship": {
+        return encodeProposeTokenManagerOperatorship(ix);
       }
-      case "tokenManagerAcceptOperatorship": {
-        return encodeTokenManagerAcceptOperatorship(ix);
+      case "acceptTokenManagerOperatorship": {
+        return encodeAcceptTokenManagerOperatorship(ix);
       }
-      case "tokenManagerHandOverMintAuthority": {
-        return encodeTokenManagerHandOverMintAuthority(ix);
+      case "handoverMintAuthority": {
+        return encodeHandoverMintAuthority(ix);
       }
-      case "interchainTokenMint": {
-        return encodeInterchainTokenMint(ix);
+      case "mintInterchainToken": {
+        return encodeMintInterchainToken(ix);
       }
-      case "interchainTokenTransferMintership": {
-        return encodeInterchainTokenTransferMintership(ix);
+      case "transferInterchainTokenMintership": {
+        return encodeTransferInterchainTokenMintership(ix);
       }
-      case "interchainTokenProposeMintership": {
-        return encodeInterchainTokenProposeMintership(ix);
+      case "proposeInterchainTokenMintership": {
+        return encodeProposeInterchainTokenMintership(ix);
       }
-      case "interchainTokenAcceptMintership": {
-        return encodeInterchainTokenAcceptMintership(ix);
+      case "acceptInterchainTokenMintership": {
+        return encodeAcceptInterchainTokenMintership(ix);
       }
 
       default: {
@@ -441,239 +441,60 @@ function encodeSetFlowLimit({ flowLimit }: any): Buffer {
   return encodeData({ setFlowLimit: { flowLimit } }, 1 + 8);
 }
 
-function encodeOperatorTransferOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { operatorTransferOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeTransferOperatorship({}: any): Buffer {
+  return encodeData({ transferOperatorship: {} }, 1);
 }
 
-function encodeOperatorProposeOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { operatorProposeOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeProposeOperatorship({}: any): Buffer {
+  return encodeData({ proposeOperatorship: {} }, 1);
 }
 
-function encodeOperatorAcceptOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { operatorAcceptOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeAcceptOperatorship({}: any): Buffer {
+  return encodeData({ acceptOperatorship: {} }, 1);
 }
 
-function encodeTokenManagerAddFlowLimiter({ inputs }: any): Buffer {
-  return encodeData(
-    { tokenManagerAddFlowLimiter: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeAddTokenManagerFlowLimiter({}: any): Buffer {
+  return encodeData({ addTokenManagerFlowLimiter: {} }, 1);
 }
 
-function encodeTokenManagerRemoveFlowLimiter({ inputs }: any): Buffer {
-  return encodeData(
-    { tokenManagerRemoveFlowLimiter: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeRemoveTokenManagerFlowLimiter({}: any): Buffer {
+  return encodeData({ removeTokenManagerFlowLimiter: {} }, 1);
 }
 
-function encodeTokenManagerSetFlowLimit({ flowLimit }: any): Buffer {
-  return encodeData({ tokenManagerSetFlowLimit: { flowLimit } }, 1 + 8);
+function encodeSetTokenManagerFlowLimit({ flowLimit }: any): Buffer {
+  return encodeData({ setTokenManagerFlowLimit: { flowLimit } }, 1 + 8);
 }
 
-function encodeTokenManagerTransferOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { tokenManagerTransferOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeTransferTokenManagerOperatorship({}: any): Buffer {
+  return encodeData({ transferTokenManagerOperatorship: {} }, 1);
 }
 
-function encodeTokenManagerProposeOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { tokenManagerProposeOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeProposeTokenManagerOperatorship({}: any): Buffer {
+  return encodeData({ proposeTokenManagerOperatorship: {} }, 1);
 }
 
-function encodeTokenManagerAcceptOperatorship({ inputs }: any): Buffer {
-  return encodeData(
-    { tokenManagerAcceptOperatorship: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeAcceptTokenManagerOperatorship({}: any): Buffer {
+  return encodeData({ acceptTokenManagerOperatorship: {} }, 1);
 }
 
-function encodeTokenManagerHandOverMintAuthority({ tokenId }: any): Buffer {
-  return encodeData(
-    { tokenManagerHandOverMintAuthority: { tokenId } },
-    1 + 1 * 32
-  );
+function encodeHandoverMintAuthority({ tokenId }: any): Buffer {
+  return encodeData({ handoverMintAuthority: { tokenId } }, 1 + 1 * 32);
 }
 
-function encodeInterchainTokenMint({ amount }: any): Buffer {
-  return encodeData({ interchainTokenMint: { amount } }, 1 + 8);
+function encodeMintInterchainToken({ amount }: any): Buffer {
+  return encodeData({ mintInterchainToken: { amount } }, 1 + 8);
 }
 
-function encodeInterchainTokenTransferMintership({ inputs }: any): Buffer {
-  return encodeData(
-    { interchainTokenTransferMintership: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeTransferInterchainTokenMintership({}: any): Buffer {
+  return encodeData({ transferInterchainTokenMintership: {} }, 1);
 }
 
-function encodeInterchainTokenProposeMintership({ inputs }: any): Buffer {
-  return encodeData(
-    { interchainTokenProposeMintership: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeProposeInterchainTokenMintership({}: any): Buffer {
+  return encodeData({ proposeInterchainTokenMintership: {} }, 1);
 }
 
-function encodeInterchainTokenAcceptMintership({ inputs }: any): Buffer {
-  return encodeData(
-    { interchainTokenAcceptMintership: { inputs } },
-    1 +
-      (() => {
-        switch (Object.keys(inputs.roles)[0]) {
-          case "minter":
-            return 1;
-          case "operator":
-            return 1;
-          case "flowLimiter":
-            return 1;
-        }
-      })() +
-      1 +
-      1 +
-      (inputs.proposalPdaBump === null ? 0 : 1)
-  );
+function encodeAcceptInterchainTokenMintership({}: any): Buffer {
+  return encodeData({ acceptInterchainTokenMintership: {} }, 1);
 }
 
 const LAYOUT = B.union(B.u8("instruction"));
@@ -828,237 +649,28 @@ LAYOUT.addVariant(
   "callContractWithInterchainTokenOffchainData"
 );
 LAYOUT.addVariant(17, B.struct([B.u64("flowLimit")]), "setFlowLimit");
-LAYOUT.addVariant(
-  18,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "operatorTransferOperatorship"
-);
-LAYOUT.addVariant(
-  19,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "operatorProposeOperatorship"
-);
-LAYOUT.addVariant(
-  20,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "operatorAcceptOperatorship"
-);
-LAYOUT.addVariant(
-  21,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(1, B.struct([]), "minter");
-          U.addVariant(2, B.struct([]), "operator");
-          U.addVariant(4, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "tokenManagerAddFlowLimiter"
-);
-LAYOUT.addVariant(
-  22,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(1, B.struct([]), "minter");
-          U.addVariant(2, B.struct([]), "operator");
-          U.addVariant(4, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "tokenManagerRemoveFlowLimiter"
-);
+LAYOUT.addVariant(18, B.struct([]), "transferOperatorship");
+LAYOUT.addVariant(19, B.struct([]), "proposeOperatorship");
+LAYOUT.addVariant(20, B.struct([]), "acceptOperatorship");
+LAYOUT.addVariant(21, B.struct([]), "addTokenManagerFlowLimiter");
+LAYOUT.addVariant(22, B.struct([]), "removeTokenManagerFlowLimiter");
 LAYOUT.addVariant(
   23,
   B.struct([B.u64("flowLimit")]),
-  "tokenManagerSetFlowLimit"
+  "setTokenManagerFlowLimit"
 );
-LAYOUT.addVariant(
-  24,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "tokenManagerTransferOperatorship"
-);
-LAYOUT.addVariant(
-  25,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "tokenManagerProposeOperatorship"
-);
-LAYOUT.addVariant(
-  26,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "tokenManagerAcceptOperatorship"
-);
+LAYOUT.addVariant(24, B.struct([]), "transferTokenManagerOperatorship");
+LAYOUT.addVariant(25, B.struct([]), "proposeTokenManagerOperatorship");
+LAYOUT.addVariant(26, B.struct([]), "acceptTokenManagerOperatorship");
 LAYOUT.addVariant(
   27,
   B.struct([B.seq(B.u8(), 32, "tokenId")]),
-  "tokenManagerHandOverMintAuthority"
+  "handoverMintAuthority"
 );
-LAYOUT.addVariant(28, B.struct([B.u64("amount")]), "interchainTokenMint");
-LAYOUT.addVariant(
-  29,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "interchainTokenTransferMintership"
-);
-LAYOUT.addVariant(
-  30,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "interchainTokenProposeMintership"
-);
-LAYOUT.addVariant(
-  31,
-  B.struct([
-    B.struct(
-      [
-        ((p: string) => {
-          const U = B.union(B.u8("discriminator"), null, p);
-          U.addVariant(0, B.struct([]), "minter");
-          U.addVariant(1, B.struct([]), "operator");
-          U.addVariant(2, B.struct([]), "flowLimiter");
-          return U;
-        })("roles"),
-        B.u8("destinationRolesPdaBump"),
-        B.option(B.u8(), "proposalPdaBump"),
-      ],
-      "inputs"
-    ),
-  ]),
-  "interchainTokenAcceptMintership"
-);
+LAYOUT.addVariant(28, B.struct([B.u64("amount")]), "mintInterchainToken");
+LAYOUT.addVariant(29, B.struct([]), "transferInterchainTokenMintership");
+LAYOUT.addVariant(30, B.struct([]), "proposeInterchainTokenMintership");
+LAYOUT.addVariant(31, B.struct([]), "acceptInterchainTokenMintership");
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);

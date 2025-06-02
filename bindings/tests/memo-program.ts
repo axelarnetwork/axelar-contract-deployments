@@ -14,9 +14,8 @@ describe("Ping Memo Program", () => {
       [],
       payer.publicKey
     );
-    const bump = 0;
-    let counterPdaPublicKey = PublicKey.createProgramAddressSync(
-      [gatewayRootPdaPublicKey.toBuffer(), Buffer.from([bump])],
+    let [counterPdaPublicKey, bump] = PublicKey.findProgramAddressSync(
+      [],
       AXELAR_SOLANA_MEMO_PROGRAM_PROGRAM_ID
     );
 
@@ -35,7 +34,7 @@ describe("Ping Memo Program", () => {
           "Initializing failed, probably it has been already initialized. Skipping..."
         );
       } else {
-        console.log("Test FAILED: Check if program is loaded");
+        throw new Error("Test FAILED: Check if program is loaded");
       }
     }
     program.methods

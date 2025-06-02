@@ -111,6 +111,9 @@ impl<F> BorshPda for UserRoles<F> where F: RolesFlags {}
 pub struct RoleProposal<F: RolesFlags> {
     /// The roles to be transferred.
     pub roles: F,
+
+    /// The bump associated with the PDA where this data is stored.
+    pub bump: u8,
 }
 
 impl<F> Pack for RoleProposal<F>

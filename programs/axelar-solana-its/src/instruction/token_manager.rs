@@ -6,8 +6,7 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::system_program;
 
-use super::{operator, InterchainTokenServiceInstruction};
-use crate::Roles;
+use super::InterchainTokenServiceInstruction;
 
 /// Creates an [`TokenManagerInstructions::SetFlowLimit`] wrapped in an
 /// [`InterchainTokenServiceInstruction::TokenManagerInstruction`].
@@ -27,7 +26,7 @@ pub fn set_flow_limit(
     let (its_user_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
 
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit })?;
+    let data = to_vec(&InterchainTokenServiceInstruction::SetTokenManagerFlowLimit { flow_limit })?;
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -57,16 +56,21 @@ pub fn add_flow_limiter(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (accounts, inputs) = role_management::instructions::add_roles(
-        crate::id(),
-        payer,
-        token_manager_pda,
-        flow_limiter,
-        Roles::FLOW_LIMITER,
-        None,
-    );
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (flow_limiter_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
-    let data = to_vec(&InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(flow_limiter, false),
+        AccountMeta::new(flow_limiter_roles_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::AddTokenManagerFlowLimiter)?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -87,16 +91,21 @@ pub fn remove_flow_limiter(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let (accounts, inputs) = role_management::instructions::remove_roles(
-        crate::id(),
-        payer,
-        token_manager_pda,
-        flow_limiter,
-        Roles::FLOW_LIMITER,
-        None,
-    );
-    let data =
-        to_vec(&InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter { inputs })?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (flow_limiter_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(system_program::ID, false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(flow_limiter, false),
+        AccountMeta::new(flow_limiter_roles_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::RemoveTokenManagerFlowLimiter)?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -105,9 +114,7 @@ pub fn remove_flow_limiter(
     })
 }
 
-/// Creates an [`Instruction::OperatorInstruction`]
-/// instruction with the [`operator::Instruction::TransferOperatorship`]
-/// variant.
+/// Creates an [`InterchainTokenServiceInstruction::TransferTokenManagerOperatorship`] instruction.
 ///
 /// # Errors
 ///
@@ -119,19 +126,22 @@ pub fn transfer_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
-    let (accounts, operator_instruction) =
-        operator::transfer_operatorship(payer, token_manager_pda, to, Some(accounts))?;
+    let (destination_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
 
-    let inputs = match operator_instruction {
-        operator::Instruction::TransferOperatorship(val) => val,
-        operator::Instruction::ProposeOperatorship(_)
-        | operator::Instruction::AcceptOperatorship(_) => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-    };
-    let data =
-        to_vec(&InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(to, false),
+        AccountMeta::new(destination_roles_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::TransferTokenManagerOperatorship)?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -140,8 +150,7 @@ pub fn transfer_operatorship(
     })
 }
 
-/// Creates an [`Instruction::OperatorInstruction`]
-/// instruction with the [`operator::Instruction::ProposeOperatorship`] variant.
+/// Creates an [`InterchainTokenServiceInstruction::ProposeTokenManagerOperatorship`] instruction.
 ///
 /// # Errors
 ///
@@ -153,19 +162,25 @@ pub fn propose_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
-    let (accounts, operator_instruction) =
-        operator::propose_operatorship(payer, token_manager_pda, to, Some(accounts))?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (destination_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &to);
+    let (proposal_pda, _) =
+        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &payer, &to);
 
-    let inputs = match operator_instruction {
-        operator::Instruction::ProposeOperatorship(val) => val,
-        operator::Instruction::TransferOperatorship(_)
-        | operator::Instruction::AcceptOperatorship(_) => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-    };
-    let data =
-        to_vec(&InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(to, false),
+        AccountMeta::new(destination_roles_pda, false),
+        AccountMeta::new(proposal_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::ProposeTokenManagerOperatorship)?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -174,8 +189,7 @@ pub fn propose_operatorship(
     })
 }
 
-/// Creates an [`Instruction::OperatorInstruction`]
-/// instruction with the [`operator::Instruction::AcceptOperatorship`] variant.
+/// Creates an [`InterchainTokenServiceInstruction::AcceptTokenManagerOperatorship`] instruction.
 ///
 /// # Errors
 ///
@@ -187,19 +201,25 @@ pub fn accept_operatorship(
 ) -> Result<solana_program::instruction::Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let accounts = vec![AccountMeta::new_readonly(its_root_pda, false)];
-    let (accounts, operator_instruction) =
-        operator::accept_operatorship(payer, token_manager_pda, from, Some(accounts))?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &payer);
+    let (origin_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &from);
+    let (proposal_pda, _) =
+        role_management::find_roles_proposal_pda(&crate::id(), &token_manager_pda, &from, &payer);
 
-    let inputs = match operator_instruction {
-        operator::Instruction::AcceptOperatorship(val) => val,
-        operator::Instruction::TransferOperatorship(_)
-        | operator::Instruction::ProposeOperatorship(_) => {
-            return Err(ProgramError::InvalidInstructionData)
-        }
-    };
-    let data =
-        to_vec(&InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(from, false),
+        AccountMeta::new(origin_roles_pda, false),
+        AccountMeta::new(proposal_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::AcceptTokenManagerOperatorship)?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),
@@ -208,7 +228,7 @@ pub fn accept_operatorship(
     })
 }
 
-/// Creates an [`Instruction::HandoverMintAuthority`] instruction.
+/// Creates an [`InterchainTokenServiceInstruction::HandoverMintAuthority`] instruction.
 ///
 /// # Errors
 ///
@@ -234,8 +254,7 @@ pub fn handover_mint_authority(
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
-    let data =
-        to_vec(&InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id })?;
+    let data = to_vec(&InterchainTokenServiceInstruction::HandoverMintAuthority { token_id })?;
 
     Ok(solana_program::instruction::Instruction {
         program_id: crate::id(),

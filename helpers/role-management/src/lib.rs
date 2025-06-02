@@ -1,7 +1,6 @@
 //! Role management crate for the Solana blockchain.
 use solana_program::pubkey::Pubkey;
 
-pub mod instructions;
 pub mod processor;
 pub mod state;
 

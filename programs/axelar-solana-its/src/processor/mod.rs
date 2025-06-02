@@ -2,14 +2,13 @@
 //! Program state processor
 use borsh::BorshDeserialize;
 use event_utils::Event as _;
-use interchain_token::process_mint;
 use program_utils::{
     pda::{BorshPda, ValidPDA},
     validate_system_account_key,
 };
-use role_management::instructions::RoleManagementInstructionInputs;
 use role_management::processor::{
-    ensure_signer_roles, ensure_upgrade_authority, RoleManagementAccounts,
+    ensure_signer_roles, ensure_upgrade_authority, RoleAddAccounts, RoleRemoveAccounts,
+    RoleTransferWithProposalAccounts,
 };
 use role_management::state::UserRoles;
 use solana_program::account_info::{next_account_info, AccountInfo};
@@ -17,16 +16,11 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
-use token_manager::{handover_mint_authority, set_flow_limit};
+use token_manager::{handover_mint_authority, SetFlowLimitAccounts};
 
-use self::token_manager::SetFlowLimitAccounts;
 use crate::instruction::InterchainTokenServiceInstruction;
-use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{
-    assert_valid_its_root_pda, assert_valid_token_manager_pda, check_program_account, event,
-    FromAccountInfoSlice, Roles,
-};
+use crate::{assert_valid_its_root_pda, check_program_account, event, FromAccountInfoSlice, Roles};
 
 pub(crate) mod gmp;
 pub(crate) mod interchain_token;
@@ -204,47 +198,47 @@ pub fn process_instruction<'a>(
             instruction_accounts.flow_limiter = instruction_accounts.its_root_pda;
             token_manager::set_flow_limit(&instruction_accounts, flow_limit)
         }
-        InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs } => {
-            process_operator_transfer_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::TransferOperatorship => {
+            process_transfer_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs } => {
-            process_operator_propose_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::ProposeOperatorship => {
+            process_propose_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs } => {
-            process_operator_accept_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::AcceptOperatorship => {
+            process_accept_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerAddFlowLimiter { inputs } => {
-            process_tm_add_flow_limiter(accounts, &inputs)
+        InterchainTokenServiceInstruction::AddTokenManagerFlowLimiter => {
+            token_manager::process_add_flow_limiter(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerRemoveFlowLimiter { inputs } => {
-            process_tm_remove_flow_limiter(accounts, &inputs)
+        InterchainTokenServiceInstruction::RemoveTokenManagerFlowLimiter => {
+            token_manager::process_remove_flow_limiter(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerSetFlowLimit { flow_limit } => {
-            process_tm_set_flow_limit(accounts, flow_limit)
+        InterchainTokenServiceInstruction::SetTokenManagerFlowLimit { flow_limit } => {
+            token_manager::process_set_flow_limit(accounts, flow_limit)
         }
-        InterchainTokenServiceInstruction::TokenManagerTransferOperatorship { inputs } => {
-            process_tm_transfer_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::TransferTokenManagerOperatorship => {
+            token_manager::process_transfer_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerProposeOperatorship { inputs } => {
-            process_tm_propose_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::ProposeTokenManagerOperatorship => {
+            token_manager::process_propose_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerAcceptOperatorship { inputs } => {
-            process_tm_accept_operatorship(accounts, &inputs)
+        InterchainTokenServiceInstruction::AcceptTokenManagerOperatorship => {
+            token_manager::process_accept_operatorship(accounts)
         }
-        InterchainTokenServiceInstruction::TokenManagerHandOverMintAuthority { token_id } => {
+        InterchainTokenServiceInstruction::HandoverMintAuthority { token_id } => {
             handover_mint_authority(accounts, token_id)
         }
-        InterchainTokenServiceInstruction::InterchainTokenMint { amount } => {
-            process_mint(accounts, amount)
+        InterchainTokenServiceInstruction::MintInterchainToken { amount } => {
+            interchain_token::process_mint(accounts, amount)
         }
-        InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs } => {
-            process_it_transfer_mintership(accounts, &inputs)
+        InterchainTokenServiceInstruction::TransferInterchainTokenMintership => {
+            interchain_token::process_transfer_mintership(accounts)
         }
-        InterchainTokenServiceInstruction::InterchainTokenProposeMintership { inputs } => {
-            process_it_propose_mintership(accounts, &inputs)
+        InterchainTokenServiceInstruction::ProposeInterchainTokenMintership => {
+            interchain_token::process_propose_mintership(accounts)
         }
-        InterchainTokenServiceInstruction::InterchainTokenAcceptMintership { inputs } => {
-            process_it_accept_mintership(accounts, &inputs)
+        InterchainTokenServiceInstruction::AcceptInterchainTokenMintership => {
+            interchain_token::process_accept_mintership(accounts)
         }
         InterchainTokenServiceInstruction::CallContractWithInterchainToken {
             token_id,
@@ -345,195 +339,118 @@ fn process_initialize(
     Ok(())
 }
 
-fn process_operator_transfer_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_operator_accounts(accounts)?;
-    if inputs.roles.ne(&Roles::OPERATOR) {
-        return Err(ProgramError::InvalidArgument);
-    }
-
-    role_management::processor::transfer(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
-}
-
-fn process_operator_propose_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_operator_accounts(accounts)?;
-    if inputs.roles.ne(&Roles::OPERATOR) {
-        return Err(ProgramError::InvalidArgument);
-    }
-    role_management::processor::propose(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
-}
-
-fn process_operator_accept_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_operator_accounts(accounts)?;
-    if inputs.roles.ne(&Roles::OPERATOR) {
-        return Err(ProgramError::InvalidArgument);
-    }
-    role_management::processor::accept(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::empty(),
-    )
-}
-
-fn process_operator_accounts<'a>(
-    accounts: &'a [AccountInfo<'a>],
-) -> Result<RoleManagementAccounts<'a>, ProgramError> {
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts)?;
-    msg!("Instruction: Operator");
-    let its_config = InterchainTokenService::load(role_management_accounts.resource)?;
-    assert_valid_its_root_pda(role_management_accounts.resource, its_config.bump)?;
-
-    Ok(role_management_accounts)
-}
-
-fn process_tm_add_flow_limiter<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
-        msg!("Invalid role: {:?}", inputs.roles);
-        return Err(ProgramError::InvalidInstructionData);
-    }
-    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
-    msg!("Instruction: TM AddFlowLimiter");
-    role_management::processor::add(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
-}
-
-fn process_tm_remove_flow_limiter<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    if !inputs.roles.eq(&Roles::FLOW_LIMITER) {
-        return Err(ProgramError::InvalidInstructionData);
-    }
-    let instruction_accounts = RoleManagementAccounts::try_from(accounts)?;
-    msg!("Instruction: TM RemoveFlowLimiter");
-    role_management::processor::remove(&crate::id(), instruction_accounts, inputs, Roles::OPERATOR)
-}
-
-fn process_tm_set_flow_limit<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    flow_limit: u64,
-) -> ProgramResult {
-    let instruction_accounts = SetFlowLimitAccounts::from_account_info_slice(accounts, &())?;
-    if !instruction_accounts.flow_limiter.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-    msg!("Instruction: TM SetFlowLimit");
-    set_flow_limit(&instruction_accounts, flow_limit)
-}
-
-fn process_tm_transfer_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
-    role_management::processor::transfer(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
-}
-
-fn process_tm_propose_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
-    role_management::processor::propose(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::OPERATOR,
-    )
-}
-
-fn process_tm_accept_operatorship<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
-    role_management::processor::accept(
-        &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::empty(),
-    )
-}
-
-fn process_tm_operator_accounts<'a>(
-    accounts: &'a [AccountInfo<'a>],
-) -> Result<RoleManagementAccounts<'a>, ProgramError> {
+fn process_transfer_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
-    let its_root_pda = next_account_info(accounts_iter)?;
-    let role_management_accounts = RoleManagementAccounts::try_from(accounts_iter.as_slice())?;
-    msg!("Instruction: TM Operator");
-    let token_manager = TokenManager::load(role_management_accounts.resource)?;
-    assert_valid_token_manager_pda(
-        role_management_accounts.resource,
-        its_root_pda.key,
-        &token_manager.token_id,
-        token_manager.bump,
+
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let resource = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+
+    msg!("Instruction: TransferOperatorship");
+
+    let its_config = InterchainTokenService::load(resource)?;
+    assert_valid_its_root_pda(resource, its_config.bump)?;
+
+    let role_add_accounts = RoleAddAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        destination_user_account,
+        destination_roles_account,
+    };
+
+    let role_remove_accounts = RoleRemoveAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+    };
+
+    role_management::processor::add(
+        &crate::id(),
+        role_add_accounts,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
     )?;
 
-    Ok(role_management_accounts)
-}
-
-fn process_it_transfer_mintership<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
-    role_management::processor::transfer(
+    role_management::processor::remove(
         &crate::id(),
-        role_management_accounts,
-        inputs,
-        Roles::MINTER,
+        role_remove_accounts,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
     )
 }
 
-fn process_it_propose_mintership<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+fn process_propose_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let resource = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    msg!("Instruction: ProposeOperatorship");
+
+    let its_config = InterchainTokenService::load(resource)?;
+    assert_valid_its_root_pda(resource, its_config.bump)?;
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        destination_user_account,
+        destination_roles_account,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+        proposal_account,
+    };
+
     role_management::processor::propose(
         &crate::id(),
         role_management_accounts,
-        inputs,
-        Roles::MINTER,
+        Roles::OPERATOR,
+        Roles::OPERATOR,
     )
 }
 
-fn process_it_accept_mintership<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    inputs: &RoleManagementInstructionInputs<Roles>,
-) -> ProgramResult {
-    let role_management_accounts = process_tm_operator_accounts(accounts)?;
+fn process_accept_operatorship<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    let accounts_iter = &mut accounts.iter();
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let resource = next_account_info(accounts_iter)?;
+    let origin_user_account = next_account_info(accounts_iter)?;
+    let origin_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    msg!("Instruction: AcceptOperatorship");
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource,
+        destination_user_account: payer,
+        destination_roles_account: payer_roles_account,
+        origin_user_account,
+        origin_roles_account,
+        proposal_account,
+    };
+
     role_management::processor::accept(
         &crate::id(),
         role_management_accounts,
-        inputs,
+        Roles::OPERATOR,
         Roles::empty(),
     )
 }
@@ -544,8 +461,10 @@ fn process_set_pause_status<'a>(accounts: &'a [AccountInfo<'a>], paused: bool) -
     msg!("Instruction: SetPauseStatus");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
+
     its_root_config.paused = paused;
     its_root_config.store(payer, its_root_pda, system_account)?;
 
@@ -561,6 +480,7 @@ fn process_set_trusted_chain<'a>(
     msg!("Instruction: SetTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 
@@ -578,9 +498,11 @@ fn process_remove_trusted_chain<'a>(
 ) -> ProgramResult {
     let (payer, program_data_account, its_root_pda, system_account) =
         get_trusted_chain_accounts(accounts)?;
+
     msg!("Instruction: RemoveTrustedChain");
 
     ensure_upgrade_authority(&crate::id(), payer, program_data_account)?;
+
     let mut its_root_config = InterchainTokenService::load(its_root_pda)?;
     assert_valid_its_root_pda(its_root_pda, its_root_config.bump)?;
 

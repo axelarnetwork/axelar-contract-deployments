@@ -12,7 +12,10 @@ use program_utils::{
     validate_spl_associated_token_account_key, validate_system_account_key,
     validate_sysvar_instructions_key,
 };
-use role_management::processor::{ensure_roles, ensure_signer_roles};
+use role_management::processor::{
+    ensure_roles, ensure_signer_roles, RoleAddAccounts, RoleRemoveAccounts,
+    RoleTransferWithProposalAccounts,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::{invoke, invoke_signed, set_return_data};
@@ -392,7 +395,7 @@ pub(crate) fn process_mint<'a>(accounts: &'a [AccountInfo<'a>], amount: u64) -> 
     let minter_roles_pda = next_account_info(accounts_iter)?;
     let token_program = next_account_info(accounts_iter)?;
 
-    msg!("Instruction: IT Mint");
+    msg!("Instruction: MintInterchainToken");
     let token_manager = TokenManager::load(token_manager_pda)?;
     assert_valid_token_manager_pda(
         token_manager_pda,
@@ -686,4 +689,148 @@ pub(crate) fn use_deploy_approval(
     }
 
     program_utils::pda::close_pda(minter, deploy_approval_account)
+}
+
+pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: TransferInterchainTokenMintership");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    let token_manager = TokenManager::load(token_manager_account)?;
+
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    let role_add_accounts = RoleAddAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account,
+        destination_roles_account,
+    };
+
+    let role_remove_accounts = RoleRemoveAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+    };
+
+    role_management::processor::add(
+        &crate::id(),
+        role_add_accounts,
+        Roles::MINTER,
+        Roles::MINTER,
+    )?;
+
+    role_management::processor::remove(
+        &crate::id(),
+        role_remove_accounts,
+        Roles::MINTER,
+        Roles::MINTER,
+    )
+}
+
+pub(crate) fn process_propose_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: ProposeInterchainTokenMintership");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let destination_user_account = next_account_info(accounts_iter)?;
+    let destination_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    let token_manager = TokenManager::load(token_manager_account)?;
+
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account,
+        destination_roles_account,
+        origin_user_account: payer,
+        origin_roles_account: payer_roles_account,
+        proposal_account,
+    };
+
+    role_management::processor::propose(
+        &crate::id(),
+        role_management_accounts,
+        Roles::MINTER,
+        Roles::MINTER,
+    )
+}
+
+pub(crate) fn process_accept_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("Instruction: AcceptInterchainTokenMintership");
+
+    let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
+    let system_account = next_account_info(accounts_iter)?;
+    let payer = next_account_info(accounts_iter)?;
+    let payer_roles_account = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
+    let origin_user_account = next_account_info(accounts_iter)?;
+    let origin_roles_account = next_account_info(accounts_iter)?;
+    let proposal_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    let token_manager = TokenManager::load(token_manager_account)?;
+
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        its_config_account.key,
+        &token_manager.token_id,
+        token_manager.bump,
+    )?;
+
+    let role_management_accounts = RoleTransferWithProposalAccounts {
+        system_account,
+        payer,
+        payer_roles_account,
+        resource: token_manager_account,
+        destination_user_account: payer,
+        destination_roles_account: payer_roles_account,
+        origin_user_account,
+        origin_roles_account,
+        proposal_account,
+    };
+
+    role_management::processor::accept(
+        &crate::id(),
+        role_management_accounts,
+        Roles::MINTER,
+        Roles::empty(),
+    )
 }

@@ -169,97 +169,78 @@ pub mod axelar_solana_its {
         Ok(())
     }
 
-    pub fn operator_transfer_operatorship(
-        ctx: Context<Operator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn transfer_operatorship(ctx: Context<TransferOperatorship>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn propose_operatorship(ctx: Context<ProposeOperatorship>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn accept_operatorship(ctx: Context<AcceptOperatorship>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn add_token_manager_flow_limiter(ctx: Context<AddTokenManagerFlowLimiter>) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn remove_token_manager_flow_limiter(
+        ctx: Context<RemoveTokenManagerFlowLimiter>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn operator_propose_operatorship(
-        ctx: Context<Operator>,
-        inputs: RoleManagementInstructionInputs,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn operator_accept_operatorship(
-        ctx: Context<Operator>,
-        inputs: RoleManagementInstructionInputs,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn token_manager_add_flow_limiter(
-        ctx: Context<TokenManagerFlowLimiter>,
-        inputs: RoleManagementInstructionInputs,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn token_manager_remove_flow_limiter(
-        ctx: Context<TokenManagerFlowLimiter>,
-        inputs: RoleManagementInstructionInputs,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn token_manager_set_flow_limit(
-        ctx: Context<TokenManagerSetFlowLimit>,
+    pub fn set_token_manager_flow_limit(
+        ctx: Context<SetTokenManagerFlowLimit>,
         flow_limit: u64,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn token_manager_transfer_operatorship(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn transfer_token_manager_operatorship(
+        ctx: Context<TransferTokenManagerOperatorship>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn token_manager_propose_operatorship(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn propose_token_manager_operatorship(
+        ctx: Context<ProposeTokenManagerOperatorship>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn token_manager_accept_operatorship(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn accept_token_manager_operatorship(
+        ctx: Context<AcceptTokenManagerOperatorship>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn token_manager_hand_over_mint_authority(
-        ctx: Context<TokenManagerHandOverMintAuthority>,
+    pub fn handover_mint_authority(
+        ctx: Context<HandoverMintAuthority>,
         token_id: [u8; 32],
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn interchain_token_mint(ctx: Context<InterchainTokenMint>, amount: u64) -> Result<()> {
+    pub fn mint_interchain_token(ctx: Context<MintInterchainToken>, amount: u64) -> Result<()> {
         Ok(())
     }
 
-    pub fn interchain_token_transfer_mintership(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn transfer_interchain_token_mintership(
+        ctx: Context<TransferInterchainTokenMintership>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn interchain_token_propose_mintership(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn propose_interchain_token_mintership(
+        ctx: Context<ProposeInterchainTokenMintership>,
     ) -> Result<()> {
         Ok(())
     }
 
-    pub fn interchain_token_accept_mintership(
-        ctx: Context<TMOperator>,
-        inputs: RoleManagementInstructionInputs,
+    pub fn accept_interchain_token_mintership(
+        ctx: Context<AcceptInterchainTokenMintership>,
     ) -> Result<()> {
         Ok(())
     }
@@ -413,9 +394,9 @@ pub struct DeployInterchainToken<'info> {
     metadata_account: AccountInfo<'info>,
     #[account(mut)]
     payer_ata: AccountInfo<'info>,
-    minter: Option<AccountInfo<'info>>,
+    optional_minter: AccountInfo<'info>,
     #[account(mut)]
-    minter_roles_pda: Option<AccountInfo<'info>>,
+    optional_minter_roles_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -493,9 +474,9 @@ pub struct RegisterCustomToken<'info> {
     its_user_roles_pda: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
     #[account(mut)]
-    operator: Option<AccountInfo<'info>>,
+    optional_operator: AccountInfo<'info>,
     #[account(mut)]
-    operator_roles_pda: Option<AccountInfo<'info>>,
+    optional_operator_roles_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -576,56 +557,72 @@ pub struct SetFlowLimit<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Operator<'info> {
+pub struct TransferOperatorship<'info> {
     system_program: Program<'info, System>,
     #[account(mut)]
     payer: Signer<'info>,
-    payer_roles_account: AccountInfo<'info>,
-    resource: AccountInfo<'info>,
-    destination_user_account: AccountInfo<'info>,
-    destination_roles_account: AccountInfo<'info>,
     #[account(mut)]
-    origin_user_account: AccountInfo<'info>,
-    origin_roles_account: AccountInfo<'info>,
-    #[account(mut)]
-    proposal_account: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct TMOperator<'info> {
+    payer_roles_pda: AccountInfo<'info>,
     its_root_pda: AccountInfo<'info>,
-    system_program: Program<'info, System>,
+    to: AccountInfo<'info>,
     #[account(mut)]
-    payer: Signer<'info>,
-    payer_roles_account: AccountInfo<'info>,
-    resource: AccountInfo<'info>,
-    destination_user_account: AccountInfo<'info>,
-    destination_roles_account: AccountInfo<'info>,
-    #[account(mut)]
-    origin_user_account: AccountInfo<'info>,
-    origin_roles_account: AccountInfo<'info>,
-    #[account(mut)]
-    proposal_account: AccountInfo<'info>,
+    destination_roles_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct TokenManagerFlowLimiter<'info> {
+pub struct ProposeOperatorship<'info> {
     system_program: Program<'info, System>,
     #[account(mut)]
     payer: Signer<'info>,
-    payer_roles_account: AccountInfo<'info>,
-    resource: AccountInfo<'info>,
-    destination_user_account: AccountInfo<'info>,
-    destination_roles_account: AccountInfo<'info>,
+    payer_roles_pda: AccountInfo<'info>,
+    its_root_pda: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    destination_roles_pda: AccountInfo<'info>,
     #[account(mut)]
-    origin_user_account: AccountInfo<'info>,
-    origin_roles_account: AccountInfo<'info>,
-    #[account(mut)]
-    proposal_account: AccountInfo<'info>,
+    proposal_pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct TokenManagerSetFlowLimit<'info> {
+pub struct AcceptOperatorship<'info> {
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    #[account(mut)]
+    payer_roles_pda: AccountInfo<'info>,
+    its_root_pda: AccountInfo<'info>,
+    from: AccountInfo<'info>,
+    #[account(mut)]
+    origin_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct AddTokenManagerFlowLimiter<'info> {
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    flow_limiter: AccountInfo<'info>,
+    #[account(mut)]
+    flow_limiter_roles_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct RemoveTokenManagerFlowLimiter<'info> {
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    flow_limiter: AccountInfo<'info>,
+    #[account(mut)]
+    flow_limiter_roles_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct SetTokenManagerFlowLimit<'info> {
     payer: Signer<'info>,
     its_root_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -636,7 +633,53 @@ pub struct TokenManagerSetFlowLimit<'info> {
 }
 
 #[derive(Accounts)]
-pub struct TokenManagerHandOverMintAuthority<'info> {
+pub struct TransferTokenManagerOperatorship<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    #[account(mut)]
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    #[account(mut)]
+    destination_roles_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ProposeTokenManagerOperatorship<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    #[account(mut)]
+    destination_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct AcceptTokenManagerOperatorship<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    #[account(mut)]
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    from: AccountInfo<'info>,
+    #[account(mut)]
+    origin_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct HandoverMintAuthority<'info> {
+    #[account(mut)]
     payer: Signer<'info>,
     #[account(mut)]
     mint: AccountInfo<'info>,
@@ -644,42 +687,117 @@ pub struct TokenManagerHandOverMintAuthority<'info> {
     token_manager_pda: AccountInfo<'info>,
     #[account(mut)]
     minter_roles_pda: AccountInfo<'info>,
-    token_program: AccountInfo<'info>,
+    token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct InterchainTokenMint<'info> {
+pub struct MintInterchainToken<'info> {
     #[account(mut)]
     mint: AccountInfo<'info>,
     #[account(mut)]
-    destination_account: AccountInfo<'info>,
+    to: AccountInfo<'info>,
     its_root_pda: AccountInfo<'info>,
     token_manager_pda: AccountInfo<'info>,
-    minter: AccountInfo<'info>,
+    minter: Signer<'info>,
     minter_roles_pda: AccountInfo<'info>,
-    token_program: AccountInfo<'info>,
+    token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct TransferInterchainTokenMintership<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    #[account(mut)]
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    #[account(mut)]
+    destination_roles_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ProposeInterchainTokenMintership<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    to: AccountInfo<'info>,
+    #[account(mut)]
+    destination_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_pda: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct AcceptInterchainTokenMintership<'info> {
+    its_root_pda: AccountInfo<'info>,
+    system_program: Program<'info, System>,
+    #[account(mut)]
+    payer: Signer<'info>,
+    #[account(mut)]
+    payer_roles_pda: AccountInfo<'info>,
+    token_manager_pda: AccountInfo<'info>,
+    from: AccountInfo<'info>,
+    #[account(mut)]
+    origin_roles_pda: AccountInfo<'info>,
+    #[account(mut)]
+    proposal_pda: AccountInfo<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub enum Type {
+    /// For tokens that are deployed directly from ITS itself they use a native
+    /// interchain token manager. Tokens that are deployed via the frontend
+    /// portal also use this type of manager.
     NativeInterchainToken,
+
+    /// The mint/burnFrom token manager type, allows tokens to be burnt on the
+    /// source chain when they are transferred out of that chain and minted they
+    /// are transferred back into the source chain. As the name suggests when
+    /// the token is burnt on the source chain the manager is looking to trigger
+    /// the `burnFrom` function on the token rather than the `burn` function.
+    /// The main implication is that ITS must be approved to call `burnFrom` by
+    /// the token. The manager must be granted the role to be able to `mint` the
+    /// token on the destination chain.
     MintBurnFrom,
+
+    /// Token integrations using the lock/unlock token manager will have their
+    /// token locked with their token’s manager. Only a single lock/unlock
+    /// manager can exist for a token as having multiple lock/unlock managers
+    /// would make it substantially more difficult to manage liquidity across
+    /// many different blockchains. These token managers are best used in the
+    /// case where a token has a “home chain” where a token can be locked. On
+    /// the remote chains users can then use a wrapped version of that token
+    /// which derives it’s value from a locked token back on the home chain.
+    /// Canonical tokens for example deployed via ITS are examples where a
+    /// lock/unlock token manager type is useful. When bridging tokens out of
+    /// the destination chain (locking them at the manager) ITS will call the
+    /// `transferTokenFrom` function, which in turn will call the
+    /// `safeTransferFrom` function. For this transaction to be successful, ITS
+    /// must be `approved` to call the `safeTransferFrom` function, otherwise
+    /// the call will revert.
     LockUnlock,
+
+    /// This manager type is similar to the lock/unlock token manager, where the
+    /// manager locks
+    /// the token on it’s “home chain” when it is bridged out and unlocks it
+    /// when it is bridged back. The key feature with this token manager is
+    /// that you have the option to set a fee that will be deducted when
+    /// executing an `interchainTransfer`.
+    ///
+    /// This token type is currently not supported.
     LockUnlockFee,
+
+    /// The mint/burn token manager type is the most common token manager type
+    /// used for integrating tokens to ITS. This token manager type is used when
+    /// there is no home chain for your token and allows you to `burn` tokens
+    /// from the source chain and `mint` tokens on the destination chain. The
+    /// manager will need to be granted the role to be able to execute the
+    /// `mint` and `burn` function on the token.
     MintBurn,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct RoleManagementInstructionInputs {
-    pub roles: Roles,
-    pub destination_roles_pda_bump: u8,
-    pub proposal_pda_bump: Option<u8>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub enum Roles {
-    Minter = 1,
-    Operator = 2,
-    FlowLimiter = 4,
 }

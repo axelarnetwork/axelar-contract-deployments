@@ -12,7 +12,7 @@ describe("Ping Gateway", () => {
         "Test OK: Program throws error, but data is properly sent through bindings."
       );
     } else {
-      console.log(
+      throw new Error(
         "Test FAIL: Program throws error and data is not properly sent. Check bindings."
       );
     }
@@ -309,4 +309,3 @@ describe("Ping Gateway", () => {
     }
   });
 });
-

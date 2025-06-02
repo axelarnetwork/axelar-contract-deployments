@@ -8,7 +8,6 @@ use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer, SendToHub};
-use role_management::instructions::{RoleManagementInstruction, RoleManagementInstructionInputs};
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -18,11 +17,8 @@ use spl_associated_token_account::get_associated_token_address_with_program_id;
 use typed_builder::TypedBuilder;
 
 use crate::state::{self, flow_limit};
-use crate::{Roles, ID};
 
 pub mod interchain_token;
-pub mod minter;
-pub mod operator;
 pub mod token_manager;
 
 /// Instructions supported by the ITS program.
@@ -488,18 +484,13 @@ pub enum InterchainTokenServiceInstruction {
     ///
     /// 0. [] System program account.
     /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
+    /// 2. [] PDA for the payer roles on the resource which the operatorship is being transferred
+    ///    from.
     /// 3. [] PDA for the resource.
     /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    /// 5. [writable] PDA with the roles on the resource the
     ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    OperatorTransferOperatorship {
-        /// Inputs for transferring operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    TransferOperatorship,
 
     /// Proposes operatorship transfer to another account.
     ///
@@ -514,10 +505,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    OperatorProposeOperatorship {
-        /// Inputs for proposing operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    ProposeOperatorship,
 
     /// Accepts operatorship transfer from another account.
     ///
@@ -532,46 +520,27 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    OperatorAcceptOperatorship {
-        /// Inputs for accepting operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    AcceptOperatorship,
 
     /// Adds a flow limiter to a [`TokenManager`].
     ///
     /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    /// 8. [writable] PDA for the proposal
-    TokenManagerAddFlowLimiter {
-        /// Inputs for adding flow limiter.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    /// 1. [writable, signer] Payer account (must have operator role).
+    /// 2. [] PDA for the payer roles on the token manager.
+    /// 3. [] PDA for the token manager.
+    /// 4. [] Account to add as flow limiter.
+    /// 5. [writable] PDA with the roles on the token manager for the flow limiter being added.
+    AddTokenManagerFlowLimiter,
 
-    /// Adds a flow limiter to a [`TokenManager`].
+    /// Removes a flow limiter from a [`TokenManager`].
     ///
     /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    /// 8. [writable] PDA for the proposal
-    TokenManagerRemoveFlowLimiter {
-        /// Inputs for removing flow limiter.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    /// 1. [writable, signer] Payer account (must have operator role).
+    /// 2. [] PDA for the payer roles on the token manager.
+    /// 3. [] PDA for the token manager.
+    /// 4. [] Account to remove as flow limiter.
+    /// 5. [writable] PDA with the roles on the token manager for the flow limiter being removed.
+    RemoveTokenManagerFlowLimiter,
 
     /// Sets the flow limit for an interchain token.
     ///
@@ -580,27 +549,23 @@ pub enum InterchainTokenServiceInstruction {
     /// 2. [writable] The [`TokenManager`] PDA account.
     /// 3. [] The PDA account with the user roles on the [`TokenManager`].
     /// 4. [] The PDA account with the user roles on ITS.
-    TokenManagerSetFlowLimit {
+    SetTokenManagerFlowLimit {
         /// The new flow limit.
         flow_limit: u64,
     },
 
     /// Transfers operatorship to another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable, signer] Payer account.
+    /// 3. [] PDA for the payer roles on the resource which the operatorship is being transferred
+    ///    from.
+    /// 4. [] PDA for the resource.
+    /// 5. [] Account to transfer operatorship to.
+    /// 6. [writable] PDA with the roles on the resource the
     ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    TokenManagerTransferOperatorship {
-        /// Inputs for transferring operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    TransferTokenManagerOperatorship,
 
     /// Proposes operatorship transfer to another account.
     ///
@@ -615,10 +580,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    TokenManagerProposeOperatorship {
-        /// Inputs for proposing operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    ProposeTokenManagerOperatorship,
 
     /// Accepts operatorship transfer from another account.
     ///
@@ -633,10 +595,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    TokenManagerAcceptOperatorship {
-        /// Inputs for accepting operatorship.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    AcceptTokenManagerOperatorship,
 
     /// Transfers the mint authority to the token manager allowing it to mint tokens and manage
     /// minters. The account transferring the authority gains minter role on the [`TokenManager`] and
@@ -649,7 +608,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 4. [] The account that will hold the roles of the former authority on the [`TokenManager`]
     /// 5. [] The token program used to create the mint
     /// 6. [] The system program account
-    TokenManagerHandOverMintAuthority {
+    HandoverMintAuthority {
         /// The id of the token registered with ITS for which the authority is being handed over.
         token_id: [u8; 32],
     },
@@ -664,27 +623,23 @@ pub enum InterchainTokenServiceInstruction {
     /// 3. [] The token manager PDA
     /// 4. [signer] The minter account
     /// 5. [] The token program id
-    InterchainTokenMint {
+    MintInterchainToken {
         /// The amount of tokens to mint.
         amount: u64,
     },
 
     /// Transfers mintership to another account.
     ///
-    /// 0. [] System program account.
-    /// 1. [writable, signer] Payer account.
-    /// 2. [] PDA for the payer roles on the resource.
-    /// 3. [] PDA for the resource.
-    /// 4. [] Account to transfer operatorship to.
-    /// 5. [writable] PDA with the roles on the resource for the accounts the
-    ///    operatorship is being transferred to.
-    /// 6. [] Account which the operatorship is being transferred from.
-    /// 7. [writable] PDA with the roles on the resource for the account the
-    ///    operatorship is being transferred from.
-    InterchainTokenTransferMintership {
-        /// Inputs for transferring mintership.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    /// 0. [] ITS root PDA.
+    /// 1. [] System program account.
+    /// 2. [writable, signer] Payer account.
+    /// 3. [] PDA for the payer roles on the resource which the mintership is being transferred
+    ///    from.
+    /// 4. [] PDA for the resource.
+    /// 5. [] Account to transfer mintership to.
+    /// 6. [writable] PDA with the roles on the resource the
+    ///    mintership is being transferred to.
+    TransferInterchainTokenMintership,
 
     /// Proposes mintership transfer to another account.
     ///
@@ -699,10 +654,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    InterchainTokenProposeMintership {
-        /// Inputs for proposing mintership.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    ProposeInterchainTokenMintership,
 
     /// Accepts mintership transfer from another account.
     ///
@@ -717,10 +669,7 @@ pub enum InterchainTokenServiceInstruction {
     /// 7. [writable] PDA with the roles on the resource for the account the
     ///    operatorship is being transferred from.
     /// 8. [writable] PDA for the proposal
-    InterchainTokenAcceptMintership {
-        /// Inputs for accepting mintership.
-        inputs: RoleManagementInstructionInputs<Roles>,
-    },
+    AcceptInterchainTokenMintership,
 
     /// A GMP Interchain Token Service instruction.
     ///
@@ -1083,7 +1032,7 @@ pub fn deploy_remote_canonical_interchain_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(
@@ -1203,7 +1152,7 @@ pub fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(
@@ -1266,7 +1215,7 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(
@@ -1315,7 +1264,7 @@ pub fn register_token_metadata(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::RegisterTokenMetadata {
@@ -1420,7 +1369,7 @@ pub fn link_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::LinkToken {
@@ -1470,7 +1419,7 @@ pub fn interchain_transfer(
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1488,7 +1437,7 @@ pub fn interchain_transfer(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(&InterchainTokenServiceInstruction::InterchainTransfer {
@@ -1537,7 +1486,7 @@ pub fn call_contract_with_interchain_token(
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1554,7 +1503,7 @@ pub fn call_contract_with_interchain_token(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let data = to_vec(
@@ -1606,7 +1555,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
     let token_manager_ata =
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(ID);
+        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1623,7 +1572,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(ID, false),
+        AccountMeta::new_readonly(crate::ID, false),
     ];
 
     let payload = GMPPayload::SendToHub(SendToHub {
@@ -1756,14 +1705,21 @@ pub fn its_gmp_payload(inputs: ItsGmpInstructionInputs) -> Result<Instruction, P
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let accounts = vec![];
-    let (accounts, operator_instruction) =
-        operator::transfer_operatorship(payer, its_root_pda, to, Some(accounts))?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (destination_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &to);
 
-    let operator::Instruction::TransferOperatorship(inputs) = operator_instruction else {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorTransferOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(to, false),
+        AccountMeta::new(destination_roles_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::TransferOperatorship)?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1772,22 +1728,31 @@ pub fn transfer_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, P
     })
 }
 
-/// Creates an [`InterchainTokenServiceInstruction::OperatorInstruction`]
-/// instruction with the [`operator::Instruction::ProposeOperatorship`] variant.
+/// Creates an [`InterchainTokenServiceInstruction::ProposeOperatorship`] instruction.
 ///
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let accounts = vec![];
-    let (accounts, operator_instruction) =
-        operator::propose_operatorship(payer, its_root_pda, to, Some(accounts))?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (destination_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &to);
+    let (proposal_pda, _) =
+        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &payer, &to);
 
-    let operator::Instruction::ProposeOperatorship(inputs) = operator_instruction else {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorProposeOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(payer_roles_pda, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(to, false),
+        AccountMeta::new_readonly(destination_roles_pda, false),
+        AccountMeta::new(proposal_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::ProposeOperatorship)?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -1796,22 +1761,31 @@ pub fn propose_operatorship(payer: Pubkey, to: Pubkey) -> Result<Instruction, Pr
     })
 }
 
-/// Creates an [`InterchainTokenServiceInstruction::OperatorInstruction`]
-/// instruction with the [`operator::Instruction::AcceptOperatorship`] variant.
+/// Creates an [`InterchainTokenServiceInstruction::AcceptOperatorship`] instruction.
 ///
 /// # Errors
 ///
 /// [`ProgramError::BorshIoError`]: When instruction serialization fails.
 pub fn accept_operatorship(payer: Pubkey, from: Pubkey) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
-    let accounts = vec![];
-    let (accounts, operator_instruction) =
-        operator::accept_operatorship(payer, its_root_pda, from, Some(accounts))?;
+    let (payer_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &payer);
+    let (origin_roles_pda, _) =
+        role_management::find_user_roles_pda(&crate::id(), &its_root_pda, &from);
+    let (proposal_pda, _) =
+        role_management::find_roles_proposal_pda(&crate::id(), &its_root_pda, &from, &payer);
 
-    let operator::Instruction::AcceptOperatorship(inputs) = operator_instruction else {
-        return Err(ProgramError::InvalidInstructionData);
-    };
-    let data = to_vec(&InterchainTokenServiceInstruction::OperatorAcceptOperatorship { inputs })?;
+    let accounts = vec![
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new(payer, true),
+        AccountMeta::new(payer_roles_pda, false),
+        AccountMeta::new_readonly(its_root_pda, false),
+        AccountMeta::new_readonly(from, false),
+        AccountMeta::new(origin_roles_pda, false),
+        AccountMeta::new(proposal_pda, false),
+    ];
+
+    let data = to_vec(&InterchainTokenServiceInstruction::AcceptOperatorship)?;
 
     Ok(Instruction {
         program_id: crate::ID,
@@ -2089,27 +2063,5 @@ impl<'a> TryFrom<&'a GMPPayload> for ItsMessageRef<'a> {
             | GMPPayload::SendToHub(_)
             | GMPPayload::ReceiveFromHub(_) => return Err(ProgramError::InvalidArgument),
         })
-    }
-}
-
-impl TryFrom<RoleManagementInstruction<Roles>> for InterchainTokenServiceInstruction {
-    type Error = ProgramError;
-
-    fn try_from(value: RoleManagementInstruction<Roles>) -> Result<Self, Self::Error> {
-        match value {
-            // Adding and removing operators on the InterchainTokenService is not supported.
-            RoleManagementInstruction::AddRoles(_) | RoleManagementInstruction::RemoveRoles(_) => {
-                Err(ProgramError::InvalidInstructionData)
-            }
-            RoleManagementInstruction::TransferRoles(inputs) => {
-                Ok(Self::OperatorTransferOperatorship { inputs })
-            }
-            RoleManagementInstruction::ProposeRoles(inputs) => {
-                Ok(Self::OperatorProposeOperatorship { inputs })
-            }
-            RoleManagementInstruction::AcceptRoles(inputs) => {
-                Ok(Self::OperatorAcceptOperatorship { inputs })
-            }
-        }
     }
 }

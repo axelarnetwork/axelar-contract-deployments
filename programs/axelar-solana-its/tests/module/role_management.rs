@@ -792,7 +792,7 @@ async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut Its
         );
 
         // Bob's roles on TokenA (where he's only Flow Limiter)
-        let (bob_roles_pda_token_a, bob_roles_pda_token_a_bump) =
+        let (bob_roles_pda_token_a, _bob_roles_pda_token_a_bump) =
             role_management::find_user_roles_pda(
                 &axelar_solana_its::id(),
                 &token_a_manager_pda,
@@ -802,11 +802,6 @@ async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut Its
         // Create exploit instruction that uses:
         // - TokenB as the resource/context for authorization (where Bob is Operator)
         // - But transfers Minter role on TokenA from Alice to Bob
-        let inputs = role_management::instructions::RoleManagementInstructionInputs {
-            roles: Roles::MINTER,
-            destination_roles_pda_bump: bob_roles_pda_token_a_bump,
-            proposal_pda_bump: None,
-        };
 
         // Create a custom instruction mimicking transfer_mintership instruction
         // with mismatched resource and role accounts
@@ -826,7 +821,7 @@ async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut Its
                 AccountMeta::new(alice_roles_pda_token_a, false),
             ],
             data: borsh::to_vec(
-                &InterchainTokenServiceInstruction::InterchainTokenTransferMintership { inputs },
+                &InterchainTokenServiceInstruction::TransferInterchainTokenMintership,
             )
             .unwrap(),
         }

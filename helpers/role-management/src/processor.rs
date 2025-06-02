@@ -1,14 +1,12 @@
 //! This module provides logic to handle user role management instructions.
 use program_utils::pda::{close_pda, BorshPda};
-use program_utils::validate_system_account_key;
-use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::account_info::AccountInfo;
 use solana_program::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::{bpf_loader_upgradeable, msg};
 
-use crate::instructions::RoleManagementInstructionInputs;
 use crate::seed_prefixes;
 use crate::state::{RoleProposal, RolesFlags, UserRoles};
 
@@ -19,54 +17,60 @@ use crate::state::{RoleProposal, RolesFlags, UserRoles};
 /// [`ProgramError`] is returned as a result of failed operations.
 pub fn propose<F: RolesFlags>(
     program_id: &Pubkey,
-    accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs<F>,
+    accounts: RoleTransferWithProposalAccounts<'_>,
+    roles: F,
     required_payer_roles: F,
 ) -> ProgramResult {
-    let transfer_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
-
     ensure_signer_roles(
         program_id,
-        transfer_accounts.resource,
-        transfer_accounts.payer,
-        transfer_accounts.payer_roles_account,
+        accounts.resource,
+        accounts.payer,
+        accounts.payer_roles_account,
         required_payer_roles,
     )?;
 
     ensure_roles(
         program_id,
-        transfer_accounts.resource,
-        transfer_accounts.origin_user_account,
-        transfer_accounts.origin_roles_account,
-        inputs.roles,
+        accounts.resource,
+        accounts.origin_user_account,
+        accounts.origin_roles_account,
+        roles,
     )?;
 
-    ensure_proper_account(
+    ensure_proper_account::<F>(
         program_id,
-        transfer_accounts.resource,
-        transfer_accounts.destination_user_account,
-        transfer_accounts.destination_roles_account,
-        None,
+        accounts.resource,
+        accounts.destination_user_account,
+        accounts.destination_roles_account,
     )?;
+
+    let (proposal_pda, proposal_pda_bump) = crate::find_roles_proposal_pda(
+        program_id,
+        accounts.resource.key,
+        accounts.origin_user_account.key,
+        accounts.destination_user_account.key,
+    );
+
+    if proposal_pda != *accounts.proposal_account.key {
+        msg!("Derived PDA doesn't match given proposal account address");
+        return Err(ProgramError::InvalidArgument);
+    }
 
     let proposal = RoleProposal {
-        roles: inputs.roles,
-    };
-
-    let Some(proposal_pda_bump) = inputs.proposal_pda_bump else {
-        return Err(ProgramError::InvalidArgument);
+        roles,
+        bump: proposal_pda_bump,
     };
 
     proposal.init(
         program_id,
-        transfer_accounts.system_account,
-        transfer_accounts.payer,
-        transfer_accounts.proposal_account,
+        accounts.system_account,
+        accounts.payer,
+        accounts.proposal_account,
         &[
             seed_prefixes::ROLE_PROPOSAL_SEED,
-            transfer_accounts.resource.key.as_ref(),
-            transfer_accounts.origin_user_account.key.as_ref(),
-            transfer_accounts.destination_user_account.key.as_ref(),
+            accounts.resource.key.as_ref(),
+            accounts.origin_user_account.key.as_ref(),
+            accounts.destination_user_account.key.as_ref(),
             &[proposal_pda_bump],
         ],
     )?;
@@ -81,86 +85,71 @@ pub fn propose<F: RolesFlags>(
 /// [`ProgramError`] is returned as a result of failed operations.
 pub fn accept<F: RolesFlags>(
     program_id: &Pubkey,
-    accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs<F>,
+    accounts: RoleTransferWithProposalAccounts<'_>,
+    roles: F,
     required_payer_roles: F,
 ) -> ProgramResult {
-    let transfer_with_proposal_accounts = RoleTransferWithProposalAccounts::try_from(accounts)?;
-
-    ensure_signer_roles(
-        program_id,
-        transfer_with_proposal_accounts.resource,
-        transfer_with_proposal_accounts.payer,
-        transfer_with_proposal_accounts.payer_roles_account,
-        required_payer_roles,
-    )?;
-
-    let Some(proposal_pda_bump) = inputs.proposal_pda_bump else {
-        return Err(ProgramError::InvalidArgument);
-    };
-
+    let proposal_pda_bump = RoleProposal::<F>::load(accounts.proposal_account)?.bump;
     let (derived_proposal_pda, _) = crate::create_roles_proposal_pda(
         program_id,
-        transfer_with_proposal_accounts.resource.key,
-        transfer_with_proposal_accounts.origin_user_account.key,
-        transfer_with_proposal_accounts.destination_user_account.key,
+        accounts.resource.key,
+        accounts.origin_user_account.key,
+        accounts.destination_user_account.key,
         proposal_pda_bump,
     );
 
-    if derived_proposal_pda != *transfer_with_proposal_accounts.proposal_account.key {
+    if derived_proposal_pda != *accounts.proposal_account.key {
         msg!("Derived PDA doesn't match given  proposal account address");
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal = RoleProposal::<F>::load(transfer_with_proposal_accounts.proposal_account)?;
-    if !proposal.roles.contains(inputs.roles) {
+    let proposal = RoleProposal::<F>::load(accounts.proposal_account)?;
+    if !proposal.roles.contains(roles) {
         msg!("Trying to accept a role that hasn't been proposed");
         return Err(ProgramError::InvalidArgument);
     }
 
-    let proposal_account = transfer_with_proposal_accounts.proposal_account;
-    let transfer_accounts: RoleTransferAccounts<'_> = transfer_with_proposal_accounts.into();
+    let proposal_account = accounts.proposal_account;
+    let role_remove_accounts = RoleRemoveAccounts::from(accounts);
+    let role_add_accounts = RoleAddAccounts::from(accounts);
 
-    transfer_roles(
+    add(program_id, role_add_accounts, roles, required_payer_roles)?;
+    remove(
         program_id,
-        &transfer_accounts,
-        inputs.roles,
-        inputs.destination_roles_pda_bump,
+        role_remove_accounts,
+        roles,
+        required_payer_roles,
     )?;
 
-    close_pda(transfer_accounts.origin_user_account, proposal_account)?;
+    close_pda(accounts.origin_user_account, proposal_account)?;
 
     Ok(())
 }
 
-fn transfer_roles<F: RolesFlags>(
+/// Add roles to a user.
+///
+/// # Errors
+///
+/// [`ProgramError`] is returned as a result of failed operations.
+pub fn add<F: RolesFlags>(
     program_id: &Pubkey,
-    accounts: &RoleTransferAccounts<'_>,
+    accounts: RoleAddAccounts<'_>,
     roles: F,
-    destination_roles_pda_bump: u8,
+    required_payer_roles: F,
 ) -> ProgramResult {
-    ensure_roles(
+    ensure_signer_roles(
         program_id,
         accounts.resource,
-        accounts.origin_user_account,
-        accounts.origin_roles_account,
-        roles,
+        accounts.payer,
+        accounts.payer_roles_account,
+        required_payer_roles,
     )?;
 
-    ensure_proper_account(
+    ensure_proper_account::<F>(
         program_id,
         accounts.resource,
         accounts.destination_user_account,
         accounts.destination_roles_account,
-        Some(destination_roles_pda_bump),
-    )?;
-
-    let mut origin_user_roles = UserRoles::load(accounts.origin_roles_account)?;
-    origin_user_roles.remove(roles);
-    origin_user_roles.store(
-        accounts.payer,
-        accounts.origin_roles_account,
-        accounts.system_account,
     )?;
 
     if let Ok(mut destination_user_roles) = UserRoles::load(accounts.destination_roles_account) {
@@ -171,6 +160,17 @@ fn transfer_roles<F: RolesFlags>(
             accounts.system_account,
         )?;
     } else {
+        let (destination_roles_pda, destination_roles_pda_bump) = crate::find_user_roles_pda(
+            program_id,
+            accounts.resource.key,
+            accounts.destination_user_account.key,
+        );
+
+        if destination_roles_pda != *accounts.destination_roles_account.key {
+            msg!("Derived PDA doesn't match given destination roles account address");
+            return Err(ProgramError::InvalidArgument);
+        }
+
         let signer_seeds = &[
             seed_prefixes::USER_ROLES_SEED,
             accounts.resource.key.as_ref(),
@@ -186,93 +186,6 @@ fn transfer_roles<F: RolesFlags>(
             signer_seeds,
         )?;
     }
-    Ok(())
-}
-
-/// Transfer roles from one user to another.
-///
-/// # Errors
-///
-/// [`ProgramError`] is returned as a result of failed operations.
-pub fn transfer<F: RolesFlags>(
-    program_id: &Pubkey,
-    accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs<F>,
-    required_payer_roles: F,
-) -> ProgramResult {
-    let transfer_accounts = RoleTransferAccounts::try_from(accounts)?;
-
-    ensure_signer_roles(
-        program_id,
-        transfer_accounts.resource,
-        transfer_accounts.payer,
-        transfer_accounts.payer_roles_account,
-        required_payer_roles,
-    )?;
-
-    transfer_roles(
-        program_id,
-        &transfer_accounts,
-        inputs.roles,
-        inputs.destination_roles_pda_bump,
-    )?;
-
-    Ok(())
-}
-
-/// Add roles to a user.
-///
-/// # Errors
-///
-/// [`ProgramError`] is returned as a result of failed operations.
-pub fn add<F: RolesFlags>(
-    program_id: &Pubkey,
-    accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs<F>,
-    required_payer_roles: F,
-) -> ProgramResult {
-    let add_accounts = RoleAddAccounts::try_from(accounts)?;
-
-    ensure_signer_roles(
-        program_id,
-        add_accounts.resource,
-        add_accounts.payer,
-        add_accounts.payer_roles_account,
-        required_payer_roles,
-    )?;
-
-    ensure_proper_account(
-        program_id,
-        add_accounts.resource,
-        add_accounts.destination_user_account,
-        add_accounts.destination_roles_account,
-        None,
-    )?;
-
-    if let Ok(mut destination_user_roles) = UserRoles::load(add_accounts.destination_roles_account)
-    {
-        destination_user_roles.add(inputs.roles);
-        destination_user_roles.store(
-            add_accounts.payer,
-            add_accounts.destination_roles_account,
-            add_accounts.system_account,
-        )?;
-    } else {
-        let signer_seeds = &[
-            seed_prefixes::USER_ROLES_SEED,
-            add_accounts.resource.key.as_ref(),
-            add_accounts.destination_user_account.key.as_ref(),
-            &[inputs.destination_roles_pda_bump],
-        ];
-
-        UserRoles::new(inputs.roles, inputs.destination_roles_pda_bump).init(
-            program_id,
-            add_accounts.system_account,
-            add_accounts.payer,
-            add_accounts.destination_roles_account,
-            signer_seeds,
-        )?;
-    }
 
     Ok(())
 }
@@ -284,35 +197,31 @@ pub fn add<F: RolesFlags>(
 /// [`ProgramError`] is returned as a result of failed operations.
 pub fn remove<F: RolesFlags>(
     program_id: &Pubkey,
-    accounts: RoleManagementAccounts<'_>,
-    inputs: &RoleManagementInstructionInputs<F>,
+    accounts: RoleRemoveAccounts<'_>,
+    roles: F,
     required_payer_roles: F,
 ) -> ProgramResult {
-    let remove_accounts = RoleRemoveAccounds::try_from(accounts)?;
     ensure_signer_roles(
         program_id,
-        remove_accounts.resource,
-        remove_accounts.payer,
-        remove_accounts.payer_roles_account,
+        accounts.resource,
+        accounts.payer,
+        accounts.payer_roles_account,
         required_payer_roles,
     )?;
 
-    ensure_proper_account(
+    ensure_proper_account::<F>(
         program_id,
-        remove_accounts.resource,
-        remove_accounts.destination_user_account,
-        remove_accounts.destination_roles_account,
-        None,
+        accounts.resource,
+        accounts.origin_user_account,
+        accounts.origin_roles_account,
     )?;
 
-    if let Ok(mut destination_user_roles) =
-        UserRoles::load(remove_accounts.destination_roles_account)
-    {
-        destination_user_roles.remove(inputs.roles);
+    if let Ok(mut destination_user_roles) = UserRoles::load(accounts.origin_roles_account) {
+        destination_user_roles.remove(roles);
         destination_user_roles.store(
-            remove_accounts.payer,
-            remove_accounts.destination_roles_account,
-            remove_accounts.system_account,
+            accounts.payer,
+            accounts.origin_roles_account,
+            accounts.system_account,
         )?;
     } else {
         msg!("Trying to remove roles from a user that doesn't have any");
@@ -348,13 +257,7 @@ pub fn ensure_roles<F: RolesFlags>(
         return Err(ProgramError::InvalidArgument);
     }
 
-    ensure_proper_account(
-        program_id,
-        resource,
-        user,
-        roles_account,
-        Some(user_roles.bump()),
-    )?;
+    ensure_proper_account::<F>(program_id, resource, user, roles_account)?;
 
     Ok(())
 }
@@ -437,156 +340,54 @@ pub fn ensure_upgrade_authority(
 ///
 /// If the PDA derived from the user and resource keys is different than the passed role account
 /// key.
-pub fn ensure_proper_account(
+pub fn ensure_proper_account<F: RolesFlags>(
     program_id: &Pubkey,
     resource: &AccountInfo<'_>,
     user: &AccountInfo<'_>,
     user_roles: &AccountInfo<'_>,
-    maybe_bump: Option<u8>,
 ) -> ProgramResult {
-    let (derived_pda, _) = crate::user_roles_pda(program_id, resource.key, user.key, maybe_bump);
+    let (derived_pda, _) = crate::user_roles_pda(
+        program_id,
+        resource.key,
+        user.key,
+        UserRoles::<F>::load(user_roles).ok().map(|r| r.bump()),
+    );
 
     if *user_roles.key != derived_pda {
-        msg!(
-            "Derived PDA ({}) doesn't match given roles account address ({})",
-            user_roles.key,
-            derived_pda
-        );
+        msg!("Derived PDA doesn't match given roles account address");
         return Err(ProgramError::InvalidArgument);
     }
 
     Ok(())
 }
 
-/// Accounts used by role management instructions.
-#[derive(Debug)]
-pub struct RoleManagementAccounts<'a> {
-    /// System account.
+#[derive(Debug, Clone, Copy)]
+pub struct RoleTransferWithProposalAccounts<'a> {
     pub system_account: &'a AccountInfo<'a>,
-
-    /// Payer account.
     pub payer: &'a AccountInfo<'a>,
-
-    /// Payer roles account.
     pub payer_roles_account: &'a AccountInfo<'a>,
-
-    /// Resource account.
     pub resource: &'a AccountInfo<'a>,
-
-    /// Destination user account.
-    pub destination_user_account: Option<&'a AccountInfo<'a>>,
-
-    /// Destination roles account.
-    pub destination_roles_account: Option<&'a AccountInfo<'a>>,
-
-    /// Origin user account.
-    pub origin_user_account: Option<&'a AccountInfo<'a>>,
-
-    /// Origin roles account.
-    pub origin_roles_account: Option<&'a AccountInfo<'a>>,
-
-    /// Proposal account.
-    pub proposal_account: Option<&'a AccountInfo<'a>>,
+    pub destination_user_account: &'a AccountInfo<'a>,
+    pub destination_roles_account: &'a AccountInfo<'a>,
+    pub origin_user_account: &'a AccountInfo<'a>,
+    pub origin_roles_account: &'a AccountInfo<'a>,
+    pub proposal_account: &'a AccountInfo<'a>,
 }
 
-impl<'a> TryFrom<&'a [AccountInfo<'a>]> for RoleManagementAccounts<'a> {
-    type Error = ProgramError;
-
-    fn try_from(value: &'a [AccountInfo<'a>]) -> Result<Self, Self::Error> {
-        let account_iter = &mut value.iter();
-        let system_account = next_account_info(account_iter)?;
-        validate_system_account_key(system_account.key)?;
-
-        Ok(Self {
-            system_account,
-            payer: next_account_info(account_iter)?,
-            payer_roles_account: next_account_info(account_iter)?,
-            resource: next_account_info(account_iter)?,
-            destination_user_account: next_account_info(account_iter).ok(),
-            destination_roles_account: next_account_info(account_iter).ok(),
-            origin_user_account: next_account_info(account_iter).ok(),
-            origin_roles_account: next_account_info(account_iter).ok(),
-            proposal_account: next_account_info(account_iter).ok(),
-        })
-    }
-}
-
-pub(crate) struct RoleTransferAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
-    payer: &'a AccountInfo<'a>,
-    payer_roles_account: &'a AccountInfo<'a>,
-    resource: &'a AccountInfo<'a>,
-    destination_user_account: &'a AccountInfo<'a>,
-    destination_roles_account: &'a AccountInfo<'a>,
-    origin_user_account: &'a AccountInfo<'a>,
-    origin_roles_account: &'a AccountInfo<'a>,
-}
-
-impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleTransferAccounts<'a> {
-    type Error = ProgramError;
-    fn try_from(value: RoleManagementAccounts<'a>) -> Result<Self, Self::Error> {
-        Ok(Self {
+impl<'a> From<RoleTransferWithProposalAccounts<'a>> for RoleRemoveAccounts<'a> {
+    fn from(value: RoleTransferWithProposalAccounts<'a>) -> Self {
+        Self {
             system_account: value.system_account,
             payer: value.payer,
             payer_roles_account: value.payer_roles_account,
             resource: value.resource,
-            destination_user_account: value
-                .destination_user_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            destination_roles_account: value
-                .destination_roles_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            origin_user_account: value
-                .origin_user_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            origin_roles_account: value
-                .origin_roles_account
-                .ok_or(ProgramError::InvalidArgument)?,
-        })
+            origin_user_account: value.origin_user_account,
+            origin_roles_account: value.origin_roles_account,
+        }
     }
 }
 
-pub(crate) struct RoleTransferWithProposalAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
-    payer: &'a AccountInfo<'a>,
-    payer_roles_account: &'a AccountInfo<'a>,
-    resource: &'a AccountInfo<'a>,
-    destination_user_account: &'a AccountInfo<'a>,
-    destination_roles_account: &'a AccountInfo<'a>,
-    origin_user_account: &'a AccountInfo<'a>,
-    origin_roles_account: &'a AccountInfo<'a>,
-    proposal_account: &'a AccountInfo<'a>,
-}
-
-impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleTransferWithProposalAccounts<'a> {
-    type Error = ProgramError;
-
-    fn try_from(value: RoleManagementAccounts<'a>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            system_account: value.system_account,
-            payer: value.payer,
-            payer_roles_account: value.payer_roles_account,
-            resource: value.resource,
-            destination_user_account: value
-                .destination_user_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            destination_roles_account: value
-                .destination_roles_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            origin_user_account: value
-                .origin_user_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            origin_roles_account: value
-                .origin_roles_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            proposal_account: value
-                .proposal_account
-                .ok_or(ProgramError::InvalidArgument)?,
-        })
-    }
-}
-
-impl<'a> From<RoleTransferWithProposalAccounts<'a>> for RoleTransferAccounts<'a> {
+impl<'a> From<RoleTransferWithProposalAccounts<'a>> for RoleAddAccounts<'a> {
     fn from(value: RoleTransferWithProposalAccounts<'a>) -> Self {
         Self {
             system_account: value.system_account,
@@ -595,40 +396,29 @@ impl<'a> From<RoleTransferWithProposalAccounts<'a>> for RoleTransferAccounts<'a>
             resource: value.resource,
             destination_user_account: value.destination_user_account,
             destination_roles_account: value.destination_roles_account,
-            origin_user_account: value.origin_user_account,
-            origin_roles_account: value.origin_roles_account,
         }
     }
 }
 
-pub(crate) struct RoleAddAccounts<'a> {
-    system_account: &'a AccountInfo<'a>,
-    payer: &'a AccountInfo<'a>,
-    payer_roles_account: &'a AccountInfo<'a>,
-    resource: &'a AccountInfo<'a>,
-    destination_user_account: &'a AccountInfo<'a>,
-    destination_roles_account: &'a AccountInfo<'a>,
+#[derive(Debug, Clone, Copy)]
+pub struct RoleAddAccounts<'a> {
+    pub system_account: &'a AccountInfo<'a>,
+    pub payer: &'a AccountInfo<'a>,
+    pub payer_roles_account: &'a AccountInfo<'a>,
+    pub resource: &'a AccountInfo<'a>,
+    pub destination_user_account: &'a AccountInfo<'a>,
+    pub destination_roles_account: &'a AccountInfo<'a>,
 }
 
-impl<'a> TryFrom<RoleManagementAccounts<'a>> for RoleAddAccounts<'a> {
-    type Error = ProgramError;
-    fn try_from(value: RoleManagementAccounts<'a>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            system_account: value.system_account,
-            payer: value.payer,
-            payer_roles_account: value.payer_roles_account,
-            resource: value.resource,
-            destination_user_account: value
-                .destination_user_account
-                .ok_or(ProgramError::InvalidArgument)?,
-            destination_roles_account: value
-                .destination_roles_account
-                .ok_or(ProgramError::InvalidArgument)?,
-        })
-    }
+#[derive(Debug, Clone, Copy)]
+pub struct RoleRemoveAccounts<'a> {
+    pub system_account: &'a AccountInfo<'a>,
+    pub payer: &'a AccountInfo<'a>,
+    pub payer_roles_account: &'a AccountInfo<'a>,
+    pub resource: &'a AccountInfo<'a>,
+    pub origin_user_account: &'a AccountInfo<'a>,
+    pub origin_roles_account: &'a AccountInfo<'a>,
 }
-
-pub(crate) type RoleRemoveAccounds<'a> = RoleAddAccounts<'a>;
 
 #[cfg(test)]
 mod tests {
