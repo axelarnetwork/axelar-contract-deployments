@@ -20,6 +20,7 @@
 )]
 
 mod deploy_interchain_token;
+mod deploy_remote_metadata_validation;
 mod flow_limits;
 mod from_evm_to_solana;
 mod from_solana_to_evm;

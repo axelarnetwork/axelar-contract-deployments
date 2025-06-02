@@ -286,6 +286,12 @@ pub(crate) fn process_outbound_deploy<'a>(
 
     let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
     let mint_data = Mint::unpack(&mint.try_borrow_data()?)?;
+
+    if token_metadata.mint != *mint.key {
+        msg!("The metadata and mint accounts passed don't match");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     let name = token_metadata.name.trim_end_matches('\0').to_owned();
     let symbol = token_metadata.symbol.trim_end_matches('\0').to_owned();
 
