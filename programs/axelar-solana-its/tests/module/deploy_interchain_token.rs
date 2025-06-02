@@ -1,5 +1,9 @@
 use anyhow::anyhow;
+use axelar_solana_its::instruction::InterchainTokenServiceInstruction;
+use borsh::to_vec;
 use event_utils::Event as _;
+use solana_program::instruction::{AccountMeta, Instruction};
+use solana_program::system_program;
 use solana_program_test::tokio;
 use solana_sdk::program_pack::Pack;
 use solana_sdk::signature::Keypair;
@@ -439,5 +443,112 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
                 .is_some()
     );
 
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_prevent_deploy_approval_created_by_anyone(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    // Bob is our ctx.solana_chain.fixture.payer who has deployed TokenB
+    let token_b_salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
+
+    // Create Alice who will deploy worthless TokenA
+    let alice = Keypair::new();
+
+    // Fund Alice's account so she can pay for transactions
+    ctx.send_solana_tx(&[system_instruction::transfer(
+        &ctx.solana_chain.fixture.payer.pubkey(),
+        &alice.pubkey(),
+        u32::MAX.into(),
+    )])
+    .await
+    .unwrap();
+
+    // Alice deploys TokenA
+    let token_a_salt = [1u8; 32];
+    let deploy_token_a_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        alice.pubkey(),
+        token_a_salt,
+        "Token A".to_string(),
+        "TOKA".to_string(),
+        8,
+        0,
+        Some(alice.pubkey()),
+    )?;
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[deploy_token_a_ix],
+            &[
+                &alice.insecure_clone(),
+                &ctx.solana_chain.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    let destination_chain = "ethereum";
+    let destination_minter = vec![1, 2, 3, 4, 5];
+
+    // Alice uses here Minter role over TokenA to create the approval on TokenB
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let token_id = axelar_solana_its::interchain_token_id(&alice.pubkey(), &token_a_salt);
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+    let (roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::ID,
+        &token_manager_pda,
+        &alice.pubkey(),
+    );
+    let (deploy_approval_pda, _) = axelar_solana_its::find_deployment_approval_pda(
+        &alice.pubkey(),
+        &ctx.deployed_interchain_token,
+        destination_chain,
+    );
+
+    let accounts = vec![
+        AccountMeta::new(alice.pubkey(), true),
+        AccountMeta::new_readonly(token_manager_pda, false),
+        AccountMeta::new_readonly(roles_pda, false),
+        AccountMeta::new(deploy_approval_pda, false),
+        AccountMeta::new_readonly(system_program::ID, false),
+    ];
+
+    let data = to_vec(
+        &InterchainTokenServiceInstruction::ApproveDeployRemoteInterchainToken {
+            deployer: ctx.solana_chain.fixture.payer.pubkey(),
+            salt: token_b_salt,
+            destination_chain: destination_chain.to_string(),
+            destination_minter,
+        },
+    )?;
+
+    let approve_deploy_b_ix = Instruction {
+        program_id: axelar_solana_its::ID,
+        accounts,
+        data,
+    };
+
+    let res = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[approve_deploy_b_ix],
+            &[
+                alice.insecure_clone(),
+                ctx.solana_chain.payer.insecure_clone(),
+            ],
+        )
+        .await;
+    assert!(res.is_err());
+    let err = res.as_ref().expect_err("Expected to fail");
+    assert!(
+        err.find_log("Invalid TokenManager PDA provided").is_some()
+            || err
+                .find_log("Provided seeds do not result in a valid address")
+                .is_some()
+    );
     Ok(())
 }
