@@ -381,11 +381,5 @@ async fn test_cannot_create_proposal_twice() {
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
     assert!(res.is_err());
 
-    // We split the error message in two, as the error message contains addresses
-    // that are changing in each test run.
-    assert_msg_present_in_logs(
-        res.clone().err().unwrap(),
-        "Create Account: account Address",
-    );
-    assert_msg_present_in_logs(res.err().unwrap(), "already in use");
+    assert_msg_present_in_logs(res.err().unwrap(), "Proposal already exists");
 }

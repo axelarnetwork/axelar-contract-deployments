@@ -96,6 +96,7 @@ impl TestFixture {
     }
 
     /// Initialize a new token mint
+    #[allow(clippy::disallowed_methods)]
     pub async fn init_new_mint(
         &mut self,
         mint_authority: Pubkey,
@@ -134,6 +135,7 @@ impl TestFixture {
 
     /// Initialize a new token mint with a fee (uses `spl_token_2022`)
     #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::disallowed_methods)]
     pub async fn init_new_mint_with_fee(
         &mut self,
         mint_authority: &Pubkey,

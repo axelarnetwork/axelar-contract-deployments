@@ -115,11 +115,11 @@ async fn test_operator_proposal_management_cannot_be_enabled_twice() {
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
     assert!(res.is_err());
+
     assert_msg_present_in_logs(
-        res.clone().err().unwrap(),
-        "Create Account: account Address",
+        res.err().unwrap(),
+        "Proposal already under operator control",
     );
-    assert_msg_present_in_logs(res.err().unwrap(), "already in use");
 }
 
 #[tokio::test]

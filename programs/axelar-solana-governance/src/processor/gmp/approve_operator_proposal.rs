@@ -3,8 +3,10 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L17).
 
+use program_utils::pda::ValidPDA;
 use program_utils::validate_system_account_key;
 use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
@@ -40,6 +42,11 @@ pub(crate) fn process(
         operator_proposal_pda,
         &ctx.proposal_hash,
     )?;
+
+    if operator_proposal_pda.is_initialized_pda(&crate::ID) {
+        msg!("Proposal already under operator control");
+        return Err(ProgramError::InvalidArgument);
+    }
 
     program_utils::pda::init_pda_raw(
         payer,

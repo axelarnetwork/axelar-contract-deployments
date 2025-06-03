@@ -17,3 +17,7 @@ solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
 
 [dev-dependencies]
+solana-sdk.workspace = true
+solana-program-test.workspace = true
+axelar-solana-gateway-test-fixtures.workspace = true
+dummy-axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }

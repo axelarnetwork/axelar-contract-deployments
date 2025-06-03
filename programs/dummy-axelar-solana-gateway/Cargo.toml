@@ -17,5 +17,6 @@ test-sbf = []
 [dependencies]
 solana-program.workspace = true
 borsh.workspace = true
+program-utils.workspace = true
 
 [dev-dependencies]

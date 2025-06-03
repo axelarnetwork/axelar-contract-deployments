@@ -195,6 +195,10 @@ impl ExecutableProposal {
         hash: &[u8; 32],
         bump: u8,
     ) -> Result<(), ProgramError> {
+        if proposal_pda.is_initialized_pda(&crate::id()) {
+            msg!("Proposal already exists");
+            return Err(ProgramError::AccountAlreadyInitialized);
+        }
         program_utils::pda::init_pda::<Self>(
             payer,
             proposal_pda,

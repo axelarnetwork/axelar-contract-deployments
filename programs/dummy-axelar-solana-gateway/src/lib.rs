@@ -6,5 +6,6 @@
 pub mod entrypoint;
 pub mod instructions;
 pub mod processor;
+pub mod seed_prefixes;
 
 solana_program::declare_id!("gtwgM94UYHwBh3g7rWi1tcpkgELxHQRLPpPHsaECW57");
