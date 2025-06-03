@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
 | **Stagenet**         | Completed             | 2025-05-07 |
-| **Testnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-05-27 |
 | **Mainnet**          | -                     | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
