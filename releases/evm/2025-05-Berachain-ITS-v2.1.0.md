@@ -8,7 +8,7 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-05-23 |
-| **Stagenet**         | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2025-05-28 |
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
@@ -74,7 +74,7 @@ node cosmwasm/submit-proposal.js \
 Set Berachain as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-node evm/its.js set-trusted-chains $CHAIN hub -n all
+node evm/its.js set-trusted-chains berachain hub -n all
 ```
 
 ## Checklist
