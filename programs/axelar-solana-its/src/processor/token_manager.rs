@@ -14,6 +14,7 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::program_option::COption;
+use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use solana_program::{msg, system_program};
 use spl_token_2022::check_spl_token_program_account;
@@ -89,12 +90,7 @@ pub(crate) fn deploy<'a>(
 ) -> ProgramResult {
     msg!("Instruction: TM Deploy");
     check_accounts(accounts)?;
-
-    validate_token_manager_type(
-        deploy_token_manager.manager_type,
-        accounts.token_mint,
-        accounts.token_manager_pda,
-    )?;
+    validate_mint_extensions(deploy_token_manager.manager_type, accounts.token_mint)?;
 
     crate::create_associated_token_account(
         payer,
@@ -248,32 +244,50 @@ fn check_accounts(accounts: &DeployTokenManagerAccounts<'_>) -> ProgramResult {
     Ok(())
 }
 
+pub(crate) fn validate_mint_extensions(
+    ty: token_manager::Type,
+    token_mint: &AccountInfo<'_>,
+) -> ProgramResult {
+    let mint_data = token_mint.try_borrow_data()?;
+    let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
+
+    if ty == token_manager::Type::LockUnlockFee
+        && !mint
+            .get_extension_types()?
+            .contains(&ExtensionType::TransferFeeConfig)
+    {
+        msg!("The mint is not compatible with the LockUnlockFee TokenManager type, please make sure the mint has the TransferFeeConfig extension initialized");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(())
+}
 pub(crate) fn validate_token_manager_type(
     ty: token_manager::Type,
     token_mint: &AccountInfo<'_>,
     token_manager_pda: &AccountInfo<'_>,
 ) -> ProgramResult {
     let mint_data = token_mint.try_borrow_data()?;
-    let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
+    let mint = Mint::unpack_from_slice(&mint_data)?;
 
-    match (mint.base.mint_authority, ty) {
-        (COption::None, token_manager::Type::NativeInterchainToken) => {
-            msg!("Mint authority is required for native InterchainToken");
+    match (mint.mint_authority, ty) {
+        (
+            COption::None,
+            token_manager::Type::NativeInterchainToken
+            | token_manager::Type::MintBurn
+            | token_manager::Type::MintBurnFrom,
+        ) => {
+            msg!("Mint authority is required for the given token manager type");
             Err(ProgramError::InvalidInstructionData)
         }
-        (COption::Some(key), token_manager::Type::NativeInterchainToken)
-            if &key != token_manager_pda.key =>
-        {
+        (
+            COption::Some(key),
+            token_manager::Type::NativeInterchainToken
+            | token_manager::Type::MintBurn
+            | token_manager::Type::MintBurnFrom,
+        ) if &key != token_manager_pda.key => {
             msg!("TokenManager is not the mint authority, which is required for this token manager type");
             Err(ProgramError::InvalidInstructionData)
-        }
-        (_, token_manager::Type::LockUnlockFee)
-            if !mint
-                .get_extension_types()?
-                .contains(&ExtensionType::TransferFeeConfig) =>
-        {
-            msg!("The mint is not compatible with the LockUnlockFee TokenManager type, please make sure the mint has the TransferFeeConfig extension initialized");
-            Err(ProgramError::InvalidAccountData)
         }
         _ => Ok(()),
     }

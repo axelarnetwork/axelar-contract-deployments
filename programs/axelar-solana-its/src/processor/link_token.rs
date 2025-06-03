@@ -196,6 +196,10 @@ pub(crate) fn register_custom_token<'a>(
     token_manager_type: token_manager::Type,
     operator: Option<Pubkey>,
 ) -> ProgramResult {
+    if token_manager_type == token_manager::Type::NativeInterchainToken {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     register_token(
         accounts,
         &TokenRegistration::Custom {
