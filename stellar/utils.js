@@ -37,6 +37,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'InterchainTokenService',
     'Upgrader',
     'Multicall',
+    'TokenUtils'
 ]);
 
 const CustomMigrationDataTypeToScValV112 = {
@@ -585,6 +586,13 @@ function isFriendbotSupported(networkType) {
     }
 }
 
+function assetToScVal(asset) {
+    return nativeToScVal(
+        Buffer.from(asset.toXDRObject().toXDR('base64'), 'base64'),
+        { type: 'bytes' }
+    );
+}
+
 module.exports = {
     ...require('ts-node/register') /* enable node during migration */,
     stellarCmd,
@@ -616,4 +624,5 @@ module.exports = {
     sanitizeMigrationData,
     generateKeypair,
     isFriendbotSupported,
+    assetToScVal,
 };
