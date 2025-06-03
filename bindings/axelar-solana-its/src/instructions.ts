@@ -559,7 +559,6 @@ export class ItsInstructions {
   interchainTransfer(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -579,7 +578,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority! : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -600,7 +598,6 @@ export class ItsInstructions {
       )
       .accounts({
         payer: params.payer,
-        authority,
         sourceAccount: params.sourceAccount,
         mint: params.mint,
         tokenManagerPda,
@@ -620,7 +617,6 @@ export class ItsInstructions {
   callContractWithInterchainToken(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -641,7 +637,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -664,7 +659,6 @@ export class ItsInstructions {
       )
       .accounts({
         payer: params.payer,
-        authority,
         sourceAccount: params.sourceAccount,
         mint: params.mint,
         tokenManagerPda,
@@ -684,7 +678,6 @@ export class ItsInstructions {
   callContractWithInterchainTokenOffchainData(params: {
     payer: PublicKey;
     sourceAccount: PublicKey;
-    authority: PublicKey | null;
     tokenId: number[];
     destinationChain: string;
     destinationAddress: Uint8Array;
@@ -708,7 +701,6 @@ export class ItsInstructions {
     const flowEpoch = flowEpochWithTimestamp(timestamp);
     const [flowSlotPda] = findFlowSlotPda(tokenManagerPda, flowEpoch);
 
-    const authority = params.authority ? params.authority : tokenManagerPda;
     const tokenManagerAta = getAssociatedTokenAddressSync(
       params.mint,
       tokenManagerPda,
@@ -751,7 +743,6 @@ export class ItsInstructions {
         )
         .accounts({
           payer: params.payer,
-          authority,
           sourceAccount: params.sourceAccount,
           mint: params.mint,
           tokenManagerPda,

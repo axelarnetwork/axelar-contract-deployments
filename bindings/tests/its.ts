@@ -199,7 +199,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -404,7 +403,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,
@@ -441,7 +439,6 @@ describe("Ping ITS", () => {
         )
         .accounts({
           payer: payer.publicKey,
-          authority: payer.publicKey,
           sourceAccount: payer.publicKey,
           mint: payer.publicKey,
           tokenManagerPda: payer.publicKey,

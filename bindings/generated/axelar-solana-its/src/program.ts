@@ -405,11 +405,6 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "sourceAccount";
           isMut: true;
           isSigner: false;
@@ -1060,11 +1055,6 @@ type AxelarSolanaIts = {
           isSigner: true;
         },
         {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "sourceAccount";
           isMut: true;
           isSigner: false;
@@ -1175,11 +1165,6 @@ type AxelarSolanaIts = {
           name: "payer";
           isMut: false;
           isSigner: true;
-        },
-        {
-          name: "authority";
-          isMut: false;
-          isSigner: false;
         },
         {
           name: "sourceAccount";
@@ -2329,11 +2314,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "sourceAccount",
           isMut: true,
           isSigner: false,
@@ -2984,11 +2964,6 @@ const IDL: AxelarSolanaIts = {
           isSigner: true,
         },
         {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "sourceAccount",
           isMut: true,
           isSigner: false,
@@ -3099,11 +3074,6 @@ const IDL: AxelarSolanaIts = {
           name: "payer",
           isMut: false,
           isSigner: true,
-        },
-        {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
         },
         {
           name: "sourceAccount",

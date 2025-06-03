@@ -225,7 +225,6 @@ async fn test_outgoing_interchain_transfer_within_limit(
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
-        Some(ctx.solana_wallet),
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -313,7 +312,6 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
-        Some(ctx.solana_wallet),
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -534,7 +532,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
-        Some(ctx.solana_wallet),
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),
@@ -576,7 +573,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
     let transfer_ix_2 = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         associated_account_address,
-        Some(ctx.solana_wallet),
         token_id,
         ctx.evm_chain_name.clone(),
         ctx.evm_signer.wallet.address().as_bytes().to_vec(),

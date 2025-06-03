@@ -352,7 +352,6 @@ impl ItsTestContext {
         let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
             self.solana_wallet,
             token_account,
-            Some(self.solana_wallet),
             token_id,
             self.evm_chain_name.clone(),
             self.evm_signer.wallet.address().as_bytes().to_vec(),

@@ -229,8 +229,9 @@ pub(crate) fn process_outbound_transfer<'a>(
     data: Option<Vec<u8>>,
     payload_hash: Option<[u8; 32]>,
 ) -> ProgramResult {
+    const GMP_ACCOUNTS_IDX: usize = 7;
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
-    let (_other, outbound_message_accounts) = accounts.split_at(8);
+    let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
     msg!("Instruction: OutboundTransfer");
@@ -455,7 +456,7 @@ fn handle_take_token_transfer(
     let transferred = match token_manager.ty {
         NativeInterchainToken | MintBurn | MintBurnFrom => {
             burn(
-                accounts.authority,
+                accounts.payer,
                 accounts.token_program,
                 accounts.token_mint,
                 accounts.source_account,
@@ -517,7 +518,7 @@ const fn create_take_token_transfer_info<'a, 'b>(
         token_program: accounts.token_program,
         token_mint: accounts.token_mint,
         destination_ata: accounts.token_manager_ata,
-        authority: accounts.authority,
+        authority: accounts.payer,
         source_ata: accounts.source_account,
         signers_seeds,
         amount,
@@ -669,7 +670,6 @@ fn transfer_with_fee_to(info: &TransferInfo<'_, '_>) -> ProgramResult {
 #[derive(Debug)]
 pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) payer: &'a AccountInfo<'a>,
-    pub(crate) authority: &'a AccountInfo<'a>,
     pub(crate) source_account: &'a AccountInfo<'a>,
     pub(crate) token_mint: &'a AccountInfo<'a>,
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
@@ -697,7 +697,6 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
 
         Ok(TakeTokenAccounts {
             payer: next_account_info(accounts_iter)?,
-            authority: next_account_info(accounts_iter)?,
             source_account: next_account_info(accounts_iter)?,
             token_mint: next_account_info(accounts_iter)?,
             token_manager_pda: next_account_info(accounts_iter)?,
