@@ -63,7 +63,6 @@ async function processCommand(config, chain, options) {
         postConditionMode: PostConditionMode.Allow,
         anchorMode: AnchorMode.Any,
         clarityVersion: ClarityVersion.Clarity3,
-        fee: 1_000_000,
     });
     const result = await broadcastTransaction({
         transaction: deployTx,
@@ -72,7 +71,12 @@ async function processCommand(config, chain, options) {
 
     chain.contracts[kebabToPascal(contractName)] = {
         address: `${stacksAddress}.${contractName}`,
+        deployer: stacksAddress,
     };
+
+    if (options.version) {
+        chain.contracts[kebabToPascal(contractName)].version = options.version;
+    }
 
     printInfo(`Finished deploying contract`, result.txid);
 }
@@ -92,6 +96,7 @@ if (require.main === module) {
         .description('Deploy a contract')
         .addOption(new Option('-c, --contract <contract>', 'The contract to deploy').makeOptionMandatory(true))
         .addOption(new Option('-n, --name <name>', 'The name of the contract'))
+        .addOption(new Option('-v, --version <version>', 'The version of the contract'))
         .action((options) => {
             mainProcessor(options, processCommand);
         });

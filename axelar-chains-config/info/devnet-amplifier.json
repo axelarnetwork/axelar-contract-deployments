@@ -1275,29 +1275,39 @@
       },
       "contracts": {
         "ClarityStacks": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.clarity-stacks"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.clarity-stacks",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "GasStorage": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-storage"
+          "address": "STWXYJW1C758HRJR2Y12YN6MNXMY2WVGH144WHAZ.gas-storage",
+          "deployer": "STWXYJW1C758HRJR2Y12YN6MNXMY2WVGH144WHAZ"
         },
         "Traits": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.traits"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.traits",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "GasImpl": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-impl"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-impl",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
+          "version": "1.0.0"
         },
         "GatewayStorage": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-storage"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-storage",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "GasService": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-service",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "gasCollector": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83"
         },
         "GatewayImpl": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-impl"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-impl",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
+          "version": "1.0.0"
         },
         "Gateway": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "signers": {
             "weightedSigners": [
               {
@@ -1324,17 +1334,21 @@
         },
         "Governance": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.governance",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "governanceChain": "avalanche-fuji",
           "governanceAddress": "0x9279Da42329a01D4bf1229FCFA5cABF7B3c9D383"
         },
         "InterchainTokenServiceStorage": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service-storage"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service-storage",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "InterchainTokenFactory": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-factory"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-factory",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "InterchainTokenService": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
           "itsContractAddressName": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.interchain-token-service",
           "gasServiceAddress": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gas-service",
           "operator": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6",
@@ -1342,22 +1356,29 @@
           "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
         },
         "InterchainTokenFactoryImpl": {
-          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-factory-impl-2"
+          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-factory-impl-2",
+          "deployer": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P",
+          "version": "1.0.0"
         },
         "VerifyOnchain": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.verify-onchain"
         },
         "InterchainTokenServiceImpl": {
-          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-service-impl-2"
+          "address": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P.interchain-token-service-impl-2",
+          "deployer": "ST3FGC00SKXZJ9ST80ATD33BW40AFHGX1YNE9E17P",
+          "version": "1.0.0"
         },
         "NativeInterchainToken": {
-          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.native-interchain-token"
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.native-interchain-token",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         },
         "SampleSip010": {
-          "address": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10"
+          "address": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10",
+          "deployer": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF"
         },
         "TokenManagerSample": {
           "address": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83.tm-smpl2",
+          "deployer": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83",
           "token": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10",
           "interchainTokenId": "0x8fa3abdb6289970a569ab61d3bd93db89d21f7b99f98864a12d254230173c6e6"
         }

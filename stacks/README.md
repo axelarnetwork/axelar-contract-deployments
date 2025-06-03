@@ -32,7 +32,7 @@ In order to deploy all the contracts required by the Stacks integration, please 
 ### Collect Fees
 
 ```bash
-node stacks/gas-service.js collect-fees --amount 1000000 --receiver <receiver address>
+node stacks/gas-service.js collect-fees --amount 1000000 --receiver <optional stacks receiver address>
 ```
 
 ## Setup Trusted Address
