@@ -2846,7 +2846,8 @@
       "chainType": "evm",
       "explorer": {
         "name": "Plume Explorer",
-        "url": "https://testnet-explorer.plumenetwork.xyz/"
+        "url": "https://testnet-explorer.plumenetwork.xyz/",
+        "api": "https://testnet-explorer.plume.org/api/"
       },
       "contracts": {
         "ConstAddressDeployer": {

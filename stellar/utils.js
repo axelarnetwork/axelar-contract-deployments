@@ -26,6 +26,10 @@ const ASSET_TYPE_NATIVE = 'native';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
+const TRANSACTION_TIMEOUT = 30;
+const RETRY_WAIT = 1000; // 1 sec
+const MAX_RETRIES = 30;
+
 // TODO: Need to be migrated to Pascal Case
 const SUPPORTED_CONTRACTS = new Set([
     'AxelarExample',
@@ -88,7 +92,7 @@ async function buildTransaction(operation, server, wallet, networkType, options 
         networkPassphrase,
     })
         .addOperation(operation)
-        .setTimeout(options.timeout || 30)
+        .setTimeout(options.timeout || TRANSACTION_TIMEOUT)
         .build();
 
     if (options.verbose) {
@@ -121,7 +125,18 @@ async function sendTransaction(tx, server, action, options = {}) {
     // then submit the transaction into the network for us. Then we will have to
     // wait, polling `getTransaction` until the transaction completes.
     try {
-        const sendResponse = await server.sendTransaction(tx);
+        let sendResponse, getResponse;
+        let retries = MAX_RETRIES;
+
+        while (retries > 0) {
+            sendResponse = await server.sendTransaction(tx);
+
+            if (sendResponse.status === 'PENDING') break;
+
+            await sleep(RETRY_WAIT);
+            retries--;
+        }
+
         printInfo(`${action} tx`, sendResponse.hash);
 
         if (options.verbose) {
@@ -132,16 +147,15 @@ async function sendTransaction(tx, server, action, options = {}) {
             throw Error(`Response: ${JSON.stringify(sendResponse, null, 2)}`);
         }
 
-        let getResponse = await server.getTransaction(sendResponse.hash);
-        const retryWait = 1000; // 1 sec
-        let retries = 10;
+        retries = MAX_RETRIES;
 
-        while (getResponse.status === 'NOT_FOUND' && retries > 0) {
-            await sleep(retryWait);
-
+        while (retries > 0) {
             getResponse = await server.getTransaction(sendResponse.hash);
 
-            retries -= 1;
+            if (getResponse.status === 'SUCCESS') break;
+
+            await sleep(RETRY_WAIT);
+            retries--;
         }
 
         if (options.verbose) {
