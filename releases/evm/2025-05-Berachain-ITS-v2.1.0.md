@@ -74,7 +74,7 @@ node cosmwasm/submit-proposal.js \
 Set Berachain as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-node evm/its.js set-trusted-chains all hub -n berachain
+node evm/its.js set-trusted-chains berachain hub -n all
 ```
 
 ## Checklist
