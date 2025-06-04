@@ -68,6 +68,12 @@ Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM c
 node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
+Set berachain as trusted chain on sui 
+
+```bash
+node sui/its.js add-trusted-chains $CHAIN
+```
+
 ## Checklist
 
 The following checks should be performed after the rollout.
@@ -93,3 +99,5 @@ node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 
 # Transfer token back from remote chain
 node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```
+
+- Run Sui ITS [Checklist](https://github.com/axelarnetwork/axelar-contract-deployments/blob/main/releases/sui/2025-03-ITS-v1.1.3.md#checklist)
