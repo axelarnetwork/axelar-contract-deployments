@@ -2846,7 +2846,7 @@
       "name": "XRPL EVM",
       "axelarId": "xrpl-evm",
       "chainId": 1440000,
-      "rpc": "http://mainnet-json-rpc-1868519179.us-east-1.elb.amazonaws.com",
+      "rpc": "https://rpc-mainnet.aws.peersyst.tech",
       "tokenSymbol": "XRP",
       "decimals": 18,
       "confirmations": 1,
