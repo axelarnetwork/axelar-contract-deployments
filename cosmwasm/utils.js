@@ -198,26 +198,14 @@ const validateAddress = (address) => {
     return isString(address) && isValidCosmosAddress(address);
 };
 
-const makeCoordinatorInstantiateMsg = (config, _options, contractConfig) => {
-    const {
-        axelar: { contracts },
-    } = config;
-    const {
-        ServiceRegistry: { address: registryAddress },
-        Multisig: { address: multisigAddress },
-        Router: { address: routerAddress },
-    } = contracts;
+const makeCoordinatorInstantiateMsg = (_config, _options, contractConfig) => {
     const { governanceAddress } = contractConfig;
 
     if (!validateAddress(governanceAddress)) {
         throw new Error('Missing or invalid Coordinator.governanceAddress in axelar info');
     }
 
-    if (!validateAddress(registryAddress)) {
-        throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
-    }
-
-    return { governance_address: governanceAddress, service_registry: registryAddress, router_address: routerAddress, multisig_address: multisigAddress };
+    return { governance_address: governanceAddress };
 };
 
 const makeServiceRegistryInstantiateMsg = (_config, _options, contractConfig) => {
@@ -283,6 +271,7 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         AxelarnetGateway: { address: axelarnetGateway },
+        Coordinator: { address: coordinator }
     } = contracts;
     const { adminAddress, governanceAddress } = contractConfig;
 
@@ -298,7 +287,11 @@ const makeRouterInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error('Missing or invalid AxelarnetGateway.address in axelar info');
     }
 
-    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway };
+    if (!validateAddress(coordinator)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
+    return { admin_address: adminAddress, governance_address: governanceAddress, axelarnet_gateway: axelarnetGateway, coordinator_address: coordinator };
 };
 
 const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
