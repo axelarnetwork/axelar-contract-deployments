@@ -3,13 +3,13 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** |                                    |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io>                                   |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
+| **Stagenet**         | Completed             | 2025-05-07 |
+| **Testnet**          | Completed             | 2025-05-27 |
 | **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
@@ -89,7 +89,7 @@ npm ci
 | Network              | Addresses                                                                                                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
-| **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E`                                                                                                                                           |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC`, `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05`, `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85`, `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 
@@ -185,8 +185,13 @@ node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"co
 8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
 
 ```bash
-# Only for mainnet and official testnet connection
+# For mainnet
 node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+# For testnet
+node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
