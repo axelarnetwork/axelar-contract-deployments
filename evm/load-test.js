@@ -296,6 +296,14 @@ const programHandler = () => {
         )
         .addOption(new Option('-m, --mnemonic <mnemonic>', 'mnemonic').env('MNEMONIC'))
         .addOption(new Option('-o, --output <output>', 'output file to save the transactions generated').default('/tmp/load-test.txt'))
+        .hook('preAction', (command) => {
+            const addressesToDerive = command.opts().addressesToDerive;
+            const mnemonic = command.opts().mnemonic;
+
+            if (addressesToDerive && !mnemonic) {
+                throw new Error('Mnemonic is required when deriving addresses');
+            }
+        })
         .action((options) => {
             mainProcessor(startTest, options);
         });
