@@ -109,7 +109,7 @@ jobs:
         id: create_pr
         run: |
           cd ${{ secrets.EXTERNAL_REPO }}
-          PR_TITLE="feat: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
+          PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
           PR_BODY="Auto-generated PR with updated configuration files"
           PR_HEAD="${{ steps.branch-name.outputs.branch }}"
           PR_BASE="main"
@@ -125,7 +125,7 @@ jobs:
         if: env.NETWORKS != 'none'
         run: |
           PR_NUMBER=${{ env.PR_NUMBER }}
-          PR_TITLE="chore: update configurations for ${{ env.NETWORKS }}"
+          PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
           curl -s -X PUT \
             -H "Authorization: token ${{ secrets.CHAINS_PAT }}" \
             -H "Accept: application/vnd.github.v3+json" \
