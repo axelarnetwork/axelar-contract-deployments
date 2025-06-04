@@ -49,6 +49,15 @@ const estimateGas = async (config, options) => {
     return gasFee.toString();
 };
 
+const printStats = (txCount, elapsedTime, privateKeys) => {
+    printDivider();
+    printInfo('Txs count', txCount.toString());
+    printInfo('Elapsed time (min)', elapsedTime / 60);
+    printInfo('Tx per second', txCount / elapsedTime);
+    printInfo('Private keys in queue to be processed', privateKeys.length);
+    printDivider();
+};
+
 const startTest = async (config, options) => {
     const {
         time,
@@ -123,12 +132,7 @@ const startTest = async (config, options) => {
 
                     pendingPromises.delete(promiseId);
 
-                    printDivider();
-                    printInfo('Txs count', txCount.toString());
-                    printInfo('Elapsed time (min)', elapsedTime / 60);
-                    printInfo('Tx per second', txCount / elapsedTime);
-                    printInfo('Private keys in queue to be processed', privateKeys.length);
-                    printDivider();
+                    printStats(txCount, elapsedTime, privateKeys);
                 });
 
             pendingPromises.set(promiseId, promise);
