@@ -58,16 +58,9 @@ node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register &lt;ChainName&gt; ITS on ITS Hub
-
-```bash
-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" 
-```
-
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
+
+#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
