@@ -1,6 +1,6 @@
 'use strict';
 
-const { loadConfig, printInfo, printWarn, printHighlight, callAxelarscanApi } = require('../common/index.js');
+const { loadConfig, printInfo, printWarn, printHighlight, callAxelarscanApi, printDivider } = require('../common/index.js');
 const { Command, Option } = require('commander');
 const { addBaseOptions } = require('../common/cli-utils.js');
 
@@ -123,12 +123,12 @@ const startTest = async (config, options) => {
 
                     pendingPromises.delete(promiseId);
 
-                    console.log('='.repeat(20).concat('\n'));
+                    printDivider();
                     printInfo('Txs count', txCount.toString());
                     printInfo('Elapsed time (min)', elapsedTime / 60);
                     printInfo('Tx per second', txCount / elapsedTime);
                     printInfo('Private keys in queue to be processed', privateKeys.length);
-                    console.log('='.repeat(20).concat('\n'));
+                    printDivider();
                 });
 
             pendingPromises.set(promiseId, promise);

@@ -78,6 +78,10 @@ const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
     console.log(`${colour(msg)}\n`);
 };
 
+const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
+    console.log(colour(char.repeat(width)));
+};
+
 function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
@@ -650,6 +654,7 @@ module.exports = {
     printWarn,
     printError,
     printHighlight,
+    printDivider,
     printLog,
     isKeccak256Hash,
     isNonEmptyString,
