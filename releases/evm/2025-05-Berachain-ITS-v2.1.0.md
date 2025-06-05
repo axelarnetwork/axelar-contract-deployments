@@ -102,3 +102,19 @@ node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 
 # Transfer token back from remote chain
 node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```
+
+- Run the following for EVM chain with Sui
+
+```bash
+# Deploy Test Tokens
+node sui/its-example deploy-token --origin TST1 "Test Token 1" 6
+
+# Send Token Deployment to Gateway
+node sui/its-example send-deployment TST1 [destinationChain] 1
+
+# Send Tokens to Destination chain
+node sui/its-example send-token TST1 [destinationChain] [destinationAddress] 1 1
+
+# Initiate token transfer from both EVM chains too
+node evm/its.js --action interchainTransfer --destinationChain sui --tokenId [tokenId] --destinationAddress [recipientAddress] --amount 1 --gasValue 1
+```
