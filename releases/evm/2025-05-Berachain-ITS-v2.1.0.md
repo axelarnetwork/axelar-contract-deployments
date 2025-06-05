@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-05-23 |
 | **Stagenet**         | Deployed              | 2025-05-28 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Deployed              | 2025-06-03 |
+| **Mainnet**          | In-Progress           | TBD        |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
 
@@ -77,6 +77,12 @@ Set Berachain as trusted chain on remote ITS contracts for EVM and non-EVM chain
 node evm/its.js set-trusted-chains berachain hub -n all
 ```
 
+Set berachain as trusted chain on sui 
+
+```bash
+node sui/its.js add-trusted-chains berachain 
+```
+
 ## Checklist
 
 The following checks should be performed after the rollout.
@@ -94,11 +100,13 @@ node evm/its.js checks -n $CHAIN -y
 node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
+node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
 # Transfer token to remote chain
-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
 ```
+
+- Run Sui ITS [Checklist](https://github.com/axelarnetwork/axelar-contract-deployments/blob/main/releases/sui/2025-03-ITS-v1.1.3.md#checklist)
