@@ -370,6 +370,8 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 ```
 
 15. Register `$CHAIN` ITS on ITS Hub
+    
+Proceed with this step only if ITS deployment on $CHAIN is confirmed.
 
 ```bash
 node cosmwasm/submit-proposal.js \
