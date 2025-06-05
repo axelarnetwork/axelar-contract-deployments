@@ -18,15 +18,12 @@ Build the project via
 
 Please note that this project currently supports both Javascript and Typescript.
 
-All new commands should continue to use `node` for continuity.
-The migration from `node` to `ts-node` will be done all at once.
-
 ### To migrate to Typescript, you may use the following steps
 
 1. When touching a file or creating a new file, ensure the file's extension is `.ts`
 2. Complete your implementation, and ensure any relevant testing is also in TS
 3. Use types appropriately throughout your implementation. You may type code unrelated to your changes only as necessary
-4. Run `npm run build` to compile the project and ensure your new TS is valid
+4. Run `npm run build` to compile the project and ensure your new TS is valid via `ts-node <your_new_script>`
 
 ### Once migration is complete
 

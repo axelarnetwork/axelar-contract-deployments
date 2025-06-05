@@ -608,7 +608,6 @@ function assetToScVal(asset) {
 }
 
 module.exports = {
-    ...require('ts-node/register') /* enable node during migration */,
     stellarCmd,
     ASSET_TYPE_NATIVE,
     buildTransaction,

@@ -81,7 +81,7 @@ shasum -a 256 $ARTIFACT_PATH/xrpl_voting_verifier.wasm | grep $CHECKSUM
 4. Store `XRPLVotingVerifier` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js store \
+ts-node cosmwasm/submit-proposal.js store \
   -c XrplVotingVerifier \
   -t "Upload XRPLVotingVerifier contract v1.3.0" \
   -d "Upload XRPLVotingVerifier contract v1.3.0" \
@@ -93,7 +93,7 @@ node cosmwasm/submit-proposal.js store \
 6. Migrate `XRPLVotingVerifier` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c XrplVotingVerifier \
   -t "Migrate XRPLVotingVerifier to v1.3.0" \
   -d "Migrate XRPLVotingVerifier to v1.3.0" \
