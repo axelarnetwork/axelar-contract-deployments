@@ -77,6 +77,12 @@ Set Berachain as trusted chain on remote ITS contracts for EVM and non-EVM chain
 node evm/its.js set-trusted-chains berachain hub -n all
 ```
 
+Set berachain as trusted chain on sui 
+
+```bash
+node sui/its.js add-trusted-chains berachain 
+```
+
 ## Checklist
 
 The following checks should be performed after the rollout.
