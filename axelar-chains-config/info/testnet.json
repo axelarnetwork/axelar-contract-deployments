@@ -131,10 +131,15 @@
       "tokenSymbol": "STRK",
       "chainType": "starknet",
       "decimals": 18,
+      "universalDeployerAddress": "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf",
       "contracts": {
         "AxelarGateway": {
-          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
-          "address": "0x049ec69cd2e0c987857fbda7966ff59077e2e92c18959bdb9b0012438c452047"
+          "deployer": "0x0282b4492e08d8b6bbec8dfe7412e42e897eef9c080c5b97be1537433e583bdc",
+          "address": "0x66a1db5348892a67d4dc482f95c6722e39307623df369470034820a00fa88a8",
+          "classHash": "0x007eb89b57c847f1c3dff2799ecd02c12507967c2e4da6cf32bbf9d7c396429a",
+          "deploymentTransactionHash": "0x5e0777741150011d52e851dcc94b1d8174fab1e38b66a1909c9be533e0e8f28",
+          "salt": "0x0",
+          "deployedAt": "2025-06-05T15:43:19.429Z"
         }
       },
       "explorer": {

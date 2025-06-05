@@ -270,14 +270,14 @@ const validateStarknetOptions = (env, offline, privateKey, accountAddress, requi
     if (requiresTransaction && env === 'mainnet' && !offline) {
         throw new Error('Mainnet environment requires offline flag (--offline) for security. All mainnet transactions must use hardware wallets with offline signing.');
     }
-    
+
     // Validate key management requirements
     if (requiresTransaction) {
         // Account address is always required for transactions (both online and offline)
         if (!accountAddress) {
             throw new Error('Account address (--accountAddress) is required for transaction operations.');
         }
-        
+
         // Private key is only required for online execution
         if (!offline && !privateKey) {
             throw new Error('Private key (--privateKey) is required for online transaction execution. Use --offline flag for offline transaction generation.');

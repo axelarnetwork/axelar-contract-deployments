@@ -6,17 +6,16 @@ const { Command } = require('commander');
 const { loadConfig, saveConfig, prompt } = require('../common');
 const { addStarknetOptions } = require('./cli-utils');
 const {
-    getStarknetProvider,
-    getStarknetAccount,
     deployContract,
     upgradeContract,
     declareContract,
     loadContractArtifact,
     getContractConfig,
     saveContractConfig,
-    generateUnsignedTransaction,
-    saveUnsignedTransaction,
+    handleOfflineTransaction,
+    validateStarknetOptions,
 } = require('./utils');
+const { CallData } = require('starknet');
 
 async function processCommand(config, chain, options) {
     const {
@@ -30,50 +29,43 @@ async function processCommand(config, chain, options) {
         contractAddress,
         yes,
         offline,
-        nonce,
-        outputDir,
+        env,
     } = options;
 
-    const provider = getStarknetProvider(chain);
-    const account = getStarknetAccount(privateKey, accountAddress, provider);
+    // Validate execution options
+    validateStarknetOptions(env, offline, privateKey, accountAddress);
 
     // Handle offline mode
     if (offline) {
-        if (!nonce) {
-            throw new Error('Nonce is required for offline transaction generation. Use --nonce flag.');
-        }
-        if (!accountAddress) {
-            throw new Error('Account address is required for offline transaction generation. Use --accountAddress flag.');
-        }
-
         console.log(`\nGenerating unsigned transaction for ${upgrade ? 'upgrading' : 'deploying'} ${contractName} on ${chain.name}...`);
 
-        // Create offline account object (address only, no private key needed)
-        const offlineAccount = { address: accountAddress };
-
-        let calls = [];
+        let targetContractAddress, entrypoint, calldata;
 
         if (upgrade) {
             if (!contractAddress && !getContractConfig(config, chain.name, contractName).address) {
                 throw new Error('Contract address required for upgrade. Provide --contractAddress or ensure contract exists in config.');
             }
 
-            const targetAddress = contractAddress || getContractConfig(config, chain.name, contractName).address;
+            const upgradeTargetAddress = contractAddress || getContractConfig(config, chain.name, contractName).address;
 
             if (!classHash) {
                 throw new Error('Class hash required for upgrade. Provide --classHash.');
             }
 
-            // Create upgrade call
-            calls = [{
-                contractAddress: targetAddress,
-                entrypoint: 'upgrade',
-                calldata: [classHash]
-            }];
+            // Prepare upgrade call
+            targetContractAddress = upgradeTargetAddress;
+            entrypoint = 'upgrade';
+            calldata = CallData.compile([classHash]);
         } else {
-            // For deployment, we need to declare first if no classHash provided
+            // For deployment using Universal Deployer Contract (UDC)
             if (!classHash) {
                 throw new Error('Class hash is required for offline deployment. Declare the contract first and provide --classHash.');
+            }
+
+            // Get Universal Deployer Address from config
+            const universalDeployerAddress = chain.universalDeployerAddress;
+            if (!universalDeployerAddress) {
+                throw new Error('Universal Deployer Address not found in chain configuration');
             }
 
             // Parse constructor calldata if provided
@@ -86,31 +78,21 @@ async function processCommand(config, chain, options) {
                 }
             }
 
-            // Create deployment call
-            calls = [{
-                contractAddress: accountAddress,
-                entrypoint: 'deployContract',
-                calldata: [classHash, ...parsedCalldata, salt || '0']
-            }];
+            const deploymentSalt = salt || '0x0';
+
+            targetContractAddress = universalDeployerAddress;
+            entrypoint = 'deployContract';
+            calldata = CallData.compile([
+                classHash,
+                deploymentSalt,
+                true, // origin dependant deployment
+                parsedCalldata,
+            ]);
         }
 
-        // Generate unsigned transaction
-        const unsignedTx = generateUnsignedTransaction(offlineAccount, calls, {
-            nonce,
-        });
-
-        // Save unsigned transaction
-        const txFilepath = saveUnsignedTransaction(unsignedTx, outputDir,
-            `${upgrade ? 'upgrade' : 'deploy'}_${contractName}_${chain.name}.json`);
-
-        console.log(`✅ Unsigned transaction generated successfully!`);
-        console.log(`Transaction file: ${txFilepath}`);
-        console.log(`\nNext steps:`);
-        console.log(`1. Transfer the transaction file to your offline signing environment`);
-        console.log(`2. Sign the transaction using your Ledger or signing script`);
-        console.log(`3. Broadcast the signed transaction using the broadcast script`);
-
-        return config;
+        // Use common offline transaction handler
+        const operationName = upgrade ? `upgrade_${contractName}` : `deploy_${contractName}`;
+        return handleOfflineTransaction(options, chain.name, targetContractAddress, entrypoint, calldata, operationName);
     }
 
     console.log(`\n${upgrade ? 'Upgrading' : 'Deploying'} ${contractName} on ${chain.name}...`);
@@ -127,7 +109,7 @@ async function processCommand(config, chain, options) {
         }
 
         if (!yes) {
-            const confirmUpgrade = await prompt(`Are you sure you want to upgrade ${contractName} at ${targetAddress} to class hash ${classHash}?`);
+            const confirmUpgrade = prompt(`Are you sure you want to upgrade ${contractName} at ${targetAddress} to class hash ${classHash}?`);
             if (!confirmUpgrade) {
                 console.log('Upgrade cancelled.');
                 return;
@@ -178,7 +160,7 @@ async function processCommand(config, chain, options) {
         }
 
         if (!yes) {
-            const confirmDeploy = await prompt(`Deploy ${contractName} with class hash ${finalClassHash}?`);
+            const confirmDeploy = prompt(`Deploy ${contractName} with class hash ${finalClassHash}?`);
             if (!confirmDeploy) {
                 console.log('Deployment cancelled.');
                 return;
@@ -215,6 +197,7 @@ async function main() {
         .version('1.0.0');
 
     addStarknetOptions(program, {
+        ignorePrivateKey: true,
         contractName: true,
         classHash: true,
         constructorCalldata: true,
@@ -228,6 +211,9 @@ async function main() {
 
     const options = program.opts();
     const { env, chainNames } = options;
+
+    // Validate execution options before processing any chains
+    validateStarknetOptions(env, options.offline, options.privateKey, options.accountAddress);
 
     const config = loadConfig(env);
     const chains = chainNames.split(',').map(name => name.trim());
