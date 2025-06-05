@@ -109,7 +109,7 @@ jobs:
         id: create_pr
         run: |
           cd ${{ secrets.EXTERNAL_REPO }}
-          PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
+          PR_TITLE="chore: update configs for ${{ env.NETWORKS }} from axelar-contract-deployments"
           PR_BODY="Auto-generated PR with updated configuration files"
           PR_HEAD="${{ steps.branch-name.outputs.branch }}"
           PR_BASE="main"
