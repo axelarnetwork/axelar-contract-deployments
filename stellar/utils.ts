@@ -247,10 +247,14 @@ async function broadcast(
 }
 
 function isReadOnly(response: rpc.Api.SimulateTransactionResponse): boolean {
-    if (!rpc.Api.isSimulationSuccess(response)) return false;
-    if (response.transactionData.getReadWrite().length > 0) return false;
-    if (response.result && response.result.auth.length > 0) return false;
-    if (response.stateChanges && response.stateChanges.length > 0) return false;
+    if (
+        !rpc.Api.isSimulationSuccess(response) ||
+        response.transactionData.getReadWrite().length > 0 ||
+        response.result?.auth?.length > 0 ||
+        response.stateChanges?.length > 0
+    ) {
+        return false;
+    }
 
     printInfo('Transaction is read-only.');
     return true;

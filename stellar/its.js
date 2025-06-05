@@ -79,7 +79,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         minter,
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options, false);
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
