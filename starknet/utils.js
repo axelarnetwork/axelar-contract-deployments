@@ -258,13 +258,30 @@ const saveUnsignedTransaction = (unsignedTx, outputDir = './starknet-offline-txs
 };
 
 /**
- * Check if mainnet environment requires offline flag
+ * Validate Starknet execution options including mainnet security requirements and key management
  * @param {string} env - Environment name
  * @param {boolean} offline - Whether offline flag is set
+ * @param {string} privateKey - Private key (optional for offline mode)
+ * @param {string} accountAddress - Account address
+ * @param {boolean} requiresTransaction - Whether this operation requires transaction execution (default: true)
  */
-const checkMainnetOfflineRequirement = (env, offline) => {
-    if (env === 'mainnet' && !offline) {
+const validateStarknetOptions = (env, offline, privateKey, accountAddress, requiresTransaction = true) => {
+    // Check mainnet offline requirement for transaction operations
+    if (requiresTransaction && env === 'mainnet' && !offline) {
         throw new Error('Mainnet environment requires offline flag (--offline) for security. All mainnet transactions must use hardware wallets with offline signing.');
+    }
+    
+    // Validate key management requirements
+    if (requiresTransaction) {
+        // Account address is always required for transactions (both online and offline)
+        if (!accountAddress) {
+            throw new Error('Account address (--accountAddress) is required for transaction operations.');
+        }
+        
+        // Private key is only required for online execution
+        if (!offline && !privateKey) {
+            throw new Error('Private key (--privateKey) is required for online transaction execution. Use --offline flag for offline transaction generation.');
+        }
     }
 };
 
@@ -298,9 +315,6 @@ const handleOfflineTransaction = (options, chainName, contractAddress, entrypoin
 
     console.log(`\nGenerating unsigned transaction for ${operationName} on ${chainName}...`);
 
-    // Create offline account object (address only, no private key needed)
-    const offlineAccount = { address: accountAddress };
-
     // Create contract call
     const calls = [{
         contractAddress,
@@ -320,7 +334,7 @@ const handleOfflineTransaction = (options, chainName, contractAddress, entrypoin
         }
     };
 
-    const unsignedTx = generateUnsignedTransaction(offlineAccount, calls, {
+    const unsignedTx = generateUnsignedTransaction(accountAddress, calls, {
         nonce,
         resourceBounds,
     });
@@ -353,5 +367,5 @@ module.exports = {
     generateUnsignedTransaction,
     saveUnsignedTransaction,
     handleOfflineTransaction,
-    checkMainnetOfflineRequirement,
+    validateStarknetOptions,
 };
