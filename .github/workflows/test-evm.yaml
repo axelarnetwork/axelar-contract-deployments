@@ -22,12 +22,6 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Debug node_modules
-        run: |
-          ls -la node_modules/.bin/
-          which ts-node || echo "ts-node not found in PATH"
-          npm list ts-node
-
       - name: Build
         run: npm run build
 
