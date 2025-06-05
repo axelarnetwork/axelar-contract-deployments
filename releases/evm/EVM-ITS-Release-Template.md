@@ -68,11 +68,11 @@ Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM c
 node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
-Set berachain as trusted chain on sui 
+Set $CHAIN as trusted chain on sui and stellar
 
 ```bash
 node sui/its.js add-trusted-chains $CHAIN
-```
+node stellar/its.js add-trusted-chains $CHAIN
 
 ## Checklist
 
