@@ -70,6 +70,18 @@ const printError = (msg, info = '') => {
     console.log(`${chalk.bold.red(msg)}\n`);
 };
 
+const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
+    if (info) {
+        msg = `${msg}: ${info}`;
+    }
+
+    console.log(`${colour(msg)}\n`);
+};
+
+const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
+    console.log(colour(char.repeat(width)));
+};
+
 function printLog(log) {
     console.log(JSON.stringify({ log }, null, 2));
 }
@@ -177,6 +189,14 @@ const httpPost = async (url, data) => {
         body: JSON.stringify(data),
     });
     return response.json();
+};
+
+const callAxelarscanApi = async (config, method, data, time = 10000) => {
+    return timeout(
+        httpPost(`${config.axelar.axelarscanApi}/${method}`, data),
+        time,
+        new Error(`Timeout calling Axelarscan API: ${method}`),
+    );
 };
 
 /**
@@ -633,6 +653,8 @@ module.exports = {
     printInfo,
     printWarn,
     printError,
+    printHighlight,
+    printDivider,
     printLog,
     isKeccak256Hash,
     isNonEmptyString,
@@ -648,6 +670,7 @@ module.exports = {
     copyObject,
     httpGet,
     httpPost,
+    callAxelarscanApi,
     parseArgs,
     sleep,
     dateToEta,
