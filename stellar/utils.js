@@ -36,6 +36,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'AxelarGateway',
     'AxelarOperators',
     'AxelarGasService',
+    'AxelarGovernance',
     'InterchainToken',
     'TokenManager',
     'InterchainTokenService',
