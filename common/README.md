@@ -13,12 +13,12 @@ When sending interchain tokens across different chains using the **Interchain To
 ### Usage
 
 ```bash
-node common/its.js encode-recipient [destination-chain] [destination-address]
+ts-node common/its.js encode-recipient [destination-chain] [destination-address]
 ```
 
 #### Example (EVM)
 ```bash
-node common/its.js encode-recipient flow 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C
+ts-node common/its.js encode-recipient flow 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C
 
 # Output
 Human-readable destination address: 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C
@@ -28,7 +28,7 @@ Encoded ITS destination address: 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C
 
 #### Example (Stellar)
 ```bash
-node common/its.js encode-recipient stellar CC6FYRUBDJVTATQ55KGPMD2JQFY775BTSJQMRNJEWPEJFUXPOBFSMEOX
+ts-node common/its.js encode-recipient stellar CC6FYRUBDJVTATQ55KGPMD2JQFY775BTSJQMRNJEWPEJFUXPOBFSMEOX
 
 # Output
 Human-readable destination address: CC6FYRUBDJVTATQ55KGPMD2JQFY775BTSJQMRNJEWPEJFUXPOBFSMEOX
