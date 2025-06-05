@@ -323,6 +323,11 @@ node cosmwasm/query.js rewards -n $CHAIN
 
 ```bash
 [[handlers]]
+chain_name="$CHAIN"
+cosmwasm_contract="$MULTISIG"
+type="MultisigSigner"
+
+[[handlers]]
 chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
 chain_rpc_url=[http url]
@@ -337,13 +342,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-12. Update `ampd` with the `$CHAIN` chain configuration.
+13. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-13. Create genesis verifier set
+14. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
@@ -362,6 +367,17 @@ Query the multisig prover for active verifier set
 
 ```bash
 axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
+```
+
+15. Register `$CHAIN` ITS on ITS Hub
+    
+Proceed with this step only if ITS deployment on $CHAIN is confirmed.
+
+```bash
+node cosmwasm/submit-proposal.js \
+    its-hub-register-chains $CHAIN \
+    -t "Register $CHAIN on ITS Hub" \
+    -d "Register $CHAIN on ITS Hub" 
 ```
 
 ## Checklist

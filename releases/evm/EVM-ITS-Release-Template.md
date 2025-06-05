@@ -58,22 +58,21 @@ node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register &lt;ChainName&gt; ITS on ITS Hub
-
-```bash
-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" 
-```
-
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
+
+#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
 Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
 node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
+
+Set $CHAIN as trusted chain on sui and stellar
+
+```bash
+node sui/its.js add-trusted-chains $CHAIN
+node stellar/its.js add-trusted-chains $CHAIN
 
 ## Checklist
 
@@ -84,6 +83,8 @@ The following checks should be performed after the rollout.
 ```bash
 node evm/its.js checks -n $CHAIN -y
 ```
+
+- Verify the token manager proxy contract once an ITS token is deployed on $CHAIN and then mark it as a proxy.
 
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
@@ -100,3 +101,5 @@ node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 
 # Transfer token back from remote chain
 node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```
+
+- Run Sui ITS [Checklist](https://github.com/axelarnetwork/axelar-contract-deployments/blob/main/releases/sui/2025-03-ITS-v1.1.3.md#checklist)
