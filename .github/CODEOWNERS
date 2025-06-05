@@ -2,7 +2,7 @@
 # Each line is a file pattern followed by one or more owners.
 
 * @axelarnetwork/chainops
-./cosmwasm @axelarnetwork/core
-./evm @axelarnetwork/contracts
-./sui @axelarnetwork/contracts
-./stellar @axelarnetwork/contracts
+./cosmwasm/* @axelarnetwork/protocol
+./evm/* @axelarnetwork/protocol
+./sui/* @axelarnetwork/protocol
+./stellar/* @axelarnetwork/protocol

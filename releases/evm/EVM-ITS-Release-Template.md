@@ -1,38 +1,38 @@
-## Plume ITS v2.1.0
+# &lt; ChainName &gt; GMP vX.X.X
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+|                | **Owner**                                 |
+| -------------- | ----------------------------------------- |
+| **Created By** | @yourGithubUsername <user@interoplabs.io> |
+| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | Completed             | 2025-05-07 |
-| **Testnet**          | Completed             | 2025-05-27 |
-| **Mainnet**          | -                     | TBD        |
+| **Network**          | **Deployment Status** | **Date** |
+| -------------------- | --------------------- | -------- |
+| **Devnet Amplifier** | -                     | TBD      |
+| **Stagenet**         | -                     | TBD      |
+| **Testnet**          | -                     | TBD      |
+| **Mainnet**          | -                     | TBD      |
 
-[Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
+- [Releases] add link to Github release here
 
 ## Background
 
-- This is the Plume ITS release.
+Describe release content here
 
 ## Deployment
 
-Ensure that [Plume GMP](../evm/2025-05-Plume-GMP-v6.0.4.md) is deployed first.
+Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first. 
 
 ```bash
 # Clone latest main and update deps
 npm ci
 ```
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `plume`.
+Create an `.env` config
 
 ```yaml
-PRIVATE_KEY=xyz
-ENV=xyz
-CHAINS=xyz
+PRIVATE_KEY=<deployer private key>
+ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+CHAIN=<chain name>
 ```
 
 | Network              | `deployer address`                           |
@@ -58,22 +58,18 @@ ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register Plume ITS on ITS Hub
-
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Plume GMP Amplifier](../cosmwasm/2025-05-Plume-GMP-v6.0.4.md).
+## Register &lt;ChainName&gt; ITS on ITS Hub
 
 ```bash
 ts-node cosmwasm/submit-proposal.js \
     its-hub-register-chains $CHAIN \
     -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" \
-    --deposit $DEPOSIT_VALUE \
-    --runAs $RUN_AS_ACCOUNT
+    -d "Register $CHAIN on ITS Hub" 
 ```
 
-## Set Plume as trusted chain on remote ITS contracts
+## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 
-Set Plume as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all

@@ -1,15 +1,15 @@
-# Plume GMP v6.0.4
+# Berachain GMP v6.0.4
 
-|                | **Owner**                          |
-| -------------- | ---------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io>                                   |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | Completed             | 2025-05-07 |
-| **Testnet**          | Completed             | 2025-05-27 |
+| **Devnet Amplifier** | Deployed              | 2025-05-23 |
+| **Stagenet**         | Deployed              | 2025-05-28 |
+| **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
@@ -18,11 +18,10 @@
 
 Changes in the release:
 
-This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Plume.
-
+This is the v6.0.4 deployment of EVM compatible Amplifier Gateway contracts for Berachain.
 ## Deployment
 
-Create an `.env` config. Local environment variable `CHAIN` should be set to `plume`.
+Create an `.env` config. `CHAIN` should be set to `berachain`.
 
 ```yaml
 PRIVATE_KEY=xyz
@@ -30,58 +29,58 @@ ENV=xyz
 CHAINS=xyz
 ```
 
-An initial chain config needs to be added to `${ENV}.json`.
+An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` key.
 
 Update npm dependencies (including contracts)
 
 ```bash
-npm ci
+npm ci && npm run build
 ```
 
 #### Devnet-Amplifier / Stagenet / Testnet
 
 ```json
 "$CHAIN": {
-  "name": "Plume",
-  "axelarId": "plume",
-  "networkType": "testnet",
-  "chainId": 98867,
-  "rpc": "https://testnet-rpc.plumenetwork.xyz",
-  "tokenSymbol": "PLUME",
-  "confirmations": 1,
-  "finality": "finalized",
-  "decimals": 18,
-  "approxFinalityWaitTime": 53,
-  "chainType": "evm",
-  "explorer": {
-    "name": "Plume-testnet Explorer",
-    "url": "https://testnet-explorer.plumenetwork.xyz/"
-  },
-  "contracts": {}
-}
+    "name": "Berachain",
+    "axelarId": "$CHAIN",
+    "chainId": 80069,
+    "rpc": "https://bepolia.rpc.berachain.com",
+    "tokenSymbol": "BERA",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
+    "chainType": "evm",
+    "explorer": {
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
+    },
+    "contracts": {}
+  }
 ```
 
 #### Mainnet
 
 ```json
 "$CHAIN": {
-  "name": "Plume",
-  "axelarId": "plume",
-  "chainId": "TBD",
-  "rpc": "TBD",
-  "tokenSymbol": "PLUME",
-  "confirmations": 1,
-  "finality": "finalized",
-  "decimals": 18,
-  "approxFinalityWaitTime": 30,
-  "chainType": "evm",
-  "explorer": {
-    "name": "TBD",
-    "url": "TBD",
-    "api": "TBD"
-  },
-  "contracts": {}
-}
+    "name": "Berachain",
+    "axelarId": "$CHAIN",
+    "chainId": 80094,
+    "rpc": "https://rpc.berachain.com/",
+    "tokenSymbol": "BERA",
+    "confirmations": 1,
+    "finality": "finalized",
+    "decimals": 18,
+    "approxFinalityWaitTime": 1,
+    "chainType": "evm",
+    "explorer": {
+        "name": "Berascan",
+        "url": "https://berascan.com/",
+        "api": "https://rpc.berachain.com/"
+    },
+    "contracts": {}
+  }
 ```
 
 1. Fund the following addresses with native tokens on chain:
@@ -169,7 +168,7 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 6)
+8. Deploy GasService (set the `collector` to `Operators` address from step 6)
 
 | Network              | `deployer address`                           | `deployMethod` |
 | -------------------- | -------------------------------------------- | -------------- |
@@ -182,23 +181,29 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
+8. Transfer ownership for contracts on mainnet and testnet.
+
+For Mainnet
 
 ```bash
-# For mainnet
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
 
-# For testnet
+For Testnet
+
+```bash
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 
 ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
 
 The following checks should be performed after the rollout
 
-### Plume -> EVM GMP call
+### Berachain -> EVM GMP call
 
 1. Send a GMP call
 
@@ -219,10 +224,10 @@ ts-node evm/gateway.js -n [destination-chain] --action submitProof --multisigSes
 4. Confirm whether the message is approved
 
 ```bash
-ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash [payload-hash]
+ts-node evm/gateway.js -n [destination-chain] --action isContractCallApproved --commandID [command-id] --sourceChain $CHAIN --sourceAddress 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --destination 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --payloadHash 0x1234
 ```
 
-### EVM -> Plume GMP Call
+### EVM -> Berachain GMP Call
 
 1. Send a GMP call
 
@@ -243,5 +248,5 @@ ts-node evm/gateway.js -n $CHAIN --action submitProof --multisigSessionId [multi
 4. Confirm whether the message is approved
 
 ```bash
-ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
+ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash 0x1234
 ```
