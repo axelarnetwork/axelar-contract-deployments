@@ -84,6 +84,8 @@ The following checks should be performed after the rollout.
 node evm/its.js checks -n $CHAIN -y
 ```
 
+- Verify the token manager proxy contract once an ITS token is deployed on $CHAIN and then mark it as a proxy.
+
 - Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
 
 ```bash
