@@ -1,22 +1,21 @@
 'use strict';
 
-const {
+import {
     Keypair,
     rpc,
     Horizon,
     TransactionBuilder,
     Networks,
     BASE_FEE,
-    xdr: { DiagnosticEvent, SorobanTransactionData },
     Address,
     xdr,
     nativeToScVal,
-} = require('@stellar/stellar-sdk');
-const { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } = require('../common/utils');
-const { printInfo, sleep, addEnvOption, getCurrentVerifierSet } = require('../common');
-const { Option } = require('commander');
-const { ethers } = require('hardhat');
-const { itsCustomMigrationDataToScValV112 } = require('./type-utils');
+} from '@stellar/stellar-sdk';
+import { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } from '../common/utils';
+import { printInfo, sleep, addEnvOption, getCurrentVerifierSet } from '../common';
+import { Command, Option } from 'commander';
+import { ethers } from 'ethers';
+import { itsCustomMigrationDataToScValV112 } from './type-utils';
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -44,6 +43,18 @@ const SUPPORTED_CONTRACTS = new Set([
     'TokenUtils'
 ]);
 
+type NetworkType = 'local' | 'futurenet' | 'testnet' | 'mainnet';
+
+interface Options {
+    timeout?: number;
+    verbose?: boolean;
+    nativePayment?: boolean;
+    estimateCost?: boolean;
+    simulateTransaction?: boolean;
+    ignorePrivateKey?: boolean;
+    address?: string;
+}
+
 const CustomMigrationDataTypeToScValV112 = {
     InterchainTokenService: (migrationData) => itsCustomMigrationDataToScValV112(migrationData),
 };
@@ -52,7 +63,7 @@ const VERSIONED_CUSTOM_MIGRATION_DATA_TYPES = {
     '1.1.2': CustomMigrationDataTypeToScValV112,
 };
 
-function getNetworkPassphrase(networkType) {
+function getNetworkPassphrase(networkType: NetworkType) {
     switch (networkType) {
         case 'local':
             return Networks.STANDALONE;
@@ -67,25 +78,25 @@ function getNetworkPassphrase(networkType) {
     }
 }
 
-const addBaseOptions = (program, options = {}) => {
-    addEnvOption(program);
-    program.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
-    program.addOption(new Option('--chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
-    program.addOption(new Option('-v, --verbose', 'verbose output').default(false));
-    program.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
+const addBaseOptions = (command: Command, options: Options = {}) => {
+    addEnvOption(command);
+    command.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
+    command.addOption(new Option('--chain-name <chainName>', 'chain name for stellar in amplifier').default('stellar').env('CHAIN'));
+    command.addOption(new Option('-v, --verbose', 'verbose output').default(false));
+    command.addOption(new Option('--estimate-cost', 'estimate on-chain resources').default(false));
 
-    if (!options.ignorePrivateKey) {
-        program.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
+    if (options && !options.ignorePrivateKey) {
+        command.addOption(new Option('-p, --private-key <privateKey>', 'private key').makeOptionMandatory(true).env('PRIVATE_KEY'));
     }
 
-    if (options.address) {
-        program.addOption(new Option('--address <address>', 'override contract address'));
+    if (options && options.address) {
+        command.addOption(new Option('--address <address>', 'override contract address'));
     }
 
-    return program;
+    return command;
 };
 
-async function buildTransaction(operation, server, wallet, networkType, options = {}) {
+async function buildTransaction(operation, server, wallet, networkType, options: Options = {}) {
     const account = await server.getAccount(wallet.publicKey());
     const networkPassphrase = getNetworkPassphrase(networkType);
     const builtTransaction = new TransactionBuilder(account, {
@@ -96,14 +107,14 @@ async function buildTransaction(operation, server, wallet, networkType, options 
         .setTimeout(options.timeout || TRANSACTION_TIMEOUT)
         .build();
 
-    if (options.verbose) {
+    if (options && options.verbose) {
         printInfo('Tx', builtTransaction.toXDR());
     }
 
     return builtTransaction;
 }
 
-const prepareTransaction = async (operation, server, wallet, networkType, options = {}) => {
+const prepareTransaction = async (operation, server, wallet, networkType, options: Options = {}) => {
     const builtTransaction = await buildTransaction(operation, server, wallet, networkType, options);
 
     // We use the RPC server to "prepare" the transaction. This simulating the
@@ -114,14 +125,14 @@ const prepareTransaction = async (operation, server, wallet, networkType, option
 
     preparedTransaction.sign(wallet);
 
-    if (options.verbose) {
+    if (options && options.verbose) {
         printInfo('Signed tx', preparedTransaction.toEnvelope().toXDR('base64'));
     }
 
     return preparedTransaction;
 };
 
-async function sendTransaction(tx, server, action, options = {}) {
+async function sendTransaction(tx, server, action, options: Options = {}) {
     // Submit the transaction to the Soroban-RPC server. The RPC server will
     // then submit the transaction into the network for us. Then we will have to
     // wait, polling `getTransaction` until the transaction completes.
@@ -140,7 +151,7 @@ async function sendTransaction(tx, server, action, options = {}) {
 
         printInfo(`${action} tx`, sendResponse.hash);
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction broadcast response', JSON.stringify(sendResponse));
         }
 
@@ -159,7 +170,7 @@ async function sendTransaction(tx, server, action, options = {}) {
             retries--;
         }
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction response', JSON.stringify(getResponse));
         }
 
@@ -168,7 +179,7 @@ async function sendTransaction(tx, server, action, options = {}) {
         }
 
         // Native payment — sorobanMeta is not present, so skip parsing.
-        if (options.nativePayment) return;
+        if (options && options.nativePayment) return;
 
         // Make sure the transaction's resultMetaXDR is not empty
         // TODO: might be empty if the operation doesn't have a return value
@@ -179,7 +190,7 @@ async function sendTransaction(tx, server, action, options = {}) {
         const transactionMeta = getResponse.resultMetaXdr;
         const returnValue = transactionMeta.v3().sorobanMeta().returnValue();
 
-        if (options.verbose) {
+        if (options && options.verbose) {
             printInfo('Transaction result', returnValue.value());
         }
 
@@ -190,16 +201,15 @@ async function sendTransaction(tx, server, action, options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options = {}, simulateTransaction = false) {
+async function broadcast(operation, wallet, chain, action, options: Options, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
-    if (options.nativePayment) {
+    if (options && options.nativePayment) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
-
-    if (options.estimateCost) {
+    if (options && options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
@@ -208,14 +218,13 @@ async function broadcast(operation, wallet, chain, action, options = {}, simulat
 
     if (simulateTransaction) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        const response = await server.simulateTransaction(tx);
-
-        if (response.error) {
-            throw new Error(response.error);
+        try {
+            const response = await server.simulateTransaction(tx);
+            printInfo('successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
+            return response;
+        } catch (error) {
+            throw new Error(error);
         }
-
-        printInfo('successfully simulated tx', { action, networkType: chain.networkType, chainName: chain.name });
-        return response;
     }
 
     const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
@@ -282,7 +291,7 @@ async function estimateCost(tx, server) {
     }
 
     const events = response.events.map((event) => {
-        const e = DiagnosticEvent.fromXDR(event, 'base64');
+        const e = xdr.DiagnosticEvent.fromXDR(event, 'base64');
 
         if (e.event().type().name === 'diagnostic') return 0;
 
@@ -293,7 +302,7 @@ async function estimateCost(tx, server) {
         events.reduce((accumulator, currentValue) => accumulator + currentValue, 0) + // events
         Buffer.from(response.results[0].xdr, 'base64').length; // return value size
 
-    const sorobanTransactionData = SorobanTransactionData.fromXDR(response.transactionData, 'base64');
+    const sorobanTransactionData = xdr.SorobanTransactionData.fromXDR(response.transactionData, 'base64');
 
     return {
         // the first two lines are incorrect. use sorobanTransactionData instead of `cost`
@@ -332,7 +341,7 @@ const getAmplifierVerifiers = async (config, chain) => {
 };
 
 const getNewSigners = async (wallet, config, chain, options) => {
-    if (options.signers === 'wallet') {
+    if (options && options.signers === 'wallet') {
         return {
             nonce: options.newNonce ? arrayify(id(options.newNonce)) : Array(32).fill(0),
             signers: [
@@ -457,7 +466,7 @@ function getContractArtifactPath(artifactPath, contractName) {
 }
 
 const getContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) {
+    if (options && options.artifactPath) {
         if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
             return getContractArtifactPath(options.artifactPath, contractName);
         }
@@ -465,7 +474,7 @@ const getContractCodePath = async (options, contractName) => {
         return options.artifactPath;
     }
 
-    if (options.version) {
+    if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
         return downloadContractCode(url, contractName, options.version);
     }
@@ -474,9 +483,9 @@ const getContractCodePath = async (options, contractName) => {
 };
 
 const getUploadContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) return options.artifactPath;
+    if (options && options.artifactPath) return options.artifactPath;
 
-    if (options.version) {
+    if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
         return downloadContractCode(url, contractName, options.version);
     }
