@@ -1,11 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 'use strict';
 
-const { Command } = require('commander');
-const { loadConfig, saveConfig, prompt } = require('../common');
-const { addStarknetOptions } = require('./cli-utils');
-const {
+import { Command } from 'commander';
+import { loadConfig, saveConfig, prompt } from '../common';
+import { addStarknetOptions } from './cli-utils';
+import {
     deployContract,
     upgradeContract,
     declareContract,
@@ -14,10 +14,22 @@ const {
     saveContractConfig,
     handleOfflineTransaction,
     validateStarknetOptions,
-} = require('./utils');
-const { CallData } = require('starknet');
+    getStarknetAccount,
+    getStarknetProvider
+} from './utils';
+import { CallData } from 'starknet';
+import {
+    Config,
+    ChainConfig,
+    DeployContractOptions,
+    OfflineTransactionResult
+} from './types';
 
-async function processCommand(config, chain, options) {
+async function processCommand(
+    config: Config, 
+    chain: ChainConfig & { name: string }, 
+    options: DeployContractOptions
+): Promise<Config | OfflineTransactionResult> {
     const {
         privateKey,
         accountAddress,
@@ -39,7 +51,9 @@ async function processCommand(config, chain, options) {
     if (offline) {
         console.log(`\nGenerating unsigned transaction for ${upgrade ? 'upgrading' : 'deploying'} ${contractName} on ${chain.name}...`);
 
-        let targetContractAddress, entrypoint, calldata;
+        let targetContractAddress: string;
+        let entrypoint: string;
+        let calldata: any[];
 
         if (upgrade) {
             if (!contractAddress && !getContractConfig(config, chain.name, contractName).address) {
@@ -96,6 +110,10 @@ async function processCommand(config, chain, options) {
     }
 
     console.log(`\n${upgrade ? 'Upgrading' : 'Deploying'} ${contractName} on ${chain.name}...`);
+
+    // Initialize account for online operations
+    const provider = getStarknetProvider(chain);
+    const account = getStarknetAccount(privateKey!, accountAddress!, provider);
 
     if (upgrade) {
         if (!contractAddress && !getContractConfig(config, chain.name, contractName).address) {
@@ -188,7 +206,7 @@ async function processCommand(config, chain, options) {
     return config;
 }
 
-async function main() {
+async function main(): Promise<void> {
     const program = new Command();
 
     program
@@ -209,7 +227,7 @@ async function main() {
 
     program.parse();
 
-    const options = program.opts();
+    const options = program.opts() as DeployContractOptions;
     const { env, chainNames } = options;
 
     // Validate execution options before processing any chains
@@ -249,6 +267,6 @@ if (require.main === module) {
     });
 }
 
-module.exports = {
+export {
     processCommand,
 };

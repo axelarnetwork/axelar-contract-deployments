@@ -1,38 +1,65 @@
 'use strict';
 
-const { Contract, Account, RpcProvider, stark, shortString, CallData, constants } = require('starknet');
-const fs = require('fs');
-const path = require('path');
+import { 
+    Contract, 
+    Account, 
+    RpcProvider, 
+    stark, 
+    shortString, 
+    CallData, 
+    constants, 
+    Call,
+    InvokeFunctionResponse,
+    DeclareContractResponse,
+    CompiledContract,
+    DeclareContractPayload,
+    UniversalDetails,
+    InvokeTransactionReceiptResponse,
+} from 'starknet';
+import * as fs from 'fs';
+import * as path from 'path';
+import {
+    ChainConfig,
+    ContractConfig,
+    Config,
+    DeploymentResult,
+    UpgradeResult,
+    DeclareResult,
+    ContractArtifact,
+    UnsignedTransaction,
+    GenerateUnsignedTxOptions,
+    OfflineTransactionOptions,
+    OfflineTransactionResult,
+    ResourceBounds
+} from './types';
 
 /**
  * Get Starknet provider for the specified chain
- * @param {Object} chain - Chain configuration
- * @returns {RpcProvider} Starknet RPC provider
  */
-const getStarknetProvider = (chain) => {
+export const getStarknetProvider = (chain: ChainConfig): RpcProvider => {
     return new RpcProvider({ nodeUrl: chain.rpc });
 };
 
 /**
  * Get Starknet account from private key and address
- * @param {string} privateKey - Private key
- * @param {string} accountAddress - Account address
- * @param {RpcProvider} provider - Starknet provider
- * @returns {Account} Starknet account
  */
-const getStarknetAccount = (privateKey, accountAddress, provider) => {
+export const getStarknetAccount = (
+    privateKey: string, 
+    accountAddress: string, 
+    provider: RpcProvider
+): Account => {
     return new Account(provider, accountAddress, privateKey, undefined, constants.TRANSACTION_VERSION.V3);
 };
 
 /**
  * Deploy a contract to Starknet
- * @param {Account} account - Starknet account
- * @param {string} classHash - Contract class hash
- * @param {Array} constructorCalldata - Constructor calldata
- * @param {string} salt - Salt for deployment
- * @returns {Object} Deployment result
  */
-const deployContract = async (account, classHash, constructorCalldata = [], salt = '0') => {
+export const deployContract = async (
+    account: Account, 
+    classHash: string, 
+    constructorCalldata: any[] = [], 
+    salt: string = '0'
+): Promise<DeploymentResult> => {
     try {
         const deployResponse = await account.deployContract({
             classHash,
@@ -40,7 +67,7 @@ const deployContract = async (account, classHash, constructorCalldata = [], salt
             salt,
         }, {
             version: '0x3'
-        });
+        } as UniversalDetails);
 
         await account.waitForTransaction(deployResponse.transaction_hash);
 
@@ -49,22 +76,22 @@ const deployContract = async (account, classHash, constructorCalldata = [], salt
             transactionHash: deployResponse.transaction_hash,
             classHash,
         };
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Contract deployment failed: ${error.message}`);
     }
 };
 
 /**
  * Upgrade a contract on Starknet
- * @param {Account} account - Starknet account
- * @param {string} contractAddress - Contract address to upgrade
- * @param {string} newClassHash - New class hash
- * @returns {Object} Upgrade result
  */
-const upgradeContract = async (account, contractAddress, newClassHash) => {
+export const upgradeContract = async (
+    account: Account, 
+    contractAddress: string, 
+    newClassHash: string
+): Promise<UpgradeResult> => {
     try {
         // Call upgrade function on the contract
-        const upgradeCall = {
+        const upgradeCall: Call = {
             contractAddress,
             entrypoint: 'upgrade',
             calldata: CallData.compile([newClassHash])
@@ -72,7 +99,7 @@ const upgradeContract = async (account, contractAddress, newClassHash) => {
 
         const response = await account.execute(upgradeCall, undefined, {
             version: '0x3'
-        });
+        } as UniversalDetails);
         await account.waitForTransaction(response.transaction_hash);
 
         return {
@@ -80,39 +107,37 @@ const upgradeContract = async (account, contractAddress, newClassHash) => {
             transactionHash: response.transaction_hash,
             newClassHash,
         };
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Contract upgrade failed: ${error.message}`);
     }
 };
 
 /**
  * Declare a contract class on Starknet
- * @param {Account} account - Starknet account
- * @param {Object} contractArtifact - Contract artifact (sierra and casm)
- * @returns {Object} Declaration result
  */
-const declareContract = async (account, contractArtifact) => {
+export const declareContract = async (
+    account: Account, 
+    contractArtifact: ContractArtifact
+): Promise<DeclareResult> => {
     try {
-        const declareResponse = await account.declare(contractArtifact, {
+        const declareResponse = await account.declare(contractArtifact as any, {
             version: '0x3'
-        });
+        } as UniversalDetails);
         await account.waitForTransaction(declareResponse.transaction_hash);
 
         return {
             classHash: declareResponse.class_hash,
             transactionHash: declareResponse.transaction_hash,
         };
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Contract declaration failed: ${error.message}`);
     }
 };
 
 /**
  * Load contract artifact from file
- * @param {string} contractName - Contract name
- * @returns {Object} Contract artifact
  */
-const loadContractArtifact = (contractName) => {
+export const loadContractArtifact = (contractName: string): ContractArtifact => {
     const artifactPath = path.join(__dirname, 'artifacts', contractName);
 
     const sierraPath = path.join(artifactPath, `${contractName}.contract_class.json`);
@@ -130,12 +155,12 @@ const loadContractArtifact = (contractName) => {
 
 /**
  * Get contract configuration from chain config
- * @param {Object} config - Chain configuration
- * @param {string} chainName - Chain name
- * @param {string} contractName - Contract name
- * @returns {Object} Contract configuration
  */
-const getContractConfig = (config, chainName, contractName) => {
+export const getContractConfig = (
+    config: Config, 
+    chainName: string, 
+    contractName: string
+): ContractConfig => {
     const chain = config.chains[chainName];
     if (!chain) {
         throw new Error(`Chain ${chainName} not found in configuration`);
@@ -146,12 +171,13 @@ const getContractConfig = (config, chainName, contractName) => {
 
 /**
  * Save contract deployment info to config
- * @param {Object} config - Chain configuration
- * @param {string} chainName - Chain name
- * @param {string} contractName - Contract name
- * @param {Object} deploymentInfo - Deployment information
  */
-const saveContractConfig = (config, chainName, contractName, deploymentInfo) => {
+export const saveContractConfig = (
+    config: Config, 
+    chainName: string, 
+    contractName: string, 
+    deploymentInfo: Partial<ContractConfig>
+): void => {
     if (!config.chains[chainName]) {
         throw new Error(`Chain ${chainName} not found in configuration`);
     }
@@ -160,8 +186,8 @@ const saveContractConfig = (config, chainName, contractName, deploymentInfo) => 
         config.chains[chainName].contracts = {};
     }
 
-    config.chains[chainName].contracts[contractName] = {
-        ...config.chains[chainName].contracts[contractName],
+    config.chains[chainName].contracts![contractName] = {
+        ...config.chains[chainName].contracts![contractName],
         ...deploymentInfo,
         deployedAt: new Date().toISOString(),
     };
@@ -169,44 +195,42 @@ const saveContractConfig = (config, chainName, contractName, deploymentInfo) => 
 
 /**
  * Convert string to felt
- * @param {string} str - String to convert
- * @returns {string} Felt representation
  */
-const stringToFelt = (str) => {
+export const stringToFelt = (str: string): string => {
     return shortString.encodeShortString(str);
 };
 
 /**
  * Convert felt to string
- * @param {string} felt - Felt to convert
- * @returns {string} String representation
  */
-const feltToString = (felt) => {
+export const feltToString = (felt: string): string => {
     return shortString.decodeShortString(felt);
 };
 
 /**
  * Generate unsigned transaction for offline signing
- * @param {Account} account - Starknet account (address only, no network calls)
- * @param {Array} calls - Transaction calls
- * @param {Object} options - Transaction options (must include nonce for offline)
- * @returns {Object} Unsigned transaction data
  */
-const generateUnsignedTransaction = (account, calls, options = {}) => {
+export const generateUnsignedTransaction = (
+    account: Account | string, 
+    calls: Call[], 
+    options: GenerateUnsignedTxOptions
+): UnsignedTransaction => {
     try {
         const { nonce, resourceBounds } = options;
         if (!nonce) {
             throw new Error('Nonce is required for offline transaction generation');
         }
 
-        const unsignedTx = {
+        const accountAddress = typeof account === 'string' ? account : account.address;
+
+        const unsignedTx: UnsignedTransaction = {
             type: 'INVOKE',
             version: constants.TRANSACTION_VERSION.V3,
-            sender_address: account.address,
+            sender_address: accountAddress,
             calls: calls.map(call => ({
                 contract_address: call.contractAddress,
                 entry_point: call.entrypoint,
-                calldata: Array.isArray(call.calldata) ? call.calldata : CallData.compile(call.calldata)
+                calldata: Array.isArray(call.calldata) ? call.calldata.map(String) : CallData.compile(call.calldata)
             })),
             nonce,
             resource_bounds: resourceBounds,
@@ -219,19 +243,19 @@ const generateUnsignedTransaction = (account, calls, options = {}) => {
         };
 
         return unsignedTx;
-    } catch (error) {
+    } catch (error: any) {
         throw new Error(`Failed to generate unsigned transaction: ${error.message}`);
     }
 };
 
 /**
  * Save unsigned transaction to file
- * @param {Object} unsignedTx - Unsigned transaction
- * @param {string} outputDir - Output directory
- * @param {string} filename - Filename (optional)
- * @returns {string} File path
  */
-const saveUnsignedTransaction = (unsignedTx, outputDir = './starknet-offline-txs', filename) => {
+export const saveUnsignedTransaction = (
+    unsignedTx: UnsignedTransaction, 
+    outputDir: string = './starknet-offline-txs', 
+    filename?: string
+): string => {
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
     }
@@ -240,7 +264,7 @@ const saveUnsignedTransaction = (unsignedTx, outputDir = './starknet-offline-txs
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-');
 
     // Handle filename with timestamp
-    let finalFilename;
+    let finalFilename: string;
     if (filename) {
         // Insert timestamp before the file extension
         const ext = path.extname(filename);
@@ -259,13 +283,14 @@ const saveUnsignedTransaction = (unsignedTx, outputDir = './starknet-offline-txs
 
 /**
  * Validate Starknet execution options including mainnet security requirements and key management
- * @param {string} env - Environment name
- * @param {boolean} offline - Whether offline flag is set
- * @param {string} privateKey - Private key (optional for offline mode)
- * @param {string} accountAddress - Account address
- * @param {boolean} requiresTransaction - Whether this operation requires transaction execution (default: true)
  */
-const validateStarknetOptions = (env, offline, privateKey, accountAddress, requiresTransaction = true) => {
+export const validateStarknetOptions = (
+    env: string, 
+    offline: boolean, 
+    privateKey?: string, 
+    accountAddress?: string, 
+    requiresTransaction: boolean = true
+): void => {
     // Check mainnet offline requirement for transaction operations
     if (requiresTransaction && env === 'mainnet' && !offline) {
         throw new Error('Mainnet environment requires offline flag (--offline) for security. All mainnet transactions must use hardware wallets with offline signing.');
@@ -287,23 +312,23 @@ const validateStarknetOptions = (env, offline, privateKey, accountAddress, requi
 
 /**
  * Common handler for offline transaction generation
- * @param {Object} options - Command options containing offline parameters
- * @param {string} chainName - Chain name
- * @param {string} contractAddress - Contract address
- * @param {string} entrypoint - Contract entrypoint
- * @param {Array} calldata - Compiled calldata
- * @param {string} operationName - Operation name for logging and filename
- * @returns {Object} Result with offline flag and transaction file path
  */
-const handleOfflineTransaction = (options, chainName, contractAddress, entrypoint, calldata, operationName) => {
+export const handleOfflineTransaction = (
+    options: OfflineTransactionOptions, 
+    chainName: string, 
+    contractAddress: string, 
+    entrypoint: string, 
+    calldata: any[], 
+    operationName: string
+): OfflineTransactionResult => {
     const {
         nonce,
         accountAddress,
         outputDir,
-        l1GasMaxAmount,
-        l1GasMaxPricePerUnit,
-        l2GasMaxAmount,
-        l2GasMaxPricePerUnit,
+        l1GasMaxAmount = '50000',
+        l1GasMaxPricePerUnit = '10000000000',
+        l2GasMaxAmount = '5000',
+        l2GasMaxPricePerUnit = '1000000000',
     } = options;
 
     if (!nonce) {
@@ -316,14 +341,14 @@ const handleOfflineTransaction = (options, chainName, contractAddress, entrypoin
     console.log(`\nGenerating unsigned transaction for ${operationName} on ${chainName}...`);
 
     // Create contract call
-    const calls = [{
+    const calls: Call[] = [{
         contractAddress,
         entrypoint,
         calldata
     }];
 
     // Build resource bounds with provided values (defaults applied by CLI)
-    const resourceBounds = {
+    const resourceBounds: ResourceBounds = {
         l1_gas: {
             max_amount: '0x' + parseInt(l1GasMaxAmount).toString(16),
             max_price_per_unit: '0x' + parseInt(l1GasMaxPricePerUnit).toString(16)
@@ -351,21 +376,4 @@ const handleOfflineTransaction = (options, chainName, contractAddress, entrypoin
     console.log(`3. Broadcast the signed transaction using the broadcast script`);
 
     return { offline: true, transactionFile: txFilepath };
-};
-
-module.exports = {
-    getStarknetProvider,
-    getStarknetAccount,
-    deployContract,
-    upgradeContract,
-    declareContract,
-    loadContractArtifact,
-    getContractConfig,
-    saveContractConfig,
-    stringToFelt,
-    feltToString,
-    generateUnsignedTransaction,
-    saveUnsignedTransaction,
-    handleOfflineTransaction,
-    validateStarknetOptions,
 };

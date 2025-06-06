@@ -1,12 +1,17 @@
 'use strict';
 
-const { Option } = require('commander');
-const { addBaseOptions, ...exportedCliUtils } = require('../common/cli-utils');
+import { Option, Command } from 'commander';
+import { addBaseOptions } from '../common/cli-utils';
+import { CliOptionConfig } from './types';
 
-const addStarknetOptions = (program, options = {}) => {
+/**
+ * Add Starknet-specific command line options to a Commander program
+ * Extends base options with Starknet-specific parameters for key management,
+ * offline workflows, Ledger support, and contract operations
+ */
+export const addStarknetOptions = (program: Command, options: CliOptionConfig = {}): Command => {
     addBaseOptions(program, options);
 
-    // Key management options
     if (!options.ignorePrivateKey) {
         program.addOption(
             new Option('-p, --privateKey <privateKey>', 'private key for Starknet account (testnet only)')
@@ -21,7 +26,6 @@ const addStarknetOptions = (program, options = {}) => {
         );
     }
 
-    // Offline workflow options
     if (options.offlineSupport) {
         program.addOption(
             new Option('--offline', 'generate unsigned transaction for offline signing')
@@ -69,7 +73,6 @@ const addStarknetOptions = (program, options = {}) => {
         );
     }
 
-    // Ledger options
     if (options.ledgerSupport) {
         program.addOption(
             new Option('--useLedger', 'use Ledger hardware wallet for signing (mainnet)')
@@ -83,7 +86,6 @@ const addStarknetOptions = (program, options = {}) => {
         );
     }
 
-    // Signature handling
     if (options.signatureSupport) {
         program.addOption(
             new Option('--combineSignatures', 'combine multiple signatures')
@@ -129,7 +131,6 @@ const addStarknetOptions = (program, options = {}) => {
         );
     }
 
-
     if (options.upgrade) {
         program.addOption(
             new Option('--upgrade', 'upgrade existing contract instead of deploying new one')
@@ -145,9 +146,4 @@ const addStarknetOptions = (program, options = {}) => {
     }
 
     return program;
-};
-
-module.exports = {
-    addStarknetOptions,
-    ...exportedCliUtils,
 };
