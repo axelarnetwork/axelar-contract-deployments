@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
 | **Stagenet**         | Completed             | 2025-05-06 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-05-27 |
+| **Mainnet**          | In progress           | 2025-06-05 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)

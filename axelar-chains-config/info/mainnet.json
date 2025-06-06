@@ -2967,6 +2967,25 @@
           ]
         }
       }
+    },
+    "plume": {
+      "name": "Plume",
+      "axelarId": "plume",
+      "networkType": "mainnet",
+      "chainId": 98866,
+      "rpc": "https://rpc.plume.org",
+      "tokenSymbol": "PLUME",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 53,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Plume Explorer",
+        "url": "https://explorer.plume.org",
+        "api": "https://explorer.plume.org/api/"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
@@ -3107,6 +3126,21 @@
           "domainSeparator": "0x0474cdd6880766991d1bab2fdfae4385e7b54b1032d68f9b1c0bab887b2f5ca4",
           "address": "axelar198xehj5htckk75s8wcamxerxtdc45669zdqjmr69guveqntj9f6s5rqq55"
         },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 16,
+          "domainSeparator": "0x2045d8261988680bb5160059c6d86d7ec571a291cea38c4fce4ba1d75670bd21",
+          "address": "axelar1ll4yhqtldlgqwqthyffqln3cyr2f8ydzhv0djpjyp6sk4v5k4kqqrs60s7"
+        },
         "storeCodeProposalId": "263",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "codeId": 16,
@@ -3131,6 +3165,10 @@
         "xrpl-evm": {
           "codeId": 17,
           "address": "axelar1vvdukrmxdylvnn8e59s3gnn49lutv3n9tg4vnsttn33a8zulgfssl62q69"
+        },
+        "plume": {
+          "codeId": 17,
+          "address": "axelar163ee8p7xne8een7v3hwz6zxh339v6s8js3v5c9520mlnzd7nxneq5eq86v"
         }
       },
       "VotingVerifier": {
@@ -3192,6 +3230,21 @@
           "addressFormat": "eip55",
           "codeId": 20,
           "address": "axelar1q8kn9t39ddpce42atk0d6wpdudr6djqxmz689m3nxy92ck0nnftqxfsuyk"
+        },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 20,
+          "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t"
         },
         "storeCodeProposalId": "267",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
