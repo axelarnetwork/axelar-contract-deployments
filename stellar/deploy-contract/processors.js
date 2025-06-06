@@ -202,7 +202,7 @@ const uploadContract = async (contractName, options, wallet, chain) => {
 const uploadWasm = async (wallet, chain, filePath, contractName) => {
     const bytecode = readFileSync(filePath);
     const operation = Operation.uploadContractWasm({ wasm: bytecode });
-    const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`);
+    const wasmResponse = await broadcast(operation, wallet, chain, `Uploaded ${contractName} wasm`, {}, false);
     return wasmResponse.value();
 };
 
