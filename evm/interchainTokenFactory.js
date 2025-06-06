@@ -47,6 +47,181 @@ async function processCommand(config, chain, options) {
     }
 
     switch (action) {
+        case 'debugStorageLayout': {
+            const { tokenId } = options;
+        
+            validateParameters({ isNonEmptyString: { tokenId } });
+        
+            try {
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address`, tokenAddress);
+            
+                // Read first 10 storage slots
+                for (let i = 0; i < 10; i++) {
+                    const slot = await provider.getStorageAt(tokenAddress, i);
+                    const isEmpty = slot === '0x0000000000000000000000000000000000000000000000000000000000000000';
+                    const asAddress = '0x' + slot.slice(-40);
+                    const isYourAddress = asAddress.toLowerCase() === wallet.address.toLowerCase();
+                    
+                    printInfo(`Slot ${i}`, `${slot} ${isEmpty ? '(empty)' : ''} ${isYourAddress ? '← YOUR ADDRESS!' : ''}`);
+                    if (!isEmpty && !isYourAddress) {
+                        printInfo(`  As address`, asAddress);
+                        printInfo(`  As number`, parseInt(slot, 16));
+                    }
+                }
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                    printInfo(`This could mean:`);
+                    printInfo(`  • Token was deployed on a different chain`);
+                    printInfo(`  • Token ID is incorrect`);
+                    printInfo(`  • Token deployment failed`);
+                    
+                    // Check if we can find info about this token in the factory
+                    try {
+                        const deployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                        if (deployer !== AddressZero) {
+                            printInfo(`✅ Factory has deployer record:`, deployer);
+                            printInfo(`   This suggests token was intended to be deployed but may have failed`);
+                        } else {
+                            printInfo(`❌ No deployer record in factory`);
+                        }
+                    } catch (factoryError) {
+                        printInfo(`❌ Could not check factory deployer record`);
+                    }
+                } else {
+                    throw error;
+                }
+            }
+
+            break;
+        }
+        
+        case 'getTokenDeployer': {
+            const { tokenId } = options;
+        
+            validateParameters({ isNonEmptyString: { tokenId } });
+        
+            try {
+                const deployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                printInfo(`Token ${tokenId} was deployed by`, deployer);
+                
+                // Also show the current wallet address for comparison
+                printInfo(`Current wallet address`, wallet.address);
+                printInfo(`Deployer matches current wallet`, deployer.toLowerCase() === wallet.address.toLowerCase());
+            } catch (error) {
+                printInfo(`❌ Error getting token deployer:`, error.message);
+                printInfo(`This could mean the token doesn't exist or wasn't deployed via this factory`);
+            }
+        
+            break;
+        }
+        
+        case 'checkTokenSlot0': {
+            const { tokenId } = options;
+
+            validateParameters({ isNonEmptyString: { tokenId } });
+
+            try {
+                // Get the token address
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address for ${tokenId}`, tokenAddress);
+
+                // Read storage slot 0 directly from the token contract
+                const slot0 = await provider.getStorageAt(tokenAddress, 0);
+                const deployerFromSlot0 = '0x' + slot0.slice(-40); // Last 20 bytes
+                
+                printInfo(`Deployer in token slot 0`, deployerFromSlot0);
+                printInfo(`Current wallet address`, wallet.address);
+                printInfo(`Slot 0 matches wallet`, deployerFromSlot0.toLowerCase() === wallet.address.toLowerCase());
+                
+                // Also check via factory's mapping for comparison
+                const deployerFromFactory = await interchainTokenFactory.getTokenDeployer(tokenId);
+                printInfo(`Deployer from factory`, deployerFromFactory);
+                printInfo(`Factory and slot 0 match`, deployerFromSlot0.toLowerCase() === deployerFromFactory.toLowerCase());
+
+                // Test the getDeployer function on the token contract itself
+                const IInterchainToken = getContractJSON('IInterchainToken');
+                const tokenContract = new Contract(tokenAddress, IInterchainToken.abi, wallet);
+                
+                try {
+                    const deployerFromContract = await tokenContract.getDeployer();
+                    printInfo(`Deployer from token contract`, deployerFromContract);
+                    printInfo(`All methods match`, 
+                        deployerFromSlot0.toLowerCase() === deployerFromContract.toLowerCase() &&
+                        deployerFromFactory.toLowerCase() === deployerFromContract.toLowerCase()
+                    );
+                } catch (error) {
+                    printInfo(`Token contract getDeployer() failed`, error.message);
+                }
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                    printInfo(`Cannot check storage slots for non-existent token`);
+                    
+                    // Check if we can find info about this token in the factory
+                    try {
+                        const deployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                        if (deployer !== AddressZero) {
+                            printInfo(`✅ Factory has deployer record:`, deployer);
+                        } else {
+                            printInfo(`❌ No deployer record in factory`);
+                        }
+                    } catch (factoryError) {
+                        printInfo(`❌ Could not check factory deployer record`);
+                    }
+                } else {
+                    throw error;
+                }
+            }
+
+            break;
+        }
+        
+        case 'checkTokenExists': {
+            const { tokenId } = options;
+        
+            validateParameters({ isNonEmptyString: { tokenId } });
+        
+            printInfo(`Checking token ${tokenId} on ${chain.name}:`);
+            
+            // Check if token exists via ITS
+            try {
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`✅ Token exists at address:`, tokenAddress);
+                
+                // Check token manager
+                try {
+                    const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenId);
+                    printInfo(`✅ Token manager at:`, tokenManagerAddress);
+                } catch (error) {
+                    printInfo(`❌ Token manager not found`);
+                }
+                
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token does not exist on this chain`);
+                } else {
+                    printInfo(`❌ Error checking token:`, error.message);
+                }
+            }
+            
+            // Check factory deployer record
+            try {
+                const deployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                if (deployer !== AddressZero) {
+                    printInfo(`✅ Factory deployer record:`, deployer);
+                    printInfo(`   Deployer matches wallet:`, deployer.toLowerCase() === wallet.address.toLowerCase());
+                } else {
+                    printInfo(`❌ No factory deployer record`);
+                }
+            } catch (error) {
+                printInfo(`❌ Error checking factory record:`, error.message);
+            }
+        
+            break;
+        }
+
         case 'contractId': {
             const contractId = await interchainTokenFactory.contractId();
             printInfo('InterchainTokenFactory contract ID', contractId);
@@ -149,6 +324,40 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'deployInterchainTokenWithDeployer': {
+            const { name, symbol, decimals, initialSupply, minter, deployer } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isNonEmptyString: { name, symbol },
+                isValidNumber: { decimals },
+                isValidDecimal: { initialSupply },
+                isAddress: { minter },
+                isValidAddress: { deployer },
+            });
+
+            const tx = await interchainTokenFactory.deployInterchainTokenWithDeployer(
+                deploymentSalt,
+                name,
+                symbol,
+                decimals,
+                BigNumber.from(10).pow(decimals).mul(parseInt(initialSupply)),
+                minter,
+                deployer,
+                gasOptions,
+            );
+
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+            printInfo('Custom deployer', deployer);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            printInfo('Token address', await interchainTokenService.registeredTokenAddress(tokenId));
+            break;
+        }
+
         case 'deployRemoteInterchainToken': {
             const { destinationChain, gasValue } = options;
 
@@ -174,6 +383,121 @@ async function processCommand(config, chain, options) {
             );
             const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'deployRemoteInterchainTokenWithDeployer': {
+            const { destinationChain, gasValue, deployer } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { gasValue },
+                isValidAddress: { deployer },
+            });
+
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
+
+            const tx = await interchainTokenFactory['deployRemoteInterchainTokenWithDeployer(bytes32,string,uint256,address)'](
+                deploymentSalt,
+                destinationChain,
+                gasValue,
+                deployer,
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
+            );
+
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+            printInfo('Custom deployer', deployer);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+        case 'deployRemoteInterchainTokenWithMinter': {
+            const { destinationChain, gasValue, minter, destinationMinter } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { gasValue },
+                isAddress: { minter },
+            });
+
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
+
+            // Convert destinationMinter to bytes if provided, otherwise use empty bytes
+            const destinationMinterBytes = destinationMinter ? ethers.utils.toUtf8Bytes(destinationMinter) : '0x';
+
+            const tx = await interchainTokenFactory.deployRemoteInterchainTokenWithMinter(
+                deploymentSalt,
+                minter || AddressZero,
+                destinationChain,
+                destinationMinterBytes,
+                gasValue,
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
+            );
+
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+            printInfo('Minter', minter || 'None (address(0))');
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'deployRemoteInterchainTokenWithMinterAndDeployer': {
+            const { destinationChain, gasValue, minter, deployer, destinationMinter } = options;
+
+            const deploymentSalt = getDeploymentSalt(options);
+
+            validateParameters({
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { gasValue },
+                isAddress: { minter },
+                isValidAddress: { deployer },
+            });
+
+            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            }
+
+            // Convert destinationMinter to bytes if provided, otherwise use empty bytes
+            const destinationMinterBytes = destinationMinter ? ethers.utils.toUtf8Bytes(destinationMinter) : '0x';
+
+            const tx = await interchainTokenFactory.deployRemoteInterchainTokenWithMinterAndDeployer(
+                deploymentSalt,
+                minter || AddressZero,
+                destinationChain,
+                destinationMinterBytes,
+                gasValue,
+                deployer,
+                {
+                    value: gasValue,
+                    ...gasOptions,
+                },
+            );
+
+            const tokenId = await interchainTokenFactory.interchainTokenId(wallet.address, deploymentSalt);
+            printInfo('tokenId', tokenId);
+            printInfo('Minter', minter || 'None (address(0))');
+            printInfo('Custom deployer', deployer);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -215,6 +539,35 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
             printInfo('tokenId', tokenId);
+
+            await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
+
+            break;
+        }
+
+        case 'deployRemoteCanonicalInterchainTokenWithDeployer': {
+            const { tokenAddress, destinationChain, gasValue, deployer } = options;
+
+            validateParameters({
+                isValidAddress: { tokenAddress },
+                isNonEmptyString: { destinationChain },
+                isValidNumber: { gasValue },
+                isValidAddress: { deployer },
+            });
+
+            isValidDestinationChain(config, destinationChain);
+
+            const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainTokenWithDeployer(address,string,uint256,address)'](
+                tokenAddress,
+                destinationChain,
+                gasValue,
+                deployer,
+                { value: gasValue, ...gasOptions },
+            );
+
+            const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
+            printInfo('tokenId', tokenId);
+            printInfo('Custom deployer', deployer);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -307,11 +660,20 @@ if (require.main === module) {
                 'canonicalInterchainTokenId',
                 'interchainTokenAddress',
                 'deployInterchainToken',
+                'deployInterchainTokenWithDeployer',
                 'deployRemoteInterchainToken',
+                'deployRemoteInterchainTokenWithDeployer',
+                'deployRemoteInterchainTokenWithMinter',
+                'deployRemoteInterchainTokenWithMinterAndDeployer',
                 'registerCanonicalInterchainToken',
                 'deployRemoteCanonicalInterchainToken',
+                'deployRemoteCanonicalInterchainTokenWithDeployer',
                 'registerCustomToken',
                 'linkToken',
+                'getTokenDeployer',
+                'checkTokenExists',
+                'checkTokenSlot0',
+                'debugStorageLayout'
             ])
             .makeOptionMandatory(true),
     );
@@ -329,6 +691,7 @@ if (require.main === module) {
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
+    program.addOption(new Option('--destinationMinter <destinationMinter>', 'destination minter address'));
     program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
     program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));

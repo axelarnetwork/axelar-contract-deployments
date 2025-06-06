@@ -380,7 +380,7 @@ async function deployAll(config, wallet, chain, options) {
         const deployment = deployments[key];
 
         // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
-        if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
+        if (options.reuseProxy && deployment.contractName === 'InterchainProxy') {
             printInfo(`Reusing ${deployment.name} deployment`);
             continue;
         }
