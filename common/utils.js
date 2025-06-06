@@ -20,6 +20,8 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
+const camelToTitle = (str) => str.replace(/([A-Z])/g, (group) => ` ${group}`).replace(/^./, (firstChar) => firstChar.toUpperCase());
+
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
@@ -66,6 +68,18 @@ const printError = (msg, info = '') => {
     }
 
     console.log(`${chalk.bold.red(msg)}\n`);
+};
+
+const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
+    if (info) {
+        msg = `${msg}: ${info}`;
+    }
+
+    console.log(`${colour(msg)}\n`);
+};
+
+const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
+    console.log(colour(char.repeat(width)));
 };
 
 function printLog(log) {
@@ -175,6 +189,14 @@ const httpPost = async (url, data) => {
         body: JSON.stringify(data),
     });
     return response.json();
+};
+
+const callAxelarscanApi = async (config, method, data, time = 10000) => {
+    return timeout(
+        httpPost(`${config.axelar.axelarscanApi}/${method}`, data),
+        time,
+        new Error(`Timeout calling Axelarscan API: ${method}`),
+    );
 };
 
 /**
@@ -614,6 +636,16 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
     }
 }
 
+const getProposalConfig = (config, env, key) => {
+    try {
+        const value = config.axelar?.[key];
+        if (value === undefined) throw new Error(`Key "${key}" not found in config for ${env}`);
+        return value;
+    } catch (error) {
+        throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
+    }
+};
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -621,6 +653,8 @@ module.exports = {
     printInfo,
     printWarn,
     printError,
+    printHighlight,
+    printDivider,
     printLog,
     isKeccak256Hash,
     isNonEmptyString,
@@ -636,6 +670,7 @@ module.exports = {
     copyObject,
     httpGet,
     httpPost,
+    callAxelarscanApi,
     parseArgs,
     sleep,
     dateToEta,
@@ -656,6 +691,7 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
+    camelToTitle,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
@@ -668,4 +704,5 @@ module.exports = {
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
+    getProposalConfig,
 };

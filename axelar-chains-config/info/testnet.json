@@ -4,7 +4,7 @@
       "name": "Ethereum-Sepolia",
       "axelarId": "ethereum-sepolia",
       "chainId": 11155111,
-      "rpc": "https://1rpc.io/sepolia",
+      "rpc": "https://sepolia.drpc.org",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "confirmations": 2,
@@ -90,7 +90,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -209,7 +210,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0xf7b6736d66E545a1A460Bf14CAa46B9460Aa9caf"
+          "gatewayCaller": "0xf7b6736d66E545a1A460Bf14CAa46B9460Aa9caf",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -328,7 +330,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0x64cf33D513F045DcecD7Fe32f5E0056D5607CeBd"
+          "gatewayCaller": "0x64cf33D513F045DcecD7Fe32f5E0056D5607CeBd",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -484,7 +487,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0xa2d3c0eC6B03EAc02A0A686b4A82b430A076E0eC"
+          "gatewayCaller": "0xa2d3c0eC6B03EAc02A0A686b4A82b430A076E0eC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -603,7 +607,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0xb4799F0CA9dFb8FAB3eb473526C33ab68687A07B"
+          "gatewayCaller": "0xb4799F0CA9dFb8FAB3eb473526C33ab68687A07B",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -688,7 +693,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -842,7 +848,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0x8150f03DceB9D9464Cb472c4b926B6e958cE4daa"
+          "gatewayCaller": "0x8150f03DceB9D9464Cb472c4b926B6e958cE4daa",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -953,7 +960,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0xf7057A0202B1F5ac85bCF18f9fd078F8437183E4"
+          "gatewayCaller": "0xf7057A0202B1F5ac85bCF18f9fd078F8437183E4",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -1067,7 +1075,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -1184,7 +1193,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1297,7 +1307,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x3AB8A7be32b7a1A12686258aDda1C005E2fcb4EC"
+          "gatewayCaller": "0x3AB8A7be32b7a1A12686258aDda1C005E2fcb4EC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1506,7 +1517,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1627,7 +1639,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1743,7 +1756,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1759,7 +1773,7 @@
       "name": "Blast-Sepolia",
       "axelarId": "blast-sepolia",
       "chainId": 168587773,
-      "rpc": "https://sepolia.blast.io/",
+      "rpc": "https://blastl2-sepolia.public.blastapi.io",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "chainType": "evm",
@@ -1859,7 +1873,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1972,7 +1987,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x8150f03DceB9D9464Cb472c4b926B6e958cE4daa"
+          "gatewayCaller": "0x8150f03DceB9D9464Cb472c4b926B6e958cE4daa",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2075,7 +2091,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2186,7 +2203,8 @@
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC"
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2280,7 +2298,8 @@
           "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2644,95 +2663,6 @@
         }
       }
     },
-    "xrpl-evm-test-1": {
-      "name": "XRPL EVM",
-      "axelarId": "xrpl-evm-test-1",
-      "chainId": 1449000,
-      "rpc": "https://rpc.testnet.xrplevm.org",
-      "tokenSymbol": "XRP",
-      "decimals": 18,
-      "confirmations": 1,
-      "finality": "finalized",
-      "approxFinalityWaitTime": 1,
-      "chainType": "evm",
-      "explorer": {
-        "name": "Blockscout",
-        "url": "https://explorer.testnet.xrplevm.org/",
-        "api": "https://explorer.testnet.xrplevm.org/api/"
-      },
-      "contracts": {
-        "AxelarGateway": {
-          "implementation": "0x27a3daf3b243104E9b0afAe6b56026a416B852C9",
-          "implementationCodehash": "0xe56da1cf07bfb2f24fb6fc782c510e2e7cff95c40d3ef4eec0c374565104c173",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxyDeploymentArgs": [
-            "0x27a3daf3b243104E9b0afAe6b56026a416B852C9",
-            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000010e64a700000000000000000000000000000000000000000000000000000000000000160000000000000000000000000e3c1ac746bd5d47fa44f77a6e3a700eadd9e1bc00000000000000000000000000000000000000000000000000000000000000010000000000000000000000001f2eb0420e6aac6e25154639a37587bbc4b256d6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020aecd082d8788639f2a4afb8563f62aee2183f2000000000000000000000000000000000000000000000000000000000000000100000000000000000000000024449d80a8c616cff227b37a1461ebd059529d140000000000000000000000000000000000000000000000000000000000000001000000000000000000000000380dda1ce71d1922b37db6079ca6e26b2b65da4b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000414b06d536092988aa828a3209a0331be53a126f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004acc331501a4cde2bea4a3703ccf328f2833182500000000000000000000000000000000000000000000000000000000000000010000000000000000000000005cdf30e201017cb3aaab487949af41e7225e2d1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000006ff6e6fb7f3804fee29aa2ff75dd889c8e09eb7e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000070a97c7328a22e012d6e7c7f0615a19f6761b617000000000000000000000000000000000000000000000000000000000000000100000000000000000000000083313ac5d1e023cbca79a18b9ec5ab7875746335000000000000000000000000000000000000000000000000000000000000000100000000000000000000000092ec015a988cf083c6ad0627f37df05937687e7900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009ce4f02aab880308bc8db8cc6e4ec9a2a8cded5b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a8f56991b33b07ccac084be1d2a246d1c82fa73e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b00e4c94faa6698ad2c3b64af7c94071d5eeb2d00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b9f5ea2331ef8224b56576db506afc88f8b070480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c4db1d3fcf418d4baf61f173eef18c6fb40132fb0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c89566ef25f70cbf3507d5b3c6605129ef9d508c0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cbfa786fbdbb8779063fd7580a22da8f306eb8240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cee3d5699cbfd940b7ee9ac71518120d5f8f67570000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e19404210888776d57780666d0a435298da6d7cf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6a16d54e432883da61ce9130b1cd0240025ce620000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "2834280fb102254adf6bd68a066a6d11cc08614331574f479291cd0ccdac6a5b",
-          "address": "0xA1eBb6A4b856dF8bf6c3aCa88a9115a9ab3b2E02",
-          "deploymentMethod": "create",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0x2214f7ca91c3424e236cedad6111c856315c14847a06255275a9df3de28aa015",
-          "minimumRotationDelay": 3600,
-          "connectionType": "amplifier",
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        },
-        "ConstAddressDeployer": {
-          "address": "0x858Bd33dF5BeAabF16Dc0249Acd194564c16BB2d",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create",
-          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
-          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
-        },
-        "Create3Deployer": {
-          "address": "0x27A6E2Cf2d37B320EDaF5688ae89f21ef19099A8",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
-          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
-          "salt": "Create3Deployer"
-        },
-        "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "address": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "deploymentMethod": "create2",
-          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "salt": "Operators"
-        },
-        "AxelarGasService": {
-          "collector": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
-          "salt": "AxelarGasService",
-          "address": "0x2CcdaDdc282D5F22F740398f1992003b525aE0F5",
-          "implementation": "0x3c5c8cCdc4178af5a54f343988b8a068dba4b387",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0xBC97Fc0D633312Fe7E991BCFcAA2F98A3958122F",
-          "interchainToken": "0x0db26a0EBE8EBe69c83D0A3b6Dd11d26bCeD7D64",
-          "interchainTokenDeployer": "0xBdcc0bD2B7fB45952a0D29500D9225cE4a5d4f16",
-          "tokenManager": "0x20b13F343227037f2911598e30dE2f24c27f5B7c",
-          "tokenHandler": "0xE36Dd3A5D2e4aeDCA024F051c739c6135027D671",
-          "gatewayCaller": "0x281DA551fB8E9fe16b595107f6bC9d5e049eBdaC",
-          "implementation": "0x2A4c19146Fc83e01C92C09AbE8A9383B34efe52F",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x3b1ca8B18698409fF95e29c506ad7014980F0193"
-        },
-        "InterchainTokenFactory": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0",
-          "implementation": "0x56858a5bD9928858cd0307f22C3FE8791a784253",
-          "address": "0x0E7620b73a53980f2138B43314fa944AE990d387"
-        }
-      }
-    },
     "xrpl-evm": {
       "name": "XRPL EVM",
       "axelarId": "xrpl-evm",
@@ -2812,7 +2742,8 @@
           "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
           "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2905,7 +2836,7 @@
         "InterchainTokenService": {
           "address": "CCXT3EAQ7GPQTJWENU62SIFBQ3D4JMNQSB77KRPTGBJ7ZWBYESZQBZRK",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "ed1762aa118cc09a2c035213f92b8cc0fa32d74302ec9636d4f925a3eba49dc3",
+          "wasmHash": "cd078e4d495a61a113a6ba457f5efa4579c5bc41a396779fd82f164aa75e9942",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
@@ -2917,7 +2848,7 @@
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
           },
-          "version": "1.1.2"
+          "version": "1.2.0"
         },
         "Multicall": {
           "address": "CC6BXRCUQFAJ64NDLEZCS4FDL6GN65FL2KDOKCRHFWPMPKRWQNBA4YR2",
@@ -2925,6 +2856,185 @@
           "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
           "version": "1.0.1",
           "initializeArgs": {}
+        }
+      }
+    },
+    "plume": {
+      "name": "Plume",
+      "axelarId": "plume",
+      "networkType": "testnet",
+      "chainId": 98867,
+      "rpc": "https://testnet-rpc.plumenetwork.xyz",
+      "tokenSymbol": "PLUME",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 53,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Plume Explorer",
+        "url": "https://testnet-explorer.plumenetwork.xyz/",
+        "api": "https://testnet-explorer.plume.org/api/"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "operator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "proxyDeploymentArgs": [
+            "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+            "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+            "0x000000000000000000000000b8cd93c83a974649d76b1c19f311f639e62272bc0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000001237f2700000000000000000000000000000000000000000000000000000000000000160000000000000000000000000e3c1ac746bd5d47fa44f77a6e3a700eadd9e1bc00000000000000000000000000000000000000000000000000000000000000010000000000000000000000001f2eb0420e6aac6e25154639a37587bbc4b256d6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020aecd082d8788639f2a4afb8563f62aee2183f2000000000000000000000000000000000000000000000000000000000000000100000000000000000000000024449d80a8c616cff227b37a1461ebd059529d140000000000000000000000000000000000000000000000000000000000000001000000000000000000000000380dda1ce71d1922b37db6079ca6e26b2b65da4b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000414b06d536092988aa828a3209a0331be53a126f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004acc331501a4cde2bea4a3703ccf328f2833182500000000000000000000000000000000000000000000000000000000000000010000000000000000000000005cdf30e201017cb3aaab487949af41e7225e2d1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000006ff6e6fb7f3804fee29aa2ff75dd889c8e09eb7e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000070a97c7328a22e012d6e7c7f0615a19f6761b617000000000000000000000000000000000000000000000000000000000000000100000000000000000000000083313ac5d1e023cbca79a18b9ec5ab7875746335000000000000000000000000000000000000000000000000000000000000000100000000000000000000000092ec015a988cf083c6ad0627f37df05937687e7900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009ce4f02aab880308bc8db8cc6e4ec9a2a8cded5b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a8f56991b33b07ccac084be1d2a246d1c82fa73e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b00e4c94faa6698ad2c3b64af7c94071d5eeb2d00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b9f5ea2331ef8224b56576db506afc88f8b070480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c4db1d3fcf418d4baf61f173eef18c6fb40132fb0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c89566ef25f70cbf3507d5b3c6605129ef9d508c0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cbfa786fbdbb8779063fd7580a22da8f306eb8240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cee3d5699cbfd940b7ee9ac71518120d5f8f67570000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e19404210888776d57780666d0a435298da6d7cf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6a16d54e432883da61ce9130b1cd0240025ce620000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "43df6f363aabca5b666e8a5888e845e47a0513f14c0912e1721303bab71be87a",
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "implementationCodehash": "0x91f090fcebc0bfc3c8bc4627888f753de8f7f3a840a584f5eb1e5539c1f3d2d6",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xecb35aaefd4f374fa1ea62bc6280f4150361977ad6ecad5f2ef878a89feb214e",
+          "minimumRotationDelay": 3600,
+          "connectionType": "amplifier",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
+          "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0xe50A35500805b555A8318Bdb98E542FB50DD6E08",
+          "interchainToken": "0xFe3C351E8D85aBc4eb7B669C450583ff40ed0B22",
+          "interchainTokenDeployer": "0x6Cf80d1dcEdD398A6af7e9b0026a750a5c6e2a4c",
+          "tokenManager": "0x9D3583cBeB5542287B635Bf09D693C8106284C27",
+          "tokenHandler": "0xcC360c322f72a89E5247F3875a02c214F31DA035",
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0x9c551097d890E16f407a1e675490a2359B3933FD",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
+        }
+      }
+    },
+    "berachain": {
+      "name": "Berachain",
+      "axelarId": "berachain",
+      "chainId": 80069,
+      "rpc": "https://bepolia.rpc.berachain.com",
+      "tokenSymbol": "BERA",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Berascan",
+        "url": "https://testnet.berascan.com/",
+        "api": "https://api-testnet.berascan.com/api"
+      },
+      "contracts": {
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGateway": {
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "operator": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "proxyDeploymentArgs": [
+            "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+            "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+            "0x000000000000000000000000b8cd93c83a974649d76b1c19f311f639e62272bc0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000125cd1600000000000000000000000000000000000000000000000000000000000000160000000000000000000000000e3c1ac746bd5d47fa44f77a6e3a700eadd9e1bc00000000000000000000000000000000000000000000000000000000000000010000000000000000000000001f2eb0420e6aac6e25154639a37587bbc4b256d6000000000000000000000000000000000000000000000000000000000000000100000000000000000000000020aecd082d8788639f2a4afb8563f62aee2183f2000000000000000000000000000000000000000000000000000000000000000100000000000000000000000024449d80a8c616cff227b37a1461ebd059529d140000000000000000000000000000000000000000000000000000000000000001000000000000000000000000380dda1ce71d1922b37db6079ca6e26b2b65da4b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000414b06d536092988aa828a3209a0331be53a126f00000000000000000000000000000000000000000000000000000000000000010000000000000000000000004acc331501a4cde2bea4a3703ccf328f2833182500000000000000000000000000000000000000000000000000000000000000010000000000000000000000005cdf30e201017cb3aaab487949af41e7225e2d1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000006ff6e6fb7f3804fee29aa2ff75dd889c8e09eb7e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000070a97c7328a22e012d6e7c7f0615a19f6761b617000000000000000000000000000000000000000000000000000000000000000100000000000000000000000083313ac5d1e023cbca79a18b9ec5ab7875746335000000000000000000000000000000000000000000000000000000000000000100000000000000000000000092ec015a988cf083c6ad0627f37df05937687e7900000000000000000000000000000000000000000000000000000000000000010000000000000000000000009ce4f02aab880308bc8db8cc6e4ec9a2a8cded5b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000a8f56991b33b07ccac084be1d2a246d1c82fa73e0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b00e4c94faa6698ad2c3b64af7c94071d5eeb2d00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b9f5ea2331ef8224b56576db506afc88f8b070480000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c4db1d3fcf418d4baf61f173eef18c6fb40132fb0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c89566ef25f70cbf3507d5b3c6605129ef9d508c0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cbfa786fbdbb8779063fd7580a22da8f306eb8240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000cee3d5699cbfd940b7ee9ac71518120d5f8f67570000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e19404210888776d57780666d0a435298da6d7cf0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e6a16d54e432883da61ce9130b1cd0240025ce620000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "35387c40132fa705b25bb15eaf13ab558acec79d241498480ff848429b521ff1",
+          "address": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "implementation": "0x05823c334150a48ACD5D325fBA16147c21bA3653",
+          "implementationCodehash": "0x963ee682e979bb5cefaac64874946da05cc79621877d58f4b7e5e9b19a0b4cfb",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
+          "minimumRotationDelay": 3600,
+          "connectionType": "amplifier",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "Operators": {
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
+          "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
+          "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0xe50A35500805b555A8318Bdb98E542FB50DD6E08",
+          "interchainToken": "0xFe3C351E8D85aBc4eb7B669C450583ff40ed0B22",
+          "interchainTokenDeployer": "0x6Cf80d1dcEdD398A6af7e9b0026a750a5c6e2a4c",
+          "tokenManager": "0x9D3583cBeB5542287B635Bf09D693C8106284C27",
+          "tokenHandler": "0xcC360c322f72a89E5247F3875a02c214F31DA035",
+          "gatewayCaller": "0x336B1C1FDa843C7f323B954C6525cB8EcB2b2aFC",
+          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0x9c551097d890E16f407a1e675490a2359B3933FD",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       }
     }
@@ -2988,10 +3098,10 @@
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "blockExpiry": 10,
-        "storeCodeProposalId": "276",
-        "storeCodeProposalCodeHash": "a031928989cca91d7b3f673969b397856edfea67a52d8ee4a9f4fedd6f0b5121",
-        "codeId": 44,
-        "lastUploadedCodeId": 44,
+        "storeCodeProposalId": "308",
+        "storeCodeProposalCodeHash": "cd6109a37eab844941ea09266e54bf3fdb18bfb55e02a0ed91aa5a8d47aea2ec",
+        "codeId": 54,
+        "lastUploadedCodeId": 54,
         "address": "axelar14a4ar5jh7ue4wg28jwsspf23r8k68j7g5d6d3fsttrhp42ajn4xq6zayy5",
         "executeProposalId": "115",
         "flow": {
@@ -3012,7 +3122,7 @@
           "keyType": "ecdsa",
           "domainSeparator": "0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259",
           "codeId": 18,
-          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6plu5qspzn7e0"
+          "address": "axelar1rsuejfntt4rs2y8dn4dd3acszs00zyg9wpnsc6fmhevcp6x5qspzn7e0"
         },
         "hedera": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
@@ -3044,21 +3154,6 @@
           "domainSeparator": "0xf221c54a1a478f48c840a24cf2b96f77c9bc369a40570744b8fedd91df001624",
           "address": "axelar1v8jrupu2rqpskwgtr69max0ajul92q8z5mdxd505m2hu3xc5jzcqm8zyc6"
         },
-        "xrpl-evm-test-1": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "signingThreshold": [
-            "51",
-            "100"
-          ],
-          "serviceName": "amplifier",
-          "verifierSetDiffThreshold": 0,
-          "encoder": "abi",
-          "keyType": "ecdsa",
-          "codeId": 18,
-          "domainSeparator": "0x2214f7ca91c3424e236cedad6111c856315c14847a06255275a9df3de28aa015",
-          "address": "axelar1fxjzgyhuvst30frp773jnyvy4sj9839t23fkfsfnr3gun0w740uqfhwe4g"
-        },
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
@@ -3089,6 +3184,36 @@
           "domainSeparator": "0xf9a0a7d720169b49cd9d4351ec9eab0e6a49161d7258a3b507e93cd11fe8b315",
           "address": "axelar1cypnpcqk4zpk32stl7dutv3cdnag0q2v5a7dzfxh4jukrzxagxpqgjl5sr"
         },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 18,
+          "domainSeparator": "0xecb35aaefd4f374fa1ea62bc6280f4150361977ad6ecad5f2ef878a89feb214e",
+          "address": "axelar1ll4yhqtldlgqwqthyffqln3cyr2f8ydzhv0djpjyp6sk4v5k4kqqrs60s7"
+        },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 18,
+          "domainSeparator": "0xa0179f51986dc9adc4f4b5ca9aadc5125cbdb84449bf68509e09da0306c951f8",
+          "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw"
+        },
         "storeCodeProposalId": "175",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 18
@@ -3106,10 +3231,6 @@
           "codeId": 24,
           "address": "axelar1svl69e32m240xgjluezrvpudjn92usrn3dqzfm2tzn3zqkn76d6qfse593"
         },
-        "xrpl-evm-test-1": {
-          "codeId": 24,
-          "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-        },
         "xrpl-evm": {
           "codeId": 24,
           "address": "axelar1vvdukrmxdylvnn8e59s3gnn49lutv3n9tg4vnsttn33a8zulgfssl62q69"
@@ -3120,6 +3241,14 @@
         "stellar-2025-q1": {
           "codeId": 24,
           "address": "axelar1h5mvyzjjara9a5jk4psayas6pg9c55llay02mmaprzmfk5r6epfqqadvs4"
+        },
+        "plume": {
+          "codeId": 24,
+          "address": "axelar163ee8p7xne8een7v3hwz6zxh339v6s8js3v5c9520mlnzd7nxneq5eq86v"
+        },
+        "berachain": {
+          "codeId": 24,
+          "address": "axelar1yedkcrlaf479vcu3xk47emzryc89kwm2m06zmecrd7ruqu4wguuqk0z0vg"
         }
       },
       "VotingVerifier": {
@@ -3168,21 +3297,6 @@
           "codeId": 26,
           "address": "axelar1sykyha8kzf35kc5hplqk76kdufntjn6w45ntwlevwxp74dqr3rvsq7fazh"
         },
-        "xrpl-evm-test-1": {
-          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-          "serviceName": "amplifier",
-          "sourceGatewayAddress": "0xA1eBb6A4b856dF8bf6c3aCa88a9115a9ab3b2E02",
-          "votingThreshold": [
-            "51",
-            "100"
-          ],
-          "blockExpiry": 10,
-          "confirmationHeight": 1,
-          "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "eip55",
-          "codeId": 26,
-          "address": "axelar1wn27x0th9amw5z59tssn5f9hwraevla8xx7ksur570npfpkckr9s257vet"
-        },
         "xrpl-evm": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "serviceName": "amplifier",
@@ -3212,6 +3326,36 @@
           "addressFormat": "stellar",
           "codeId": 26,
           "address": "axelar1a4wt84rllhuwpdvymj4tql6cugfsmdmau9ufmzcm329yx9st96eqx05uam"
+        },
+        "plume": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 26,
+          "address": "axelar1nrdqke6tcxjuymg5gyd9x3yg35n3wrgarnj3sqskp98z2xnvlx9q82f63t"
+        },
+        "berachain": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 26,
+          "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal"
         },
         "storeCodeProposalId": "183",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
@@ -3262,12 +3406,12 @@
           "verifierSetDiffThreshold": 1,
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
-          "codeId": 33,
+          "codeId": 57,
           "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
         },
-        "storeCodeProposalId": "247",
-        "storeCodeProposalCodeHash": "5bfc4d78765c25c85b1e93fb9d693b7ff2805620db8987d8181cc9600caec912",
-        "lastUploadedCodeId": 33
+        "storeCodeProposalId": "312",
+        "storeCodeProposalCodeHash": "bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a",
+        "lastUploadedCodeId": 57
       },
       "XrplVotingVerifier": {
         "xrpl": {
@@ -3279,23 +3423,23 @@
           ],
           "blockExpiry": 10,
           "confirmationHeight": 1,
-          "codeId": 31,
+          "codeId": 56,
           "address": "axelar1pnynr6wnmchutkv6490mdqqxkz54fnrtmq8krqhvglhsqhmu7wzsnc86sy"
         },
-        "storeCodeProposalCodeHash": "bd408b0d152ab460e53f2ca4107153df7a169cec9e501fc058f242abaaf0e23e",
-        "lastUploadedCodeId": 31,
-        "storeCodeProposalId": "245"
+        "storeCodeProposalCodeHash": "7055d307103d5bcbed4c9465f40084acdb0f154a8dda0d8c0ee68f865892874a",
+        "lastUploadedCodeId": 56,
+        "storeCodeProposalId": "311"
       },
       "XrplGateway": {
         "xrpl": {
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "adminAddress": "axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35",
-          "codeId": 32,
+          "codeId": 55,
           "address": "axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh"
         },
-        "storeCodeProposalId": "255",
-        "storeCodeProposalCodeHash": "695eac10df3b5e5c571047ddab1bc64b92e80938d424907d7e2039c86883fd51",
-        "lastUploadedCodeId": 34
+        "storeCodeProposalId": "310",
+        "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
+        "lastUploadedCodeId": 55
       }
     },
     "axelarId": "axelar",
@@ -3306,6 +3450,12 @@
     "tokenSymbol": "AXL",
     "axelarscanApi": "https://testnet.api.axelarscan.io",
     "gasPrice": "0.007uaxl",
-    "gasLimit": "auto"
+    "gasLimit": "auto",
+    "govProposalDepositAmount": "2000000000",
+    "govProposalInstantiateAddresses": [
+      "axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2",
+      "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+      "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7"
+    ]
   }
 }
