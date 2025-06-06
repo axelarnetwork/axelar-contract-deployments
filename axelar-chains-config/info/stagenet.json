@@ -2488,6 +2488,21 @@
           "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
         }
       }
+    },
+    "solana": {
+      "name": "Solana",
+      "axelarId": "solana",
+      "rpc": "https://api.devnet.solana.com",
+      "chainType": "svm",
+      "decimals": 9,
+      "finality": "31",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "SOL",
+      "explorer": {
+        "name": "Solana Explorer",
+        "url": "https://explorer.solana.com/?cluster=devnet"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
@@ -2710,6 +2725,18 @@
           "domainSeparator": "0x500160c7def19100fa590da323c3c796b53dd4a4bd68b5f971c516545f3f7051",
           "address": "axelar1zwg52tslcf5vq5ge4yc2lqslc9v6z0ynxu59jnwdw7spy00je0dsn2g93z"
         },
+        "solana": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "borsh",
+          "keyType": "ecdsa"
+        },
         "storeCodeProposalId": "69",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 21
@@ -2890,6 +2917,19 @@
           "addressFormat": "eip55",
           "codeId": 24,
           "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92"
+        },
+        "solana": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 31,
+          "msgIdFormat": "base58_tx_signature_and_log_index",
+          "addressFormat": "solana"
         },
         "storeCodeProposalId": "72",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
