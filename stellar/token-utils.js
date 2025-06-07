@@ -26,7 +26,7 @@ async function createStellarAssetContract(wallet, _config, chain, contract, args
     const operation = contract.call('create_stellar_asset_contract', xdrAssetScVal);
     const returnValue = await broadcast(operation, wallet, chain, 'create_stellar_asset_contract', options);
 
-    printInfo('contract address', serializeValue(returnValue.value()));
+    printInfo('Stellar asset contract address', serializeValue(returnValue.value()));
 }
 
 async function mainProcessor(processor, args, options) {
