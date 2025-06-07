@@ -419,3 +419,24 @@ Transfer the operatorship of the contract:
 ```bash
 ts-node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
+
+## Deploy Stellar Asset Contract
+
+The deploy-stellar-asset-contract command allows you to deploy a Stellar asset contract through the Token Utils contract. This creates a smart contract wrapper for an existing Stellar classic asset, enabling it to be used within the Stellar ecosystem. The command validates the asset parameters and returns the deployed contract's address.
+
+#### Usage
+
+```bash
+ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issuer-address]
+```
+
+#### Parameters
+
+- `<asset-code>`: The asset code for the Stellar asset (e.g., "USDC", "AQUA", "PEN")
+- `<issuer-address>`: The Stellar address of the asset issuer
+
+#### Example
+
+```bash
+ts-node stellar/token-utils.js deploy-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
+```

@@ -189,6 +189,10 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             return {};
         }
 
+        case 'TokenUtils': {
+            return {};
+        }
+
         default:
             throw new Error(`Unknown contract: ${contractName}`);
     }
