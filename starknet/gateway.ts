@@ -21,8 +21,8 @@ import {
 } from './types';
 
 async function callContract(
-    config: Config, 
-    chain: ChainConfig & { name: string }, 
+    config: Config,
+    chain: ChainConfig & { name: string },
     options: GatewayCommandOptions
 ): Promise<any | OfflineTransactionResult> {
     const {
@@ -73,8 +73,8 @@ async function callContract(
 }
 
 async function approveMessages(
-    config: Config, 
-    chain: ChainConfig & { name: string }, 
+    config: Config,
+    chain: ChainConfig & { name: string },
     options: GatewayCommandOptions
 ): Promise<any | OfflineTransactionResult> {
     const {
@@ -120,8 +120,8 @@ async function approveMessages(
 }
 
 async function validateMessage(
-    config: Config, 
-    chain: ChainConfig & { name: string }, 
+    config: Config,
+    chain: ChainConfig & { name: string },
     options: GatewayCommandOptions
 ): Promise<any | OfflineTransactionResult> {
     const {
@@ -365,11 +365,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const cmdOptions = {
                     ...options,
@@ -405,11 +400,6 @@ async function main(): Promise<void> {
             const chain = config.chains[chainName];
             if (!chain) {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
-            }
-
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
             }
 
             try {
@@ -450,11 +440,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const cmdOptions = {
                     ...options,
@@ -491,11 +476,6 @@ async function main(): Promise<void> {
             const chain = config.chains[chainName];
             if (!chain) {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
-            }
-
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
             }
 
             try {
@@ -537,11 +517,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const cmdOptions = {
                     ...options,
@@ -580,11 +555,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const cmdOptions = {
                     ...options,
@@ -619,11 +589,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const cmdOptions = {
                     ...options,
@@ -656,11 +621,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
-
             try {
                 const result = await getOperator(config, { ...chain, name: chainName }, options);
                 console.log(`✅ get-operator completed for ${chainName}\n`);
@@ -688,10 +648,6 @@ async function main(): Promise<void> {
                 throw new Error(`Chain ${chainName} not found in environment ${options.env}`);
             }
 
-            if (chain.chainType !== 'starknet') {
-                console.log(`Skipping ${chainName} - not a Starknet chain`);
-                continue;
-            }
 
             try {
                 const result = await getEpoch(config, { ...chain, name: chainName }, options);

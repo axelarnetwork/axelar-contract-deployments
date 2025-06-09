@@ -9,141 +9,119 @@ import { CliOptionConfig } from './types';
  * Extends base options with Starknet-specific parameters for key management,
  * offline workflows, Ledger support, and contract operations
  */
-export const addStarknetOptions = (program: Command, options: CliOptionConfig = {}): Command => {
-    addBaseOptions(program, options);
+export const addStarknetOptions = (program: Command, config: CliOptionConfig = {}): Command => {
+    addBaseOptions(program, config);
 
-    if (!options.ignorePrivateKey) {
+    if (!config.ignorePrivateKey) {
         program.addOption(
-            new Option('-p, --privateKey <privateKey>', 'private key for Starknet account (testnet only)')
+            new Option('--privateKey <privateKey>', 'private key for Starknet account (testnet only, not required for offline tx generation)')
                 .env('STARKNET_PRIVATE_KEY')
         );
     }
 
-    if (!options.ignoreAccountAddress) {
+    if (!config.ignoreAccountAddress) {
         program.addOption(
-            new Option('-a, --accountAddress <accountAddress>', 'Starknet account address')
+            new Option('--accountAddress <accountAddress>', 'Starknet account address')
                 .env('STARKNET_ACCOUNT_ADDRESS')
         );
     }
 
-    if (options.offlineSupport) {
+    if (config.offlineSupport) {
         program.addOption(
             new Option('--offline', 'generate unsigned transaction for offline signing')
                 .env('OFFLINE')
         );
 
         program.addOption(
-            new Option('--outputDir <outputDir>', 'output directory for unsigned transactions')
+            new Option('--outputDir <outputDir>', 'output directory for unsigned transactions (required for --offline)')
                 .default('./starknet-offline-txs')
                 .env('OUTPUT_DIR')
-        );
-
-        program.addOption(
-            new Option('--package', 'create offline package with dependencies')
-                .env('PACKAGE')
         );
 
         program.addOption(
             new Option('--nonce <nonce>', 'nonce for offline transaction generation (required for --offline)')
                 .env('NONCE')
         );
-
-        program.addOption(
-            new Option('--l1GasMaxAmount <l1GasMaxAmount>', 'maximum L1 gas amount (default: 0)')
-                .default('0')
-                .env('L1_GAS_MAX_AMOUNT')
-        );
-
-        program.addOption(
-            new Option('--l1GasMaxPricePerUnit <l1GasMaxPricePerUnit>', 'maximum L1 gas price per unit in wei (default: 0)')
-                .default('0')
-                .env('L1_GAS_MAX_PRICE_PER_UNIT')
-        );
-
-        program.addOption(
-            new Option('--l2GasMaxAmount <l2GasMaxAmount>', 'maximum L2 gas amount (default: 0)')
-                .default('0')
-                .env('L2_GAS_MAX_AMOUNT')
-        );
-
-        program.addOption(
-            new Option('--l2GasMaxPricePerUnit <l2GasMaxPricePerUnit>', 'maximum L2 gas price per unit in wei (default: 0)')
-                .default('0')
-                .env('L2_GAS_MAX_PRICE_PER_UNIT')
-        );
     }
 
-    if (options.ledgerSupport) {
+    if (config.declaration) {
         program.addOption(
-            new Option('--useLedger', 'use Ledger hardware wallet for signing (mainnet)')
-                .env('USE_LEDGER')
+            new Option('--compiledClassHash <compiledClassHash>', 'compiled class hash for declare transactions (generate with: starkli class-hash <compiled_contract_class.json>)')
+                .env('COMPILED_CLASS_HASH')
         );
-
         program.addOption(
-            new Option('--derivationPath <derivationPath>', 'Ledger derivation path')
-                .default("m/2645'/579218131'/0'/0'")
-                .env('DERIVATION_PATH')
-        );
-    }
-
-    if (options.signatureSupport) {
-        program.addOption(
-            new Option('--combineSignatures', 'combine multiple signatures')
-                .env('COMBINE_SIGNATURES')
-        );
-
-        program.addOption(
-            new Option('--multisigSignatures <multisigSignatures>', 'comma-separated list of signature hex values')
-                .env('MULTISIG_SIGNATURES')
-        );
-    }
-
-    if (options.contractName) {
-        program.addOption(
-            new Option('-c, --contractName <contractName>', 'contract name')
+            new Option('--contractName <contractName>', 'contract name')
                 .makeOptionMandatory(true)
         );
     }
 
-    if (options.classHash) {
+    if (config.deployment) {
+        program.addOption(
+            new Option('--contractName <contractName>', 'contract name')
+                .makeOptionMandatory(true)
+        );
+        program.addOption(
+            new Option('--classHash <classHash>', 'class hash for contract deployment')
+        );
+        program.addOption(
+            new Option('--constructorCalldata <constructorCalldata>', 'constructor calldata as JSON array')
+        );
+        program.addOption(
+            new Option('--salt <salt>', 'salt for deterministic deployment')
+                .default('0')
+                .env('SALT')
+        );
+    }
+
+    if (config.upgrade) {
+        program.addOption(
+            new Option('--contractAddress <contractAddress>', 'contract address')
+                .env('CONTRACT_ADDRESS')
+        );
+        program.addOption(
+            new Option('--contractName <contractName>', 'contract name')
+                .makeOptionMandatory(true)
+        );
         program.addOption(
             new Option('--classHash <classHash>', 'class hash for contract deployment')
         );
     }
 
-    if (options.constructorCalldata) {
-        program.addOption(
-            new Option('--constructorCalldata <constructorCalldata>', 'constructor calldata as JSON array')
-        );
-    }
+    program.addOption(
+        new Option('--l1GasMaxAmount <l1GasMaxAmount>', 'maximum L1 gas amount (default: 0)')
+            .default('0')
+            .env('L1_GAS_MAX_AMOUNT')
+    );
 
-    if (options.salt) {
-        program.addOption(
-            new Option('-s, --salt <salt>', 'salt for deterministic deployment')
-                .env('SALT')
-        );
-    }
+    program.addOption(
+        new Option('--l1GasMaxPricePerUnit <l1GasMaxPricePerUnit>', 'maximum L1 gas price per unit in wei (default: 0)')
+            .default('0')
+            .env('L1_GAS_MAX_PRICE_PER_UNIT')
+    );
 
-    if (options.verify) {
-        program.addOption(
-            new Option('-v, --verify', 'verify the deployed contract')
-                .env('VERIFY')
-        );
-    }
+    program.addOption(
+        new Option('--l2GasMaxAmount <l2GasMaxAmount>', 'maximum L2 gas amount (default: 0)')
+            .default('0')
+            .env('L2_GAS_MAX_AMOUNT')
+    );
 
-    if (options.upgrade) {
-        program.addOption(
-            new Option('--upgrade', 'upgrade existing contract instead of deploying new one')
-                .env('UPGRADE')
-        );
-    }
+    program.addOption(
+        new Option('--l2GasMaxPricePerUnit <l2GasMaxPricePerUnit>', 'maximum L2 gas price per unit in wei (default: 0)')
+            .default('0')
+            .env('L2_GAS_MAX_PRICE_PER_UNIT')
+    );
 
-    if (options.contractAddress) {
-        program.addOption(
-            new Option('--contractAddress <contractAddress>', 'contract address for upgrade operations')
-                .env('CONTRACT_ADDRESS')
-        );
-    }
+    program.addOption(
+        new Option('--l1DataMaxAmount <l1DataMaxAmount>', 'maximum L1 data amount (default: 0)')
+            .default('0')
+            .env('L1_DATA_MAX_AMOUNT')
+    );
+
+    program.addOption(
+        new Option('--l1DataMaxPricePerUnit <l1DataMaxPricePerUnit>', 'maximum L1 data price per unit in wei (default: 0)')
+            .default('0')
+            .env('L1_DATA_MAX_PRICE_PER_UNIT')
+    );
 
     return program;
 };

@@ -17,6 +17,10 @@ export interface ResourceBounds {
         max_amount: string;
         max_price_per_unit: string;
     };
+    l1_data: {
+        max_amount: string;
+        max_price_per_unit: string;
+    };
 }
 
 /**
@@ -26,8 +30,6 @@ export interface ResourceBounds {
 export interface ChainConfig {
     /** RPC endpoint URL for connecting to the chain */
     rpc: string;
-    /** Type of blockchain (e.g., 'starknet', 'evm', etc.) */
-    chainType: string;
     /** Optional mapping of contract names to their deployment configurations */
     contracts?: Record<string, ContractConfig>;
     /** Universal deployer contract address for Starknet deployments */
@@ -111,16 +113,36 @@ export interface ContractArtifact {
 }
 
 /**
- * Represents an unsigned transaction for offline signing
- * Contains all necessary data for transaction execution
+ * Base fields for all unsigned transactions
  */
-export interface UnsignedTransaction {
+interface BaseUnsignedTransaction {
     /** Transaction type (e.g., 'INVOKE', 'DECLARE', 'DEPLOY') */
     type: string;
     /** Transaction version (e.g., '0x3' for v3 transactions) */
     version: string;
     /** Address of the account sending the transaction */
     sender_address: string;
+    /** Account nonce for transaction ordering */
+    nonce: string;
+    /** Gas limits and pricing for L1 and L2 */
+    resource_bounds: ResourceBounds;
+    /** Optional tip for block producers */
+    tip: string;
+    /** Data for paymaster sponsorship (if applicable) */
+    paymaster_data: any[];
+    /** Data availability mode for nonce (L1 or L2) */
+    nonce_data_availability_mode: string;
+    /** Data availability mode for fee (L1 or L2) */
+    fee_data_availability_mode: string;
+    /** Unix timestamp of transaction creation */
+    timestamp: number;
+}
+
+/**
+ * Unsigned invoke transaction for offline signing
+ */
+export interface UnsignedInvokeTransaction extends BaseUnsignedTransaction {
+    type: 'INVOKE';
     /** Array of contract calls to execute */
     calls: Array<{
         /** Target contract address */
@@ -130,23 +152,25 @@ export interface UnsignedTransaction {
         /** Encoded function arguments */
         calldata: string[];
     }>;
-    /** Account nonce for transaction ordering */
-    nonce: string;
-    /** Gas limits and pricing for L1 and L2 */
-    resource_bounds: ResourceBounds;
-    /** Optional tip for block producers */
-    tip: string;
-    /** Data for paymaster sponsorship (if applicable) */
-    paymaster_data: any[];
     /** Data for account deployment (if applicable) */
     account_deployment_data: any[];
-    /** Data availability mode for nonce (L1 or L2) */
-    nonce_data_availability_mode: string;
-    /** Data availability mode for fee (L1 or L2) */
-    fee_data_availability_mode: string;
-    /** Unix timestamp of transaction creation */
-    timestamp: number;
 }
+
+/**
+ * Unsigned declare transaction for offline signing
+ */
+export interface UnsignedDeclareTransaction extends BaseUnsignedTransaction {
+    type: 'DECLARE';
+    /** Contract class to declare */
+    contract_class: CompiledContract;
+    /** Compiled class hash */
+    compiled_class_hash: string;
+}
+
+/**
+ * Union type for all unsigned transactions
+ */
+export type UnsignedTransaction = UnsignedInvokeTransaction | UnsignedDeclareTransaction;
 
 /**
  * Options for generating unsigned transactions
@@ -177,6 +201,12 @@ export interface OfflineTransactionOptions {
     l2GasMaxAmount?: string;
     /** Maximum L2 gas price per unit */
     l2GasMaxPricePerUnit?: string;
+    /** Maximum L1 data amount */
+    l1DataMaxAmount?: string;
+    /** Maximum L1 data price per unit */
+    l1DataMaxPricePerUnit?: string;
+    /** Compiled class hash (required for declare transactions, computed with starkli) */
+    compiledClassHash?: string;
     /** Whether offline mode is enabled */
     offline?: boolean;
 }
@@ -236,6 +266,18 @@ export interface DeployContractOptions extends StarknetCommandOptions {
 }
 
 /**
+ * Options for contract upgrade commands
+ */
+export interface UpgradeContractOptions extends StarknetCommandOptions {
+    /** Name of the contract to upgrade */
+    contractName?: string;
+    /** New class hash for the upgrade */
+    classHash?: string;
+    /** Contract address to upgrade (optional if already in config) */
+    contractAddress?: string;
+}
+
+/**
  * Options for gateway contract interactions
  */
 export interface GatewayCommandOptions extends StarknetCommandOptions {
@@ -272,25 +314,15 @@ export interface CliOptionConfig {
     ignorePrivateKey?: boolean;
     /** Skip account address option */
     ignoreAccountAddress?: boolean;
-    /** Add contract name option */
-    contractName?: boolean;
-    /** Add class hash option */
-    classHash?: boolean;
-    /** Add constructor calldata option */
-    constructorCalldata?: boolean;
-    /** Add salt option */
-    salt?: boolean;
-    /** Add upgrade flag */
+    /** Is the command related to contract declaration? */
+    declaration?: boolean;
+    /** Is the command related to contract deployment? */
+    deployment?: boolean;
+    /** Is the command related to upgrading a deployment? */
     upgrade?: boolean;
     /** Add contract address option */
     contractAddress?: boolean;
     /** Enable offline transaction support */
     offlineSupport?: boolean;
-    /** Add Ledger support options */
-    ledgerSupport?: boolean;
-    /** Add signature handling options */
-    signatureSupport?: boolean;
-    /** Add contract verification option */
-    verify?: boolean;
 }
 

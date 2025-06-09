@@ -47,6 +47,10 @@ CHAIN_NAMES=starknet-sepolia
 - **Testnet/Devnet**: Private key-based signing
 - **Mainnet**: Mandatory offline workflow with Ledger hardware wallets
 
+### Transaction Types
+- **Invoke Transactions**: Contract calls with L1 data availability support
+- **Declare Transactions**: Contract class declarations with compiled class hash validation
+
 ### Contract Support
 - ✅ Contract deployment and upgrades
 - ✅ Gateway operations (call contract, approve messages, validate messages)
@@ -56,6 +60,7 @@ CHAIN_NAMES=starknet-sepolia
 ## 📚 Documentation
 
 ### Contract-Specific Guides
+- **[Contract Declaration](./docs/declare-contract.md)** - Declare contract classes (includes offline workflow)
 - **[Contract Deployment](./docs/deploy-contract.md)** - Deploy and upgrade contracts
 - **[Gateway Operations](./docs/gateway.md)** - Cross-chain messaging and gateway management
 
@@ -103,6 +108,32 @@ starknet/artifacts/
 - `--nonce`: Account nonce (required for offline)
 - `--outputDir`: Output directory for offline files
 
+**Declare-Specific Options:**
+- `--compiledClassHash`: Compiled class hash (required for offline declare, generate with `starkli class-hash`)
+- `--l1DataMaxAmount`: Maximum L1 data amount (default: 128)
+- `--l1DataMaxPricePerUnit`: Maximum L1 data price per unit (default: 10000000000)
+
+## 📋 Quick Command Reference
+
+### Declare Contract (Offline)
+```bash
+# 1. Generate compiled class hash
+starkli class-hash path/to/contract.compiled_contract_class.json
+
+# 2. Generate offline declare transaction
+npx ts-node starknet/declare-contract.ts \
+  --env testnet \
+  --chainNames starknet-sepolia \
+  --contractName AxelarGateway \
+  --offline \
+  --nonce 123 \
+  --accountAddress 0x1234... \
+  --compiledClassHash 0xabcd...
+```
+
+### Declare Contract (Online - Testnet Only)
+Use `starkli declare...`
+
 ## 🔍 Troubleshooting
 
 ### Common Issues
@@ -118,6 +149,9 @@ starknet/artifacts/
 
 **"Account address required for offline transaction generation"**
 - Solution: Add `--accountAddress 0x...` flag
+
+**"Compiled class hash is required for offline declare transaction"**
+- Solution: Generate with `starkli class-hash <compiled_contract_class.json>` and use `--compiledClassHash 0x...`
 
 ### Debug Mode
 
