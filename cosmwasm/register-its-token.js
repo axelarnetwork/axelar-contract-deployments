@@ -5,13 +5,12 @@ const { Contract, getDefaultProvider } = ethers;
 const { Command, Option } = require('commander');
 const IInterchainToken = require('@axelar-network/interchain-token-service/artifacts/contracts/interfaces/IInterchainToken.sol/IInterchainToken.json')
 const fs = require('fs');
-const { printError, loadConfig, saveConfig } = require('../common');
+const { printError, loadConfig, saveConfig, printInfo } = require('../common');
 const { initContractConfig, prepareWallet, prepareClient } = require('./utils');
 const { addAmplifierOptions } = require('./cli-utils');
 
 class TokenIterator {
     constructor(env, info, tokenInfo, options) {
-        console.log(options);
         this.env = env
         this.info = info;
         this.tokenInfo = tokenInfo;
@@ -38,6 +37,7 @@ class TokenIterator {
             this.tokenIndex++;
             const token = this.token();
             if(!token) continue;
+
             this.chainNames = this.chains || Object.keys(token).slice(0, -1);
             this.chainIndex = 0;
             return true;
@@ -50,6 +50,10 @@ class TokenIterator {
 
     chainName() {
         return this.chainNames[this.chainIndex];
+    }
+
+    axelarId() {
+        return this.info.chains[this.chainName()].axelarId;
     }
 
     rpc() {
@@ -65,9 +69,11 @@ class TokenIterator {
         fs.writeFileSync(`./axelar-chains-config/info/tokens-${this.env}.json`, JSON.stringify(this.tokenInfo, null, 2));                 
         while (true) {
             this.chainIndex++;
+
             if (this.chainIndex >= this.chainNames.length) {
                 if(!this.incrementTokenIndex()) return false;
             }
+
             const chainName = this.chainName();
 
             const token = this.token();
@@ -85,6 +91,7 @@ class TokenIterator {
                 } catch (e) {
                     printError('Failed to query token supply for', current.tokenAddress);
                 }
+
                 console.log(`Chain Progress: ${this.chainIndex + 1}/${this.chainNames.length} | Token Progress: ${this.tokenIndex + 1}/${this.tokenIds.length}`)
                 return true;
             }
@@ -92,7 +99,7 @@ class TokenIterator {
     }
 }
 
-async function registerToken(client, wallet, tokenIterator) {
+async function registerToken(client, wallet, tokenIterator, options) {
     const config = loadConfig(tokenIterator.env);
 
     initContractConfig(config, {contractName: "InterchainTokenService"});
@@ -100,33 +107,26 @@ async function registerToken(client, wallet, tokenIterator) {
     const supply = tokenIterator.get().supply;
     const supplyParam = supply ? {"tracked": String(supply)} : "untracked";
     const msg = { "register_p2p_token_instance": {
-        "chain": tokenIterator.chainName(),
+        "chain": tokenIterator.axelarId(),
         "token_id": tokenIterator.tokenId().slice(2),
-        "origin_chain": tokenIterator.token().originChain,
+        "origin_chain": tokenIterator.info.chains[tokenIterator.token().originChain].axelarId,
         "decimals": tokenIterator.get().decimals,
         "supply": supplyParam,
     } };
-    console.log(msg); return;
-    const registeredChains = {};
-    const registered = await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {"token_instance": {chain: tokenIterator.chainName(), "token_id": tokenIterator.tokenId().slice(2)}});
+
+    const interchainTokenServiceAddress = tokenIterator.info.axelar.contracts.InterchainTokenService.address;
+    const registered = await client.queryContractSmart(interchainTokenServiceAddress, {"token_instance": {chain: tokenIterator.chainName(), "token_id": tokenIterator.tokenId().slice(2)}});
     if (registered) return;
-    const [account] = await wallet.getAccounts(info.axelar.contracts.InterchainTokenService.address, {});
 
-    const ensureChainRegistered = async (chain) => {
-        if(registeredChains[chain]) return;
-        registeredChains[chain] = true;
-        if(await client.queryContractSmart(info.axelar.contracts.InterchainTokenService.address, {"its_chain": {"chain": chain}})) return;
-        const msg = {"register_chains":{"chains":[{"chain":chain,"its_edge_contract":"source-its-contract","truncation":{"max_uint_bits":256,"max_decimals_when_truncating":255}}]}};
-        await client.execute(account.address, info.axelar.contracts.InterchainTokenService.address, msg, 'auto');
+    const [account] = await wallet.getAccounts(interchainTokenServiceAddress, {});
+    printInfo('Registerring ', msg.register_p2p_token_instance);
+    if (!options.dryRun) {
+        await client.execute(account.address, interchainTokenServiceAddress, msg, 'auto');
+        // If registration is successfull skip this token in the future without needing to query.
+        tokenIterator.get().registered = true;
     }
-    await ensureChainRegistered(tokenIterator.chainName());
-    await ensureChainRegistered(tokenIterator.token().originChain);
-    
-    await client.execute(account.address, info.axelar.contracts.InterchainTokenService.address, msg, 'auto');
-    // If registration is successfull skip this token in the future without needing to query.
-    tokenIterator.get().registered = true;
 
-    saveConfig(config, env);
+    saveConfig(config, options.env);
 }
 
 const processCommand = async (options) => {
@@ -145,7 +145,7 @@ const processCommand = async (options) => {
     let iter = new TokenIterator(env, info, tokenInfo, options);
 
     while (await iter.getNext()) {
-        await registerToken(client, wallet, iter);
+        await registerToken(client, wallet, iter, options);
     }
 
     saveConfig(config, env);
@@ -158,9 +158,10 @@ const programHandler = () => {
 
     addAmplifierOptions(program, {});
 
-    program.addOption(new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for'));
-    program.addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for'));
-    program.addOption(new Option('-rpcs, --rpcs <rpcs...>', 'rpcs. Must be provided alongside a --chains argument and their length must match'));
+    program.addOption(new Option('-tokenIds, --tokenIds <tokenIds...>', 'tokenIds to run the script for').env('TOKEN_IDS'));
+    program.addOption(new Option('-chains, --chains <chains...>', 'chains to run the script for').env('CHAINS'));
+    program.addOption(new Option('-rpcs, --rpcs <rpcs...>', 'rpcs. Must be provided alongside a --chains argument and their length must match').env('RPCS'));
+    program.addOption(new Option('-dryRun, --dryRun', 'provide to just print out what will happen when running the command.'));
 
     program.action((options) => {
         processCommand(options);
