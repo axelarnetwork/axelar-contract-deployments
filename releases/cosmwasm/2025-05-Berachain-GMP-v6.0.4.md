@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Deployed              | 2025-05-20 |
 | **Stagenet**         | Deployed              | 2025-05-27 |
 | **Testnet**          | Deployed              | 2025-06-03 |
-| **Mainnet**          | Deployed              | 2025-06-07 |
+| **Mainnet**          | Deployed              | 2025-06-12 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -245,7 +245,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1100000000`        |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -289,8 +289,28 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
-    Add Rewards:
+10. Register Berachain ITS on ITS Hub
+
+Proceed with this step only if ITS deployment on $CHAIN is confirmed. Replace `contracts` in $CHAIN config on `ENV.json` with following:
+
+```json
+{
+  "InterchainTokenService": {
+    "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+  }
+}
+```
+
+```bash
+ts-node cosmwasm/submit-proposal.js \
+    its-hub-register-chains $CHAIN \
+    -t "Register $CHAIN on ITS Hub" \
+    -d "Register $CHAIN on ITS Hub"
+```
+
+1.  Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+  
+Add Rewards:
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
@@ -303,7 +323,7 @@ Check reward pool to confirm funding worked:
 ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+12. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`                        |
 | -------------------- | --------------------------------- |
@@ -333,14 +353,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-12. Update ampd with the `$CHAIN` chain configuration.
+13. Update ampd with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-
-13. Create genesis verifier set
+14. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
