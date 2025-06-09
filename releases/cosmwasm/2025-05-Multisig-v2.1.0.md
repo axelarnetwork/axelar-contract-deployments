@@ -29,7 +29,7 @@ Changes in this release:
 1. Upload new Multisig contract
 
 ```bash
-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.1.0" -d "Upload Multisig contract v2.1.0" --version 2.1.0
+ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.1.0" -d "Upload Multisig contract v2.1.0" --version 2.1.0
 ```
 
 2. Upgrade Multisig contract
@@ -37,7 +37,7 @@ node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract 
 There is no state migration needed during upgrade.
 
 ```bash
-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c Multisig \
   -t "Migrate Multisig to v2.1.0" \
   -d "Multisig to v2.1.0" \
