@@ -629,6 +629,10 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
             validateParameters({ isValidStellarAddress: { destinationAddress } });
             return asciiToBytes(destinationAddress);
 
+        case 'xrpl':
+            // TODO: validate XRPL address format
+            return asciiToBytes(destinationAddress);
+
         case 'evm':
         case 'sui':
         default: // EVM, Sui, and other chains (return as-is)
