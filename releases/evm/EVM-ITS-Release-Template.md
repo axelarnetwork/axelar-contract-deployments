@@ -45,13 +45,13 @@ CHAIN=<chain name>
 ### Devnet Amplifier
 
 ```bash
-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -65,7 +65,7 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM chains.
 
 ```bash
-node evm/its.js set-trusted-chains $CHAIN hub -n all
+ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
 ```
 
 Set $CHAIN as trusted chain on sui and stellar
@@ -81,7 +81,7 @@ The following checks should be performed after the rollout.
 - Run post-deployment checks.
 
 ```bash
-node evm/its.js checks -n $CHAIN -y
+ts-node evm/its.js checks -n $CHAIN -y
 ```
 
 - Verify the token manager proxy contract once an ITS token is deployed on $CHAIN and then mark it as a proxy.
@@ -90,16 +90,16 @@ node evm/its.js checks -n $CHAIN -y
 
 ```bash
 # Create a token on chain. Substitute the `minter-address` below with the deployer key
-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
- node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
+ ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
 
 # Transfer token to remote chain
-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
 
 # Transfer token back from remote chain
-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
 ```
 
 - Run Sui ITS [Checklist](https://github.com/axelarnetwork/axelar-contract-deployments/blob/main/releases/sui/2025-03-ITS-v1.1.3.md#checklist)

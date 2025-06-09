@@ -81,7 +81,7 @@ shasum -a 256 $ARTIFACT_PATH/xrpl_multisig_prover.wasm | grep $CHECKSUM
 4. Store `XRPLMultisigProver` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js store \
+ts-node cosmwasm/submit-proposal.js store \
   -c XrplMultisigProver \
   -t "Upload XRPLMultisigProver contract v1.3.1" \
   -d "Upload XRPLMultisigProver contract v1.3.1" \
@@ -93,7 +93,7 @@ node cosmwasm/submit-proposal.js store \
 6. Migrate `XRPLMultisigProver` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c XrplMultisigProver \
   -t "Migrate XRPLMultisigProver to v1.3.1" \
   -d "Migrate XRPLMultisigProver to v1.3.1" \
