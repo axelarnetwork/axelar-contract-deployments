@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+echo "Running 'npm run build' pre-commit..."
+npm run build
+
+bash ./.husky/scripts/detect-private-rpc.sh
