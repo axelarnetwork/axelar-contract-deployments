@@ -23,7 +23,7 @@ These are the instructions for deploying Amplifier contracts for Hedera chain co
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-04-Hedera-GMP-v6.0.6.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-04-Hedera-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
@@ -33,7 +33,7 @@ Predict the [External Gateway](../evm/2025-04-Hedera-GMP-v6.0.6.md) address, as 
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
 ```
 
 ## Deployment
@@ -116,19 +116,19 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Instantiate `VotingVerifier`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 2. Instantiate `Gateway`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 3. Instantiate `MultisigProver`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 4. Set environment variables
@@ -165,7 +165,7 @@ RUN_AS_ACCOUNT=[wasm deployer/governance address]
 5. Register Gateway at the Router
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for $CHAIN" \
   -d "Register Gateway address for $CHAIN at Router contract" \
@@ -195,7 +195,7 @@ axelard q wasm contract-state smart <router-address> '{"chain_info": "$CHAIN"}' 
 }
 ```
 
-6. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+6. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC ts-node for the `http_url` in production.
 
 | Network              | `http_url`                    |
 | -------------------- | ----------------------------- |
@@ -229,7 +229,7 @@ ampd register-chain-support "[service name]" $CHAIN
 8. Register prover contract on coordinator
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for $CHAIN" \
   -d "Register Multisig Prover address for $CHAIN at Coordinator contract" \
@@ -246,7 +246,7 @@ node cosmwasm/submit-proposal.js execute \
 9. Authorize `$CHAIN` Multisig prover on Multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for $CHAIN" \
   -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
@@ -281,7 +281,7 @@ axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"
 | **Mainnet**          | `14845`          | `["8", "10"]`             | `TBD`               |
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in $CHAIN voting verifier" \
   -d "Create pool for $CHAIN in $CHAIN voting verifier" \
@@ -305,7 +305,7 @@ node cosmwasm/submit-proposal.js execute \
 11. Create reward pool for multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in axelar multisig" \
   -d "Create pool for $CHAIN in axelar multisig" \
