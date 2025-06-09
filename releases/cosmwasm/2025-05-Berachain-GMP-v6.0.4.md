@@ -293,10 +293,17 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 Proceed with this step only if ITS deployment on $CHAIN is confirmed. Replace `contracts` in $CHAIN config on `ENV.json` with following:
 
+| Network              | `ITS_EDGE_CONTRACT`                          |
+| -------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff` |
+| **Stagenet**         | `0x0FCb262571be50815627C16Eca1f5F3D342FF5a5` |
+| **Testnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
+| **Mainnet**          | `0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C` |
+
 ```json
 {
   "InterchainTokenService": {
-    "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+    "address": "$ITS_EDGE_CONTRACT"
   }
 }
 ```
@@ -308,7 +315,7 @@ ts-node cosmwasm/submit-proposal.js \
     -d "Register $CHAIN on ITS Hub"
 ```
 
-1.  Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+11.  Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
   
 Add Rewards:
 
