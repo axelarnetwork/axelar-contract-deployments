@@ -289,6 +289,8 @@ ts-node cosmwasm/submit-proposal.js \
     -d "Register $CHAIN on ITS Hub"
 ```
 
+- Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
+
 11. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
