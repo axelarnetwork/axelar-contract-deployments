@@ -613,7 +613,7 @@ function asciiToBytes(string) {
 /**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
- * Note: - Stellar addresses are converted to ASCII byte arrays.
+ * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
@@ -627,6 +627,10 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
 
         case 'stellar':
             validateParameters({ isValidStellarAddress: { destinationAddress } });
+            return asciiToBytes(destinationAddress);
+
+        case 'xrpl':
+            // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
 
         case 'evm':
