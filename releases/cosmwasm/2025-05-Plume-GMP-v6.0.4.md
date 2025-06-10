@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
 | **Stagenet**         | Completed             | 2025-05-06 |
 | **Testnet**          | Completed             | 2025-05-27 |
-| **Mainnet**          | In progress           | 2025-06-05 |
+| **Mainnet**          | Completed             | 2025-06-10 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -322,7 +322,7 @@ node cosmwasm/query.js rewards -n $CHAIN
 | **Devnet-amplifier** | https://testnet-rpc.plume.org |
 | **Stagenet**         | https://testnet-rpc.plume.org |
 | **Testnet**          | https://testnet-rpc.plume.org |
-| **Mainnet**          | TBD                           |
+| **Mainnet**          | https://rpc.plume.org         |
 
 ```bash
 [[handlers]]
@@ -354,8 +354,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 21                  |
-| **Mainnet**          | 25                  |
+| **Testnet**          | 5                   |
+| **Mainnet**          | 5                   |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
