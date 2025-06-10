@@ -166,8 +166,8 @@ const addMigrateOptions = (program) => {
 };
 
 const addProposalOptions = (program) => {
-    program.addOption(new Option('-t, --title <title>', 'title of proposal'));
-    program.addOption(new Option('-d, --description <description>', 'description of proposal'));
+    program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
+    program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
     program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
