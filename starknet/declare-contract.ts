@@ -6,52 +6,91 @@ import { Command } from 'commander';
 import { loadConfig, saveConfig, prompt } from '../common';
 import { addStarknetOptions } from './cli-utils';
 import {
-    loadContractArtifact,
-    handleOfflineDeclareTransaction,
+    declareContract,
+    saveContractConfig,
     validateStarknetOptions,
+    getStarknetAccount,
+    getStarknetProvider
 } from './utils';
+import { readFileSync } from 'fs';
+import { CompiledContract } from 'starknet';
 import {
     Config,
     ChainConfig,
-    DeployContractOptions,
-    OfflineTransactionResult
+    DeclareContractOptions
 } from './types';
 
 async function processCommand(
-    _config: Config,
+    config: Config,
     chain: ChainConfig & { name: string },
-    options: DeployContractOptions
-): Promise<Config | OfflineTransactionResult> {
+    options: DeclareContractOptions
+): Promise<Config> {
     const {
         privateKey,
         accountAddress,
-        offline,
+        contractConfigName,
+        contractPath,
+        yes,
         env,
-        compiledClassHash,
-        contractName,
     } = options;
 
-    // Declare script is offline-only, use starkli for online declarations
-    if (!offline) {
-        throw new Error('This script only supports offline declare transaction generation. For online contract declaration, use: starkli declare <contract_class.json> --compiled-class-hash <compiled_class_hash>');
+    // Validate execution options
+    validateStarknetOptions(env, false, privateKey, accountAddress);
+
+    console.log(`\nDeclaring contract on ${chain.name}...`);
+
+    // Initialize account for online operations
+    const provider = getStarknetProvider(chain);
+    const account = getStarknetAccount(privateKey!, accountAddress!, provider);
+
+    // Load contract artifact from file path
+    console.log(`Loading contract artifact from ${contractPath}...`);
+    let contractArtifact;
+    try {
+        const contractData = readFileSync(contractPath, 'utf8');
+        contractArtifact = JSON.parse(contractData) as CompiledContract;
+    } catch (error) {
+        throw new Error(`Failed to load contract artifact from ${contractPath}: ${error.message}`);
     }
 
-    console.log(`\nGenerating unsigned declare transaction on ${chain.name}...`);
-
-    if (!compiledClassHash) {
-        throw new Error('Compiled class hash is required for offline declare transaction. Use --compiledClassHash flag. Generate it with: starkli class-hash <compiled_contract_class.json>');
+    // Load CASM if it exists
+    let casmArtifact;
+    let casmPath = contractPath.replace('.contract_class.json', '.compiled_contract_class.json');
+    try {
+        const casmData = readFileSync(casmPath, 'utf8');
+        casmArtifact = JSON.parse(casmData) as CompiledContract;
+        console.log(`Found CASM file at ${casmPath}`);
+    } catch (error) {
+        throw new Error(`Failed to parse CASM file at ${casmPath}`);
     }
 
-    // Validate execution options for offline mode
-    validateStarknetOptions(env, offline, privateKey, accountAddress);
+    if (!yes) {
+        const shouldCancel = prompt(`Are you sure you want to declare the contract from ${contractPath}?`);
+        if (shouldCancel) {
+            console.log('Declaration cancelled.');
+            process.exit(1);
+        }
+    }
 
-    // Load contract artifact
-    console.log(`Loading contract artifact for ${contractName}...`);
-    const contractArtifact = loadContractArtifact(contractName);
+    console.log(`Declaring contract...`);
 
-    // Use offline declare transaction handler
-    const operationName = contractName;
-    return handleOfflineDeclareTransaction(options, chain.name, contractArtifact, operationName);
+    try {
+        const declareResult = await declareContract(account, { contract: contractArtifact, casm: casmArtifact });
+
+        console.log(`Contract declared successfully!`);
+        console.log(`Class Hash: ${declareResult.classHash}`);
+        console.log(`Transaction Hash: ${declareResult.transactionHash}`);
+
+        // Save class hash to config under the contractConfigName
+        saveContractConfig(config, chain.name, contractConfigName, {
+            classHash: declareResult.classHash,
+            declaredAt: new Date().toISOString(),
+        });
+    } catch (error: any) {
+        throw error;
+    }
+
+    return config;
 }
 
 async function main(): Promise<void> {
@@ -59,57 +98,39 @@ async function main(): Promise<void> {
 
     program
         .name('declare-contract')
-        .description('Generate offline declare transactions for Starknet contracts. For online declarations, use starkli.')
+        .description('Declare Starknet contracts and save class hash to config')
         .version('1.0.0');
 
     addStarknetOptions(program, {
-        ignorePrivateKey: true, // Private key not needed for offline-only script
-        declaration: true,
-        offlineSupport: true,
-    });
-
-    // Make offline flag mandatory
-    program.hook('preAction', (thisCommand) => {
-        const opts = thisCommand.opts();
-        if (!opts.offline) {
-            console.error('Error: --offline flag is required. This script only generates offline transactions.');
-            console.error('For online declarations, use: starkli declare <contract_class.json> --compiled-class-hash <compiled_class_hash>');
-            process.exit(1);
-        }
+        declare: true,
     });
 
     program.parse();
 
-    const options = program.opts() as DeployContractOptions;
-    const { env, chainNames } = options;
+    const options = program.opts() as DeclareContractOptions;
+    const { env } = options;
 
-    // Note: validation happens inside processCommand after offline check
+    // Validate execution options
+    validateStarknetOptions(env, false, options.privateKey, options.accountAddress);
 
     const config = loadConfig(env);
-    const chains = chainNames.split(',').map(name => name.trim());
-
-    for (const chainName of chains) {
-        const chain = config.chains[chainName];
-        if (!chain) {
-            throw new Error(`Chain ${chainName} not found in environment ${env}`);
-        }
-
-        try {
-            const result = await processCommand(config, { ...chain, name: chainName }, options);
-            if (result && 'offline' in result) {
-                console.log(`✅ Offline declare transaction generated for ${chainName}\n`);
-                return; // Exit early for offline mode
-            }
-        } catch (error) {
-            console.error(`❌ Declare transaction generation failed for ${chainName}: ${error.message}\n`);
-            process.exit(1);
-        }
+    const chainName = 'starknet';
+    const chain = config.chains[chainName];
+    
+    if (!chain) {
+        throw new Error(`Chain ${chainName} not found in environment ${env}`);
     }
 
-    if (!options.offline) {
-        saveConfig(config, env);
-        console.log('Configuration updated successfully.');
+    try {
+        await processCommand(config, { ...chain, name: chainName }, options);
+        console.log(`✅ Declaration completed for ${chainName}\n`);
+    } catch (error) {
+        console.error(`❌ Declaration failed for ${chainName}: ${error.message}\n`);
+        process.exit(1);
     }
+
+    saveConfig(config, env);
+    console.log('Configuration updated successfully.');
 }
 
 if (require.main === module) {

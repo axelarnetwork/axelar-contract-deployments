@@ -57,6 +57,8 @@ export interface ContractConfig {
     salt?: string;
     /** ISO timestamp of when the contract was deployed */
     deployedAt?: string;
+    /** ISO timestamp of when the contract was declared */
+    declaredAt?: string;
 }
 
 /**
@@ -248,29 +250,33 @@ export interface StarknetCommandOptions extends BaseCommandOptions, OfflineTrans
 }
 
 /**
+ * Options for contract declaration commands
+ */
+export interface DeclareContractOptions extends StarknetCommandOptions {
+    /** Name to store in config for this contract */
+    contractConfigName?: string;
+    /** Path to the contract JSON file */
+    contractPath?: string;
+}
+
+/**
  * Options for contract deployment commands
  */
 export interface DeployContractOptions extends StarknetCommandOptions {
-    /** Name of the contract to deploy */
-    contractName?: string;
-    /** Pre-declared class hash (skips declaration step) */
-    classHash?: string;
+    /** Name of the contract configuration to use */
+    contractConfigName?: string;
     /** JSON-encoded constructor arguments */
     constructorCalldata?: string;
     /** Salt for deterministic deployment addresses */
     salt?: string;
-    /** Whether this is an upgrade operation */
-    upgrade?: boolean;
-    /** Contract address for upgrade operations */
-    contractAddress?: string;
 }
 
 /**
  * Options for contract upgrade commands
  */
 export interface UpgradeContractOptions extends StarknetCommandOptions {
-    /** Name of the contract to upgrade */
-    contractName?: string;
+    /** Name of the contract configuration to use */
+    contractConfigName?: string;
     /** New class hash for the upgrade */
     classHash?: string;
     /** Contract address to upgrade (optional if already in config) */
@@ -315,7 +321,7 @@ export interface CliOptionConfig {
     /** Skip account address option */
     ignoreAccountAddress?: boolean;
     /** Is the command related to contract declaration? */
-    declaration?: boolean;
+    declare?: boolean;
     /** Is the command related to contract deployment? */
     deployment?: boolean;
     /** Is the command related to upgrading a deployment? */
@@ -324,5 +330,37 @@ export interface CliOptionConfig {
     contractAddress?: boolean;
     /** Enable offline transaction support */
     offlineSupport?: boolean;
+    /** Is the command related to contract verification? */
+    verify?: boolean;
+}
+
+/**
+ * Options for contract verification commands
+ */
+export interface VerifyContractOptions extends BaseCommandOptions {
+    /** Name of the contract configuration to verify */
+    contractConfigName?: string;
+    /** Contract address to verify (optional if in config) */
+    contractAddress?: string;
+    /** Explorer to use for verification (voyager/starkscan) */
+    explorer?: string;
+    /** Directory containing contract source files */
+    sourceDir?: string;
+}
+
+/**
+ * Result of contract verification
+ */
+export interface VerificationResult {
+    /** Whether verification was successful */
+    success: boolean;
+    /** Contract address that was verified */
+    contractAddress: string;
+    /** Explorer used for verification */
+    explorer: string;
+    /** Verification status message */
+    message: string;
+    /** Verification URL if successful */
+    verificationUrl?: string;
 }
 

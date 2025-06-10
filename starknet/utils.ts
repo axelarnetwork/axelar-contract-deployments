@@ -136,24 +136,6 @@ export const declareContract = async (
     }
 };
 
-/**
- * Load contract artifact from file
- */
-export const loadContractArtifact = (contractName: string): ContractArtifact => {
-    const artifactPath = path.join(__dirname, 'artifacts');
-
-    const sierraPath = path.join(artifactPath, `${contractName}.contract_class.json`);
-    const casmPath = path.join(artifactPath, `${contractName}.compiled_contract_class.json`);
-
-    if (!fs.existsSync(sierraPath) || !fs.existsSync(casmPath)) {
-        throw new Error(`Contract artifacts not found for ${contractName}. Expected files at ${sierraPath} and ${casmPath}`);
-    }
-
-    return {
-        contract: JSON.parse(fs.readFileSync(sierraPath, 'utf8')),
-        casm: JSON.parse(fs.readFileSync(casmPath, 'utf8')),
-    };
-};
 
 /**
  * Get contract configuration from chain config
@@ -250,46 +232,6 @@ export const generateUnsignedInvokeTransaction = (
     }
 };
 
-/**
- * Generate unsigned declare transaction for offline signing
- */
-export const generateUnsignedDeclareTransaction = (
-    account: Account | string,
-    contractArtifact: ContractArtifact,
-    compiledClassHash: string,
-    options: GenerateUnsignedTxOptions
-): UnsignedDeclareTransaction => {
-    try {
-        const { nonce, resourceBounds } = options;
-        if (!nonce) {
-            throw new Error('Nonce is required for offline transaction generation');
-        }
-
-        const accountAddress = typeof account === 'string' ? account : account.address;
-
-        // Get contract classes from artifact
-        const sierraContractClass = contractArtifact.contract;
-
-        const unsignedTx: UnsignedDeclareTransaction = {
-            type: 'DECLARE',
-            version: constants.TRANSACTION_VERSION.V3,
-            sender_address: accountAddress,
-            contract_class: sierraContractClass,
-            compiled_class_hash: compiledClassHash,
-            nonce,
-            resource_bounds: resourceBounds,
-            tip: '0x0',
-            paymaster_data: [],
-            nonce_data_availability_mode: 'L1',
-            fee_data_availability_mode: 'L1',
-            timestamp: Date.now(),
-        };
-
-        return unsignedTx;
-    } catch (error: any) {
-        throw new Error(`Failed to generate unsigned declare transaction: ${error.message}`);
-    }
-};
 
 /**
  * Save unsigned transaction to file
@@ -427,71 +369,3 @@ export const handleOfflineTransaction = (
     return { offline: true, transactionFile: txFilepath };
 };
 
-/**
- * Handler for offline declare transaction generation
- */
-export const handleOfflineDeclareTransaction = (
-    options: OfflineTransactionOptions,
-    chainName: string,
-    contractArtifact: ContractArtifact,
-    operationName: string
-): OfflineTransactionResult => {
-    const {
-        nonce,
-        accountAddress,
-        outputDir,
-        compiledClassHash,
-        l1GasMaxAmount = '50000',
-        l1GasMaxPricePerUnit = '10000000000',
-        l2GasMaxAmount = '5000',
-        l2GasMaxPricePerUnit = '1000000000',
-        l1DataMaxAmount = '128',
-        l1DataMaxPricePerUnit = '10000000000',
-    } = options;
-
-    if (!nonce) {
-        throw new Error('Nonce is required for offline transaction generation. Use --nonce flag.');
-    }
-    if (!accountAddress) {
-        throw new Error('Account address is required for offline transaction generation. Use --accountAddress flag.');
-    }
-    if (!compiledClassHash) {
-        throw new Error('Compiled class hash is required for offline declare transaction generation. Use --compiledClassHash flag. You can generate it with: starkli class-hash <compiled_contract_class.json>');
-    }
-
-    console.log(`\nGenerating unsigned declare transaction for ${operationName} on ${chainName}...`);
-
-    // Build resource bounds with provided values (defaults applied by CLI)
-    const resourceBounds: ResourceBounds = {
-        l1_gas: {
-            max_amount: '0x' + parseInt(l1GasMaxAmount).toString(16),
-            max_price_per_unit: '0x' + parseInt(l1GasMaxPricePerUnit).toString(16)
-        },
-        l2_gas: {
-            max_amount: '0x' + parseInt(l2GasMaxAmount).toString(16),
-            max_price_per_unit: '0x' + parseInt(l2GasMaxPricePerUnit).toString(16)
-        },
-        l1_data: {
-            max_amount: '0x' + parseInt(l1DataMaxAmount).toString(16),
-            max_price_per_unit: '0x' + parseInt(l1DataMaxPricePerUnit).toString(16)
-        }
-    };
-
-    const unsignedTx = generateUnsignedDeclareTransaction(accountAddress, contractArtifact, compiledClassHash, {
-        nonce,
-        resourceBounds,
-    });
-
-    // Save unsigned transaction
-    const txFilepath = saveUnsignedTransaction(unsignedTx, outputDir || './starknet-offline-txs',
-        `declare_${operationName}_${chainName}.json`);
-
-    console.log(`✅ Unsigned declare transaction generated successfully!`);
-    console.log(`Transaction file: ${txFilepath}`);
-    console.log(`\nNext steps:`);
-    console.log(`1. Transfer the transaction file to your offline signing environment`);
-    console.log(`2. Sign the transaction using your Ledger or signing script`);
-    console.log(`3. Broadcast the signed transaction using the broadcast script`);
-
-    return { offline: true, transactionFile: txFilepath };
-};

@@ -7,8 +7,7 @@ import { loadConfig, saveConfig, prompt } from '../common';
 import { addStarknetOptions } from './cli-utils';
 import {
     deployContract,
-    declareContract,
-    loadContractArtifact,
+    getContractConfig,
     saveContractConfig,
     handleOfflineTransaction,
     validateStarknetOptions,
@@ -31,8 +30,7 @@ async function processCommand(
     const {
         privateKey,
         accountAddress,
-        contractName,
-        classHash,
+        contractConfigName,
         constructorCalldata,
         salt,
         yes,
@@ -43,14 +41,16 @@ async function processCommand(
     // Validate execution options
     validateStarknetOptions(env, offline, privateKey, accountAddress);
 
+    // Get class hash from config
+    const contractConfig = getContractConfig(config, chain.name, contractConfigName!);
+    if (!contractConfig.classHash) {
+        throw new Error(`Class hash not found in config for ${contractConfigName}. Please declare the contract first.`);
+    }
+    const classHash = contractConfig.classHash;
+
     // Handle offline mode
     if (offline) {
-        console.log(`\nGenerating unsigned transaction for deploying ${contractName} on ${chain.name}...`);
-
-        // For deployment using Universal Deployer Contract (UDC)
-        if (!classHash) {
-            throw new Error('Class hash is required for offline deployment tx generation. Declare the contract first and provide --classHash.');
-        }
+        console.log(`\nGenerating unsigned transaction for deploying ${contractConfigName} on ${chain.name}...`);
 
         // Get Universal Deployer Address from config
         const universalDeployerAddress = chain.universalDeployerAddress;
@@ -78,33 +78,17 @@ async function processCommand(
         ]);
 
         // Use common offline transaction handler
-        const operationName = `deploy_${contractName}`;
+        const operationName = `deploy_${contractConfigName}`;
         return handleOfflineTransaction(options, chain.name, targetContractAddress, entrypoint, calldata, operationName);
     }
 
-    console.log(`\nDeploying ${contractName} on ${chain.name}...`);
+    console.log(`\nDeploying ${contractConfigName} on ${chain.name}...`);
 
     // Initialize account for online operations
     const provider = getStarknetProvider(chain);
     const account = getStarknetAccount(privateKey!, accountAddress!, provider);
 
-    // Deploy new contract
-    let finalClassHash = classHash;
-
-    if (!finalClassHash) {
-        // Need to declare the contract first
-        console.log(`Loading contract artifact for ${contractName}...`);
-        const contractArtifact = loadContractArtifact(contractName);
-
-        console.log(`Declaring contract ${contractName}...`);
-        const declareResult = await declareContract(account, contractArtifact);
-
-        console.log(`Contract declared successfully!`);
-        console.log(`Class Hash: ${declareResult.classHash}`);
-        console.log(`Transaction Hash: ${declareResult.transactionHash}`);
-
-        finalClassHash = declareResult.classHash;
-    }
+    // Deploy contract using class hash from config
 
     // Parse constructor calldata if provided
     let parsedCalldata = [];
@@ -117,15 +101,15 @@ async function processCommand(
     }
 
     if (!yes) {
-        const confirmDeploy = prompt(`Deploy ${contractName} with class hash ${finalClassHash}?`);
-        if (!confirmDeploy) {
+        const shouldCancel = prompt(`Deploy ${contractConfigName} with class hash ${classHash}?`);
+        if (shouldCancel) {
             console.log('Deployment cancelled.');
-            return config;
+            process.exit(1);
         }
     }
 
-    console.log(`Deploying contract ${contractName}...`);
-    const deployResult = await deployContract(account, finalClassHash, parsedCalldata, salt);
+    console.log(`Deploying contract ${contractConfigName}...`);
+    const deployResult = await deployContract(account, classHash, parsedCalldata, salt);
 
     console.log(`Contract deployed successfully!`);
     console.log(`Contract Address: ${deployResult.contractAddress}`);
@@ -133,12 +117,12 @@ async function processCommand(
     console.log(`Class Hash: ${deployResult.classHash}`);
 
     // Save deployment info to config
-    saveContractConfig(config, chain.name, contractName, {
+    saveContractConfig(config, chain.name, contractConfigName!, {
         address: deployResult.contractAddress,
-        classHash: deployResult.classHash,
         deploymentTransactionHash: deployResult.transactionHash,
         deployer: accountAddress,
         salt,
+        deployedAt: new Date().toISOString(),
     });
 
     return config;
@@ -160,27 +144,25 @@ async function main(): Promise<void> {
     program.parse();
 
     const options = program.opts() as DeployContractOptions;
-    const { env, chainNames } = options;
+    const { env } = options;
 
-    // Validate execution options before processing any chains
+    // Validate execution options
     validateStarknetOptions(env, options.offline, options.privateKey, options.accountAddress);
 
     const config = loadConfig(env);
-    const chains = chainNames.split(',').map(name => name.trim());
+    const chainName = 'starknet';
+    const chain = config.chains[chainName];
+    
+    if (!chain) {
+        throw new Error(`Chain ${chainName} not found in environment ${env}`);
+    }
 
-    for (const chainName of chains) {
-        const chain = config.chains[chainName];
-        if (!chain) {
-            throw new Error(`Chain ${chainName} not found in environment ${env}`);
-        }
-
-        try {
-            await processCommand(config, { ...chain, name: chainName }, options);
-            console.log(`✅ Deployment completed for ${chainName}\n`);
-        } catch (error) {
-            console.error(`❌ Deployment failed for ${chainName}: ${error.message}\n`);
-            process.exit(1);
-        }
+    try {
+        await processCommand(config, { ...chain, name: chainName }, options);
+        console.log(`✅ Deployment completed for ${chainName}\n`);
+    } catch (error) {
+        console.error(`❌ Deployment failed for ${chainName}: ${error.message}\n`);
+        process.exit(1);
     }
 
     saveConfig(config, env);
