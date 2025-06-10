@@ -265,7 +265,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 10. Register ITS edge contract on ITS Hub
 
-Proceed with this step only if ITS deployment on $CHAIN is confirmed. Replace `contracts` in $CHAIN config on `ENV.json` with following:
+Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
 
 | Network              | `ITS_EDGE_CONTRACT`                          |
 | -------------------- | -------------------------------------------- |
