@@ -2,7 +2,7 @@
 
 const { Command, Option } = require('commander');
 const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData } = require('../utils');
-const { addStoreOptions } = require('../../common/cli-utils');
+const { addStoreOptions } = require('../cli-utils');
 const { mainProcessor, upgrade, upload, deploy } = require('./processors');
 
 require('../cli-utils');
@@ -96,20 +96,7 @@ const getDeployContractCommands = () => {
 
 const getUpgradeContractCommands = () => {
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Upgrade ${contractName} contract`).addHelpText(
-            'after',
-            `
-Examples:
-  # using Vec<Address> as migration data:
-  $ deploy-contract upgrade axelar-operators deploy --artifact-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
-
-  # default void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
-
-  # equivalent explicit void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
-`,
-        );
+        const command = new Command(contractName).description(`Upgrade ${contractName} contract`);
 
         addUpgradeOptions(command);
 
