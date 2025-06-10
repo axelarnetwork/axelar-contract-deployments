@@ -466,23 +466,8 @@ function getContractArtifactPath(artifactPath, contractName) {
 
 const getContractCodePath = async (options, contractName) => {
     if (options && options.artifactPath) {
-        if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
-            return getContractArtifactPath(options.artifactPath, contractName);
-        }
-
-        return options.artifactPath;
+        return getContractArtifactPath(options.artifactPath, contractName);
     }
-
-    if (options && options.version) {
-        const url = getContractR2Url(contractName, options.version);
-        return downloadContractCode(url, contractName, options.version);
-    }
-
-    throw new Error('Either --artifact-path or --version must be provided');
-};
-
-const getUploadContractCodePath = async (options, contractName) => {
-    if (options && options.artifactPath) return options.artifactPath;
 
     if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
@@ -630,7 +615,6 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     getContractCodePath,
-    getUploadContractCodePath,
     isValidAddress,
     SUPPORTED_CONTRACTS,
     BytesToScVal,
