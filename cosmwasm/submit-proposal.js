@@ -32,13 +32,11 @@ const {
     saveConfig,
     loadConfig,
     printInfo,
-    printError,
     prompt,
     getChainConfig,
     itsEdgeContract,
     readContractCode,
     getProposalConfig,
-    camelToTitle,
 } = require('../common');
 const {
     StoreCodeProposal,
