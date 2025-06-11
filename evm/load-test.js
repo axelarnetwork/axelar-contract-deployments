@@ -1,6 +1,6 @@
 'use strict';
 
-const { loadConfig, printInfo, printWarn, printHighlight, callAxelarscanApi, printDivider } = require('../common/index.js');
+const { loadConfig, printInfo, printWarn, printError, printHighlight, callAxelarscanApi, printDivider } = require('../common/index.js');
 const { Command, Option } = require('commander');
 const { addBaseOptions } = require('../common/cli-utils.js');
 
@@ -153,7 +153,7 @@ const startTest = async (config, options) => {
     }
 
     clearInterval(writeInterval);
-    await writeTransactions();
+    await writeTransactions(writing, transactions, stream);
     stream.end();
 
     const endTime = performance.now();
