@@ -1,5 +1,3 @@
-#!/usr/bin/env ts-node
-
 'use strict';
 
 import { Command } from 'commander';
