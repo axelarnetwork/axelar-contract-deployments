@@ -20,8 +20,6 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
-const camelToTitle = (str) => str.replace(/([A-Z])/g, (group) => ` ${group}`).replace(/^./, (firstChar) => firstChar.toUpperCase());
-
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
@@ -695,7 +693,6 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
-    camelToTitle,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
