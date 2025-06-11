@@ -328,23 +328,23 @@
           "salt": "Operators devnet-amplifier"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.2",
+          "salt": "ITS v2.1.14-complete-deployer-fix devnet-amplifiers",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v1.0.0 devnet-amplifier2",
-          "tokenManagerDeployer": "0x9ABD1B919005b18D51D8f2528FfF0819495cB2B4",
-          "interchainToken": "0x5321CB9412D5F53d95D2B5a07861Dd45CBca2671",
-          "interchainTokenDeployer": "0xd3A71C05b0BcCf6F00eD0316871763b950e914D4",
-          "tokenManager": "0xE0ec2D4A4B3b92a26Dd66b1a5eD9f51219EA5F5D",
-          "tokenHandler": "0xB6252A44336559D055aF43CfD60c608f0124c045",
-          "gatewayCaller": "0x342130B4488894f0abC48451D1e6616f9dd93985",
-          "implementation": "0x0C10f5EB6c2fa5244eD2b0B8B233b0951a25aBdc",
+          "tokenManagerDeployer": "0x8cA426cac66C0771B65e78F234C6eaB9E10aed29",
+          "interchainToken": "0x598c0F244800C9096dC552f2cf1cDBEb53A0798A",
+          "interchainTokenDeployer": "0x8070675B45f854597BCA258dAd1f46E22123D447",
+          "tokenManager": "0xf926a0B47964b689428118D04d8998824c062902",
+          "tokenHandler": "0xd172CFD5086362c4a0a0b26851d2C8A2F12A1f65",
+          "gatewayCaller": "0xD89B5eeA3e3c3B588d63E032B8cDb4f45E7021a9",
+          "implementation": "0x00829C527b6632c1912Ecb4CC0d286aD0dE44710",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v1.0.0 devnet-amplifier2",
-          "implementation": "0xc7a65772B83C0205f38a37dD384379542855F3e8",
+          "implementation": "0x6582dAC8dE1d2C0e6cCada1975A1c9ab39b7652e",
           "address": "0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
         }
       }
@@ -369,40 +369,16 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "contracts": {
-        "AxelarGateway": {
-          "gasOptions": {
-            "gasLimit": 5000000
-          },
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxyDeploymentArgs": [
-            "0x3c19E701ed674350DE8cAEb0B85A388499246D2d",
-            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000002b5c75000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
-          ],
-          "initialVerifierSetId": "23b68feb94699d32d762ad7264d416d5324408018f9ecd172a3aadd38a255c36",
-          "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "address": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
-          "implementation": "0xe9ac03F10b219fbFa1bc1EAb288963e288989e58",
-          "implementationCodehash": "0x5dbe684f109d8834e12707c98776512805d553f6246c97ec8546d712ccf0d5ab",
-          "deploymentMethod": "create2",
-          "previousSignersRetention": 15,
-          "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
-          "minimumRotationDelay": 0,
-          "salt": "v6.0.4",
-          "connectionType": "amplifier",
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
-        },
         "ConstAddressDeployer": {
-          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
-          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "address": "0x7F0e53759123E0EEDc8176EF44dd862c6d1E8674",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create",
           "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
           "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
         },
         "Create3Deployer": {
-          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xc0D302dD996EFFB420772721E5018a39a1066c60",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
           "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
@@ -417,32 +393,52 @@
         },
         "Operators": {
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "address": "0x1C3D126Cf52A0B3610EFb8911831afCfb2DC1270",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
           "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
           "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
-          "salt": "Operators devnet-amplifier"
+          "salt": "Operators"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.7-complete-deployer-fix devnet-amplifier ava3",
+          "salt": "ITS v2.1.13-complete-deployer-fix devnet-amplifiers",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v1.0.0 consensus devnet-amplifier2",
-          "tokenManagerDeployer": "0x1B8718CD63378cA3e7AcE58D120CE57EB24B24b8",
-          "interchainToken": "0x07B38a405CBC2fd9Cb3A35B6398025dd073C02C3",
-          "interchainTokenDeployer": "0xD00e945fB1d96Bd3f647D9C464fE008B27bE7F7D",
-          "tokenManager": "0x3D790A48c26680491F644575D5c33Bddb1907E02",
-          "tokenHandler": "0x30D001bA0e93D2786590F4e27b633Adfb05dfCE5",
-          "gatewayCaller": "0xf423F67bEd8D0DF7f890F9F18dfc8627E80968FC",
-          "implementation": "0xe54C6F82463bE87C677c6e89E92118BfC826F467",
+          "tokenManagerDeployer": "0x5f30A7578F26dbB234A342f52efcE82Bc7C391C8",
+          "interchainToken": "0xb30cdEa9F1725b48d4fc98a87e517fF296e49Eeb",
+          "interchainTokenDeployer": "0x8077f85100f36AFE12B98e7609F2B957E5D77F3f",
+          "tokenManager": "0xA158Aa4526eC589C4F46711E273DA56067B0F21e",
+          "tokenHandler": "0x176D3433ee47C0315D214381da133573C39D9ef1",
+          "gatewayCaller": "0x7010AFfA90cDa321963EacAE313d58921B8F3b1E",
+          "implementation": "0x07B6dF785FcB56966856f939aa6f7C1a0377C96c",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x77883201091c08570D55000AB32645b88cB96324"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v1.0.0 consensus devnet-amplifier2",
-          "implementation": "0x4FD5789bFCa05538aCfe3f2E30A0FB93c9B4cCd4",
+          "implementation": "0x5Fe52360CB18dCCE2633e0Dda2EaBbF2f1a6CcD4",
           "address": "0xD08cd727E13FAA39F4041C2f5d4D3FF89A519d5b"
+        },
+        "AxelarGateway": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxyDeploymentArgs": [
+            "0x4484ea829DDB2c85E4310267e6dE44448Bb8D6F3",
+            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000007097fe000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "8f9789efc732f0b900d6babaddfd4964839be44a39a7754b991893f700d38122",
+          "address": "0x25b8660EcF3c215cca4c2Dc006D8F4359831e2D6",
+          "implementation": "0x4484ea829DDB2c85E4310267e6dE44448Bb8D6F3",
+          "implementationCodehash": "0x7e69c75118e970566bb527cf767f317abbae8b25b24b98a96872306cbfe61e44",
+          "deploymentMethod": "create3",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xa06e1fbf47c847af2bc09eb7fefec4834c6eda8a3af686d8ba9fa23aca12935d",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "AxelarAmplifierGateway"
         }
       }
     },
@@ -547,10 +543,13 @@
       "name": "Eth Sepolia",
       "axelarId": "eth-sepolia",
       "chainId": 11155111,
-      "rpc": "https://1rpc.io/sepolia",
+      "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 15000000
+      },
       "chainType": "evm",
       "explorer": {
         "explorer": "Sepoliascan",
@@ -616,23 +615,23 @@
           "salt": "Operators devnet-amplifier"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0 devnet-amplifier",
+          "salt": "ITS v2.1.14-complete-deployer-fix devnet-amplifiers",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v1.0.0 devnet-amplifier2",
-          "tokenManagerDeployer": "0x1Eb942ca2ADC970E43eBb40e94E0118eAA2EDC16",
-          "interchainToken": "0x5321CB9412D5F53d95D2B5a07861Dd45CBca2671",
-          "interchainTokenDeployer": "0xd99464aF9D4040e1F657ca3Ee5472DAEbb4b1edd",
-          "tokenManager": "0x5683C518fB0A39Cdc3EEBc0E03B968F108AC9916",
-          "tokenHandler": "0x5AE8567D9Ce9f9EfB91b3818C4F8cE3a2505a3d0",
-          "gatewayCaller": "0x7d6aBBb2a041D1bDEb7c45f233D09D75D9e0b17C",
-          "implementation": "0xDF462B5df860e747212C9081ed25355032Dc6a37",
+          "tokenManagerDeployer": "0x8cA426cac66C0771B65e78F234C6eaB9E10aed29",
+          "interchainToken": "0x598c0F244800C9096dC552f2cf1cDBEb53A0798A",
+          "interchainTokenDeployer": "0x8070675B45f854597BCA258dAd1f46E22123D447",
+          "tokenManager": "0xf926a0B47964b689428118D04d8998824c062902",
+          "tokenHandler": "0xd172CFD5086362c4a0a0b26851d2C8A2F12A1f65",
+          "gatewayCaller": "0xD89B5eeA3e3c3B588d63E032B8cDb4f45E7021a9",
+          "implementation": "0x00829C527b6632c1912Ecb4CC0d286aD0dE44710",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x2269B93c8D8D4AfcE9786d2940F5Fcd4386Db7ff"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v1.0.0 devnet-amplifier2",
-          "implementation": "0x7fA7b469fF43B4B74BAc1e8e3AB31A8633F67f49",
+          "implementation": "0x6582dAC8dE1d2C0e6cCada1975A1c9ab39b7652e",
           "address": "0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
         }
       }
@@ -1365,23 +1364,23 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "InterchainTokenService": {
-          "salt": "ITS",
+          "salt": "ITS v2.1.14-complete-deployer-fix devnet-amplifiers",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x41b1aD4102BAcEF139F65DfC7CFd83DEFC39bF74",
-          "interchainToken": "0x29aaEB4622BB6ed3bab3A3Fe5f42B2d24137f915",
-          "interchainTokenDeployer": "0xc8376ebE4B81a229523CE591C34E05EBB0805402",
-          "tokenManager": "0xD6b8828fCd95F357Df79d1B0EacF9e63CdFC6E3f",
-          "tokenHandler": "0x70066BB653DA6f4fe29705664A37304EABE780d2",
-          "gatewayCaller": "0x9e050f34123FD7ae8Dd95337E16D5198a111AE25",
-          "implementation": "0x6ABF86fdF2396f7e2551683E64132077733c1E47",
+          "tokenManagerDeployer": "0xC722c1A65e4E15Ad4ceb19606361eB958c374b64",
+          "interchainToken": "0xfcaC7cF44778DF41A28C1022168Cd29B33098C97",
+          "interchainTokenDeployer": "0x07d404694406D5b4A32D8BDb9891Eb7cE0c675c2",
+          "tokenManager": "0x0E3e91AC4A62d24e035C3D8E682E3f35ccc3fD7a",
+          "tokenHandler": "0xf09AF18fFe079B42015E0226Da5d32b1cE4696D4",
+          "gatewayCaller": "0x52AF1001162F0f43C406026cF0451546DeCeb236",
+          "implementation": "0x8DCfee3B12c319264B84bdf8501DF93F815593AF",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xA56FF641931653667A00191837aAef0BeD9Fff53"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0xb763fCdD3dA46Da55a47382820F8CD3A24c5443A",
+          "implementation": "0xb7AE49d83ef73B3482028025AEBDbf5414B14548",
           "address": "0xEc5328F11818D98468226b0BB0a2884D9ccF74F7"
         }
       }
@@ -1503,7 +1502,7 @@
         "avalanche3": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
-          "sourceGatewayAddress": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+          "sourceGatewayAddress": "0xc0558f96a3f1F31aeC48eEdd5d19799621E09a62",
           "votingThreshold": [
             "6",
             "10"
@@ -1512,8 +1511,8 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "eip55",
-          "codeId": 854,
-          "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
+          "codeId": 1331,
+          "address": "axelar1v0jcnpavdk2cy8eccttj4dkag4s58vgywanmlqunklaky2gvqjkqelyxyv"
         },
         "avalanche4": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1530,7 +1529,7 @@
           "codeId": 854,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "lastUploadedCodeId": 854,
+        "lastUploadedCodeId": 1331,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1644,7 +1643,7 @@
           "codeId": 848,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 848,
+        "lastUploadedCodeId": 1332,
         "eth-sepolia": {
           "codeId": 848,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -1674,6 +1673,10 @@
         "hyperliquid": {
           "codeId": 848,
           "address": "axelar1qpjv5cfccz2m5asj028agfed7jqm6pjg5mfzn3jnlfk8j56asuhs37e5pn"
+        },
+        "avalanche3": {
+          "codeId": 1332,
+          "address": "axelar1uvlpyyeczkn95jwkudnfngaq3u3mjhuc8hk4h7ep4skrn3haa8fsctnysl"
         }
       },
       "XrplMultisigProver": {
@@ -1720,9 +1723,8 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "abi",
           "keyType": "ecdsa",
-          "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
-          "codeId": 855,
-          "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
+          "codeId": 1333,
+          "address": "axelar14e3hnr3aqen7gpxjg6pe5r69phg52qsefjlazh6lf3m30c9jn48sx7zx0m"
         },
         "avalanche4": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1740,7 +1742,7 @@
           "codeId": 855,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "lastUploadedCodeId": 855,
+        "lastUploadedCodeId": 1333,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",

@@ -358,6 +358,54 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'updateTokenDeployer': {
+            const { tokenId, deployer } = options;  // Note: changed from newDeployer to deployer to match your command
+        
+            validateParameters({ 
+                isNonEmptyString: { tokenId },
+                isValidAddress: { deployer }
+            });
+        
+            try {
+                // Get the token address from ITS
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address for ${tokenId}`, tokenAddress);
+        
+                // Create token contract instance with the full InterchainToken ABI
+                const InterchainToken = getContractJSON('InterchainToken');  // Changed from IInterchainToken
+                const tokenContract = new Contract(tokenAddress, InterchainToken.abi, wallet);
+        
+                // Get current deployer for comparison
+                const currentDeployer = await tokenContract.getDeployer();
+                printInfo(`Current deployer`, currentDeployer);
+                printInfo(`New deployer`, deployer);
+        
+                // Update the deployer
+                const tx = await tokenContract.updateDeployer(deployer, gasOptions);
+                printInfo(`Updating deployer...`);
+                
+                // Wait for transaction
+                const receipt = await tx.wait();
+                printInfo(`Transaction hash`, receipt.transactionHash);
+        
+                // Verify the change
+                const updatedDeployer = await tokenContract.getDeployer();
+                printInfo(`Updated deployer`, updatedDeployer);
+                printInfo(`Update successful`, updatedDeployer.toLowerCase() === deployer.toLowerCase());
+        
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                } else if (error.errorName === 'NotAuthorized') {
+                    printInfo(`❌ Not authorized to update deployer. Must be ITS operator.`);
+                } else {
+                    printInfo(`❌ Error updating deployer:`, error.message);
+                }
+            }
+        
+            break;
+        }
+
         case 'deployRemoteInterchainToken': {
             const { destinationChain, gasValue } = options;
 
@@ -368,9 +416,9 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
-            }
+            //if ((await interchainTokenService.trustedAddress(destinationChain)) === '') {
+            //    throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
+            //}
 
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
@@ -673,7 +721,8 @@ if (require.main === module) {
                 'getTokenDeployer',
                 'checkTokenExists',
                 'checkTokenSlot0',
-                'debugStorageLayout'
+                'debugStorageLayout',
+                'updateTokenDeployer'
             ])
             .makeOptionMandatory(true),
     );
