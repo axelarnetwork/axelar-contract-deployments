@@ -330,37 +330,5 @@ export interface CliOptionConfig {
     contractAddress?: boolean;
     /** Enable offline transaction support */
     offlineSupport?: boolean;
-    /** Is the command related to contract verification? */
-    verify?: boolean;
-}
-
-/**
- * Options for contract verification commands
- */
-export interface VerifyContractOptions extends BaseCommandOptions {
-    /** Name of the contract configuration to verify */
-    contractConfigName?: string;
-    /** Contract address to verify (optional if in config) */
-    contractAddress?: string;
-    /** Explorer to use for verification (voyager/starkscan) */
-    explorer?: string;
-    /** Directory containing contract source files */
-    sourceDir?: string;
-}
-
-/**
- * Result of contract verification
- */
-export interface VerificationResult {
-    /** Whether verification was successful */
-    success: boolean;
-    /** Contract address that was verified */
-    contractAddress: string;
-    /** Explorer used for verification */
-    explorer: string;
-    /** Verification status message */
-    message: string;
-    /** Verification URL if successful */
-    verificationUrl?: string;
 }
 

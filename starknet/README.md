@@ -123,28 +123,6 @@ npx ts-node starknet/upgrade-contract.ts \
   --accountAddress 0x...
 ```
 
-### 4. Verify Contract
-
-After deployment, verify your contract on block explorers:
-
-**Verify using contract config:**
-```bash
-npx ts-node starknet/verify-contract.ts \
-  --env testnet \
-  --contractConfigName AxelarGateway \
-  --sourceDir ./starknet/contracts/src \
-  --explorer voyager
-```
-
-**Verify using contract address:**
-```bash
-npx ts-node starknet/verify-contract.ts \
-  --env testnet \
-  --contractAddress 0x3d602ae73d488eb4b40d83dc82f03d7c8e63c1b68ed000e767a59871b95a4cd \
-  --sourceDir ./starknet/contracts/src \
-  --explorer starkscan
-```
-
 ## 📋 Contract Configuration
 
 Contracts are managed through configuration names stored in the chain config. Each contract entry contains:
@@ -181,12 +159,6 @@ Contracts are managed through configuration names stored in the chain config. Ea
 - `--classHash`: New class hash for upgrade
 - `--contractAddress`: Contract address (optional if in config)
 
-**Verify-Specific Options:**
-- `--contractConfigName`: Contract configuration to verify
-- `--contractAddress`: Contract address (optional if using contractConfigName)
-- `--sourceDir`: Directory containing Cairo source files
-- `--explorer`: Explorer to use (voyager/starkscan, default: voyager)
-
 **Offline Transaction Gas Options:**
 - `--l1GasMaxAmount`: Maximum L1 gas amount
 - `--l1GasMaxPricePerUnit`: Maximum L1 gas price per unit
@@ -204,16 +176,6 @@ Contracts are managed through configuration names stored in the chain config. Ea
 - **[Offline Signing](./docs/OFFLINE-SIGNING.md)** - Complete guide for mainnet offline workflow
 - **[Key Management](./key-management.md)** - Security guidelines and key management
 
-### Contract Verification
-
-To verify contracts on block explorers:
-
-1. **Prepare source files**: Ensure all Cairo source files are in a single directory
-2. **Run verification**: Use `verify-contract.ts` with the appropriate explorer
-3. **Supported explorers**: Voyager (default) and Starkscan
-
-Note: Constructor arguments are automatically retrieved from the deployment configuration when available.
-
 ## 🔍 Troubleshooting
 
 ### Common Issues
@@ -229,11 +191,6 @@ Note: Constructor arguments are automatically retrieved from the deployment conf
 
 **"Contract path does not exist"**
 - Solution: Verify the path to your contract JSON file is correct
-
-**"Contract verification failed"**
-- Solution: Ensure source code matches the deployed contract
-- Check that all source files are included in --sourceDir
-- Verify the contract was compiled with the same Cairo version
 
 ### Debug Mode
 
