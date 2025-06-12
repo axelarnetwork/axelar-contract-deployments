@@ -2855,8 +2855,8 @@
       "chainType": "evm",
       "explorer": {
         "name": "Xrplscan",
-        "url": "[placeholder]",
-        "api": "[placeholder]"
+        "url": "https://explorer-mainnet.aws.peersyst.tech",
+        "api": "https://explorer-mainnet.aws.peersyst.tech/api"
       },
       "contracts": {
         "ConstAddressDeployer": {
