@@ -16,7 +16,7 @@ defaults:
 name: audit
 jobs:
   check:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: audit
     steps:
       - uses: actions/checkout@v4

@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: "Build the code"
     steps:
       - name: Checkout repository

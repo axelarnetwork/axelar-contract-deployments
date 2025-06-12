@@ -21,7 +21,7 @@ defaults:
 name: docs
 jobs:
   doc:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: doc
     steps:
       - uses: actions/checkout@v4

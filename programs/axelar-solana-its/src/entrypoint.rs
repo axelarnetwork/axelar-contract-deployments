@@ -1,6 +1,7 @@
 //! Program entrypoint
 
 #![cfg(not(feature = "no-entrypoint"))]
+#![allow(unexpected_cfgs)]
 
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;

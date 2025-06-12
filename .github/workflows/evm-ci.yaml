@@ -18,7 +18,7 @@ jobs:
       fail-fast: true
 
     name: Foundry project
-    runs-on: large-runner
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:

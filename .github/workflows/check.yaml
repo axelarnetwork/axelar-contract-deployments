@@ -16,7 +16,7 @@ defaults:
 name: check
 jobs:
   check:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: check
     steps:
       - uses: actions/checkout@v4

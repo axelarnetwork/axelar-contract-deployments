@@ -16,7 +16,7 @@ defaults:
 name: deny
 jobs:
   check:
-    runs-on: large-runner
+    runs-on: self-hosted
     name: deny
     steps:
       - uses: actions/checkout@v4
