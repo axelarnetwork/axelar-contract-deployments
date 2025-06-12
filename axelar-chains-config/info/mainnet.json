@@ -2970,7 +2970,7 @@
     },
     "hedera": {
       "name": "Hedera",
-      "axelarId": "$CHAIN",
+      "axelarId": "hedera",
       "chainId": 295,
       "rpc": "https://mainnet.hashio.io/api",
       "tokenSymbol": "HBAR",
