@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
 | **Stagenet**         | Completed             | 2025-05-06 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Completed             | 2025-05-27 |
+| **Mainnet**          | Completed             | 2025-06-10 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -28,7 +28,7 @@ Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
@@ -253,7 +253,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1100000000`        |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -322,9 +322,14 @@ ts-node cosmwasm/query.js rewards -n $CHAIN
 | **Devnet-amplifier** | https://testnet-rpc.plume.org |
 | **Stagenet**         | https://testnet-rpc.plume.org |
 | **Testnet**          | https://testnet-rpc.plume.org |
-| **Mainnet**          | TBD                           |
+| **Mainnet**          | https://rpc.plume.org         |
 
 ```bash
+[[handlers]]
+chain_name="$CHAIN"
+cosmwasm_contract="$MULTISIG"
+type="MultisigSigner"
+
 [[handlers]]
 chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
@@ -354,8 +359,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 21                  |
-| **Mainnet**          | 25                  |
+| **Testnet**          | 5                   |
+| **Mainnet**          | 5                   |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
