@@ -17,7 +17,7 @@ sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.14/install)"
 3. Install `solana-verify`, for verifiable builds:
 
 ```sh
-cargo install solana-verify --locked 0.4.4
+cargo install solana-verify
 ```
 
 4. Create a new  Solana keypair
@@ -83,7 +83,7 @@ solana-verify build --base-image $BASE_IMAGE --library-name axelar_solana_multic
 popd
 ```
 
-3. Declare enviroment variables:
+3. Declare environment variables:
 
 ```sh
 GATEWAY_PROGRAM_KEYPAIR_PATH=<path/to/gateway_program_keypair.json>
@@ -101,58 +101,65 @@ MULTICALL_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_multicall.so"
 ITS_PROGRAM_KEYPAIR_PATH=<path/to/its_program_keypair.json>
 ITS_PROGRAM_PATH="solana-axelar/target/deploy/axelar_solana_its.so"
 
-UPGRADE_AUTHORITY_PUBKEY=<base58 pubkey to set as upgrade authority>
+UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
 ```
+```bash
+set -a
+source .env
+set +a
+```
+
+When in in
 
 ### Gateway
 
 Deploy and verify the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
 
 ```sh
-solana program-v4 deploy --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GATEWAY_PROGRAM_PATH
+solana program-v4 deploy --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GATEWAY_PROGRAM_PATH
 
 
-solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gateway
 ```
 
 ### Gas Service
 
-Deploy and verify the gas service program
+Deploy and verify the gas service program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GAS_SERVICE_PROGRAM_PATH
+solana program-v4 deploy --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GAS_SERVICE_PROGRAM_PATH
 
-solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gas_service
 ```
 
 ### Governance
 
-Deploy and verify the governance program
+Deploy and verify the governance program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $GOVERNANCE_PROGRAM_PATH
+solana program-v4 deploy --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GOVERNANCE_PROGRAM_PATH
 
-solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_governance
 ```
 
 ### Multicall
 
-Deploy and verify the multicall program
+Deploy and verify the multicall program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $MULTICALL_PROGRAM_PATH
+solana program-v4 deploy --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MULTICALL_PROGRAM_PATH
 
-solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_multicall
 ```
 
 ### Interchain Token Service
 
-Deploy and verify the ITS program
+Deploy and verify the ITS program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $ITS_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_PUBKEY $ITS_PROGRAM_PATH
+solana program-v4 deploy --program-keypair $ITS_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $ITS_PROGRAM_PATH
 
-solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar
+solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_its
 ```
 
 ## Upgrades
@@ -202,7 +209,7 @@ By exporting the `CLUSTER` variable in your shell:
 export CLUSTER=<URL_OR_MONIKER>
 ```
 
-By creating a `.env` file in the root of the project with the `CLUSTEr=<URL_OR_MONIKER>` entry or, on every command:
+By creating a `.env` file in the root of the project with the `CLUSTER=<URL_OR_MONIKER>` entry or, on every command:
 
 ```sh
 solana/solana-axelar-cli --url <URL_OR_MONIKER> <COMMAND> [OPTIONS]
@@ -246,10 +253,10 @@ solana/solana-axelar-cli send gateway --help
 #### Initialize Gateway
 
 ```sh
-solana/solana-axelar-cli send gateway init \
-  --previous-signers-retention <RETENTION_COUNT> \
-  --minimum-rotation-delay <DELAY_IN_SECONDS> \
-  --operator <OPERATOR_PUBKEY>
+./solana-axelar-cli --url --env devnet-amplifier send gateway init \
+  --previous-signers-retention 15 \
+  --minimum-rotation-delay 15 \
+  --operator E9yYxCfQmP1UFP8LHLqRQ68LaYmFKD56Gm568tKwtWjA
 ```
 
 #### Call Contract
