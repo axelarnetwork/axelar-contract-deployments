@@ -48,7 +48,7 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
                 continue;
             }
 
-            await broadcast(contract.call(action, trustedChainScVal), wallet, chain, action, options);
+            await broadcast(contract.call(action, trustedChainScVal), wallet, chain, action, options, false);
             printInfo(`Successfully ${action === 'set_trusted_chain' ? 'added' : 'removed'} trusted chain`, trustedChain);
         } catch (error) {
             printError(`Failed to process ${action}`, trustedChain, error);
@@ -79,7 +79,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         minter,
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options, false);
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
