@@ -373,7 +373,7 @@ async fn get_verifier_set(
         let mut signers = BTreeMap::new();
 
         for signer in multisig_prover_response.verifier_set.signers.values() {
-            let pubkey = PublicKey::Secp256k1(signer.pub_key.as_ref().try_into()?);
+            let pubkey: PublicKey = signer.pub_key.clone().try_into()?;
             let weight = signer.weight.u128();
             signers.insert(pubkey, weight);
         }
@@ -412,7 +412,8 @@ fn construct_execute_data(
                         .public_key()
                         .to_encoded_point(true)
                         .as_bytes()
-                        .try_into()?,
+                        .try_into()
+                        .map_err(|_| eyre!("Invalid signature"))?,
                 ),
                 Signature::EcdsaRecoverable(
                     signature_bytes
