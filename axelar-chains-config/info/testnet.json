@@ -3382,8 +3382,8 @@
           "codeId": 57,
           "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
         },
-        "storeCodeProposalId": "312",
-        "storeCodeProposalCodeHash": "bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a",
+        "storeCodeProposalId": "328",
+        "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
         "lastUploadedCodeId": 57
       },
       "XrplVotingVerifier": {
@@ -3417,7 +3417,7 @@
     },
     "axelarId": "axelar",
     "chainId": "axelar-testnet-lisbon-3",
-    "rpc": "https://tm.axelar-testnet.lava.build",
+    "rpc": "http://testnet.rpc.axelarscan.io:80",
     "lcd": "https://rest.axelar-testnet.lava.build",
     "grpc": "grpc.axelar-testnet.lava.build:443",
     "tokenSymbol": "AXL",
