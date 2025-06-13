@@ -75,9 +75,9 @@ pub(crate) struct ChainAxelarId(pub(crate) String);
 impl From<NetworkType> for ChainAxelarId {
     fn from(value: NetworkType) -> Self {
         match value {
-            NetworkType::Local => Self("solana-localnet".to_owned()),
-            NetworkType::Devnet => Self("solana-devnet".to_owned()),
-            NetworkType::Testnet => Self("solana-testnet".to_owned()),
+            NetworkType::Local => Self("solana".to_owned()),
+            NetworkType::Devnet => Self("solana".to_owned()),
+            NetworkType::Testnet => Self("solana".to_owned()),
             NetworkType::Mainnet => Self("solana".to_owned()),
         }
     }
