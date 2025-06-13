@@ -15,6 +15,7 @@ import {
     DeclareContractPayload,
     UniversalDetails,
     InvokeTransactionReceiptResponse,
+    EstimateFeeResponse,
 } from 'starknet';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -367,5 +368,51 @@ export const handleOfflineTransaction = (
     console.log(`3. Broadcast the signed transaction using the broadcast script`);
 
     return { offline: true, transactionFile: txFilepath };
+};
+
+/**
+ * Estimate gas for a transaction and display CLI arguments
+ */
+export const estimateGasAndDisplayArgs = async (
+    account: Account,
+    calls: Call[]
+): Promise<void> => {
+    try {
+        console.log('\nEstimating gas for transaction...');
+        
+        // Estimate fee for the transaction
+        const estimation = await account.estimateInvokeFee(calls, {
+            version: constants.TRANSACTION_VERSION.V3
+        });
+
+        // Calculate resource bounds with some buffer (1.5x for safety)
+        const buffer = 1.5;
+        
+        // Extract resource limits from estimation
+        const l1GasAmount = Math.ceil(Number(estimation.resourceBounds.l1_gas.max_amount) * buffer);
+        const l1GasPrice = Number(estimation.resourceBounds.l1_gas.max_price_per_unit);
+        const l2GasAmount = Math.ceil(Number(estimation.resourceBounds.l2_gas.max_amount) * buffer);
+        const l2GasPrice = Number(estimation.resourceBounds.l2_gas.max_price_per_unit);
+        
+        console.log('\n✅ Gas estimation complete!');
+        console.log('\nEstimated resource bounds:');
+        console.log(`  L1 Gas: ${l1GasAmount} units @ ${l1GasPrice} wei/unit`);
+        console.log(`  L2 Gas: ${l2GasAmount} units @ ${l2GasPrice} wei/unit`);
+        console.log(`  Total estimated fee: ${estimation.overall_fee} wei`);
+        
+        console.log('\n📋 Copy these CLI arguments for offline transaction generation:');
+        console.log(`--l1GasMaxAmount ${l1GasAmount} --l1GasMaxPricePerUnit ${l1GasPrice} --l2GasMaxAmount ${l2GasAmount} --l2GasMaxPricePerUnit ${l2GasPrice}`);
+        
+        console.log('\n💡 Usage example:');
+        console.log('npx ts-node starknet/deploy-contract.ts --offline \\');
+        console.log(`  --l1GasMaxAmount ${l1GasAmount} \\`);
+        console.log(`  --l1GasMaxPricePerUnit ${l1GasPrice} \\`);
+        console.log(`  --l2GasMaxAmount ${l2GasAmount} \\`);
+        console.log(`  --l2GasMaxPricePerUnit ${l2GasPrice} \\`);
+        console.log('  [other arguments...]');
+        
+    } catch (error: any) {
+        throw new Error(`Failed to estimate gas: ${error.message}`);
+    }
 };
 

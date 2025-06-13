@@ -10,7 +10,8 @@ import {
     handleOfflineTransaction,
     validateStarknetOptions,
     getStarknetAccount,
-    getStarknetProvider
+    getStarknetProvider,
+    estimateGasAndDisplayArgs
 } from './utils';
 import { CallData } from 'starknet';
 import {
@@ -34,6 +35,7 @@ async function processCommand(
         yes,
         offline,
         env,
+        estimate,
     } = options;
 
     // Validate execution options
@@ -46,47 +48,11 @@ async function processCommand(
     }
     const classHash = contractConfig.classHash;
 
-    // Handle offline mode
-    if (offline) {
-        console.log(`\nGenerating unsigned transaction for deploying ${contractConfigName} on ${chain.name}...`);
-
-        // Get Universal Deployer Address from config
-        const universalDeployerAddress = chain.universalDeployerAddress;
-        if (!universalDeployerAddress) {
-            throw new Error('Universal Deployer Address not found in chain configuration');
-        }
-
-        // Parse constructor calldata if provided
-        let parsedCalldata = [];
-        if (constructorCalldata) {
-            try {
-                parsedCalldata = JSON.parse(constructorCalldata);
-            } catch (error) {
-                throw new Error(`Invalid constructor calldata JSON: ${error.message}`);
-            }
-        }
-
-        const targetContractAddress = universalDeployerAddress;
-        const entrypoint = 'deployContract';
-        const calldata = CallData.compile([
-            classHash,
-            salt,
-            true, // origin dependant deployment
-            parsedCalldata,
-        ]);
-
-        // Use common offline transaction handler
-        const operationName = `deploy_${contractConfigName}`;
-        return handleOfflineTransaction(options, chain.name, targetContractAddress, entrypoint, calldata, operationName);
+    // Get Universal Deployer Address from config
+    const universalDeployerAddress = chain.universalDeployerAddress;
+    if (!universalDeployerAddress) {
+        throw new Error('Universal Deployer Address not found in chain configuration');
     }
-
-    console.log(`\nDeploying ${contractConfigName} on ${chain.name}...`);
-
-    // Initialize account for online operations
-    const provider = getStarknetProvider(chain);
-    const account = getStarknetAccount(privateKey!, accountAddress!, provider);
-
-    // Deploy contract using class hash from config
 
     // Parse constructor calldata if provided
     let parsedCalldata = [];
@@ -97,6 +63,52 @@ async function processCommand(
             throw new Error(`Invalid constructor calldata JSON: ${error.message}`);
         }
     }
+
+    // Build deployment calldata
+    const deployCalldata = CallData.compile([
+        classHash,
+        salt,
+        true, // origin dependant deployment
+        parsedCalldata,
+    ]);
+
+    // Handle estimate mode
+    if (estimate) {
+        console.log(`\nEstimating gas for deploying ${contractConfigName} on ${chain.name}...`);
+        
+        // Initialize provider and account for estimation
+        const provider = getStarknetProvider(chain);
+        const account = getStarknetAccount(privateKey!, accountAddress!, provider);
+        
+        const calls = [{
+            contractAddress: universalDeployerAddress,
+            entrypoint: 'deployContract',
+            calldata: deployCalldata
+        }];
+
+        // Estimate gas and display CLI args
+        await estimateGasAndDisplayArgs(account, calls);
+        
+        return config; // No config changes for estimation
+    }
+
+    // Handle offline mode
+    if (offline) {
+        console.log(`\nGenerating unsigned transaction for deploying ${contractConfigName} on ${chain.name}...`);
+
+        const targetContractAddress = universalDeployerAddress;
+        const entrypoint = 'deployContract';
+
+        // Use common offline transaction handler
+        const operationName = `deploy_${contractConfigName}`;
+        return handleOfflineTransaction(options, chain.name, targetContractAddress, entrypoint, deployCalldata, operationName);
+    }
+
+    console.log(`\nDeploying ${contractConfigName} on ${chain.name}...`);
+
+    // Initialize account for online operations
+    const provider = getStarknetProvider(chain);
+    const account = getStarknetAccount(privateKey!, accountAddress!, provider);
 
     if (!yes) {
         const shouldCancel = prompt(`Deploy ${contractConfigName} with class hash ${classHash}?`);

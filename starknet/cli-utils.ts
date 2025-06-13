@@ -34,6 +34,11 @@ export const addStarknetOptions = (program: Command, config: CliOptionConfig = {
         );
 
         program.addOption(
+            new Option('--estimate', 'estimate gas for this transaction and display CLI args to copy')
+                .env('ESTIMATE')
+        );
+
+        program.addOption(
             new Option('--outputDir <outputDir>', 'output directory for unsigned transactions (required for --offline)')
                 .default('./starknet-offline-txs')
                 .env('OUTPUT_DIR')

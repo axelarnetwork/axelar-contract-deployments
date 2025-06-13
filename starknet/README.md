@@ -89,7 +89,17 @@ npx ts-node starknet/deploy-contract.ts \
 
 **Offline Deployment (Mainnet):**
 ```bash
-# Generate unsigned transaction
+# 1. Estimate gas (online environment)
+npx ts-node starknet/deploy-contract.ts \
+  --env mainnet \
+  --contractConfigName AxelarGateway \
+  --constructorCalldata '["0x1234"]' \
+  --salt 0x123 \
+  --estimate \
+  --privateKey 0x... \
+  --accountAddress 0x...
+
+# 2. Generate unsigned transaction (offline environment)
 npx ts-node starknet/deploy-contract.ts \
   --env mainnet \
   --contractConfigName AxelarGateway \
@@ -97,7 +107,11 @@ npx ts-node starknet/deploy-contract.ts \
   --salt 0x123 \
   --offline \
   --nonce 5 \
-  --accountAddress 0x...
+  --accountAddress 0x... \
+  --l1GasMaxAmount 50000 \
+  --l1GasMaxPricePerUnit 100000000000 \
+  --l2GasMaxAmount 1000000 \
+  --l2GasMaxPricePerUnit 1000000000
 ```
 
 ### 3. Upgrade Contract
@@ -114,13 +128,112 @@ npx ts-node starknet/upgrade-contract.ts \
 
 **Offline Upgrade:**
 ```bash
+# 1. Estimate gas (online environment)
+npx ts-node starknet/upgrade-contract.ts \
+  --env mainnet \
+  --contractConfigName AxelarGateway \
+  --classHash 0xNewClassHash... \
+  --estimate \
+  --privateKey 0x... \
+  --accountAddress 0x...
+
+# 2. Generate unsigned transaction (offline environment)
 npx ts-node starknet/upgrade-contract.ts \
   --env mainnet \
   --contractConfigName AxelarGateway \
   --classHash 0xNewClassHash... \
   --offline \
   --nonce 6 \
+  --accountAddress 0x... \
+  --l1GasMaxAmount 30000 \
+  --l1GasMaxPricePerUnit 100000000000 \
+  --l2GasMaxAmount 500000 \
+  --l2GasMaxPricePerUnit 1000000000
+```
+
+## 🔐 Offline Signing Workflow (Mainnet)
+
+For secure mainnet deployments, follow this complete offline signing workflow:
+
+### Step 1: Gas Estimation (Online Environment)
+```bash
+# Estimate gas for the transaction
+npx ts-node starknet/deploy-contract.ts \
+  --env mainnet \
+  --contractConfigName AxelarGateway \
+  --constructorCalldata '["0x1234"]' \
+  --salt 0x123 \
+  --estimate \
+  --privateKey 0x... \
   --accountAddress 0x...
+```
+
+The output will show CLI arguments to copy:
+```
+--l1GasMaxAmount 50000 --l1GasMaxPricePerUnit 100000000000 --l2GasMaxAmount 1000000 --l2GasMaxPricePerUnit 1000000000
+```
+
+### Step 2: Generate Unsigned Transaction (Offline Environment)
+Transfer the estimated values to your offline environment and generate the unsigned transaction:
+
+```bash
+npx ts-node starknet/deploy-contract.ts \
+  --env mainnet \
+  --contractConfigName AxelarGateway \
+  --constructorCalldata '["0x1234"]' \
+  --salt 0x123 \
+  --offline \
+  --nonce 5 \
+  --accountAddress 0x... \
+  --l1GasMaxAmount 50000 \
+  --l1GasMaxPricePerUnit 100000000000 \
+  --l2GasMaxAmount 1000000 \
+  --l2GasMaxPricePerUnit 1000000000
+```
+
+This creates a file like: `starknet-offline-txs/deploy_AxelarGateway_starknet_2025-06-12T10-30-45-123Z.json`
+
+### Step 3: Sign Transaction with Ledger (Offline Environment)
+```bash
+# Install Ledger dependencies first (if not already installed)
+npm install @ledgerhq/hw-transport-node-hid @ledgerhq/hw-app-starknet
+
+# Sign the transaction
+npx ts-node starknet/sign-transaction.ts \
+  starknet-offline-txs/deploy_AxelarGateway_starknet_2025-06-12T10-30-45-123Z.json \
+  --ledger-path "m/44'/9004'/0'/0/0" \
+  --env mainnet
+```
+
+**For Multisig Accounts:** Each signer repeats this step independently on their own offline device.
+
+### Step 4: Combine Signatures (For Multisig Only)
+If using multisig accounts, combine all signatures:
+
+```bash
+npx ts-node starknet/combine-signatures.ts \
+  starknet-offline-txs/deploy_AxelarGateway_starknet_2025-06-12T10-30-45-123Z.json \
+  starknet-offline-txs/deploy_AxelarGateway_starknet_2025-06-12T10-30-45-123Z_signed.json \
+  starknet-offline-txs/deploy_AxelarGateway_starknet_another_signer_signed.json \
+  --signers 0x123... 0x456... \
+  --output combined_transaction.json
+```
+
+### Step 5: Broadcast Transaction (Online Environment)
+Transfer the signed transaction to an online environment and broadcast:
+
+```bash
+# For single-signature accounts
+npx ts-node starknet/broadcast-transaction.ts \
+  starknet-offline-txs/deploy_AxelarGateway_starknet_2025-06-12T10-30-45-123Z_signed.json \
+  --env mainnet \
+  --contract-config-name AxelarGateway
+
+# For multisig accounts
+npx ts-node starknet/broadcast-transaction.ts \
+  combined_transaction.json \
+  --env mainnet \
+  --contract-config-name AxelarGateway
 ```
 
 ## 📋 Contract Configuration
@@ -142,6 +255,7 @@ Contracts are managed through configuration names stored in the chain config. Ea
 - `--privateKey`: Private key (testnet only, not required for offline)
 - `--accountAddress`: Account address
 - `--offline`: Generate unsigned transaction
+- `--estimate`: Estimate gas and display CLI arguments to copy
 - `--nonce`: Account nonce (required for offline)
 - `--outputDir`: Output directory for offline files
 
@@ -166,6 +280,21 @@ Contracts are managed through configuration names stored in the chain config. Ea
 - `--l2GasMaxPricePerUnit`: Maximum L2 gas price per unit
 - `--l1DataMaxAmount`: Maximum L1 data amount
 - `--l1DataMaxPricePerUnit`: Maximum L1 data price per unit
+
+**Offline Signing Script Options:**
+
+*sign-transaction.ts:*
+- `--ledger-path`: Ledger derivation path (default: "m/44'/9004'/0'/0/0")
+- `--env`: Environment for chain ID detection
+
+*combine-signatures.ts:*
+- `--signers`: Array of signer addresses corresponding to signature files
+- `--output`: Output file for combined transaction
+
+*broadcast-transaction.ts:*
+- `--env`: Environment configuration
+- `--skip-wait`: Skip waiting for transaction confirmation
+- `--contract-config-name`: Contract config name (for deployment transactions)
 
 ## 📚 Documentation
 

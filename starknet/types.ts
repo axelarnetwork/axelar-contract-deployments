@@ -171,8 +171,9 @@ export interface UnsignedDeclareTransaction extends BaseUnsignedTransaction {
 
 /**
  * Union type for all unsigned transactions
+ * Note: Only invoke transactions are supported offline since declarations are done online only
  */
-export type UnsignedTransaction = UnsignedInvokeTransaction | UnsignedDeclareTransaction;
+export type UnsignedTransaction = UnsignedInvokeTransaction;
 
 /**
  * Options for generating unsigned transactions
@@ -247,6 +248,8 @@ export interface StarknetCommandOptions extends BaseCommandOptions, OfflineTrans
     ignorePrivateKey?: boolean;
     /** Whether to ignore account address requirement */
     ignoreAccountAddress?: boolean;
+    /** Whether to estimate gas for the transaction */
+    estimate?: boolean;
 }
 
 /**
