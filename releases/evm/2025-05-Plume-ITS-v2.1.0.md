@@ -3,14 +3,14 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io>, @milapsheth <milap@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
 | **Stagenet**         | Completed             | 2025-05-07 |
 | **Testnet**          | Completed             | 2025-05-27 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Completed             | 2025-06-11 |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
 
