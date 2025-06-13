@@ -3379,12 +3379,12 @@
           "verifierSetDiffThreshold": 1,
           "xrplTransactionFee": 5000,
           "ticketCountThreshold": 5,
-          "codeId": 57,
+          "codeId": 58,
           "address": "axelar1k82qfzu3l6rvc7twlp9lpwsnav507czl6xyrk0xv287t4439ymvsl6n470"
         },
         "storeCodeProposalId": "328",
         "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
-        "lastUploadedCodeId": 57
+        "lastUploadedCodeId": 58
       },
       "XrplVotingVerifier": {
         "xrpl": {
