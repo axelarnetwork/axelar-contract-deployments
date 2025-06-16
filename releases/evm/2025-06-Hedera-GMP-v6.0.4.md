@@ -37,7 +37,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 ```json
 "$CHAIN": {
     "name": "Hedera",
-    "axelarId": "$CHAIN",
+    "axelarId": "hedera",
     "chainId": 296,
     "rpc": "https://testnet.hashio.io/api",
     "tokenSymbol": "HBAR",
@@ -60,7 +60,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 ```json
 "$CHAIN": {
     "name": "Hedera",
-    "axelarId": "$CHAIN",
+    "axelarId": "hedera",
     "chainId": 295,
     "rpc": "https://mainnet.hashio.io/api",
     "tokenSymbol": "HBAR",
@@ -128,22 +128,20 @@ ts-node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amoun
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
-| **Devnet-amplifier** | `0`                    | `create3`        | ?                                            |
-| **Stagenet**         | `300`                  | `create3`        | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
+| **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
-ts-node evm/deploy-amplifier-gateway.js \
-	-m [deploymentType] \
-	--minimumRotationDelay [minimumRotationDelay]
+ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay]
 ```
 
 6. Deploy `Operators`
 
 | Network              | `deployer address`                           |
 | -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | ?                                            |
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
@@ -165,24 +163,35 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` address in config, which you will receive at step 6)
+8. Deploy GasService (set the `collector` to `Operators` address from step 6)
 
-| Network              | `deployer address`                           |
-| -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | ?                                            |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| Network              | `deployer address`                           | `deployMethod` |
+| -------------------- | -------------------------------------------- | -------------- |
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` | `create2`      |
+| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` | `create2`      |
+| **Testnet**          | `0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85` | `create`       |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
-ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "$OPERATOR_ADDRESS"}'
+ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
+9. Transfer ownership for contracts on mainnet and testnet.
+
+For Mainnet
 
 ```bash
-# Only for mainnet and official testnet connection
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
+
+For Testnet
+
+```bash
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
