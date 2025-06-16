@@ -9,13 +9,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-config:
+  determine-networks:
     runs-on: ubuntu-latest
-
+    outputs:
+      networks: ${{ steps.set-networks.outputs.networks }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
-      CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
 
     steps:
       - name: Checkout axelar-contract-deployments repository
@@ -38,7 +37,7 @@ jobs:
           echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
 
       - name: Determine NETWORKS
-        id: determine_networks
+        id: set-networks
         run: |
           echo "Checking modified files in commit ${{ env.MERGE_COMMIT }}"
           MODIFIED_FILES=$(git diff --name-only HEAD~1..HEAD)
@@ -61,37 +60,47 @@ jobs:
 
           if [ ${#NETWORKS[@]} -eq 0 ]; then
             echo "No relevant changes detected."
-            echo "NETWORKS=none" >> $GITHUB_ENV
+            echo "networks=none" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "Detected networks: ${NETWORKS[*]}"
-          echo "NETWORKS=${NETWORKS[*]}" >> $GITHUB_ENV
+          echo "networks=${NETWORKS[*]}" >> "$GITHUB_OUTPUT"
+  update-config:
+    runs-on: ubuntu-latest
+    needs: determine-networks
+    if: needs.determine-networks.outputs.networks != 'none'
 
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+      CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
+      NETWORKS: ${{ needs.determine-networks.outputs.networks }}
+
+    steps:
+      - name: Checkout axelar-contract-deployments repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # for the diff checks between HEAD~1..HEAD on "determine_networks" step
       - name: Checkout external repository
-        if: env.NETWORKS != 'none'
         uses: actions/checkout@v4
         with:
           repository: axelarnetwork/${{ secrets.CONFIG_REPO }}
           path: ${{ secrets.CONFIG_REPO }}
           token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
-
       - name: Install jq
-        if: env.NETWORKS != 'none'
         run: sudo apt-get install -y jq
 
       - name: Setup Branch Name
-        if: env.NETWORKS != 'none'
         id: branch-name
         run: echo "branch=feat/config-update-$(date +'%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
 
       - name: Create branch and generate config
-        if: env.NETWORKS != 'none'
         run: |
           cd ${{ secrets.CONFIG_REPO }}
           curl -sSL https://install.python-poetry.org | python3 -
           poetry install --no-interaction
-          git config --local user.email "cicd@axelar.network"
+          git config --local user.email "cicd@interoplabs.io"
           git config --local user.name "Interoplabs CI"
           git checkout -b ${{ steps.branch-name.outputs.branch }}
 
@@ -105,7 +114,6 @@ jobs:
           git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
 
       - name: Create Pull Request
-        if: env.NETWORKS != 'none'
         id: create_pr
         run: |
           cd ${{ secrets.CONFIG_REPO }}
@@ -122,7 +130,6 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Merge Pull Request
-        if: env.NETWORKS != 'none'
         run: |
           PR_NUMBER=${{ env.PR_NUMBER }}
           PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
