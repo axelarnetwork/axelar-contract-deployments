@@ -2978,7 +2978,7 @@
       "confirmations": 1,
       "finality": "finalized",
       "decimals": 18,
-      "approxFinalityWaitTime": 53,
+      "approxFinalityWaitTime": 22,
       "chainType": "evm",
       "explorer": {
         "name": "Plume Explorer",
