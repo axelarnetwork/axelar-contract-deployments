@@ -14,14 +14,14 @@ jobs:
 
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CHAINS_PAT: ${{ secrets.CHAINS_PAT }}
-      EXTERNAL_REPO: ${{ secrets.EXTERNAL_REPO }}
+      CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+      CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
 
     steps:
       - name: Checkout axelar-contract-deployments repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 2 # for the diff checks between HEAD~1..HEAD on "determine_networks" step
 
       - name: Check if PR was merged
         id: check_if_merged
@@ -72,9 +72,9 @@ jobs:
         if: env.NETWORKS != 'none'
         uses: actions/checkout@v4
         with:
-          repository: axelarnetwork/${{ secrets.EXTERNAL_REPO }}
-          path: ${{ secrets.EXTERNAL_REPO }}
-          token: ${{ secrets.CHAINS_PAT }}
+          repository: axelarnetwork/${{ secrets.CONFIG_REPO }}
+          path: ${{ secrets.CONFIG_REPO }}
+          token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
 
       - name: Install jq
         if: env.NETWORKS != 'none'
@@ -88,10 +88,10 @@ jobs:
       - name: Create branch and generate config
         if: env.NETWORKS != 'none'
         run: |
-          cd ${{ secrets.EXTERNAL_REPO }}
+          cd ${{ secrets.CONFIG_REPO }}
           curl -sSL https://install.python-poetry.org | python3 -
           poetry install --no-interaction
-          git config --local user.email "devops@axelar.network"
+          git config --local user.email "cicd@axelar.network"
           git config --local user.name "Interoplabs CI"
           git checkout -b ${{ steps.branch-name.outputs.branch }}
 
@@ -108,15 +108,15 @@ jobs:
         if: env.NETWORKS != 'none'
         id: create_pr
         run: |
-          cd ${{ secrets.EXTERNAL_REPO }}
+          cd ${{ secrets.CONFIG_REPO }}
           PR_TITLE="chore: update configs for ${{ env.NETWORKS }} from axelar-contract-deployments"
           PR_BODY="Auto-generated PR with updated configuration files"
           PR_HEAD="${{ steps.branch-name.outputs.branch }}"
           PR_BASE="main"
           RESPONSE=$(curl -s -X POST \
-            -H "Authorization: token ${{ secrets.CHAINS_PAT }}" \
+            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/axelarnetwork/${{ secrets.EXTERNAL_REPO }}/pulls \
+            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls \
             -d "{\"title\":\"$PR_TITLE\",\"body\":\"$PR_BODY\",\"head\":\"$PR_HEAD\",\"base\":\"$PR_BASE\"}")
           PR_NUMBER=$(echo $RESPONSE | jq -r .number)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
@@ -127,7 +127,7 @@ jobs:
           PR_NUMBER=${{ env.PR_NUMBER }}
           PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
           curl -s -X PUT \
-            -H "Authorization: token ${{ secrets.CHAINS_PAT }}" \
+            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/axelarnetwork/${{ secrets.EXTERNAL_REPO }}/pulls/$PR_NUMBER/merge \
+            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls/$PR_NUMBER/merge \
             -d "{\"commit_title\":\"Merge PR #$PR_NUMBER: $PR_TITLE\",\"merge_method\":\"squash\"}"
