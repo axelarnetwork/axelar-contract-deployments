@@ -1,4 +1,4 @@
-# Hedera GMP v6.0.6
+# Hedera GMP v6.0.4
 
 |                | **Owner**                              |
 | -------------- | -------------------------------------- |
@@ -159,11 +159,7 @@ REWARD_AMOUNT=[reward amount]
 EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` & `--runAs` are not required.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
-
-### Create proposals
-Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Berachain-ITS-v2.1.0.md) if possible.
 
 5. Register Gateway at the Router
 
@@ -181,21 +177,6 @@ ts-node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-```bash
-axelard q wasm contract-state smart <router-address> '{"chain_info": "$CHAIN"}' --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": "$CHAIN",
-    "gateway": {
-      "address": "axelar1hzz0s0ucrhdp6tue2lxk3c03nj6f60qy463we7lgx0wudd72ctmsee8enx"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
-
 6. Register prover contract on coordinator
 
 ```bash
@@ -211,7 +192,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig Prover on Multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -225,14 +206,6 @@ ts-node cosmwasm/submit-proposal.js execute \
       }
     }
   }"
-```
-
-```bash
-axelard q wasm contract-state smart <multisig-addr> '{"is_caller_authorized": {"contract_address": "<chain-multisig-prover-addr>", "chain_name": "$CHAIN"}}' --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
 ```
 
 8. Create reward pool for voting verifier
@@ -266,7 +239,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9.  Create reward pool for multisig
+9. Create reward pool for multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -288,14 +261,56 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+10.  Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAIN", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
-axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": "$CHAIN", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
+
+axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC ts-node for the `http_url` in production.
+11. Confirm proposals have passed
+
+- Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
+  - "Register Gateway for `$CHAIN`"
+  - "Register Multisig Prover for `$CHAIN`"
+  - "Authorize Multisig Prover for `$CHAIN`"
+  - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+  - "Create pool for `$CHAIN` in axelar multisig"
+  - (optional) "Register `$CHAIN` on ITS Hub"
+
+- Check Gateway registered at Router
+```bash
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+# You should see something like this:
+{
+  "data": {
+    "name": \"$CHAIN\",
+    "gateway": {
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+    },
+    "frozen_status": 0,
+    "msg_id_format": "hex_tx_hash_and_event_index"
+  }
+}
+```
+
+- Check Multisig Prover authorized on Multisig
+```bash
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+# Result should look like:
+{
+  "data": true
+}
+```
+
+- Check reward pool to confirm funding worked:
+
+```bash
+ts-node cosmwasm/query.js rewards -n $CHAIN
+```
+
+12. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`                    |
 | -------------------- | ----------------------------- |
@@ -325,14 +340,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-12. Update ampd with the `$CHAIN` chain configuration.
+13. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-
-13. Create genesis verifier set
+14. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
@@ -347,6 +361,12 @@ Note that this step can only be run once a sufficient number of verifiers have r
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
 ```
 
+Query the multisig prover for active verifier set
+
+```bash
+axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
+```
+
 ## Checklist
 
-The [Hedera GMP checklist](../evm/2025-04-Hedera-GMP-v6.0.6.md) will test GMP call.
+The [Hedera GMP checklist](../evm/2025-06-Hedera-GMP-v6.0.4.md) will test GMP calls.
