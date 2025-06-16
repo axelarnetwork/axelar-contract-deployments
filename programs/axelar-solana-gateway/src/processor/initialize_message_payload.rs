@@ -127,6 +127,7 @@ impl Processor {
         let mut message_payload_account_data = message_payload_account.try_borrow_mut_data()?;
         let message_payload: MutMessagePayload<'_> = (*message_payload_account_data).try_into()?;
         *message_payload.bump = bump_seed;
+        *message_payload.payload_hash = incoming_message.payload_hash;
 
         Ok(())
     }

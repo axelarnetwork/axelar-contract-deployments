@@ -6,8 +6,63 @@ use axelar_solana_gateway_test_fixtures::{
 };
 use sha3::{Digest, Keccak256};
 use solana_program_test::tokio;
+use solana_sdk::instruction::InstructionError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
+use solana_sdk::transaction::TransactionError;
+
+#[tokio::test]
+#[allow(clippy::as_conversions)]
+async fn fail_commit_message_payload_pda_payload_hash_mismatch() {
+    const PAYLOAD_SIZE: usize = 1024;
+
+    // Setup: Test runner
+    let mut runner = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42, 42])
+        .build()
+        .setup()
+        .await;
+    let gateway_root_pda = runner.gateway_root_pda;
+
+    // Setup: Patch the input message to use a valid payload hash.
+    let approved_message_payload_bytes_to_write = random_bytes::<PAYLOAD_SIZE>();
+    let committed_message_payload_bytes_to_write = random_bytes::<PAYLOAD_SIZE>();
+    let message = {
+        let mut message = random_message();
+        message.payload_hash = Keccak256::digest(approved_message_payload_bytes_to_write).into();
+        message
+    };
+
+    // Setup: Send an instruction to initialize the message payload PDA account
+    initialize_message_payload_pda(&mut runner, &message, PAYLOAD_SIZE as u64).await;
+
+    // Setup: Build and send an instruction to write the message payload bytes
+    let command_id = message_to_command_id(&message);
+    let write_ix = axelar_solana_gateway::instructions::write_message_payload(
+        gateway_root_pda,
+        runner.payer.pubkey(),
+        command_id,
+        &committed_message_payload_bytes_to_write,
+        0,
+    )
+    .unwrap();
+    let write_tx = runner.send_tx(&[write_ix]).await.unwrap();
+    assert!(write_tx.result.is_ok());
+
+    // Action: Build and send an instruction to commit
+    let ix = axelar_solana_gateway::instructions::commit_message_payload(
+        gateway_root_pda,
+        runner.payer.pubkey(),
+        command_id,
+    )
+    .unwrap();
+    let tx = runner.send_tx(&[ix]).await.unwrap_err();
+    let error = tx.result.unwrap_err();
+    assert_eq!(
+        error,
+        TransactionError::InstructionError(0, InstructionError::InvalidAccountData)
+    );
+}
 
 #[tokio::test]
 #[allow(clippy::as_conversions)]

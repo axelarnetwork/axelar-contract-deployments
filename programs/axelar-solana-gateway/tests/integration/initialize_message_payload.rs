@@ -143,7 +143,7 @@ pub async fn initialize_message_payload_pda(
         usize::try_from(buffer_size).unwrap()
     );
     assert!(message_payload.raw_payload.iter().all(|&x| x == 0));
-    assert!(message_payload.payload_hash.iter().all(|&x| x == 0));
+    assert!(message_payload.payload_hash == &message.payload_hash);
 
     // Check the bump too
     let (incoming_message_pda, _) = get_incoming_message_pda(&command_id);
