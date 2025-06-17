@@ -80,8 +80,7 @@ jobs:
     steps:
       - name: Checkout axelar-contract-deployments repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # for the diff checks between HEAD~1..HEAD on "determine_networks" step
+
       - name: Checkout external repository
         uses: actions/checkout@v4
         with:
