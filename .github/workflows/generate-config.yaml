@@ -100,7 +100,7 @@ jobs:
           token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
 
       - name: Install jq
-        uses: dcarbone/install-jq-action@v2
+        run: sudo apt-get install -y jq
 
       - name: Setup Branch Name
         id: branch-name
@@ -120,8 +120,7 @@ jobs:
           git config --local user.name "Interoplabs CI"
           git checkout -b ${{ steps.branch-name.outputs.branch }}
 
-          IFS=',' read -ra NETWORKS <<< "${{ env.NETWORKS }}"
-          for NETWORK in "${NETWORKS[@]}"; do
+          for NETWORK in ${{ env.NETWORKS }}; do
             echo "Generating config for $NETWORK"
             poetry run python generate.py --network "$NETWORK" gen-configs all-configs
           done
