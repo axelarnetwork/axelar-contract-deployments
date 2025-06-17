@@ -66,6 +66,7 @@ jobs:
 
           echo "Detected networks: ${NETWORKS[*]}"
           echo "networks=${NETWORKS[*]}" >> "$GITHUB_OUTPUT"
+
   update-config:
     runs-on: ubuntu-latest
     needs: determine-networks
