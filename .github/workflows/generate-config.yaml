@@ -25,19 +25,22 @@ jobs:
       - name: Check if PR was merged
         id: check_if_merged
         run: |
-          if [ "${{ github.event.pull_request.merged }}" != "true" ]; then
-            echo "PR was not merged. Exiting."
-            exit 0
+          if [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            echo "merged=true" >> $GITHUB_OUTPUT
+          else
+            echo "merged=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Get the merge commit SHA
         id: merge_commit
+        if: steps.check_if_merged.outputs.merged == 'true'
         run: |
           MERGE_COMMIT=$(git log -1 --pretty=format:"%H")
           echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
 
       - name: Determine NETWORKS
         id: set-networks
+        if: steps.check_if_merged.outputs.merged == 'true'
         run: |
           echo "Checking modified files in commit ${{ env.MERGE_COMMIT }}"
           MODIFIED_FILES=$(git diff --name-only HEAD~1..HEAD)
@@ -66,6 +69,10 @@ jobs:
 
           echo "Detected networks: ${NETWORKS[*]}"
           echo "networks=${NETWORKS[*]}" >> "$GITHUB_OUTPUT"
+
+      - name: Set networks output to none if not merged
+        if: steps.check_if_merged.outputs.merged != 'true'
+        run: echo "networks=none" >> "$GITHUB_OUTPUT"
 
   update-config:
     runs-on: ubuntu-latest
@@ -121,12 +128,20 @@ jobs:
           PR_BODY="Auto-generated PR with updated configuration files"
           PR_HEAD="${{ steps.branch-name.outputs.branch }}"
           PR_BASE="main"
-          RESPONSE=$(curl -s -X POST \
+          # Capture both response and HTTP status code
+          RESPONSE=$(curl -s -w "%{http_code}" -o response.json -X POST \
             -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls \
             -d "{\"title\":\"$PR_TITLE\",\"body\":\"$PR_BODY\",\"head\":\"$PR_HEAD\",\"base\":\"$PR_BASE\"}")
-          PR_NUMBER=$(echo $RESPONSE | jq -r .number)
+          HTTP_STATUS=$(tail -c 3 <<< "$RESPONSE")
+          cat response.json
+          PR_NUMBER=$(jq -r .number response.json)
+          if [[ "$HTTP_STATUS" != "201" ]] || [[ "$PR_NUMBER" == "null" || -z "$PR_NUMBER" ]]; then
+            echo "Failed to create PR. HTTP status: $HTTP_STATUS, PR number: $PR_NUMBER"
+            cat response.json
+            exit 1
+          fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Merge Pull Request
