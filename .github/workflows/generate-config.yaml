@@ -117,7 +117,7 @@ jobs:
           done
 
           git add --all
-          git commit -m "create branch ${{ steps.branch-name.outputs.branch }}"
+          git commit -m "chore: update generated configuration files for ${{ env.NETWORKS }}"
           git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
 
       - name: Create Pull Request
@@ -146,10 +146,20 @@ jobs:
 
       - name: Merge Pull Request
         run: |
+          cd ${{ secrets.CONFIG_REPO }}
           PR_NUMBER=${{ env.PR_NUMBER }}
-          PR_TITLE="chore: update configurations for ${{ env.NETWORKS }} from axelar-contract-deployments"
-          curl -s -X PUT \
+          PR_TITLE="chore: update configs for ${{ env.NETWORKS }} from axelar-contract-deployments"
+          # Attempt to merge the PR and capture both response and HTTP status code
+          RESPONSE=$(curl -s -w "%{http_code}" -o merge_response.json -X PUT \
             -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls/$PR_NUMBER/merge \
-            -d "{\"commit_title\":\"Merge PR #$PR_NUMBER: $PR_TITLE\",\"merge_method\":\"squash\"}"
+            -d "{\"commit_title\":\"Merge PR #$PR_NUMBER: $PR_TITLE\",\"merge_method\":\"squash\"}")
+          HTTP_STATUS=$(tail -c 3 <<< "$RESPONSE")
+          cat merge_response.json
+          if [[ "$HTTP_STATUS" != "200" ]]; then
+            echo "Failed to merge PR. HTTP status: $HTTP_STATUS"
+            cat merge_response.json
+            exit 1
+          fi
+          echo "PR #$PR_NUMBER merged successfully."
