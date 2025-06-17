@@ -98,6 +98,7 @@ jobs:
           repository: axelarnetwork/${{ secrets.CONFIG_REPO }}
           path: config-repo
           token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+
       - name: Install jq
         uses: dcarbone/install-jq-action@v2
 
