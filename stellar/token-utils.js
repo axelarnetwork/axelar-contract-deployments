@@ -1,6 +1,6 @@
 'use strict';
 
-const { Asset, Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Asset, Contract } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
 const {
     loadConfig,
@@ -12,7 +12,7 @@ const {
 } = require('../common');
 const { addBaseOptions, broadcast, getWallet, serializeValue, assetToScVal } = require('./utils');
 
-async function deployStellarAssetContract(wallet, _config, chain, contract, args, options) {
+async function createStellarAssetContract(wallet, _config, chain, contract, args, options) {
     const [assetCode, issuer] = args;
 
     validateParameters({
@@ -23,8 +23,8 @@ async function deployStellarAssetContract(wallet, _config, chain, contract, args
     const asset = new Asset(assetCode, issuer);
     const xdrAssetScVal = assetToScVal(asset);
 
-    const operation = contract.call('deploy_stellar_asset_contract', xdrAssetScVal);
-    const returnValue = await broadcast(operation, wallet, chain, 'deploy_stellar_asset_contract', options);
+    const operation = contract.call('create_stellar_asset_contract', xdrAssetScVal);
+    const returnValue = await broadcast(operation, wallet, chain, 'create_stellar_asset_contract', options);
 
     printInfo('Stellar asset contract address', serializeValue(returnValue.value()));
 }
@@ -56,9 +56,9 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program
-        .command('deploy-stellar-asset-contract <assetCode> <issuer>')
+        .command('create-stellar-asset-contract <assetCode> <issuer>')
         .action((assetCode, issuer, options) => {
-            mainProcessor(deployStellarAssetContract, [assetCode, issuer], options);
+            mainProcessor(createStellarAssetContract, [assetCode, issuer], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
