@@ -184,7 +184,13 @@ OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
+8. Transfer ownership for Operators contract
+
+```bash
+node evm/ownership.js -c Operators --action transferOwnership  --newOwner 0xa1c5B285bFE159d9eFc7359d7938767cF9936186
+```
+
+9. Transfer ownership for Gateway and Gas Service contracts on `mainnet` and `testnet`
 
 ```bash
 # Only for mainnet and official testnet connection
