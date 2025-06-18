@@ -7,8 +7,7 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | WIP                   | 2025-06-18 |
-| **Stagenet**         | WIP                   | 2025-06-19 |
+| **Stagenet**         | Completed             | 2025-06-18 |
 | **Testnet**          | WIP                   | 2025-06-19 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
@@ -26,9 +25,9 @@ Ensure that the [External Gateway](../stellar/2025-06-GMP-v1.1.2.md) is deployed
 
 ## Deployment
 
-This deployment is being performed due to the Stellar testnet reset on June 18th, 2025 17:00 UTC. This deployment is only for devnet-amplifier, stagenet, and testnet environments - not mainnet.
+This deployment is being performed due to the Stellar testnet reset on June 18th, 2025 17:00 UTC. This deployment is only for stagenet and testnet environments - not devnet-amplifier and mainnet.
 
-- Create an `.env` config. `CHAIN` should be set to `stellar-2025-q2` for devnet-amplifier, stagenet, testnet.
+- Create an `.env` config. `CHAIN` should be set to `stellar-2025-q2` for stagenet and testnet.
 
 ```yaml
 MNEMONIC=xyz
@@ -48,13 +47,11 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 | Network              | `governanceAddress`                             | `adminAddress`                                  |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 
 | Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
 | -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
-| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
 
@@ -87,7 +84,6 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 | Network              | `CONTRACT_ADMIN`                                |
 | -------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
 | **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
 
@@ -118,19 +114,19 @@ ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeI
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
-REWARDS=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
-ROUTER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Router.address" | tr -d '"')
+VOTING_VERIFIER=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+GATEWAY=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
+REWARDS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
+ROUTER=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".axelar.contracts.Router.address" | tr -d '"')
+echo $VOTING_VERIFIER; echo $GATEWAY; echo $MULTISIG_PROVER; echo $MULTISIG; echo $REWARDS; echo $ROUTER;
 ```
 
 - Gov proposal environment variables. Update these for each network
 
 | Network              | `PROVER_ADMIN`                                  | `DEPOSIT_VALUE` | `REWARD_AMOUNT`     |
 | -------------------- | ----------------------------------------------- | --------------- | ------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `100000000`     | `1000000uamplifier` |
 | **Stagenet**         | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` | `100000000`     | `1000000uaxl`       |
 | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `2000000000`    | `1000000uaxl`       |
 
@@ -138,20 +134,17 @@ ROUTER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts
 PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
 DEPOSIT_VALUE=[deposit value]
 REWARD_AMOUNT=[reward amount]
-RUN_AS_ACCOUNT=[wasm deployer/governance address]
 ```
 
 - `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
-- Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register stellar gateway at the Router
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
-  -t "Register Gateway for stellar" \
-  -d "Register Gateway address for stellar at Router contract" \
-  --runAs $RUN_AS_ACCOUNT \
+  -t "Register Gateway for $CHAIN" \
+  -d "Register Gateway address for $CHAIN at Router contract" \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_chain\": {
@@ -191,7 +184,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for stellar" \
   -d "Register Multisig Prover address for stellar at Coordinator contract" \
-  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
@@ -208,7 +200,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for stellar" \
   -d "Authorize Multisig Prover address for stellar at Multisig contract" \
-  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"authorize_callers\": {
@@ -220,7 +211,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 ```
 
 ```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json --node [axelar rpc address] | jq .
 
 # Result should look like:
 {
@@ -234,7 +225,6 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
 
@@ -243,7 +233,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in stellar voting verifier" \
   -d "Create pool for stellar in stellar voting verifier" \
-  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
@@ -267,7 +256,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for stellar in axelar multisig" \
   -d "Create pool for stellar in axelar multisig" \
-  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
@@ -288,7 +276,6 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 | Network              | `http_url`                             |
 | -------------------- | -------------------------------------- |
-| **Devnet-amplifier** | `https://horizon-testnet.stellar.org/` |
 | **Stagenet**         | `https://horizon-testnet.stellar.org/` |
 | **Testnet**          | `https://horizon-testnet.stellar.org/` |
 
