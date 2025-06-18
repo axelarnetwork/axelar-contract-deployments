@@ -68,10 +68,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     println!("initial_governance_pda_funds: {initial_governance_pda_funds}");
 
     // Send the proposal execution instruction
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     println!("{res:?}");
     assert!(res.is_ok());
@@ -79,10 +76,7 @@ async fn test_can_withdraw_native_tokens_from_contract() {
     // Assert the contract has less funds
     let post_withdraw_governance_pda_funds = sol_integration.get_balance(&config_pda).await;
 
-    assert_eq!(
-        post_withdraw_governance_pda_funds,
-        initial_governance_pda_funds - amount_to_withdraw
-    );
+    assert!(post_withdraw_governance_pda_funds > initial_governance_pda_funds - amount_to_withdraw);
 
     // Assert the receiver has the initial funds + the gov module funds
     let new_receiver_funds = sol_integration.get_balance(&fund_receiver.pubkey()).await;
@@ -123,10 +117,7 @@ async fn test_cannot_withdraw_surpassing_rent_exemption() {
         .await;
 
     // Send the proposal execution instruction
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_err());
 

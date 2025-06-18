@@ -44,10 +44,7 @@ async fn test_time_lock_is_enforced() {
     assert!(res.is_ok());
 
     // Send execute proposal instruction
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_err());
@@ -91,10 +88,7 @@ async fn test_proposal_can_be_executed_and_reached_memo_program() {
         .await;
 
     // Send execute proposal instruction
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_ok());
@@ -140,10 +134,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     ix_builder.prop_target = Some([1_u8; 32].to_vec().try_into().unwrap());
 
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     // The runtime detects the wrong PDA and returns an error.
     assert!(res.is_err());
@@ -213,10 +204,7 @@ async fn test_proposal_can_be_executed_and_reached_memo_program_transferring_fun
 
     // Send execute proposal instruction
 
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_ok());
@@ -268,10 +256,7 @@ async fn test_proposal_is_deleted_after_execution() {
 
     // Send execute proposal instruction
 
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_ok());
@@ -321,10 +306,7 @@ async fn test_same_proposal_can_be_created_after_execution() {
         .await;
 
     // Send execute proposal instruction
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
 
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_ok());

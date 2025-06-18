@@ -144,10 +144,7 @@ async fn test_can_change_operator_via_gmp_proposal() {
 
     // Send the proposal execution instruction
 
-    let ix = ix_builder
-        .clone()
-        .execute_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
-        .build();
+    let ix = ix_builder.clone().execute_proposal(&config_pda).build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
     assert!(res.is_ok());
 

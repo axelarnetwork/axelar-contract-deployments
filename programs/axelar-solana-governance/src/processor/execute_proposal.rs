@@ -24,7 +24,6 @@ pub(crate) fn process(
 ) -> Result<(), ProgramError> {
     let accounts_iter = &mut accounts.iter();
     let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
     let config_pda = next_account_info(accounts_iter)?;
     let proposal_account = next_account_info(accounts_iter)?;
 
@@ -48,7 +47,7 @@ pub(crate) fn process(
 
     // Only invoke with target program accounts.
     let mut target_program_accounts = accounts
-        .get(4..)
+        .get(3..)
         .ok_or(ProgramError::InvalidInstructionData)?
         .as_ref()
         .to_vec();
@@ -75,5 +74,5 @@ pub(crate) fn process(
         eta: from_u64_to_u256_le_bytes(proposal.eta()),
     };
     event.emit()?;
-    ExecutableProposal::remove(proposal_account, payer)
+    ExecutableProposal::remove(proposal_account, config_pda)
 }
