@@ -2089,7 +2089,8 @@
                 "threshold": "1"
               }
             ]
-          }
+          },
+          "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CBUPGJTXVC3QYZCLNQ2L6EZZMCK2BTLBFBQSPUSG6ZZF6HI6AJ6GQQGK",
