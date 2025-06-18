@@ -109,8 +109,6 @@ source .env
 set +a
 ```
 
-When in in
-
 ### Gateway
 
 Deploy and verify the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
