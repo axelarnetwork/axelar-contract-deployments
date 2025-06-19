@@ -2145,6 +2145,13 @@
             "interchainTokenWasmHash": "6cc453f7c1a0e7c2a153a11d7d7218a76ebeb41785239000bc5c428e02749cc8",
             "tokenManagerWasmHash": "e29417a07222fe6ce5644ab9848757758bdb12ce973c5298f018384e27eecab9"
           }
+        },
+        "Multicall": {
+          "address": "CAZ4YNSCJFE2SZ2IH6AUW2OIVRJMFHGL6FCGIB3BZOLVLYDG3WQGMZCQ",
+          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
+          "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
+          "version": "1.0.2",
+          "initializeArgs": {}
         }
       }
     },
