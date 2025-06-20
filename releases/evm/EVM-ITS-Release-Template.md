@@ -58,25 +58,21 @@ ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
+## Set as trusted chain on remote ITS contracts
 
-#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
+- Ensure that `<ChainName>` is registered on ITS hub
 
-Set `<ChainName>` as trusted chain on all EVM chains
-```bash
-ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
+- Set the following addresses in `.env`. Refer to ITS release docs for owner addresses.
+
+```yaml
+PRIVATE_KEY_EVM=<EVM ITS owner>
+PRIVATE_KEY_SUI=<Sui ITS owner>
+PRIVATE_KEY_STELLAR=<Stellar ITS owner>
 ```
 
-Set `<ChainName>` as trusted chain on Sui
-
+- Set chain as trusted chain on all ITS edge contracts:
 ```bash
-ts-node sui/its.js add-trusted-chains $CHAIN
-```
-
-Set `<ChainName>` as trusted chain on Stellar
-
-```bash
-ts-node stellar/its.js add-trusted-chains $CHAIN
+ts-node common/its.js set-trusted-chains-all
 ```
 
 ## Checklist
