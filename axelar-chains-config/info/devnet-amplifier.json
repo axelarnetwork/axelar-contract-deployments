@@ -1869,21 +1869,21 @@
           "confirmationHeight": 1,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stacks",
-          "codeId": 1230,
+          "codeId": 1393,
           "address": "axelar1mjlvl44v8er50nxjxcuugd4prafzxj4r84q84pf3ntgte6crnywsrk0s5e"
         },
         "storeCodeProposalId": "631",
         "storeCodeProposalCodeHash": "e2db56111c000c7f9be4cc98ccae3ba504133fff29b05619e9433569737823b8",
-        "lastUploadedCodeId": 1230
+        "lastUploadedCodeId": 1393
       },
       "StacksGateway": {
         "stacks": {
-          "codeId": 1228,
+          "codeId": 1396,
           "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
         },
         "storeCodeProposalId": "574",
         "storeCodeProposalCodeHash": "a9ac6c640f1655aea31874d1a8d1f90e4a395fc52430719d2805e2047dc140f8",
-        "lastUploadedCodeId": 1228
+        "lastUploadedCodeId": 1396
       },
       "StacksMultisigProver": {
         "stacks": {
@@ -1897,13 +1897,13 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "stacks",
           "keyType": "ecdsa",
-          "codeId": 1229,
+          "codeId": 1395,
           "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
           "address": "axelar1az8gj559csay9am80dj04xtr2l5027qw4h0hxgspsrm5u09zey4sptt4mq"
         },
         "storeCodeProposalId": "575",
         "storeCodeProposalCodeHash": "2f802e3abff11ca183e6fa5a25c4de361b49d628c64b3e174409929fa98f7e89",
-        "lastUploadedCodeId": 1229
+        "lastUploadedCodeId": 1395
       }
     },
     "axelarId": "axelar",
