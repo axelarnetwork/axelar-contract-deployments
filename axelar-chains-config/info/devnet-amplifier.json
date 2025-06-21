@@ -1364,24 +1364,26 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.2 hyperliquid-2",
+          "salt": "ITS v2.1.0 devnet-amplifier hyperliquid2",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x7443286507e98aD85983C07a2c887b1CB1b2Db2D",
-          "interchainToken": "0x11a19A5B949571d806Daf47cE94A7Ec2AE18e5ce",
-          "interchainTokenDeployer": "0x3CEF5F6d340E97115C70B2cAd958612F15e54742",
-          "tokenManager": "0x5BF49F0f24eBB61496f7D4a4701D39092e22EE52",
-          "tokenHandler": "0xD250910cA0a227a55cE561e8e8daE51D9A1D9E81",
-          "gatewayCaller": "0x937c8323b1cBbE1971792eB38EfC8cB1c52c1140",
-          "implementation": "0x23ef9e90fE6b6FC860355510A55b8B3F64072e5A",
+          "proxySalt": "ITS v1.0.0 devnet-amplifier hyperliquid2",
+          "tokenManagerDeployer": "0xf4dD512fd6D1e318cf14547DC9113Dc616288127",
+          "interchainToken": "0x67CeD799BeEC06b9b0Ec5a8154D542e29aA154d3",
+          "interchainTokenDeployer": "0xdEE67E26242AD01941318383089106B9583c452a",
+          "tokenManager": "0x750cB5a3114cc12E4e3d20Fb47C0b6208bA83F34",
+          "tokenHandler": "0xc43A3C9212a9c8B8e4cB1bb4D9b0BecBe2F4FeCe",
+          "gatewayCaller": "0x5f5658c978E01c7d8d2d493467001f48a7403fD3",
+          "implementation": "0x7A3ba91062c6b97A6f956d363857Ec96f30e788c",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xA56FF641931653667A00191837aAef0BeD9Fff53"
+          "address": "0x8C0952aAb50a6aaB167B317aEB02d4D89A72d276",
+          "hyperliquidInterchainToken": "0xEC61878BD4da5f23589e6Ef6Bc77AB09fd63b2f3",
+          "hyperliquidInterchainTokenDeployer": "0xc383A1Fe4A128855970829773866358105Ae95FB"
         },
         "InterchainTokenFactory": {
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0",
-          "implementation": "0x1Ef9c7649A9451EA3e598B9369B216b2E5d3c6F7",
-          "address": "0xEc5328F11818D98468226b0BB0a2884D9ccF74F7"
+          "salt": "ITS Factory v1.0.0 devnet-amplifier hyperliquid2",
+          "implementation": "0x396a82d352d3AF3D7B84d2Bf08cEBf6F5638a68d",
+          "address": "0xfCdE54691FE439E5a5c06b374629E5Ba5C4f8Dec"
         }
       }
     }
