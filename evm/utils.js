@@ -1078,6 +1078,104 @@ const deriveAccounts = async (mnemonic, quantity) => {
     return accounts;
 };
 
+/**
+ * Analyzes a storage slot to detect potential conflicts and data types.
+ * @param {string} slot - The storage slot value as a hex string
+ * @param {number} slotNumber - The slot number for context
+ * @returns {Object} - Object containing conflict detection results
+ * @returns {boolean} returns.hasConflict - Whether a potential conflict was detected
+ * @returns {string} returns.conflictType - Type of conflict detected
+ * @returns {string} returns.description - Human-readable description of the slot content
+ */
+function analyzeStorageSlot(slot, slotNumber) {
+    const isEmpty = slot === '0x0000000000000000000000000000000000000000000000000000000000000000';
+    if (isEmpty) {
+        return { hasConflict: false, description: 'Empty slot' };
+    }
+
+    const asAddress = '0x' + slot.slice(-40);
+    const asNumber = parseInt(slot, 16);
+    const asBigNumber = BigNumber.from(slot);
+
+    // Check if it's a valid address
+    let isValidAddress = false;
+    try {
+        ethers.utils.getAddress(asAddress);
+        isValidAddress = true;
+    } catch (e) {
+        // Not a valid address
+    }
+
+    // Check for common patterns
+    const isMaxUint256 = slot === '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+    const isSingleBit = slot === '0x0000000000000000000000000000000000000000000000000000000000000001';
+    const isAllOnes = slot.replace('0x', '').split('').every((char) => char === 'f');
+    const isAllZerosExceptLast =
+        slot.startsWith('0x0000000000000000000000000000000000000000000000000000000000000000') &&
+        slot.endsWith('01');
+
+    // Check for reasonable number ranges
+    const isReasonableNumber = asNumber > 0 && asNumber < Number.MAX_SAFE_INTEGER;
+    const isTimestampLike = asNumber > 1600000000 && asNumber < Math.floor(Date.now() / 1000) + 1000000000;
+
+    // Check for packed data indicators
+    const nonZeroBytes = slot.replace('0x', '').match(/[1-9a-f]/g) || [];
+    const hasMultipleNonZeroBytes = nonZeroBytes.length > 8; // More than just one value
+
+    // Determine conflict type and description
+    let hasConflict = false;
+    let conflictType = 'INFO';
+    let description = '';
+
+    if (isValidAddress) {
+        description = `Address: ${asAddress}`;
+        if (slotNumber === 0) {
+            description += ' (likely deployer/owner)';
+        }
+    } else if (isMaxUint256) {
+        description = 'Maximum uint256 value (likely allowance/balance)';
+        hasConflict = true;
+        conflictType = 'MAX_VALUE';
+    } else if (isSingleBit) {
+        description = 'Single bit set (likely boolean flag)';
+    } else if (isReasonableNumber) {
+        if (isTimestampLike) {
+            const date = new Date(asNumber * 1000);
+            description = `Timestamp: ${asNumber} (${date.toISOString()})`;
+        } else {
+            description = `Number: ${asNumber}`;
+        }
+    } else if (hasMultipleNonZeroBytes) {
+        description = 'Packed data detected (multiple values in one slot)';
+        hasConflict = true;
+        conflictType = 'PACKED_DATA';
+    } else if (isAllOnes) {
+        description = 'All ones pattern (unusual)';
+        hasConflict = true;
+        conflictType = 'UNUSUAL_PATTERN';
+    } else {
+        description = `BigNumber: ${asBigNumber.toString()}`;
+        if (asBigNumber.gt(BigNumber.from(10).pow(18))) {
+            description += ' (very large value)';
+            hasConflict = true;
+            conflictType = 'LARGE_VALUE';
+        }
+    }
+
+    // Special checks for common storage patterns
+    if (slotNumber === 3) {
+        description += ' (common name slot)';
+    } else if (slotNumber === 4) {
+        description += ' (common symbol slot)';
+    } else if (slotNumber === 5) {
+        description += ' (common decimals slot)';
+    } else if (slotNumber === 1) {
+        description += ' (common total supply slot)';
+    }
+
+    return { hasConflict, conflictType, description };
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1119,4 +1217,5 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     deriveAccounts,
+    analyzeStorageSlot,
 };

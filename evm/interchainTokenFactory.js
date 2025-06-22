@@ -8,7 +8,7 @@ const {
     BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
+const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo, analyzeStorageSlot } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
@@ -280,6 +280,225 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'debugStorageLayout': {
+            const { tokenId } = options;
+
+            validateParameters({ isNonEmptyString: { tokenId } });
+
+            try {
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address`, tokenAddress);
+
+                // Read first 20 storage slots for more comprehensive analysis
+                for (let i = 0; i < 20; i++) {
+                    const slot = await provider.getStorageAt(tokenAddress, i);
+                    const analysis = analyzeStorageSlot(slot, i);
+
+                    printInfo(`Slot ${i}`, `${slot} - ${analysis.description}`);
+
+                    if (analysis.hasConflict) {
+                        printInfo(`  ⚠️  CONFLICT DETECTED: ${analysis.conflictType} - ${analysis.description}`);
+                    }
+                }
+
+                // Also check some common storage patterns
+                printInfo(`\n🔍 Checking common storage patterns:`);
+
+                // Check for ERC20-like storage layout
+                try {
+                    const nameSlot = await provider.getStorageAt(tokenAddress, 3); // Common slot for name
+                    const symbolSlot = await provider.getStorageAt(tokenAddress, 4); // Common slot for symbol
+                    const decimalsSlot = await provider.getStorageAt(tokenAddress, 5); // Common slot for decimals
+
+                    printInfo(`Name slot (3)`, nameSlot);
+                    printInfo(`Symbol slot (4)`, symbolSlot);
+                    printInfo(`Decimals slot (5)`, decimalsSlot);
+
+                    // Try to decode as strings if they look like strings
+                    if (nameSlot !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                        try {
+                            const nameLength = parseInt(nameSlot.slice(2, 10), 16);
+                            if (nameLength > 0 && nameLength < 32) {
+                                printInfo(`  Name length`, nameLength);
+                            }
+                        } catch (e) {
+                            // Not a string
+                        }
+                    }
+                } catch (e) {
+                    printInfo(`Could not check ERC20 patterns`);
+                }
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                    printInfo(`This could mean:`);
+                    printInfo(`  • Token was deployed on a different chain`);
+                    printInfo(`  • Token ID is incorrect`);
+                    printInfo(`  • Token deployment failed`);
+
+                    // Check if we can find info about this token in the factory
+                    try {
+                        const deployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                        if (deployer !== AddressZero) {
+                            printInfo(`✅ Factory has deployer record:`, deployer);
+                            printInfo(`   This suggests token was intended to be deployed but may have failed`);
+                        } else {
+                            printInfo(`❌ No deployer record in factory`);
+                        }
+                    } catch (factoryError) {
+                        printInfo(`❌ Could not check factory deployer record`);
+                    }
+                } else {
+                    throw error;
+                }
+            }
+
+            break;
+        }
+
+        case 'updateTokenDeployer': {
+            const { tokenId, deployer } = options;
+
+            validateParameters({ 
+                isNonEmptyString: { tokenId },
+                isValidAddress: { deployer }
+            });
+
+            try {
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address for ${tokenId}`, tokenAddress);
+
+                // Try HyperliquidInterchainToken ABI first
+                try {
+                    const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
+                    const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
+
+                    const currentDeployer = await hyperliquidToken.getDeployer();
+                    printInfo(`Current deployer`, currentDeployer);
+                    printInfo(`New deployer`, deployer);
+
+                    const tx = await hyperliquidToken.updateDeployer(deployer, gasOptions);
+                    printInfo(`Updating deployer...`);
+
+                    const receipt = await tx.wait();
+                    printInfo(`Transaction hash`, receipt.transactionHash);
+
+                    const updatedDeployer = await hyperliquidToken.getDeployer();
+                    printInfo(`Updated deployer`, updatedDeployer);
+                    printInfo(`Update successful`, updatedDeployer.toLowerCase() === deployer.toLowerCase());
+
+                } catch (hyperliquidError) {
+                    if (hyperliquidError.message.includes('getDeployer is not a function') ||
+                        hyperliquidError.message.includes('execution reverted')) {
+
+                        // Fall back to standard InterchainToken ABI
+                        const InterchainToken = getContractJSON('InterchainToken');
+                        const standardToken = new Contract(tokenAddress, InterchainToken.abi, wallet);
+
+                        // Check if standard token has deployer functions
+                        const tokenFunctions = Object.keys(standardToken.interface.functions);
+                        const hasDeployerFunctions = tokenFunctions.some(fn => fn.includes('deployer'));
+
+                        if (!hasDeployerFunctions) {
+                            printInfo(`❌ This token does not support deployer updates`);
+                            printInfo(`   - Token type: Standard InterchainToken`);
+                            printInfo(`   - Standard InterchainToken does not have getDeployer/updateDeployer functions`);
+                            printInfo(`   - Only HyperliquidInterchainToken supports deployer updates`);
+                            return;
+                        }
+                    } else {
+                        throw hyperliquidError;
+                    }
+                }
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                } else if (error.errorName === 'NotAuthorized') {
+                    printInfo(`❌ Not authorized to update deployer. Must be ITS operator.`);
+                } else {
+                    printInfo(`❌ Error updating deployer:`, error.message);
+                }
+            }
+
+            break;
+        }
+
+        case 'checkStorageConflicts': {
+            const { tokenId, startSlot, endSlot } = options;
+
+            validateParameters({ isNonEmptyString: { tokenId } });
+
+            const start = startSlot ? parseInt(startSlot) : 0;
+            const end = endSlot ? parseInt(endSlot) : 50; // Check more slots by default
+
+            try {
+                const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+                printInfo(`Token address`, tokenAddress);
+                printInfo(`Checking slots ${start} to ${end} for conflicts...`);
+
+                let conflicts = [];
+                let nonEmptySlots = [];
+
+                for (let i = start; i < end; i++) {
+                    const slot = await provider.getStorageAt(tokenAddress, i);
+                    const analysis = analyzeStorageSlot(slot, i);
+
+                    if (!analysis.hasConflict && slot !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                        nonEmptySlots.push(i);
+                    }
+
+                    if (analysis.hasConflict) {
+                        conflicts.push({
+                            slot: i,
+                            content: slot,
+                            conflictType: analysis.conflictType,
+                            description: analysis.description
+                        });
+                    }
+
+                    printInfo(`Slot ${i}`, `${slot} - ${analysis.description}`);
+                }
+
+                printInfo(`\n📊 Summary:`);
+                printInfo(`Total slots checked`, end - start);
+                printInfo(`Non-empty slots found`, nonEmptySlots.length);
+                printInfo(`Potential conflicts detected`, conflicts.length);
+
+                if (conflicts.length > 0) {
+                    printInfo(`\n⚠️  CONFLICTS DETECTED:`);
+                    conflicts.forEach(conflict => {
+                        printInfo(`Slot ${conflict.slot}: ${conflict.conflictType} - ${conflict.description}`);
+                    });
+                    printInfo(`\n💡 Recommendations:`);
+                    printInfo(`• Avoid using slots: ${conflicts.map(c => c.slot).join(', ')}`);
+                    printInfo(`• Consider using higher slot numbers for your implementation`);
+                    printInfo(`• Check if these values are expected for your token type`);
+                } else {
+                    printInfo(`✅ No obvious conflicts detected in checked range`);
+                }
+
+                // Show available slots
+                const availableSlots = [];
+                for (let i = start; i < end; i++) {
+                    if (!nonEmptySlots.includes(i)) {
+                        availableSlots.push(i);
+                    }
+                }
+
+                if (availableSlots.length > 0) {
+                    printInfo(`\n✅ Available slots: ${availableSlots.slice(0, 10).join(', ')}${availableSlots.length > 10 ? '...' : ''}`);
+                }
+            } catch (error) {
+                if (error.errorName === 'TokenManagerDoesNotExist') {
+                    printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
+                } else {
+                    throw error;
+                }
+            }
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -312,6 +531,9 @@ if (require.main === module) {
                 'deployRemoteCanonicalInterchainToken',
                 'registerCustomToken',
                 'linkToken',
+                'debugStorageLayout',
+                'updateTokenDeployer',
+                'checkStorageConflicts'
             ])
             .makeOptionMandatory(true),
     );
