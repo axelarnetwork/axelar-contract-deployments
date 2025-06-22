@@ -1258,6 +1258,196 @@
           "address": "0x9186233C327329408a9034F22407244421cADbEF"
         }
       }
+    },
+    "avalanche-test": {
+      "name": "Avalanche Test",
+      "axelarId": "avalanche-test",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "decimals": 18,
+      "confirmations": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Snowtrace",
+        "url": "https://testnet.snowtrace.io",
+        "api": "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan"
+      },
+      "finality": "finalized",
+      "approxFinalityWaitTime": 1,
+      "contracts": {
+        "AxelarGateway": {
+          "gasOptions": {
+            "gasLimit": 5000000
+          },
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "operator": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxyDeploymentArgs": [
+            "0x3c19E701ed674350DE8cAEb0B85A388499246D2d",
+            "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+            "0x000000000000000000000000ba76c6980428a0b10cfc5d8ccb61949677a612330000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000002b5c75000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "23b68feb94699d32d762ad7264d416d5324408018f9ecd172a3aadd38a255c36",
+          "governance": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0xF128c84c3326727c3e155168daAa4C0156B87AD1",
+          "implementation": "0xe9ac03F10b219fbFa1bc1EAb288963e288989e58",
+          "implementationCodehash": "0x5dbe684f109d8834e12707c98776512805d553f6246c97ec8546d712ccf0d5ab",
+          "deploymentMethod": "create2",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0xfa2912a57d663fcffbcb3d4c56334eb8babe48008b4b7458f4332e0828a12f40",
+          "minimumRotationDelay": 0,
+          "salt": "v6.0.4",
+          "connectionType": "amplifier",
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "ConstAddressDeployer": {
+          "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
+          "deployer": "0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x6513Aedb4D1593BA12e50644401D976aebDc90d8",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "AxelarGasService": {
+          "collector": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "salt": "AxelarGasService devnet-amplifier",
+          "address": "0x1179d44e69ba5252B7478a8602617d5EEeb2F377",
+          "implementation": "0xDC290c5e736c7ae15af984300bB7db0D30f248eC",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "Operators": {
+          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators devnet-amplifier"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0 devnet-amplifier hyperliquid6",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxySalt": "ITS v1.0.0 devnet-amplifier hyperliquid6",
+          "tokenManagerDeployer": "0xf8f856767ca982E245B61650c4251442278CFBb0",
+          "interchainToken": "0x5cf68C02A9B93aE7f35e7e0A954D7c4b77E93cB0",
+          "interchainTokenDeployer": "0x93d72Fe33F24c0694b57F41853E206009079E572",
+          "tokenManager": "0x4553e9d7308130111039053DB611Ff975bb7De60",
+          "tokenHandler": "0xbBdCcD787E12468b59301eccEB9c25f3332f6e7B",
+          "gatewayCaller": "0x6767C6783E8BEF180C239955762Da61159248974",
+          "implementation": "0x04cC35bC465e05141af6660FAaC606b3969bEC0b",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0xfee324262C603648B3A753ba7E25249203713E7D",
+          "hyperliquidInterchainToken": "0x12fe283EA984EbE6CEbEFb9F3017Fcab6234A83C",
+          "hyperliquidInterchainTokenDeployer": "0xd66844318ffac61f65bDb7f2547299Aa452b61B9"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "ITS Factory v1.0.0 devnet-amplifier hyperliquid6",
+          "implementation": "0x22B13d4f55BEE7d08fcEaA29c2EAD3E6B3E2417b",
+          "address": "0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
+        }
+      }
+    },
+    "hyperliquid": {
+      "name": "Hyperliquid",
+      "axelarId": "hyperliquid",
+      "networkType": "testnet",
+      "chainId": 998,
+      "rpc": "https://rpc.hyperliquid-testnet.xyz/evm",
+      "tokenSymbol": "HYPE",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "gasOptions": {
+        "gasLimit": 25000000
+      },
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Hyperliquid-testnet Explorer",
+        "url": "https://app.hyperliquid-testnet.xyz/explorer"
+      },
+      "contracts": {
+        "AxelarGateway": {
+          "deployer": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "operator": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "proxyDeploymentArgs": [
+            "0x23FcB411f022F887ce811eFD5C5d590bdAA1EEA3",
+            "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+            "0x000000000000000000000000640ff4a6d70ad92fc064633586d0a51fa8d89ba50000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000006993c6000000000000000000000000000000000000000000000000000000000000000300000000000000000000000051380cbf0777990e197a3e498ffafd26143e35f8000000000000000000000000000000000000000000000000000000000000000100000000000000000000000061373485594010371dfbf3a8f8bd1736bfda7c090000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c70aa87b38e6ab3c0df6e56338f96a5c00e653080000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "initialVerifierSetId": "74acaec799e88ebd2c923682b8f0416184e72a7e4e878517d22fda44f30bf0a2",
+          "address": "0x8bCF77225946Fe5c44013CC241076b3995CA1018",
+          "implementation": "0x23FcB411f022F887ce811eFD5C5d590bdAA1EEA3",
+          "implementationCodehash": "0xddac21f07c3549f6971319b0b65bbaedcf4215f52a96c9dc368af419e35ee860",
+          "deploymentMethod": "create",
+          "previousSignersRetention": 15,
+          "domainSeparator": "0x2d921bc929b5f1f775bfd6984216cf844ff00e80e68f95f7c8eb633d9a7a45e5",
+          "minimumRotationDelay": 0,
+          "connectionType": "amplifier",
+          "owner": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5"
+        },
+        "ConstAddressDeployer": {
+          "address": "0xE643B354369CbC88EFD326D5179a4a99F69612F8",
+          "deployer": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "deploymentMethod": "create",
+          "codehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe",
+          "predeployCodehash": "0x8fda47a596dfba923270da84e0c32a2d0312f1c03389f83e16f2b5a35ed37fbe"
+        },
+        "Create3Deployer": {
+          "address": "0x9E103862Bf520fCB94af91703E02B9750F83b96D",
+          "deployer": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "deploymentMethod": "create2",
+          "codehash": "0xf0ad66defbe082df243d4d274e626f557f97579c5c9e19f33d8093d6160808b7",
+          "predeployCodehash": "0x73fc31262c4bad113c79439fd231281201c7c7d45b50328bd86bccf37684bf92",
+          "salt": "Create3Deployer"
+        },
+        "Operators": {
+          "owner": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "address": "0x47c258b71D6B7E91bba63bD8Fa2dB6B301785872",
+          "deployer": "0x640fF4a6D70AD92fc064633586D0A51FA8D89Ba5",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0x47c258b71D6B7E91bba63bD8Fa2dB6B301785872",
+          "salt": "AxelarGasService",
+          "address": "0xA2d7adB603F45ECe78f3D0cd5BDB32b0A69BF037",
+          "implementation": "0xbDF0D870d8F834bf3d8c3A0D3B4b954094146EFA",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0 devnet-amplifier hyperliquid841",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxySalt": "ITS v1.0.0 devnet-amplifier hyperliquid481",
+          "tokenManagerDeployer": "0x3666DA4638dC3dBc6b8B9b2dafA07cdB03dd1BaD",
+          "interchainToken": "0xB1454894f9A33B5bc476473900b49Ba9ac80E7b6",
+          "interchainTokenDeployer": "0xb5B0780631b03629D59d507034667A5315999849",
+          "tokenManager": "0xa7F73e40E59E7AA9D7762B8603928409e1cc4Ae0",
+          "tokenHandler": "0xa92F21e37fDe3Da925EBa5E435961d85020Ec23F",
+          "gatewayCaller": "0xC0BCbE20Dd021146208d39e8b6ee146233a52fbA",
+          "implementation": "0x004040077773476b66d06e01d1fAc7EfF56fF294",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0x0F0166030105A873a77f8Bc7F3527f16b032706C",
+          "hyperliquidInterchainToken": "0x2358cB27e07593Aa961C7B2A9b828eed9C7840b0",
+          "hyperliquidInterchainTokenDeployer": "0x7c097D7545566AE8000B7DFEF9DD25c1FE066693"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "ITS Factory v1.0.0 devnet-amplifier hyperliquid481",
+          "implementation": "0x6059C07CA788afbFb675E1c26cD9060b02a53E71",
+          "address": "0x1e4e38F2dE425001adC924F36Ed42A20e2ECEaAa"
+        }
+      }
     }
   },
   "axelar": {
