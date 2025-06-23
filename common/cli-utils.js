@@ -67,22 +67,29 @@ const addStoreOptions = (program) => {
     program.addOption(
         new Option(
             '-a, --artifact-path <artifactPath>',
-            'Path to the contract artifact file to upload (required if --version is not used)',
+            'For CosmWasm: path to the contract artifact file to upload (required if --version is not used)',
         ).env('ARTIFACT_PATH'),
     );
 
     program.addOption(
         new Option(
+            '-d, --artifact-dir <artifactDir>',
+            'For Stellar: path to the contract artifact directory to upload (required if --version is not used)',
+        ).env('ARTIFACT_DIR'),
+    );
+
+    program.addOption(
+        new Option(
             '-v, --version <contractVersion>',
-            'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-path is not used)',
+            'Specify a released version (X.Y.Z) or a commit hash to upload (required if --artifact-path (CosmWasm) or --artifact-dir (Stellar) is not used)',
         ).env('CONTRACT_VERSION'),
     );
 
     program.hook('preAction', async (thisCommand) => {
         const opts = thisCommand.opts();
 
-        if (!opts.artifactPath && !opts.version) {
-            throw new Error('Either --artifact-path or --version is required');
+        if (!opts.artifactPath && !opts.artifactDir && !opts.version) {
+            throw new Error('Either --artifact-path (CosmWasm) or --artifact-dir (Stellar) or --version is required');
         }
     });
 };

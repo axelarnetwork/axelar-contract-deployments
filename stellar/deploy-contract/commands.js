@@ -2,7 +2,7 @@
 
 const { Command, Option } = require('commander');
 const { getContractCodePath, SUPPORTED_CONTRACTS, sanitizeMigrationData } = require('../utils');
-const { addStoreOptions } = require('../cli-utils');
+const { addStoreOptions } = require('../../common/cli-utils');
 const { mainProcessor, upgrade, upload, deploy } = require('./processors');
 
 require('../cli-utils');
