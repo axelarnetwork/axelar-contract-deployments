@@ -9,8 +9,8 @@
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-05-23 |
 | **Stagenet**         | Deployed              | 2025-05-28 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Testnet**          | Deployed              | 2025-06-03 |
+| **Mainnet**          | Deployed              | 2025-06-23 |
 
 [Release](https://github.com/axelarnetwork/interchain-token-service/releases/tag/v2.1.0)
 
@@ -60,21 +60,24 @@ Please follow this [instruction](https://github.com/axelarnetwork/axelar-contrac
 
 ## Register Berachain ITS on ITS Hub
 
-Please refer to `$DEPOSIT_VALUE` and `$RUN_AS_ACCOUNT` from [Berachain GMP Amplifier](../cosmwasm/2025-04-Berachain-GMP-v6.0.4.md).
-
-```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" \
-```
-
-## Set Berachain as trusted chain on remote ITS contracts
-
-Set Berachain as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+Set Berachain as trusted chain on all EVM chains
 
 ```bash
 ts-node evm/its.js set-trusted-chains berachain hub -n all
+```
+
+Set Berachain as trusted chain on Sui
+
+```bash
+ts-node sui/its.js add-trusted-chains $CHAIN
+```
+
+Set Berachain as trusted chain on Stellar
+
+```bash
+ts-node stellar/its.js add-trusted-chains $CHAIN
+```
+
 ```
 
 ## Checklist
@@ -87,18 +90,49 @@ The following checks should be performed after the rollout.
 ts-node evm/its.js checks -n $CHAIN -y
 ```
 
-- Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
+- Verify the token manager proxy contract once an ITS token is deployed on Berachain and then mark it as a proxy.
+
+- EVM Checklist
 
 ```bash
-# Create a token on chain. Substitute the `wallet` below with the deployer key
+# Create a token on Berachain
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+```
+
+- Sui Checklist
+
+```bash
+# Deploy Token on sui
+ts-node sui/its-example deploy-token --origin TST "Test Token" 6
+
+# Send Token Deployment to `<ChainName>`
+ts-node sui/its-example send-deployment TST $CHAIN [gas-value]
+
+# Send Token to `<ChainName>`
+ts-node sui/its-example send-token TST $CHAIN [destination-address] [gas-value] 1
+
+# Send token back to sui from `<ChainName>`
+ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
+```
+
+- Stellar Checklist
+
+```bash
+# Deploy token to a stellar from `<ChainName>`
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+
+# Transfer token to stellar
+ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+
+# Transfer token back from stellar
+ts-node stellar/its.js interchain-transfer [token-id] $CHAIN [destination-address] 1 --gas-amount [gas-amount]
 ```
