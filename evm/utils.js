@@ -1078,6 +1078,26 @@ const deriveAccounts = async (mnemonic, quantity) => {
     return accounts;
 };
 
+async function printTokenInfo(tokenAddress, provider) {
+    try {
+        const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, provider);
+        const [name, symbol, decimals] = await Promise.all([
+            token.name(),
+            token.symbol(),
+            token.decimals()
+        ]);
+
+        printInfo(`Token name`, name);
+        printInfo(`Token symbol`, symbol);
+        printInfo(`Token decimals`, decimals);
+
+        return { name, symbol, decimals };
+    } catch (error) {
+        printWarn(`Could not fetch token information for ${tokenAddress}: ${error.message}`);
+        throw error;
+    }
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1119,4 +1139,5 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     deriveAccounts,
+    printTokenInfo,
 };
