@@ -16,6 +16,9 @@ jobs:
           node-version: 18.x
           cache: 'npm'
 
+      - name: Add node_modules/.bin to PATH
+        run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+
       - name: Install
         run: npm ci
 
@@ -71,104 +74,104 @@ jobs:
         run: cat ./axelar-chains-config/info/local.json
 
       - name: Deploy ConstAddressDeployer
-        run: node evm/deploy-contract.js -c ConstAddressDeployer -m create -y
+        run: ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create -y
 
       - name: Deploy Create3Deployer
-        run: node evm/deploy-contract.js -c Create3Deployer -m create2 -y
+        run: ts-node evm/deploy-contract.js -c Create3Deployer -m create2 -y
 
       - name: Deploy AxelarAmplifierGateway
-        run: node evm/deploy-amplifier-gateway.js --deployMethod create3 -s "AxelarAmplifierGateway v5.8" --owner 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --domainSeparator 0x361b9fa2ae14de79d4b32164841b42ebc840b9d3ddb98cba1a45dc79a13214fc -y
+        run: ts-node evm/deploy-amplifier-gateway.js --deployMethod create3 -s "AxelarAmplifierGateway v5.8" --owner 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --domainSeparator 0x361b9fa2ae14de79d4b32164841b42ebc840b9d3ddb98cba1a45dc79a13214fc -y
 
       - name: Deploy AxelarGateway
-        run: node evm/deploy-gateway-v6.2.x.js --deployMethod create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: ts-node evm/deploy-gateway-v6.2.x.js --deployMethod create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Call Method on Gateway
-        run: node evm/gateway.js --action callContract --destinationChain test2 -y
+        run: ts-node evm/gateway.js --action callContract --destinationChain test2 -y
 
       - name: Deploy InterchainGovernance using create
-        run: node evm/deploy-contract.js -c InterchainGovernance -m create -y
+        run: ts-node evm/deploy-contract.js -c InterchainGovernance -m create -y
 
       - name: Deploy InterchainGovernance using create2
-        run: node evm/deploy-contract.js -c InterchainGovernance -m create2 -y
+        run: ts-node evm/deploy-contract.js -c InterchainGovernance -m create2 -y
 
       - name: Deploy InterchainGovernance using create3
-        run: node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
+        run: ts-node evm/deploy-contract.js -c InterchainGovernance -m create3 -y
 
       - name: Transfer gateway governance
-        run: node evm/gateway.js --action transferGovernance -y
+        run: ts-node evm/gateway.js --action transferGovernance -y
 
       - name: Generate governance upgrade proposal
-        run: node evm/governance.js --targetContractName AxelarGateway --action upgrade --proposalAction schedule --date 2100-01-01T12:00:00
+        run: ts-node evm/governance.js --targetContractName AxelarGateway --action upgrade --proposalAction schedule --date 2100-01-01T12:00:00
 
       - name: Deploy AxelarServiceGovernance using create3
-        run: node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
+        run: ts-node evm/deploy-contract.js -c AxelarServiceGovernance -m create3 -y
 
       - name: Deploy Multisig using create3
-        run: node evm/deploy-contract.js -c Multisig -m create3 -y
+        run: ts-node evm/deploy-contract.js -c Multisig -m create3 -y
 
       - name: Deploy Operators using create3
-        run: node evm/deploy-contract.js -c Operators -m create3 -y
+        run: ts-node evm/deploy-contract.js -c Operators -m create3 -y
 
       - name: Deploy AxelarGasService using create2
-        run: node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
+        run: ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 -y
 
       - name: Deploy ITS using create2
-        run: node evm/deploy-its.js -s "v1.0.0" -m create2 -y
+        run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y
 
       - name: Deploy new ITS implementation
-        run: node evm/deploy-its.js -s "v1.1.0" -m create2 --reuseProxy -y
+        run: ts-node evm/deploy-its.js -s "v1.1.0" -m create2 --reuseProxy -y
 
       - name: Upgrade ITS using create2
-        run: node evm/deploy-its.js -m create2 -u -y
+        run: ts-node evm/deploy-its.js -m create2 -u -y
 
       - name: InterchainTokenService set hub
-        run: node evm/its.js set-trusted-chains axelar axelar1xyz -y
+        run: ts-node evm/its.js set-trusted-chains axelar axelar1xyz -y
 
       - name: InterchainTokenService set trusted chain
-        run: node evm/its.js set-trusted-chains remote hub -y
+        run: ts-node evm/its.js set-trusted-chains remote hub -y
 
       - name: InterchainTokenFactory deploy interchain token on current chain
-        run: node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
+        run: ts-node evm/interchainTokenFactory.js --action deployInterchainToken --name "test" --symbol "TST" --decimals 18 --minter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
       - name: InterchainTokenFactory deploy interchain token to destination chain
-        run: node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain remote --salt "salt" -y
+        run: ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain remote --salt "salt" -y
 
       # Note that tokenAddress is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService register token metadata
-        run: node evm/its.js register-token-metadata 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 -y
+        run: ts-node evm/its.js register-token-metadata 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 -y
 
       - name: InterchainTokenFactory register custom token
-        run: node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --tokenManagerType 4 --operator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
+        run: ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 --tokenManagerType 4 --operator 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --salt "salt" -y
 
       - name: Transfer mintership of token to token manager
-        run: node evm/its.js transfer-mintership 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: ts-node evm/its.js transfer-mintership 0x49c06259B42540a025A73a32eF2Fd183c0FDB1D2 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: InterchainTokenFactory link token
-        run: node evm/interchainTokenFactory.js --action linkToken --destinationChain remote --destinationTokenAddress "0x1234" --tokenManagerType 4 --linkParams "0x5678" --salt "salt" -y
+        run: ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain remote --destinationTokenAddress "0x1234" --tokenManagerType 4 --linkParams "0x5678" --salt "salt" -y
 
       # Note that tokenId is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService interchain transfer to destination chain
-        run: node evm/its.js interchain-transfer remote 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 1 0 -y
+        run: ts-node evm/its.js interchain-transfer remote 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 1 0 -y
 
       # Note that tokenId is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService set flow limit
-        run: node evm/its.js set-flow-limits 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 123 -y
+        run: ts-node evm/its.js set-flow-limits 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 123 -y
 
       # Note that tokenId is hardcoded since it's derivation must always be the same
       - name: InterchainTokenService get flow limit
-        run: node evm/its.js flow-limit 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 -y
+        run: ts-node evm/its.js flow-limit 0x88a9d17b8f4e6e4aaceb3c8f53d54eedb144276f1dd2b9f2d17de784aa090be7 -y
 
       - name: Add gasOptions to local.json
         run: |
           jq '.chains.test += {"gasOptions": {"gasLimit": 8000000}} | .chains.test.contracts.AxelarGateway += {"gasOptions": {"gasLimit": 8000000}}' ./axelar-chains-config/info/local.json > temp.json && mv temp.json ./axelar-chains-config/info/local.json
 
       - name: Redeploy AxelarGateway with gasOptions
-        run: node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
+        run: ts-node evm/deploy-gateway-v6.2.x.js -m create3 -s "AxelarGateway v6.2" --governance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --mintLimiter 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --keyID 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -y
 
       - name: Redeploy ITS with gasOptions in Chain Config
-        run: node evm/deploy-its.js -s "v1.0.0" -m create2 -y
+        run: ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y
 
       - name: Redeploy ITS with gasOptions override via CLI
         run: |
-          node evm/deploy-its.js -s "v1.0.0" -m create2 -y --gasOptions \
+          ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y --gasOptions \
           '{"gasLimit": 9000000,"gasPriceAdjustment": 1.1}'
