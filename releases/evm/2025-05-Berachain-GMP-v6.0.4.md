@@ -8,9 +8,9 @@
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Deployed              | 2025-05-23 |
-| **Stagenet**         | Deployed              | 2025-05-28 |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2025-04-28 |
+| **Testnet**          | Deployed              | 2025-06-03 |
+| **Mainnet**          | Deployed              | 2025-06-23 |
 
 - [Releases](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/releases/tag/v6.0.4)
 
@@ -77,7 +77,7 @@ npm ci && npm run build
     "explorer": {
         "name": "Berascan",
         "url": "https://berascan.com/",
-        "api": "https://rpc.berachain.com/"
+        "api": "https://api.berascan.com/api"
     },
     "contracts": {}
   }

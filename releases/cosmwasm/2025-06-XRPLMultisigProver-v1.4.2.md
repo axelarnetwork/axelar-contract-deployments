@@ -8,9 +8,9 @@
 | **Network**          | **Deployment Status** | **Date**   |
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-06-13 |
-| **Stagenet**         | -                     | TBD        |
+| **Stagenet**         | Deployed              | 2025-06-13 |
 | **Testnet**          | Deployed              | 2025-06-13 |
-| **Mainnet**          | -                     | TBD        |
+| **Mainnet**          | Deployed              | 2025-06-16 |
 
 [Release](https://github.com/commonprefix/axelar-amplifier/releases/tag/xrpl-multisig-prover-v1.4.2)
 
