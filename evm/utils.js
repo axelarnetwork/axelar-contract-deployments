@@ -5,10 +5,21 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad },
+    utils: {
+        computeAddress,
+        getContractAddress,
+        keccak256,
+        isAddress,
+        getCreate2Address,
+        defaultAbiCoder,
+        isHexString,
+        hexZeroPad,
+        HDNode,
+    },
     constants: { AddressZero, HashZero },
     getDefaultProvider,
     BigNumber,
+    Wallet,
 } = ethers;
 const fs = require('fs');
 const path = require('path');
@@ -748,6 +759,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
@@ -763,7 +775,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            await processCommand(config, chain, options);
+            const result = await processCommand(config, chain, options);
+
+            if (result) {
+                results.push(result);
+            }
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
@@ -780,6 +796,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             }
         }
     }
+
+    return results;
 };
 
 function getConfigByChainId(chainId, config) {
@@ -1042,6 +1060,25 @@ const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionTyp
 
 const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256)';
 
+const deriveAccounts = async (mnemonic, quantity) => {
+    const hdNode = HDNode.fromMnemonic(mnemonic);
+    const accounts = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const path = `m/44'/60'/0'/0/${i}`;
+        const derivedNode = hdNode.derivePath(path);
+
+        const wallet = new Wallet(derivedNode.privateKey);
+
+        accounts.push({
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+        });
+    }
+
+    return accounts;
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1083,4 +1120,5 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     INTERCHAIN_TRANSFER,
+    deriveAccounts,
 };
