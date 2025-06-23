@@ -1093,7 +1093,7 @@ async function printTokenInfo(tokenAddress, provider) {
 
         return { name, symbol, decimals };
     } catch (error) {
-        printWarn(`Could not fetch token information for ${tokenAddress}: ${error.message}`);
+        printError(`Could not fetch token information for ${tokenAddress}: ${error.message}`);
         throw error;
     }
 }
