@@ -369,4 +369,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [Hedera GMP checklist](../evm/2025-06-Hedera-GMP-v6.0.4.md) will test GMP calls.
+The [Hedera GMP checklist](../evm/2025-04-Hedera-GMP-v6.0.4.md) will test GMP calls.
