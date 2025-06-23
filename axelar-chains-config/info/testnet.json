@@ -1,5 +1,16 @@
 {
   "chains": {
+    "adi": {
+        "name": "Adi",
+        "axelarId": "adi",
+        "chainId": 556777,
+        "rpc": "https://rpc-public.testnet.l15.adi.sre.ideasoft.io",
+        "tokenSymbol": "ADI",
+        "gasOptions": {
+            "gasLimit": 4000000
+        },
+        "confirmations": 1
+    },
     "ethereum-sepolia": {
       "name": "Ethereum-Sepolia",
       "axelarId": "ethereum-sepolia",
