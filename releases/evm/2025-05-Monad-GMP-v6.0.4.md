@@ -184,8 +184,13 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{
 9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
 
 ```bash
-# Only for mainnet and official testnet connection
+# For mainnet
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+# For testnet
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
