@@ -366,6 +366,13 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
         axelar: { contracts },
+        chains: {
+            [chainName]: {
+                contracts: {
+                    AxelarGateway: { address: gatewayAddress },
+                },
+            },
+        },
     } = config;
     const {
         ServiceRegistry: { address: serviceRegistryAddress },
@@ -400,6 +407,20 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 
     if (!isString(sourceGatewayAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
+    }
+
+    if(gatewayAddress !== undefined) {
+        if (!isString(gatewayAddress)) {
+            throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address`);
+        }
+
+        if(gatewayAddress !== sourceGatewayAddress) {
+            throw new Error(
+                `Address mismatch for [${chainName}] in config:\n` +
+                `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
+                `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`
+            );
+        }
     }
 
     if (!isStringArray(votingThreshold)) {
