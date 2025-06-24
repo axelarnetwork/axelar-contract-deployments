@@ -3215,6 +3215,24 @@
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         }
       }
+    },
+    "hyperliquid": {
+      "name": "Hyperliquid",
+      "axelarId": "hyperliquid",
+      "networkType": "mainnet",
+      "chainId": 999,
+      "rpc": "https://rpc.hyperliquid.xyz/evm",
+      "tokenSymbol": "HYPE",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Hyperliquid Explorer",
+        "url": "https://app.hyperliquid.xyz/explorer"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
@@ -3400,6 +3418,21 @@
           "domainSeparator": "0xfb124f51490a1cf2649bef7484b42997aca9ea285b0db4ac7ce44121d58245c8",
           "address": "axelar1k483q898t5w0acqzxhdjlsmnpgcxxa49ye8m46757n8mtk70ugtsu927xw"
         },
+        "hyperliquid": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 16,
+          "domainSeparator": "0xe21f055815da1492cebd0e6dd84aa03527004f02b3ac9c830d6a22c033008521",
+          "address": "axelar1fxd8rq5j6wluyc07vl9vqr4xmdxxm25l2gd6m2an20mn5fdnzy6qll2nxx"
+        },
         "storeCodeProposalId": "263",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "codeId": 16,
@@ -3436,6 +3469,10 @@
         "berachain": {
           "codeId": 17,
           "address": "axelar1yedkcrlaf479vcu3xk47emzryc89kwm2m06zmecrd7ruqu4wguuqk0z0vg"
+        },
+        "hyperliquid": {
+          "codeId": 17,
+          "address": "axelar1qezshrvqspy84w3ermmrny5w6wp347c9nzu3ktq37mwv3hmn42pqdtgzty"
         }
       },
       "VotingVerifier": {
@@ -3542,6 +3579,21 @@
           "addressFormat": "eip55",
           "codeId": 20,
           "address": "axelar1xx6xdw6mwmfl6u2jygq0zfx2q6uyc8emtt29j9wg78l2l4p739nqmwsgal"
+        },
+        "hyperliquid": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 20,
+          "address": "axelar1n64vk7l3zagh2eadkuhl7602lxluu86dn9smfxyp7c2e4v8pqj5sv4ypjr"
         },
         "storeCodeProposalId": "267",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
