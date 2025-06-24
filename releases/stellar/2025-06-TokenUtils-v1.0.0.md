@@ -17,6 +17,8 @@
 
 This is a Stellar Token Utils Release.
 
+Token Utils creates deterministic Stellar Asset Contracts for native Stellar assets. It takes an asset's XDR representation and returns a contract address - either existing or newly deployed. This ensures consistent contract addresses for the same asset across deployments.
+
 ## Deployment
 
 Create an `.env` file with the following configuration. Set `CHAIN` according to your target network:
