@@ -169,7 +169,7 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-1. Deploy GasService (set the `AxelarGasService.collector` to `Operators` contract address in config, which you will receive at step 6)
+8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` contract address in config, which you will receive at step 6)
 
 | Network              | `deployer address`                           | `deployMethod` |
 | -------------------- | -------------------------------------------- | -------------- |
