@@ -9,6 +9,7 @@
 | -------------------- | --------------------- | ---------- |
 | **Stagenet**         | WIP                   | 2025-06-25 |
 | **Testnet**          | WIP                   | 2025-06-25 |
+| **Mainnet**          | WIP                   | 2025-06-25 |
 
 - [Crates](https://crates.io/crates/stellar-token-utils/1.0.0)
 - [Releases](https://github.com/axelarnetwork/axelar-amplifier-stellar/releases/tag/stellar-token-utils-v1.0.0)
