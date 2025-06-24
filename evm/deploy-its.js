@@ -309,25 +309,9 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        gatewayCaller: {
-            name: 'Gateway Caller',
-            contractName: 'GatewayCaller',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('GatewayCaller', artifactPath),
-                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
         implementation: {
             name: 'Interchain Token Service Implementation',
-            contractName: 'InterchainTokenService',
+            contractName: isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
             async deploy() {
                 // Choose the appropriate token deployer based on chain type
                 const activeTokenDeployer = isHyperliquidChain 
@@ -341,6 +325,9 @@ async function deployAll(config, wallet, chain, options) {
                     );
                 }
 
+                // Get ITS Hub address from config
+                const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address || '0x0000000000000000000000000000000000000000';
+
                 const args = [
                     contractConfig.tokenManagerDeployer,
                     activeTokenDeployer, // Use chain-specific deployer
@@ -348,18 +335,25 @@ async function deployAll(config, wallet, chain, options) {
                     contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
+                    itsHubAddress, // NEW: string parameter for ITS Hub address
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
-                    contractConfig.gatewayCaller,
+                    // gatewayCaller parameter was removed
                 ];
 
                 printInfo('ITS Implementation args', args);
                 printInfo(`Using ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'} token deployer:`, activeTokenDeployer);
 
+                // Choose the appropriate service contract based on chain type
+                const ServiceContract = getContractJSON(
+                    isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService', 
+                    artifactPath
+                );
+
                 return deployContract(
                     proxyDeployMethod,
                     wallet,
-                    InterchainTokenService,
+                    ServiceContract, // Use the correct contract JSON
                     args,
                     getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,

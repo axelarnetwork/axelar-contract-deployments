@@ -368,44 +368,64 @@ async function processCommand(config, chain, options) {
                 const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
                 printInfo(`Token address for ${tokenId}`, tokenAddress);
 
-                // Try HyperliquidInterchainToken ABI first
+                // Check if this is a HyperliquidInterchainTokenService
                 try {
-                    const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
-                    const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
+                    const HyperliquidInterchainTokenService = getContractJSON('HyperliquidInterchainTokenService');
+                    const hyperliquidService = new Contract(interchainTokenServiceAddress, HyperliquidInterchainTokenService.abi, wallet);
+                    
+                    // Check if the service has the updateTokenDeployer function
+                    const serviceFunctions = Object.keys(hyperliquidService.interface.functions);
+                    const hasUpdateFunction = serviceFunctions.some(fn => fn.includes('updateTokenDeployer'));
+                    
+                    if (hasUpdateFunction) {
+                        // Get the token contract to check current state
+                        const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
+                        const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
+                        
+                        const currentDeployer = await hyperliquidToken.getDeployer();
+                        printInfo(`Current deployer`, currentDeployer);
+                        printInfo(`New deployer`, deployer);
 
-                    const currentDeployer = await hyperliquidToken.getDeployer();
-                    printInfo(`Current deployer`, currentDeployer);
-                    printInfo(`New deployer`, deployer);
+                        // Check if the wallet has permission to update deployers
+                        const serviceOwner = await hyperliquidService.owner();
+                        const isOperator = await hyperliquidService.isOperator(wallet.address);
+                        printInfo(`Service owner`, serviceOwner);
+                        printInfo(`Wallet is owner`, wallet.address.toLowerCase() === serviceOwner.toLowerCase());
+                        printInfo(`Wallet is operator`, isOperator);
 
-                    const tx = await hyperliquidToken.updateDeployer(deployer, gasOptions);
-                    printInfo(`Updating deployer...`);
+                        if (wallet.address.toLowerCase() !== serviceOwner.toLowerCase() && !isOperator) {
+                            printInfo(`❌ Wallet does not have permission to update deployers`);
+                            printInfo(`   - Must be the service owner or operator`);
+                            printInfo(`   - Current wallet: ${wallet.address}`);
+                            printInfo(`   - Service owner: ${serviceOwner}`);
+                            printInfo(`   - Is operator: ${isOperator}`);
+                            return;
+                        }
 
-                    const receipt = await tx.wait();
-                    printInfo(`Transaction hash`, receipt.transactionHash);
+                        printInfo(`Updating deployer through HyperliquidInterchainTokenService...`);
+                        
+                        const tx = await hyperliquidService.updateTokenDeployer(hyperliquidToken.address, deployer, gasOptions);
+                        const receipt = await tx.wait();
+                        printInfo(`Transaction hash`, receipt.transactionHash);
 
-                    const updatedDeployer = await hyperliquidToken.getDeployer();
-                    printInfo(`Updated deployer`, updatedDeployer);
-                    printInfo(`Update successful`, updatedDeployer.toLowerCase() === deployer.toLowerCase());
-
+                        const updatedDeployer = await hyperliquidToken.getDeployer();
+                        printInfo(`Updated deployer`, updatedDeployer);
+                        printInfo(`Update successful`, updatedDeployer.toLowerCase() === deployer.toLowerCase());
+                    } else {
+                        printInfo(`❌ Service contract does not support updateTokenDeployer`);
+                        printInfo(`   - This suggests you're not using HyperliquidInterchainTokenService`);
+                        printInfo(`   - Only HyperliquidInterchainTokenService supports deployer updates`);
+                        return;
+                    }
                 } catch (hyperliquidError) {
                     if (hyperliquidError.message.includes('getDeployer is not a function') ||
                         hyperliquidError.message.includes('execution reverted')) {
 
-                        // Fall back to standard InterchainToken ABI
-                        const InterchainToken = getContractJSON('InterchainToken');
-                        const standardToken = new Contract(tokenAddress, InterchainToken.abi, wallet);
-
-                        // Check if standard token has deployer functions
-                        const tokenFunctions = Object.keys(standardToken.interface.functions);
-                        const hasDeployerFunctions = tokenFunctions.some(fn => fn.includes('deployer'));
-
-                        if (!hasDeployerFunctions) {
-                            printInfo(`❌ This token does not support deployer updates`);
-                            printInfo(`   - Token type: Standard InterchainToken`);
-                            printInfo(`   - Standard InterchainToken does not have getDeployer/updateDeployer functions`);
-                            printInfo(`   - Only HyperliquidInterchainToken supports deployer updates`);
-                            return;
-                        }
+                        printInfo(`❌ This token does not support deployer updates`);
+                        printInfo(`   - Token type: Standard InterchainToken`);
+                        printInfo(`   - Standard InterchainToken does not have getDeployer/updateDeployer functions`);
+                        printInfo(`   - Only HyperliquidInterchainToken supports deployer updates`);
+                        return;
                     } else {
                         throw hyperliquidError;
                     }
@@ -413,8 +433,11 @@ async function processCommand(config, chain, options) {
             } catch (error) {
                 if (error.errorName === 'TokenManagerDoesNotExist') {
                     printInfo(`❌ Token ${tokenId} does not exist on ${chain.name}`);
-                } else if (error.errorName === 'NotAuthorized') {
-                    printInfo(`❌ Not authorized to update deployer. Must be ITS operator.`);
+                } else if (error.errorName === 'NotOperatorOrOwner') {
+                    printInfo(`❌ Not authorized to update deployer. Must be ITS operator or owner.`);
+                    printInfo(`   - Current wallet: ${wallet.address}`);
+                    printInfo(`   - Check if wallet is operator: await service.isOperator('${wallet.address}')`);
+                    printInfo(`   - Check service owner: await service.owner()`);
                 } else {
                     printInfo(`❌ Error updating deployer:`, error.message);
                 }
@@ -422,7 +445,6 @@ async function processCommand(config, chain, options) {
 
             break;
         }
-
         case 'checkStorageConflicts': {
             const { tokenId, startSlot, endSlot } = options;
 

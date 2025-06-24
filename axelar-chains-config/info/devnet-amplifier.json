@@ -1332,26 +1332,26 @@
           "salt": "Operators devnet-amplifier"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0 devnet-amplifier hyperliquid6",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0 devnet-amplifier hyperliquid6",
-          "tokenManagerDeployer": "0xf8f856767ca982E245B61650c4251442278CFBb0",
-          "interchainToken": "0x5cf68C02A9B93aE7f35e7e0A954D7c4b77E93cB0",
-          "interchainTokenDeployer": "0x93d72Fe33F24c0694b57F41853E206009079E572",
-          "tokenManager": "0x4553e9d7308130111039053DB611Ff975bb7De60",
-          "tokenHandler": "0xbBdCcD787E12468b59301eccEB9c25f3332f6e7B",
-          "gatewayCaller": "0x6767C6783E8BEF180C239955762Da61159248974",
-          "implementation": "0x04cC35bC465e05141af6660FAaC606b3969bEC0b",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xfee324262C603648B3A753ba7E25249203713E7D",
+          "salt": "ITS v2.1.0 zaaliquid8433abadasdxxxqq",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "proxySalt": "ITS v1.0.0 devnet-amplasdasssdaaxxqqq",
+          "tokenManagerDeployer": "0xc2d80244783dd1bD2db1c61558eccE14e7B374F5",
+          "interchainToken": "0x47Ab78aa85306EEAA6A849f37EAA9A61E0096386",
+          "interchainTokenDeployer": "0xd07b27159049D7d30E95eAB488Dec7bfD140cB2c",
+          "tokenManager": "0xD2FB5CA8f718E2329Af448F50b0c0F9EAc93C713",
+          "tokenHandler": "0xC73563c1e2787522fbD6cD717EBf60EB8e73b622",
+          "gatewayCaller": "0x8bCC31dF29fbb059168D95B19A9631Ba5A8d804E",
+          "implementation": "0xbDe779C3da24a9e26f5d10eA90ac8a180a89F1d7",
+          "predeployCodehash": "0x2f82a63a822a74f499b708d33d831179370ae8017a4a809bdcf2a2918884eada",
+          "address": "0x79a99706d93999C2b1436f0DFf6A69E4bbd29913",
           "hyperliquidInterchainToken": "0x12fe283EA984EbE6CEbEFb9F3017Fcab6234A83C",
           "hyperliquidInterchainTokenDeployer": "0xd66844318ffac61f65bDb7f2547299Aa452b61B9"
         },
         "InterchainTokenFactory": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0 devnet-amplifier hyperliquid6",
-          "implementation": "0x22B13d4f55BEE7d08fcEaA29c2EAD3E6B3E2417b",
-          "address": "0xdB7d6A5B8d37a4f34BC1e7ce0d0B8a9DDA124871"
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "salt": "ITS Factory v1.0.0 devnet-amplasdasssdaaxxqqq",
+          "implementation": "0x511085395984c0eD3D7BdE2F75DBFbA2a8A52347",
+          "address": "0xF5F3CaDfE8A3b20D476D43c09A1977D2757BA534"
         }
       }
     },
@@ -1426,26 +1426,26 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0 devnet-amplifier hyperliquid841",
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "proxySalt": "ITS v1.0.0 devnet-amplifier hyperliquid481",
-          "tokenManagerDeployer": "0x3666DA4638dC3dBc6b8B9b2dafA07cdB03dd1BaD",
+          "salt": "ITS asdasdasdnewv2222.1.0 asasperliquid841axx",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "proxySalt": "ITS asasneasdwv221.0.0 asdaddevnetdav",
+          "tokenManagerDeployer": "0x0CF8d4B88B97A2a8d3ECC297385118DEaA8b3cA8",
           "interchainToken": "0xB1454894f9A33B5bc476473900b49Ba9ac80E7b6",
           "interchainTokenDeployer": "0xb5B0780631b03629D59d507034667A5315999849",
-          "tokenManager": "0xa7F73e40E59E7AA9D7762B8603928409e1cc4Ae0",
-          "tokenHandler": "0xa92F21e37fDe3Da925EBa5E435961d85020Ec23F",
-          "gatewayCaller": "0xC0BCbE20Dd021146208d39e8b6ee146233a52fbA",
-          "implementation": "0x004040077773476b66d06e01d1fAc7EfF56fF294",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0x0F0166030105A873a77f8Bc7F3527f16b032706C",
-          "hyperliquidInterchainToken": "0x2358cB27e07593Aa961C7B2A9b828eed9C7840b0",
-          "hyperliquidInterchainTokenDeployer": "0x7c097D7545566AE8000B7DFEF9DD25c1FE066693"
+          "tokenManager": "0x4F04e064721147C5e198DEeb63cCe16171301fE1",
+          "tokenHandler": "0x151757269Ef92750086C6952fc63E1dB6a3602ff",
+          "gatewayCaller": "0x8500Ba390d8cD85764B7a504C55B2fB4238F9547",
+          "implementation": "0xd7029B1E94871D01584A6d01808e2896bFCc4eF2",
+          "predeployCodehash": "0x2f82a63a822a74f499b708d33d831179370ae8017a4a809bdcf2a2918884eada",
+          "address": "0xe0481a23Cd38a1B88680C6A83141F587237fc067",
+          "hyperliquidInterchainToken": "0x4fAcaF7F992dEfff0F0e78078354693D4694C2D0",
+          "hyperliquidInterchainTokenDeployer": "0xfaDa17471e1AF25f6d0de90d559F691CFe982A13"
         },
         "InterchainTokenFactory": {
-          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
-          "salt": "ITS Factory v1.0.0 devnet-amplifier hyperliquid481",
-          "implementation": "0x6059C07CA788afbFb675E1c26cD9060b02a53E71",
-          "address": "0x1e4e38F2dE425001adC924F36Ed42A20e2ECEaAa"
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "salt": "ITS Factory asasneasdwv221.0.0 asdaddevnetdav",
+          "implementation": "0x7f9DE877498B4BA566159066D2a4a741930F08fF",
+          "address": "0x36fA3d0Cfe0D8376fb53E31921824430E751f7bE"
         }
       }
     }
