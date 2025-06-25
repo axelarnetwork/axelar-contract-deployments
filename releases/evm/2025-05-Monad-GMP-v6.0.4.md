@@ -159,7 +159,7 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 
 | Network              | `operators`                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------ |
-| **Devnet-amplifier** | `<your operator address>`                                                                  |
+| **Devnet-amplifier** | `0x01c793e1F8185a2527C5a2Ef3b4a3FBCb8982690`, `0xDb32E08fd5d6823E7f0298963E487d5df4e54b1E`                                                                  |
 | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
 | **Testnet**          | `0x8f23e84c49624a22e8c252684129910509ade4e2`, `0x3b401fa00191acb03c24ebb7754fe35d34dd1abd` |
 | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
@@ -184,8 +184,13 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{
 9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
 
 ```bash
-# Only for mainnet and official testnet connection
+# For mainnet
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+# For testnet
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
