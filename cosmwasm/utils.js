@@ -409,11 +409,6 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].sourceGatewayAddress in axelar info`);
     }
 
-    if(gatewayAddress !== undefined) {
-        if (!isString(gatewayAddress)) {
-            throw new Error(`Missing or invalid [${chainName}].contracts.AxelarGateway.address`);
-        }
-
         if (gatewayAddress !== sourceGatewayAddress) {
             throw new Error(
                 `Address mismatch for [${chainName}] in config:\n` +
