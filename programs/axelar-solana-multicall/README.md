@@ -1,11 +1,11 @@
-# Gas Service
+# Multicall
 
 ## Contract id
 
 Contract id is set to default value in `./src/lib.rs` as shown in here:
 
 ```bash
-solana_program::declare_id!("gas1111111111111111111111111111111111111111");
+solana_program::declare_id!("mC11111111111111111111111111111111111111111");
 ```
 
 Currently, id values can be changed for `stagenet` or `devnet`. To apply it, pre-compilation script `./build.rs` is invoked before compilation and id update in `./src/lib.rs` is done when environment variable `CHAIN_ENV` is set in the following way:

@@ -12,7 +12,7 @@ use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-solana_program::declare_id!("gasFkyvr4LjK3WwnMGbao3Wzr67F88TmhKmi4ZCXF9K");
+solana_program::declare_id!("gas1111111111111111111111111111111111111111");
 
 /// Seed prefixes for PDAs created by this program
 pub mod seed_prefixes {

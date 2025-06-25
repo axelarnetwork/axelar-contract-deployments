@@ -32,3 +32,6 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
+
+[build-dependencies]
+anyhow.workspace = true

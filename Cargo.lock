@@ -775,6 +775,7 @@ dependencies = [
 name = "axelar-solana-gas-service"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axelar-solana-gas-service-events",
  "axelar-solana-gateway-test-fixtures",
  "borsh 1.5.7",
@@ -801,6 +802,7 @@ dependencies = [
 name = "axelar-solana-gateway"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axelar-message-primitives",
  "axelar-solana-encoding",
  "axelar-solana-gateway-test-fixtures",
@@ -863,6 +865,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
+ "anyhow",
  "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
@@ -946,6 +949,7 @@ name = "axelar-solana-multicall"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
+ "anyhow",
  "axelar-executable",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",

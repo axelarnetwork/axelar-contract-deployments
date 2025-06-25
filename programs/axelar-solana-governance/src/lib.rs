@@ -11,7 +11,7 @@ pub mod processor;
 pub mod sol_types;
 pub mod state;
 
-solana_program::declare_id!("govuuGWCowvknaLm2jkViP54eHCoLLzRqstne5Dgwvj");
+solana_program::declare_id!("gov1111111111111111111111111111111111111111");
 
 /// Checks that the supplied program ID is the correct one
 ///

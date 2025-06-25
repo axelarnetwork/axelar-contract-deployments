@@ -158,3 +158,24 @@ The role can be updated using [`Transfer Operatorship`](https://github.com/eiger
 | [Message size](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/gateway/INTEGRATION.md#limits) | 16kb is min; more than 1mb on EVM | 10kb is max with options to increase this in the future | The maximum amount of PDA storage (on-chain contract owned account) is 10kb when initialized up-front |
 | Updating verifier set | Requires the whole verifier set to be present, then it is re-hashed and then re-validated on chain | Only the verifier set hash is provided in tx parameters; we don't re-hash individual entries from the verifier set upon verifier set rotation. We take the verifier set hash from the Multisig Prover as granted and only validate that the latest verifier set signed it. We expect the hash always to be valid. | We cannot hash that many entries (67 verifiers being the minimum requirement) in a single transaction. The only thing we can do is _"prove that a verifier belongs to the verifier set"_ (like we do during signature verification). Still, even that would not change the underlying verifier set hash we set; thus, the operation would be pointless. |
 | [Upgradability](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/gateway/INTEGRATION.md#upgradability) | Gateway is deployed via a proxy contract | Gateway is deployed using `bpf_loader_upgradeable` program | This is the standard on Solana |
+
+## Contract id
+
+Contract id is set to default value in `./src/lib.rs` as shown in here:
+
+```bash
+solana_program::declare_id!("gtw1111111111111111111111111111111111111111");
+```
+
+Currently, id values can be changed for `stagenet` or `devnet`. To apply it, pre-compilation script `./build.rs` is invoked before compilation and id update in `./src/lib.rs` is done when environment variable `CHAIN_ENV` is set in the following way:
+
+```bash
+CHAIN_ENV=stagenet cargo build-sbf
+```
+
+In case that id needs to be changed for `devnet`, id value needs to be reset to the default one. Here is an example of reset with versioning system:
+
+```bash
+git checkout -- .
+CHAIN_ENV=devnet cargo build-sbf
+```

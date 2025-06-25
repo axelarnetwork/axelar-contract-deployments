@@ -44,3 +44,6 @@ rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-context.workspace = true
+
+[build-dependencies]
+anyhow.workspace = true

@@ -16,7 +16,7 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
-solana_program::declare_id!("itsbPmAntHfec9PpLDoh9y3UiAEPT7DnzSvoJzdzZqd");
+solana_program::declare_id!("its1111111111111111111111111111111111111111");
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
