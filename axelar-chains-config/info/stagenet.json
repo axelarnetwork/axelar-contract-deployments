@@ -2152,6 +2152,13 @@
           "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
           "version": "1.0.2",
           "initializeArgs": {}
+        },
+        "TokenUtils": {
+          "address": "CDNAHA5FL5EHIHX3C452X5KLXNQU6AF3ODJIZG5DYN4KMVLPQBBYNQFX",
+          "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
+          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
+          "version": "1.0.0",
+          "initializeArgs": {}
         }
       }
     },
