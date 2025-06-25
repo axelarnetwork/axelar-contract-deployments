@@ -1,7 +1,7 @@
 # Deployment logs
 
 ```bash
-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
+ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath ../evm/legacy/ConstAddressDeployer.json
 ```
 
 ```text
@@ -39,7 +39,7 @@ XRPL EVM | ConstAddressDeployer: 0x98B2920D53612483F91F12Ed7754E51b4A77919e
 ```
 
 ```bash
-node evm/deploy-contract.js -c Create3Deployer -m create2
+ts-node evm/deploy-contract.js -c Create3Deployer -m create2
 ```
 
 ```text
@@ -75,7 +75,7 @@ XRPL EVM | Create3Deployer: 0x6513Aedb4D1593BA12e50644401D976aebDc90d8
 ```
 
 ```bash
-node evm/deploy-amplifier-gateway.js -m create --minimumRotationDelay 86400
+ts-node evm/deploy-amplifier-gateway.js -m create --minimumRotationDelay 86400
 ```
 
 ```text
@@ -233,7 +233,7 @@ Deployment status: SUCCESS
 ```
 
 ```bash
-node evm/deploy-contract.js -c Operators -m create2
+ts-node evm/deploy-contract.js -c Operators -m create2
 ```
 
 ```text
@@ -271,7 +271,7 @@ XRPL EVM | Operators: 0x7DdB2d76b80B0AA19bDEa48EB1301182F4CeefbC
 ```
 
 ```bash
-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "0x7D
+ts-node evm/deploy-upgradable.js -c AxelarGasService -m create2 --args '{"collector": "0x7D
 dB2d76b80B0AA19bDEa48EB1301182F4CeefbC"}'
 ```
 
@@ -310,7 +310,7 @@ XRPL EVM | Proxy for AxelarGasService: 0x2d5d7d31F671F86C782533cc367F14109a08271
 ```
 
 ```bash
-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47F
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47F
 c8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
