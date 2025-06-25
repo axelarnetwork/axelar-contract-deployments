@@ -59,6 +59,10 @@ npm ci
   }
 ```
 
+#### Live network testing
+
+Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solidity?tab=readme-ov-file#live-network-testing) in order to verify that the RPC endpoint is EVM-compatible and the Axelar gateway can be deployed on the external network. It is recommended to run the `RpcCompatibility` and `AxelarGateway` test groups.
+
 #### Mainnet
 
 ```bash
