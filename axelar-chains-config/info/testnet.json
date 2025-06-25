@@ -838,7 +838,7 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
-    "filecoin": {
+    "filecoin-2": {
       "name": "Filecoin",
       "axelarId": "filecoin-2",
       "chainId": 314159,
@@ -1302,7 +1302,7 @@
         "gasEstimationType": 3
       }
     },
-    "centrifuge": {
+    "centrifuge-2": {
       "name": "Centrifuge",
       "axelarId": "centrifuge-2",
       "chainId": 2090,
