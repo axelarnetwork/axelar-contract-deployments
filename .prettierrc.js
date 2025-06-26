@@ -26,11 +26,15 @@ module.exports = {
         {
             files: '*.json',
             options: {
+                tabWidth: 2,
                 parser: 'json-stringify',
             },
         },
         {
             files: '*.yaml',
+            options: {
+                tabWidth: 2,
+            },
         },
     ],
 };
