@@ -10,10 +10,12 @@ describe('Verify `info/*.json` files', () => {
 
     beforeAll(() => {
         const files = fs.readdirSync('info');
-        jsons = files.map((file) => {
-            const data = fs.readFileSync(`info/${file}`);
-            return JSON.parse(data);
-        });
+        jsons = files
+            .filter((file) => file.endsWith('.json'))
+            .map((file) => {
+                const data = fs.readFileSync(`info/${file}`);
+                return JSON.parse(data);
+            });
 
         validator = addAllSchema(new Validator());
     });
