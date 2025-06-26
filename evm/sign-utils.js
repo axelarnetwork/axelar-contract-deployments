@@ -270,7 +270,7 @@ const updateNonceFileData = (nonceData) => {
 
 const getLocalNonce = (env, chainName, signerAddress) => {
     const nonceData = getNonceFileData();
-    const chainData = nonceData[env] ? nonceData[env][chainName] : undefined;
+    const chainData = nonceData[env] ? nonceData[env][chainName.toLowerCase()] : undefined;
     return chainData ? chainData[signerAddress] : undefined;
 };
 

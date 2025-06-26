@@ -349,7 +349,7 @@ async function upgrade(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chain.axelarId}-address-${address}-nonce-${baseTx.nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chain.axelarId.toLowerCase()}-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file

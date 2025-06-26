@@ -26,7 +26,7 @@ async function processCommand(_, chain, options) {
     printError(`${chain.name} minimum required Balance`, `${minRequiredBalance / 1e18}`);
 
     const nonceData = getNonceFileData();
-    const nonces = nonceData[options.env][chain.axelarId];
+    const nonces = nonceData[options.env][chain.axelarId.toLowerCase()];
 
     if (addresses) {
         addresses = JSON.parse(addresses);

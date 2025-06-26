@@ -37,6 +37,7 @@ describe('Verify `info/*.json` files', () => {
             expect(response.valid).toBe(true);
         });
     });
+
     it('should have chain names match lowercase axelarId', () => {
         jsons.forEach((json, _) => {
             if (json.data.chains) {
