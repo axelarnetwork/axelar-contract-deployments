@@ -120,7 +120,8 @@ jobs:
           git config --local user.name "Interoplabs CI"
           git checkout -b ${{ steps.branch-name.outputs.branch }}
 
-          for NETWORK in ${{ env.NETWORKS }}; do
+          IFS=',' read -ra NETWORK_LIST <<< "${{ env.NETWORKS }}"
+          for NETWORK in "${NETWORK_LIST[@]}"; do
             echo "Generating config for $NETWORK"
             poetry run python generate.py --network "$NETWORK" gen-configs all-configs
           done
