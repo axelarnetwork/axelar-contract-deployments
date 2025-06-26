@@ -17,7 +17,7 @@ const ASSET_TYPE_NATIVE = 'native';
 
 const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 
-const TRANSACTION_TIMEOUT = 30;
+const TRANSACTION_TIMEOUT = 300;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
 
