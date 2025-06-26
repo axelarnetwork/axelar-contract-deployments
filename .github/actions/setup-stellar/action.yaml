@@ -24,7 +24,7 @@ runs:
     - name: Start Stellar local network
       shell: bash
       run: |
-        stellar container start local --protocol-version 22
+        stellar container start local --protocol-version 22 --limits testnet
 
     - name: Wait for Stellar network
       shell: bash
