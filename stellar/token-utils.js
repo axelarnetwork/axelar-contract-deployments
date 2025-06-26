@@ -2,14 +2,7 @@
 
 const { Asset, Contract } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
-const {
-    loadConfig,
-    addOptionsToCommands,
-    getChainConfig,
-    printInfo,
-    validateParameters,
-    prompt,
-} = require('../common');
+const { loadConfig, addOptionsToCommands, getChainConfig, printInfo, validateParameters, prompt } = require('../common');
 const { addBaseOptions, broadcast, getWallet, serializeValue, assetToScVal } = require('./utils');
 
 async function createStellarAssetContract(wallet, _config, chain, contract, args, options) {
@@ -55,11 +48,9 @@ if (require.main === module) {
 
     addBaseOptions(program);
 
-    program
-        .command('create-stellar-asset-contract <assetCode> <issuer>')
-        .action((assetCode, issuer, options) => {
-            mainProcessor(createStellarAssetContract, [assetCode, issuer], options);
-        });
+    program.command('create-stellar-asset-contract <assetCode> <issuer>').action((assetCode, issuer, options) => {
+        mainProcessor(createStellarAssetContract, [assetCode, issuer], options);
+    });
 
     addOptionsToCommands(program, addBaseOptions);
 
