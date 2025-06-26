@@ -208,10 +208,10 @@ const registerProtocol = async (client, wallet, config, options) => {
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify({
-            'register_protocol': {
-                'service_registry_address': serviceRegistry,
-                'router_address': router,
-                'multisig_address': multisig,
+            register_protocol: {
+                service_registry_address: serviceRegistry,
+                router_address: router,
+                multisig_address: multisig,
             },
         }),
     });
@@ -243,14 +243,11 @@ const migrate = async (client, wallet, config, options) => {
 function addGovProposalDefaults(options, config, env) {
     const { runAs, deposit, instantiateAddresses } = options;
 
-    if (!runAs)
-        options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
+    if (!runAs) options.runAs = env == 'devnet-amplifier' ? 'axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9' : governanceAddress;
 
-    if (!deposit)
-        options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
+    if (!deposit) options.deposit = getProposalConfig(config, env, 'govProposalDepositAmount');
 
-    if (!instantiateAddresses)
-        options.instantiateAddresses = getProposalConfig(config, env, 'govProposalInstantiateAddresses');
+    if (!instantiateAddresses) options.instantiateAddresses = getProposalConfig(config, env, 'govProposalInstantiateAddresses');
 
     return options;
 }

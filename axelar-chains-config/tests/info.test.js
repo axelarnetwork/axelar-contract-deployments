@@ -11,12 +11,12 @@ describe('Verify `info/*.json` files', () => {
 
     beforeAll(() => {
         const files = fs.readdirSync('info');
-        jsonFiles = files.filter(file => file.endsWith('.json'));
+        jsonFiles = files.filter((file) => file.endsWith('.json'));
         jsons = jsonFiles.map((file) => {
             const data = fs.readFileSync(`info/${file}`);
             return {
                 fileName: file,
-                data: JSON.parse(data)
+                data: JSON.parse(data),
             };
         });
 
