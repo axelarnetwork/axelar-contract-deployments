@@ -1,29 +1,27 @@
-"use strict";
+'use strict';
 
-const { Command } = require("commander");
-const { mainProcessor, printInfo } = require("./utils");
-const { addBaseOptions } = require("./cli-utils");
+const { Command } = require('commander');
+const { mainProcessor, printInfo } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_, chain, options) {
-  printInfo("Axelar Chain Name", chain.axelarId);
+    printInfo('Axelar Chain Name', chain.axelarId);
 }
 
 async function main(options) {
-  await mainProcessor(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
-  const program = new Command();
+    const program = new Command();
 
-  program
-    .name("chains")
-    .description("Display chain names and axelar chain ids.");
+    program.name('chains').description('Display chain names and axelar chain ids.');
 
-  addBaseOptions(program);
+    addBaseOptions(program);
 
-  program.action((options) => {
-    main(options);
-  });
+    program.action((options) => {
+        main(options);
+    });
 
-  program.parse();
+    program.parse();
 }

@@ -1,4 +1,4 @@
-const { keccak256 } = require("@ethersproject/keccak256");
+const { keccak256 } = require('@ethersproject/keccak256');
 
 /**
  * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
@@ -7,41 +7,37 @@ const { keccak256 } = require("@ethersproject/keccak256");
  * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
  */
 
-async function getBytecodeHash(contractObject, chain = "", provider = null) {
-  let bytecode;
+async function getBytecodeHash(contractObject, chain = '', provider = null) {
+    let bytecode;
 
-  if (isString(contractObject)) {
-    if (provider === null) {
-      throw new Error("Provider must be provided for chain");
+    if (isString(contractObject)) {
+        if (provider === null) {
+            throw new Error('Provider must be provided for chain');
+        }
+
+        bytecode = await provider.getCode(contractObject);
+    } else if (contractObject.address) {
+        // Contract instance
+        provider = contractObject.provider;
+        bytecode = await provider.getCode(contractObject.address);
+    } else if (contractObject.bytecode) {
+        // Contract factory
+        bytecode = contractObject.bytecode;
+    } else {
+        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
     }
 
-    bytecode = await provider.getCode(contractObject);
-  } else if (contractObject.address) {
-    // Contract instance
-    provider = contractObject.provider;
-    bytecode = await provider.getCode(contractObject.address);
-  } else if (contractObject.bytecode) {
-    // Contract factory
-    bytecode = contractObject.bytecode;
-  } else {
-    throw new Error(
-      "Invalid contract object. Expected ethers.js Contract or ContractFactory.",
-    );
-  }
+    if (chain.toLowerCase() === 'polygon-zkevm') {
+        throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
+    }
 
-  if (chain.toLowerCase() === "polygon-zkevm") {
-    throw new Error(
-      "polygon-zkevm uses a custom bytecode hash derivation and is not supported",
-    );
-  }
-
-  return keccak256(bytecode);
+    return keccak256(bytecode);
 }
 
 const isString = (arg) => {
-  return typeof arg === "string" && arg !== "";
+    return typeof arg === 'string' && arg !== '';
 };
 
 module.exports = {
-  getBytecodeHash,
+    getBytecodeHash,
 };

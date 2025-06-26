@@ -1,23 +1,21 @@
-const { Command } = require("commander");
-const { mainProcessor, printWalletInfo } = require("./utils");
-const { addBaseOptions } = require("./cli-utils");
+const { Command } = require('commander');
+const { mainProcessor, printWalletInfo } = require('./utils');
+const { addBaseOptions } = require('./cli-utils');
 
 async function balances(_config, wallet, client, chain) {
-  await printWalletInfo(client, wallet, chain);
+    await printWalletInfo(client, wallet, chain);
 }
 
 if (require.main === module) {
-  const program = new Command();
+    const program = new Command();
 
-  program
-    .name("balances")
-    .description("Display balances of the wallet on XRPL.");
+    program.name('balances').description('Display balances of the wallet on XRPL.');
 
-  addBaseOptions(program);
+    addBaseOptions(program);
 
-  program.action((options) => {
-    mainProcessor(balances, options);
-  });
+    program.action((options) => {
+        mainProcessor(balances, options);
+    });
 
-  program.parse();
+    program.parse();
 }

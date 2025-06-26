@@ -1,21 +1,21 @@
-const { readJsonSync } = require("fs-extra");
+const { readJsonSync } = require('fs-extra');
 
 const readJSON = (filePath, require = false) => {
-  let data;
+    let data;
 
-  try {
-    data = readJsonSync(filePath, "utf8");
-  } catch (err) {
-    if (err.code === "ENOENT" && !require) {
-      return undefined;
+    try {
+        data = readJsonSync(filePath, 'utf8');
+    } catch (err) {
+        if (err.code === 'ENOENT' && !require) {
+            return undefined;
+        }
+
+        throw err;
     }
 
-    throw err;
-  }
-
-  return data;
+    return data;
 };
 
 module.exports = {
-  readJSON,
+    readJSON,
 };

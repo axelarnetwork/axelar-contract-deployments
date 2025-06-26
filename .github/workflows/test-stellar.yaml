@@ -3,234 +3,234 @@ name: Test Stellar
 on: pull_request
 
 jobs:
-  check-relevant-changes:
-    name: Check for Relevant Changes
-    runs-on: blacksmith-2vcpu-ubuntu-2204
-    outputs:
-      run_tests: ${{ steps.filter.outputs.stellar == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            stellar:
-              - 'stellar/**'
-            common:
-              - 'common/**'
-            github:
-              - '.github/workflows/test-stellar.yaml'
-      - name: Summarize Changes
-        run: |
-          echo "Changes in stellar: ${{ steps.filter.outputs.stellar }}"
-          echo "Changes in common: ${{ steps.filter.outputs.common }}"
-          echo "Changes in github: ${{ steps.filter.outputs.github }}"
+    check-relevant-changes:
+        name: Check for Relevant Changes
+        runs-on: blacksmith-2vcpu-ubuntu-2204
+        outputs:
+            run_tests: ${{ steps.filter.outputs.stellar == 'true' || steps.filter.outputs.common == 'true' || steps.filter.outputs.github == 'true' }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      stellar:
+                        - 'stellar/**'
+                      common:
+                        - 'common/**'
+                      github:
+                        - '.github/workflows/test-stellar.yaml'
+            - name: Summarize Changes
+              run: |
+                  echo "Changes in stellar: ${{ steps.filter.outputs.stellar }}"
+                  echo "Changes in common: ${{ steps.filter.outputs.common }}"
+                  echo "Changes in github: ${{ steps.filter.outputs.github }}"
 
-  test-stellar:
-    name: Test Stellar
-    needs: check-relevant-changes
-    if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
-    runs-on: blacksmith-8vcpu-ubuntu-2204
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    test-stellar:
+        name: Test Stellar
+        needs: check-relevant-changes
+        if: ${{ needs.check-relevant-changes.outputs.run_tests == 'true' }}
+        runs-on: blacksmith-8vcpu-ubuntu-2204
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Checkout axelar-amplifier-stellar repo
-        uses: actions/checkout@v4
-        with:
-          repository: axelarnetwork/axelar-amplifier-stellar
-          path: axelar-amplifier-stellar
+            - name: Checkout axelar-amplifier-stellar repo
+              uses: actions/checkout@v4
+              with:
+                  repository: axelarnetwork/axelar-amplifier-stellar
+                  path: axelar-amplifier-stellar
 
-      - name: Get latest short commit for axelar-amplifier-stellar
-        id: commit_hash
-        run: |
-          cd axelar-amplifier-stellar
-          git fetch --all
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          echo "hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+            - name: Get latest short commit for axelar-amplifier-stellar
+              id: commit_hash
+              run: |
+                  cd axelar-amplifier-stellar
+                  git fetch --all
+                  COMMIT_HASH=$(git rev-parse --short HEAD)
+                  echo "hash=${COMMIT_HASH}" >> $GITHUB_OUTPUT
 
-      - name: Install Node.js
-        uses: useblacksmith/setup-node@v5
-        with:
-          node-version: 18.x
-          cache: "npm"
+            - name: Install Node.js
+              uses: useblacksmith/setup-node@v5
+              with:
+                  node-version: 18.x
+                  cache: 'npm'
 
-      - name: Add node_modules/.bin to PATH
-        run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+            - name: Add node_modules/.bin to PATH
+              run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Build
-        run: npm run build
+            - name: Build
+              run: npm run build
 
-      - name: Setup Stellar network
-        uses: ./.github/actions/setup-stellar
+            - name: Setup Stellar network
+              uses: ./.github/actions/setup-stellar
 
-      ###### Environment Variables ######
+            ###### Environment Variables ######
 
-      - name: Prepare Environment Variables
-        id: env_vars
-        run: |
-          echo "sourceChain=ethereum" >> $GITHUB_OUTPUT
-          echo "sourceAddress=0x4F4495243837681061C4743b74B3eEdf548D56A5" >> $GITHUB_OUTPUT
-          echo "messageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-0" >> $GITHUB_OUTPUT
-          echo "payload=0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432" >> $GITHUB_OUTPUT
-          echo "destinationChain=remote" >> $GITHUB_OUTPUT
-          echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_OUTPUT
-          echo "data=0x1234" >> $GITHUB_OUTPUT
-          echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_OUTPUT
+            - name: Prepare Environment Variables
+              id: env_vars
+              run: |
+                  echo "sourceChain=ethereum" >> $GITHUB_OUTPUT
+                  echo "sourceAddress=0x4F4495243837681061C4743b74B3eEdf548D56A5" >> $GITHUB_OUTPUT
+                  echo "messageId=0x32034b47cb29d162d9d803cc405356f4ac0ec07fe847ace431385fe8acf3e6e5-0" >> $GITHUB_OUTPUT
+                  echo "payload=0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432" >> $GITHUB_OUTPUT
+                  echo "destinationChain=remote" >> $GITHUB_OUTPUT
+                  echo "destinationAddress=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" >> $GITHUB_OUTPUT
+                  echo "data=0x1234" >> $GITHUB_OUTPUT
+                  echo "accountAddress=$(awk -F '=' '/^ACCOUNT_ID=/{print $2}' .env)" >> $GITHUB_OUTPUT
 
-          stellar keys generate newAccount --fund --network local
-          echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_OUTPUT
+                  stellar keys generate newAccount --fund --network local
+                  echo "newAccountAddress=$(stellar keys address newAccount)" >> $GITHUB_OUTPUT
 
-          # ITS Example Parameters
-          echo "name=TEST" >> $GITHUB_OUTPUT
-          echo "symbol=TEST" >> $GITHUB_OUTPUT
-          echo "decimal=18" >> $GITHUB_OUTPUT
-          echo "salt=0x1234" >> $GITHUB_OUTPUT
-          echo "amount=1" >> $GITHUB_OUTPUT
-          echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_OUTPUT
+                  # ITS Example Parameters
+                  echo "name=TEST" >> $GITHUB_OUTPUT
+                  echo "symbol=TEST" >> $GITHUB_OUTPUT
+                  echo "decimal=18" >> $GITHUB_OUTPUT
+                  echo "salt=0x1234" >> $GITHUB_OUTPUT
+                  echo "amount=1" >> $GITHUB_OUTPUT
+                  echo "tokenId=0x1829aae91cedf3603a9441688a099b4fcbdb6733b464027c69814b80ef420ada" >> $GITHUB_OUTPUT
 
-          # ITS Hub Address
-          ITS_HUB_ADDRESS='its_hub_address'
-          echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
+                  # ITS Hub Address
+                  ITS_HUB_ADDRESS='its_hub_address'
+                  echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
-      ###### ITS Hub Config ######
+            ###### ITS Hub Config ######
 
-      - name: Set ITS Hub Address
-        run: |
-          jq '. + {
-            "axelar": {
-              "contracts": {
-                "InterchainTokenService": {
-                  "address": "'"${{ steps.env_vars.outputs.itsHubAddress }}"'"
-                }
-              }
-            }
-          }' axelar-chains-config/info/local.json > temp.json
-          mv temp.json axelar-chains-config/info/local.json
+            - name: Set ITS Hub Address
+              run: |
+                  jq '. + {
+                    "axelar": {
+                      "contracts": {
+                        "InterchainTokenService": {
+                          "address": "'"${{ steps.env_vars.outputs.itsHubAddress }}"'"
+                        }
+                      }
+                    }
+                  }' axelar-chains-config/info/local.json > temp.json
+                  mv temp.json axelar-chains-config/info/local.json
 
-      ###### Command: Deploy Latest Contract ######
+            ###### Command: Deploy Latest Contract ######
 
-      - name: Deploy AxelarOperators
-        run: ts-node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy AxelarOperators
+              run: ts-node stellar/deploy-contract deploy AxelarOperators --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy AxelarGasService
-        run: ts-node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy AxelarGasService
+              run: ts-node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy AxelarGateway
-        run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy AxelarGateway
+              run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy InterchainTokenService
-        run: ts-node stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy InterchainTokenService
+              run: ts-node stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy AxelarExample
-        run: ts-node stellar/deploy-contract deploy AxelarExample --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy AxelarExample
+              run: ts-node stellar/deploy-contract deploy AxelarExample --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy Upgrader
-        run: ts-node stellar/deploy-contract deploy Upgrader --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy Upgrader
+              run: ts-node stellar/deploy-contract deploy Upgrader --version ${{ steps.commit_hash.outputs.hash }}
 
-      - name: Deploy Multicall
-        run: ts-node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
+            - name: Deploy Multicall
+              run: ts-node stellar/deploy-contract deploy Multicall --version ${{ steps.commit_hash.outputs.hash }}
 
-      ###### Command: AxelarGateway ######
+            ###### Command: AxelarGateway ######
 
-      - name: Gateway Paused
-        run: ts-node stellar/contract.js paused AxelarGateway
+            - name: Gateway Paused
+              run: ts-node stellar/contract.js paused AxelarGateway
 
-      - name: Gateway Pause
-        run: ts-node stellar/contract.js pause AxelarGateway
+            - name: Gateway Pause
+              run: ts-node stellar/contract.js pause AxelarGateway
 
-      - name: Gateway Unpause
-        run: ts-node stellar/contract.js unpause AxelarGateway
+            - name: Gateway Unpause
+              run: ts-node stellar/contract.js unpause AxelarGateway
 
-      - name: Gateway Approve
-        run: ts-node stellar/gateway.js approve ${{ steps.env_vars.outputs.sourceChain }} ${{ steps.env_vars.outputs.messageId }} ${{ steps.env_vars.outputs.sourceAddress }} ${{ steps.env_vars.outputs.accountAddress }} ${{ steps.env_vars.outputs.payload }}
+            - name: Gateway Approve
+              run: ts-node stellar/gateway.js approve ${{ steps.env_vars.outputs.sourceChain }} ${{ steps.env_vars.outputs.messageId }} ${{ steps.env_vars.outputs.sourceAddress }} ${{ steps.env_vars.outputs.accountAddress }} ${{ steps.env_vars.outputs.payload }}
 
-      - name: Gateway Call Contract
-        run: ts-node stellar/gateway.js call-contract ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.data }}
+            - name: Gateway Call Contract
+              run: ts-node stellar/gateway.js call-contract ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.data }}
 
-      - name: Gateway Rotate Signers
-        run: ts-node stellar/gateway.js rotate --new-nonce test --signers wallet
+            - name: Gateway Rotate Signers
+              run: ts-node stellar/gateway.js rotate --new-nonce test --signers wallet
 
-      ###### Command: InterchainTokenService ######
+            ###### Command: InterchainTokenService ######
 
-      - name: ITS Paused
-        run: ts-node stellar/contract.js paused InterchainTokenService
+            - name: ITS Paused
+              run: ts-node stellar/contract.js paused InterchainTokenService
 
-      - name: ITS Pause
-        run: ts-node stellar/contract.js pause InterchainTokenService
+            - name: ITS Pause
+              run: ts-node stellar/contract.js pause InterchainTokenService
 
-      - name: ITS Unpause
-        run: ts-node stellar/contract.js unpause InterchainTokenService
+            - name: ITS Unpause
+              run: ts-node stellar/contract.js unpause InterchainTokenService
 
-      - name: Add Trusted Chain
-        run: ts-node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+            - name: Add Trusted Chain
+              run: ts-node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Remove Trusted Chain
-        run: ts-node stellar/its.js remove-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+            - name: Remove Trusted Chain
+              run: ts-node stellar/its.js remove-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Add All Trusted Chains
-        run: ts-node stellar/its.js add-trusted-chains all
+            - name: Add All Trusted Chains
+              run: ts-node stellar/its.js add-trusted-chains all
 
-      - name: Remove All Trusted Chains
-        run: ts-node stellar/its.js remove-trusted-chains all
+            - name: Remove All Trusted Chains
+              run: ts-node stellar/its.js remove-trusted-chains all
 
-      ###### Command: ITS Example ######
+            ###### Command: ITS Example ######
 
-      - name: Add Trusted Chains
-        run: ts-node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
+            - name: Add Trusted Chains
+              run: ts-node stellar/its.js add-trusted-chains ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Deploy Test Tokens
-        run: |
-          ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
-          ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
+            - name: Deploy Test Tokens
+              run: |
+                  ts-node stellar/its.js deploy-interchain-token ${{ steps.env_vars.outputs.name }} ${{ steps.env_vars.outputs.symbol }} ${{ steps.env_vars.outputs.decimal }} ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.amount }}
+                  ts-node stellar/its.js deploy-remote-interchain-token ${{ steps.env_vars.outputs.salt }} ${{ steps.env_vars.outputs.destinationChain }}
 
-      - name: Send Token to another chain
-        run: ts-node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
+            - name: Send Token to another chain
+              run: ts-node stellar/its.js interchain-transfer ${{ steps.env_vars.outputs.tokenId }} ${{ steps.env_vars.outputs.destinationChain }} ${{ steps.env_vars.outputs.destinationAddress }} ${{ steps.env_vars.outputs.amount }} --data ''
 
-      ###### Command: ITS Flow Limit ######
+            ###### Command: ITS Flow Limit ######
 
-      - name: ITS Flow Limit
-        run: ts-node stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
+            - name: ITS Flow Limit
+              run: ts-node stellar/its.js flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
-      - name: ITS Flow Limit Set
-        run: ts-node stellar/its.js set-flow-limit ${{ steps.env_vars.outputs.tokenId }} 1
+            - name: ITS Flow Limit Set
+              run: ts-node stellar/its.js set-flow-limit ${{ steps.env_vars.outputs.tokenId }} 1
 
-      - name: ITS Flow Limit Remove
-        run: ts-node stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
+            - name: ITS Flow Limit Remove
+              run: ts-node stellar/its.js remove-flow-limit ${{ steps.env_vars.outputs.tokenId }}
 
-      ###### Command: Operators ######
+            ###### Command: Operators ######
 
-      - name: Operator
-        run: ts-node stellar/operators is-operator ${{ steps.env_vars.outputs.accountAddress }}
+            - name: Operator
+              run: ts-node stellar/operators is-operator ${{ steps.env_vars.outputs.accountAddress }}
 
-      - name: Add Operator
-        run: ts-node stellar/operators add-operator ${{ steps.env_vars.outputs.accountAddress }}
+            - name: Add Operator
+              run: ts-node stellar/operators add-operator ${{ steps.env_vars.outputs.accountAddress }}
 
-      - name: Remove Operator
-        run: ts-node stellar/operators remove-operator ${{ steps.env_vars.outputs.accountAddress }}
+            - name: Remove Operator
+              run: ts-node stellar/operators remove-operator ${{ steps.env_vars.outputs.accountAddress }}
 
-      ###### Command: Operator ######
+            ###### Command: Operator ######
 
-      - name: Operator
-        run: ts-node stellar/contract operator InterchainTokenService
+            - name: Operator
+              run: ts-node stellar/contract operator InterchainTokenService
 
-      - name: Transfer Operatorship
-        run: ts-node stellar/contract transfer-operatorship InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
+            - name: Transfer Operatorship
+              run: ts-node stellar/contract transfer-operatorship InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
 
-      ###### Command: Owner ######
+            ###### Command: Owner ######
 
-      - name: Owner
-        run: ts-node stellar/contract owner InterchainTokenService
+            - name: Owner
+              run: ts-node stellar/contract owner InterchainTokenService
 
-      - name: Transfer Ownership
-        run: ts-node stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
+            - name: Transfer Ownership
+              run: ts-node stellar/contract transfer-ownership InterchainTokenService ${{ steps.env_vars.outputs.newAccountAddress }}
 
-      ###### Command: Upgrade Contract ######
+            ###### Command: Upgrade Contract ######
 
-      - name: Upgrade Contract
-        run: |
-          ts-node stellar/deploy-contract deploy AxelarOperators --version 1.1.0
-          ts-node stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
+            - name: Upgrade Contract
+              run: |
+                  ts-node stellar/deploy-contract deploy AxelarOperators --version 1.1.0
+                  ts-node stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
