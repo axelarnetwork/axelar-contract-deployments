@@ -111,10 +111,10 @@ set +a
 
 ### Gateway
 
-Deploy and verify the gateway program. If `--authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
+Deploy and verify the gateway program. If `--upgrade-authority` is omitted, the current Solana CLI keypair is set as upgrade-authority.
 
 ```sh
-solana program-v4 deploy --program-keypair $GATEWAY_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GATEWAY_PROGRAM_PATH
+solana program deploy --program-id $GATEWAY_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GATEWAY_PROGRAM_PATH
 
 
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GATEWAY_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gateway
@@ -125,7 +125,7 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $
 Deploy and verify the gas service program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GAS_SERVICE_PROGRAM_PATH
+solana program deploy --program-id $GAS_SERVICE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GAS_SERVICE_PROGRAM_PATH
 
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GAS_SERVICE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_gas_service
 ```
@@ -135,7 +135,7 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $
 Deploy and verify the governance program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $GOVERNANCE_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GOVERNANCE_PROGRAM_PATH
+solana program deploy --program-id $GOVERNANCE_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $GOVERNANCE_PROGRAM_PATH
 
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $GOVERNANCE_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_governance
 ```
@@ -145,7 +145,7 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $
 Deploy and verify the multicall program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $MULTICALL_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MULTICALL_PROGRAM_PATH
+solana program deploy --program-id $MULTICALL_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $MULTICALL_PROGRAM_PATH
 
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $MULTICALL_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_multicall
 ```
@@ -155,18 +155,18 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $
 Deploy and verify the ITS program (note that verification will only work on mainnet)
 
 ```sh
-solana program-v4 deploy --program-keypair $ITS_PROGRAM_KEYPAIR_PATH --authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $ITS_PROGRAM_PATH
+solana program deploy --program-id $ITS_PROGRAM_KEYPAIR_PATH --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $ITS_PROGRAM_PATH
 
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE --commit-hash $COMMIT_HASH --program-id $(solana address -k $ITS_PROGRAM_KEYPAIR_PATH) https://github.com/eigerco/solana-axelar --library-name axelar_solana_its
 ```
 
 ## Upgrades
 
-To upgrade a program, a similar command is used as for the initial deployment, but with the `--program-id` option instead of `--program-keypair`. The upgrade should be performed by the authority assigned during the initial deployment.
+To upgrade a program, a similar command is used as for the initial deployment, but with the `--program-id` option instead of `--program-id`. The upgrade should be performed by the authority assigned during the initial deployment.
 
 
 ```sh
-solana program-v4 deploy --program-id <PROGRAM_ID_PUBKEY> <PATH_TO_PROGRAM_SO>
+solana program deploy --program-id <PROGRAM_ID_PUBKEY> <PATH_TO_PROGRAM_SO>
 ```
 
 For upgrades with offline signing, recovery of failed deployments, and other information about Solana program deployment, please check the [official docs](https://solana.com/docs/programs/deploying).
@@ -304,7 +304,7 @@ Execute a cross-chain message that was approved on the Solana gateway:
 ```sh
 # Transfer Gateway operatorship
 ./solana-axelar-cli send gateway transfer-operatorship \
-  --authority <CURRENT_AUTHORITY_PUBKEY> \
+  --upgrade-authority <CURRENT_AUTHORITY_PUBKEY> \
   --new-operator <NEW_OPERATOR_PUBKEY>
 ```
 
