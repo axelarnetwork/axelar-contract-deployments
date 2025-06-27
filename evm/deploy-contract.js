@@ -2,11 +2,11 @@
 
 /**
  * @fileoverview EVM Contract Deployment Script
- * 
+ *
  * This script provides functionality to deploy various Axelar contracts on EVM-compatible chains.
  * It supports multiple deployment methods (create, create2, create3) and handles contract
  * verification, configuration management, and deployment validation.
- * 
+ *
  * Supported contract types:
  * - AxelarServiceGovernance: Governance contract for Axelar services
  * - InterchainProposalSender: Contract for sending interchain proposals
@@ -18,7 +18,7 @@
  * - TokenDeployer: Token deployment contract
  * - AxelarTransceiver: Axelar transceiver contract
  * - TransceiverStructs: Transceiver structures library
- * 
+ *
  * @requires hardhat
  * @requires ethers
  * @requires commander
@@ -57,15 +57,11 @@ const {
 const { addEvmOptions } = require('./cli-utils');
 
 // Import transceiver-specific functions from deploy-transceiver.js
-const {
-    getTransceiverConstructorArgs,
-    getTransceiverStructsConstructorArgs,
-    checkTransceiverContract,
-} = require('./deploy-transceiver');
+const { linkLibraryToTransceiver } = require('./deploy-transceiver');
 
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
- * 
+ *
  * @param {string} contractName - The name of the contract to deploy
  * @param {Object} config - The chain configuration object containing contract configurations
  * @param {Object} wallet - The wallet instance used for deployment
@@ -201,12 +197,36 @@ async function getConstructorArgs(contractName, config, wallet, options) {
             return [];
         }
 
-        case 'AxelarTransceiver': {
-            return getTransceiverConstructorArgs(config, options);
+        case 'TransceiverStructs': {
+            return [];
         }
 
-        case 'TransceiverStructs': {
-            return getTransceiverStructsConstructorArgs();
+        case 'AxelarTransceiver': {
+            const gateway = config.AxelarGateway?.address;
+            const gasService = config.AxelarGasService?.address;
+            const nttManager = options.nttManager;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            if (!isAddress(nttManager)) {
+                throw new Error(`Missing NTT Manager address. Please provide --nttManager parameter.`);
+            }
+
+            return [gateway, gasService, nttManager];
+        }
+
+        case 'ERC1967Proxy': {
+            const args = options.args ? JSON.parse(options.args) : [];
+            if (args.length < 2) {
+                throw new Error(`ERC1967Proxy requires implementation address and init data.`);
+            }
+            return args;
         }
     }
 
@@ -215,7 +235,7 @@ async function getConstructorArgs(contractName, config, wallet, options) {
 
 /**
  * Validates deployed contract configuration by checking contract state against expected values.
- * 
+ *
  * @param {string} contractName - The name of the deployed contract
  * @param {Object} contract - The deployed contract instance
  * @param {Object} contractConfig - The expected contract configuration
@@ -270,7 +290,23 @@ async function checkContract(contractName, contract, contractConfig) {
         }
 
         case 'AxelarTransceiver': {
-            await checkTransceiverContract(contract, contractConfig);
+            const gateway = await contract.gateway();
+            const gasService = await contract.gasService();
+            const nttManager = await contract.nttManager();
+
+            if (gateway !== contractConfig.gateway) {
+                printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
+            }
+
+            if (gasService !== contractConfig.gasService) {
+                printError(`Expected gasService ${contractConfig.gasService} but got ${gasService}.`);
+            }
+
+            if (nttManager !== contractConfig.nttManager) {
+                printError(`Expected nttManager ${contractConfig.nttManager} but got ${nttManager}.`);
+            }
+
+            printInfo('Transceiver contract verification passed');
             break;
         }
     }
@@ -279,7 +315,7 @@ async function checkContract(contractName, contract, contractConfig) {
 /**
  * Processes the deployment command for a specific chain.
  * Handles contract deployment, verification, and configuration updates.
- * 
+ *
  * @param {Object} config - The global configuration object
  * @param {Object} chain - The chain configuration object
  * @param {Object} options - Deployment options including:
@@ -293,7 +329,7 @@ async function checkContract(contractName, contract, contractConfig) {
  *   - {boolean} predictOnly - Only predict address without deploying
  * @returns {Promise<void>}
  */
-async function deployGivenContract(config, chain, options) {
+async function deployEvmContract(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -323,6 +359,16 @@ async function deployGivenContract(config, chain, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
+
+    // Special handling for AxelarTransceiver - link the library
+    if (contractName === 'AxelarTransceiver') {
+        const libraryAddress = contracts.TransceiverStructs?.address;
+        if (!libraryAddress) {
+            throw new Error('TransceiverStructs library address not found. Deploy it first.');
+        }
+
+        linkLibraryToTransceiver(contractJson, libraryAddress);
+    }
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
@@ -403,6 +449,25 @@ async function deployGivenContract(config, chain, options) {
     contractConfig.codehash = codehash;
     contractConfig.predeployCodehash = predeployCodehash;
 
+    // Special handling for AxelarTransceiver - store additional config
+    if (contractName === 'AxelarTransceiver') {
+        const args = options.args ? JSON.parse(options.args) : {};
+        contractConfig.gateway = args.gateway;
+        contractConfig.gasService = args.gasService;
+        contractConfig.nttManager = args.nttManager;
+    }
+
+    // Special handling for ERC1967Proxy - store proxy address in AxelarTransceiver config
+    if (contractName === 'ERC1967Proxy' && contracts.AxelarTransceiver) {
+        contracts.AxelarTransceiver.proxyAddress = contract.address;
+        contracts.AxelarTransceiver.proxyDeployer = wallet.address;
+        contracts.AxelarTransceiver.proxyDeploymentMethod = deployMethod;
+        contracts.AxelarTransceiver.proxyCodehash = codehash;
+        if (deployMethod !== 'create') {
+            contracts.AxelarTransceiver.proxySalt = salt;
+        }
+    }
+
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
@@ -412,17 +477,19 @@ async function deployGivenContract(config, chain, options) {
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
 
     await checkContract(contractName, contract, contractConfig);
+
+    return contract;
 }
 
 /**
  * Main entry point for the deploy-contract script.
  * Processes deployment options and executes the deployment across specified chains.
- * 
+ *
  * @param {Object} options - Command line options and configuration
  * @returns {Promise<void>}
  */
 async function main(options) {
-    await mainProcessor(options, deployGivenContract);
+    await mainProcessor(options, deployEvmContract);
 }
 
 // CLI setup and execution
@@ -452,3 +519,10 @@ if (require.main === module) {
 
     program.parse();
 }
+
+// Export functions for use by other modules
+module.exports = {
+    deployEvmContract,
+    getConstructorArgs,
+    checkContract,
+};
