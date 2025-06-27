@@ -382,7 +382,7 @@ async function processCommand(config, chain, options) {
                         const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
                         const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
                         
-                        const currentDeployer = await hyperliquidToken.getDeployer();
+                        const currentDeployer = await hyperliquidToken.deployer();
                         printInfo(`Current deployer`, currentDeployer);
                         printInfo(`New deployer`, deployer);
 
@@ -404,11 +404,11 @@ async function processCommand(config, chain, options) {
 
                         printInfo(`Updating deployer through HyperliquidInterchainTokenService...`);
                         
-                        const tx = await hyperliquidService.updateTokenDeployer(hyperliquidToken.address, deployer, gasOptions);
+                        const tx = await hyperliquidService.updateTokenDeployer(tokenId, deployer, gasOptions);
                         const receipt = await tx.wait();
                         printInfo(`Transaction hash`, receipt.transactionHash);
 
-                        const updatedDeployer = await hyperliquidToken.getDeployer();
+                        const updatedDeployer = await hyperliquidToken.deployer();
                         printInfo(`Updated deployer`, updatedDeployer);
                         printInfo(`Update successful`, updatedDeployer.toLowerCase() === deployer.toLowerCase());
                     } else {
@@ -418,7 +418,7 @@ async function processCommand(config, chain, options) {
                         return;
                     }
                 } catch (hyperliquidError) {
-                    if (hyperliquidError.message.includes('getDeployer is not a function') ||
+                    if (hyperliquidError.message.includes('deployer is not a function') ||
                         hyperliquidError.message.includes('execution reverted')) {
 
                         printInfo(`❌ This token does not support deployer updates`);

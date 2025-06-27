@@ -244,13 +244,13 @@ async function deployAll(config, wallet, chain, options) {
         // Deploy only the appropriate token deployer based on chain type
         ...(isHyperliquidChain ? {
             hyperliquidInterchainTokenDeployer: {
-                name: 'Hyperliquid Interchain Token Deployer',
-                contractName: 'HyperliquidInterchainTokenDeployer',
+                name: 'Interchain Token Deployer (Hyperliquid)',
+                contractName: 'InterchainTokenDeployer',
                 async deploy() {
                     return deployContract(
                         deployMethod,
                         wallet,
-                        getContractJSON('HyperliquidInterchainTokenDeployer', artifactPath),
+                        getContractJSON('InterchainTokenDeployer', artifactPath),
                         [contractConfig.hyperliquidInterchainToken],
                         deployOptions,
                         gasOptions,
@@ -261,7 +261,7 @@ async function deployAll(config, wallet, chain, options) {
             },
         } : {
             interchainTokenDeployer: {
-                name: 'Standard Interchain Token Deployer',
+                name: 'Interchain Token Deployer (Standard)',
                 contractName: 'InterchainTokenDeployer',
                 async deploy() {
                     return deployContract(
@@ -571,7 +571,9 @@ async function upgrade(_, chain, options) {
     // Validate that the correct chain-specific implementations are deployed
     validateChainSpecificDeployments(contractConfig, isHyperliquidChain, chain.name);
 
-    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
+    // Choose the correct contract based on chain type
+    const ServiceContractName = isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
+    const InterchainTokenService = getContractJSON(ServiceContractName, artifactPath);
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
