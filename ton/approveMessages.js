@@ -1,9 +1,7 @@
 const { Command } = require('commander');
 const { Address, Cell, internal } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
-
-// Constants
-const APPROVE_MESSAGES_COST = '2';
+const { APPROVE_MESSAGES_COST } = require('axelar-cgp-ton');
 
 function createApproveMessagesCell(encodedPayload) {
     return Cell.fromBoc(Buffer.from(encodedPayload, 'hex'))[0];
@@ -37,7 +35,6 @@ async function run(encodedPayload) {
         console.log('Approve messages transaction sent successfully!');
 
         await waitForTransaction(contract, seqno);
-
     } catch (error) {
         console.error('Error in approve messages:', error);
         throw error;

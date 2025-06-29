@@ -34,3 +34,19 @@ node ton/relayerExecute.js "0x05cca7a140b1d3863cc4ab842570aa862d857e9d224739e0ba
 ```bash
 node ton/callContract.js "eth-sepolia" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "48656c6c6f2066726f6d204176616c616e63686521"
 ```
+
+
+## Post Deployment (initialize signers)
+
+```bash
+node ton/initializeSigners.js '{
+  "signers": [
+    {
+      "signer": "79607624103790023686192160900267678169386878801005916234280733090365959006096",
+      "weight": "1"
+    }
+  ],
+  "threshold": "1",
+  "nonce": "0"
+}'
+```

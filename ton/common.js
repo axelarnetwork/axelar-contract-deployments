@@ -39,39 +39,16 @@ async function waitForTransaction(contract, seqno) {
     let currentSeqno = seqno;
     while (currentSeqno === seqno) {
         console.log('Waiting for transaction confirmation...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         currentSeqno = await contract.getSeqno();
     }
     console.log('Transaction confirmed!');
-}
-
-const BYTES_PER_CELL = 96;
-
-function bufferToCell(buffer) {
-    function buildCellChain(startIndex) {
-        const builder = beginCell();
-        const endIndex = Math.min(startIndex + BYTES_PER_CELL, buffer.length);
-
-        for (let i = startIndex; i < endIndex; i++) {
-            builder.storeUint(buffer[i], 8);
-        }
-
-        if (endIndex < buffer.length) {
-            const nextCell = buildCellChain(endIndex);
-            builder.storeRef(nextCell);
-        }
-
-        return builder.endCell();
-    }
-
-    return buildCellChain(0);
 }
 
 module.exports = {
     getTonClient,
     loadWallet,
     waitForTransaction,
-    bufferToCell,
     TONCENTER_ENDPOINT,
     GATEWAY_ADDRESS,
 };

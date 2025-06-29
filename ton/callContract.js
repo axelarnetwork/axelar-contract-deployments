@@ -1,27 +1,9 @@
 const { Command } = require('commander');
-const { Address, internal, beginCell } = require('@ton/ton');
-const { getTonClient, loadWallet, bufferToCell, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { Address, internal, toNano } = require('@ton/ton');
+const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { buildContractCallMessageChained } = require('axelar-cgp-ton');
 
-// Constants
-const CALL_CONTRACT_COST = '0.3';
-const OP_CALL_CONTRACT = 0x00000009;
-
-function buildCallContractMessageBody(
-    destinationChainString,
-    destinationContractAddressString,
-    payloadBuffer,
-) {
-    const destinationChain = beginCell().storeStringTail(destinationChainString).endCell();
-    const destinationContractAddress = beginCell().storeStringTail(destinationContractAddressString).endCell();
-    const payload = bufferToCell(payloadBuffer);
-
-    return beginCell()
-        .storeUint(OP_CALL_CONTRACT, 32)
-        .storeRef(destinationChain)
-        .storeRef(destinationContractAddress)
-        .storeRef(payload)
-        .endCell();
-}
+const CALL_CONTRACT_COST = toNano('0.1');
 
 async function run(destinationChain, destinationContractAddress, payload) {
     try {
@@ -31,11 +13,7 @@ async function run(destinationChain, destinationContractAddress, payload) {
 
         const payloadBuffer = Buffer.from(payload, 'hex');
 
-        const callContractCell = buildCallContractMessageBody(
-            destinationChain,
-            destinationContractAddress,
-            payloadBuffer
-        );
+        const callContractCell = buildContractCallMessageChained(destinationChain, destinationContractAddress, payloadBuffer);
 
         const message = internal({
             to: gateway,
@@ -57,7 +35,6 @@ async function run(destinationChain, destinationContractAddress, payload) {
         console.log('Call contract transaction sent successfully!');
 
         await waitForTransaction(contract, seqno);
-
     } catch (error) {
         console.error('Error in call contract:', error);
         throw error;
@@ -76,4 +53,4 @@ if (require.main === module) {
         .action(run);
 
     program.parse();
-} 
+}
