@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const { Address, Cell, internal } = require('@ton/ton');
-const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { getTonClient, loadWallet, sendTransactionWithCost, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
 const { APPROVE_MESSAGES_COST } = require('axelar-cgp-ton');
 
 function createApproveMessagesCell(encodedPayload) {
@@ -15,22 +15,7 @@ async function run(encodedPayload) {
         const gateway = Address.parse(GATEWAY_ADDRESS);
         const approveMessagesCell = createApproveMessagesCell(encodedPayload);
 
-        const message = internal({
-            to: gateway,
-            value: APPROVE_MESSAGES_COST,
-            body: approveMessagesCell,
-        });
-
-        const seqno = await contract.getSeqno();
-        console.log('Current wallet seqno:', seqno);
-
-        console.log('Sending approve messages transaction...');
-        const transfer = await contract.sendTransfer({
-            secretKey: key.secretKey,
-            messages: [message],
-            seqno: seqno,
-            amount: APPROVE_MESSAGES_COST,
-        });
+        var { transfer, seqno } = await sendTransactionWithCost(contract, key, gateway, approveMessagesCell, APPROVE_MESSAGES_COST);
 
         console.log('Approve messages transaction sent successfully!');
 

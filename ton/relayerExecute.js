@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const { Address, internal } = require('@ton/ton');
-const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GATEWAY_ADDRESS } = require('./common');
 const { buildRelayerExecuteMessage, RELAYER_EXECUTE_COST } = require('axelar-cgp-ton');
 
 async function run(messageId, sourceChain, sourceAddress, payload, executableAddress, destinationChain, payloadHash) {
@@ -23,22 +23,7 @@ async function run(messageId, sourceChain, sourceAddress, payload, executableAdd
             BigInt(payloadHash),
         );
 
-        const message = internal({
-            to: gateway,
-            value: RELAYER_EXECUTE_COST,
-            body: relayerExecuteCell,
-        });
-
-        const seqno = await contract.getSeqno();
-        console.log('Current wallet seqno:', seqno);
-
-        console.log('Sending relayer execute transaction...');
-        const transfer = await contract.sendTransfer({
-            secretKey: key.secretKey,
-            messages: [message],
-            seqno: seqno,
-            amount: RELAYER_EXECUTE_COST,
-        });
+        var { transfer, seqno } = await sendTransactionWithCost(contract, key, gateway, relayerExecuteCell, RELAYER_EXECUTE_COST);
 
         console.log('Relayer execute transaction sent successfully!');
 

@@ -1,5 +1,7 @@
 const { TonClient, WalletContractV5R1, beginCell } = require('@ton/ton');
 const { mnemonicToWalletKey } = require('@ton/crypto');
+const { internal } = require('@ton/ton');
+const { getEmptySignature } = require('axelar-cgp-ton');
 require('dotenv').config();
 
 // Constants
@@ -45,8 +47,62 @@ async function waitForTransaction(contract, seqno) {
     console.log('Transaction confirmed!');
 }
 
+function parseWeightedSigners(jsonString) {
+    try {
+        const parsed = JSON.parse(jsonString);
+
+        // Validate structure
+        if (!parsed.signers || !Array.isArray(parsed.signers)) {
+            throw new Error('Invalid format: signers must be an array');
+        }
+
+        if (typeof parsed.threshold === 'undefined' || typeof parsed.nonce === 'undefined') {
+            throw new Error('Invalid format: threshold and nonce are required');
+        }
+
+        // Convert to proper types
+        const weightedSigners = {
+            signers: parsed.signers.map((signer) => ({
+                signer: BigInt(signer.signer),
+                weight: BigInt(signer.weight),
+                signature: getEmptySignature(),
+            })),
+            threshold: BigInt(parsed.threshold),
+            nonce: BigInt(parsed.nonce),
+        };
+
+        return weightedSigners;
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            throw new Error('Invalid JSON format');
+        }
+        throw error;
+    }
+}
+
+async function sendTransactionWithCost(contract, key, gateway, messageBody, cost) {
+    const message = internal({
+        to: gateway,
+        value: cost,
+        body: messageBody,
+    });
+
+    const seqno = await contract.getSeqno();
+    console.log('Current wallet seqno:', seqno);
+
+    const transfer = await contract.sendTransfer({
+        secretKey: key.secretKey,
+        messages: [message],
+        seqno: seqno,
+    });
+
+    return { transfer, seqno };
+}
+
 module.exports = {
+    sendTransactionWithCost,
     getTonClient,
+    parseWeightedSigners,
     loadWallet,
     waitForTransaction,
     TONCENTER_ENDPOINT,

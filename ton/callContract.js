@@ -1,6 +1,6 @@
 const { Command } = require('commander');
 const { Address, internal, toNano } = require('@ton/ton');
-const { getTonClient, loadWallet, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GATEWAY_ADDRESS } = require('./common');
 const { buildContractCallMessageChained } = require('axelar-cgp-ton');
 
 const CALL_CONTRACT_COST = toNano('0.1');
@@ -12,25 +12,9 @@ async function run(destinationChain, destinationContractAddress, payload) {
         const gateway = Address.parse(GATEWAY_ADDRESS);
 
         const payloadBuffer = Buffer.from(payload, 'hex');
-
         const callContractCell = buildContractCallMessageChained(destinationChain, destinationContractAddress, payloadBuffer);
 
-        const message = internal({
-            to: gateway,
-            value: CALL_CONTRACT_COST,
-            body: callContractCell,
-        });
-
-        const seqno = await contract.getSeqno();
-        console.log('Current wallet seqno:', seqno);
-
-        console.log('Sending call contract transaction...');
-        const transfer = await contract.sendTransfer({
-            secretKey: key.secretKey,
-            messages: [message],
-            seqno: seqno,
-            amount: CALL_CONTRACT_COST,
-        });
+        var { transfer, seqno } = await sendTransactionWithCost(contract, key, gateway, callContractCell, CALL_CONTRACT_COST);
 
         console.log('Call contract transaction sent successfully!');
 
