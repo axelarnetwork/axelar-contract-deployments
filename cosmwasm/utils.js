@@ -1107,19 +1107,11 @@ const getContractR2Url = (contractName, contractVersion) => {
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
-<<<<<<< HEAD
 const getContractArtifactPath = (artifactDir, contractName) => {
     const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
     const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
     return basePath + fileName;
 };
-=======
-function getContractArtifactPath(artifactDir, contractName) {
-    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
-    const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
-    return basePath + fileName;
-}
->>>>>>> cda4723 (cosmwasm changed to use --artifact-dir)
 
 const getContractCodePath = async (options, contractName) => {
     if (options.artifactDir) {
