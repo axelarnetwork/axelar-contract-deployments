@@ -607,18 +607,14 @@ async function upgrade(_, chain, options) {
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
-    // Get gas options before block size switching
     const gasOptions = await getGasOptions(chain, options, contractName);
 
-    // For Hyperliquid chains, switch to big blocks if requested
     if (isHyperliquidChain) {
         await switchHyperliquidBlockSize(options, gasOptions, true, 'Hyperliquid upgrade');
     }
 
-    // Validate that the correct chain-specific implementations are deployed
     validateChainSpecificDeployments(contractConfig, isHyperliquidChain, chain.name);
 
-    // Choose the correct contract based on chain type
     const ServiceContractName = isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
     const InterchainTokenService = getContractJSON(ServiceContractName, artifactPath);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
@@ -627,10 +623,6 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Proxy`, contract.address);
 
     const currImplementation = await contract.implementation();
-
-    const expectedImplementation = isHyperliquidChain
-        ? contractConfig.hyperliquidInterchainTokenDeployer
-        : contractConfig.interchainTokenDeployer;
 
     if (currImplementation === contractConfig.implementation) {
         printWarn(`ITS implementation is already up to date`);
