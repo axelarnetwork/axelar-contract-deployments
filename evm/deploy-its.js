@@ -43,23 +43,17 @@ async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, dep
     const network = isMainnet ? 'Mainnet' : 'Testnet';
     const blockType = useBigBlocks ? 'BIG' : 'SMALL';
 
-    printInfo(`🔄 Switching to ${blockType} blocks for ${deploymentName}...`);
-
     try {
         await switchBlockSize(options.privateKey, useBigBlocks, network);
-        printInfo(`✅ Successfully switched to ${blockType} blocks`);
 
-        // Adjust gas limit for big blocks
         if (useBigBlocks && gasOptions.gasLimit) {
             const { BigNumber } = require('ethers');
-            const originalGasLimit = gasOptions.gasLimit;
             gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
-            printInfo(`📈 Increased gas limit from ${originalGasLimit.toString()} to ${gasOptions.gasLimit.toString()} for big blocks`);
         }
 
         return true;
     } catch (error) {
-        printWarn(`⚠️ Failed to switch to ${blockType} blocks, continuing with deployment:`, error.message);
+        printWarn(`Failed to switch to ${blockType} blocks, continuing with deployment:`, error.message);
         return false;
     }
 }
@@ -230,10 +224,7 @@ async function deployAll(config, wallet, chain, options) {
         return;
     }
 
-    // Determine if this is a Hyperliquid chain
     const isHyperliquidChain = chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
-
-    printInfo(`Chain type detected: ${isHyperliquidChain ? 'Hyperliquid (slot 0 reserved)' : 'Standard (slot 0 available)'}`);
 
     const deployments = {
         tokenManagerDeployer: {
@@ -382,21 +373,16 @@ async function deployAll(config, wallet, chain, options) {
 
                 const args = [
                     contractConfig.tokenManagerDeployer,
-                    activeTokenDeployer, // Use chain-specific deployer
+                    activeTokenDeployer,
                     contracts.AxelarGateway.address,
                     contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
-                    itsHubAddress, // NEW: string parameter for ITS Hub address
+                    itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
-                    // gatewayCaller parameter was removed
                 ];
 
-                printInfo('ITS Implementation args', args);
-                printInfo(`Using ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'} token deployer:`, activeTokenDeployer);
-
-                // Choose the appropriate service contract based on chain type
                 const ServiceContract = getContractJSON(
                     isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
                     artifactPath,
@@ -405,7 +391,7 @@ async function deployAll(config, wallet, chain, options) {
                 return deployContract(
                     proxyDeployMethod,
                     wallet,
-                    ServiceContract, // Use the correct contract JSON
+                    ServiceContract,
                     args,
                     getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,
@@ -427,7 +413,6 @@ async function deployAll(config, wallet, chain, options) {
                 contractConfig.predeployCodehash = predeployCodehash;
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
-                printInfo('ITS Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -462,7 +447,6 @@ async function deployAll(config, wallet, chain, options) {
             contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
-                printInfo('ITS Factory Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -599,8 +583,6 @@ function validateChainSpecificDeployments(contractConfig, isHyperliquidChain, ch
                 `Please run a full deployment first.`,
         );
     }
-
-    printInfo(`✅ Chain-specific deployments validated for ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'} chain`);
 }
 
 async function upgrade(_, chain, options) {
@@ -623,7 +605,6 @@ async function upgrade(_, chain, options) {
     // Determine if this is a Hyperliquid chain (same logic as in deployAll)
     const isHyperliquidChain = chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
 
-    printInfo(`Chain type detected: ${isHyperliquidChain ? 'Hyperliquid (slot 0 reserved)' : 'Standard (slot 0 available)'}`);
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
     // Get gas options before block size switching
@@ -646,15 +627,10 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Proxy`, contract.address);
 
     const currImplementation = await contract.implementation();
-    printInfo(`Current ITS implementation`, currImplementation);
-    printInfo(`New ITS implementation`, contractConfig.implementation);
 
-    // Verify that the correct implementation is being used for this chain type
     const expectedImplementation = isHyperliquidChain
         ? contractConfig.hyperliquidInterchainTokenDeployer
         : contractConfig.interchainTokenDeployer;
-
-    printInfo(`Expected token deployer for ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'} chain:`, expectedImplementation);
 
     if (currImplementation === contractConfig.implementation) {
         printWarn(`ITS implementation is already up to date`);
@@ -682,8 +658,6 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Factory Proxy`, itsFactory.address);
 
     const factoryImplementation = await itsFactory.implementation();
-    printInfo(`Current ITS Factory implementation`, factoryImplementation);
-    printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
     if (factoryImplementation === itsFactoryContractConfig.implementation) {
         printWarn(`ITS Factory implementation is already up to date`);
@@ -710,17 +684,6 @@ async function upgrade(_, chain, options) {
         printInfo(`Upgraded Interchain Token Factory`);
     }
 
-    // Log upgrade summary
-    printInfo(`\n=== Upgrade Summary for ${chain.name} ===`);
-    printInfo(`Chain Type: ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'}`);
-    printInfo(`ITS Implementation: ${contractConfig.implementation}`);
-    printInfo(`ITS Factory Implementation: ${itsFactoryContractConfig.implementation}`);
-    printInfo(`Expected Token Deployer: ${expectedImplementation}`);
-    if (isHyperliquidChain && options.useBigBlocks) {
-        printInfo(`Block Size: BIG blocks enabled for upgrade`);
-    }
-
-    // Switch back to small blocks for Hyperliquid chains after upgrade
     if (isHyperliquidChain) {
         await switchHyperliquidBlockSize(options, gasOptions, false, 'normal operations');
     }
