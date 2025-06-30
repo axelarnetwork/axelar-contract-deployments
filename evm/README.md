@@ -78,7 +78,7 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ### Hyperliquid Block Size Support
 
-For Hyperliquid chains, you can manually switch between BIG and SMALL blocks using the `hyperliquid-block-helper.js` script. This is particularly useful for deploying large contracts like the HyperliquidInterchainTokenService.
+For Hyperliquid chains, you can manually switch between BIG and SMALL blocks using the `hyperliquid-block-helper.js` script. This is particularly useful for deploying large contracts like the Gateway contract. For the ITS deployment the module is importer directly into `deploy-its.js` and block changes are handled internally.
 
 To switch block sizes the CHAINS and PRIVATE_KEY should be set in the .env:
 
