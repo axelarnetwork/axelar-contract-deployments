@@ -28,35 +28,6 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
-const { switchBlockSize } = require('./hyperliquid-block-helper');
-
-/**
- * Switches Hyperliquid block size and adjusts gas options accordingly
- * @param {Object} options - Deployment options
- * @param {Object} gasOptions - Gas options to modify
- * @param {boolean} useBigBlocks - Whether to switch to big blocks
- * @param {string} deploymentName - Name of the deployment for logging
- * @returns {Promise<boolean>} - Whether the switch was successful
- */
-async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, deploymentName) {
-    const isMainnet = options.env === 'mainnet';
-    const network = isMainnet ? 'Mainnet' : 'Testnet';
-    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
-
-    try {
-        await switchBlockSize(options.privateKey, useBigBlocks, network);
-
-        if (useBigBlocks && gasOptions.gasLimit) {
-            const { BigNumber } = require('ethers');
-            gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
-        }
-
-        return true;
-    } catch (error) {
-        printWarn(`Failed to switch to ${blockType} blocks, continuing with deployment:`, error.message);
-        return false;
-    }
-}
 
 /**
  * Determines if a deployment should use big blocks on Hyperliquid
@@ -473,11 +444,6 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
-        // Handle Hyperliquid block size switching
-        if (shouldUseBigBlocks(key, isHyperliquidChain)) {
-            await switchHyperliquidBlockSize(options, gasOptions, true, deployment.name);
-        }
-
         printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
@@ -488,11 +454,6 @@ async function deployAll(config, wallet, chain, options) {
             itsFactoryContractConfig.address = contract.address;
         } else {
             contractConfig[key] = contract.address;
-        }
-
-        // Switch back to small blocks after big block deployments
-        if (shouldUseBigBlocks(key, isHyperliquidChain)) {
-            await switchHyperliquidBlockSize(options, gasOptions, false, 'normal operations');
         }
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);
@@ -609,10 +570,6 @@ async function upgrade(_, chain, options) {
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
-    if (isHyperliquidChain) {
-        await switchHyperliquidBlockSize(options, gasOptions, true, 'Hyperliquid upgrade');
-    }
-
     validateChainSpecificDeployments(contractConfig, isHyperliquidChain, chain.name);
 
     const ServiceContractName = isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
@@ -674,10 +631,6 @@ async function upgrade(_, chain, options) {
         }
 
         printInfo(`Upgraded Interchain Token Factory`);
-    }
-
-    if (isHyperliquidChain) {
-        await switchHyperliquidBlockSize(options, gasOptions, false, 'normal operations');
     }
 }
 
