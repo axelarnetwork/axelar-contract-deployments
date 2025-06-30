@@ -73,8 +73,8 @@ const addStoreOptions = (program) => {
 
     program.addOption(
         new Option(
-            '-d, --artifact-dir <artifactDir>',
-            'For Stellar: path to the contract artifact directory to upload (required if --version is not used)',
+            '-p, --artifact-dir <artifactDir>',
+            'Path to the contract artifact directory to upload (required if --version is not used)',
         ).env('ARTIFACT_DIR'),
     );
 
