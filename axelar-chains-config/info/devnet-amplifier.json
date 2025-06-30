@@ -1658,6 +1658,10 @@
         "berachain": {
           "codeId": 848,
           "address": "axelar129htsgeyygnc6mlhxxjsdrtu2yj8wam83ur6mcdlvdttvk3zlecqwdjnl0"
+        },
+        "stacks": {
+          "codeId": 1396,
+          "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
         }
       },
       "XrplMultisigProver": {
@@ -1875,15 +1879,6 @@
         "storeCodeProposalId": "631",
         "storeCodeProposalCodeHash": "e2db56111c000c7f9be4cc98ccae3ba504133fff29b05619e9433569737823b8",
         "lastUploadedCodeId": 1393
-      },
-      "StacksGateway": {
-        "stacks": {
-          "codeId": 1396,
-          "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
-        },
-        "storeCodeProposalId": "574",
-        "storeCodeProposalCodeHash": "a9ac6c640f1655aea31874d1a8d1f90e4a395fc52430719d2805e2047dc140f8",
-        "lastUploadedCodeId": 1396
       },
       "StacksMultisigProver": {
         "stacks": {
