@@ -76,6 +76,24 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
+### Hyperliquid Block Size Support
+
+For Hyperliquid chains, you can optionally switch to BIG blocks during deployment to handle large contracts more efficiently. This is particularly useful for deploying the HyperliquidInterchainTokenService which can be quite large.
+
+To enable BIG blocks for Hyperliquid deployments:
+
+```bash
+ts-node evm/deploy-its -e testnet -n hyperliquid -s '[salt]' --proxySalt 'v1.0.0' -m create2 --useBigBlocks
+```
+
+The `--useBigBlocks` flag will:
+- Automatically detect if the target chain is Hyperliquid
+- Switch to BIG blocks before deploying the HyperliquidInterchainTokenService
+- Switch to BIG blocks before upgrading if using the `--upgrade` flag
+- Display the block size status in the deployment/upgrade summary
+
+**Note**: This feature only applies to Hyperliquid chains. For other chains, the flag will be ignored.
+
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.

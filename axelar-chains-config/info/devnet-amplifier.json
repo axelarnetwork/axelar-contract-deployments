@@ -1365,9 +1365,6 @@
       "confirmations": 1,
       "finality": "finalized",
       "decimals": 18,
-      "gasOptions": {
-        "gasLimit": 25000000
-      },
       "approxFinalityWaitTime": 1,
       "chainType": "evm",
       "explorer": {
@@ -1426,26 +1423,27 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0 clean original aa30",
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "proxySalt": "ITS v1.0.0 clean originalaa30",
-          "tokenManagerDeployer": "0x88fd8e58884B3769110D763ADC00e469AeFd8415",
+          "salt": "ITS v2.1.0 aaclean original aaaa30891aasdad",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "proxySalt": "ITS v1.0.0 aaclean aaaoriginalaa30881asda",
+          "tokenManagerDeployer": "0xA22e8397463213Ff3b1DEaD1321268d684eEBD27",
           "interchainToken": "0x9f553930671ee5F8153734c8d286999c2320A195",
           "interchainTokenDeployer": "0xdb6722296f31CFd0586b8F728b3444333bea58E9",
-          "tokenManager": "0x74CF87Bf0A771D31C98dBf35d10F581E6743fd17",
-          "tokenHandler": "0xfe09f40fa817C91EA126ad43a8B1d9AcF9b22CBD",
+          "tokenManager": "0xD1D48Cd40f87D423AA6f4B65a661B2D47aC0F5BD",
+          "tokenHandler": "0xD229d2DAf1fbd19065dB19fB62759b825182287a",
           "gatewayCaller": "0x4B61C2f079Db2f55d37cA746175E69066ab81418",
-          "implementation": "0x7BcDFfE14A63c7F9734c20FeE38A6835962690FD",
+          "implementation": "0x8d96EafCFEAC89A74398d4b4C308d559Ad3C26eb",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xC9aeF960750893A2775F76febd27ACA650A1744A",
-          "hyperliquidInterchainToken": "0xddD9eCF8273DBB9992526260710e101AFD5B77c3",
-          "hyperliquidInterchainTokenDeployer": "0x070ec826042824240936bee028A61B20DBcFFb7d"
+          "address": "0xa04EDD9BF321eCF32900dd330aBa1d0FF6f7a8F1",
+          "hyperliquidInterchainToken": "0x16845220CEE3a46C5A7f3B044dD738437835757c",
+          "hyperliquidInterchainTokenDeployer": "0x5C4785FD040d7e366Ed8f62a1C31E607AF34c6fB",
+          "owner": "0xc84f53Eb743E45204a7e3756B984368C25A68a1b"
         },
         "InterchainTokenFactory": {
-          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "salt": "ITS Factory v1.0.0 clean originalaa30",
-          "implementation": "0xDB4516cB0b0199ba64550cFBd472B66d1E6BcAF7",
-          "address": "0x5E7b51b396A520216fc98e6f0AC9B92170900207"
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "salt": "ITS Factory v1.0.0 aaclean aaaoriginalaa30881asda",
+          "implementation": "0xaEe1371Ec5605623394a3Dde581bAfD80d21347D",
+          "address": "0x57ab6b2e7892325b8E33c91e8E43DB05A3fF3A8a"
         }
       }
     }
