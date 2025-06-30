@@ -7,11 +7,10 @@ const { buildPayNativeGasForContractCallMessage } = require('axelar-cgp-ton');
 const program = new Command();
 program.name('gasService').description('Axelar TON Gas Service CLI').version('1.0.0');
 
-async function executeOperation(operationName, messageBuilder, cost, args) {
+async function executeOperation(operationName, messageBody, cost) {
     try {
         const client = getTonClient();
         const { contract, key } = await loadWallet(client);
-        const messageBody = messageBuilder(...args);
 
         const { transfer, seqno } = await sendTransactionWithCost(contract, key, GAS_SERVICE_ADDRESS, messageBody, cost);
 
@@ -40,9 +39,8 @@ program
 
         await executeOperation(
             'Pay Native Gas',
-            (chain, addr, payload, refund) => buildPayNativeGasForContractCallMessage(sender, chain, addr, payload, Address.parse(refund)),
+            buildPayNativeGasForContractCallMessage(sender, destinationChain, destinationAddress, payload, Address.parse(refundAddress)),
             cost,
-            [destinationChain, destinationAddress, payload, refundAddress],
         );
     });
 
