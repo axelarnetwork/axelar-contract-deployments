@@ -303,13 +303,11 @@ async function processCommand(config, chain, options) {
             try {
                 const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
                 const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
-                
+
                 const currentDeployer = await hyperliquidToken.deployer();
                 printInfo('Current deployer', currentDeployer);
             } catch (error) {
-                if (error.message.includes('deployer is not a function') ||
-                    error.message.includes('execution reverted')) {
-                    
+                if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
                     // Fallback to factory method
                     const factoryDeployer = await interchainTokenFactory.getTokenDeployer(tokenId);
                     if (factoryDeployer !== AddressZero) {
@@ -328,9 +326,9 @@ async function processCommand(config, chain, options) {
         case 'updateTokenDeployer': {
             const { tokenId, deployer } = options;
 
-            validateParameters({ 
+            validateParameters({
                 isNonEmptyString: { tokenId },
-                isValidAddress: { deployer }
+                isValidAddress: { deployer },
             });
 
             const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
@@ -338,11 +336,11 @@ async function processCommand(config, chain, options) {
 
             const HyperliquidInterchainTokenService = getContractJSON('HyperliquidInterchainTokenService');
             const hyperliquidService = new Contract(interchainTokenServiceAddress, HyperliquidInterchainTokenService.abi, wallet);
-            
+
             // Check if the service has the updateTokenDeployer function
             const serviceFunctions = Object.keys(hyperliquidService.interface.functions);
-            const hasUpdateFunction = serviceFunctions.some(fn => fn.includes('updateTokenDeployer'));
-            
+            const hasUpdateFunction = serviceFunctions.some((fn) => fn.includes('updateTokenDeployer'));
+
             if (!hasUpdateFunction) {
                 throw new Error('Service contract does not support updateTokenDeployer');
             }
@@ -350,7 +348,7 @@ async function processCommand(config, chain, options) {
             // Get the token contract to check current state
             const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
             const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
-            
+
             const currentDeployer = await hyperliquidToken.deployer();
             printInfo('Current deployer', currentDeployer);
             printInfo('New deployer', deployer);
@@ -405,7 +403,7 @@ if (require.main === module) {
                 'registerCustomToken',
                 'linkToken',
                 'getCurrentDeployer',
-                'updateTokenDeployer'
+                'updateTokenDeployer',
             ])
             .makeOptionMandatory(true),
     );
