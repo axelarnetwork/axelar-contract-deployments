@@ -30,19 +30,6 @@ const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 
 /**
- * Determines if a deployment should use big blocks on Hyperliquid
- * @param {string} key - Deployment key
- * @param {boolean} isHyperliquidChain - Whether this is a Hyperliquid chain
- * @returns {boolean} - Whether big blocks should be used
- */
-function shouldUseBigBlocks(key, isHyperliquidChain) {
-    if (!isHyperliquidChain) return false;
-
-    // Use big blocks for large contract deployments
-    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
-}
-
-/**
  * Function that handles the ITS deployment with chain-specific token support.
  * @param {*} wallet
  * @param {*} chain
@@ -468,19 +455,6 @@ async function deployAll(config, wallet, chain, options) {
             throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
         }
     }
-
-    // Log the final configuration
-    const activeTokenDeployer = isHyperliquidChain
-        ? contractConfig.hyperliquidInterchainTokenDeployer
-        : contractConfig.interchainTokenDeployer;
-
-    const activeTokenImplementation = isHyperliquidChain ? contractConfig.hyperliquidInterchainToken : contractConfig.interchainToken;
-
-    printInfo(`\n=== Deployment Summary for ${chain.name} ===`);
-    printInfo(`Chain Type: ${isHyperliquidChain ? 'Hyperliquid' : 'Standard'}`);
-    printInfo(`Active Token Deployer: ${activeTokenDeployer}`);
-    printInfo(`Active Token Implementation: ${activeTokenImplementation}`);
-    printInfo(`Slot 0 Status: ${isHyperliquidChain ? 'Reserved for deployer' : 'Available for ERC20 balances'}`);
 }
 
 async function deploy(config, chain, options) {
@@ -563,7 +537,6 @@ async function upgrade(_, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    // Determine if this is a Hyperliquid chain (same logic as in deployAll)
     const isHyperliquidChain = chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
