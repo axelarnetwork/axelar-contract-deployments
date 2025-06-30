@@ -1,12 +1,12 @@
-const { TonClient, WalletContractV5R1, beginCell } = require('@ton/ton');
+const { TonClient, WalletContractV5R1, internal } = require('@ton/ton');
 const { mnemonicToWalletKey } = require('@ton/crypto');
-const { internal } = require('@ton/ton');
 const { getEmptySignature } = require('axelar-cgp-ton');
 require('dotenv').config();
 
 // Constants
 const TONCENTER_ENDPOINT = 'https://testnet.toncenter.com/api/v2/jsonRPC';
 const GATEWAY_ADDRESS = process.env.TON_GATEWAY_ADDRESS;
+const GAS_SERVICE_ADDRESS = process.env.TON_GAS_SERVICE;
 
 if (!GATEWAY_ADDRESS) {
     throw new Error('Please set TON_GATEWAY_ADDRESS in your .env file');
@@ -107,4 +107,5 @@ module.exports = {
     waitForTransaction,
     TONCENTER_ENDPOINT,
     GATEWAY_ADDRESS,
+    GAS_SERVICE_ADDRESS,
 };

@@ -66,3 +66,11 @@ node ton/signerRotation.js b5ee9c72410208010001c10002080000001401020040ab98abb51
   "nonce": "0"
 }'
 ```
+
+# Gas Service Scripts
+
+Paying native gas for a contract call
+
+```bash
+node ton/gasService.js pay-native-gas "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" 0.01
+```
