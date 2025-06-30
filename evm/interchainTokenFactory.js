@@ -8,7 +8,16 @@ const {
     BigNumber,
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, prompt, mainProcessor, validateParameters, getContractJSON, getGasOptions, printWalletInfo } = require('./utils');
+const {
+    printInfo,
+    prompt,
+    mainProcessor,
+    validateParameters,
+    getContractJSON,
+    getGasOptions,
+    printWalletInfo,
+    printTokenInfo,
+} = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
 const { getWallet } = require('./sign-utils');
@@ -189,6 +198,7 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
             printInfo('tokenId', tokenId);
+            await printTokenInfo(tokenAddress, provider);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'TokenManagerDeploymentStarted');
 
@@ -215,6 +225,7 @@ async function processCommand(config, chain, options) {
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
             printInfo('tokenId', tokenId);
+            await printTokenInfo(tokenAddress, provider);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 
@@ -241,6 +252,7 @@ async function processCommand(config, chain, options) {
             );
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
             printInfo('tokenId', tokenId);
+            await printTokenInfo(tokenAddress, provider);
 
             await handleTx(tx, chain, interchainTokenService, options.action, 'TokenManagerDeployed', 'InterchainTokenDeploymentStarted');
 

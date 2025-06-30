@@ -213,7 +213,7 @@ async function checkContract(contractName, contract, contractConfig) {
 
 async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
-    const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
+    const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     if (!chain.contracts) {
         chain.contracts = {};

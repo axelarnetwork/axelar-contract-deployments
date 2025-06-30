@@ -89,7 +89,7 @@ function shouldUseBigBlocks(key, isHyperliquidChain) {
 
 async function deployAll(config, wallet, chain, options) {
     const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
-    const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
+    const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
     const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
