@@ -308,7 +308,6 @@ async function processCommand(config, chain, options) {
                 printInfo('Current deployer', currentDeployer);
             } catch (error) {
                 if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
-                    // Fallback to factory method
                     const factoryDeployer = await interchainTokenFactory.getTokenDeployer(tokenId);
                     if (factoryDeployer !== AddressZero) {
                         printInfo('Factory deployer', factoryDeployer);
@@ -337,15 +336,18 @@ async function processCommand(config, chain, options) {
             const HyperliquidInterchainTokenService = getContractJSON('HyperliquidInterchainTokenService');
             const hyperliquidService = new Contract(interchainTokenServiceAddress, HyperliquidInterchainTokenService.abi, wallet);
 
-            // Check if the service has the updateTokenDeployer function
-            const serviceFunctions = Object.keys(hyperliquidService.interface.functions);
-            const hasUpdateFunction = serviceFunctions.some((fn) => fn.includes('updateTokenDeployer'));
+            let hasUpdateFunction = false;
+            try {
+                const updateFunction = hyperliquidService.interface.getFunction('updateTokenDeployer');
+                hasUpdateFunction = !!updateFunction;
+            } catch (error) {
+                hasUpdateFunction = false;
+            }
 
             if (!hasUpdateFunction) {
                 throw new Error('Service contract does not support updateTokenDeployer');
             }
 
-            // Get the token contract to check current state
             const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
             const hyperliquidToken = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
 
@@ -353,7 +355,6 @@ async function processCommand(config, chain, options) {
             printInfo('Current deployer', currentDeployer);
             printInfo('New deployer', deployer);
 
-            // Check if the wallet has permission to update deployers
             const serviceOwner = await hyperliquidService.owner();
             const isOperator = await hyperliquidService.isOperator(wallet.address);
 
