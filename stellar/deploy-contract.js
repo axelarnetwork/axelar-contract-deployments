@@ -10,7 +10,7 @@ require('./cli-utils');
 function main() {
     const command = new Command('deploy-contract').description('Deploy/Upgrade Stellar contracts');
 
-    const deployCommand = new Command('deploy').description('Deploy a Stellar contract')
+    const deployCommand = new Command('deploy').description('Deploy a Stellar contract');
     const upgradeCommand = new Command('upgrade').description('Upgrade a Stellar contract').addHelpText(
         'after',
         `
