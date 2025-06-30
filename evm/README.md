@@ -78,21 +78,24 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ### Hyperliquid Block Size Support
 
-For Hyperliquid chains, you can optionally switch to BIG blocks during deployment to handle large contracts more efficiently. This is particularly useful for deploying the HyperliquidInterchainTokenService which can be quite large.
+For Hyperliquid chains, you can manually switch between BIG and SMALL blocks using the `hyperliquid-block-helper.js` script. This is particularly useful for deploying large contracts like the HyperliquidInterchainTokenService.
 
-To enable BIG blocks for Hyperliquid deployments:
+To switch block sizes the CHAINS and PRIVATE_KEY should be set in the .env:
 
 ```bash
-ts-node evm/deploy-its -e testnet -n hyperliquid -s '[salt]' --proxySalt 'v1.0.0' -m create2 --useBigBlocks
+# Switch to BIG blocks
+node evm/hyperliquid-block-helper.js --blockSize big
+
+# Switch to SMALL blocks  
+node evm/hyperliquid-block-helper.js --blockSize small
 ```
 
-The `--useBigBlocks` flag will:
-- Automatically detect if the target chain is Hyperliquid
-- Switch to BIG blocks before deploying the HyperliquidInterchainTokenService
-- Switch to BIG blocks before upgrading if using the `--upgrade` flag
-- Display the block size status in the deployment/upgrade summary
+**Note**: This script only works on Hyperliquid chains. If you try to run it on other chains, it will throw an error indicating that the chain is not supported.
 
-**Note**: This feature only applies to Hyperliquid chains. For other chains, the flag will be ignored.
+The script will:
+- Automatically detect if the target chain is Hyperliquid
+- Switch to the specified block size
+- Handle API errors gracefully and continue with deployment if the switch fails
 
 ## Governance
 
