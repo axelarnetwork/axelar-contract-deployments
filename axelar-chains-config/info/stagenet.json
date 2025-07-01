@@ -1670,7 +1670,7 @@
           "salt": "v6.0.4"
         },
         "Operators": {
-          "owner": "0xa1c5B285bFE159d9eFc7359d7938767cF9936186",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0xc5C525B7Bb2a7Ce95C13Ee5aBdB7F8fd3cb77392",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "deploymentMethod": "create2",
