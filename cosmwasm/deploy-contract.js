@@ -4,7 +4,7 @@ require('../common/cli-utils');
 
 const { instantiate2Address } = require('@cosmjs/cosmwasm-stargate');
 
-const { printInfo, loadConfig, saveConfig, prompt, getChainConfig } = require('../common');
+const { printInfo, loadConfig, saveConfig, prompt } = require('../common');
 
 const {
     CONTRACTS,
@@ -18,7 +18,6 @@ const {
     uploadContract,
     instantiateContract,
     migrateContract,
-    getDomainSeparator
 } = require('./utils');
 
 const { Command } = require('commander');
@@ -57,11 +56,6 @@ const instantiate = async (client, wallet, config, options) => {
     }
 
     contractConfig.codeId = codeId;
-
-    if (contractConfig.codeId && contractConfig.adminAddress) {
-        const chainConfig = getChainConfig(chainName, config, options);
-        contractConfig.domainSeparator = await getDomainSeparator(contractConfig, chainConfig, options);
-    }
 
     const initMsg = await CONTRACTS[contractName].makeInstantiateMsg(config, options, contractConfig);
     const contractAddress = await instantiateContract(client, wallet, initMsg, config, options);
