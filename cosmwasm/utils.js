@@ -36,6 +36,7 @@ const {
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
+    getDomainSeparator,
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
@@ -1180,6 +1181,7 @@ module.exports = {
     fromHex,
     getSalt,
     calculateDomainSeparator,
+    getDomainSeparator,
     initContractConfig,
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
