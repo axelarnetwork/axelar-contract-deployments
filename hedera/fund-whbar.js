@@ -4,6 +4,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { addBaseOptions } = require('./cli-utils');
+const { prompt } = require('../common/utils.js');
 
 // Basic WHBAR ABI for deposit, transfer, and balanceOf functions
 const WHBAR_ABI = [
@@ -14,7 +15,7 @@ const WHBAR_ABI = [
 ];
 
 async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
-    console.log(`Funding ${targetAddress} with ${ethers.utils.formatUnits(amount, 8)} HBAR worth of WHBAR...`);
+    console.log(`Funding ${targetAddress} with ${amount} HBAR worth of WHBAR...`);
 
     // Deposit HBAR to get WHBAR
     const depositTx = await whbar.connect(wallet).deposit({ value: amount });
@@ -38,8 +39,10 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
 }
 
 async function fundWhbar(_config, options) {
+
     try {
         // Get RPC URL from environment or use default
+        // TODO(hedera) use network config for RPC
         const rpcUrl = process.env.HEDERA_RPC_URL || 'https://testnet.hashio.io/api';
         const provider = getDefaultProvider(rpcUrl);
 
@@ -51,8 +54,12 @@ async function fundWhbar(_config, options) {
         const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
         console.log(`Using WHBAR contract at: ${options.whbarAddress}`);
 
-        // Parse amount (assuming it's in HBAR)
+        // Parse amount
         const amount = ethers.utils.parseEther(options.amount.toString());
+
+       	if (prompt(`Proceed with funding ${options.to} with ${options.amount.toFixed(8)} WHBAR?`, options.yes)) {
+          return;
+        }
 
         // Call the funding function
         await fundWithWHBAR(whbar, options.to, amount, wallet);
