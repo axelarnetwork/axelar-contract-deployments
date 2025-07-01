@@ -116,8 +116,8 @@ jobs:
         run: |
           cd config-repo
           poetry install --no-interaction
-          git config --local user.email "cicd@interoplabs.io"
-          git config --local user.name "Interoplabs CI"
+          git config --local user.email "devops@interoplabs.io"
+          git config --local user.name "Interop Labs CI"
           git checkout -b ${{ steps.branch-name.outputs.branch }}
 
           IFS=',' read -ra NETWORK_LIST <<< "${{ env.NETWORKS }}"
