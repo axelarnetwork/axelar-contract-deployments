@@ -105,3 +105,15 @@ Add jetton gas to previous transaction
 ```bash
 node ton/gasService.js add-jetton-gas "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di" "0.000000001" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw"
 ```
+
+Refund native gas
+
+```bash
+node ton/gasService.js native-refund "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "0.05"
+```
+
+Jetton refund
+
+```bash
+node ton/gasService.js jetton-refund "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw"  "0.000000001" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di"
+```
