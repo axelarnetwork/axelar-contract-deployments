@@ -16,15 +16,12 @@
  * - ConstAddressDeployer: Constant address deployer contract
  * - Create3Deployer: Create3 deployment contract
  * - TokenDeployer: Token deployment contract
- * - AxelarTransceiver: Axelar transceiver contract
- * - TransceiverStructs: Transceiver structures library
  *
  * @requires hardhat
  * @requires ethers
  * @requires commander
  * @requires ./utils
  * @requires ./cli-utils
- * @requires ./deploy-transceiver
  */
 
 const chalk = require('chalk');
@@ -193,38 +190,6 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         case 'TokenDeployer': {
             return [];
         }
-
-        case 'TransceiverStructs': {
-            return [];
-        }
-
-        case 'AxelarTransceiver': {
-            const gateway = config.AxelarGateway?.address;
-            const gasService = config.AxelarGasService?.address;
-            const nttManager = options.nttManager;
-
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            if (!isAddress(gasService)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
-
-            if (!isAddress(nttManager)) {
-                throw new Error(`Missing NTT Manager address. Please provide --nttManager parameter.`);
-            }
-
-            return [gateway, gasService, nttManager];
-        }
-
-        case 'ERC1967Proxy': {
-            const args = options.args ? JSON.parse(options.args) : [];
-            if (args.length < 2) {
-                throw new Error(`ERC1967Proxy requires implementation address and init data.`);
-            }
-            return args;
-        }
     }
 
     throw new Error(`${contractName} is not supported.`);
@@ -285,43 +250,7 @@ async function checkContract(contractName, contract, contractConfig) {
 
             break;
         }
-
-        case 'AxelarTransceiver': {
-            const gateway = await contract.gateway();
-            const gasService = await contract.gasService();
-            const nttManager = await contract.nttManager();
-
-            if (gateway !== contractConfig.gateway) {
-                printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
-            }
-
-            if (gasService !== contractConfig.gasService) {
-                printError(`Expected gasService ${contractConfig.gasService} but got ${gasService}.`);
-            }
-
-            if (nttManager !== contractConfig.nttManager) {
-                printError(`Expected nttManager ${contractConfig.nttManager} but got ${nttManager}.`);
-            }
-
-            printInfo('Transceiver contract verification passed');
-            break;
-        }
     }
-}
-
-/**
- * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
- *
- * @param {Object} transceiverJson - The contract JSON object
- * @param {string} libraryAddress - The library address to link
- * @returns {Object} The modified contract JSON with linked library
- */
-async function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
-    // Replace library placeholder in bytecode
-    const libraryPlaceholder = '__$' + 'TransceiverStructs'.padEnd(34, '$') + '__';
-    const libraryAddressPadded = libraryAddress.slice(2).padStart(40, '0');
-    transceiverJson.bytecode = transceiverJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
-    return transceiverJson;
 }
 
 /**
@@ -371,16 +300,6 @@ async function deployEvmContract(config, chain, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
-
-    // Special handling for AxelarTransceiver - link the library
-    if (contractName === 'AxelarTransceiver') {
-        const libraryAddress = contracts.TransceiverStructs?.address;
-        if (!libraryAddress) {
-            throw new Error('TransceiverStructs library address not found. Deploy it first.');
-        }
-
-        linkLibraryToTransceiver(contractJson, libraryAddress);
-    }
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
@@ -461,25 +380,6 @@ async function deployEvmContract(config, chain, options) {
     contractConfig.codehash = codehash;
     contractConfig.predeployCodehash = predeployCodehash;
 
-    // Special handling for AxelarTransceiver - store additional config
-    if (contractName === 'AxelarTransceiver') {
-        // Store the same values used in constructor arguments
-        contractConfig.gateway = contracts.AxelarGateway?.address;
-        contractConfig.gasService = contracts.AxelarGasService?.address;
-        contractConfig.nttManager = options.nttManager;
-    }
-
-    // Special handling for ERC1967Proxy - store proxy address in AxelarTransceiver config
-    if (contractName === 'ERC1967Proxy' && contracts.AxelarTransceiver) {
-        contracts.AxelarTransceiver.proxyAddress = contract.address;
-        contracts.AxelarTransceiver.proxyDeployer = wallet.address;
-        contracts.AxelarTransceiver.proxyDeploymentMethod = deployMethod;
-        contracts.AxelarTransceiver.proxyCodehash = codehash;
-        if (deployMethod !== 'create') {
-            contracts.AxelarTransceiver.proxySalt = salt;
-        }
-    }
-
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
@@ -535,6 +435,4 @@ if (require.main === module) {
 // Export functions for use by other modules
 module.exports = {
     deployEvmContract,
-    getConstructorArgs,
-    checkContract,
 };

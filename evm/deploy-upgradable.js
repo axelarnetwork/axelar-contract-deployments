@@ -1,5 +1,26 @@
 'use strict';
 
+/**
+ * @fileoverview EVM Upgradable Contract Deployment Script
+ *
+ * This script provides functionality to deploy upgradable contracts using the proxy pattern
+ * on EVM-compatible chains. It supports multiple deployment methods (create, create2, create3)
+ * and handles contract verification, configuration management, and deployment validation.
+ *
+ * Supported upgradable contract types:
+ * - AxelarGasService: Gas service contract with upgrade capability
+ * - AxelarDepositService: Deposit service contract with upgrade capability
+ * - TransceiverStructs: Library for transceiver structures
+ * - AxelarTransceiver: Transceiver contract with upgrade capability
+ *
+ * @requires hardhat
+ * @requires ethers
+ * @requires commander
+ * @requires ./upgradable
+ * @requires ./utils
+ * @requires ./cli-utils
+ */
+
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -24,10 +45,56 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
+/**
+ * Creates a proxy contract instance for interacting with an upgradable contract.
+ *
+ * @param {Object} wallet - The wallet instance
+ * @param {string} proxyAddress - The proxy contract address
+ * @returns {Object} The proxy contract instance
+ */
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
 
+/**
+ * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
+ * Uses the correct Solidity library placeholder format.
+ *
+ * @param {Object} transceiverJson - The contract JSON object
+ * @param {string} libraryAddress - The library address to link
+ * @returns {Object} A new contract JSON object with linked library
+ */
+function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
+    // Create a copy to avoid modifying the cached object
+    const linkedJson = JSON.parse(JSON.stringify(transceiverJson));
+
+    // Solidity generates library placeholders as: __$<libraryName>$__
+    // The library name is hashed and truncated to 34 characters
+    const libraryName = 'TransceiverStructs';
+    const libraryPlaceholder = `__$${libraryName}$__`;
+
+    // Ensure the library address is properly formatted (40 hex chars without 0x)
+    const libraryAddressPadded = libraryAddress.replace('0x', '').padStart(40, '0');
+
+    // Replace the placeholder in the bytecode
+    if (linkedJson.bytecode.includes(libraryPlaceholder)) {
+        linkedJson.bytecode = linkedJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
+    } else {
+        throw new Error(`Library placeholder '${libraryPlaceholder}' not found in bytecode. Library linking failed.`);
+    }
+
+    return linkedJson;
+}
+
+/**
+ * Generates implementation constructor arguments for a given contract based on its configuration and options.
+ *
+ * @param {string} contractName - The name of the contract to deploy
+ * @param {Object} config - The chain configuration object containing contract configurations
+ * @param {Object} options - Deployment options including custom args
+ * @returns {Array} Array of constructor arguments for the implementation contract
+ * @throws {Error} When required configuration is missing or invalid
+ */
 async function getImplementationArgs(contractName, config, options) {
     let args;
 
@@ -74,11 +141,42 @@ async function getImplementationArgs(contractName, config, options) {
 
             return [gateway, symbol, refundIssuer];
         }
+
+        case 'TransceiverStructs': {
+            return [];
+        }
+
+        case 'AxelarTransceiver': {
+            const gateway = config.AxelarGateway?.address;
+            const gasService = config.AxelarGasService?.address;
+            const nttManager = options.nttManager;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            if (!isAddress(nttManager)) {
+                throw new Error(`Missing NTT Manager address. Please provide --nttManager parameter.`);
+            }
+
+            return [gateway, gasService, nttManager];
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
+/**
+ * Generates initialization arguments for proxy setup.
+ *
+ * @param {string} contractName - The name of the contract
+ * @returns {string} The initialization arguments as a hex string
+ * @throws {Error} When contract is not supported
+ */
 function getInitArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
@@ -88,11 +186,26 @@ function getInitArgs(contractName) {
         case 'AxelarDepositService': {
             return '0x';
         }
+
+        case 'TransceiverStructs': {
+            return '0x';
+        }
+
+        case 'AxelarTransceiver': {
+            return '0x';
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
+/**
+ * Generates upgrade arguments for contract upgrades.
+ *
+ * @param {string} contractName - The name of the contract
+ * @returns {string} The upgrade arguments as a hex string
+ * @throws {Error} When contract is not supported
+ */
 function getUpgradeArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
@@ -102,15 +215,36 @@ function getUpgradeArgs(contractName) {
         case 'AxelarDepositService': {
             return '0x';
         }
+
+        case 'TransceiverStructs': {
+            return '0x';
+        }
+
+        case 'AxelarTransceiver': {
+            return '0x';
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
-/*
+/**
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
+ * This function handles both initial deployment and upgrades of upgradable contracts.
+ *
+ * @param {Object} config - The global configuration object (unused, kept for compatibility)
+ * @param {Object} chain - The chain configuration object
+ * @param {Object} options - Deployment options
+ * @param {string} options.contractName - The name of the contract to deploy
+ * @param {string} options.deployMethod - The deployment method (create, create2, create3)
+ * @param {string} options.privateKey - The private key for deployment
+ * @param {boolean} options.upgrade - Whether to perform an upgrade
+ * @param {string} options.verifyEnv - Environment for contract verification
+ * @param {boolean} options.yes - Skip confirmation prompts
+ * @param {boolean} options.predictOnly - Only predict address without deploying
+ * @returns {Promise<Object|null>} The deployed contract or null if cancelled
  */
-async function processCommand(_, chain, options) {
+async function deployEvmUpgradableContract(_, chain, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 
@@ -127,7 +261,20 @@ async function processCommand(_, chain, options) {
     const artifactPath =
         options.artifactPath ||
         '@axelar-network/axelar-cgp-solidity/artifacts/contracts/' +
-            (contractName === 'AxelarGasService' ? 'gas-service/' : 'deposit-service/');
+            (() => {
+                switch (contractName) {
+                    case 'AxelarGasService':
+                        return 'gas-service/';
+                    case 'AxelarDepositService':
+                        return 'deposit-service/';
+                    case 'TransceiverStructs':
+                        return 'transceiver-structs/';
+                    case 'AxelarTransceiver':
+                        return 'transceiver/';
+                    default:
+                        return '';
+                }
+            })();
 
     const implementationPath = artifactPath + contractName + '.sol/' + contractName + '.json';
     const proxyPath = artifactPath + contractName + 'Proxy.sol/' + contractName + 'Proxy.json';
@@ -145,6 +292,16 @@ async function processCommand(_, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
+
+    // Special handling for AxelarTransceiver - link the library
+    if (contractName === 'AxelarTransceiver') {
+        const libraryAddress = contracts.TransceiverStructs?.address;
+        if (!libraryAddress) {
+            throw new Error('TransceiverStructs library address not found. Deploy it first.');
+        }
+
+        implementationJson = linkLibraryToTransceiver(implementationJson, libraryAddress);
+    }
 
     if (upgrade) {
         if (!contractConfig.address) {
@@ -285,13 +442,23 @@ async function processCommand(_, chain, options) {
         if (owner !== wallet.address) {
             printError(`${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`);
         }
+
+        return contract;
     }
 }
 
+/**
+ * Main entry point for the deploy-upgradable script.
+ * Processes deployment options and executes the deployment across specified chains.
+ *
+ * @param {Object} options - Command line options and configuration
+ * @returns {Promise<void>}
+ */
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessor(options, deployEvmUpgradableContract);
 }
 
+// CLI setup and execution
 if (require.main === module) {
     const program = new Command();
 
@@ -310,3 +477,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { deployEvmUpgradableContract };
