@@ -78,7 +78,7 @@ node ton/gasService.js pay-native-gas "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B
 Pay jetton gas for a contract call
 
 ```bash
-node ton/gasService.js pay-jetton-gas "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di" "0.000000001" "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0.35"
+node ton/gasService.js pay-jetton-gas "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di" "0.000000001" "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234"
 ```
 
 Collect native gas
@@ -91,4 +91,17 @@ Collect Jettons
 
 ```bash
 node ton/gasService.js collect-jettons "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "0.000000001" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di"
+```
+
+
+Add native gas to previous transaction
+
+```bash
+node ton/gasService.js add-native-gas "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "0.05"
+```
+
+Add jetton gas to previous transaction
+
+```bash
+node ton/gasService.js add-jetton-gas "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di" "0.000000001" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw"
 ```
