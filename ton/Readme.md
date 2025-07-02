@@ -117,3 +117,9 @@ Jetton refund
 ```bash
 node ton/gasService.js jetton-refund "c97bfc52337ca67da1fbbe4e6034b35aec37eb069e73336683f85aaea7329e4e" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw"  "0.000000001" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di"
 ```
+
+Update Gas Info
+
+```bash
+node ton/gasService.js update-gas-info '{"ethereum": {"gasEstimationType": 2, "l1FeeScalar": 800000, "axelarBaseFee": 300000, "relativeGasPrice": 1500000, "relativeBlobBaseFee": 80000, "expressFee": 750000}}' "0.01"
+```

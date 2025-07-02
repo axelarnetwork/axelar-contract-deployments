@@ -11,9 +11,11 @@ const {
     buildAddJettonGasMessage,
     buildNativeRefundMessage,
     buildJettonRefundMessage,
+    buildUpdateGasInfoMessage,
     JettonWallet,
     JettonMinter,
 } = require('axelar-cgp-ton');
+const { keccak256 } = require('@ethersproject/keccak256');
 
 const program = new Command();
 program.name('gasService').description('Axelar TON Gas Service CLI').version('1.0.0');
@@ -236,24 +238,44 @@ program
         );
     });
 
-// // 7. Update Gas Info
-// program
-//     .command('update-gas-info')
-//     .description('Update gas pricing information (gas collector only)')
-//     .argument('<gas-info-json>', 'Gas info dictionary as JSON string')
-//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
-//     .action(async (gasInfoJson, gasAmount) => {
-//         const cost = toNano(gasAmount);
+// 7. Update Gas Info
+program
+    .command('update-gas-info')
+    .description('Update gas pricing information (gas collector only)')
+    .argument('<gas-info-json>', 'Gas info dictionary as JSON string')
+    .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+    .action(async (gasInfoJson, gasAmount) => {
+        const cost = toNano(gasAmount);
 
-//         try {
-//             const gasInfo = JSON.parse(gasInfoJson);
+        try {
+            const gasInfoInput = JSON.parse(gasInfoJson);
 
-//             await executeOperation('Update Gas Info', buildUpdateGasInfoMessage(gasInfo), cost);
-//         } catch (error) {
-//             console.error('❌ Invalid gas info JSON:', error.message);
-//             process.exit(1);
-//         }
-//     });
+            // Convert the input to Map<bigint, GasInfo> format
+            const gasInfoMap = new Map();
+
+            for (const [chainName, gasInfo] of Object.entries(gasInfoInput)) {
+                // Hash the chain name to get the key
+                const chainKey = BigInt(keccak256(Buffer.from(chainName)).toString());
+
+                // Convert all values to bigints
+                const convertedGasInfo = {
+                    gasEstimationType: BigInt(gasInfo.gasEstimationType),
+                    l1FeeScalar: BigInt(gasInfo.l1FeeScalar),
+                    axelarBaseFee: BigInt(gasInfo.axelarBaseFee),
+                    relativeGasPrice: BigInt(gasInfo.relativeGasPrice),
+                    relativeBlobBaseFee: BigInt(gasInfo.relativeBlobBaseFee),
+                    expressFee: BigInt(gasInfo.expressFee),
+                };
+
+                gasInfoMap.set(chainKey, convertedGasInfo);
+            }
+
+            await executeOperation('Update Gas Info', buildUpdateGasInfoMessage(gasInfoMap), cost);
+        } catch (error) {
+            console.error('❌ Invalid gas info JSON:', error.message);
+            process.exit(1);
+        }
+    });
 
 // // 8. Pay Gas (with optional estimation)
 // program
