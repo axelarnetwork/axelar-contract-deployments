@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
-const { toNano, Address } = require('@ton/ton');
+const { toNano, Cell, Address, beginCell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GAS_SERVICE_ADDRESS } = require('./common');
-const { buildPayNativeGasForContractCallMessage } = require('axelar-cgp-ton');
+const {
+    buildPayNativeGasForContractCallMessage,
+    buildPayJettonGasForContractCallMessage,
+    JettonWallet,
+    JettonMinter,
+} = require('axelar-cgp-ton');
 
 const program = new Command();
 program.name('gasService').description('Axelar TON Gas Service CLI').version('1.0.0');
@@ -22,6 +27,7 @@ async function executeOperation(operationName, messageBody, cost) {
     }
 }
 
+// 1. Pay Native Gas For Contract Call
 program
     .command('pay-native-gas')
     .description('Pay native TON gas for contract call')
@@ -43,5 +49,242 @@ program
             cost,
         );
     });
+
+// 2. Pay Jetton Gas For Contract Call
+program
+    .command('pay-jetton-gas')
+    .description('Pay jetton gas for contract call')
+    .argument('<jetton-minter>', 'Jetton minter address')
+    .argument('<jetton-amount>', 'Jetton amount')
+    .argument('<destination-chain>', 'Destination chain name')
+    .argument('<destination-address>', 'Destination contract address')
+    .argument('<payload>', 'Payload in hex format')
+    .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+    .action(async (jettonMinter, jettonAmount, destinationChain, destinationAddress, payload, gasAmount) => {
+        const cost = toNano(gasAmount);
+
+        const client = getTonClient();
+        const { contract, key } = await loadWallet(client);
+        const sender = contract.address;
+        const refundAddress = sender;
+
+        const gasServiceAddress = Address.parse(GAS_SERVICE_ADDRESS);
+        const jettonMinterAddress = Address.parse(jettonMinter);
+
+        const myWalletAddress = contract.address;
+
+        const minter = JettonMinter.createFromAddress(jettonMinterAddress);
+        const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), myWalletAddress);
+
+        const jettonToSend = toNano(jettonAmount);
+        const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
+
+        console.log(`Sending ${jettonToSend.toString()} Jettons`);
+
+        try {
+            const res = await userJettonWallet.sendTransfer(
+                client.provider(userJettonWallet.address),
+                contract.sender(key.secretKey),
+                toNano('0.1'),
+                jettonToSend,
+                gasServiceAddress,
+                gasServiceAddress,
+                beginCell().endCell(),
+                toNano('0.05'), // will be sent with transfer notification to gas service
+                beginCell().storeAddress(jettonMinterAddress).storeAddress(jettonWalletAddress).endCell(), // forward payload
+            );
+
+            console.log('Transaction result:', res);
+            console.log('✅ Jetton transfer transaction sent successfully!');
+
+            // Wait for confirmation
+            const seqno = await contract.getSeqno();
+            await waitForTransaction(contract, seqno);
+        } catch (error) {
+            console.error('❌ Error in jetton transfer:', error);
+            console.error('Error details:', error.message);
+        }
+
+        await executeOperation(
+            'Pay Jetton Gas',
+            buildPayJettonGasForContractCallMessage(
+                jettonMinterAddress,
+                jettonWalletAddress,
+                jettonToSend,
+                destinationChain,
+                destinationAddress,
+                payload,
+                sender,
+                refundAddress,
+            ),
+            cost,
+        );
+    });
+
+// 3. Collect Gas (Native)
+// program
+//     .command('collect-gas')
+//     .description('Collect native gas fees (gas collector only)')
+//     .argument('<receiver>', 'Receiver address')
+//     .argument('<amount>', 'Amount in TON to collect')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (receiver, amount, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const collectAmount = toNano(amount);
+
+//         await executeOperation('Collect Gas', buildCollectGasMessage(Address.parse(receiver), collectAmount), cost);
+//     });
+
+// // 4. Collect Jettons
+// program
+//     .command('collect-jettons')
+//     .description('Collect jetton gas fees (gas collector only)')
+//     .argument('<receiver>', 'Receiver address')
+//     .argument('<jetton-amount>', 'Jetton amount to collect')
+//     .argument('<jetton-minter>', 'Jetton minter address')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (receiver, jettonAmount, jettonMinter, gasAmount) => {
+//         const cost = toNano(gasAmount);
+
+//         await executeOperation(
+//             'Collect Jettons',
+//             buildCollectJettonsMessage(Address.parse(receiver), BigInt(jettonAmount), Address.parse(jettonMinter)),
+//             cost,
+//         );
+//     });
+
+// // 5. Add Native Gas
+// program
+//     .command('add-native-gas')
+//     .description('Add native gas to existing transaction')
+//     .argument('<tx-hash>', 'Transaction hash (hex without 0x prefix)')
+//     .argument('<refund-address>', 'Refund address')
+//     .argument('<gas-amount>', 'Gas amount in TON to add')
+//     .action(async (txHash, refundAddress, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const txHashBigInt = BigInt('0x' + txHash);
+
+//         await executeOperation('Add Native Gas', buildAddNativeGasMessage(txHashBigInt, Address.parse(refundAddress)), cost);
+//     });
+
+// // 6. Add Jetton Gas
+// program
+//     .command('add-jetton-gas')
+//     .description('Add jetton gas to existing transaction')
+//     .argument('<tx-hash>', 'Transaction hash (hex without 0x prefix)')
+//     .argument('<jetton-minter>', 'Jetton minter address')
+//     .argument('<jetton-wallet>', 'Jetton sender wallet address')
+//     .argument('<jetton-amount>', 'Jetton amount')
+//     .argument('<refund-address>', 'Refund address')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (txHash, jettonMinter, jettonWallet, jettonAmount, refundAddress, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const txHashBigInt = BigInt('0x' + txHash);
+
+//         await executeOperation(
+//             'Add Jetton Gas',
+//             buildAddJettonGasMessage(
+//                 txHashBigInt,
+//                 Address.parse(jettonMinter),
+//                 Address.parse(jettonWallet),
+//                 BigInt(jettonAmount),
+//                 Address.parse(refundAddress),
+//             ),
+//             cost,
+//         );
+//     });
+
+// // 7. Update Gas Info
+// program
+//     .command('update-gas-info')
+//     .description('Update gas pricing information (gas collector only)')
+//     .argument('<gas-info-json>', 'Gas info dictionary as JSON string')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (gasInfoJson, gasAmount) => {
+//         const cost = toNano(gasAmount);
+
+//         try {
+//             const gasInfo = JSON.parse(gasInfoJson);
+
+//             await executeOperation('Update Gas Info', buildUpdateGasInfoMessage(gasInfo), cost);
+//         } catch (error) {
+//             console.error('❌ Invalid gas info JSON:', error.message);
+//             process.exit(1);
+//         }
+//     });
+
+// // 8. Pay Gas (with optional estimation)
+// program
+//     .command('pay-gas')
+//     .description('Pay gas with optional on-chain estimation')
+//     .argument('<destination-chain>', 'Destination chain name')
+//     .argument('<destination-address>', 'Destination contract address')
+//     .argument('<payload>', 'Payload in hex format')
+//     .argument('<refund-address>', 'Refund address')
+//     .argument('<execution-gas-limit>', 'Execution gas limit')
+//     .argument('<estimate-on-chain>', 'Enable on-chain gas estimation (true/false)')
+//     .argument('<gas-amount>', 'Gas amount in TON')
+//     .action(async (destinationChain, destinationAddress, payload, refundAddress, executionGasLimit, estimateOnChain, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const estimate = estimateOnChain.toLowerCase() === 'true';
+
+//         const client = getTonClient();
+//         const { contract, key } = await loadWallet(client);
+//         const sender = contract.address;
+
+//         await executeOperation(
+//             'Pay Gas',
+//             buildPayGasMessage(
+//                 sender,
+//                 destinationChain,
+//                 destinationAddress,
+//                 payload,
+//                 Address.parse(refundAddress),
+//                 BigInt(executionGasLimit),
+//                 estimate,
+//             ),
+//             cost,
+//         );
+//     });
+
+// // 9. Native Refund
+// program
+//     .command('native-refund')
+//     .description('Refund native gas (gas collector only)')
+//     .argument('<tx-hash>', 'Transaction hash (hex without 0x prefix)')
+//     .argument('<refund-address>', 'Refund address')
+//     .argument('<refund-amount>', 'Amount in TON to refund')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (txHash, refundAddress, refundAmount, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const txHashBigInt = BigInt('0x' + txHash);
+//         const refundAmountTon = toNano(refundAmount);
+
+//         await executeOperation(
+//             'Native Refund',
+//             buildNativeRefundMessage(txHashBigInt, Address.parse(refundAddress), refundAmountTon),
+//             cost,
+//         );
+//     });
+
+// // 10. Jetton Refund
+// program
+//     .command('jetton-refund')
+//     .description('Refund jetton gas (gas collector only)')
+//     .argument('<tx-hash>', 'Transaction hash (hex without 0x prefix)')
+//     .argument('<receiver>', 'Receiver address')
+//     .argument('<jetton-amount>', 'Jetton amount to refund')
+//     .argument('<jetton-minter>', 'Jetton minter address')
+//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
+//     .action(async (txHash, receiver, jettonAmount, jettonMinter, gasAmount) => {
+//         const cost = toNano(gasAmount);
+//         const txHashBigInt = BigInt('0x' + txHash);
+
+//         await executeOperation(
+//             'Jetton Refund',
+//             buildJettonRefundMessage(txHashBigInt, Address.parse(receiver), BigInt(jettonAmount), Address.parse(jettonMinter)),
+//             cost,
+//         );
+//     });
 
 program.parse();
