@@ -36,21 +36,6 @@ async function deployTransceiverStructs(config, chain, options) {
 }
 
 /**
- * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
- *
- * @param {Object} transceiverJson - The contract JSON object
- * @param {string} libraryAddress - The library address to link
- * @returns {Object} The modified contract JSON with linked library
- */
-async function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
-    // Replace library placeholder in bytecode
-    const libraryPlaceholder = '__$' + 'TransceiverStructs'.padEnd(38, '$') + '__';
-    const libraryAddressPadded = libraryAddress.slice(2).padStart(40, '0');
-    transceiverJson.bytecode = transceiverJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
-    return transceiverJson;
-}
-
-/**
  * Deploys AxelarTransceiver proxy contract using the generic deployEvmContract function.
  *
  * @param {Object} config - The global configuration object

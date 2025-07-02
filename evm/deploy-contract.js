@@ -56,9 +56,6 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
-// Import transceiver-specific functions from deploy-transceiver.js
-const { linkLibraryToTransceiver } = require('./deploy-transceiver');
-
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
  *
@@ -313,6 +310,21 @@ async function checkContract(contractName, contract, contractConfig) {
 }
 
 /**
+ * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
+ *
+ * @param {Object} transceiverJson - The contract JSON object
+ * @param {string} libraryAddress - The library address to link
+ * @returns {Object} The modified contract JSON with linked library
+ */
+async function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
+    // Replace library placeholder in bytecode
+    const libraryPlaceholder = '__$' + 'TransceiverStructs'.padEnd(34, '$') + '__';
+    const libraryAddressPadded = libraryAddress.slice(2).padStart(40, '0');
+    transceiverJson.bytecode = transceiverJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
+    return transceiverJson;
+}
+
+/**
  * Processes the deployment command for a specific chain.
  * Handles contract deployment, verification, and configuration updates.
  *
@@ -451,10 +463,10 @@ async function deployEvmContract(config, chain, options) {
 
     // Special handling for AxelarTransceiver - store additional config
     if (contractName === 'AxelarTransceiver') {
-        const args = options.args ? JSON.parse(options.args) : {};
-        contractConfig.gateway = args.gateway;
-        contractConfig.gasService = args.gasService;
-        contractConfig.nttManager = args.nttManager;
+        // Store the same values used in constructor arguments
+        contractConfig.gateway = contracts.AxelarGateway?.address;
+        contractConfig.gasService = contracts.AxelarGasService?.address;
+        contractConfig.nttManager = options.nttManager;
     }
 
     // Special handling for ERC1967Proxy - store proxy address in AxelarTransceiver config
