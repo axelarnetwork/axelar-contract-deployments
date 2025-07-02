@@ -1088,6 +1088,15 @@ async function printTokenInfo(tokenAddress, provider) {
     }
 }
 
+/**
+ * Determines if a chain is a Hyperliquid chain based on its name or axelarId.
+ * @param {Object} chain - The chain object containing name and axelarId properties
+ * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
+ */
+function isHyperliquidChain(chain) {
+    return chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1130,4 +1139,5 @@ module.exports = {
     isConsensusChain,
     deriveAccounts,
     printTokenInfo,
+    isHyperliquidChain,
 };
