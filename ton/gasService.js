@@ -12,6 +12,7 @@ const {
     buildNativeRefundMessage,
     buildJettonRefundMessage,
     buildUpdateGasInfoMessage,
+    buildPayGasMessage,
     JettonWallet,
     JettonMinter,
 } = require('axelar-cgp-ton');
@@ -277,39 +278,39 @@ program
         }
     });
 
-// // 8. Pay Gas (with optional estimation)
-// program
-//     .command('pay-gas')
-//     .description('Pay gas with optional on-chain estimation')
-//     .argument('<destination-chain>', 'Destination chain name')
-//     .argument('<destination-address>', 'Destination contract address')
-//     .argument('<payload>', 'Payload in hex format')
-//     .argument('<refund-address>', 'Refund address')
-//     .argument('<execution-gas-limit>', 'Execution gas limit')
-//     .argument('<estimate-on-chain>', 'Enable on-chain gas estimation (true/false)')
-//     .argument('<gas-amount>', 'Gas amount in TON')
-//     .action(async (destinationChain, destinationAddress, payload, refundAddress, executionGasLimit, estimateOnChain, gasAmount) => {
-//         const cost = toNano(gasAmount);
-//         const estimate = estimateOnChain.toLowerCase() === 'true';
+// 8. Pay Gas (with optional estimation)
+program
+    .command('pay-gas')
+    .description('Pay gas with optional on-chain estimation')
+    .argument('<destination-chain>', 'Destination chain name')
+    .argument('<destination-address>', 'Destination contract address')
+    .argument('<payload>', 'Payload in hex format')
+    .argument('<refund-address>', 'Refund address')
+    .argument('<execution-gas-limit>', 'Execution gas limit')
+    .argument('<estimate-on-chain>', 'Enable on-chain gas estimation (true/false)')
+    .argument('<gas-amount>', 'Gas amount in TON')
+    .action(async (destinationChain, destinationAddress, payload, refundAddress, executionGasLimit, estimateOnChain, gasAmount) => {
+        const cost = toNano(gasAmount);
+        const estimate = Number(estimateOnChain.toLowerCase() === 'true');
 
-//         const client = getTonClient();
-//         const { contract, key } = await loadWallet(client);
-//         const sender = contract.address;
+        const client = getTonClient();
+        const { contract, key } = await loadWallet(client);
+        const sender = contract.address;
 
-//         await executeOperation(
-//             'Pay Gas',
-//             buildPayGasMessage(
-//                 sender,
-//                 destinationChain,
-//                 destinationAddress,
-//                 payload,
-//                 Address.parse(refundAddress),
-//                 BigInt(executionGasLimit),
-//                 estimate,
-//             ),
-//             cost,
-//         );
-//     });
+        await executeOperation(
+            'Pay Gas',
+            buildPayGasMessage(
+                sender,
+                destinationChain,
+                destinationAddress,
+                payload,
+                Address.parse(refundAddress),
+                estimate,
+                toNano(executionGasLimit),
+            ),
+            cost,
+        );
+    });
 
 // 9. Native Refund
 program

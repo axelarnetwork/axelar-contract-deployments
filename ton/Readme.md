@@ -123,3 +123,9 @@ Update Gas Info
 ```bash
 node ton/gasService.js update-gas-info '{"ethereum": {"gasEstimationType": 2, "l1FeeScalar": 800000, "axelarBaseFee": 300000, "relativeGasPrice": 1500000, "relativeBlobBaseFee": 80000, "expressFee": 750000}}' "0.01"
 ```
+
+Pay Gas (on chain estimation)
+
+```bash
+node ton/gasService.js pay-gas "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "21000" "true" "0.01"
+```
