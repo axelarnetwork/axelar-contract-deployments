@@ -69,8 +69,26 @@ node ton/signerRotation.js b5ee9c72410208010001c10002080000001401020040ab98abb51
 
 # Gas Service Scripts
 
-Paying native gas for a contract call
+Pay native gas for a contract call
 
 ```bash
 node ton/gasService.js pay-native-gas "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" 0.01
+```
+
+Pay jetton gas for a contract call
+
+```bash
+node ton/gasService.js pay-jetton-gas "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di" "0.000000001" "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0.35"
+```
+
+Collect native gas
+
+```bash
+node ton/gasService.js collect-gas "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "0.01"
+```
+
+Collect Jettons
+
+```bash
+node ton/gasService.js collect-jettons "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "0.000000001" "kQAiboDEv_qRrcEdrYdwbVLNOXBHwShFbtKGbQVJ2OKxY_Di"
 ```

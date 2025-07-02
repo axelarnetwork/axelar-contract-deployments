@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
-const { toNano, Cell, Address, beginCell } = require('@ton/ton');
+const { toNano, Address, beginCell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GAS_SERVICE_ADDRESS } = require('./common');
 const {
     buildPayNativeGasForContractCallMessage,
     buildPayJettonGasForContractCallMessage,
+    buildCollectGasMessage,
+    buildCollectJettonsMessage,
     JettonWallet,
     JettonMinter,
 } = require('axelar-cgp-ton');
@@ -122,36 +124,40 @@ program
     });
 
 // 3. Collect Gas (Native)
-// program
-//     .command('collect-gas')
-//     .description('Collect native gas fees (gas collector only)')
-//     .argument('<receiver>', 'Receiver address')
-//     .argument('<amount>', 'Amount in TON to collect')
-//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
-//     .action(async (receiver, amount, gasAmount) => {
-//         const cost = toNano(gasAmount);
-//         const collectAmount = toNano(amount);
+program
+    .command('collect-gas')
+    .description('Collect native gas fees (gas collector only)')
+    .argument('<receiver>', 'Receiver address')
+    .argument('<amount>', 'Amount in TON to collect')
+    .action(async (receiver, amount) => {
+        const cost = toNano('0.01');
+        const collectAmount = toNano(amount);
 
-//         await executeOperation('Collect Gas', buildCollectGasMessage(Address.parse(receiver), collectAmount), cost);
-//     });
+        const client = getTonClient();
+        const { contract, key } = await loadWallet(client);
+        const sender = contract.address;
+        console.log('sender: ', sender);
 
-// // 4. Collect Jettons
-// program
-//     .command('collect-jettons')
-//     .description('Collect jetton gas fees (gas collector only)')
-//     .argument('<receiver>', 'Receiver address')
-//     .argument('<jetton-amount>', 'Jetton amount to collect')
-//     .argument('<jetton-minter>', 'Jetton minter address')
-//     .argument('<gas-amount>', 'Gas amount in TON for transaction fees')
-//     .action(async (receiver, jettonAmount, jettonMinter, gasAmount) => {
-//         const cost = toNano(gasAmount);
+        await executeOperation('Collect Gas', buildCollectGasMessage(Address.parse(receiver), collectAmount), cost);
+    });
 
-//         await executeOperation(
-//             'Collect Jettons',
-//             buildCollectJettonsMessage(Address.parse(receiver), BigInt(jettonAmount), Address.parse(jettonMinter)),
-//             cost,
-//         );
-//     });
+// 4. Collect Jettons
+program
+    .command('collect-jettons')
+    .description('Collect jetton gas fees (gas collector only)')
+    .argument('<receiver>', 'Receiver address')
+    .argument('<jetton-amount>', 'Jetton amount to collect')
+    .argument('<jetton-minter>', 'Jetton minter address')
+    .action(async (receiver, jettonAmount, jettonMinter, gasAmount) => {
+        const cost = toNano('0.05');
+        const jettonToCollect = toNano(jettonAmount);
+
+        await executeOperation(
+            'Collect Jettons',
+            buildCollectJettonsMessage(Address.parse(receiver), jettonToCollect, Address.parse(jettonMinter)),
+            cost,
+        );
+    });
 
 // // 5. Add Native Gas
 // program
