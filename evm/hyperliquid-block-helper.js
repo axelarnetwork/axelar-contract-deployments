@@ -4,7 +4,7 @@ const { Wallet } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, printError, validateParameters, mainProcessor } = require('./utils');
+const { printInfo, printError, validateParameters, mainProcessor, isHyperliquidChain } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const execAsync = promisify(exec);
 
@@ -129,9 +129,9 @@ async function processCommand(config, chain, options) {
     }
 
     // Check if this is a Hyperliquid chain
-    const isHyperliquidChain = chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
+    const isHyperliquid = isHyperliquidChain(chain);
 
-    if (!isHyperliquidChain) {
+    if (!isHyperliquid) {
         throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
     }
 
