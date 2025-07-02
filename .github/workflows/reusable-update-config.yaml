@@ -1,0 +1,129 @@
+name: Reusable Update config
+
+on:
+  workflow_call:
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+      CHAINS_REPO_CICD_TOKEN:
+        required: true
+      CONFIG_REPO:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  determine-networks:
+    runs-on: ubuntu-latest
+    outputs:
+      networks: ${{ steps.set-networks.outputs.networks }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get latest merge commit SHA
+        id: merge_commit
+        run: |
+          MERGE_COMMIT=$(git log -1 --pretty=format:"%H")
+          echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
+
+      - name: Determine NETWORKS
+        id: set-networks
+        run: |
+          MODIFIED_FILES=$(git diff --name-only HEAD~1..HEAD)
+          echo "Modified files: $MODIFIED_FILES"
+          NETWORKS=()
+
+          for N in mainnet testnet stagenet devnet-amplifier; do
+            if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/$N.json"; then
+              NETWORKS+=("$N")
+            fi
+          done
+
+          if [ ${#NETWORKS[@]} -eq 0 ]; then
+            echo "No relevant changes detected."
+            echo "networks=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Detected networks: ${NETWORKS[*]}"
+          echo "networks=$(IFS=,; echo "${NETWORKS[*]}")" >> "$GITHUB_OUTPUT"
+
+  update-config:
+    needs: determine-networks
+    if: needs.determine-networks.outputs.networks != 'none'
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+      CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
+      NETWORKS: ${{ needs.determine-networks.outputs.networks }}
+
+    steps:
+      - name: Checkout current repo
+        uses: actions/checkout@v4
+
+      - name: Checkout config repo
+        uses: actions/checkout@v4
+        with:
+          repository: axelarnetwork/${{ secrets.CONFIG_REPO }}
+          path: config-repo
+          token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+
+      - name: Install deps
+        run: |
+          sudo apt-get install -y jq
+          pip install poetry
+
+      - name: Setup branch
+        id: branch-name
+        run: echo "branch=feat/config-update-$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Generate config
+        run: |
+          cd config-repo
+          poetry install --no-interaction
+          git config user.email "devops@interoplabs.io"
+          git config user.name "Interop Labs CI"
+          git checkout -b ${{ steps.branch-name.outputs.branch }}
+
+          IFS=',' read -ra NETWORK_LIST <<< "${{ env.NETWORKS }}"
+          for NETWORK in "${NETWORK_LIST[@]}"; do
+            poetry run python generate.py --network "$NETWORK" gen-configs all-configs
+          done
+
+          git add --all
+          git commit -m "chore: update configs for ${{ env.NETWORKS }}"
+          git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
+
+      - name: Create & merge PR
+        run: |
+          cd config-repo
+          PR_TITLE="chore: update configs for ${{ env.NETWORKS }}"
+          PR_HEAD="${{ steps.branch-name.outputs.branch }}"
+          PR_BASE="main"
+          BODY="Auto-generated PR"
+          
+          RESPONSE=$(curl -s -w "%{http_code}" -o response.json -X POST \
+            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls \
+            -d "{\"title\":\"$PR_TITLE\",\"body\":\"$BODY\",\"head\":\"$PR_HEAD\",\"base\":\"$PR_BASE\"}")
+
+          PR_NUMBER=$(jq -r .number response.json)
+          HTTP_STATUS=$(tail -c 3 <<< "$RESPONSE")
+          if [[ "$HTTP_STATUS" != "201" ]]; then cat response.json && exit 1; fi
+
+          RESPONSE=$(curl -s -w "%{http_code}" -o merge_response.json -X PUT \
+            -H "Authorization: token ${{ secrets.CHAINS_REPO_CICD_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/axelarnetwork/${{ secrets.CONFIG_REPO }}/pulls/$PR_NUMBER/merge \
+            -d "{\"commit_title\":\"$PR_TITLE\",\"merge_method\":\"squash\"}")
+          
+          if [[ "$(tail -c 3 <<< "$RESPONSE")" != "200" ]]; then cat merge_response.json && exit 1; fi
