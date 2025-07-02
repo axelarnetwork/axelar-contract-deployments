@@ -17,6 +17,7 @@ const {
     getGasOptions,
     printWalletInfo,
     printTokenInfo,
+    isHyperliquidChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
@@ -292,6 +293,87 @@ async function processCommand(config, chain, options) {
             break;
         }
 
+        case 'getCurrentDeployer': {
+            const { tokenId } = options;
+
+            validateParameters({ isNonEmptyString: { tokenId } });
+
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+            printInfo('Token address', tokenAddress);
+
+            try {
+                const isHyperliquid = isHyperliquidChain(chain);
+                const TokenContractName = isHyperliquid ? 'HyperliquidInterchainToken' : 'InterchainToken';
+                const tokenContract = new Contract(tokenAddress, getContractJSON(TokenContractName).abi, wallet);
+
+                const currentDeployer = await tokenContract.deployer();
+                printInfo('Current deployer', currentDeployer);
+            } catch (error) {
+                if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
+                    const factoryDeployer = await interchainTokenFactory.getTokenDeployer(tokenId);
+                    if (factoryDeployer !== AddressZero) {
+                        printInfo('Factory deployer', factoryDeployer);
+                    } else {
+                        throw new Error('Token does not support deployer retrieval and no factory record found');
+                    }
+                } else {
+                    throw error;
+                }
+            }
+
+            break;
+        }
+
+        case 'updateTokenDeployer': {
+            const { tokenId, deployer } = options;
+
+            validateParameters({
+                isNonEmptyString: { tokenId },
+                isValidAddress: { deployer },
+            });
+
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+            printInfo('Token address', tokenAddress);
+
+            const isHyperliquid = isHyperliquidChain(chain);
+            const ServiceContractName = isHyperliquid ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
+            const serviceContract = new Contract(interchainTokenServiceAddress, getContractJSON(ServiceContractName).abi, wallet);
+
+            let hasUpdateFunction = false;
+            try {
+                const updateFunction = serviceContract.interface.getFunction('updateTokenDeployer');
+                hasUpdateFunction = !!updateFunction;
+            } catch (error) {
+                hasUpdateFunction = false;
+            }
+
+            if (!hasUpdateFunction) {
+                throw new Error('Service contract does not support updateTokenDeployer');
+            }
+
+            const TokenContractName = isHyperliquid ? 'HyperliquidInterchainToken' : 'InterchainToken';
+            const tokenContract = new Contract(tokenAddress, getContractJSON(TokenContractName).abi, wallet);
+
+            const currentDeployer = await tokenContract.deployer();
+            printInfo('Current deployer', currentDeployer);
+            printInfo('New deployer', deployer);
+
+            const serviceOwner = await serviceContract.owner();
+            const isOperator = await serviceContract.isOperator(wallet.address);
+
+            if (wallet.address.toLowerCase() !== serviceOwner.toLowerCase() && !isOperator) {
+                throw new Error('Wallet does not have permission to update deployers. Must be service owner or operator.');
+            }
+
+            const tx = await serviceContract.updateTokenDeployer(tokenId, deployer, gasOptions);
+            await handleTx(tx, chain, serviceContract, options.action);
+
+            const updatedDeployer = await tokenContract.deployer();
+            printInfo('Updated deployer', updatedDeployer);
+
+            break;
+        }
+
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -324,6 +406,8 @@ if (require.main === module) {
                 'deployRemoteCanonicalInterchainToken',
                 'registerCustomToken',
                 'linkToken',
+                'getCurrentDeployer',
+                'updateTokenDeployer',
             ])
             .makeOptionMandatory(true),
     );

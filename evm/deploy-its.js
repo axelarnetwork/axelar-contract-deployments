@@ -25,12 +25,55 @@ const {
     getDeployedAddress,
     wasEventEmitted,
     isConsensusChain,
+    isHyperliquidChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
+const { switchBlockSize } = require('./hyperliquid-block-helper');
 
 /**
- * Function that handles the ITS deployment.
+ * Switches Hyperliquid block size and adjusts gas options accordingly
+ * @param {Object} options - Deployment options
+ * @param {Object} gasOptions - Gas options to modify
+ * @param {boolean} useBigBlocks - Whether to switch to big blocks
+ * @param {string} deploymentName - Name of the deployment for logging
+ * @returns {Promise<boolean>} - Whether the switch was successful
+ */
+async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, deploymentName) {
+    const isMainnet = options.env === 'mainnet';
+    const network = isMainnet ? 'Mainnet' : 'Testnet';
+    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
+
+    try {
+        await switchBlockSize(options.privateKey, useBigBlocks, network);
+
+        if (useBigBlocks && gasOptions.gasLimit) {
+            const { BigNumber } = require('ethers');
+            gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
+        }
+
+        return true;
+    } catch (error) {
+        printWarn(`Failed to switch to ${blockType} blocks, continuing with deployment:`, error.message);
+        return false;
+    }
+}
+
+/**
+ * Determines if a deployment should use big blocks on Hyperliquid
+ * @param {string} key - Deployment key
+ * @param {boolean} isHyperliquidChain - Whether this is a Hyperliquid chain
+ * @returns {boolean} - Whether big blocks should be used
+ */
+function shouldUseBigBlocks(key, isHyperliquidChain) {
+    if (!isHyperliquidChain) return false;
+
+    // Use big blocks for large contract deployments
+    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
+}
+
+/**
+ * Function that handles the ITS deployment with chain-specific token support.
  * @param {*} wallet
  * @param {*} chain
  * @param {*} deployOptions
@@ -182,6 +225,8 @@ async function deployAll(config, wallet, chain, options) {
         return;
     }
 
+    const isHyperliquid = isHyperliquidChain(chain);
+
     const deployments = {
         tokenManagerDeployer: {
             name: 'Token Manager Deployer',
@@ -199,38 +244,82 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        interchainToken: {
-            name: 'Interchain Token',
-            contractName: 'InterchainToken',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('InterchainToken', artifactPath),
-                    [interchainTokenService],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
-        interchainTokenDeployer: {
-            name: 'Interchain Token Deployer',
-            contractName: 'InterchainTokenDeployer',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('InterchainTokenDeployer', artifactPath),
-                    [contractConfig.interchainToken],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
+        // Deploy only the appropriate token implementation based on chain type
+        ...(isHyperliquid
+            ? {
+                  hyperliquidInterchainToken: {
+                      name: 'Hyperliquid Interchain Token',
+                      contractName: 'HyperliquidInterchainToken',
+                      async deploy() {
+                          return deployContract(
+                              deployMethod,
+                              wallet,
+                              getContractJSON('HyperliquidInterchainToken', artifactPath),
+                              [interchainTokenService],
+                              deployOptions,
+                              gasOptions,
+                              verifyOptions,
+                              chain,
+                          );
+                      },
+                  },
+              }
+            : {
+                  interchainToken: {
+                      name: 'Interchain Token',
+                      contractName: 'InterchainToken',
+                      async deploy() {
+                          return deployContract(
+                              deployMethod,
+                              wallet,
+                              getContractJSON('InterchainToken', artifactPath),
+                              [interchainTokenService],
+                              deployOptions,
+                              gasOptions,
+                              verifyOptions,
+                              chain,
+                          );
+                      },
+                  },
+              }),
+        // Deploy only the appropriate token deployer based on chain type
+        ...(isHyperliquid
+            ? {
+                  hyperliquidInterchainTokenDeployer: {
+                      name: 'Interchain Token Deployer (Hyperliquid)',
+                      contractName: 'InterchainTokenDeployer',
+                      async deploy() {
+                          return deployContract(
+                              deployMethod,
+                              wallet,
+                              getContractJSON('InterchainTokenDeployer', artifactPath),
+                              [contractConfig.hyperliquidInterchainToken],
+                              deployOptions,
+                              gasOptions,
+                              verifyOptions,
+                              chain,
+                          );
+                      },
+                  },
+              }
+            : {
+                  interchainTokenDeployer: {
+                      name: 'Interchain Token Deployer',
+                      contractName: 'InterchainTokenDeployer',
+                      async deploy() {
+                          return deployContract(
+                              deployMethod,
+                              wallet,
+                              getContractJSON('InterchainTokenDeployer', artifactPath),
+                              [contractConfig.interchainToken],
+                              deployOptions,
+                              gasOptions,
+                              verifyOptions,
+                              chain,
+                          );
+                      },
+                  },
+              }),
         tokenManager: {
             name: 'Token Manager',
             contractName: 'TokenManager',
@@ -263,44 +352,47 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        gatewayCaller: {
-            name: 'Gateway Caller',
-            contractName: 'GatewayCaller',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON('GatewayCaller', artifactPath),
-                    [contracts.AxelarGateway.address, contracts.AxelarGasService.address],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
         implementation: {
             name: 'Interchain Token Service Implementation',
-            contractName: 'InterchainTokenService',
+            contractName: isHyperliquid ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
             async deploy() {
+                // Choose the appropriate token deployer based on chain type
+                const activeTokenDeployer = isHyperliquid
+                    ? contractConfig.hyperliquidInterchainTokenDeployer
+                    : contractConfig.interchainTokenDeployer;
+
+                if (!activeTokenDeployer) {
+                    throw new Error(
+                        `Missing ${isHyperliquid ? 'hyperliquidInterchainTokenDeployer' : 'interchainTokenDeployer'}` +
+                            `Expected: ${isHyperliquid ? 'hyperliquidInterchainTokenDeployer' : 'interchainTokenDeployer'}`,
+                    );
+                }
+
+                // Get ITS Hub address from config
+                const itsHubAddress =
+                    config.axelar?.contracts?.InterchainTokenService?.address || '0x0000000000000000000000000000000000000000';
+
                 const args = [
                     contractConfig.tokenManagerDeployer,
-                    contractConfig.interchainTokenDeployer,
+                    activeTokenDeployer,
                     contracts.AxelarGateway.address,
                     contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
+                    itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
-                    contractConfig.gatewayCaller,
                 ];
 
-                printInfo('ITS Implementation args', args);
+                const ServiceContract = getContractJSON(
+                    isHyperliquid ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+                    artifactPath,
+                );
 
                 return deployContract(
                     proxyDeployMethod,
                     wallet,
-                    InterchainTokenService,
+                    ServiceContract,
                     args,
                     getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,
@@ -322,7 +414,6 @@ async function deployAll(config, wallet, chain, options) {
                 contractConfig.predeployCodehash = predeployCodehash;
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
-                printInfo('ITS Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -357,7 +448,6 @@ async function deployAll(config, wallet, chain, options) {
             contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
-                printInfo('ITS Factory Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -384,6 +474,11 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
+        // Handle Hyperliquid block size switching
+        if (shouldUseBigBlocks(key, isHyperliquid)) {
+            await switchHyperliquidBlockSize(options, gasOptions, true, deployment.name);
+        }
+
         printInfo(`Deploying ${deployment.name}`);
 
         const contract = await deployment.deploy();
@@ -394,6 +489,11 @@ async function deployAll(config, wallet, chain, options) {
             itsFactoryContractConfig.address = contract.address;
         } else {
             contractConfig[key] = contract.address;
+        }
+
+        // Switch back to small blocks after big block deployments
+        if (shouldUseBigBlocks(key, isHyperliquid)) {
+            await switchHyperliquidBlockSize(options, gasOptions, false, 'normal operations');
         }
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);
@@ -438,6 +538,39 @@ async function deploy(config, chain, options) {
     await deployAll(config, wallet, chain, options);
 }
 
+/**
+ * Validates that the correct chain-specific implementations are deployed
+ * @param {Object} contractConfig - The contract configuration
+ * @param {boolean} isHyperliquidChain - Whether this is a Hyperliquid chain
+ * @param {string} chainName - The chain name for error messages
+ */
+function validateChainSpecificDeployments(contractConfig, isHyperliquidChain, chainName) {
+    const requiredDeployments = [];
+
+    if (isHyperliquidChain) {
+        if (!contractConfig.hyperliquidInterchainToken) {
+            requiredDeployments.push('hyperliquidInterchainToken');
+        }
+        if (!contractConfig.hyperliquidInterchainTokenDeployer) {
+            requiredDeployments.push('hyperliquidInterchainTokenDeployer');
+        }
+    } else {
+        if (!contractConfig.interchainToken) {
+            requiredDeployments.push('interchainToken');
+        }
+        if (!contractConfig.interchainTokenDeployer) {
+            requiredDeployments.push('interchainTokenDeployer');
+        }
+    }
+
+    if (requiredDeployments.length > 0) {
+        throw new Error(
+            `Missing required deployments for  ${chainName}: ${requiredDeployments.join(', ')}. ` +
+                `Please run a full deployment first.`,
+        );
+    }
+}
+
 async function upgrade(_, chain, options) {
     const { artifactPath, privateKey, predictOnly } = options;
 
@@ -455,18 +588,27 @@ async function upgrade(_, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    printInfo(`Upgrading Interchain Token Service.`);
+    // Determine if this is a Hyperliquid chain (same logic as in deployAll)
+    const isHyperliquid = isHyperliquidChain(chain);
 
-    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
+    printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
+
     const gasOptions = await getGasOptions(chain, options, contractName);
+
+    if (isHyperliquid) {
+        await switchHyperliquidBlockSize(options, gasOptions, true, 'Hyperliquid upgrade');
+    }
+
+    validateChainSpecificDeployments(contractConfig, isHyperliquid, chain.name);
+
+    const ServiceContractName = isHyperliquid ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
+    const InterchainTokenService = getContractJSON(ServiceContractName, artifactPath);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
     printInfo(`ITS Proxy`, contract.address);
 
     const currImplementation = await contract.implementation();
-    printInfo(`Current ITS implementation`, currImplementation);
-    printInfo(`New ITS implementation`, contractConfig.implementation);
 
     if (currImplementation === contractConfig.implementation) {
         printWarn(`ITS implementation is already up to date`);
@@ -494,8 +636,6 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Factory Proxy`, itsFactory.address);
 
     const factoryImplementation = await itsFactory.implementation();
-    printInfo(`Current ITS Factory implementation`, factoryImplementation);
-    printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
     if (factoryImplementation === itsFactoryContractConfig.implementation) {
         printWarn(`ITS Factory implementation is already up to date`);
@@ -521,6 +661,10 @@ async function upgrade(_, chain, options) {
 
         printInfo(`Upgraded Interchain Token Factory`);
     }
+
+    if (isHyperliquid) {
+        await switchHyperliquidBlockSize(options, gasOptions, false, 'normal operations');
+    }
 }
 
 async function processCommand(config, chain, options) {
@@ -538,7 +682,9 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('deploy-its').description('Deploy interchain token service and interchain token factory');
+    program
+        .name('deploy-its')
+        .description('Deploy interchain token service and interchain token factory with chain-specific token support');
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),

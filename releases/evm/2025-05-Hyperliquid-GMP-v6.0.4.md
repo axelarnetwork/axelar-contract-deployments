@@ -102,28 +102,7 @@ Hyperliquid EVM uses a dual architecture block model:
 
 Contract deployments exceed the fast block gas limit and will require that each deployer key be permissioned to use the slow block model. Additional instructtions are provided if accounts needs to be converted back to fast block to utilize the faster finalization rate.
 
-a. Clone the Hyperliquid Python SDK. This document was prepared using release v0.13 (commit hash: 583a96dc0af53c6d0b4eed06afb5a5c08481821d):
-   ```bash
-   git clone https://github.com/hyperliquid-dex/hyperliquid-python-sdk.git
-   cd hyperliquid-python-sdk
-   ```
-
-b. Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file:
-   #### For devnet-amplifier, testnet and stagenet
-   ```bash
-   address, info, exchange = example_utils.setup(constants.TESTNET_API_URL, skip_ws=True)
-   ``` 
-
-   #### For mainnet
-   ```bash
-   address, info, exchange = example_utils.setup(constants.MAINNET_API_URL, skip_ws=True)
-   ``` 
-   - Comment out or delete:
-   ```bash
-   print(exchange.use_big_blocks(False))
-   ``` 
-
-c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to procure and swap funds are:
+a. For any deployer key that needs to switch to large block the account must be pre-funded with HYPE on both HyperCore and Hyperliquid EVM. Steps to procure and swap funds are:
    #### For devnet-amplifier, testnet and stagenet
     - Provision USDC funds: from their faucet at: https://app.hyperliquid-testnet.xyz/drip. Faucet requires account exist on mainnet.
     - Use their trading app https://app.hyperliquid-testnet.xyz/trade and connect wallet.
@@ -136,24 +115,17 @@ c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to pr
     - Buy HYPE with USDC balance
     - Under `balances` section connect wallet again to perform an EVM transfer.
 
-    Note: Above flow has been tested. In order to preserve nonces do not transfer funds from EVM to Hypercore
+    Note: Above flow has been tested. In order to preserve nonces do not transfer funds from EVM to Hypercore. A seperate key can be used to provision all funds and transfered to the corresponding deployer keys.
 
-d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
-- Set the main funded account as the secret_key
-- Set the deployer address as the account_address
-
-e. Run the script:
-```bash
-python3 examples/basic_evm_use_big_blocks.py
-```
-
-Steps `c`, `d` and `e` needs to be repeated for each deployer key.  
-
-f. Delete private key information from `./hyperliquid-python-sdk/examples/config.json`
-
-After release is complete the deployer keys can set to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks. To disable slow/big blocks Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file to add back `print(exchange.use_big_blocks(True))` and rerun step `d` and `e`
-
+b. For the Gateway and AxelarGasService deployer keys switch to large blocks using the provided script. Once the .env parameters are set execute:
+   ```bash
+   node evm/hyperliquid-block-helper.js --blockSize big
+   ```
+c. After release is complete the deployer keys can changed to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks by executing:
+   ```bash
+   node evm/hyperliquid-block-helper.js --blockSize small
+   ```
 
 3. Deploy `ConstAddrDeployer`:
 

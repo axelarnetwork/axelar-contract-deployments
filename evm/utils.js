@@ -1053,6 +1053,15 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+/**
+ * Determines if a chain is a Hyperliquid chain based on its name or axelarId
+ * @param {Object} chain - The chain object containing name and axelarId properties
+ * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
+ */
+const isHyperliquidChain = (chain) => {
+    return chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
+};
+
 const deriveAccounts = async (mnemonic, quantity) => {
     const hdNode = HDNode.fromMnemonic(mnemonic);
     const accounts = [];
@@ -1128,6 +1137,7 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    isHyperliquidChain,
     deriveAccounts,
     printTokenInfo,
 };
