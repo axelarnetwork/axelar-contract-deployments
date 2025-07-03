@@ -7,7 +7,7 @@ jobs:
     if: github.event.pull_request.merged == true
     uses: ./.github/workflows/reusable-update-config.yaml
     with:
-      source_repo: axelar-configs
+      source_repo: axelar-contract-deployments
       paths_map: |
         {
           "mainnet": ["registry/mainnet/interchain/squid.tokenlist.json"],
