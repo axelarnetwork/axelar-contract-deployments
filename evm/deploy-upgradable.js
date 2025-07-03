@@ -58,7 +58,7 @@ function getProxy(wallet, proxyAddress) {
 
 /**
  * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
- * Uses the correct Solidity library placeholder format.
+ * Uses the correct Solidity library placeholder format with keccak256 hash.
  *
  * @param {Object} transceiverJson - The contract JSON object
  * @param {string} libraryAddress - The library address to link
@@ -68,10 +68,10 @@ function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
     // Create a copy to avoid modifying the cached object
     const linkedJson = JSON.parse(JSON.stringify(transceiverJson));
 
-    // Solidity generates library placeholders as: __$<libraryName>$__
-    // The library name is hashed and truncated to 34 characters
+    // Solidity generates library placeholders as: __$<keccak256(libraryName).slice(0, 34)>$__
     const libraryName = 'TransceiverStructs';
-    const libraryPlaceholder = `__$${libraryName}$__`;
+    const libraryNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(libraryName));
+    const libraryPlaceholder = `__$${libraryNameHash.slice(2, 36)}__`; // Remove '0x' and take 34 chars
 
     // Ensure the library address is properly formatted (40 hex chars without 0x)
     const libraryAddressPadded = libraryAddress.replace('0x', '').padStart(40, '0');
