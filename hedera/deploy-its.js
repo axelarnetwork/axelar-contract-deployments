@@ -396,7 +396,7 @@ async function deployAll(config, wallet, chain, options) {
             const amount = ethers.utils.parseUnits(options.whbarAmount.toString(), 8); // WHBAR has 8 decimals
 
             await fundWithWHBAR(whbar, contract.address, amount, wallet);
-            console.log(`Successfully funded InterchainProxy with ${options.whbarAmount} HBAR worth of WHBAR`);
+            console.log(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
           } else {
 							console.warn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
           }

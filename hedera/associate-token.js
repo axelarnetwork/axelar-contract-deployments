@@ -30,6 +30,11 @@ async function associateToken(_config, tokenId, options) {
 
     console.log("Account ID: ", accountId.toString());
     console.log("Account EVM Address: ", accountId.toSolidityAddress());
+
+    if (tokenId >= 40) {
+    	tokenId = evmAddressToTokenId(tokenId);
+    }
+
     console.log("Token ID: ", tokenId);
     console.log("Token EVM Address: ", tokenIdToEvmAddress(tokenId));
 
