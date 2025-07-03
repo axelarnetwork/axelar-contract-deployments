@@ -161,7 +161,10 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
 
 async function interchainTransfer(privateKey, networkType, chain, args, options) {
     validateParameters({
-        isNonEmptyString: { destinationChain: options.destinationChain, destinationAddress: options.destinationAddress },
+        isNonEmptyString: {
+            destinationChain: options.destinationChain,
+            destinationAddress: options.destinationAddress,
+        },
         isValidNumber: { value: options.value, gasValue: options.gasValue },
     });
 
@@ -224,6 +227,56 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
     printInfo(`Finished transferring interchain token ${contracts[contractName].token} to destination chain ${options.destinationChain}`, result.txid);
 }
 
+async function helloWorld(privateKey, networkType, chain, args) {
+    const [destinationChain, destinationContract, payload, gasValue] = args;
+
+    validateParameters({
+        isNonEmptyString: { destinationChain, destinationContract, payload },
+        isValidNumber: { gasValue },
+    });
+
+    const helloWorldContract = 'HelloWorld';
+
+    const contracts = chain.contracts;
+    if (!contracts[helloWorldContract]?.address) {
+        throw new Error(`Contract ${helloWorldContract} not yet deployed`);
+    }
+    if (!contracts.GatewayImpl?.address) {
+        throw new Error(`Contract GatewayImpl not yet deployed`);
+    }
+    if (!contracts.GasImpl?.address) {
+        throw new Error(`Contract GasImpl not yet deployed`);
+    }
+
+    printInfo(`Calling ${helloWorldContract} set-remote-value, destination chain ${destinationChain}, destination contract ${destinationContract}, payload hex ${payload}, gas amount ${gasValue}`);
+
+    const helloWorldContractAddress = contracts[helloWorldContract].address.split('.');
+    const registerTransaction = await makeContractCall({
+        contractAddress: helloWorldContractAddress[0],
+        contractName: helloWorldContractAddress[1],
+        functionName: 'set-remote-value',
+        functionArgs: [
+            Cl.stringAscii(destinationChain),
+            Cl.stringAscii(destinationContract),
+            Cl.bufferFromHex(payload),
+            Cl.uint(gasValue),
+            Cl.address(contracts.GatewayImpl.address),
+            Cl.address(contracts.GasImpl.address),
+        ],
+        senderKey: privateKey,
+        network: networkType,
+        postConditionMode: PostConditionMode.Allow,
+        anchorMode: AnchorMode.Any,
+        fee: 10_000,
+    });
+    const result = await broadcastTransaction({
+        transaction: registerTransaction,
+        network: networkType,
+    });
+
+    printInfo(`Successfully called set-remote-value`, result.txid);
+}
+
 async function processCommand(command, chain, args, options) {
     const { privateKey, networkType } = await getWallet(chain, options);
 
@@ -271,9 +324,18 @@ if (require.main === module) {
             mainProcessor(interchainTransfer, options, [contractName], processCommand);
         });
 
+    const helloWorldCmd = new Command()
+        .name('hello-world')
+        .description('Call the hello world contract')
+        .command('hello-world <destinationChain> <destinationContract> <payload> <gasValue>')
+        .action((destinationChain, destinationContract, payload, gasValue, options) => {
+            mainProcessor(helloWorld, options, [destinationChain, destinationContract, payload, gasValue], processCommand);
+        });
+
     program.addCommand(registerTokenManagerCmd);
     program.addCommand(deployRemoteCanonicalInterchainTokenCmd);
     program.addCommand(interchainTransferCmd);
+    program.addCommand(helloWorldCmd);
 
     addOptionsToCommands(program, addBaseOptions);
 

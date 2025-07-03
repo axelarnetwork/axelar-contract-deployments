@@ -1381,6 +1381,10 @@
           "deployer": "ST1SCVNT9406763532TGDC5BWXZWTA2Z51GYENQ83",
           "token": "ST26F9JZV231H450RBYTWC78SHP1SY2RPFVJVWTDF.sip10",
           "interchainTokenId": "0x8fa3abdb6289970a569ab61d3bd93db89d21f7b99f98864a12d254230173c6e6"
+        },
+        "HelloWorld": {
+          "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.hello-world",
+          "deployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
         }
       },
       "initialContractsDeployer": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6"
