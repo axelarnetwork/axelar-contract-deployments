@@ -1,30 +1,21 @@
 name: Update config
-
 on:
   pull_request_target:
     types: [closed]
-
 jobs:
   reusable-update-config:
     if: github.event.pull_request.merged == true
-    uses: .github/workflows/reusable-update-config.yaml@main
+    uses: ./.github/workflows/reusable-update-config.yaml
     with:
+      source_repo: axelar-configs
       paths_map: |
         {
-          "mainnet": [
-            "axelar-chains-config/info/mainnet.json",
-          ],
-          "testnet": [
-            "axelar-chains-config/info/testnet.json",
-          ],
-          "stagenet": [
-            "axelar-chains-config/info/stagenet.json"
-          ],
-          "devnet-amplifier": [
-            "axelar-chains-config/info/devnet-amplifier.json"
-          ]
+          "mainnet": ["registry/mainnet/interchain/squid.tokenlist.json"],
+          "testnet": ["registry/testnet/interchain/squid.tokenlist.json"],
+          "stagenet": ["registry/stagenet/interchain/squid.tokenlist.json"],
+          "devnet-amplifier": ["registry/devnet-amplifier/interchain/squid.tokenlist.json"]
         }
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SOURCE_REPO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
       CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
