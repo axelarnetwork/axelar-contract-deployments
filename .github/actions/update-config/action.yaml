@@ -3,19 +3,19 @@ description: Generate config and update external repository via PR.
 inputs:
   networks:
     required: true
-    description: "The networks that need to be updated"
+    description: 'The networks that need to be updated'
   source_repo:
     required: true
-    description: "the repo name that has triggered the PR creation."
+    description: 'the repo name that has triggered the PR creation.'
   config_repo:
     required: true
-    description: "The repository on which the configs are set"
+    description: 'The repository on which the configs are set'
   cicd_token:
     required: true
-    description: "The paths used to check on the network changes"
+    description: 'The paths used to check on the network changes'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout current repository
       uses: actions/checkout@v4

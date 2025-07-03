@@ -10,10 +10,10 @@ jobs:
       source_repo: axelar-contract-deployments
       paths_map: |
         {
-          "mainnet": ["registry/mainnet/interchain/squid.tokenlist.json"],
-          "testnet": ["registry/testnet/interchain/squid.tokenlist.json"],
-          "stagenet": ["registry/stagenet/interchain/squid.tokenlist.json"],
-          "devnet-amplifier": ["registry/devnet-amplifier/interchain/squid.tokenlist.json"]
+          "mainnet": ["axelar-chains-config/info/mainnet.json"],
+          "testnet": ["axelar-chains-config/info/testnet.json"],
+          "stagenet": ["axelar-chains-config/info/stagenet.json"],
+          "devnet-amplifier": ["axelar-chains-config/info/devnet-amplifier.json"]
         }
     secrets:
       SOURCE_REPO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

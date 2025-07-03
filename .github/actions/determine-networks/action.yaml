@@ -3,7 +3,7 @@ description: Detect changed networks from a map of paths.
 inputs:
   paths_map:
     required: true
-    description: "the paths used to check on the network changes"
+    description: 'the paths used to check on the network changes'
 
 outputs:
   networks:
@@ -11,7 +11,7 @@ outputs:
     description: Comma-separated list of changed networks or "none"
 
 runs:
-  using: "composite"
+  using: 'composite'
 
   steps:
     - name: Get the latest commit SHA
