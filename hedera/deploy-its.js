@@ -23,12 +23,11 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
-    isConsensusChain,
 } = require('../evm/utils');
 
 const { getContractJSONWithHTS } = require('./utils.js');
 
-const { addEvmOptions } = require('../evm/cli-utils');
+const { addEvmOptions, printHederaNetwork } = require('../evm/cli-utils');
 const { Command, Option } = require('commander');
 const { WHBAR_ABI, fundWithWHBAR } = require('./fund-whbar.js');
 const { DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS, TINY_PARTS_PER_WHOLE } = require('./token-creation-price.js')
@@ -134,19 +133,11 @@ async function deployAll(config, wallet, chain, options) {
         printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
     }
 
-    const isCurrentChainConsensus = isConsensusChain(chain);
-
     // Register all EVM chains that ITS is or will be deployed on.
     const itsChains = Object.values(config.chains).filter(
         (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.address,
     );
     const trustedChains = itsChains.map((chain) => chain.axelarId);
-    const trustedAddresses = itsChains.map((chain) =>
-        // If both current chain and remote chain are consensus chains, connect them in pairwise mode
-        isCurrentChainConsensus && isConsensusChain(chain)
-            ? chain.contracts?.InterchainTokenService?.address || interchainTokenService
-            : 'hub',
-    );
 
     // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
@@ -157,13 +148,11 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         trustedChains.push(config.axelar?.axelarId);
-        trustedAddresses.push(itsHubAddress);
     }
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
-        printInfo('Trusted addresses', trustedAddresses);
     }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
@@ -526,7 +515,9 @@ async function processCommand(config, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+	printHederaNetwork(options);
+
+  await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

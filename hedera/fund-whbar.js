@@ -3,8 +3,9 @@
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, printHederaNetwork } = require('./cli-utils');
 const { prompt } = require('../common/utils.js');
+const { getRpcUrl } = require('./client.js');
 
 // Basic WHBAR ABI for deposit, transfer, and balanceOf functions
 const WHBAR_ABI = [
@@ -39,16 +40,18 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
 }
 
 async function fundWhbar(_config, options) {
+		printHederaNetwork(options);
 
     try {
-        // Get RPC URL from environment or use default
-        // TODO(hedera) use network config for RPC
-        const rpcUrl = process.env.HEDERA_RPC_URL || 'https://testnet.hashio.io/api';
-        const provider = getDefaultProvider(rpcUrl);
+        // Get RPC URL from environment
+        const provider = getDefaultProvider(getRpcUrl(options.hederaNetwork));
 
         // Create wallet from private key
         const wallet = new Wallet(options.privateKey, provider);
         console.log(`Using wallet address: ${wallet.address}`);
+
+        const accountBalance = await wallet.getBalance();
+        console.log(`Account balance: ${ethers.utils.formatEther(accountBalance)} HBAR`);
 
         // Create WHBAR contract instance
         const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
@@ -56,6 +59,11 @@ async function fundWhbar(_config, options) {
 
         // Parse amount
         const amount = ethers.utils.parseEther(options.amount.toString());
+
+        if (accountBalance.lt(amount)) {
+        		console.error(`Insufficient balance. Your account has ${ethers.utils.formatEther(accountBalance)} HBAR, but you need ${ethers.utils.formatEther(amount)} HBAR to fund ${options.to}.`);
+						process.exit(1);
+				}
 
        	if (prompt(`Proceed with funding ${options.to} with ${options.amount.toFixed(8)} WHBAR?`, options.yes)) {
           return;
