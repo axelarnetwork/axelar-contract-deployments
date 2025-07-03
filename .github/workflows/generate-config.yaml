@@ -8,6 +8,22 @@ jobs:
   reusable-update-config:
     if: github.event.pull_request.merged == true
     uses: .github/workflows/reusable-update-config.yaml@main
+    with:
+      paths_map: |
+        {
+          "mainnet": [
+            "axelar-chains-config/info/mainnet.json",
+          ],
+          "testnet": [
+            "axelar-chains-config/info/testnet.json",
+          ],
+          "stagenet": [
+            "axelar-chains-config/info/stagenet.json"
+          ],
+          "devnet-amplifier": [
+            "axelar-chains-config/info/devnet-amplifier.json"
+          ]
+        }
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}

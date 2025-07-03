@@ -2,6 +2,11 @@ name: Reusable Update config
 
 on:
   workflow_call:
+    inputs:
+      paths_map:
+        required: true
+        type: string
+        default: '{ "testnet": ["axelar-chains-config/info/testnet.json"] }'
     secrets:
       GITHUB_TOKEN:
         required: true
@@ -21,6 +26,7 @@ jobs:
       networks: ${{ steps.set-networks.outputs.networks }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PATHS_MAP: ${{ inputs.paths_map }}
 
     steps:
       - name: Checkout current repository
@@ -48,24 +54,21 @@ jobs:
         id: set-networks
         if: steps.check_if_merged.outputs.merged == 'true'
         run: |
-          echo "Checking modified files in commit ${{ env.MERGE_COMMIT }}"
+          echo "Modified files in commit ${{ env.MERGE_COMMIT }}"
           MODIFIED_FILES=$(git diff --name-only HEAD~1..HEAD)
-          echo "Modified files: $MODIFIED_FILES"
+          echo "$MODIFIED_FILES"
 
           NETWORKS=()
 
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/mainnet.json"; then
-            NETWORKS+=("mainnet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/testnet.json"; then
-            NETWORKS+=("testnet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/stagenet.json"; then
-            NETWORKS+=("stagenet")
-          fi
-          if echo "$MODIFIED_FILES" | grep -q "axelar-chains-config/info/devnet-amplifier.json"; then
-            NETWORKS+=("devnet-amplifier")
-          fi
+          echo "$PATHS_MAP" | jq -r 'to_entries[] | "\(.key)|\(.value | join(","))"' | while IFS='|' read -r NETWORK PATHS_CSV; do
+            IFS=',' read -ra PATHS <<< "$PATHS_CSV"
+            for PATH in "${PATHS[@]}"; do
+              if echo "$MODIFIED_FILES" | grep -q "$PATH"; then
+                echo "Detected change for $NETWORK in $PATH"
+                NETWORKS+=("$NETWORK")
+              fi
+            done
+          done
 
           if [ ${#NETWORKS[@]} -eq 0 ]; then
             echo "No relevant changes detected."
