@@ -21,7 +21,7 @@ async function deployHtsLib(_config, options) {
 			options.hederaNetwork,
     );
 
-    const contractName = options.contract || 'HTS';
+    const contractName = HTS_LIBRARY_NAME;
     const gasLimit = options.gas || 300_000;
 
     const json = getContractJSON(contractName);
@@ -55,8 +55,8 @@ async function deployHtsLib(_config, options) {
             const fs = require('fs');
             const output = {
                 contractId: newContractId.toString(),
-                evmAddress: evmAddress,
-                contractName: contractName,
+                evmAddress,
+                contractName,
                 sourceName: json.sourceName,
                 deployedAt: new Date().toISOString()
             };
@@ -78,10 +78,6 @@ if (require.main === module) {
     program
         .name('deploy-hts-lib')
         .description('Deploy HTS library contract to Hedera')
-        .addOption(
-            new Option('--contract <contract>', 'contract name to deploy')
-                .default('HTS')
-        )
         .addOption(
             new Option('--gas <gas>', 'gas limit for deployment')
                 .default(300_000)

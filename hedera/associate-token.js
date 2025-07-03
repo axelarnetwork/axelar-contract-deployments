@@ -7,7 +7,7 @@ const {
     TokenAssociateTransaction,
     TokenId,
 } = require("@hashgraph/sdk");
-const { addBaseOptions } = require('./cli-utils');
+const { addBaseOptions, printHederaNetwork } = require('./cli-utils');
 const { getClient } = require('./client.js');
 
 function evmAddressToTokenId(evmAddress) {
@@ -25,17 +25,18 @@ async function associateToken(_config, tokenId, options) {
         options.hederaNetwork,
     );
 
+    printHederaNetwork(options);
+
     const accountId = AccountId.fromString(options.accountId);
     const privateKey = PrivateKey.fromStringECDSA(options.privateKey);
 
-    console.log("Account ID: ", accountId.toString());
     console.log("Account EVM Address: ", accountId.toSolidityAddress());
 
-    if (tokenId >= 40) {
+    if (tokenId.length >= 40) {
     	tokenId = evmAddressToTokenId(tokenId);
     }
 
-    console.log("Token ID: ", tokenId);
+    console.log("Token ID: ", tokenId.toString());
     console.log("Token EVM Address: ", tokenIdToEvmAddress(tokenId));
 
     try {

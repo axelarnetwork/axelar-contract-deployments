@@ -49,4 +49,5 @@ function getContractJSONWithHTS(htsLibAddress) {
 
 module.exports = {
 	getContractJSONWithHTS,
+	HTS_LIBRARY_NAME,
 }
