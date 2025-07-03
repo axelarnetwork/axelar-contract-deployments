@@ -1205,7 +1205,7 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
     },
-    StacksAbiTransformer: {
+    ItsStacksTranslator: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: () => ({}),
     },

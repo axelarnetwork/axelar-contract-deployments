@@ -1851,7 +1851,7 @@
         "instantiateProposalId": "991",
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
       },
-      "StacksAbiTransformer": {
+      "ItsStacksTranslator": {
         "stacks": {
           "codeId": 1392,
           "address": "axelar1qtfj4yy6r8g630mxjr4amwmqqttv3gajum5c9x2hlkne7sp7k8wsv2capu"
