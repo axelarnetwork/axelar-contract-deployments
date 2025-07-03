@@ -1,0 +1,51 @@
+name: Reusable Update Config
+
+on:
+  workflow_call:
+    inputs:
+      paths_map:
+        required: true
+        type: string
+        default: '{ "stagenet": ["registry/stagenet/interchain/squid.tokenlist.json"] }'
+      source_repo:
+        required: true
+        type: string
+    secrets:
+      SOURCE_REPO_GITHUB_TOKEN:
+        required: true
+      CHAINS_REPO_CICD_TOKEN:
+        required: true
+      CONFIG_REPO:
+        required: true
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  determine-networks:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.SOURCE_REPO_GITHUB_TOKEN }}
+    outputs:
+      networks: ${{ steps.determine-networks.outputs.networks }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # for the diff checks between HEAD~1..HEAD
+      - id: determine-networks
+        uses: ./.github/actions/determine-networks
+        with:
+          paths_map: ${{ inputs.paths_map }}
+  update-config:
+    env:
+      GITHUB_TOKEN: ${{ secrets.SOURCE_REPO_GITHUB_TOKEN }}
+    needs: determine-networks
+    if: needs.determine-networks.outputs.networks != 'none'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/update-config
+        with:
+          networks: ${{ needs.determine-networks.outputs.networks }}
+          source_repo: ${{ inputs.source_repo }}
+          config_repo: ${{ secrets.CONFIG_REPO }}
+          cicd_token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
