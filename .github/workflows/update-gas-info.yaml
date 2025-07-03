@@ -48,4 +48,4 @@ jobs:
           echo "ENV=$ENV" >> .env
           echo "CHAINS=all" >> .env
 
-          node evm/operators.js --action updateGasInfo --chains all -y
+          ts-node evm/operators.js --action updateGasInfo --chains all -y

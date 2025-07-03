@@ -28,7 +28,7 @@ async function sendToken(keypair, client, contracts, args, options) {
     const ItsToken = contracts[symbol.toUpperCase()];
 
     if (!ItsToken) {
-        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'ts-node sui/its-example.js deploy-token' command`);
     }
 
     await checkTrustedAddresses(destinationChain);
@@ -129,7 +129,7 @@ async function handleReceivedMessage(keypair, client, contracts, args, options, 
     const symbol = tokenSymbol.toUpperCase();
 
     if (!contracts[symbol]) {
-        throw new Error(`Token ${symbol} not found. Deploy it first with 'node sui/its-example.js deploy-token' command`);
+        throw new Error(`Token ${symbol} not found. Deploy it first with 'ts-node sui/its-example.js deploy-token' command`);
     }
 
     const discoveryInfo = parseDiscoveryInfo(contracts);
@@ -384,7 +384,7 @@ if (require.main === module) {
 
     // The token must be deployed on sui first before executing receive deployment command
     // and the token must have zero supply, otherwise the command will fail.
-    // To deploy the token, use the command `node sui/its-example.js deploy-token <symbol> <name> <decimals>`
+    // To deploy the token, use the command `ts-node sui/its-example.js deploy-token <symbol> <name> <decimals>`
     const receiveTokenDeploymentProgram = new Command()
         .name('receive-deployment')
         .description('Receive token deployment from other chain to Sui.')

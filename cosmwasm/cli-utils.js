@@ -79,11 +79,7 @@ const addAmplifierOptions = (program, options) => {
     }
 
     if (options.runAs) {
-        program.addOption(
-            new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address').default(
-                governanceAddress,
-            ),
-        );
+        program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
     }
 };
 
@@ -130,9 +126,10 @@ const addStoreProposalOptions = (program) => {
         new Option('--builder <builder>', 'a valid docker image name with tag, such as "cosmwasm/workspace-optimizer:0.16.0'),
     );
     program.addOption(
-        new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate')
-            .default([])
-            .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
+        new Option(
+            '-i, --instantiateAddresses <instantiateAddresses>',
+            'comma separated list of addresses allowed to instantiate',
+        ).argParser((addresses) => addresses.split(',').map((address) => address.trim())),
     );
 };
 
@@ -173,7 +170,7 @@ const addMigrateOptions = (program) => {
 const addProposalOptions = (program) => {
     program.addOption(new Option('-t, --title <title>', 'title of proposal').makeOptionMandatory(true));
     program.addOption(new Option('-d, --description <description>', 'description of proposal').makeOptionMandatory(true));
-    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit').makeOptionMandatory(true));
+    program.addOption(new Option('--deposit <deposit>', 'the proposal deposit'));
 };
 
 module.exports = {

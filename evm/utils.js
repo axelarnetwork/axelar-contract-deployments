@@ -5,10 +5,21 @@ const { ethers } = require('hardhat');
 const {
     ContractFactory,
     Contract,
-    utils: { computeAddress, getContractAddress, keccak256, isAddress, getCreate2Address, defaultAbiCoder, isHexString, hexZeroPad },
+    utils: {
+        computeAddress,
+        getContractAddress,
+        keccak256,
+        isAddress,
+        getCreate2Address,
+        defaultAbiCoder,
+        isHexString,
+        hexZeroPad,
+        HDNode,
+    },
     constants: { AddressZero, HashZero },
     getDefaultProvider,
     BigNumber,
+    Wallet,
 } = ethers;
 const fs = require('fs');
 const path = require('path');
@@ -708,11 +719,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         const executeChain = (chainName) => {
             const chain = config.chains[chainName.toLowerCase()];
 
-            if (
-                chainsToSkip.includes(chain.name.toLowerCase()) ||
-                chain.status === 'deactive' ||
-                (chain.contracts && chain.contracts[options.contractName]?.skip)
-            ) {
+            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
                 printWarn('Skipping chain', chain.name);
                 return Promise.resolve();
             }
@@ -749,14 +756,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (
-            chainsToSkip.includes(chain.name.toLowerCase()) ||
-            chain.status === 'deactive' ||
-            (chain.contracts && chain.contracts[options.contractName]?.skip)
-        ) {
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
             printWarn('Skipping chain', chain.name);
             continue;
         }
@@ -765,7 +769,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            await processCommand(config, chain, options);
+            const result = await processCommand(config, chain, options);
+
+            if (result) {
+                results.push(result);
+            }
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
@@ -782,6 +790,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             }
         }
     }
+
+    return results;
 };
 
 function getConfigByChainId(chainId, config) {
@@ -1043,6 +1053,41 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+const deriveAccounts = async (mnemonic, quantity) => {
+    const hdNode = HDNode.fromMnemonic(mnemonic);
+    const accounts = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const path = `m/44'/60'/0'/0/${i}`;
+        const derivedNode = hdNode.derivePath(path);
+
+        const wallet = new Wallet(derivedNode.privateKey);
+
+        accounts.push({
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+        });
+    }
+
+    return accounts;
+};
+
+async function printTokenInfo(tokenAddress, provider) {
+    try {
+        const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, provider);
+        const [name, symbol, decimals] = await Promise.all([token.name(), token.symbol(), token.decimals()]);
+
+        printInfo(`Token name`, name);
+        printInfo(`Token symbol`, symbol);
+        printInfo(`Token decimals`, decimals);
+
+        return { name, symbol, decimals };
+    } catch (error) {
+        printError(`Could not fetch token information for ${tokenAddress}: ${error.message}`);
+        throw error;
+    }
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1083,4 +1128,6 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    deriveAccounts,
+    printTokenInfo,
 };
