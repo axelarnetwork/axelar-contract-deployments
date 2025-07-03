@@ -28,7 +28,7 @@ touch .env
 PRIVATE_KEY=""
 # Possible values: "secp256k1", "ed25519", "secp256r1" (defaults to: "secp256k1")
 SIGNATURE_SCHEME=""
-# JSON list of multi-sig signers for axelar_gateway package, in format [{"pub_key":"string", "weight": number}]
+# JSON list of multi-sig signers for axelar_gateway package, in format `{"signers": [{"publicKey": "string","weight": number,"schemeType": "string"}],"threshold": number}`
 SIGNERS=""
 ```
 
