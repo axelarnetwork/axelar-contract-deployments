@@ -4,16 +4,16 @@ const { Wallet } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, printError, validateParameters, mainProcessor, isHyperliquidChain } = require('./utils');
+const { printInfo, printError, printWarn, validateParameters, mainProcessor, isHyperliquidChain } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const execAsync = promisify(exec);
+const msgpack = require('msgpack-lite');
 
 function addressToBytes(address) {
     return Buffer.from(address.replace('0x', ''), 'hex');
 }
 
 function actionHash(action, vaultAddress, nonce) {
-    const msgpack = require('msgpack-lite');
     const actionData = msgpack.encode(action);
     const nonceBuffer = Buffer.alloc(8);
     nonceBuffer.writeBigUInt64BE(BigInt(nonce));
@@ -124,19 +124,14 @@ async function processCommand(config, chain, options) {
         isNonEmptyString: { blockSize },
     });
 
-    if (blockSize !== 'big' && blockSize !== 'small') {
-        throw new Error('Block size must be "big" or "small"');
-    }
-
-    // Check if this is a Hyperliquid chain
     const isHyperliquid = isHyperliquidChain(chain);
 
     if (!isHyperliquid) {
         throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
     }
 
-    const isMainnet = options.env === 'mainnet';
-    const network = isMainnet ? 'mainnet' : 'testnet';
+    const network = options.env;
+    const isMainnet = network === 'mainnet';
     const useBig = blockSize === 'big';
 
     printInfo('Block size', blockSize.toUpperCase());
@@ -148,15 +143,56 @@ async function processCommand(config, chain, options) {
         return result;
     } catch (error) {
         if (error.message.includes('does not exist')) {
-            printInfo('Result', 'Account not found, continuing without block size switch');
+            printWarn('Result', 'Account not found, continuing without block size switch');
             return { status: 'ok', message: 'Account not found, continuing without block size switch' };
         }
         if (error.message.includes('curl request failed')) {
-            printInfo('Result', 'Block size switch failed, continuing with deployment');
+            printError('Result', 'Block size switch failed, continuing with deployment');
             return { status: 'ok', message: 'Block size switch failed, continuing with deployment' };
         }
         throw error;
     }
+}
+
+/**
+ * Switches Hyperliquid block size and adjusts gas options accordingly
+ * @param {Object} options - Deployment options
+ * @param {Object} gasOptions - Gas options to modify
+ * @param {boolean} useBigBlocks - Whether to switch to big blocks
+ * @param {string} deploymentName - Name of the deployment for logging
+ * @returns {Promise<boolean>} - Whether the switch was successful
+ */
+async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, deploymentName) {
+    const network = options.env;
+    const isMainnet = network === 'mainnet';
+    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
+
+    try {
+        await switchBlockSize(options.privateKey, useBigBlocks, network);
+
+        if (useBigBlocks && gasOptions.gasLimit) {
+            const { BigNumber } = require('ethers');
+            gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
+        }
+
+        return true;
+    } catch (error) {
+        printWarn(`Failed to switch to ${blockType} blocks, continuing with deployment:`, error.message);
+        return false;
+    }
+}
+
+/**
+ * Determines if a deployment should use big blocks on Hyperliquid
+ * @param {string} key - Deployment key
+ * @param {boolean} isHyperliquidChain - Whether this is a Hyperliquid chain
+ * @returns {boolean} - Whether big blocks should be used
+ */
+function shouldUseBigBlocks(key, isHyperliquidChain) {
+    if (!isHyperliquidChain) return false;
+
+    // Use big blocks for large contract deployments
+    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
 }
 
 async function main(options) {
@@ -179,4 +215,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { switchBlockSize };
+module.exports = { switchBlockSize, switchHyperliquidBlockSize, shouldUseBigBlocks };

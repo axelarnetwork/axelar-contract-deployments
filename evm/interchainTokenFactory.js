@@ -302,11 +302,10 @@ async function processCommand(config, chain, options) {
             printInfo('Token address', tokenAddress);
 
             try {
-                const isHyperliquid = isHyperliquidChain(chain);
-                const TokenContractName = isHyperliquid ? 'HyperliquidInterchainToken' : 'InterchainToken';
-                const tokenContract = new Contract(tokenAddress, getContractJSON(TokenContractName).abi, wallet);
+                const TokenContract = getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken');
+                const token = new Contract(tokenAddress, TokenContract.abi, wallet);
 
-                const currentDeployer = await tokenContract.deployer();
+                const currentDeployer = await token.deployer();
                 printInfo('Current deployer', currentDeployer);
             } catch (error) {
                 if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
@@ -335,13 +334,14 @@ async function processCommand(config, chain, options) {
             const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
             printInfo('Token address', tokenAddress);
 
-            const isHyperliquid = isHyperliquidChain(chain);
-            const ServiceContractName = isHyperliquid ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
-            const serviceContract = new Contract(interchainTokenServiceAddress, getContractJSON(ServiceContractName).abi, wallet);
+            const ServiceContract = getContractJSON(
+                isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+            );
+            const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
 
             let hasUpdateFunction = false;
             try {
-                const updateFunction = serviceContract.interface.getFunction('updateTokenDeployer');
+                const updateFunction = service.interface.getFunction('updateTokenDeployer');
                 hasUpdateFunction = !!updateFunction;
             } catch (error) {
                 hasUpdateFunction = false;
@@ -351,24 +351,24 @@ async function processCommand(config, chain, options) {
                 throw new Error('Service contract does not support updateTokenDeployer');
             }
 
-            const TokenContractName = isHyperliquid ? 'HyperliquidInterchainToken' : 'InterchainToken';
-            const tokenContract = new Contract(tokenAddress, getContractJSON(TokenContractName).abi, wallet);
+            const TokenContract = getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken');
+            const token = new Contract(tokenAddress, TokenContract.abi, wallet);
 
-            const currentDeployer = await tokenContract.deployer();
+            const currentDeployer = await token.deployer();
             printInfo('Current deployer', currentDeployer);
             printInfo('New deployer', deployer);
 
-            const serviceOwner = await serviceContract.owner();
-            const isOperator = await serviceContract.isOperator(wallet.address);
+            const serviceOwner = await service.owner();
+            const isOperator = await service.isOperator(wallet.address);
 
             if (wallet.address.toLowerCase() !== serviceOwner.toLowerCase() && !isOperator) {
                 throw new Error('Wallet does not have permission to update deployers. Must be service owner or operator.');
             }
 
-            const tx = await serviceContract.updateTokenDeployer(tokenId, deployer, gasOptions);
-            await handleTx(tx, chain, serviceContract, options.action);
+            const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
+            await handleTx(tx, chain, service, options.action);
 
-            const updatedDeployer = await tokenContract.deployer();
+            const updatedDeployer = await token.deployer();
             printInfo('Updated deployer', updatedDeployer);
 
             break;

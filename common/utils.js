@@ -186,6 +186,24 @@ const httpPost = async (url, data) => {
         },
         body: JSON.stringify(data),
     });
+
+    // Check if the response is successful
+    if (!response.ok) {
+        let errorBody;
+        try {
+            errorBody = await response.text();
+        } catch (e) {
+            errorBody = 'Unable to read error response body';
+        }
+
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.body = errorBody;
+        error.url = url;
+        throw error;
+    }
+
     return response.json();
 };
 
