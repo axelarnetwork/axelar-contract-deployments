@@ -18,6 +18,20 @@ This document will guide you through testing the ITS (Interchain Token Service) 
 
 ## Setup the Environment
 
+1. Create environment file
+```bash
+touch .env
+```
+2. Add the following environment variables to the `.env` file
+```bash
+# Wallet private key for txs
+PRIVATE_KEY=""
+# Possible values: "secp256k1", "ed25519", "secp256r1" (defaults to: "secp256k1")
+SIGNATURE_SCHEME=""
+# JSON list of multi-sig signers for axelar_gateway package, in format [{"pub_key":"string", "weight": number}]
+SIGNERS=""
+```
+
 ### Contract Deployment
 
 Deploy the contracts with the following commands:
@@ -26,11 +40,11 @@ Deploy the contracts with the following commands:
 ts-node sui/faucet
 ts-node sui/deploy-contract deploy Utils
 ts-node sui/deploy-contract deploy VersionControl
-ts-node sui/deploy-contract deploy AxelarGateway --signers wallet
+ts-node sui/deploy-contract deploy AxelarGateway
 ts-node sui/deploy-contract deploy GasService
 ts-node sui/deploy-contract deploy Abi
 ts-node sui/deploy-contract deploy RelayerDiscovery
-ts-node sui/deploy-contract deploy ITS
+ts-node sui/deploy-contract deploy InterchainTokenService
 ts-node sui/deploy-contract deploy Example
 ```
 
