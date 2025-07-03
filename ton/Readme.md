@@ -129,3 +129,17 @@ Pay Gas (on chain estimation)
 ```bash
 node ton/gasService.js pay-gas "ethereum" "0x81e63eA8F64FEdB9858EB6E2176B431FBd10d1eC" "0x1234" "0QBc6NctNT4wc-8eweIkNo1JcSezNK9LArR_lMwMXqoq_xgw" "21000" "true" "0.01"
 ```
+
+## Governance
+
+Executing a timelock proposal
+
+```bash
+node ton/governance.js execute-timelock-proposal "<target-address>" "<native-ton-amount>" "<proposal-hash>" "<proposal-hex-data>" "<timelock-seconds>" "<actual-timelock-value>" "<gas-amount>"
+```
+
+Executing an operator proposal
+
+```bash
+node ton/governance.js execute-operator-proposal "<target-address>" "<native-ton-amount>" "<proposal-hash>" "<proposal-hex-data>" "<gas-amount>"
+```

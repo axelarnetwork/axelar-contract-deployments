@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
 const { toNano, Address, beginCell } = require('@ton/ton');
-const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GAS_SERVICE_ADDRESS } = require('./common');
+const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
 const {
     buildPayNativeGasForContractCallMessage,
     buildPayJettonGasForContractCallMessage,
@@ -17,6 +17,12 @@ const {
     JettonMinter,
 } = require('axelar-cgp-ton');
 const { keccak256 } = require('@ethersproject/keccak256');
+
+const GAS_SERVICE_ADDRESS = process.env.TON_GAS_SERVICE_ADDRESS;
+
+if (!GAS_SERVICE_ADDRESS) {
+    throw new Error('Please set TON_GAS_SERVICE_ADDRESS in your .env file');
+}
 
 const program = new Command();
 program.name('gasService').description('Axelar TON Gas Service CLI').version('1.0.0');

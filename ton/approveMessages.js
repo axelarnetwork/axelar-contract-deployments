@@ -1,11 +1,7 @@
 const { Command } = require('commander');
 const { Address, Cell, internal } = require('@ton/ton');
-const { getTonClient, loadWallet, sendTransactionWithCost, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
+const { getTonClient, loadWallet, sendTransactionWithCost, waitForTransaction, bocToCell, GATEWAY_ADDRESS } = require('./common');
 const { APPROVE_MESSAGES_COST } = require('axelar-cgp-ton');
-
-function createApproveMessagesCell(encodedPayload) {
-    return Cell.fromBoc(Buffer.from(encodedPayload, 'hex'))[0];
-}
 
 async function run(encodedPayload) {
     try {
@@ -13,7 +9,7 @@ async function run(encodedPayload) {
         const { contract, key } = await loadWallet(client);
 
         const gateway = Address.parse(GATEWAY_ADDRESS);
-        const approveMessagesCell = createApproveMessagesCell(encodedPayload);
+        const approveMessagesCell = bocToCell(encodedPayload);
 
         var { transfer, seqno } = await sendTransactionWithCost(contract, key, gateway, approveMessagesCell, APPROVE_MESSAGES_COST);
 
