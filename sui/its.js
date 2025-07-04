@@ -194,7 +194,7 @@ if (require.main === module) {
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <token-id>')
-        .description(`Publicly expose metadata for a given token id. Use to migrate v0 tokens (with metadata saved in ITS) to v1`)
+        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
         .action((tokenId, options) => {
             mainProcessor(migrateCoinMetadata, options, tokenId, processCommand);
         });
