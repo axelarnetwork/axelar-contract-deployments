@@ -26,6 +26,8 @@ touch .env
 ```bash
 # Wallet private key for txs
 PRIVATE_KEY=""
+# Possible values: "bech32", "mnemonic", "hex" (defaults to: "bech32")
+PRIVATE_KEY_TYPE=""
 # Possible values: "secp256k1", "ed25519", "secp256r1" (defaults to: "secp256k1")
 SIGNATURE_SCHEME=""
 # JSON list of multi-sig signers for axelar_gateway package, in format `{"signers": [{"publicKey": "string","weight": number,"schemeType": "string"}],"threshold": number}`
