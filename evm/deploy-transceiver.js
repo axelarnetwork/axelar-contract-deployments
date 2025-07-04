@@ -3,21 +3,18 @@
 // TODO tkulik:
 // * Use ERC1967Proxy as a feature in the deploy-contract script.
 // * Make AxelarTransceiver deployment part of the deploy-contract script
-//   (along with TransceiverStructs with/without linking if needed).
-// * Decide if we need dynamic linking - remove the linkLibraryToTranceiver along with the tests
 
 /**
  * @fileoverview EVM Transceiver Deployment Script
  *
  * This script provides functionality to deploy AxelarTransceiver contracts and their dependencies
- * on EVM-compatible chains. It orchestrates the deployment of TransceiverStructs library,
- * AxelarTransceiver implementation, and ERC1967Proxy.
+ * on EVM-compatible chains. It orchestrates the deployment of AxelarTransceiver implementation
+ * and ERC1967Proxy. The TransceiverStructs library is statically linked at compile time.
  *
  * Deployment sequence:
- * 1. TransceiverStructs library (required by AxelarTransceiver)
- * 2. AxelarTransceiver implementation contract
- * 3. ERC1967Proxy contract
- * 4. Contract initialization and pauser capability transfer
+ * 1. AxelarTransceiver implementation contract (with statically linked library)
+ * 2. ERC1967Proxy contract
+ * 3. Contract initialization and pauser capability transfer
  */
 
 const { ethers } = require('hardhat');
@@ -30,24 +27,9 @@ const { addEvmOptions } = require('./cli-utils');
 const { processCommand: deployEvmContract } = require('./deploy-contract');
 
 /**
- * Deploys the TransceiverStructs library contract.
- */
-async function deployTransceiverStructs(config, chain, options) {
-    const structsOptions = {
-        ...options,
-        contractName: 'TransceiverStructs',
-        salt: options.transceiverStructsSalt || 'TransceiverStructs',
-    };
-
-    const contract = await deployEvmContract(config, chain, structsOptions);
-
-    return contract;
-}
-
-/**
  * Deploys the AxelarTransceiver implementation contract.
  */
-async function deployAxelarTransceiver(config, chain, options, libraryAddress) {
+async function deployAxelarTransceiver(config, chain, options) {
     const transceiverOptions = {
         ...options,
         contractName: 'AxelarTransceiver',
@@ -133,7 +115,7 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
 }
 
 /**
- * Orchestrates the deployment of TransceiverStructs, AxelarTransceiver, and proxy.
+ * Orchestrates the deployment of AxelarTransceiver and proxy.
  */
 async function deployTransceiverContracts(config, chain, options) {
     // Create wallet for contract interactions
@@ -142,14 +124,8 @@ async function deployTransceiverContracts(config, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);
 
-    // Deploy TransceiverStructs library first
-    const structsContract = await deployTransceiverStructs(config, chain, options);
-    if (!structsContract) {
-        return; // User cancelled or predictOnly mode
-    }
-
     // Deploy AxelarTransceiver implementation
-    const implementationContract = await deployAxelarTransceiver(config, chain, options, structsContract.address);
+    const implementationContract = await deployAxelarTransceiver(config, chain, options);
     if (!implementationContract) {
         return; // User cancelled or predictOnly mode
     }
@@ -199,12 +175,6 @@ if (require.main === module) {
     program.addOption(
         new Option('--transceiverSalt <transceiverSalt>', 'deployment salt to use for AxelarTransceiver deployment').env(
             'TRANSCEIVER_SALT',
-        ),
-    );
-
-    program.addOption(
-        new Option('--transceiverStructsSalt <transceiverStructsSalt>', 'deployment salt to use for TransceiverStructs deployment').env(
-            'TRANSCEIVER_STRUCTS_SALT',
         ),
     );
 

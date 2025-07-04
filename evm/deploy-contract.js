@@ -18,7 +18,6 @@
  * - TokenDeployer: Token deployment contract
  * - ERC1967Proxy: ERC1967 proxy contract
  * - AxelarTransceiver: Transceiver contract
- * - TransceiverStructs: Transceiver structs library
  */
 
 const chalk = require('chalk');
@@ -181,10 +180,6 @@ async function getConstructorArgs(contractName, config, wallet, options) {
             return [];
         }
 
-        case 'TransceiverStructs': {
-            return [];
-        }
-
         case 'AxelarTransceiver': {
             const gateway = config.AxelarGateway?.address;
             const gasService = config.AxelarGasService?.address;
@@ -215,32 +210,6 @@ async function getConstructorArgs(contractName, config, wallet, options) {
     }
 
     throw new Error(`${contractName} is not supported.`);
-}
-
-/**
- * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
- * Uses the correct Solidity library placeholder format with keccak256 hash.
- */
-function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
-    // Create a copy to avoid modifying the cached object
-    const linkedJson = JSON.parse(JSON.stringify(transceiverJson));
-
-    // Solidity generates library placeholders as: __$<keccak256(libraryName).slice(0, 34)>$__
-    const libraryName = 'TransceiverStructs';
-    const libraryNameHash = keccak256(toUtf8Bytes(libraryName));
-    const libraryPlaceholder = `__$${libraryNameHash.slice(2, 36)}__`; // Remove '0x' and take 34 chars
-
-    // Ensure the library address is properly formatted (40 hex chars without 0x)
-    const libraryAddressPadded = libraryAddress.replace('0x', '').padStart(40, '0');
-
-    // Replace the placeholder in the bytecode
-    if (linkedJson.bytecode.includes(libraryPlaceholder)) {
-        linkedJson.bytecode = linkedJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
-    } else {
-        throw new Error(`Library placeholder '${libraryPlaceholder}' not found in bytecode. Library linking failed.`);
-    }
-
-    return linkedJson;
 }
 
 /**
@@ -350,17 +319,7 @@ async function processCommand(config, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    let contractJson = getContractJSON(contractName, artifactPath);
-
-    // Special handling for AxelarTransceiver - link the library
-    if (contractName === 'AxelarTransceiver') {
-        const libraryAddress = contracts.TransceiverStructs?.address;
-        if (!libraryAddress) {
-            throw new Error('TransceiverStructs library address not found. Deploy it first.');
-        }
-
-        contractJson = linkLibraryToTransceiver(contractJson, libraryAddress);
-    }
+    const contractJson = getContractJSON(contractName, artifactPath);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
@@ -513,4 +472,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { processCommand, linkLibraryToTransceiver };
+module.exports = { processCommand };
