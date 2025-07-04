@@ -114,6 +114,36 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Chains', options);
 }
 
+// register_coin_from_info
+// register_coin_from_metadata
+// register_custom_coin
+// link_coin
+// register_coin_metadata
+// receive_link_coin
+// give_unlinked_coin
+// remove_treasury_cap
+// restore_treasury_cap
+
+// migrate_coin_metadata
+async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
+    const tokenId = args;
+
+    if (tokenId.length === 0) throw new Error('No token_id provided');
+
+    const txBuilder = new TxBuilder(client);
+
+    await txBuilder.moveCall({
+        target: `${contracts.InterchainTokenService.address}::interchain_token_service::remove_trusted_chains`,
+        arguments: [
+            contracts.InterchainTokenService.objects.InterchainTokenService,
+            contracts.InterchainTokenService.objects.OperatorCap,
+            tokenId,
+        ],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -161,9 +191,18 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
+    const migrateCoinMetadataProgram = new Command()
+        .name('migrate-coin-metadata')
+        .command('migrate-coin-metadata <token-id>')
+        .description(`Publicly expose metadata for a given token id. Use to migrate v0 tokens (with metadata saved in ITS) to v1`)
+        .action((tokenId, options) => {
+            mainProcessor(migrateCoinMetadata, options, tokenId, processCommand);
+        });
+
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(migrateCoinMetadataProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 
