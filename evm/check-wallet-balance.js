@@ -12,7 +12,6 @@ async function processCommand(_, chain, options) {
     const { rpc } = options;
     let { addresses } = options;
 
-    const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(rpc || chain.rpc);
     const staticGasOptions = chain.staticGasOptions;
 
@@ -27,7 +26,7 @@ async function processCommand(_, chain, options) {
     printError(`${chain.name} minimum required Balance`, `${minRequiredBalance / 1e18}`);
 
     const nonceData = getNonceFileData();
-    const nonces = nonceData[options.env][chainName];
+    const nonces = nonceData[options.env][chain.axelarId.toLowerCase()];
 
     if (addresses) {
         addresses = JSON.parse(addresses);

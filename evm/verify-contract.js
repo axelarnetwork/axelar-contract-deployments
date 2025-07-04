@@ -37,10 +37,10 @@ async function verifyConsensusGateway(config, chain, contractConfig, env, wallet
     const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     const setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [contractConfig.deployer, contractConfig.deployer, '0x']);
 
-    await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
-    await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
-    await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-    await verifyContract(env, chain.name, contractConfig.address, [implementation, setupParams], verifyOptions);
+    await verifyContract(env, chain.axelarId, auth, [authParams], verifyOptions);
+    await verifyContract(env, chain.axelarId, tokenDeployer, [], verifyOptions);
+    await verifyContract(env, chain.axelarId, implementation, [auth, tokenDeployer], verifyOptions);
+    await verifyContract(env, chain.axelarId, contractConfig.address, [implementation, setupParams], verifyOptions);
 }
 
 async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options) {
@@ -55,7 +55,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
 
     verifyContractByName(
         env,
-        chain.name,
+        chain.axelarId,
         'AxelarAmplifierGateway',
         implementation,
         [previousSignersRetention, domainSeparator, minimumRotationDelay],
@@ -64,7 +64,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
 
     verifyContractByName(
         env,
-        chain.name,
+        chain.axelarId,
         'AxelarAmplifierGatewayProxy',
         amplifierGateway.address,
         contractConfig.proxyDeploymentArgs,

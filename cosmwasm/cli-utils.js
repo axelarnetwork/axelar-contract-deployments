@@ -126,8 +126,10 @@ const addStoreProposalOptions = (program) => {
         new Option('--builder <builder>', 'a valid docker image name with tag, such as "cosmwasm/workspace-optimizer:0.16.0'),
     );
     program.addOption(
-        new Option('-i, --instantiateAddresses <instantiateAddresses>', 'comma separated list of addresses allowed to instantiate')
-            .argParser((addresses) => addresses.split(',').map((address) => address.trim())),
+        new Option(
+            '-i, --instantiateAddresses <instantiateAddresses>',
+            'comma separated list of addresses allowed to instantiate',
+        ).argParser((addresses) => addresses.split(',').map((address) => address.trim())),
     );
 };
 
