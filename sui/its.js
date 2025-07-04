@@ -126,19 +126,29 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
 
 // migrate_coin_metadata
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
-    const tokenId = args;
-
-    if (tokenId.length === 0) throw new Error('No token_id provided');
-
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { OperatorCap, InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(client);
+    
+    const [tokenId, symbol] = args;
+    if (!tokenId || !symbol) throw new Error('No token_id and token_type are required');
+
+    const tokenType = contracts[symbol.toUpperCase()].typeArgument;
+
+    // console.log("?", {
+    //     itsConfig, 
+    //     args: {
+    //         InterchainTokenService, 
+    //         OperatorCap, 
+    //         tokenId
+    //     }, 
+    //     typedArgs: tokenType
+    // });
 
     await txBuilder.moveCall({
-        target: `${contracts.InterchainTokenService.address}::interchain_token_service::migrate_coin_metadata`,
-        arguments: [
-            contracts.InterchainTokenService.objects.InterchainTokenService,
-            contracts.InterchainTokenService.objects.OperatorCap,
-            tokenId,
-        ],
+        target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
+        arguments: [InterchainTokenService, OperatorCap, tokenId],
+        typeArguments: [tokenType],
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
@@ -193,10 +203,10 @@ if (require.main === module) {
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
-        .command('migrate-coin-metadata <token-id>')
+        .command('migrate-coin-metadata <token-id> <token-symbol>')
         .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
-        .action((tokenId, options) => {
-            mainProcessor(migrateCoinMetadata, options, tokenId, processCommand);
+        .action((tokenId, tokenSymbol, options) => {
+            mainProcessor(migrateCoinMetadata, options, [tokenId, tokenSymbol], processCommand);
         });
 
     program.addCommand(setFlowLimitsProgram);
