@@ -51,6 +51,7 @@ ts-node sui/deploy-contract deploy Example
 A full list of contracts that can be deployed can be viewed by running
 ```bash
 ts-node sui/deploy-contract deploy --help
+```
 
 ### Prepare Parameters
 
