@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { linkLibraryToTransceiver } = require('./deploy-upgradable');
+const { linkLibraryToTransceiver } = require('../deploy-contract');
 
 describe('linkLibraryToTransceiver', () => {
     it('should replace the correct placeholder with the library address', () => {

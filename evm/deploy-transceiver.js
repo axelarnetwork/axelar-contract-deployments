@@ -1,71 +1,53 @@
 'use strict';
 
+// TODO tkulik:
+// * Use ERC1967Proxy as a feature in the deploy-contract script.
+// * Make AxelarTransceiver deployment part of the deploy-contract script
+//   (along with TransceiverStructs with/without linking if needed).
+// * Decide if we need dynamic linking - remove the linkLibraryToTranceiver along with the tests
+
 /**
  * @fileoverview EVM Transceiver Deployment Script
  *
  * This script provides functionality to deploy AxelarTransceiver contracts and their dependencies
  * on EVM-compatible chains. It orchestrates the deployment of TransceiverStructs library,
- * AxelarTransceiver implementation.
+ * AxelarTransceiver implementation, and ERC1967Proxy.
  *
  * Deployment sequence:
  * 1. TransceiverStructs library (required by AxelarTransceiver)
  * 2. AxelarTransceiver implementation contract
+ * 3. ERC1967Proxy contract
  * 4. Contract initialization and pauser capability transfer
- *
- * @requires hardhat
- * @requires ethers
- * @requires commander
- * @requires ./utils
- * @requires ./cli-utils
- * @requires ./deploy-upgradable
  */
 
 const { ethers } = require('hardhat');
 const {
-    Wallet,
-    getDefaultProvider,
     utils: { isAddress },
 } = ethers;
 const { Command, Option } = require('commander');
 const { printInfo, printWarn, saveConfig, mainProcessor, getContractJSON } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
-
-// Import the deployEvmUpgradableContract function from deploy-upgradable.js
-const { deployEvmUpgradableContract } = require('./deploy-upgradable');
+const { processCommand: deployEvmContract } = require('./deploy-contract');
 
 /**
- * Deploys TransceiverStructs library using the generic deployEvmUpgradableContract function.
- *
- * @param {Object} config - The global configuration object
- * @param {Object} chain - The chain configuration object
- * @param {Object} options - Deployment options
- * @returns {Promise<Object|null>} The deployed contract or null if cancelled
+ * Deploys the TransceiverStructs library contract.
  */
 async function deployTransceiverStructs(config, chain, options) {
-    // Create a modified options object for TransceiverStructs deployment
     const structsOptions = {
         ...options,
         contractName: 'TransceiverStructs',
         salt: options.transceiverStructsSalt || 'TransceiverStructs',
     };
 
-    // Use the generic deployment function
-    const contract = await deployEvmUpgradableContract(config, chain, structsOptions);
+    const contract = await deployEvmContract(config, chain, structsOptions);
 
     return contract;
 }
 
 /**
- * Deploys AxelarTransceiver implementation contract using the generic deployEvmUpgradableContract function.
- *
- * @param {Object} config - The global configuration object
- * @param {Object} chain - The chain configuration object
- * @param {Object} options - Deployment options
- * @param {string} libraryAddress - The TransceiverStructs library address
- * @returns {Promise<Object|null>} The deployed contract or null if cancelled
+ * Deploys the AxelarTransceiver implementation contract.
  */
 async function deployAxelarTransceiver(config, chain, options, libraryAddress) {
-    // Create a modified options object for AxelarTransceiver deployment
     const transceiverOptions = {
         ...options,
         contractName: 'AxelarTransceiver',
@@ -73,25 +55,51 @@ async function deployAxelarTransceiver(config, chain, options, libraryAddress) {
         args: JSON.stringify({
             gateway: chain.contracts.AxelarGateway?.address,
             gasService: chain.contracts.AxelarGasService?.address,
-            nttManager: options.nttManager,
-            libraryAddress: libraryAddress,
+            gmpManager: options.gmpManager,
         }),
     };
 
-    // Use the generic deployment function
-    const contract = await deployEvmUpgradableContract(config, chain, transceiverOptions);
+    const contract = await deployEvmContract(config, chain, transceiverOptions);
 
     return contract;
 }
 
 /**
- * Initializes the AxelarTransceiver contract if not already initialized.
- *
- * @param {Object} transceiverContract - The transceiver contract instance
- * @returns {Promise<void>}
+ * Deploys the ERC1967Proxy contract for AxelarTransceiver.
  */
-async function initializeTransceiver(transceiverContract) {
+async function deployTransceiverProxy(config, chain, options, implementationAddress) {
+    const proxyOptions = {
+        ...options,
+        contractName: 'ERC1967Proxy',
+        salt: options.proxySalt || 'AxelarTransceiverProxy',
+        args: JSON.stringify([implementationAddress, '0x']), // implementation address and empty init data
+    };
+
+    const contract = await deployEvmContract(config, chain, proxyOptions);
+
+    return contract;
+}
+
+/**
+ * Creates an AxelarTransceiver interface instance using the proxy address.
+ */
+function createTransceiverInterface(proxyAddress, artifactPath) {
+    const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
+    const { ethers } = require('hardhat');
+    const { Contract } = ethers;
+
+    // Create a contract instance with AxelarTransceiver ABI but proxy address
+    return new Contract(proxyAddress, transceiverJson.abi, null);
+}
+
+/**
+ * Initializes the AxelarTransceiver contract if not already initialized.
+ */
+async function initializeTransceiver(proxyAddress, artifactPath, wallet) {
     try {
+        const transceiverInterface = createTransceiverInterface(proxyAddress, artifactPath);
+        const transceiverContract = transceiverInterface.connect(wallet);
+
         const isInitialized = await transceiverContract.isInitialized();
         if (!isInitialized) {
             printInfo('Initializing AxelarTransceiver...');
@@ -106,17 +114,15 @@ async function initializeTransceiver(transceiverContract) {
 
 /**
  * Transfers pauser capability to the specified address.
- *
- * @param {Object} transceiverContract - The transceiver contract instance
- * @param {string} pauserAddress - The address to transfer pauser capability to
- * @returns {Promise<void>}
  */
-async function transferPauserCapability(transceiverContract, pauserAddress) {
+async function transferPauserCapability(proxyAddress, artifactPath, wallet, pauserAddress) {
     if (pauserAddress && isAddress(pauserAddress)) {
         try {
+            const transceiverInterface = createTransceiverInterface(proxyAddress, artifactPath);
+            const transceiverContract = transceiverInterface.connect(wallet);
+
             printInfo(`Transferring pauser capability to ${pauserAddress}...`);
 
-            // TODO tkulik: How to handle the pauser capability?
             const transferTx = await transceiverContract.transferPauserCapability(pauserAddress);
             await transferTx.wait();
             printInfo('Pauser capability transferred successfully');
@@ -127,15 +133,15 @@ async function transferPauserCapability(transceiverContract, pauserAddress) {
 }
 
 /**
- * Processes the transceiver deployment command for a specific chain.
  * Orchestrates the deployment of TransceiverStructs, AxelarTransceiver, and proxy.
- *
- * @param {Object} config - The global configuration object
- * @param {Object} chain - The chain configuration object
- * @param {Object} options - Deployment options
- * @returns {Promise<void>}
  */
 async function deployTransceiverContracts(config, chain, options) {
+    // Create wallet for contract interactions
+    const { ethers } = require('hardhat');
+    const { Wallet, getDefaultProvider } = ethers;
+    const provider = getDefaultProvider(chain.rpc);
+    const wallet = new Wallet(options.privateKey, provider);
+
     // Deploy TransceiverStructs library first
     const structsContract = await deployTransceiverStructs(config, chain, options);
     if (!structsContract) {
@@ -148,20 +154,23 @@ async function deployTransceiverContracts(config, chain, options) {
         return; // User cancelled or predictOnly mode
     }
 
+    // Deploy ERC1967Proxy for AxelarTransceiver
+    const proxyContract = await deployTransceiverProxy(config, chain, options, implementationContract.address);
+    if (!proxyContract) {
+        return; // User cancelled or predictOnly mode
+    }
+
     // Initialize the contract if needed
-    await initializeTransceiver(implementationContract);
+    await initializeTransceiver(proxyContract.address, options.artifactPath, wallet);
 
     // Transfer pauser capability if provided
-    await transferPauserCapability(implementationContract, options.pauserAddress);
+    await transferPauserCapability(proxyContract.address, options.artifactPath, wallet, options.pauserAddress);
 
     saveConfig(config, options.env);
 }
 
 /**
  * Main entry point for the deploy-transceiver script.
- *
- * @param {Object} options - Command line options and configuration
- * @returns {Promise<void>}
  */
 async function main(options) {
     await mainProcessor(options, deployTransceiverContracts);
@@ -183,7 +192,7 @@ if (require.main === module) {
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
 
-    program.addOption(new Option('--nttManager <nttManager>', 'NTT Manager address').makeOptionMandatory(true).env('NTT_MANAGER'));
+    program.addOption(new Option('--gmpManager <gmpManager>', 'GMP Manager address').makeOptionMandatory(true).env('GMP_MANAGER'));
 
     program.addOption(new Option('--pauserAddress <pauserAddress>', 'Address to transfer pauser capability to').env('PAUSER_ADDRESS'));
 
@@ -198,6 +207,8 @@ if (require.main === module) {
             'TRANSCEIVER_STRUCTS_SALT',
         ),
     );
+
+    program.addOption(new Option('--proxySalt <proxySalt>', 'deployment salt to use for ERC1967Proxy deployment').env('PROXY_SALT'));
 
     program.action(async (options) => {
         await main(options);
