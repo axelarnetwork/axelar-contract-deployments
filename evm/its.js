@@ -26,6 +26,7 @@ const {
     parseTrustedChains,
     encodeITSDestination,
     INTERCHAIN_TRANSFER,
+    printTokenInfo,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -326,6 +327,8 @@ async function processCommand(config, chain, action, options) {
                 getContractJSON('InterchainToken').abi,
                 wallet,
             );
+
+            await printTokenInfo(await interchainTokenService.registeredTokenAddress(tokenIdBytes32), provider);
 
             const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();

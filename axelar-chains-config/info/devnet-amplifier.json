@@ -48,7 +48,7 @@
           "salt": "Create3Deployer"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -133,7 +133,7 @@
           "salt": "Create3Deployer"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -218,7 +218,7 @@
           "salt": "Create3Deployer"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x60607ebAE692cfD36af19b4779b72AC2f1Ca2798",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -319,7 +319,7 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -413,7 +413,7 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -507,7 +507,7 @@
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -583,7 +583,7 @@
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x505381EEd15c828b3158836d0196bC2E6B51c49f",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -1063,7 +1063,7 @@
           "salt": "AxelarAmplifierGateway"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -1152,7 +1152,7 @@
           "salt": "AxelarAmplifierGateway"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0xcBA75dd553f70E9Ca0c49415a31F2214fb9090F3",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
@@ -1222,7 +1222,7 @@
           "salt": "AxelarAmplifierGateway"
         },
         "Operators": {
-          "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
           "address": "0x2e1C331cE54863555Ee1638c99eA9154b02bA831",
           "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "deploymentMethod": "create2",
