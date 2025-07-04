@@ -38,6 +38,11 @@ ts-node sui/deploy-contract deploy InterchainTokenService
 ts-node sui/deploy-contract deploy Example
 ```
 
+A full list of contracts that can be deployed can be viewed by running
+```bash
+ts-node sui/deploy-contract deploy --help
+```
+
 ### Prepare Parameters
 
 To simplify the process of obtaining necessary parameters, run the following script:
