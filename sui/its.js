@@ -133,7 +133,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const txBuilder = new TxBuilder(client);
 
     await txBuilder.moveCall({
-        target: `${contracts.InterchainTokenService.address}::interchain_token_service::remove_trusted_chains`,
+        target: `${contracts.InterchainTokenService.address}::interchain_token_service::migrate_coin_metadata`,
         arguments: [
             contracts.InterchainTokenService.objects.InterchainTokenService,
             contracts.InterchainTokenService.objects.OperatorCap,
