@@ -1,5 +1,26 @@
 'use strict';
 
+/**
+ * @fileoverview EVM Contract Deployment Script
+ *
+ * This script provides functionality to deploy various Axelar contracts on EVM-compatible chains.
+ * It supports multiple deployment methods (create, create2, create3) and handles contract
+ * verification, configuration management, and deployment validation.
+ *
+ * Supported contract types:
+ * - AxelarServiceGovernance: Governance contract for Axelar services
+ * - InterchainProposalSender: Contract for sending interchain proposals
+ * - InterchainGovernance: Interchain governance contract
+ * - Multisig: Multi-signature wallet contract
+ * - Operators: Operator management contract
+ * - ConstAddressDeployer: Constant address deployer contract
+ * - Create3Deployer: Create3 deployment contract
+ * - TokenDeployer: Token deployment contract
+ * - ERC1967Proxy: ERC1967 proxy contract
+ * - AxelarTransceiver: Transceiver contract
+ * - TransceiverStructs: Transceiver structs library
+ */
+
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -29,6 +50,9 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
+/**
+ * Generates constructor arguments for a given contract based on its configuration and options.
+ */
 async function getConstructorArgs(contractName, config, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
     const contractConfig = config[contractName];
@@ -156,11 +180,72 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         case 'TokenDeployer': {
             return [];
         }
+
+        case 'TransceiverStructs': {
+            return [];
+        }
+
+        case 'AxelarTransceiver': {
+            const gateway = config.AxelarGateway?.address;
+            const gasService = config.AxelarGasService?.address;
+            const gmpManager = options.gmpManager;
+
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            if (!isAddress(gmpManager)) {
+                throw new Error(`Missing GMP Manager address. Please provide --gmpManager parameter.`);
+            }
+
+            return [gateway, gasService, gmpManager];
+        }
+
+        case 'ERC1967Proxy': {
+            const args = options.args ? JSON.parse(options.args) : [];
+            if (args.length < 2) {
+                throw new Error(`ERC1967Proxy requires implementation address and init data.`);
+            }
+            return args;
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
+/**
+ * Links the TransceiverStructs library to the AxelarTransceiver bytecode.
+ * Uses the correct Solidity library placeholder format with keccak256 hash.
+ */
+function linkLibraryToTransceiver(transceiverJson, libraryAddress) {
+    // Create a copy to avoid modifying the cached object
+    const linkedJson = JSON.parse(JSON.stringify(transceiverJson));
+
+    // Solidity generates library placeholders as: __$<keccak256(libraryName).slice(0, 34)>$__
+    const libraryName = 'TransceiverStructs';
+    const libraryNameHash = keccak256(toUtf8Bytes(libraryName));
+    const libraryPlaceholder = `__$${libraryNameHash.slice(2, 36)}__`; // Remove '0x' and take 34 chars
+
+    // Ensure the library address is properly formatted (40 hex chars without 0x)
+    const libraryAddressPadded = libraryAddress.replace('0x', '').padStart(40, '0');
+
+    // Replace the placeholder in the bytecode
+    if (linkedJson.bytecode.includes(libraryPlaceholder)) {
+        linkedJson.bytecode = linkedJson.bytecode.replace(libraryPlaceholder, libraryAddressPadded);
+    } else {
+        throw new Error(`Library placeholder '${libraryPlaceholder}' not found in bytecode. Library linking failed.`);
+    }
+
+    return linkedJson;
+}
+
+/**
+ * Validates deployed contract configuration by checking contract state against expected values.
+ */
 async function checkContract(contractName, contract, contractConfig) {
     switch (contractName) {
         case 'Operators': {
@@ -208,9 +293,34 @@ async function checkContract(contractName, contract, contractConfig) {
 
             break;
         }
+
+        case 'AxelarTransceiver': {
+            const gateway = await contract.gateway();
+            const gasService = await contract.gasService();
+            const gmpManager = await contract.gmpManager();
+
+            if (gateway !== contractConfig.gateway) {
+                printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
+            }
+
+            if (gasService !== contractConfig.gasService) {
+                printError(`Expected gasService ${contractConfig.gasService} but got ${gasService}.`);
+            }
+
+            if (gmpManager !== contractConfig.gmpManager) {
+                printError(`Expected gmpManager ${contractConfig.gmpManager} but got ${gmpManager}.`);
+            }
+
+            printInfo('Transceiver contract verification passed');
+            break;
+        }
     }
 }
 
+/**
+ * Processes the deployment command for a specific chain.
+ * Handles contract deployment, verification, and configuration updates.
+ */
 async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
@@ -240,7 +350,17 @@ async function processCommand(config, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    const contractJson = getContractJSON(contractName, artifactPath);
+    let contractJson = getContractJSON(contractName, artifactPath);
+
+    // Special handling for AxelarTransceiver - link the library
+    if (contractName === 'AxelarTransceiver') {
+        const libraryAddress = contracts.TransceiverStructs?.address;
+        if (!libraryAddress) {
+            throw new Error('TransceiverStructs library address not found. Deploy it first.');
+        }
+
+        contractJson = linkLibraryToTransceiver(contractJson, libraryAddress);
+    }
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
@@ -321,6 +441,29 @@ async function processCommand(config, chain, options) {
     contractConfig.codehash = codehash;
     contractConfig.predeployCodehash = predeployCodehash;
 
+    // Special handling for AxelarTransceiver - store additional config
+    if (contractName === 'AxelarTransceiver') {
+        // Store the actual values used in deployment, not from options.args
+        const gateway = contracts.AxelarGateway?.address;
+        const gasService = contracts.AxelarGasService?.address;
+        const gmpManager = options.gmpManager;
+
+        contractConfig.gateway = gateway;
+        contractConfig.gasService = gasService;
+        contractConfig.gmpManager = gmpManager;
+    }
+
+    // Special handling for ERC1967Proxy - store proxy address in AxelarTransceiver config
+    if (contractName === 'ERC1967Proxy' && contracts.AxelarTransceiver) {
+        contracts.AxelarTransceiver.proxyAddress = contract.address;
+        contracts.AxelarTransceiver.proxyDeployer = wallet.address;
+        contracts.AxelarTransceiver.proxyDeploymentMethod = deployMethod;
+        contracts.AxelarTransceiver.proxyCodehash = codehash;
+        if (deployMethod !== 'create') {
+            contracts.AxelarTransceiver.proxySalt = salt;
+        }
+    }
+
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
@@ -330,12 +473,19 @@ async function processCommand(config, chain, options) {
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
 
     await checkContract(contractName, contract, contractConfig);
+
+    return contract;
 }
 
+/**
+ * Main entry point for the deploy-contract script.
+ * Processes deployment options and executes the deployment across specified chains.
+ */
 async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
+// CLI setup and execution
 if (require.main === module) {
     const program = new Command();
 
@@ -362,3 +512,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { processCommand, linkLibraryToTransceiver };
