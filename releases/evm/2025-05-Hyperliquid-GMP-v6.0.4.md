@@ -120,11 +120,11 @@ a. For any deployer key that needs to switch to large block the account must be 
 
 b. For the Gateway and AxelarGasService deployer keys switch to large blocks using the provided script. Once the .env parameters are set execute:
    ```bash
-   ts-node evm/hyperliquid.js --blockSize big
+   ts-node evm/hyperliquid.js --action updateBlockSize --blockSize big
    ```
 c. After release is complete the deployer keys can changed to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks by executing:
    ```bash
-   ts-node evm/hyperliquid.js --blockSize small
+   ts-node evm/hyperliquid.js --action updateBlockSize --blockSize small
    ```
 
 3. Deploy `ConstAddrDeployer`:

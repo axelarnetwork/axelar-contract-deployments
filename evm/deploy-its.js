@@ -431,8 +431,9 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
-        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key, isHyperliquidChain(chain))) {
-            await switchHyperliquidBlockSize(options, gasOptions, true, deployment.name);
+        printInfo(`Key: ${key}`);
+        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
+            await switchHyperliquidBlockSize(options, gasOptions, true, chain);
         }
 
         printInfo(`Deploying ${deployment.name}`);
@@ -447,8 +448,8 @@ async function deployAll(config, wallet, chain, options) {
             contractConfig[key] = contract.address;
         }
 
-        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key, isHyperliquidChain(chain))) {
-            await switchHyperliquidBlockSize(options, gasOptions, false, deployment.name);
+        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
+            await switchHyperliquidBlockSize(options, gasOptions, false, chain);
         }
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);

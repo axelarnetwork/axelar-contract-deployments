@@ -1059,7 +1059,7 @@ const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionTyp
  * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
  */
 const isHyperliquidChain = (chain) => {
-    return chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
+    return chain.axelarId.toLowerCase().includes('hyperliquid');
 };
 
 const deriveAccounts = async (mnemonic, quantity) => {

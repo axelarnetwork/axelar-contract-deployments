@@ -293,87 +293,6 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'getCurrentDeployer': {
-            const { tokenId } = options;
-
-            validateParameters({ isNonEmptyString: { tokenId } });
-
-            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
-            printInfo('Token address', tokenAddress);
-
-            try {
-                const TokenContract = getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken');
-                const token = new Contract(tokenAddress, TokenContract.abi, wallet);
-
-                const currentDeployer = await token.deployer();
-                printInfo('Current deployer', currentDeployer);
-            } catch (error) {
-                if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
-                    const factoryDeployer = await interchainTokenFactory.getTokenDeployer(tokenId);
-                    if (factoryDeployer !== AddressZero) {
-                        printInfo('Factory deployer', factoryDeployer);
-                    } else {
-                        throw new Error('Token does not support deployer retrieval and no factory record found');
-                    }
-                } else {
-                    throw error;
-                }
-            }
-
-            break;
-        }
-
-        case 'updateTokenDeployer': {
-            const { tokenId, deployer } = options;
-
-            validateParameters({
-                isNonEmptyString: { tokenId },
-                isValidAddress: { deployer },
-            });
-
-            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
-            printInfo('Token address', tokenAddress);
-
-            const ServiceContract = getContractJSON(
-                isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
-            );
-            const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
-
-            let hasUpdateFunction = false;
-            try {
-                const updateFunction = service.interface.getFunction('updateTokenDeployer');
-                hasUpdateFunction = !!updateFunction;
-            } catch (error) {
-                hasUpdateFunction = false;
-            }
-
-            if (!hasUpdateFunction) {
-                throw new Error('Service contract does not support updateTokenDeployer');
-            }
-
-            const TokenContract = getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken');
-            const token = new Contract(tokenAddress, TokenContract.abi, wallet);
-
-            const currentDeployer = await token.deployer();
-            printInfo('Current deployer', currentDeployer);
-            printInfo('New deployer', deployer);
-
-            const serviceOwner = await service.owner();
-            const isOperator = await service.isOperator(wallet.address);
-
-            if (wallet.address.toLowerCase() !== serviceOwner.toLowerCase() && !isOperator) {
-                throw new Error('Wallet does not have permission to update deployers. Must be service owner or operator.');
-            }
-
-            const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
-            await handleTx(tx, chain, service, options.action);
-
-            const updatedDeployer = await token.deployer();
-            printInfo('Updated deployer', updatedDeployer);
-
-            break;
-        }
-
         default: {
             throw new Error(`Unknown action ${action}`);
         }
@@ -406,8 +325,6 @@ if (require.main === module) {
                 'deployRemoteCanonicalInterchainToken',
                 'registerCustomToken',
                 'linkToken',
-                'getCurrentDeployer',
-                'updateTokenDeployer',
             ])
             .makeOptionMandatory(true),
     );
