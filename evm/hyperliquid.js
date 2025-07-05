@@ -4,7 +4,16 @@ const { Wallet, ethers } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, printError, validateParameters, mainProcessor, isHyperliquidChain, getContractJSON, getGasOptions, getDefaultProvider } = require('./utils');
+const {
+    printInfo,
+    printError,
+    validateParameters,
+    mainProcessor,
+    isHyperliquidChain,
+    getContractJSON,
+    getGasOptions,
+    getDefaultProvider,
+} = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
@@ -134,7 +143,7 @@ async function processCommand(config, chain, options) {
     }
 
     const network = chain.networkType;
-    
+
     switch (action) {
         case 'updateBlockSize': {
             const { blockSize } = options;
@@ -160,14 +169,14 @@ async function processCommand(config, chain, options) {
         }
         case 'deployer': {
             const { tokenId } = options;
-            
+
             validateParameters({
                 isNonEmptyString: { tokenId },
             });
 
             printInfo('Switching to big blocks for deployer query');
             await updateBlockSize(privateKey, true, network);
-            
+
             try {
                 await getTokenDeployer(config, chain, options);
             } finally {
@@ -178,7 +187,7 @@ async function processCommand(config, chain, options) {
         }
         case 'updateTokenDeployer': {
             const { tokenId, deployer } = options;
-            
+
             validateParameters({
                 isNonEmptyString: { tokenId },
                 isValidAddress: { deployer },
@@ -186,7 +195,7 @@ async function processCommand(config, chain, options) {
 
             printInfo('Switching to big blocks for deployer update');
             await updateBlockSize(privateKey, true, network);
-            
+
             try {
                 await updateTokenDeployer(config, chain, options);
             } finally {
@@ -202,17 +211,17 @@ async function processCommand(config, chain, options) {
 }
 
 /**
-* Switches Hyperliquid block size and adjusts gas options accordingly
-* @param {Object} options - Deployment options
-* @param {Object} gasOptions - Gas options to modify
-* @param {boolean} useBigBlocks - Whether to switch to big blocks
-* @param {Object} chain - Chain configuration object
-* @returns {Promise<boolean>} - Whether the switch was successful
-*/
+ * Switches Hyperliquid block size and adjusts gas options accordingly
+ * @param {Object} options - Deployment options
+ * @param {Object} gasOptions - Gas options to modify
+ * @param {boolean} useBigBlocks - Whether to switch to big blocks
+ * @param {Object} chain - Chain configuration object
+ * @returns {Promise<boolean>} - Whether the switch was successful
+ */
 async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, chain) {
     const network = chain.networkType;
     const blockType = useBigBlocks ? 'BIG' : 'SMALL';
- 
+
     try {
         const result = await updateBlockSize(options.privateKey, useBigBlocks, network);
 
@@ -229,7 +238,7 @@ async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, cha
         throw error;
     }
 }
- 
+
 /**
  * Determines if a deployment should use big blocks on Hyperliquid
  * @param {string} key - Deployment key
@@ -253,7 +262,7 @@ async function getTokenDeployer(config, chain, options) {
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
-    validateParameters({ 
+    validateParameters({
         isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
     });
 
@@ -362,9 +371,11 @@ if (require.main === module) {
     program.addOption(
         new Option('--action <action>', 'action to perform')
             .choices(['updateBlockSize', 'deployer', 'updateTokenDeployer'])
-            .makeOptionMandatory(true)
+            .makeOptionMandatory(true),
     );
-    program.addOption(new Option('--blockSize <blockSize>', 'block size to switch to (required for updateBlockSize action)').choices(['big', 'small']));
+    program.addOption(
+        new Option('--blockSize <blockSize>', 'block size to switch to (required for updateBlockSize action)').choices(['big', 'small']),
+    );
     program.addOption(new Option('--address <address>', 'contract address'));
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
     program.addOption(new Option('--deployer <deployer>', 'deployer address'));
