@@ -1,6 +1,6 @@
 'use strict';
 
-const { Wallet, ethers } = require('ethers');
+const { Wallet, ethers, getDefaultProvider } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
@@ -12,7 +12,6 @@ const {
     isHyperliquidChain,
     getContractJSON,
     getGasOptions,
-    getDefaultProvider,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { handleTx } = require('./its');
@@ -174,15 +173,7 @@ async function processCommand(config, chain, options) {
                 isNonEmptyString: { tokenId },
             });
 
-            printInfo('Switching to big blocks for deployer query');
-            await updateBlockSize(privateKey, true, network);
-
-            try {
-                await getTokenDeployer(config, chain, options);
-            } finally {
-                printInfo('Switching back to small blocks');
-                await updateBlockSize(privateKey, false, network);
-            }
+            await getTokenDeployer(config, chain, options);
             break;
         }
         case 'updateTokenDeployer': {
@@ -193,15 +184,7 @@ async function processCommand(config, chain, options) {
                 isValidAddress: { deployer },
             });
 
-            printInfo('Switching to big blocks for deployer update');
-            await updateBlockSize(privateKey, true, network);
-
-            try {
-                await updateTokenDeployer(config, chain, options);
-            } finally {
-                printInfo('Switching back to small blocks');
-                await updateBlockSize(privateKey, false, network);
-            }
+            await updateTokenDeployer(config, chain, options);
             break;
         }
         default: {
@@ -329,11 +312,6 @@ async function updateTokenDeployer(config, chain, options) {
 
     const ServiceContract = getContractJSON('HyperliquidInterchainTokenService');
     const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
-
-    const hasUpdateFunction = serviceContract.interface.functions.hasOwnProperty('updateTokenDeployer');
-    if (!hasUpdateFunction) {
-        printError('Service contract does not support updateTokenDeployer');
-    }
 
     const TokenContract = getContractJSON('HyperliquidInterchainToken');
     const token = new Contract(tokenAddress, TokenContract.abi, wallet);
