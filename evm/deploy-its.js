@@ -431,7 +431,6 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
-        printInfo(`Key: ${key}`);
         if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
             await switchHyperliquidBlockSize(options, gasOptions, true, chain);
         }
