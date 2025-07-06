@@ -334,7 +334,9 @@ async function processCommand(config, chain, options) {
             const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
             printInfo('Token address', tokenAddress);
 
-            const ServiceContract = getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService');
+            const ServiceContract = getContractJSON(
+                isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+            );
             const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
 
             let hasUpdateFunction = false;

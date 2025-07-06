@@ -1094,7 +1094,7 @@ async function printTokenInfo(tokenAddress, provider) {
  * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
  */
 function isHyperliquidChain(chain) {
-    return chain.name.toLowerCase().includes('hyperliquid') || chain.axelarId.toLowerCase().includes('hyperliquid');
+    return chain.axelarId.toLowerCase().includes('hyperliquid');
 }
 
 module.exports = {

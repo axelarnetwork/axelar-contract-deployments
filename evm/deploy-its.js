@@ -512,8 +512,7 @@ function validateChainSpecificDeployments(contractConfig, isHyperliquidChain, ch
 
     if (requiredDeployments.length > 0) {
         throw new Error(
-            `Missing required deployments for ${chainName}: ${requiredDeployments.join(', ')}. ` +
-                `Please run a full deployment first.`,
+            `Missing required deployments for ${chainName}: ${requiredDeployments.join(', ')}. ` + `Please run a full deployment first.`,
         );
     }
 }
