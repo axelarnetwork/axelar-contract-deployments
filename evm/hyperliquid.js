@@ -231,10 +231,10 @@ function shouldUseBigBlocks(key) {
  * @returns {Promise<void>}
  */
 async function getTokenDeployer(config, chain, options) {
-    const { privateKey, address, tokenId } = options;
+    const { privateKey, tokenId } = options;
 
     const contracts = chain.contracts;
-    const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
+    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
     validateParameters({
@@ -282,10 +282,10 @@ async function getTokenDeployer(config, chain, options) {
  * @returns {Promise<void>}
  */
 async function updateTokenDeployer(config, chain, options) {
-    const { privateKey, address, tokenId, deployer } = options;
+    const { privateKey, tokenId, deployer } = options;
 
     const contracts = chain.contracts;
-    const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
+    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
     validateParameters({
@@ -346,7 +346,6 @@ if (require.main === module) {
     program.addOption(
         new Option('--blockSize <blockSize>', 'block size to switch to (required for updateBlockSize action)').choices(['big', 'small']),
     );
-    program.addOption(new Option('--address <address>', 'contract address'));
     program.addOption(new Option('--tokenId <tokenId>', 'ID of the token'));
     program.addOption(new Option('--deployer <deployer>', 'deployer address'));
 

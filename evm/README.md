@@ -111,7 +111,6 @@ ts-node evm/hyperliquid.js --action deployer --tokenId <tokenId>
 **Parameters:**
 - `--action deployer`: Specifies the deployer query action
 - `--tokenId`: The ID of the token to query (required)
-- `--address` (optional): Override the contract address from config
 
 **Example:**
 ```bash
@@ -130,7 +129,6 @@ ts-node evm/hyperliquid.js --action updateTokenDeployer --tokenId <tokenId> --de
 - `--action updateTokenDeployer`: Specifies the deployer update action
 - `--tokenId`: The ID of the token to update (required)
 - `--deployer`: The new deployer address (required)
-- `--address` (optional): Override the contract address from config
 
 **Example:**
 ```bash
