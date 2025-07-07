@@ -1083,6 +1083,50 @@ async function printTokenInfo(tokenAddress, provider) {
     }
 }
 
+/**
+ * Links libraries in contract bytecode without deploying.
+ * Manually replaces library placeholders in bytecode with actual addresses.
+ */
+const linkLibrariesInBytecode = (contractBytecode, libraries = {}) => {
+    let linkedBytecode = contractBytecode;
+
+    // Replace library placeholders with actual addresses
+    for (const [libraryFullyQualifiedName, libraryAddress] of Object.entries(libraries)) {
+        // Try both hash-based and old-style placeholders
+        const libraryNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(libraryFullyQualifiedName));
+        const libraryName = libraryFullyQualifiedName.split(':')[1];
+        const hashPlaceholder = `__$${libraryNameHash.slice(2, 36)}$__`;
+        const oldStylePlaceholder40 = `__${libraryName}`.padEnd(40, '_');
+
+        const addressWithoutPrefix = libraryAddress.replace('0x', '');
+        if (linkedBytecode.includes(hashPlaceholder)) {
+            linkedBytecode = linkedBytecode.replace(hashPlaceholder, addressWithoutPrefix);
+        } else if (linkedBytecode.includes(oldStylePlaceholder40)) {
+            linkedBytecode = linkedBytecode.replace(oldStylePlaceholder40, addressWithoutPrefix);
+        } else {
+            printError(`Library placeholder not found for ${libraryFullyQualifiedName}`);
+            throw new Error(`Library placeholder not found for ${libraryFullyQualifiedName}`);
+        }
+    }
+
+    return linkedBytecode;
+};
+
+/**
+ * Links libraries in contract bytecode and returns the linked contract JSON.
+ * This creates a new contract JSON with the linked bytecode.
+ */
+const linkLibrariesInContractJson = (contractJson, libraries = {}) => {
+    const linkedBytecode = linkLibrariesInBytecode(contractJson.bytecode, libraries);
+    const linkedDeployedBytecode = linkLibrariesInBytecode(contractJson.deployedBytecode, libraries);
+
+    return {
+        ...contractJson,
+        bytecode: linkedBytecode,
+        deployedBytecode: linkedDeployedBytecode,
+    };
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1125,4 +1169,6 @@ module.exports = {
     isConsensusChain,
     deriveAccounts,
     printTokenInfo,
+    linkLibrariesInBytecode,
+    linkLibrariesInContractJson,
 };

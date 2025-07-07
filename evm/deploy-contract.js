@@ -46,6 +46,7 @@ const {
     isContract,
     getContractJSON,
     getDeployOptions,
+    linkLibrariesInContractJson,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
@@ -194,7 +195,9 @@ async function getConstructorArgs(contractName, config, wallet, options) {
             }
 
             if (!isAddress(gmpManager)) {
-                throw new Error(`Missing GMP Manager address. Please provide --gmpManager parameter.`);
+                throw new Error(
+                    `Missing GMP Manager address or the address is not valid. Please provide a correct --gmpManager parameter.`,
+                );
             }
 
             return [gateway, gasService, gmpManager];
@@ -320,11 +323,24 @@ async function processCommand(config, chain, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
-
-    const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
-    printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
-
     const constructorArgs = await getConstructorArgs(contractName, contracts, wallet, options);
+
+    // Parse libraries option if provided
+    let linkedContractJson = contractJson;
+    if (options.libraries) {
+        let libraries;
+        try {
+            libraries = JSON.parse(options.libraries);
+            console.log('Parsed libraries:', libraries);
+        } catch (error) {
+            console.log('JSON parse error:', error.message);
+            throw new Error(`Invalid libraries JSON format: ${options.libraries}`);
+        }
+        linkedContractJson = linkLibrariesInContractJson(contractJson, libraries, constructorArgs);
+    }
+
+    const predeployCodehash = await getBytecodeHash(linkedContractJson, chain.axelarId);
+    printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
@@ -334,7 +350,7 @@ async function processCommand(config, chain, options) {
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
         deployerContract,
-        contractJson,
+        contractJson: linkedContractJson,
         constructorArgs,
         provider: wallet.provider,
     });
@@ -383,7 +399,7 @@ async function processCommand(config, chain, options) {
     const contract = await deployContract(
         deployMethod,
         wallet,
-        contractJson,
+        linkedContractJson,
         constructorArgs,
         { salt, deployerContract },
         gasOptions,
@@ -466,6 +482,10 @@ if (require.main === module) {
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
     program.addOption(new Option('--args <args>', 'custom deployment args'));
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
+    program.addOption(
+        new Option('--libraries <libraries>', 'JSON string of library addresses to link (e.g., \'{"TransceiverStructs":"0x..."}\')'),
+    );
+    program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
 
     program.action((options) => {
         main(options);
