@@ -232,7 +232,7 @@ if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
 
-    // v0 release:
+    // v0 release
 
     // This command is used to setup the trusted chains on the InterchainTokenService contract.
     // The trusted chain is used to verify the message from the source chain.
@@ -261,9 +261,12 @@ if (require.main === module) {
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
+    
+    program.addCommand(setFlowLimitsProgram);
+    program.addCommand(addTrustedChainsProgram);
+    program.addCommand(removeTrustedChainsProgram);
 
-    // v1 release:
-
+    // v1 its release
     const registerCoinFromInfoProgram = new Command()
         .name('register-coin-from-info')
         .command('register-coin-from-info <symbol> <name> <decimals>')
@@ -288,14 +291,11 @@ if (require.main === module) {
             mainProcessor(migrateCoinMetadata, options, [tokenId, tokenSymbol], processCommand);
         });
 
-    program.addCommand(setFlowLimitsProgram);
-    program.addCommand(addTrustedChainsProgram);
-    program.addCommand(removeTrustedChainsProgram);
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
+    // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
-
     program.parse();
 }
