@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Address } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const {
     saveConfig,
@@ -22,9 +22,8 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
-    isHexString,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination, isValidStellarAddress, asciiToBytes } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -286,10 +285,10 @@ async function linkToken(wallet, _, chain, contract, args, options) {
     });
 
     const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });
-    if (linkParams && !isHexString(linkParams)) {
-        throw new Error(`Invalid link params: ${linkParams} must be a hex string.`);
+    if (linkParams && !isValidStellarAddress(linkParams)) {
+        throw new Error(`Invalid link params: ${linkParams} must be a valid Stellar address.`);
     }
-    const linkParamsBytes = linkParams ? hexToScVal(linkParams) : nativeToScVal(null, { type: 'void' });
+    const linkParamsBytes = linkParams ? hexToScVal(asciiToBytes(linkParams)) : nativeToScVal(null, { type: 'void' });
 
     const operation = contract.call(
         'link_token',
