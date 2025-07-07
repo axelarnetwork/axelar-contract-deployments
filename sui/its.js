@@ -214,6 +214,29 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 }
 
 // register_coin_metadata
+async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+
+    // Coin Metadata to be registered
+    const tokenType = contracts[symbol.toUpperCase()].typeArgument;
+    const coinMetadata = await client.getCoinMetadata({coinType: tokenType});
+
+    // Register Coin Metadata
+    const txBuilder = new TxBuilder(client);
+
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
+        arguments: [InterchainTokenService, coinMetadata],
+        typeArguments: [tokenType],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
+}
+
 // receive_link_coin
 // give_unlinked_coin
 // remove_treasury_cap
@@ -226,7 +249,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const txBuilder = new TxBuilder(client);
 
     const [tokenId, symbol] = args;
-    if (!tokenId || !symbol) throw new Error('token_id and token_type are required');
+    if (!tokenId || !symbol) throw new Error('token id and token symbol are required');
 
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
 
@@ -317,6 +340,14 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], processCommand);
         });
 
+    const registerCoinMetadataProgram = new Command()
+        .name('register-coin-metadata')
+        .command('register-coin-metadata <token-symbol>')
+        .description(`TODO: descript register-coin-metadata`)
+        .action((tokenSymbol, options) => {
+            mainProcessor(registerCoinMetadata, options, tokenSymbol, processCommand);
+        });
+
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <token-id> <token-symbol>')
@@ -328,6 +359,7 @@ if (require.main === module) {
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(registerCoinMetadataProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     // finalize program
