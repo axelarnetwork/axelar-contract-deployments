@@ -223,7 +223,7 @@ async function registerCoinMetadata(keypair, client, config, contracts, args, op
 
     // Coin Metadata to be registered
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
-    const coinMetadata = await client.getCoinMetadata({coinType: tokenType});
+    const coinMetadata = await client.getCoinMetadata({ coinType: tokenType });
 
     // Register Coin Metadata
     const txBuilder = new TxBuilder(client);
