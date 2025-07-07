@@ -825,9 +825,10 @@ function findContractPath(dir, contractName) {
 
 function getContractPath(contractName) {
     const searchDirs = [
-        path.join('@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
-        path.join('@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
-        path.join('@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
     ];
 
     for (const dir of searchDirs) {
