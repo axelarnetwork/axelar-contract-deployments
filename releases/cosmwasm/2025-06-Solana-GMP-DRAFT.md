@@ -131,12 +131,12 @@ ts-node cosmwasm/submit-proposal.js store \
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
-| Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
-| -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
-| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
-| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `1`                  |
+| Network              | `serviceName` | `votingThreshold` | `signingThreshold` | 
+| -------------------- | ------------- | ----------------- | ------------------ | 
+| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      |
+| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
+| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
+| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       |
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
@@ -234,8 +234,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for solana" \
   -d "Register Gateway address for solana at Router contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_chain\": {
       \"chain\": \"$CHAIN\",
