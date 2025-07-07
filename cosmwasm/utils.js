@@ -1115,7 +1115,6 @@ const getContractCodePath = async (options, contractName) => {
 };
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
-    // No special fields required, just return an empty object
     return {};
 };
 
