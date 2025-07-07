@@ -169,7 +169,24 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
         typeArguments: [tokenType],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Register Coin from Info', options);
+    const result = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register coin (${symbol}) from info in InterchainTokenService`,
+        options,
+        { showEvents: true, },
+    );
+    const tokenId = result.events[0].parsedJson.token_id.id;
+
+    // Save the deployed token info in the contracts object.
+    contracts[symbol.toUpperCase()] = {
+        address: packageId,
+        typeArgument: tokenType,
+        decimals,
+        objects: {
+            TokenId: tokenId,
+        },
+    };
 }
 
 // register_coin_from_metadata
