@@ -53,9 +53,8 @@ const { addEvmOptions } = require('./cli-utils');
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
  */
-async function getConstructorArgs(contractName, config, wallet, options) {
+async function getConstructorArgs(contractName, config, contractConfig, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
-    const contractConfig = config[contractName];
     Object.assign(contractConfig, args);
 
     switch (contractName) {
@@ -204,11 +203,30 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         }
 
         case 'ERC1967Proxy': {
-            const args = options.args ? JSON.parse(options.args) : [];
-            if (args.length < 2) {
-                throw new Error(`ERC1967Proxy requires implementation address and init data.`);
+            // Handle proxy-specific arguments
+            const forContract = options.forContract;
+            const proxyData = options.proxyData || '0x';
+
+            // If forContract is specified, try to get implementation from config
+            if (forContract && config[forContract]?.address) {
+                const implementationAddress = config[forContract].address;
+                printInfo(`Using implementation address from ${forContract}: ${implementationAddress}`);
+                return [implementationAddress, proxyData];
             }
-            return args;
+
+            // Fallback to explicit args if provided
+            const args = options.args ? JSON.parse(options.args) : [];
+            if (args.length >= 2) {
+                return args;
+            }
+
+            // If forContract was specified but not found, throw error
+            if (forContract) {
+                throw new Error(`Proxy for ${forContract} requires implementation address to be present in the config.`);
+            }
+
+            // If no forContract and no explicit args, throw error
+            throw new Error(`ERC1967Proxy requires implementation address and init data.`);
         }
     }
 
@@ -303,15 +321,22 @@ async function processCommand(config, chain, options) {
 
     const contracts = chain.contracts;
 
-    if (!contracts[contractName]) {
-        contracts[contractName] = {};
-    }
-
-    const contractConfig = contracts[contractName];
-
-    if (contractConfig.address && options.skipExisting) {
-        printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
-        return;
+    let contractConfig;
+    if (contractName === 'ERC1967Proxy') {
+        contractConfig = contracts[options.forContract];
+        if (contractConfig.proxyAddress && options.skipExisting) {
+            printWarn(`Skipping proxy deployment for ${options.forContract} deployment on ${chain.name} because it is already deployed.`);
+            return;
+        }
+    } else {
+        if (!contracts[contractName]) {
+            contracts[contractName] = {};
+        }
+        contractConfig = contracts[contractName];
+        if (contractConfig.address && options.skipExisting) {
+            printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+            return;
+        }
     }
 
     const rpc = chain.rpc;
@@ -323,7 +348,7 @@ async function processCommand(config, chain, options) {
     printInfo('Contract name', contractName);
 
     const contractJson = getContractJSON(contractName, artifactPath);
-    const constructorArgs = await getConstructorArgs(contractName, contracts, wallet, options);
+    const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
 
     // Parse libraries option if provided
     let linkedContractJson = contractJson;
@@ -336,7 +361,7 @@ async function processCommand(config, chain, options) {
             console.log('JSON parse error:', error.message);
             throw new Error(`Invalid libraries JSON format: ${options.libraries}`);
         }
-        linkedContractJson = linkLibrariesInContractJson(contractJson, libraries, constructorArgs);
+        linkedContractJson = linkLibrariesInContractJson(contractJson, libraries);
     }
 
     const predeployCodehash = await getBytecodeHash(linkedContractJson, chain.axelarId);
@@ -410,38 +435,35 @@ async function processCommand(config, chain, options) {
     const codehash = await getBytecodeHash(contract, chain.axelarId);
     printInfo('Deployed Contract bytecode hash', codehash);
 
-    contractConfig.address = contract.address;
-    contractConfig.deployer = wallet.address;
-    contractConfig.deploymentMethod = deployMethod;
-    contractConfig.codehash = codehash;
-    contractConfig.predeployCodehash = predeployCodehash;
-    contractConfig.gateway = contracts.AxelarGateway?.address;
-    contractConfig.gasService = contracts.AxelarGasService?.address;
-    contractConfig.gmpManager = options.gmpManager;
-
     // Special handling for ERC1967Proxy - store proxy address in target contract config
     if (contractName === 'ERC1967Proxy') {
         const targetContract = options.forContract;
-        if (targetContract && contracts[targetContract]) {
-            const args = options.args ? JSON.parse(options.args) : [];
-            if (args.length >= 1) {
-                const implementationAddress = args[0];
-                // Only store if this proxy points to the target contract's implementation
-                if (implementationAddress === contracts[targetContract].address) {
-                    contracts[targetContract].proxyAddress = contract.address;
-                    contracts[targetContract].proxyDeployer = wallet.address;
-                    contracts[targetContract].proxyDeploymentMethod = deployMethod;
-                    contracts[targetContract].proxyCodehash = codehash;
-                    if (deployMethod !== 'create') {
-                        contracts[targetContract].proxySalt = salt;
-                    }
+        if (targetContract && contractConfig) {
+            // Get implementation address from constructor args
+            const implementationAddress = constructorArgs[0];
+            // Only store if this proxy points to the target contract's implementation
+            if (implementationAddress === contractConfig.address) {
+                contractConfig.proxyAddress = contract.address;
+                contractConfig.proxyDeployer = wallet.address;
+                contractConfig.proxyDeploymentMethod = deployMethod;
+                contractConfig.proxyCodehash = codehash;
+                contractConfig.proxyData = constructorArgs[1] || '0x';
+                if (deployMethod !== 'create') {
+                    contractConfig.proxySalt = salt;
                 }
+                printInfo(`Stored proxy address ${contract.address} for ${targetContract}`);
             }
         }
-    }
-
-    if (deployMethod !== 'create') {
-        contractConfig.salt = salt;
+    } else {
+        contractConfig.address = contract.address;
+        contractConfig.deployer = wallet.address;
+        contractConfig.deploymentMethod = deployMethod;
+        contractConfig.codehash = codehash;
+        contractConfig.predeployCodehash = predeployCodehash;
+        contractConfig.gmpManager = options.gmpManager;
+        if (deployMethod !== 'create') {
+            contractConfig.salt = salt;
+        }
     }
 
     saveConfig(config, options.env);
@@ -482,8 +504,12 @@ if (require.main === module) {
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
     program.addOption(new Option('--args <args>', 'custom deployment args'));
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
+    program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
     program.addOption(
-        new Option('--libraries <libraries>', 'JSON string of library addresses to link (e.g., \'{"full/path/Contract.sol:TransceiverStructs":"0x..."}\')'),
+        new Option(
+            '--libraries <libraries>',
+            'JSON string of library addresses to link (e.g., \'{"full/path/Contract.sol:TransceiverStructs":"0x..."}\')',
+        ),
     );
     program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
 
@@ -494,4 +520,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { processCommand };
+module.exports = { processCommand, getConstructorArgs };
