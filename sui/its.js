@@ -147,19 +147,15 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
         typeArguments: [tokenType],
     });
 
-    await broadcastFromTxBuilder(
-        txBuilder,
-        keypair,
-        `Register coin (${symbol}) from info in InterchainTokenService`,
-        options,
-        { showEvents: true },
-    );
+    await broadcastFromTxBuilder(txBuilder, keypair, `Register coin (${symbol}) from info in InterchainTokenService`, options, {
+        showEvents: true,
+    });
 
     // Save the deployed token info in the contracts object
     saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
 }
 
-// register_coin_from_metadata 
+// register_coin_from_metadata
 // (XXX: covered in its-example.js#deployToken)
 
 // register_custom_coin
@@ -181,13 +177,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const txBuilder = new TxBuilder(client);
     const [tokenId] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
-        arguments: [
-            InterchainTokenService, 
-            ChannelId,
-            salt,
-            metadata,
-            coinManagement
-        ],
+        arguments: [InterchainTokenService, ChannelId, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 

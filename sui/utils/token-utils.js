@@ -48,7 +48,7 @@ async function saveTokenDeployment(packageId, contracts, symbol, TokenId, Treasu
         objects: {
             TokenId,
             TreasuryCap,
-            Metadata
+            Metadata,
         },
     };
 }
