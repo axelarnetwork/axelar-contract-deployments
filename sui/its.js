@@ -174,7 +174,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
         keypair,
         `Register coin (${symbol}) from info in InterchainTokenService`,
         options,
-        { showEvents: true, },
+        { showEvents: true },
     );
     const tokenId = result.events[0].parsedJson.token_id.id;
 
