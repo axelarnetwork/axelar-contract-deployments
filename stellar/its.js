@@ -24,7 +24,7 @@ const {
     serializeValue,
     isHexString,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, isValidStellarAddress } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
