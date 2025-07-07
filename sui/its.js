@@ -1,7 +1,17 @@
 const { Command } = require('commander');
-const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
+const { Transaction } = require('@mysten/sui/transactions');
+const { copyMovePackage, STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
+const { 
+    addBaseOptions,
+    addOptionsToCommands,
+    findPublishedObject,
+    getWallet,
+    moveDir,
+    printWalletInfo,
+    broadcastFromTxBuilder,
+    saveGeneratedTx
+} = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
@@ -115,6 +125,53 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
 }
 
 // register_coin_from_info
+async function registerCoinFromInfo(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+
+    const [symbol, name, decimals] = args;
+    if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
+
+    // Define the interchain token options
+    copyMovePackage('interchain_token', null, moveDir);
+    const interchainTokenOptions = {
+        symbol,
+        name,
+        decimals,
+    };
+
+    let txBuilder = new TxBuilder(client);
+
+    // Token Capability
+    const tokenCap = await txBuilder.publishInterchainToken(moveDir, interchainTokenOptions);
+    txBuilder.tx.transferObjects([tokenCap], walletAddress);
+
+    // Publish token and derive type
+    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`, options);
+    const publishObject = findPublishedObject(publishTxn);
+    const packageId = publishObject.packageId;
+    const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
+
+    // New CoinManagement<T>
+    const coinManagementTx = new Transaction();
+    const coinManagement = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
+        typeArguments: [tokenType]
+    });
+    coinManagementTx.transferObjects(coinManagement, walletAddress);
+
+    // Register deployed token (from info)
+    txBuilder = new TxBuilder(client);
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
+        arguments: [InterchainTokenService, name, symbol, decimals, coinManagement],
+        typeArguments: [tokenType],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Register Coin from Info', options);
+}
+
 // register_coin_from_metadata
 // register_custom_coin
 // link_coin
@@ -131,19 +188,9 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const txBuilder = new TxBuilder(client);
     
     const [tokenId, symbol] = args;
-    if (!tokenId || !symbol) throw new Error('No token_id and token_type are required');
+    if (!tokenId || !symbol) throw new Error('token_id and token_type are required');
 
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
-
-    // console.log("?", {
-    //     itsConfig, 
-    //     args: {
-    //         InterchainTokenService, 
-    //         OperatorCap, 
-    //         tokenId
-    //     }, 
-    //     typedArgs: tokenType
-    // });
 
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
@@ -173,6 +220,8 @@ if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
 
+    // v0 release:
+
     // This command is used to setup the trusted chains on the InterchainTokenService contract.
     // The trusted chain is used to verify the message from the source chain.
     const addTrustedChainsProgram = new Command()
@@ -199,6 +248,17 @@ if (require.main === module) {
         .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists`)
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
+        });
+
+
+    // v1 release:
+
+    const registerCoinFromInfoProgram = new Command()
+        .name('register-coin-from-info')
+        .command('register-coin-from-info <symbol> <name> <decimals>')
+        .description(`Deploy a coin on SUI and register it in ITS using token name, symbol and decimals.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
         });
 
     const migrateCoinMetadataProgram = new Command()
