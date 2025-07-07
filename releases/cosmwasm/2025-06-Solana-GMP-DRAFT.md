@@ -140,6 +140,7 @@ ts-node cosmwasm/submit-proposal.js store \
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
+# External gateway address can be checked at pre-requisites section.
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "serviceName": "[service name]",

@@ -61,6 +61,7 @@ MultisigProver(v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853
 
 ```bash
 # Add under `config.axelar.contracts.VotingVerifier` based on Network
+# External gateway address can be checked at pre-requisites section.
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "serviceName": "[service name]",
