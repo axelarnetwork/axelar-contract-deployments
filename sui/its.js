@@ -1,16 +1,17 @@
+const { randomBytes } = require('node:crypto');
 const { Command } = require('commander');
-const { Transaction } = require('@mysten/sui/transactions');
-const { copyMovePackage, STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
-    findPublishedObject,
-    getWallet,
-    moveDir,
-    printWalletInfo,
     broadcastFromTxBuilder,
+    deployTokenFromInfo,
+    getWallet,
+    newCoinManagementLocked,
+    printWalletInfo,
     saveGeneratedTx,
+    saveTokenDeployment,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
@@ -128,69 +129,72 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
 async function registerCoinFromInfo(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
     const walletAddress = keypair.toSuiAddress();
 
-    const [symbol, name, decimals] = args;
-    if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
-
-    // Define the interchain token options
-    copyMovePackage('interchain_token', null, moveDir);
-    const interchainTokenOptions = {
-        symbol,
-        name,
-        decimals,
-    };
-
-    let txBuilder = new TxBuilder(client);
-
-    // Token Capability
-    const tokenCap = await txBuilder.publishInterchainToken(moveDir, interchainTokenOptions);
-    txBuilder.tx.transferObjects([tokenCap], walletAddress);
-
-    // Publish token and derive type
-    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`, options);
-    const publishObject = findPublishedObject(publishTxn);
-    const packageId = publishObject.packageId;
-    const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
+    // Deploy token on Sui
+    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(symbol, name, decimals, walletAddress);
 
     // New CoinManagement<T>
-    const coinManagementTx = new Transaction();
-    const coinManagement = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
-        typeArguments: [tokenType],
-    });
-    coinManagementTx.transferObjects(coinManagement, walletAddress);
+    const coinManagement = newCoinManagementLocked(itsConfig, tokenType, walletAddress);
 
     // Register deployed token (from info)
-    txBuilder = new TxBuilder(client);
-    await txBuilder.moveCall({
+    const txBuilder = new TxBuilder(client);
+    const tokenId = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
         arguments: [InterchainTokenService, name, symbol, decimals, coinManagement],
         typeArguments: [tokenType],
     });
 
-    const result = await broadcastFromTxBuilder(
+    await broadcastFromTxBuilder(
         txBuilder,
         keypair,
         `Register coin (${symbol}) from info in InterchainTokenService`,
         options,
         { showEvents: true },
     );
-    const tokenId = result.events[0].parsedJson.token_id.id;
 
-    // Save the deployed token info in the contracts object.
-    contracts[symbol.toUpperCase()] = {
-        address: packageId,
-        typeArgument: tokenType,
-        decimals,
-        objects: {
-            TokenId: tokenId,
-        },
-    };
+    // Save the deployed token info in the contracts object
+    saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
 }
 
-// register_coin_from_metadata
+// register_coin_from_metadata 
+// (XXX: covered in its-example.js#deployToken)
+
 // register_custom_coin
+async function registerCustomCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { ChannelId, InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    // Deploy token on Sui
+    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(symbol, name, decimals, walletAddress);
+
+    // New CoinManagement<T>
+    const coinManagement = newCoinManagementLocked(itsConfig, tokenType, walletAddress);
+
+    // Register deployed token (from info)
+    const salt = randomBytes(32);
+    const txBuilder = new TxBuilder(client);
+    const [tokenId] = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
+        arguments: [
+            InterchainTokenService, 
+            ChannelId,
+            salt,
+            metadata,
+            coinManagement
+        ],
+        typeArguments: [tokenType],
+    });
+
+    // Save the deployed token info in the contracts object
+    saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
+}
+
 // link_coin
 // register_coin_metadata
 // receive_link_coin
