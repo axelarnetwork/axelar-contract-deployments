@@ -186,6 +186,32 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
 }
 
 // link_coin
+async function linkCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { ChannelId, InterchainTokenService } = itsConfig.objects;
+    const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams] = args;
+
+    if (typeof destinationChain !== 'string' || typeof destinationTokenAddress !== 'string') 
+        throw new Error('Destination chain and destination token address are required,');
+
+    // TODO: destination_token_address and link_params are vector<u8> in move.
+    // How can we really send these params, does Buffer.from work?
+    const address = Buffer.from(destinationTokenAddress);
+    const params = Buffer.from(linkParams);
+    let type = (tokenManagerType) ? parseInt(tokenManagerType) : 0;
+    if (type < 0 || type > 4) throw new Error('Invalid token manager type');
+
+    // Link coin
+    const salt = randomBytes(32);
+    const txBuilder = new TxBuilder(client);
+
+    const messageTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::link_coin`,
+        arguments: [InterchainTokenService, ChannelId, salt, destinationChain, address, type, params],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Link coin:\n${JSON.stringify(messageTicket)}`, options);
+}
 
 // register_coin_metadata
 // receive_link_coin
@@ -282,6 +308,14 @@ if (require.main === module) {
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
+    
+    const linkCoinProgram = new Command()
+        .name('link-coin')
+        .command('link-coin <destination-chain> <destination-address> <token-type> <link-params>')
+        .description(`TODO: describe link-coin and params`)
+        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options) => {
+            mainProcessor(linkCoin, options, [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], processCommand);
+        });
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
@@ -293,6 +327,7 @@ if (require.main === module) {
 
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCustomCoinProgram);
+    program.addCommand(linkCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     // finalize program
