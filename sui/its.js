@@ -271,7 +271,7 @@ if (require.main === module) {
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
         });
-    
+
     const registerCustomCoinProgram = new Command()
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
