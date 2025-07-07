@@ -57,6 +57,15 @@ npm ci
     "name": "Hyperliquid-testnet Explorer",
     "url": "https://app.hyperliquid-testnet.xyz/explorer"
   },
+  "hypercore":{
+    "domain": {
+      "chainId": 1337,
+        "name": "Exchange",
+        "verifyingContract": "0x0000000000000000000000000000000000000000",
+        "version": "1",
+    },
+    "url": "https://api.hyperliquid-testnet.xyz"
+  },
   "contracts": {}
 }
 ```
@@ -79,9 +88,19 @@ npm ci
     "name": "Hyperliquid Explorer",
     "url": "https://app.hyperliquid.xyz/explorer"
   },
+  "hypercore":{
+    "domain": {
+      "chainId": 1337,
+        "name": "Exchange",
+        "verifyingContract": "0x0000000000000000000000000000000000000000",
+        "version": "1",
+    },
+    "url": "https://api.hyperliquid.xyz"
+  },
   "contracts": {}
 }
 ```
+
 
 Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.   
 

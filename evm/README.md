@@ -78,77 +78,18 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ## Hyperliquid
 
-The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to manage block sizes and token deployers with automatic block size optimization.
-
-### Block Size Management
-
-#### Manual Block Size Switching
-
-Switch between big and small blocks using the `updateBlockSize` action:
+The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to set an account to used a specific block size, to query the deployer address of an interchain token, and to update the deployer address of an interchain token. The supported commands are:
 
 ```bash
-# Switch to big blocks (30M gas limit, 1 minute blocks)
-ts-node evm/hyperliquid.js --action updateBlockSize --blockSize big
+# Update block size
+ts-node evm/hyperliquid.js update-block-size --block-size small
 
-# Switch to small blocks (2M gas limit, 2 second blocks)
-ts-node evm/hyperliquid.js --action updateBlockSize --blockSize small
+# Get token deployer
+ts-node evm/hyperliquid.js deployer --token-id <id>
+
+# Update token deployer
+ts-node evm/hyperliquid.js update-token-deployer --token-id <id> --deployer <address>
 ```
-
-**Parameters:**
-- `--action updateBlockSize`: Specifies the block size update action
-- `--blockSize`: The target block size (required, must be 'big' or 'small')
-
-### Token Deployer Management
-
-#### Get Token Deployer
-
-Retrieve the current deployer address for a Hyperliquid interchain token:
-
-```bash
-ts-node evm/hyperliquid.js --action deployer --tokenId <tokenId>
-```
-
-**Parameters:**
-- `--action deployer`: Specifies the deployer query action
-- `--tokenId`: The ID of the token to query (required)
-
-**Example:**
-```bash
-ts-node evm/hyperliquid.js --action deployer --tokenId 0x1234567890abcdef...
-```
-
-#### Update Token Deployer
-
-Update the deployer address for a Hyperliquid interchain token:
-
-```bash
-ts-node evm/hyperliquid.js --action updateTokenDeployer --tokenId <tokenId> --deployer <newDeployerAddress>
-```
-
-**Parameters:**
-- `--action updateTokenDeployer`: Specifies the deployer update action
-- `--tokenId`: The ID of the token to update (required)
-- `--deployer`: The new deployer address (required)
-
-**Example:**
-```bash
-ts-node evm/hyperliquid.js --action updateTokenDeployer --tokenId 0x1234567890abcdef... --deployer 0x9876543210fedcba...
-```
-
-**Prerequisites:**
-- The wallet must be the service owner or an operator
-- The service contract must support the `updateTokenDeployer` function
-
-### Block Size Optimization
-
-The script automatically optimizes block sizes for different operations:
-
-- **Read operations** (e.g., `deployer`): Switches to big blocks for the query, then back to small blocks
-- **Write operations** (e.g., `updateTokenDeployer`): Switches to big blocks for the transaction, then back to small blocks
-- **Manual operations** (e.g., `updateBlockSize`): Directly switches to the specified block size
-
-This ensures optimal performance while maintaining the correct gas limits for each operation type.
-
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
