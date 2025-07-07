@@ -238,7 +238,7 @@ ts-node cosmwasm/submit-proposal.js execute \
     \"register_chain\": {
       \"chain\": \"$CHAIN\",
       \"gateway_address\": \"$GATEWAY\",
-      \"msg_id_format\": \"hex_tx_hash_and_event_index\"
+      \"msg_id_format\": \"base58_tx_signature_and_log_index\"
       }
     }"
 ```
@@ -258,7 +258,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
       "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
     },
     "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
+    "msg_id_format": "base58_tx_signature_and_log_index"
   }
 }
 ```
