@@ -186,6 +186,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
 }
 
 // link_coin
+
 // register_coin_metadata
 // receive_link_coin
 // give_unlinked_coin
@@ -269,6 +270,14 @@ if (require.main === module) {
         .description(`Deploy a coin on SUI and register it in ITS using token name, symbol and decimals.`)
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
+        });
+    
+    const registerCustomCoinProgram = new Command()
+        .name('register-custom-coin')
+        .command('register-custom-coin <symbol> <name> <decimals>')
+        .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
 
     const migrateCoinMetadataProgram = new Command()
