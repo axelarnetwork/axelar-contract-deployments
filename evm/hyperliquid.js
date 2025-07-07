@@ -22,9 +22,10 @@ function actionHash(action, activePool, nonce) {
     const nonceBuffer = Buffer.alloc(8);
     nonceBuffer.writeBigUInt64BE(BigInt(nonce));
 
-    const vaultBuffer = activePool === null || activePool === undefined 
-        ? Buffer.from([0x00])
-        : Buffer.concat([Buffer.from([0x01]), addressToBytes(activePool)]);
+    const vaultBuffer =
+        activePool === null || activePool === undefined
+            ? Buffer.from([0x00])
+            : Buffer.concat([Buffer.from([0x01]), addressToBytes(activePool)]);
 
     const data = Buffer.concat([actionData, nonceBuffer, vaultBuffer]);
     return keccak256(data);
@@ -85,9 +86,11 @@ async function updateBlockSize(privateKey, useBig, network = 'mainnet', chain) {
     const signature = await signL1Action(wallet, action, null, nonce, isMainnet, chain);
     const result = await sendRequest(action, signature, nonce, chain);
 
-    return result.status === 'ok' 
+    return result.status === 'ok'
         ? { success: true, data: result }
-        : (() => { throw new Error(result.response || result); })();
+        : (() => {
+              throw new Error(result.response || result);
+          })();
 }
 
 async function processCommand(config, chain, options) {
@@ -308,11 +311,7 @@ if (require.main === module) {
     const updateBlockSizeCmd = program
         .command('update-block-size')
         .description('Update Hyperliquid block size')
-        .addOption(
-            new Option('--block-size <blockSize>', 'block size to switch to')
-                .choices(['big', 'small'])
-                .makeOptionMandatory(true)
-        );
+        .addOption(new Option('--block-size <blockSize>', 'block size to switch to').choices(['big', 'small']).makeOptionMandatory(true));
 
     addEvmOptions(updateBlockSizeCmd, { privateKey: true });
 
@@ -322,9 +321,7 @@ if (require.main === module) {
     });
 
     // Deployer command
-    const deployerCmd = program
-        .command('deployer')
-        .description('Get deployer address for a Hyperliquid interchain token');
+    const deployerCmd = program.command('deployer').description('Get deployer address for a Hyperliquid interchain token');
 
     addEvmOptions(deployerCmd, { privateKey: true });
     deployerCmd.addOption(new Option('--tokenId <tokenId>', 'ID of the token').makeOptionMandatory(true));
