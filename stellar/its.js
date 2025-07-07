@@ -280,7 +280,8 @@ async function linkToken(wallet, _, chain, contract, args, options) {
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount, tokenManagerType },
-        isNonEmptyString: { destinationChain, destinationTokenAddress },
+        isNonEmptyString: { destinationChain },
+        isHexString: { destinationTokenAddress },
     });
 
     const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });

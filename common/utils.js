@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify, defaultAbiCoder },
+    utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -338,6 +338,7 @@ const validationFunctions = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isHexString,
 };
 
 function validateParameters(parameters) {
@@ -669,6 +670,7 @@ module.exports = {
     isNumberArray,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isHexString,
     copyObject,
     httpGet,
     httpPost,
