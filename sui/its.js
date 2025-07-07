@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { Transaction } = require('@mysten/sui/transactions');
 const { copyMovePackage, STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
-const { 
+const {
     addBaseOptions,
     addOptionsToCommands,
     findPublishedObject,
@@ -10,7 +10,7 @@ const {
     moveDir,
     printWalletInfo,
     broadcastFromTxBuilder,
-    saveGeneratedTx
+    saveGeneratedTx,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
@@ -157,7 +157,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const coinManagementTx = new Transaction();
     const coinManagement = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
-        typeArguments: [tokenType]
+        typeArguments: [tokenType],
     });
     coinManagementTx.transferObjects(coinManagement, walletAddress);
 
@@ -186,7 +186,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(client);
-    
+
     const [tokenId, symbol] = args;
     if (!tokenId || !symbol) throw new Error('token_id and token_type are required');
 
@@ -249,7 +249,6 @@ if (require.main === module) {
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
-
 
     // v1 release:
 
