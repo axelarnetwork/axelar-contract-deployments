@@ -23,7 +23,7 @@ These are the instructions for deploying Amplifier contracts for Solana connecti
 
 ### Pre-requisites
 
-Ensure that the [External Gateway](../solana/2025-05-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
+Ensure that the [External Gateway](../solana/2025-07-GMP-v1.0.0.md) is deployed first, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 ## Deployment
 

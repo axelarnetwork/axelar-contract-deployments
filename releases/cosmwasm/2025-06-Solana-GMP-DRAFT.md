@@ -417,5 +417,5 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-* Follow the [Solana GMP checklist](../solana/2025-05-GMP-v1.0.0.md)
-* Follow the [Solana ITS checklist](../solana/2025-05-ITS-v1.0.0.md)
+* Follow the [Solana GMP checklist](../solana/2025-07-GMP-v1.0.0.md)
+* Follow the [Solana ITS checklist](../solana/2025-07-ITS-v1.0.0.md)
