@@ -412,14 +412,24 @@ async function processCommand(config, chain, options) {
         contractConfig.gmpManager = gmpManager;
     }
 
-    // Special handling for ERC1967Proxy - store proxy address in AxelarTransceiver config
-    if (contractName === 'ERC1967Proxy' && contracts.AxelarTransceiver) {
-        contracts.AxelarTransceiver.proxyAddress = contract.address;
-        contracts.AxelarTransceiver.proxyDeployer = wallet.address;
-        contracts.AxelarTransceiver.proxyDeploymentMethod = deployMethod;
-        contracts.AxelarTransceiver.proxyCodehash = codehash;
-        if (deployMethod !== 'create') {
-            contracts.AxelarTransceiver.proxySalt = salt;
+    // Special handling for ERC1967Proxy - store proxy address in target contract config
+    if (contractName === 'ERC1967Proxy') {
+        const targetContract = options.forContract;
+        if (targetContract && contracts[targetContract]) {
+            const args = options.args ? JSON.parse(options.args) : [];
+            if (args.length >= 1) {
+                const implementationAddress = args[0];
+                // Only store if this proxy points to the target contract's implementation
+                if (implementationAddress === contracts[targetContract].address) {
+                    contracts[targetContract].proxyAddress = contract.address;
+                    contracts[targetContract].proxyDeployer = wallet.address;
+                    contracts[targetContract].proxyDeploymentMethod = deployMethod;
+                    contracts[targetContract].proxyCodehash = codehash;
+                    if (deployMethod !== 'create') {
+                        contracts[targetContract].proxySalt = salt;
+                    }
+                }
+            }
         }
     }
 
@@ -464,6 +474,7 @@ if (require.main === module) {
     );
     program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
     program.addOption(new Option('--args <args>', 'custom deployment args'));
+    program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
 
     program.action((options) => {
         main(options);

@@ -55,6 +55,7 @@ async function deployTransceiverProxy(config, chain, options, implementationAddr
         contractName: 'ERC1967Proxy',
         salt: options.proxySalt || 'AxelarTransceiverProxy',
         args: JSON.stringify([implementationAddress, '0x']), // implementation address and empty init data
+        forContract: 'AxelarTransceiver', // Specify that this proxy is for AxelarTransceiver
     };
 
     const contract = await deployEvmContract(config, chain, proxyOptions);
