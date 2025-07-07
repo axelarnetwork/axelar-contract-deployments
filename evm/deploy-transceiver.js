@@ -1,9 +1,9 @@
 'use strict';
 
 // TODO tkulik:
-// * Use ERC1967Proxy as a feature in the deploy-contract script.
-// * Make AxelarTransceiver deployment part of the deploy-contract script
 // * Update README.md to reflect the new transceiver deployment process
+// * Remove this file once we confirm that we don't want to have a single script to deploy
+//   everything related to transceivers.
 
 /**
  * @fileoverview EVM Transceiver Deployment Script

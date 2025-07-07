@@ -483,7 +483,7 @@ if (require.main === module) {
     program.addOption(new Option('--args <args>', 'custom deployment args'));
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(
-        new Option('--libraries <libraries>', 'JSON string of library addresses to link (e.g., \'{"TransceiverStructs":"0x..."}\')'),
+        new Option('--libraries <libraries>', 'JSON string of library addresses to link (e.g., \'{"full/path/Contract.sol:TransceiverStructs":"0x..."}\')'),
     );
     program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
 
