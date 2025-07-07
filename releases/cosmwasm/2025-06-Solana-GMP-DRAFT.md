@@ -375,6 +375,9 @@ ts-node cosmwasm/submit-proposal.js execute \
 
 ```bash
 [[handlers]]
+type = "MultisigSigner"
+cosmwasm_contract = "$MULTISIG"
+[[handlers]]
 type="SolanaMsgVerifier"
 http_url=[http_url]
 cosmwasm_contract="$VOTING_VERIFIER"
