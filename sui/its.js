@@ -291,6 +291,8 @@ if (require.main === module) {
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(registerCoinFromInfoProgram);
+    program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
