@@ -36,6 +36,9 @@ jobs:
         with:
           paths_map: ${{ inputs.paths_map }}
   update-config:
+    strategy:
+      matrix:
+        network: ${{ fromJson(needs.determine-networks.outputs.networks) }}
     env:
       GITHUB_TOKEN: ${{ secrets.SOURCE_REPO_GITHUB_TOKEN }}
     needs: determine-networks
@@ -45,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/update-config
         with:
-          networks: ${{ needs.determine-networks.outputs.networks }}
+          network: ${{ matrix.network }}
           source_repo: ${{ inputs.source_repo }}
           config_repo: ${{ secrets.CONFIG_REPO }}
           cicd_token: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}

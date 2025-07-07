@@ -8,7 +8,7 @@ inputs:
 outputs:
   networks:
     value: ${{ steps.set-networks.outputs.networks }}
-    description: Comma-separated list of changed networks or "none"
+    description: JSON array of changed networks or "none"
 
 runs:
   using: 'composite'
@@ -30,10 +30,10 @@ runs:
 
         NETWORKS=()
         while IFS='|' read -r NETWORK PATHS_CSV; do
-          IFS=',' read -ra PATHS <<< "$PATHS_CSV"          
-          for PATH in "${PATHS[@]}"; do
-            if [[ "$MODIFIED_FILES" == *"$PATH"* ]]; then
-              echo "Detected change for $NETWORK in $PATH"
+          IFS=',' read -ra PATHS <<< "$PATHS_CSV"
+          for FILE_PATH in "${PATHS[@]}"; do
+            if [[ "$MODIFIED_FILES" == *"$FILE_PATH"* ]]; then
+              echo "Detected change for $NETWORK in $FILE_PATH"
               NETWORKS+=("$NETWORK")
             fi
           done
@@ -43,6 +43,9 @@ runs:
           echo "No relevant changes detected."
           echo "networks=none" >> $GITHUB_OUTPUT
         else
-          echo "Detected networks: ${NETWORKS[*]}"
-          echo "networks=$(IFS=,; echo "${NETWORKS[*]}")" >> $GITHUB_OUTPUT
+          echo "Detected networks: ${NETWORKS[*]}"         
+          JSON_ARRAY=$(printf '%s\n' "${NETWORKS[@]}" | jq -R . | jq -s .)
+          echo "networks<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$JSON_ARRAY" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
         fi
