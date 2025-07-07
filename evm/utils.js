@@ -829,6 +829,7 @@ function getContractPath(contractName) {
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@openzeppelin', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
