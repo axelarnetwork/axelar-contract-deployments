@@ -399,18 +399,9 @@ async function processCommand(config, chain, options) {
     contractConfig.deploymentMethod = deployMethod;
     contractConfig.codehash = codehash;
     contractConfig.predeployCodehash = predeployCodehash;
-
-    // Special handling for AxelarTransceiver - store additional config
-    if (contractName === 'AxelarTransceiver') {
-        // Store the actual values used in deployment, not from options.args
-        const gateway = contracts.AxelarGateway?.address;
-        const gasService = contracts.AxelarGasService?.address;
-        const gmpManager = options.gmpManager;
-
-        contractConfig.gateway = gateway;
-        contractConfig.gasService = gasService;
-        contractConfig.gmpManager = gmpManager;
-    }
+    contractConfig.gateway = contracts.AxelarGateway?.address;
+    contractConfig.gasService = contracts.AxelarGasService?.address;
+    contractConfig.gmpManager = options.gmpManager;
 
     // Special handling for ERC1967Proxy - store proxy address in target contract config
     if (contractName === 'ERC1967Proxy') {

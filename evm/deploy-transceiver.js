@@ -3,6 +3,7 @@
 // TODO tkulik:
 // * Use ERC1967Proxy as a feature in the deploy-contract script.
 // * Make AxelarTransceiver deployment part of the deploy-contract script
+// * Update README.md to reflect the new transceiver deployment process
 
 /**
  * @fileoverview EVM Transceiver Deployment Script
