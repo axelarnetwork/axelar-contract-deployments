@@ -261,7 +261,7 @@ if (require.main === module) {
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
-    
+
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
