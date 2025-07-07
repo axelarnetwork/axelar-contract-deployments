@@ -224,7 +224,6 @@ REWARD_AMOUNT=[reward amount]
 RUN_AS_ACCOUNT=[wasm deployer/governance address]
 ```
 
-- `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
 5. Register Gateway at the Router
@@ -270,8 +269,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for solana" \
   -d "Register Multisig Prover address for solana at Coordinator contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"register_prover_contract\": {
       \"chain_name\": \"$CHAIN\",
@@ -287,8 +284,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for solana" \
   -d "Authorize Multisig Prover address for solana at Multisig contract" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"authorize_callers\": {
       \"contracts\": {
@@ -323,7 +318,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for solana in solana voting verifier" \
   -d "Create pool for solana in solana voting verifier" \
-  --runAs $RUN_AS_ACCOUNT \
   --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
@@ -347,8 +341,6 @@ ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for solana in axelar multisig" \
   -d "Create pool for solana in axelar multisig" \
-  --runAs $RUN_AS_ACCOUNT \
-  --deposit $DEPOSIT_VALUE \
   --msg "{
     \"create_pool\": {
       \"params\": {
