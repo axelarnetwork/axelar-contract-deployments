@@ -229,6 +229,78 @@ async function removeFlowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Successfully removed flow limit');
 }
 
+async function registerTokenMetadata(wallet, _, chain, contract, args, options) {
+    const [tokenAddress] = args;
+    const spender = addressToScVal(wallet.publicKey());
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
+
+    const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });
+
+    const operation = contract.call('register_token_metadata', nativeToScVal(tokenAddress, { type: 'address' }), spender, gasToken);
+
+    await broadcast(operation, wallet, chain, 'Token Metadata Registered', options);
+}
+
+async function registerCustomToken(wallet, _, chain, contract, args, options) {
+    const deployer = addressToScVal(wallet.publicKey());
+    const [salt, tokenAddress, tokenManagerType] = args;
+    const saltBytes32 = saltToBytes32(salt);
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress },
+        isValidNumber: { tokenManagerType },
+    });
+
+    const operation = contract.call(
+        'register_custom_token',
+        deployer,
+        hexToScVal(saltBytes32),
+        nativeToScVal(tokenAddress, { type: 'address' }),
+        nativeToScVal(tokenManagerType, { type: 'u32' }),
+    );
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Custom Token Registered', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
+}
+
+async function linkToken(wallet, _, chain, contract, args, options) {
+    const deployer = addressToScVal(wallet.publicKey());
+    const [salt, destinationChain, destinationTokenAddress, tokenManagerType] = args;
+    const saltBytes32 = saltToBytes32(salt);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+    const linkParams = options.linkParams;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount, tokenManagerType },
+        isNonEmptyString: { destinationChain, destinationTokenAddress },
+    });
+
+    const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });
+    const linkParamsBytes = linkParams ? hexToScVal(linkParams) : nativeToScVal(null, { type: 'void' });
+
+    const operation = contract.call(
+        'link_token',
+        deployer,
+        hexToScVal(saltBytes32),
+        nativeToScVal(destinationChain, { type: 'string' }),
+        hexToScVal(destinationTokenAddress),
+        nativeToScVal(tokenManagerType, { type: 'u32' }),
+        linkParamsBytes,
+        gasToken,
+    );
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Token Linked', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -305,6 +377,32 @@ if (require.main === module) {
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .action((tokenAddress, destinationChain, options) => {
             mainProcessor(deployRemoteCanonicalToken, [tokenAddress, destinationChain], options);
+        });
+
+    program
+        .command('register-token-metadata <tokenAddress>')
+        .description('register token metadata')
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .action((tokenAddress, options) => {
+            mainProcessor(registerTokenMetadata, [tokenAddress], options);
+        });
+
+    program
+        .command('register-custom-token <salt> <tokenAddress> <tokenManagerType>')
+        .description('register custom token')
+        .action((salt, tokenAddress, tokenManagerType, options) => {
+            mainProcessor(registerCustomToken, [salt, tokenAddress, tokenManagerType], options);
+        });
+
+    program
+        .command('link-token <salt> <destinationChain> <destinationTokenAddress> <tokenManagerType>')
+        .description('link token')
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--link-params <linkParams>', 'link parameters'))
+        .action((salt, destinationChain, destinationTokenAddress, tokenManagerType, options) => {
+            mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, tokenManagerType], options);
         });
 
     program

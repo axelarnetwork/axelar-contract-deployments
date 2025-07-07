@@ -277,6 +277,24 @@ ts-node stellar/its.js register-canonical-token [token-address]
 ts-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-amount [amount]
 ```
 
+#### Register Token Metadata
+
+```bash
+ts-node stellar/its.js register-token-metadata [token-address] --gas-amount [amount]
+```
+
+#### Register Custom Token
+
+```bash
+ts-node stellar/its.js register-custom-token [salt] [token-address] [token-manager-type]
+```
+
+#### Link Token
+
+```bash
+ts-node stellar/its.js link-token <salt> <destination-chain> <destination-token-address> <token-manager-type> --gas-amount [amount] --link-params [link-params]
+```
+
 #### Interchain Transfer
 
 ```bash
@@ -308,6 +326,7 @@ ts-node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121f
 ```
 
 #### Remove Flow Limit
+
 ```bash
 ts-node stellar/its.js remove-flow-limit [token-id]
 
@@ -377,7 +396,6 @@ ts-node stellar/contract.js [action] [contract-name]
 #### Options
 
 - `[action]` can be one of the following:
-
     - `pause`: Pause the contract
     - `paused`: Check if the contract is paused
     - `unpause`: Unpause the contract
@@ -427,7 +445,7 @@ The deploy-stellar-asset-contract command allows you to deploy a Stellar asset c
 #### Usage
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issuer-address]
+ts-node stellar/token-utils.js create-stellar-asset-contract [asset-code] [issuer-address]
 ```
 
 #### Parameters
@@ -438,5 +456,5 @@ ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issue
 #### Example
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
+ts-node stellar/token-utils.js create-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
 ```
