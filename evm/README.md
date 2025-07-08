@@ -109,6 +109,25 @@ The deployment script will:
 - Store configuration including gateway, gas service, and NTT manager addresses
 - Verify the deployed contract state matches the original constructor arguments
 
+### AxelarTransceiver Post-Deployment Operations
+
+After deploying the AxelarTransceiver contract, you can perform post-deployment operations using the `axelar-transceiver.ts` script:
+
+```bash
+# Initialize the transceiver contract
+ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --initialize
+
+# Transfer pauser capability to a new address
+ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --pauserAddress 0x...
+
+# Perform both operations
+ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --initialize --pauserAddress 0x...
+```
+
+**Available Operations:**
+- **Initialization**: Calls the `initialize()` function on the AxelarTransceiver contract. The script handles cases where the contract is already initialized gracefully.
+- **Pauser Transfer**: Transfers the pauser capability to a specified address using `transferPauserCapability()`. Requires appropriate permissions.
+
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
