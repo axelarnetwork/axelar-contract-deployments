@@ -4,7 +4,7 @@ const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } =
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, validateParameters, mainProcessor, isHyperliquidChain, getContractJSON, getGasOptions } = require('./utils');
+const { printInfo, validateParameters, isHyperliquidChain, getContractJSON, getGasOptions, loadConfig, getChainConfig} = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
@@ -76,15 +76,21 @@ async function sendRequest(action, signature, nonce, chain) {
     return result;
 }
 
-async function updateBlockSize(privateKey, useBig, network = 'mainnet', chain) {
-    validateParameters({ isValidPrivateKey: { privateKey } });
+async function updateBlockSize(wallet, config, chain, args, options) {
+    const [blockSize] = args;
+    validateParameters({
+        isNonEmptyString: { blockSize },
+    });
 
-    const wallet = new Wallet(privateKey);
-    const isMainnet = network.toLowerCase() === 'mainnet';
+    const useBig = blockSize === 'big';
+    const network = chain.networkType;
+    
+    printInfo('Block size', blockSize.toUpperCase());
+    printInfo('Network', network);
 
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
     const nonce = Date.now();
-    const signature = await signL1Action(wallet, action, null, nonce, isMainnet, chain);
+    const signature = await signL1Action(wallet, action, null, nonce, network === 'mainnet', chain);
     const result = await sendRequest(action, signature, nonce, chain);
 
     if (result.status !== 'ok') {
@@ -95,117 +101,11 @@ async function updateBlockSize(privateKey, useBig, network = 'mainnet', chain) {
     return result;
 }
 
-async function processCommand(config, chain, options) {
-    const { privateKey, action } = options;
-
+async function deployer(wallet, config, chain, args) {
+    const [tokenId] = args;
     validateParameters({
-        isNonEmptyString: { privateKey },
+        isNonEmptyString: { tokenId },
     });
-
-    if (!isHyperliquidChain(chain)) {
-        throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
-    }
-
-    if (!action) {
-        throw new Error('Action is required. Use --action to specify what operation to perform.');
-    }
-
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-    const wallet = new Wallet(privateKey, provider);
-
-    const network = chain.networkType;
-
-    switch (action) {
-        case 'updateBlockSize': {
-            const { blockSize } = options;
-            validateParameters({
-                isNonEmptyString: { blockSize },
-            });
-
-            const useBig = blockSize === 'big';
-            printInfo('Block size', blockSize.toUpperCase());
-            printInfo('Network', network);
-
-            try {
-                return await updateBlockSize(privateKey, useBig, network, chain);
-            } catch (error) {
-                throw error;
-            }
-        }
-        case 'deployer': {
-            const { tokenId } = options;
-
-            validateParameters({
-                isNonEmptyString: { tokenId },
-            });
-
-            await getTokenDeployer(config, chain, options, wallet);
-            break;
-        }
-        case 'updateTokenDeployer': {
-            const { tokenId, deployer } = options;
-
-            validateParameters({
-                isNonEmptyString: { tokenId },
-                isValidAddress: { deployer },
-            });
-
-            await updateTokenDeployer(config, chain, options, wallet);
-            break;
-        }
-        default: {
-            throw new Error(`Unknown action: ${action}`);
-        }
-    }
-}
-
-/**
- * Switches Hyperliquid block size and adjusts gas options accordingly
- * @param {Object} options - Deployment options
- * @param {Object} gasOptions - Gas options to modify
- * @param {boolean} useBigBlocks - Whether to switch to big blocks
- * @param {Object} chain - Chain configuration object
- * @returns {Promise<boolean>} - Whether the switch was successful
- */
-async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, chain) {
-    const network = chain.networkType;
-    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
-
-    try {
-        const result = await updateBlockSize(options.privateKey, useBigBlocks, network, chain);
-
-        if (result.status === 'ok') {
-            if (useBigBlocks && gasOptions.gasLimit) {
-                gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
-            }
-            return true;
-        } else {
-            throw new Error(`Failed to switch to ${blockType} blocks: ${result.error}`);
-        }
-    } catch (error) {
-        throw error;
-    }
-}
-
-/**
- * Determines if a deployment should use big blocks on Hyperliquid
- * @param {string} key - Deployment key
- * @returns {boolean} - Whether big blocks should be used
- */
-function shouldUseBigBlocks(key) {
-    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
-}
-
-/**
- * Gets the deployer address for a Hyperliquid interchain token
- * @param {Object} config - Configuration object
- * @param {Object} chain - Chain configuration
- * @param {Object} options - Command options
- * @returns {Promise<void>}
- */
-async function getTokenDeployer(config, chain, options, wallet) {
-    const { privateKey, tokenId } = options;
 
     const contracts = chain.contracts;
     const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
@@ -244,15 +144,12 @@ async function getTokenDeployer(config, chain, options, wallet) {
     }
 }
 
-/**
- * Updates the deployer address for a Hyperliquid interchain token
- * @param {Object} config - Configuration object
- * @param {Object} chain - Chain configuration
- * @param {Object} options - Command options
- * @returns {Promise<void>}
- */
-async function updateTokenDeployer(config, chain, options, wallet) {
-    const { privateKey, tokenId, deployer } = options;
+async function updateTokenDeployer(wallet, config, chain, args, options) {
+    const [tokenId, deployer] = args;
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidAddress: { deployer },
+    });
 
     const contracts = chain.contracts;
     const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
@@ -293,8 +190,73 @@ async function updateTokenDeployer(config, chain, options, wallet) {
     printInfo('Updated deployer', updatedDeployer);
 }
 
-async function main(options) {
-    await mainProcessor(options, processCommand);
+async function main(processor, args, options) {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    if (!options.chainNames) {
+        throw new Error('Chain names were not provided');
+    }
+
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    
+    // Handle single chain name (take first if comma-separated)
+    const chainName = options.chainNames.split(',')[0].trim();
+    const chain = getChainConfig(config, chainName);
+    
+    if (!chain) {
+        throw new Error(`Chain "${chainName}" is not defined in the config`);
+    }
+
+    if (!isHyperliquidChain(chain)) {
+        throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
+    }
+
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+    const wallet = new Wallet(options.privateKey, provider);
+
+    await processor(wallet, config, chain, args, options);
+}
+
+/**
+ * Switches Hyperliquid block size and adjusts gas options accordingly
+ * @param {Object} options - Deployment options
+ * @param {Object} gasOptions - Gas options to modify
+ * @param {boolean} useBigBlocks - Whether to switch to big blocks
+ * @param {Object} chain - Chain configuration object
+ * @returns {Promise<boolean>} - Whether the switch was successful
+ */
+async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, chain) {
+    const network = chain.networkType;
+    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
+
+    try {
+        const result = await updateBlockSize(options.privateKey, config, chain, [blockType], options);
+
+        if (result.status === 'ok') {
+            if (useBigBlocks && gasOptions.gasLimit) {
+                gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
+            }
+            return true;
+        } else {
+            throw new Error(`Failed to switch to ${blockType} blocks: ${result.error}`);
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+
+/**
+ * Determines if a deployment should use big blocks on Hyperliquid
+ * @param {string} key - Deployment key
+ * @returns {boolean} - Whether big blocks should be used
+ */
+function shouldUseBigBlocks(key) {
+    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
 }
 
 if (require.main === module) {
@@ -302,43 +264,30 @@ if (require.main === module) {
 
     program.name('hyperliquid').description('Hyperliquid chain management commands');
 
-    // Update block size command
-    const updateBlockSizeCmd = program
-        .command('update-block-size')
+    program
+        .command('update-block-size <blockSize>')
         .description('Update Hyperliquid block size')
-        .addOption(new Option('--block-size <blockSize>', 'block size to switch to').choices(['big', 'small']).makeOptionMandatory(true));
+        .action((blockSize, options) => {
+            main(updateBlockSize, [blockSize], options);
+        });
 
-    updateBlockSizeCmd.action((options) => {
-        options.action = 'updateBlockSize';
-        main(options);
-    });
+    program
+        .command('deployer <tokenId>')
+        .description('Get deployer address for a Hyperliquid interchain token')
+        .action((tokenId, options) => {
+            main(deployer, [tokenId], options);
+        });
 
-    // Deployer command
-    const deployerCmd = program.command('deployer').description('Get deployer address for a Hyperliquid interchain token');
-
-    deployerCmd.addOption(new Option('--tokenId <tokenId>', 'ID of the token').makeOptionMandatory(true));
-
-    deployerCmd.action((options) => {
-        options.action = 'deployer';
-        main(options);
-    });
-
-    // Update token deployer command
-    const updateTokenDeployerCmd = program
-        .command('update-token-deployer')
-        .description('Update deployer address for a Hyperliquid interchain token');
-
-    updateTokenDeployerCmd.addOption(new Option('--tokenId <tokenId>', 'ID of the token').makeOptionMandatory(true));
-    updateTokenDeployerCmd.addOption(new Option('--deployer <deployer>', 'new deployer address').makeOptionMandatory(true));
-
-    updateTokenDeployerCmd.action((options) => {
-        options.action = 'updateTokenDeployer';
-        main(options);
-    });
+    program
+        .command('update-token-deployer <tokenId> <deployer>')
+        .description('Update deployer address for a Hyperliquid interchain token')
+        .action((tokenId, deployer, options) => {
+            main(updateTokenDeployer, [tokenId, deployer], options);
+        });
 
     addOptionsToCommands(program, addEvmOptions, { privateKey: true });
 
     program.parse();
 }
 
-module.exports = { updateBlockSize, switchHyperliquidBlockSize, shouldUseBigBlocks, getTokenDeployer, updateTokenDeployer };
+module.exports = { updateBlockSize, switchHyperliquidBlockSize, shouldUseBigBlocks, deployer, updateTokenDeployer };
