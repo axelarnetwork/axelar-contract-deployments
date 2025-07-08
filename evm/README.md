@@ -76,6 +76,39 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
+## Proxy and Transceiver Deployment
+
+### ERC1967Proxy
+
+The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify which contract this proxy is for:
+
+```bash
+ts-node evm/deploy-contract.js -e testnet -n ethereum -c ERC1967Proxy --forContract AxelarTransceiver -m create2
+```
+
+The proxy deployment will:
+- Use the implementation address from the specified contract's config
+- Store the proxy address in the target contract's configuration
+- Support custom initialization data via `--proxyData` (defaults to "0x")
+
+### AxelarTransceiver
+
+Deploy the AxelarTransceiver contract using the updated `deploy-contract.js` script:
+
+```bash
+ts-node evm/deploy-contract.js -e testnet -n ethereum -c AxelarTransceiver --gmpManager <NTT_MANAGER_ADDRESS> -m create2 --libraries '{"TransceiverStructs":"0x..."}'
+```
+
+**Important**:
+- The `--gmpManager` parameter should be the NTT Manager address, not a GMP manager. The contract constructor expects the NTT Manager as the third parameter.
+- The `--libraries` parameter is required to link the `TransceiverStructs` library. You must provide the deployed address of the TransceiverStructs library.
+
+The deployment script will:
+- Validate the gateway, gas service, and NTT manager addresses
+- Deploy the contract with the correct constructor arguments
+- Store configuration including gateway, gas service, and NTT manager addresses
+- Verify the deployed contract state matches the original constructor arguments
+
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
