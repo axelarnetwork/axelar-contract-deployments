@@ -23,7 +23,25 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, isValidStellarAddress, asciiToBytes } = require('../common/utils');
+const {
+    prompt,
+    parseTrustedChains,
+    encodeITSDestination,
+    isValidStellarAddress,
+    asciiToBytes,
+    isNonEmptyString,
+    isValidNumber,
+} = require('../common/utils');
+
+/// The type of token manager supported by Stellar ITS.
+/// Only `LockUnlock`, `NativeInterchainToken` and `MintBurn` Token Manager types are supported.
+const tokenManagerImplementations = {
+    INTERCHAIN_TOKEN: 0,
+    //MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    //LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -70,6 +88,9 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
     const [symbol, name, decimal, salt, initialSupply] = args;
     const saltBytes32 = saltToBytes32(salt);
 
+    printInfo('Original salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
+
     const operation = contract.call(
         'deploy_interchain_token',
         caller,
@@ -89,6 +110,9 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const saltBytes32 = saltToBytes32(salt);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
+
+    printInfo('Original salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
@@ -240,17 +264,24 @@ async function registerTokenMetadata(wallet, _, chain, contract, args, options) 
         isValidNumber: { gasAmount },
     });
 
-    const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });
-
-    const operation = contract.call('register_token_metadata', nativeToScVal(tokenAddress, { type: 'address' }), spender, gasToken);
+    const operation = contract.call(
+        'register_token_metadata',
+        nativeToScVal(tokenAddress, { type: 'address' }),
+        spender,
+        tokenToScVal(gasTokenAddress, gasAmount),
+    );
 
     await broadcast(operation, wallet, chain, 'Token Metadata Registered', options);
 }
 
 async function registerCustomToken(wallet, _, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
-    const [salt, tokenAddress, tokenManagerType] = args;
+    const [salt, tokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
+    const tokenManagerType = tokenManagerImplementations[type];
+
+    printInfo('Original salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     validateParameters({
         isValidStellarAddress: { tokenAddress },
@@ -269,36 +300,45 @@ async function registerCustomToken(wallet, _, chain, contract, args, options) {
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function linkToken(wallet, _, chain, contract, args, options) {
+async function linkToken(wallet, config, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
-    const [salt, destinationChain, destinationTokenAddress, tokenManagerType] = args;
+    const [salt, destinationChain, destinationTokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
+    const tokenManagerType = tokenManagerImplementations[type];
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
-    const linkParams = options.linkParams;
+    let operatorBytes = nativeToScVal(null, { type: 'void' });
+
+    printInfo('Original salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount, tokenManagerType },
-        isNonEmptyString: { destinationChain },
-        isHexString: { destinationTokenAddress },
+        isNonEmptyString: { destinationChain, destinationTokenAddress },
     });
 
-    const gasToken = gasAmount > 0 ? tokenToScVal(gasTokenAddress, gasAmount) : nativeToScVal(null, { type: 'void' });
-    if (linkParams && !isValidStellarAddress(linkParams)) {
-        throw new Error(`Invalid link params: ${linkParams} must be a valid Stellar address.`);
+    const itsDestinationTokenAddress = encodeITSDestination(config, destinationChain, destinationTokenAddress);
+    printInfo('Human-readable destination token address', destinationTokenAddress);
+    printInfo('Encoded ITS destination token address', itsDestinationTokenAddress);
+
+    if (options.operator) {
+        const itsDestinationOperatorAddress = encodeITSDestination(config, destinationChain, options.operator);
+        printInfo('Human-readable destination operator address', options.operator);
+        printInfo('Encoded ITS destination operator address', itsDestinationOperatorAddress);
+
+        operatorBytes = hexToScVal(itsDestinationOperatorAddress);
     }
-    const linkParamsBytes = linkParams ? hexToScVal(asciiToBytes(linkParams)) : nativeToScVal(null, { type: 'void' });
 
     const operation = contract.call(
         'link_token',
         deployer,
         hexToScVal(saltBytes32),
         nativeToScVal(destinationChain, { type: 'string' }),
-        hexToScVal(destinationTokenAddress),
+        hexToScVal(itsDestinationTokenAddress),
         nativeToScVal(tokenManagerType, { type: 'u32' }),
-        linkParamsBytes,
-        gasToken,
+        operatorBytes,
+        tokenToScVal(gasTokenAddress, gasAmount),
     );
 
     const returnValue = await broadcast(operation, wallet, chain, 'Token Linked', options);
@@ -393,20 +433,20 @@ if (require.main === module) {
         });
 
     program
-        .command('register-custom-token <salt> <tokenAddress> <tokenManagerType>')
+        .command('register-custom-token <salt> <tokenAddress> <type>')
         .description('register custom token')
-        .action((salt, tokenAddress, tokenManagerType, options) => {
-            mainProcessor(registerCustomToken, [salt, tokenAddress, tokenManagerType], options);
+        .action((salt, tokenAddress, type, options) => {
+            mainProcessor(registerCustomToken, [salt, tokenAddress, type], options);
         });
 
     program
-        .command('link-token <salt> <destinationChain> <destinationTokenAddress> <tokenManagerType>')
+        .command('link-token <salt> <destinationChain> <destinationTokenAddress> <type>')
         .description('link token')
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
-        .addOption(new Option('--link-params <linkParams>', 'link parameters'))
-        .action((salt, destinationChain, destinationTokenAddress, tokenManagerType, options) => {
-            mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, tokenManagerType], options);
+        .addOption(new Option('--operator <operator>', 'operator for the token id on the destination chain'))
+        .action((salt, destinationChain, destinationTokenAddress, type, options) => {
+            mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, type], options);
         });
 
     program
