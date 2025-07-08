@@ -134,7 +134,8 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const walletAddress = keypair.toSuiAddress();
 
     // Deploy token on Sui
-    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(client, keypair, symbol, name, decimals, walletAddress);
+    const deployConfig = { client, keypair, options, walletAddress };
+    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
     const coinManagement = newCoinManagementLocked(itsConfig, tokenType, walletAddress);
@@ -167,7 +168,8 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const walletAddress = keypair.toSuiAddress();
 
     // Deploy token on Sui
-    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(client, keypair, symbol, name, decimals, walletAddress);
+    const deployConfig = { client, keypair, options, walletAddress };
+    const { metadata, packageId, tokenType, treasuryCap } = deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
     const coinManagement = newCoinManagementLocked(itsConfig, tokenType, walletAddress);

@@ -3,7 +3,7 @@ const { copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui')
 const { findPublishedObject, getObjectIdsByObjectTypes, moveDir } = require('./utils');
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
-async function deployTokenFromInfo(client, keypair, symbol, name, decimals, walletAddress) {
+async function deployTokenFromInfo(config, symbol, name, decimals) {
     if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
 
     // Define the interchain token options
@@ -14,14 +14,14 @@ async function deployTokenFromInfo(client, keypair, symbol, name, decimals, wall
         decimals,
     };
 
-    const txBuilder = new TxBuilder(client);
+    const txBuilder = new TxBuilder(config.client);
 
     // Token Capability
     const tokenCap = await txBuilder.publishInterchainToken(moveDir, interchainTokenOptions);
-    txBuilder.tx.transferObjects([tokenCap], walletAddress);
+    txBuilder.tx.transferObjects([tokenCap], config.walletAddress);
 
     // Publish token and derive type
-    const publishTxn = await broadcastFromTxBuilder(txBuilder, keypair, `Published ${symbol}`, options);
+    const publishTxn = await broadcastFromTxBuilder(txBuilder, config.keypair, `Published ${symbol}`, config.options);
     const publishObject = findPublishedObject(publishTxn);
     const packageId = publishObject.packageId;
     const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
