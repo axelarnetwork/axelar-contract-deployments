@@ -32,17 +32,13 @@ async function deployTokenFromInfo(config, symbol, name, decimals) {
 
 async function newCoinManagementLocked(config, itsConfig, tokenType) {
     const txBuilder = new TxBuilder(config.client);
-    console.log({
-        target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
-        typeArguments: [tokenType],
-    });
-    const coinManagement = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
-        typeArguments: [tokenType],
-    });
-    txBuilder.tx.transferObjects([coinManagement], config.walletAddress);
 
-    return coinManagement;
+    const coinManagement = await txBuilder.moveCall({
+        target: `${itsConfig.address}::coin_management::new_locked`,
+        typeArguments: [tokenType],
+    });
+
+    return [txBuilder, coinManagement];
 }
 
 async function saveTokenDeployment(packageId, contracts, symbol, TokenId, TreasuryCap, Metadata) {

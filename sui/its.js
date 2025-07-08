@@ -138,17 +138,16 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const { metadata, packageId, tokenType, treasuryCap } = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const coinManagement = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from info)
-    const txBuilder = new TxBuilder(client);
-    const tokenId = await txBuilder.moveCall({
+    await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
         arguments: [InterchainTokenService, name, symbol, decimals, coinManagement],
         typeArguments: [tokenType],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Register coin (${symbol}) from info in InterchainTokenService`, options, {
+    const tokenId = await broadcastFromTxBuilder(txBuilder, keypair, `Register coin (${symbol}) from info in InterchainTokenService`, options, {
         showEvents: true,
     });
 
@@ -172,11 +171,10 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const { metadata, packageId, tokenType, treasuryCap } = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const coinManagement = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from info)
     const salt = randomBytes(32);
-    const txBuilder = new TxBuilder(client);
     const [tokenId] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [InterchainTokenService, ChannelId, salt, metadata, coinManagement],
