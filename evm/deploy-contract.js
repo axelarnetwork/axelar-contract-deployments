@@ -285,7 +285,7 @@ async function checkContract(contractName, contract, contractConfig) {
         case 'AxelarTransceiver': {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
-            const gmpManager = await contract.gmpManager();
+            const gmpManager = await contract.nttManager();
 
             if (gateway !== contractConfig.gateway) {
                 printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
@@ -346,7 +346,7 @@ async function updateConfig(
             contractConfig.predeployCodehash = predeployCodehash;
             contractConfig.gateway = await contract.gateway();
             contractConfig.gasService = await contract.gasService();
-            contractConfig.gmpManager = await contract.gmpManager();
+            contractConfig.gmpManager = await contract.nttManager();
             if (deployMethod !== 'create') {
                 contractConfig.salt = salt;
             }
