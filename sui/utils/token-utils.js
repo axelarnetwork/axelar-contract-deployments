@@ -1,6 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { findPublishedObject, getObjectIdsByObjectTypes, moveDir } = require('./utils');
+const { broadcastFromTxBuilder } = require('./sign-utils');
 
 async function deployTokenFromInfo(client, symbol, name, decimals, walletAddress) {
     if (!name || !symbol || !decimals) throw new Error('Token name, symbol and decimals are required');
