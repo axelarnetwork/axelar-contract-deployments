@@ -40,8 +40,11 @@ async function signL1Action(wallet, action, activePool, nonce, isMainnet, chain)
     const hash = actionHash(action, activePool, nonce);
     const phantomAgent = constructPhantomAgent(hash, isMainnet);
 
-    // Use chain.hypercore.domain if available, otherwise fall back to default
-    const domain = chain?.hypercore?.domain;
+    const domain = chain.hypercore.domain;
+    if (!domain) {
+        throw new Error('hypercore domain information is required');
+    }
+
     const agent = [
         { name: 'source', type: 'string' },
         { name: 'connectionId', type: 'bytes32' },
@@ -65,8 +68,8 @@ async function sendRequest(action, signature, nonce, chain) {
 
     const { stdout, stderr } = await execAsync(curlCommand);
 
-    if (stderr && !stderr.includes('curl')) {
-        throw new Error(`curl stderr: ${stderr}`);
+    if (stderr) {
+        throw new Error(stderr);
     }
 
     const result = JSON.parse(stdout);
@@ -84,11 +87,10 @@ async function updateBlockSize(privateKey, useBig, network = 'mainnet', chain) {
     const signature = await signL1Action(wallet, action, null, nonce, isMainnet, chain);
     const result = await sendRequest(action, signature, nonce, chain);
 
-    return result.status === 'ok'
-        ? { success: true, data: result }
-        : (() => {
-              throw new Error(result.response || result);
-          })();
+    if (result.status !== 'ok') {
+        throw new Error(result.response || result);
+    }
+    return result;
 }
 
 async function processCommand(config, chain, options) {
