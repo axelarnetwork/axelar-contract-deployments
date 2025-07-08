@@ -85,7 +85,7 @@ async function updateBlockSize(wallet, config, chain, args, options) {
     const useBig = blockSize === 'big';
     const network = chain.networkType;
     
-    printInfo('Block size', blockSize.toUpperCase());
+    printInfo('Block size', blockSize);
     printInfo('Network', network);
 
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
@@ -230,12 +230,14 @@ async function main(processor, args, options) {
  * @param {Object} chain - Chain configuration object
  * @returns {Promise<boolean>} - Whether the switch was successful
  */
-async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, chain) {
-    const network = chain.networkType;
-    const blockType = useBigBlocks ? 'BIG' : 'SMALL';
+async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlocks, chain) {
+    const blockType = useBigBlocks ? 'big' : 'small';
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+    const wallet = new Wallet(options.privateKey, provider);
 
     try {
-        const result = await updateBlockSize(options.privateKey, config, chain, [blockType], options);
+        const result = await updateBlockSize(wallet, config, chain, [blockType], options);
 
         if (result.status === 'ok') {
             if (useBigBlocks && gasOptions.gasLimit) {
