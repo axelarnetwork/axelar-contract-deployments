@@ -151,12 +151,7 @@
           "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0xB8Cd93C83A974649D76B1c19f311f639e62272BC",
           "collector": "0x7F83F5cA2AE4206AbFf8a3C3668e88ce5F11C0B5",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
-          "proxyAddress": "0xE9bCa28cFde7C9D9c6D648FFc34D939c52338574",
-          "proxyDeployer": "0x983ebeFf3279a6b5C690A97f57C09D58Bc1ef780",
-          "proxyDeploymentMethod": "create",
-          "proxyCodehash": "0xbf54fecdb9d68c1436d34e703f13aa00b84c22aa93f8e91fe396acfadde639ec",
-          "proxyData": "0x"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         },
         "AxelarDepositService": {
           "salt": "AxelarDepositService",
