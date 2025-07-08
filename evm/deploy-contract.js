@@ -47,6 +47,7 @@ const {
     getContractJSON,
     getDeployOptions,
     linkLibrariesInContractJson,
+    validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
@@ -185,19 +186,9 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             const gasService = config.AxelarGasService?.address;
             const gmpManager = options.gmpManager;
 
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            if (!isAddress(gasService)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
-
-            if (!isAddress(gmpManager)) {
-                throw new Error(
-                    `Missing GMP Manager address or the address is not valid. Please provide a correct --gmpManager parameter.`,
-                );
-            }
+            validateParameters({
+                isAddress: { gateway, gasService, gmpManager },
+            });
 
             return [gateway, gasService, gmpManager];
         }
