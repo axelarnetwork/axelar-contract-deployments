@@ -91,10 +91,10 @@ runs:
         cd config-repo
         PR_NUMBER=${{ env.PR_NUMBER }}
         PR_TITLE="chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
-        MERGE_PR_OUTPUT=$(gh pr merge "$PR_NUMBER" \
+        gh pr merge "$PR_NUMBER" \
             --repo "${{ inputs.config_repo }}" \
             --squash \
-            --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE")
+            --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE"
         MERGE_PR_EXIT_CODE=$?
         if [ "$MERGE_PR_EXIT_CODE" -ne 0 ]; then
           echo "Failed to merge PR #$PR_NUMBER."
