@@ -84,13 +84,10 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet) {
         const transceiverInterface = createTransceiverInterface(proxyAddress, artifactPath);
         const transceiverContract = transceiverInterface.connect(wallet);
 
-        const isInitialized = await transceiverContract.isInitialized();
-        if (!isInitialized) {
-            printInfo('Initializing AxelarTransceiver...');
-            const initTx = await transceiverContract.initialize();
-            await initTx.wait();
-            printInfo('AxelarTransceiver initialized successfully');
-        }
+        printInfo('Initializing AxelarTransceiver...');
+        const initTx = await transceiverContract.initialize();
+        await initTx.wait();
+        printInfo('AxelarTransceiver initialized successfully');
     } catch (error) {
         printWarn('Could not check or initialize transceiver:', error.message);
     }

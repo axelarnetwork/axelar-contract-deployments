@@ -358,7 +358,6 @@ async function updateConfig(
             contractConfig.deploymentMethod = deployMethod;
             contractConfig.codehash = codehash;
             contractConfig.predeployCodehash = predeployCodehash;
-            contractConfig.gmpManager = options.gmpManager;
             if (deployMethod !== 'create') {
                 contractConfig.salt = salt;
             }
