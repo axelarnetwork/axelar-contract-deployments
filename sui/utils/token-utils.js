@@ -1,4 +1,3 @@
-const { Transaction } = require('@mysten/sui/transactions');
 const { copyMovePackage, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { findPublishedObject, getObjectIdsByObjectTypes, moveDir } = require('./utils');
 const { broadcastFromTxBuilder } = require('./sign-utils');
@@ -24,19 +23,24 @@ async function deployTokenFromInfo(config, symbol, name, decimals) {
     const publishTxn = await broadcastFromTxBuilder(txBuilder, config.keypair, `Published ${symbol}`, config.options);
     const publishObject = findPublishedObject(publishTxn);
     const packageId = publishObject.packageId;
+
     const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
     const [treasuryCap, metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
     return { metadata, packageId, tokenType, treasuryCap };
 }
 
-async function newCoinManagementLocked(itsConfig, tokenType, walletAddress) {
-    const tx = new Transaction();
-    const coinManagement = tx.moveCall({
+async function newCoinManagementLocked(config, itsConfig, tokenType) {
+    const txBuilder = new TxBuilder(config.client);
+    console.log({
         target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
         typeArguments: [tokenType],
     });
-    tx.transferObjects([coinManagement], walletAddress);
+    const coinManagement = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
+        typeArguments: [tokenType],
+    });
+    txBuilder.tx.transferObjects([coinManagement], config.walletAddress);
 
     return coinManagement;
 }
