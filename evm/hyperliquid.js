@@ -1,17 +1,15 @@
 'use strict';
 
-const { Wallet, ethers, getDefaultProvider } = require('ethers');
+const { Wallet, ethers, getDefaultProvider, Contract, AddressZero } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, printError, validateParameters, mainProcessor, isHyperliquidChain, getContractJSON, getGasOptions } = require('./utils');
+const { printInfo, validateParameters, mainProcessor, isHyperliquidChain, getContractJSON, getGasOptions } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
 const msgpack = require('msgpack-lite');
 const { keccak256 } = require('ethers/lib/utils');
-const { Contract } = require('ethers');
-const { AddressZero } = require('ethers');
 
 function addressToBytes(address) {
     return Buffer.from(address.replace('0x', ''), 'hex');

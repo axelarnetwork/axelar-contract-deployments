@@ -202,81 +202,39 @@ async function deployAll(config, wallet, chain, options) {
             },
         },
         // Deploy only the appropriate token implementation based on chain type
-        ...(isHyperliquidChain(chain)
-            ? {
-                  hyperliquidInterchainToken: {
-                      name: 'Hyperliquid Interchain Token',
-                      contractName: 'HyperliquidInterchainToken',
-                      async deploy() {
-                          return deployContract(
-                              deployMethod,
-                              wallet,
-                              getContractJSON('HyperliquidInterchainToken', artifactPath),
-                              [interchainTokenService],
-                              deployOptions,
-                              gasOptions,
-                              verifyOptions,
-                              chain,
-                          );
-                      },
-                  },
-              }
-            : {
-                  interchainToken: {
-                      name: 'Interchain Token',
-                      contractName: 'InterchainToken',
-                      async deploy() {
-                          return deployContract(
-                              deployMethod,
-                              wallet,
-                              getContractJSON('InterchainToken', artifactPath),
-                              [interchainTokenService],
-                              deployOptions,
-                              gasOptions,
-                              verifyOptions,
-                              chain,
-                          );
-                      },
-                  },
-              }),
+        [isHyperliquidChain(chain) ? 'hyperliquidInterchainToken' : 'interchainToken']: {
+            name: isHyperliquidChain(chain) ? 'Hyperliquid Interchain Token' : 'Interchain Token',
+            contractName: isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken',
+            async deploy() {
+                return deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON(isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken', artifactPath),
+                    [interchainTokenService],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
+            },
+        },
         // Deploy only the appropriate token deployer based on chain type
-        ...(isHyperliquidChain(chain)
-            ? {
-                  hyperliquidInterchainTokenDeployer: {
-                      name: 'Interchain Token Deployer (Hyperliquid)',
-                      contractName: 'InterchainTokenDeployer',
-                      async deploy() {
-                          return deployContract(
-                              deployMethod,
-                              wallet,
-                              getContractJSON('InterchainTokenDeployer', artifactPath),
-                              [contractConfig.hyperliquidInterchainToken],
-                              deployOptions,
-                              gasOptions,
-                              verifyOptions,
-                              chain,
-                          );
-                      },
-                  },
-              }
-            : {
-                  interchainTokenDeployer: {
-                      name: 'Interchain Token Deployer',
-                      contractName: 'InterchainTokenDeployer',
-                      async deploy() {
-                          return deployContract(
-                              deployMethod,
-                              wallet,
-                              getContractJSON('InterchainTokenDeployer', artifactPath),
-                              [contractConfig.interchainToken],
-                              deployOptions,
-                              gasOptions,
-                              verifyOptions,
-                              chain,
-                          );
-                      },
-                  },
-              }),
+        [isHyperliquidChain(chain) ? 'hyperliquidInterchainTokenDeployer' : 'interchainTokenDeployer']: {
+            name: isHyperliquidChain(chain) ? 'Interchain Token Deployer (Hyperliquid)' : 'Interchain Token Deployer',
+            contractName: 'InterchainTokenDeployer',
+            async deploy() {
+                return deployContract(
+                    deployMethod,
+                    wallet,
+                    getContractJSON('InterchainTokenDeployer', artifactPath),
+                    [contractConfig[isHyperliquidChain(chain) ? 'hyperliquidInterchainToken' : 'interchainToken']],
+                    deployOptions,
+                    gasOptions,
+                    verifyOptions,
+                    chain,
+                );
+            },
+        },
         tokenManager: {
             name: 'Token Manager',
             contractName: 'TokenManager',
