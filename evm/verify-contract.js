@@ -216,7 +216,9 @@ async function processCommand(config, chain, options) {
                 getContractJSON('InterchainTokenDeployer').abi,
                 wallet,
             );
-            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+						const interchainToken = 'implementationAddress' in interchainTokenDeployerContract
+							? await interchainTokenDeployerContract.implementationAddress()
+							: undefined;
             const interchainTokenFactory = await its.interchainTokenFactory();
             const interchainTokenFactoryContract = new Contract(
                 interchainTokenFactory,
@@ -237,7 +239,9 @@ async function processCommand(config, chain, options) {
             );
 
             await verifyContract(env, chain.axelarId, tokenManagerDeployer, [], verifyOptions);
-            await verifyContract(env, chain.axelarId, interchainToken, [contractAddress], verifyOptions);
+            if (interchainToken) {
+              await verifyContract(env, chain.axelarId, interchainToken, [contractAddress], verifyOptions);
+            }
             await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenManager, [contractAddress], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenHandler, [], verifyOptions);
