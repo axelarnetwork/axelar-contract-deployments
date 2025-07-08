@@ -332,6 +332,7 @@ if (require.main === module) {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
 
+    // TODO: <token-type> (and maybe <link-params>?) would be better as options
     const linkCoinProgram = new Command()
         .name('link-coin')
         .command('link-coin <destination-chain> <destination-address> <token-type> <link-params>')
@@ -342,7 +343,7 @@ if (require.main === module) {
 
     const registerCoinMetadataProgram = new Command()
         .name('register-coin-metadata')
-        .command('register-coin-metadata <token-symbol>')
+        .command('register-coin-metadata <symbol>')
         .description(`TODO: descript register-coin-metadata`)
         .action((tokenSymbol, options) => {
             mainProcessor(registerCoinMetadata, options, tokenSymbol, processCommand);
@@ -350,7 +351,7 @@ if (require.main === module) {
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
-        .command('migrate-coin-metadata <token-id> <token-symbol>')
+        .command('migrate-coin-metadata <token-id> <symbol>')
         .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
         .action((tokenId, tokenSymbol, options) => {
             mainProcessor(migrateCoinMetadata, options, [tokenId, tokenSymbol], processCommand);
