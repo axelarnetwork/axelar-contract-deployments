@@ -2834,6 +2834,13 @@
           "wasmHash": "0c491cc15edf95dbc131cbac07dc3035f05a9e6fd180d2733b9315685323df26",
           "version": "1.0.1",
           "initializeArgs": {}
+        },
+        "TokenUtils": {
+          "address": "CBFUPD6RNBYGW6UNMIP26TOXM2FSMCBI7XFY4LATRKFKHTIHPRG2W7LJ",
+          "deployer": "GCUIBOS2JPTJSJ3PFMXU4RD67PS5QT7FG3HSXHFZQGVNIYXPYODKRJ7S",
+          "wasmHash": "48d81492a15e4a77f4ba270dcee530910ff0470c14bfa446cee2ee42ae43d8cb",
+          "version": "1.0.0",
+          "initializeArgs": {}
         }
       },
       "approxFinalityWaitTime": 1,
@@ -2846,7 +2853,7 @@
       "name": "XRPL EVM",
       "axelarId": "xrpl-evm",
       "chainId": 1440000,
-      "rpc": "https://rpc-mainnet.aws.peersyst.tech",
+      "rpc": "https://rpc.xrplevm.org",
       "tokenSymbol": "XRP",
       "decimals": 18,
       "confirmations": 1,
