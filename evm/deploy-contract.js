@@ -474,7 +474,6 @@ async function main(options) {
     await mainProcessor(options, processCommand);
 }
 
-// CLI setup and execution
 if (require.main === module) {
     const program = new Command();
 

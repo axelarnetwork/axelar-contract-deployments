@@ -154,7 +154,6 @@ async function main(options) {
     await mainProcessor(options, deployTransceiverContracts);
 }
 
-// CLI setup and execution
 if (require.main === module) {
     const program = new Command();
 
