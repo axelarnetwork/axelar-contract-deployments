@@ -186,11 +186,7 @@ if (require.main === module) {
     program.addOption(new Option('-n, --network <network>', 'network name').makeOptionMandatory(true));
     program.addOption(new Option('--privateKey <privateKey>', 'private key').env('PRIVATE_KEY').makeOptionMandatory(true));
     program.addOption(new Option('--artifactPath <artifactPath>', 'artifact path').makeOptionMandatory(true));
-    program.addOption(new Option('--skipExisting', 'skip if already deployed'));
-    program.addOption(new Option('--predictOnly', 'only predict deployment address'));
-
     program.addOption(new Option('--pauserAddress <pauserAddress>', 'Address to transfer pauser capability to').env('PAUSER_ADDRESS'));
-
     program.addOption(new Option('--initialize', 'Initialize the transceiver').default(false));
 
     program.action(async (options: TransceiverOptions) => {
