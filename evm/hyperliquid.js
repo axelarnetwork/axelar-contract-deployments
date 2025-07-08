@@ -1,11 +1,11 @@
 'use strict';
 
-const { Wallet, ethers, getDefaultProvider, Contract, AddressZero } = require('ethers');
+const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } = require('ethers');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
 const { printInfo, validateParameters, mainProcessor, isHyperliquidChain, getContractJSON, getGasOptions } = require('./utils');
-const { addEvmOptions } = require('./cli-utils');
+const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
 const msgpack = require('msgpack-lite');
@@ -90,6 +90,8 @@ async function updateBlockSize(privateKey, useBig, network = 'mainnet', chain) {
     if (result.status !== 'ok') {
         throw new Error(result.response || result);
     }
+
+    printInfo('Result', result);
     return result;
 }
 
@@ -126,13 +128,7 @@ async function processCommand(config, chain, options) {
             printInfo('Network', network);
 
             try {
-                const result = await updateBlockSize(privateKey, useBig, network, chain);
-                if (result.success) {
-                    printInfo('Result', result.data);
-                    return result.data;
-                } else {
-                    throw new Error(`Block size switch failed: ${result.error}`);
-                }
+                return await updateBlockSize(privateKey, useBig, network, chain);
             } catch (error) {
                 throw error;
             }
@@ -179,9 +175,8 @@ async function switchHyperliquidBlockSize(options, gasOptions, useBigBlocks, cha
     try {
         const result = await updateBlockSize(options.privateKey, useBigBlocks, network, chain);
 
-        if (result.success) {
+        if (result.status === 'ok') {
             if (useBigBlocks && gasOptions.gasLimit) {
-                const { BigNumber } = require('ethers');
                 gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
             }
             return true;
@@ -313,8 +308,6 @@ if (require.main === module) {
         .description('Update Hyperliquid block size')
         .addOption(new Option('--block-size <blockSize>', 'block size to switch to').choices(['big', 'small']).makeOptionMandatory(true));
 
-    addEvmOptions(updateBlockSizeCmd, { privateKey: true });
-
     updateBlockSizeCmd.action((options) => {
         options.action = 'updateBlockSize';
         main(options);
@@ -323,7 +316,6 @@ if (require.main === module) {
     // Deployer command
     const deployerCmd = program.command('deployer').description('Get deployer address for a Hyperliquid interchain token');
 
-    addEvmOptions(deployerCmd, { privateKey: true });
     deployerCmd.addOption(new Option('--tokenId <tokenId>', 'ID of the token').makeOptionMandatory(true));
 
     deployerCmd.action((options) => {
@@ -336,7 +328,6 @@ if (require.main === module) {
         .command('update-token-deployer')
         .description('Update deployer address for a Hyperliquid interchain token');
 
-    addEvmOptions(updateTokenDeployerCmd, { privateKey: true });
     updateTokenDeployerCmd.addOption(new Option('--tokenId <tokenId>', 'ID of the token').makeOptionMandatory(true));
     updateTokenDeployerCmd.addOption(new Option('--deployer <deployer>', 'new deployer address').makeOptionMandatory(true));
 
@@ -344,6 +335,8 @@ if (require.main === module) {
         options.action = 'updateTokenDeployer';
         main(options);
     });
+
+    addOptionsToCommands(program, addEvmOptions, { privateKey: true });
 
     program.parse();
 }
