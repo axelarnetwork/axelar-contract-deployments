@@ -107,7 +107,7 @@ function compare(contractValue, configValue, variableName) {
 }
 
 function compareToConfig(contractConfig, contractName, toCheck) {
-    for (const [key, value] of Object.entries(toCheck)) {
+    for (const [key, value] of Object.entries(toCheck).filter(([_key, value]) => typeof value !== 'undefined')) {
         if (contractConfig[key]) {
             const configValue = contractConfig[key];
             compare(value, configValue, key);
@@ -192,17 +192,23 @@ async function processCommand(config, chain, action, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            console.log({tokenIdBytes32})
+
+            if ('interchainTokenAddress' in interchainTokenService) {
+	            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+	            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            }
 
             try {
-                await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+                const interchainTokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
+                return interchainTokenAddress;
             } catch (error) {
+            		console.log(error)
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
-            return interchainTokenAddress;
+            return;
         }
 
         case 'interchain-token-id': {
@@ -557,7 +563,11 @@ async function processCommand(config, chain, action, options) {
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
-            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+
+            // Note: only get `interchainToken` if the contract supports it
+						const interchainToken = 'implementationAddress' in interchainTokenDeployerContract
+							? await interchainTokenDeployerContract.implementationAddress()
+							: undefined;
 
             const trustedChains = await getTrustedChains(config, interchainTokenService);
             printInfo('Trusted chains', trustedChains);
