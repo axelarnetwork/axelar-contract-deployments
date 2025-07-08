@@ -1,21 +1,13 @@
 'use strict';
 
-import {
-    Keypair,
-    rpc,
-    Horizon,
-    TransactionBuilder,
-    Networks,
-    BASE_FEE,
-    Address,
-    xdr,
-    nativeToScVal,
-} from '@stellar/stellar-sdk';
-import { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } from '../common/utils';
-import { printInfo, sleep, addEnvOption, getCurrentVerifierSet } from '../common';
+import { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
+
+import { addEnvOption, getCurrentVerifierSet, printInfo, sleep } from '../common';
+import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
+
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -40,7 +32,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'InterchainTokenService',
     'Upgrader',
     'Multicall',
-    'TokenUtils'
+    'TokenUtils',
 ]);
 
 type NetworkType = 'local' | 'futurenet' | 'testnet' | 'mainnet';
@@ -610,10 +602,7 @@ function isFriendbotSupported(networkType) {
 }
 
 function assetToScVal(asset) {
-    return nativeToScVal(
-        Buffer.from(asset.toXDRObject().toXDR('base64'), 'base64'),
-        { type: 'bytes' }
-    );
+    return nativeToScVal(Buffer.from(asset.toXDRObject().toXDR('base64'), 'base64'), { type: 'bytes' });
 }
 
 module.exports = {
