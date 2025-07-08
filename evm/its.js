@@ -193,8 +193,6 @@ async function processCommand(config, chain, action, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            console.log({tokenIdBytes32})
-
             if ('interchainTokenAddress' in interchainTokenService) {
 	            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
 	            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
@@ -205,7 +203,6 @@ async function processCommand(config, chain, action, options) {
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
                 return interchainTokenAddress;
             } catch (error) {
-            		console.log(error)
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
