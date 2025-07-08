@@ -195,9 +195,9 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         throw new Error('Destination chain and destination token address are required,');
 
     // TODO: destination_token_address and link_params are vector<u8> in move.
-    // How can we really send these params, does Buffer.from work?
-    const address = Buffer.from(destinationTokenAddress);
-    const params = Buffer.from(linkParams);
+    // Is this the correct way to submit them to interchain_token_service::link_coin?
+    const address = bcs.string().serialize(destinationTokenAddress).toBytes();
+    const params = bcs.string().serialize(linkParams).toBytes();
     let type = tokenManagerType ? parseInt(tokenManagerType) : 0;
     if (type < 0 || type > 4) throw new Error('Invalid token manager type');
 
