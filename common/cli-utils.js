@@ -66,7 +66,7 @@ const addOptionsToCommands = (program, optionMethod, options) => {
 const addStoreOptions = (program) => {
     program.addOption(
         new Option(
-            '-q, --artifact-dir <artifactDir>',
+            '-a, --artifact-dir <artifactDir>',
             'Path to the contract artifact directory to upload (required if --version is not used)',
         ).env('ARTIFACT_DIR'),
     );
