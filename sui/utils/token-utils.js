@@ -35,7 +35,7 @@ async function newCoinManagementLocked(itsConfig, tokenType, walletAddress) {
         target: `${itsConfig.address}::interchain_token_service::coin_management::new_locked`,
         typeArguments: [tokenType],
     });
-    tx.transferObjects(coinManagement, walletAddress);
+    tx.transferObjects([coinManagement], walletAddress);
 
     return coinManagement;
 }
