@@ -23,25 +23,7 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const {
-    prompt,
-    parseTrustedChains,
-    encodeITSDestination,
-    isValidStellarAddress,
-    asciiToBytes,
-    isNonEmptyString,
-    isValidNumber,
-} = require('../common/utils');
-
-/// The type of token manager supported by Stellar ITS.
-/// Only `LockUnlock`, `NativeInterchainToken` and `MintBurn` Token Manager types are supported.
-const tokenManagerImplementations = {
-    INTERCHAIN_TOKEN: 0,
-    //MINT_BURN_FROM: 1,
-    LOCK_UNLOCK: 2,
-    //LOCK_UNLOCK_FEE: 3,
-    MINT_BURN: 4,
-};
+const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -88,7 +70,12 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
     const [symbol, name, decimal, salt, initialSupply] = args;
     const saltBytes32 = saltToBytes32(salt);
 
-    printInfo('Original salt', salt);
+    validateParameters({
+        isNonEmptyString: { symbol, name },
+        isValidNumber: { decimal, initialSupply },
+    });
+
+    printInfo('salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
@@ -111,13 +98,13 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
 
-    printInfo('Original salt', salt);
-    printInfo('Deployment salt (bytes32)', saltBytes32);
-
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
+
+    printInfo('salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
@@ -177,7 +164,6 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
 
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
-    printInfo('Encoded ITS destination address', itsDestinationAddress);
 
     const operation = contract.call(
         'interchain_transfer',
@@ -278,15 +264,15 @@ async function registerCustomToken(wallet, _, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
     const [salt, tokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const tokenManagerType = tokenManagerImplementations[type];
-
-    printInfo('Original salt', salt);
-    printInfo('Deployment salt (bytes32)', saltBytes32);
+    const tokenManagerType = tokenManagerTypes[type];
 
     validateParameters({
         isValidStellarAddress: { tokenAddress },
         isValidNumber: { tokenManagerType },
     });
+
+    printInfo('salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
         'register_custom_token',
@@ -304,30 +290,27 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
     const [salt, destinationChain, destinationTokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const tokenManagerType = tokenManagerImplementations[type];
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
-    let operatorBytes = nativeToScVal(null, { type: 'void' });
-
-    printInfo('Original salt', salt);
-    printInfo('Deployment salt (bytes32)', saltBytes32);
+    const tokenManagerType = tokenManagerTypes[type];
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
-        isValidNumber: { gasAmount, tokenManagerType },
+        isValidNumber: { gasAmount },
         isNonEmptyString: { destinationChain, destinationTokenAddress },
+        isValidStellarLinkTokenManagerType: { tokenManagerType },
     });
+
+    printInfo('salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const itsDestinationTokenAddress = encodeITSDestination(config, destinationChain, destinationTokenAddress);
     printInfo('Human-readable destination token address', destinationTokenAddress);
-    printInfo('Encoded ITS destination token address', itsDestinationTokenAddress);
 
+    let operatorBytes = nativeToScVal(null, { type: 'void' });
     if (options.operator) {
-        const itsDestinationOperatorAddress = encodeITSDestination(config, destinationChain, options.operator);
         printInfo('Human-readable destination operator address', options.operator);
-        printInfo('Encoded ITS destination operator address', itsDestinationOperatorAddress);
-
-        operatorBytes = hexToScVal(itsDestinationOperatorAddress);
+        operatorBytes = hexToScVal(encodeITSDestination(config, destinationChain, options.operator));
     }
 
     const operation = contract.call(

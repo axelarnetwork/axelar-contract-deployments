@@ -41,13 +41,7 @@ const IOwnable = getContractJSON('IOwnable');
 const { addOptionsToCommands } = require('../common');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
-const tokenManagerImplementations = {
-    INTERCHAIN_TOKEN: 0,
-    MINT_BURN_FROM: 1,
-    LOCK_UNLOCK: 2,
-    LOCK_UNLOCK_FEE: 3,
-    MINT_BURN: 4,
-};
+const { tokenManagerTypes } = require('../common/utils');
 
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
@@ -342,17 +336,13 @@ async function processCommand(config, chain, action, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
             }
 
-            if (
-                implementationType !== tokenManagerImplementations.MINT_BURN &&
-                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
-            ) {
+            if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.INTERCHAIN_TOKEN) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
             const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
-            printInfo('Encoded ITS destination address', itsDestinationAddress);
 
             const tx = await interchainTokenService.interchainTransfer(
                 tokenIdBytes32,
@@ -645,7 +635,7 @@ async function processCommand(config, chain, action, options) {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
             const { gasValue } = options;
             const deploymentSalt = getDeploymentSalt(options);
-            const tokenManagerType = tokenManagerImplementations[type];
+            const tokenManagerType = tokenManagerTypes[type];
 
             validateParameters({
                 isValidTokenId: { tokenId },
