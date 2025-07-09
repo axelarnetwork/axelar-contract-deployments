@@ -1,4 +1,3 @@
-const { randomBytes } = require('node:crypto');
 const { Command } = require('commander');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
@@ -162,12 +161,9 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
 }
 
 // register_coin_from_metadata
-// (XXX: covered in its-example.js#deployToken)
-
-// register_custom_coin
-async function registerCustomCoin(keypair, client, config, contracts, args, options) {
+async function registerCoinFromMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
-    const { ChannelId, InterchainTokenService } = itsConfig.objects;
+    const { InterchainTokenService } = itsConfig.objects;
     const [symbol, name, decimals] = args;
 
     const walletAddress = keypair.toSuiAddress();
@@ -180,68 +176,125 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from info)
-    const salt = randomBytes(32);
-    const [tokenId] = await txBuilder.moveCall({
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_coin_from_metadata`,
+        arguments: [InterchainTokenService, metadata, coinManagement],
+        typeArguments: [tokenType],
+    });
+
+    const tokenId = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register coin (${symbol}) from Coin Metadata in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
+
+    // Save the deployed token info in the contracts object
+    saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
+}
+
+// register_custom_coin
+// TODO: Fix / use a valid ChannelId 
+// Failing with Error: 
+// The following input objects are invalid: {
+//  "code":"notExists",
+//  "object_id":"0xba1958cefa5dc9d71809edcea6ee07c54ff3195803999fb2864162bc394814d6"
+// }
+async function registerCustomCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+    const { ChannelId, InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    // Deploy token on Sui
+    const deployConfig = { client, keypair, options, walletAddress };
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // New CoinManagement<T>
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+
+    // Create salt
+    const salt = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [walletAddress],
+    });
+
+    // Register deployed token (from info)
+    await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [InterchainTokenService, ChannelId, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
+
+    const tokenId = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register custom coin (${symbol}) in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
 
     // Save the deployed token info in the contracts object
     saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
 }
 
 // link_coin
-async function linkCoin(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig } = contracts;
-    const { ChannelId, InterchainTokenService } = itsConfig.objects;
-    const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams] = args;
+// async function linkCoin(keypair, client, config, contracts, args, options) {
+//     const { InterchainTokenService: itsConfig } = contracts;
+//     const { ChannelId, InterchainTokenService } = itsConfig.objects;
+//     const [destinationChain, destinationTokenAddress, tokenManagerType, linkParams] = args;
 
-    if (typeof destinationChain !== 'string' || typeof destinationTokenAddress !== 'string')
-        throw new Error('Destination chain and destination token address are required,');
+//     if (typeof destinationChain !== 'string' || typeof destinationTokenAddress !== 'string')
+//         throw new Error('Destination chain and destination token address are required,');
 
-    // TODO: destination_token_address and link_params are vector<u8> in move.
-    // Is this the correct way to submit them to interchain_token_service::link_coin?
-    const address = bcs.string().serialize(destinationTokenAddress).toBytes();
-    const params = bcs.string().serialize(linkParams).toBytes();
-    let type = tokenManagerType ? parseInt(tokenManagerType) : 0;
-    if (type < 0 || type > 4) throw new Error('Invalid token manager type');
+//     // TODO: destination_token_address and link_params are vector<u8> in move.
+//     // Is this the correct way to submit them to interchain_token_service::link_coin?
+//     const address = bcs.string().serialize(destinationTokenAddress).toBytes();
+//     const params = bcs.string().serialize(linkParams).toBytes();
+//     let type = tokenManagerType ? parseInt(tokenManagerType) : 0;
+//     if (type < 0 || type > 4) throw new Error('Invalid token manager type');
 
-    // Link coin
-    const salt = randomBytes(32);
-    const txBuilder = new TxBuilder(client);
+//     // Link coin
+//     const salt = randomBytes(32);
+//     const txBuilder = new TxBuilder(client);
 
-    const messageTicket = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::link_coin`,
-        arguments: [InterchainTokenService, ChannelId, salt, destinationChain, address, type, params],
-    });
+//     const messageTicket = await txBuilder.moveCall({
+//         target: `${itsConfig.address}::interchain_token_service::link_coin`,
+//         arguments: [InterchainTokenService, ChannelId, salt, destinationChain, address, type, params],
+//     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Link coin:\n${JSON.stringify(messageTicket)}`, options);
-}
+//     await broadcastFromTxBuilder(txBuilder, keypair, `Link coin:\n${JSON.stringify(messageTicket)}`, options);
+// }
 
 // register_coin_metadata
-async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig } = contracts;
-    const { InterchainTokenService } = itsConfig.objects;
+// async function registerCoinMetadata(keypair, client, config, contracts, args, options) {
+//     const { InterchainTokenService: itsConfig } = contracts;
+//     const { InterchainTokenService } = itsConfig.objects;
 
-    const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
+//     const symbol = args;
+//     if (!symbol) throw new Error('token symbol is required');
 
-    // Coin Metadata to be registered
-    const tokenType = contracts[symbol.toUpperCase()].typeArgument;
-    const coinMetadata = await client.getCoinMetadata({ coinType: tokenType });
+//     // Coin Metadata to be registered
+//     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
+//     const coinMetadata = await client.getCoinMetadata({ coinType: tokenType });
 
-    // Register Coin Metadata
-    const txBuilder = new TxBuilder(client);
+//     // Register Coin Metadata
+//     const txBuilder = new TxBuilder(client);
 
-    await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-        arguments: [InterchainTokenService, coinMetadata],
-        typeArguments: [tokenType],
-    });
+//     await txBuilder.moveCall({
+//         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
+//         arguments: [InterchainTokenService, coinMetadata],
+//         typeArguments: [tokenType],
+//     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
-}
+//     await broadcastFromTxBuilder(txBuilder, keypair, 'Register Coin Metadata', options);
+// }
 
 // receive_link_coin
 // give_unlinked_coin
@@ -330,6 +383,14 @@ if (require.main === module) {
             mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
         });
 
+    const registerCoinFromMetadataProgram = new Command()
+        .name('register-coin-from-metadata')
+        .command('register-coin-from-metadata <symbol> <name> <decimals>')
+        .description(`Deploy a coin on SUI and register it in ITS using its coin metadata.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
+        });
+
     const registerCustomCoinProgram = new Command()
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
@@ -339,21 +400,21 @@ if (require.main === module) {
         });
 
     // TODO: <token-type> (and maybe <link-params>?) would be better as options
-    const linkCoinProgram = new Command()
-        .name('link-coin')
-        .command('link-coin <destination-chain> <destination-address> <token-type> <link-params>')
-        .description(`TODO: describe link-coin and params`)
-        .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options) => {
-            mainProcessor(linkCoin, options, [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], processCommand);
-        });
+    // const linkCoinProgram = new Command()
+    //     .name('link-coin')
+    //     .command('link-coin <destination-chain> <destination-address> <token-type> <link-params>')
+    //     .description(`TODO: describe link-coin and params`)
+    //     .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options) => {
+    //         mainProcessor(linkCoin, options, [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], processCommand);
+    //     });
 
-    const registerCoinMetadataProgram = new Command()
-        .name('register-coin-metadata')
-        .command('register-coin-metadata <symbol>')
-        .description(`TODO: descript register-coin-metadata`)
-        .action((tokenSymbol, options) => {
-            mainProcessor(registerCoinMetadata, options, tokenSymbol, processCommand);
-        });
+    // const registerCoinMetadataProgram = new Command()
+    //     .name('register-coin-metadata')
+    //     .command('register-coin-metadata <symbol>')
+    //     .description(`TODO: descript register-coin-metadata`)
+    //     .action((tokenSymbol, options) => {
+    //         mainProcessor(registerCoinMetadata, options, tokenSymbol, processCommand);
+    //     });
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
@@ -364,9 +425,10 @@ if (require.main === module) {
         });
 
     program.addCommand(registerCoinFromInfoProgram);
+    program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
-    program.addCommand(linkCoinProgram);
-    program.addCommand(registerCoinMetadataProgram);
+    // program.addCommand(linkCoinProgram);
+    // program.addCommand(registerCoinMetadataProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     // finalize program
