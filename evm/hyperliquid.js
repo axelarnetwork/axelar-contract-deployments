@@ -15,6 +15,7 @@ const {
     printError,
 } = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
+const { httpPost } = require('../common/utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
 const msgpack = require('msgpack-lite');
@@ -67,40 +68,6 @@ async function signL1Action(wallet, action, activePool, nonce, isMainnet, chain)
     return { r: sig.r, s: sig.s, v: sig.v };
 }
 
-async function httpPost(action, signature, nonce, chain) {
-    const payload = { action, signature, nonce };
-    const endpoint = `${chain.hypercore.url}/exchange`;
-
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
-    return response.json();
-};
-
-async function sendRequest(action, signature, nonce, chain) {
-    const payload = { action, signature, nonce };
-    const endpoint = `${chain.hypercore.url}/exchange`;
-
-    const curlCommand = `curl -s -X POST "${endpoint}" \
-        -H "Content-Type: application/json" \
-        -d '${JSON.stringify(payload)}' \
-        --connect-timeout 15 \
-        --max-time 30`;
-
-    const { stdout, stderr } = await execAsync(curlCommand);
-
-    if (stderr) {
-        throw new Error(stderr);
-    }
-
-    const result = JSON.parse(stdout);
-    return result;
-}
-
 async function updateBlockSize(wallet, config, chain, args, options) {
     const [blockSize] = args;
     validateParameters({
@@ -116,7 +83,9 @@ async function updateBlockSize(wallet, config, chain, args, options) {
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
     const nonce = Date.now();
     const signature = await signL1Action(wallet, action, null, nonce, network === 'mainnet', chain);
-    const result = await httpPost(action, signature, nonce, chain);
+    const payload = { action, signature, nonce };
+    const endpoint = `${chain.hypercore.url}/exchange`;
+    const result = await httpPost(endpoint, payload);
 
     if (result.status !== 'ok') {
         throw new Error(result.response || result);

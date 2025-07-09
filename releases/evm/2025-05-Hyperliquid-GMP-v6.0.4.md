@@ -293,3 +293,15 @@ ts-node evm/gateway.js -n $CHAIN --action submitProof --multisigSessionId [multi
 ```bash
 ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
 ```
+
+
+## Note
+
+**SSL Compatibility**: Some users may encounter SSL certificate verification issues when connecting to the Hyperliquid testnet API endpoint (`https://api.hyperliquid-testnet.xyz`). 
+
+**Recommended Solutions**:
+1. **Update OpenSSL**: Ensure you have OpenSSL 3.5 or greater installed
+2. **Update Node.js**: Make sure Node.js is linked to the latest OpenSSL version
+3. **Alternative**: If issues persist, try running commands from a different geographical location using a VPN
+
+These SSL issues are typically resolved by updating to the latest OpenSSL and Node.js versions.
