@@ -23,6 +23,8 @@ $ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirector
 
 # equivalent explicit void migration data:
 $ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 1.0.1 --migration-data '()'
+
+# artifactDirectoryPath example: ../axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/
 `,
     );
     const uploadCommand = new Command('upload').description('Upload a Stellar contract');
