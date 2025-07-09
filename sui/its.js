@@ -197,8 +197,8 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
 }
 
 // register_custom_coin
-// TODO: Fix / use a valid ChannelId 
-// Failing with Error: 
+// TODO: Fix / use a valid ChannelId
+// Failing with Error:
 // The following input objects are invalid: {
 //  "code":"notExists",
 //  "object_id":"0xba1958cefa5dc9d71809edcea6ee07c54ff3195803999fb2864162bc394814d6"
