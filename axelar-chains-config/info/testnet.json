@@ -1380,10 +1380,6 @@
           "address": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "implementation": "0xA72afaa3130fE7F25CfcA4A49ed48e377a35aB6C",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85"
-        },
-        "InterchainTokenService": {
-          "salt": "ITS v2.1.1",
-          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         }
       },
       "gasOptions": {
