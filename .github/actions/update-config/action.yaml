@@ -95,9 +95,4 @@ runs:
             --repo "${{ inputs.config_repo }}" \
             --squash \
             --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE"
-        MERGE_PR_EXIT_CODE=$?
-        if [ "$MERGE_PR_EXIT_CODE" -ne 0 ]; then
-          echo "Failed to merge PR #$PR_NUMBER."
-          exit 1
-        fi
         echo "PR #$PR_NUMBER merged successfully."
