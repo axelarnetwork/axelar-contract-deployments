@@ -147,9 +147,15 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
         typeArguments: [tokenType],
     });
 
-    const tokenId = await broadcastFromTxBuilder(txBuilder, keypair, `Register coin (${symbol}) from info in InterchainTokenService`, options, {
-        showEvents: true,
-    });
+    const tokenId = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register coin (${symbol}) from info in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
 
     // Save the deployed token info in the contracts object
     saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
