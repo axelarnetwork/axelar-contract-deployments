@@ -1111,7 +1111,7 @@ const getContractArtifactPath = (artifactDir, contractName) => {
     const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
     const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
     return basePath + fileName;
-}
+};
 
 const getContractCodePath = async (options, contractName) => {
     if (options.artifactDir) {
