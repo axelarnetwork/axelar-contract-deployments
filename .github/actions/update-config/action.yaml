@@ -95,5 +95,6 @@ runs:
         gh pr merge "$PR_NUMBER" \
             --repo "${{ inputs.config_repo }}" \
             --squash \
+            --admin \
             --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE"
         echo "PR #$PR_NUMBER merged successfully."

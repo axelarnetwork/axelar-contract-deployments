@@ -1,7 +1,7 @@
 {
   "chains": {
     "core-avalanche": {
-      "name": "Avalanche Fuji [DUMMY_TEXT_FOR_TESTING]",
+      "name": "Avalanche Fuji",
       "axelarId": "core-avalanche",
       "chainId": 43113,
       "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
