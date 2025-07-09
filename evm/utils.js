@@ -60,6 +60,11 @@ const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/ID
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
+
+const getITSHubAddress = (config) => {
+    return config?.axelar?.contracts?.InterchainTokenService?.address || '0x0000000000000000000000000000000000000000';
+};
+
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
@@ -1140,4 +1145,5 @@ module.exports = {
     isHyperliquidChain,
     deriveAccounts,
     printTokenInfo,
+    getITSHubAddress,
 };

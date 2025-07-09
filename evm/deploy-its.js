@@ -26,6 +26,7 @@ const {
     wasEventEmitted,
     isConsensusChain,
     isHyperliquidChain,
+    getITSHubAddress,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
@@ -144,8 +145,7 @@ async function deployAll(config, wallet, chain, options) {
             : 'hub',
     );
 
-    // If ITS Hub is deployed, register it as a trusted chain as well
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+    const itsHubAddress = getITSHubAddress(config);
 
     if (itsHubAddress) {
         if (!config.axelar?.axelarId) {
@@ -282,10 +282,6 @@ async function deployAll(config, wallet, chain, options) {
                             `Expected: ${isHyperliquidChain(chain) ? 'hyperliquidInterchainTokenDeployer' : 'interchainTokenDeployer'}`,
                     );
                 }
-
-                // Get ITS Hub address from config
-                const itsHubAddress =
-                    config.axelar?.contracts?.InterchainTokenService?.address || '0x0000000000000000000000000000000000000000';
 
                 const args = [
                     contractConfig.tokenManagerDeployer,

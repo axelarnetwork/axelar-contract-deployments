@@ -4,7 +4,16 @@ const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } =
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const { printInfo, validateParameters, isHyperliquidChain, getContractJSON, getGasOptions, loadConfig, getChainConfig} = require('./utils');
+const {
+    printInfo,
+    validateParameters,
+    isHyperliquidChain,
+    getContractJSON,
+    getGasOptions,
+    loadConfig,
+    getChainConfig,
+    printError,
+} = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { handleTx } = require('./its');
 const execAsync = promisify(exec);
@@ -31,6 +40,8 @@ function actionHash(action, activePool, nonce) {
 
 function constructPhantomAgent(hash, isMainnet) {
     return {
+        // hypercore utilizes the same chainID for both mainnet and testnet
+        // and the source is used to determine to which chain the transaction is sent
         source: isMainnet ? 'a' : 'b',
         connectionId: hash,
     };
@@ -84,7 +95,7 @@ async function updateBlockSize(wallet, config, chain, args, options) {
 
     const useBig = blockSize === 'big';
     const network = chain.networkType;
-    
+
     printInfo('Block size', blockSize);
     printInfo('Network', network);
 
@@ -136,7 +147,7 @@ async function deployer(wallet, config, chain, args) {
             if (factoryDeployer !== AddressZero) {
                 printInfo('Factory deployer', factoryDeployer);
             } else {
-                throw new Error('Token does not support deployer retrieval and no factory record found');
+                printError('Token does not support deployer retrieval and no factory record found');
             }
         } else {
             throw error;
@@ -202,11 +213,10 @@ async function main(processor, args, options) {
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    
-    // Handle single chain name (take first if comma-separated)
+
     const chainName = options.chainNames.split(',')[0].trim();
     const chain = getChainConfig(config, chainName);
-    
+
     if (!chain) {
         throw new Error(`Chain "${chainName}" is not defined in the config`);
     }
@@ -222,14 +232,6 @@ async function main(processor, args, options) {
     await processor(wallet, config, chain, args, options);
 }
 
-/**
- * Switches Hyperliquid block size and adjusts gas options accordingly
- * @param {Object} options - Deployment options
- * @param {Object} gasOptions - Gas options to modify
- * @param {boolean} useBigBlocks - Whether to switch to big blocks
- * @param {Object} chain - Chain configuration object
- * @returns {Promise<boolean>} - Whether the switch was successful
- */
 async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlocks, chain) {
     const blockType = useBigBlocks ? 'big' : 'small';
     const rpc = chain.rpc;
@@ -256,11 +258,6 @@ async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlo
     }
 }
 
-/**
- * Determines if a deployment should use big blocks on Hyperliquid
- * @param {string} key - Deployment key
- * @returns {boolean} - Whether big blocks should be used
- */
 function shouldUseBigBlocks(key) {
     return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
 }
