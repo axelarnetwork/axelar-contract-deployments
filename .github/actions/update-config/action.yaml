@@ -91,6 +91,7 @@ runs:
         cd config-repo
         PR_NUMBER=${{ env.PR_NUMBER }}
         PR_TITLE="chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
+
         gh pr merge "$PR_NUMBER" \
             --repo "${{ inputs.config_repo }}" \
             --squash \
