@@ -1298,7 +1298,7 @@
       "name": "Mantle-Sepolia",
       "axelarId": "mantle-sepolia",
       "chainId": 5003,
-      "rpc": "https://mantle-sepolia.drpc.org",
+      "rpc": "https://rpc.sepolia.mantle.xyz",
       "tokenSymbol": "MNT",
       "decimals": 18,
       "chainType": "evm",
@@ -1376,23 +1376,23 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v2.1.0",
+          "salt": "ITS v2.1.1",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "proxySalt": "ITS v1.0.0",
-          "tokenManagerDeployer": "0x8d73f4350f1d0384e097aaC88d3e04Af94A95984",
+          "tokenManagerDeployer": "0x04d7499405869C7969fd4f5d1059F66400765af9",
           "interchainToken": "0xbEfE642EDd190358a1c48c1c2E14B044e17EC021",
-          "interchainTokenDeployer": "0x13Cc10015F8bC95fd3a5E848cEE2183c0DE2A69D",
-          "tokenManager": "0x790bD31aCF3a0548b4e71f2fB6785f6844aA286e",
-          "tokenHandler": "0x95C7e8e04440bD85c336147e2964b2F8331F23aD",
-          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "interchainTokenDeployer": "0x0BFF669D165a58Fb0D60FeD92Ccd1FbCd9930bCf",
+          "tokenManager": "0x381a06ef2ab8af30c5041556ed5719279b5734B2",
+          "tokenHandler": "0x2C6fb9B5A093ED0558aB794A5F4aA70901A7841F",
+          "implementation": "0xFF882Ade63338494Fdab578c2046208dB2cA08EA",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5",
-          "gatewayCaller": "0xb8Dcc3f2971072d556d8E33284725B3A6f83adFd"
+          "gatewayCaller": "0x4AE2Dac5647e218035aFA9d763DaE5E2B2E8A19d"
         },
         "InterchainTokenFactory": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
-          "implementation": "0x27Dae89620Ed5f3111d85D44ceFc6EdB7fe74551",
+          "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
           "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
         }
       },
