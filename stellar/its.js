@@ -268,7 +268,7 @@ async function registerCustomToken(wallet, _, chain, contract, args, options) {
 
     validateParameters({
         isValidStellarAddress: { tokenAddress },
-        isValidNumber: { tokenManagerType },
+        isValidStellarLinkTokenManagerType: { tokenManagerType },
     });
 
     printInfo('salt', salt);
