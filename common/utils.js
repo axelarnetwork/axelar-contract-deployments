@@ -325,6 +325,16 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/// Token Manager Types supported by ITS
+/// These are the standardized token manager implementations across all chains
+const tokenManagerTypes = {
+    INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
+
 /**
  * Validates if a token manager type is supported for Stellar link token operations.
  * Only LOCK_UNLOCK and MINT_BURN token manager types are allowed for linking tokens on Stellar.
@@ -659,16 +669,6 @@ const getProposalConfig = (config, env, key) => {
     } catch (error) {
         throw new Error(`Failed to load config value "${key}" for ${env}: ${error.message}`);
     }
-};
-
-/// Token Manager Types supported by ITS
-/// These are the standardized token manager implementations across all chains
-const tokenManagerTypes = {
-    INTERCHAIN_TOKEN: 0,
-    MINT_BURN_FROM: 1,
-    LOCK_UNLOCK: 2,
-    LOCK_UNLOCK_FEE: 3,
-    MINT_BURN: 4,
 };
 
 module.exports = {
