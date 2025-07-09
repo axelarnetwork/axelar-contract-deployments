@@ -6,6 +6,7 @@ on:
       network:
         required: true
         type: string
+      # Uses `files` input with `https://github.com/tj-actions/changed-files` action
       files:
         required: true
         type: string
