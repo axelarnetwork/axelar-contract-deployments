@@ -27,7 +27,7 @@ async function deployTokenFromInfo(config, symbol, name, decimals) {
     const tokenType = `${packageId}::${symbol.toLowerCase()}::${symbol.toUpperCase()}`;
     const [treasuryCap, metadata] = getObjectIdsByObjectTypes(publishTxn, [`TreasuryCap<${tokenType}>`, `Metadata<${tokenType}>`]);
 
-    return { metadata, packageId, tokenType, treasuryCap };
+    return [metadata, packageId, tokenType, treasuryCap];
 }
 
 async function newCoinManagementLocked(config, itsConfig, tokenType) {

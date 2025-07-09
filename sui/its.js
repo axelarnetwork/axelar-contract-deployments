@@ -135,7 +135,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
 
     // Deploy token on Sui
     const deployConfig = { client, keypair, options, walletAddress };
-    const { metadata, packageId, tokenType, treasuryCap } = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
@@ -168,7 +168,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
 
     // Deploy token on Sui
     const deployConfig = { client, keypair, options, walletAddress };
-    const { metadata, packageId, tokenType, treasuryCap } = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
