@@ -67,6 +67,20 @@ async function signL1Action(wallet, action, activePool, nonce, isMainnet, chain)
     return { r: sig.r, s: sig.s, v: sig.v };
 }
 
+async function httpPost(action, signature, nonce, chain) {
+    const payload = { action, signature, nonce };
+    const endpoint = `${chain.hypercore.url}/exchange`;
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+    return response.json();
+};
+
 async function sendRequest(action, signature, nonce, chain) {
     const payload = { action, signature, nonce };
     const endpoint = `${chain.hypercore.url}/exchange`;
@@ -102,7 +116,7 @@ async function updateBlockSize(wallet, config, chain, args, options) {
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
     const nonce = Date.now();
     const signature = await signL1Action(wallet, action, null, nonce, network === 'mainnet', chain);
-    const result = await sendRequest(action, signature, nonce, chain);
+    const result = await httpPost(action, signature, nonce, chain);
 
     if (result.status !== 'ok') {
         throw new Error(result.response || result);
