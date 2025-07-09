@@ -1114,6 +1114,10 @@ const getContractCodePath = async (options, contractName) => {
     throw new Error('Either --artifact-path or --version must be provided');
 };
 
+const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
+    return {};
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1166,6 +1170,10 @@ const CONTRACTS = {
     InterchainTokenService: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeInterchainTokenServiceInstantiateMsg,
+    },
+    ItsAbiTranslator: {
+        scope: CONTRACT_SCOPE_GLOBAL,
+        makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
     },
 };
 
