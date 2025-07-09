@@ -1107,7 +1107,7 @@ const getContractR2Url = (contractName, contractVersion) => {
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
-function getContractArtifactPath(artifactDir, contractName) {
+const getContractArtifactPath = (artifactDir, contractName) => {
     const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
     const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
     return basePath + fileName;
