@@ -16,13 +16,13 @@ function main() {
         `
 Examples:
 # using Vec<Address> as migration data:
-$ deploy-contract upgrade <contractName> deploy --artifact-dir <releasePath> --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
 
 # default void migration data:
-$ deploy-contract upgrade <contractName> deploy --artifact-dir <releasePath> --version 1.0.1
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 1.0.1
 
 # equivalent explicit void migration data:
-$ deploy-contract upgrade <contractName> deploy --artifact-dir <releasePath> --version 1.0.1 --migration-data '()'
+$ deploy-contract upgrade <contractName> deploy --artifact-dir <artifactDirectoryPath> --version 1.0.1 --migration-data '()'
 `,
     );
     const uploadCommand = new Command('upload').description('Upload a Stellar contract');
