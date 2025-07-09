@@ -36,7 +36,7 @@ runs:
     - name: Setup Branch Name
       shell: bash
       id: branch-name
-      run: echo "branch=feat/config-update-$(date +'%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
+      run: echo "branch=feat/config-update-${{ inputs.network }}-$(date +'%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
 
     - name: Create branch and generate config
       shell: bash
