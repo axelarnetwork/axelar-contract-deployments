@@ -240,8 +240,12 @@ async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlo
         const result = await updateBlockSize(wallet, config, chain, [blockType], options);
 
         if (result.status === 'ok') {
-            if (useBigBlocks && gasOptions.gasLimit) {
-                gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(2);
+            if (gasOptions.gasLimit) {
+                if (useBigBlocks) {
+                    gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(10);
+                } else {
+                    gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).div(10);
+                }
             }
             return true;
         } else {
