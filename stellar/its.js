@@ -104,7 +104,6 @@ async function deployRemoteInterchainToken(wallet, config, chain, contract, args
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
-    isValidDestinationChain(config, destinationChain);
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
@@ -140,7 +139,6 @@ async function deployRemoteCanonicalToken(wallet, config, chain, contract, args,
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
-    isValidDestinationChain(config, destinationChain);
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
