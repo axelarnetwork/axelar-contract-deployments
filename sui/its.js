@@ -215,9 +215,11 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Channel
-    const deployerChannel = options.channel ? options.channel : await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::new`,
-    });
+    const deployerChannel = options.channel
+        ? options.channel
+        : await txBuilder.moveCall({
+              target: `${AxelarGateway.address}::channel::new`,
+          });
 
     // Salt
     const salt = await txBuilder.moveCall({
@@ -238,7 +240,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
             deployerChannel, // XXX todo: this type should be correct (&Channel), determine why it's throwing `TypeMismatch`
             salt,
             metadata,
-            coinManagement
+            coinManagement,
         ],
         typeArguments: [tokenType],
     });
