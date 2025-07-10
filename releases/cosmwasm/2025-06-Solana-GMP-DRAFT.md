@@ -3,7 +3,7 @@
 |                | **Owner**                            |
 | -------------- | ------------------------------------ |
 | **Created By** | @eigerco                             |
-| **Deployment** | @attiss                              |
+| **Deployment** | @eigerco                              |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -12,11 +12,11 @@
 | **Testnet**          | -                     | -          |
 | **Mainnet**          | -                     | -          |
 
-- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier/tree/solana-cosmwasm)
+- [Amplifier Fork](https://github.com/eigerco/axelar-amplifier/tree/v0.1.0)
 - Contract Checksums:
-  - VotingVerifier: `23063bd7064298e07e78fa208b521ea3d42bfa4036127e38c02ef1434ee84f91`
-  - Gateway: `769b6695060da742c2ba578cdfe728c6e4438b90bf0df02477defc0b2641798c`
-  - MultisigProver: `3a114cd8960d5fe529e1b0a4b47da0786419dbd1cbf4ffd33c7de7832725ba53`
+  - VotingVerifier: `52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c`
+  - Gateway: `31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee`
+  - SolanaMultisigProver: `20c38aff9c725424cd71e7f85e357fb8a078954c11302f6d5e325060de9dac5c`
 
 ## Background
 
@@ -39,19 +39,12 @@ git checkout solana-cosmwasm
 
 2. Build the contracts and copy artifacts:
 ```bash
-cd contracts/voting-verifier
-RUSTFLAGS='-C link-arg=-s' cargo build --release --target wasm32-unknown-unknown --lib
-cd ../gateway
-RUSTFLAGS='-C link-arg=-s' cargo build --release --target wasm32-unknown-unknown --lib
-cd ../multisig-prover
-RUSTFLAGS='-C link-arg=-s' cargo build --release --target wasm32-unknown-unknown --lib
-
-cd ../..
-mkdir -p artifacts
-cp target/wasm32-unknown-unknown/release/voting_verifier.wasm artifacts/
-cp target/wasm32-unknown-unknown/release/gateway.wasm artifacts/
-cp target/wasm32-unknown-unknown/release/multisig_prover.wasm artifacts/
+docker run --rm -v "$(pwd)":/code \
+      --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+      --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+      cosmwasm/optimizer:0.16.1
 ```
+That would create the `artifacts` folder with all the compiled contracts, plus the checksums.
 
 ### Store Contracts
 
