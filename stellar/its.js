@@ -163,7 +163,6 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
-    isValidDestinationChain(config, destinationChain);
 
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
