@@ -638,7 +638,7 @@ async function processCommand(config, chain, action, options) {
             isValidDestinationChain(config, destinationChain);
 
             const tokenManagerType = tokenManagerTypes[type];
-            isValidLinkType(getChainConfig(config, destinationChain).chainType, tokenManagerType);
+            isValidLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, tokenManagerType);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);

@@ -7,6 +7,7 @@ const {
     loadConfig,
     addOptionsToCommands,
     getChainConfig,
+    getChainConfigByAxelarId,
     printInfo,
     printWarn,
     printError,
@@ -306,7 +307,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     isValidDestinationChain(config, destinationChain);
 
     const tokenManagerType = tokenManagerTypes[type];
-    isValidLinkType(getChainConfig(config, destinationChain).chainType, tokenManagerType);
+    isValidLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, tokenManagerType);
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
