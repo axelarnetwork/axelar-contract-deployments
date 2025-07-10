@@ -344,6 +344,12 @@ const tokenManagerTypes = {
  * @throws {Error} If the token manager type is not valid for the specified chain type
  */
 const isValidLinkType = (chainType, tokenManagerType) => {
+    // Validate that tokenManagerType is a valid number and one of the supported types
+    const validTokenManagerTypes = Object.values(tokenManagerTypes);
+    if (!isNumber(tokenManagerType) || !validTokenManagerTypes.includes(tokenManagerType)) {
+        throw new Error(`Invalid token manager type: ${tokenManagerType}. Must be one of: ${validTokenManagerTypes.join(', ')}`);
+    }
+
     const chainRules = {
         evm: {
             forbidden: [tokenManagerTypes.INTERCHAIN_TOKEN],
