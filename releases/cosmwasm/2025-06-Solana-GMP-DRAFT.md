@@ -383,8 +383,6 @@ cosmwasm_contract="$VOTING_VERIFIER"
 11. Update ampd with the Solana chain configuration.
 
 ```bash
-TODO: ampd register-public-key ???
-
 ampd register-chain-support "[service name]" $CHAIN
 ```
 

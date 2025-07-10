@@ -635,7 +635,7 @@ function trySolanaAddressBytesFromBase58(string) {
 /**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
- * Note: - Stellar addresses are converted to ASCII byte arrays.
+ * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
  *       - Solana (svm) addresses are decoded from base58 and hexlified.
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
