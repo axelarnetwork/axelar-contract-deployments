@@ -356,22 +356,22 @@ const isValidLinkType = (chainType, tokenManagerType) => {
     const chainRules = {
         evm: {
             forbidden: [tokenManagerTypes.INTERCHAIN_TOKEN],
+            validate: (type) => !chainRules.evm.forbidden.includes(type),
             errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
         },
         stellar: {
             allowed: [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN],
+            validate: (type) => chainRules.stellar.allowed.includes(type),
             errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
         },
     };
 
     const rules = chainRules[chainType];
     if (!rules) {
-        throw new Error(`Unsupported chain type: ${chainType}. Supported chain types: ${Object.keys(chainRules).join(', ')}`);
+        throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
     }
 
-    const isValid = rules.allowed ? rules.allowed.includes(tokenManagerType) : !rules.forbidden.includes(tokenManagerType);
-
-    if (!isValid) {
+    if (!rules.validate(tokenManagerType)) {
         throw new Error(`Invalid token manager type ${tokenManagerType} for chain type ${chainType}: ${rules.errorMsg}`);
     }
 };
