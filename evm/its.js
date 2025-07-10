@@ -76,7 +76,9 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 }
 
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
-    const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
+    const allChains = Object.values(config.chains)
+        .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
+        .map((chain) => chain.axelarId);
 
     // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
