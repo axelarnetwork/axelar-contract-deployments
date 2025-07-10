@@ -1,7 +1,7 @@
 'use strict';
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command, Option } = require('commander');
+const { Command, Option, Argument } = require('commander');
 const {
     saveConfig,
     loadConfig,
@@ -11,6 +11,7 @@ const {
     printWarn,
     printError,
     validateParameters,
+    isValidDestinationChain,
 } = require('../common');
 const {
     addBaseOptions,
@@ -23,7 +24,7 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, isValidLinkType } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -75,7 +76,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         isValidNumber: { decimal, initialSupply },
     });
 
-    printInfo('salt', salt);
+    printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
@@ -102,8 +103,9 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
+    isValidDestinationChain(config, destinationChain);
 
-    printInfo('salt', salt);
+    printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
@@ -137,6 +139,7 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
+    isValidDestinationChain(config, destinationChain);
 
     const operation = contract.call(
         'deploy_remote_canonical_token',
@@ -161,6 +164,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
+    isValidDestinationChain(config, destinationChain);
 
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
@@ -264,14 +268,15 @@ async function registerCustomToken(wallet, _, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
     const [salt, tokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
-    const tokenManagerType = tokenManagerTypes[type];
 
     validateParameters({
         isValidStellarAddress: { tokenAddress },
-        isValidStellarLinkTokenManagerType: { tokenManagerType },
     });
 
-    printInfo('salt', salt);
+    const tokenManagerType = tokenManagerTypes[type];
+    isValidLinkType(chain.chainType, tokenManagerType);
+
+    printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
@@ -292,16 +297,18 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     const saltBytes32 = saltToBytes32(salt);
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
     const gasAmount = options.gasAmount;
-    const tokenManagerType = tokenManagerTypes[type];
 
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
         isNonEmptyString: { destinationChain, destinationTokenAddress },
-        isValidStellarLinkTokenManagerType: { tokenManagerType },
     });
+    isValidDestinationChain(config, destinationChain);
 
-    printInfo('salt', salt);
+    const tokenManagerType = tokenManagerTypes[type];
+    isValidLinkType(getChainConfig(config, destinationChain).chainType, tokenManagerType);
+
+    printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const itsDestinationTokenAddress = encodeITSDestination(config, destinationChain, destinationTokenAddress);
@@ -309,7 +316,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
 
     let operatorBytes = nativeToScVal(null, { type: 'void' });
     if (options.operator) {
-        printInfo('Human-readable destination operator address', options.operator);
+        printInfo('Destination Operator address', options.operator);
         operatorBytes = hexToScVal(encodeITSDestination(config, destinationChain, options.operator));
     }
 
@@ -416,15 +423,17 @@ if (require.main === module) {
         });
 
     program
-        .command('register-custom-token <salt> <tokenAddress> <type>')
+        .command('register-custom-token <salt> <tokenAddress>')
         .description('register custom token')
+        .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
         .action((salt, tokenAddress, type, options) => {
             mainProcessor(registerCustomToken, [salt, tokenAddress, type], options);
         });
 
     program
-        .command('link-token <salt> <destinationChain> <destinationTokenAddress> <type>')
+        .command('link-token <salt> <destinationChain> <destinationTokenAddress>')
         .description('link token')
+        .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
         .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
         .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
         .addOption(new Option('--operator <operator>', 'operator for the token id on the destination chain'))

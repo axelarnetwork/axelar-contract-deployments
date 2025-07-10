@@ -336,14 +336,35 @@ const tokenManagerTypes = {
 };
 
 /**
- * Validates if a token manager type is supported for Stellar link token operations.
- * Only LOCK_UNLOCK and MINT_BURN token manager types are allowed for linking tokens on Stellar.
+ * Validates if a token manager type is supported for link token operations on a specific chain.
+ * Different chains may have different supported token manager types for linking tokens.
  *
+ * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
  * @param {number} tokenManagerType - The token manager type to validate
- * @returns {boolean} - True if the token manager type is valid for Stellar link token operations, false otherwise
+ * @throws {Error} If the token manager type is not valid for the specified chain type
  */
-const isValidStellarLinkTokenManagerType = (tokenManagerType) => {
-    return tokenManagerType === tokenManagerTypes.LOCK_UNLOCK || tokenManagerType === tokenManagerTypes.MINT_BURN;
+const isValidLinkType = (chainType, tokenManagerType) => {
+    const chainRules = {
+        evm: {
+            forbidden: [tokenManagerTypes.INTERCHAIN_TOKEN],
+            errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
+        },
+        stellar: {
+            allowed: [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN],
+            errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
+        },
+    };
+
+    const rules = chainRules[chainType];
+    if (!rules) {
+        throw new Error(`Unsupported chain type: ${chainType}`);
+    }
+
+    const isValid = rules.allowed ? rules.allowed.includes(tokenManagerType) : !rules.forbidden.includes(tokenManagerType);
+
+    if (!isValid) {
+        throw new Error(`Invalid token manager type ${tokenManagerType} for chain type ${chainType}: ${rules.errorMsg}`);
+    }
 };
 
 const validationFunctions = {
@@ -360,7 +381,6 @@ const validationFunctions = {
     isValidStellarAccount,
     isValidStellarContract,
     isHexString,
-    isValidStellarLinkTokenManagerType,
 };
 
 function validateParameters(parameters) {
@@ -671,6 +691,37 @@ const getProposalConfig = (config, env, key) => {
     }
 };
 
+/**
+ * Validates if a chain name is valid in the config.
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} chainName - The chain name to validate
+ * @throws {Error} If the chain is not valid
+ */
+function isValidChain(config, chainName) {
+    const chains = config.chains;
+
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
+}
+
+/**
+ * Validates if a destination chain is valid (allows empty string).
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} destinationChain - The destination chain to validate
+ */
+function isValidDestinationChain(config, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    isValidChain(config, destinationChain);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -731,5 +782,7 @@ module.exports = {
     encodeITSDestination,
     getProposalConfig,
     tokenManagerTypes,
-    isValidStellarLinkTokenManagerType,
+    isValidLinkType,
+    isValidChain,
+    isValidDestinationChain,
 };
