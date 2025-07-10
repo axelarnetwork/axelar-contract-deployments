@@ -61,7 +61,7 @@ const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const getITSHubAddress = (config) => {
-    return config?.axelar?.contracts?.InterchainTokenService?.address || '0x0000000000000000000000000000000000000000';
+    return config?.axelar?.contracts?.InterchainTokenService?.address;
 };
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
