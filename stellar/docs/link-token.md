@@ -111,17 +111,13 @@ ts-node evm/interchainTokenFactory.js \
 
 #### For Stellar Classic Assets
 
-If you're using Stellar Classic assets (format: {Symbol-Issuer}), you must deploy a corresponding Soroban contract to make them accessible within Soroban-based contracts:
+If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Soroban contract to make them accessible within Soroban-based contracts:
 
 **Stellar Classic Asset Types:**
 
 - Classic assets follow the {Symbol-Issuer} format
-- Addresses starting with "C" indicate Soroban smart contracts
-- Classic assets can be deployed as Soroban contracts for ITS compatibility
 
-**Note:** If you already have a Soroban contract (address starting with "C"), you can skip the deploy step below and register token metadata directly.
 
-**Deploy Soroban Contract for Classic Asset:**
 
 ```bash
 ts-node stellar/token-utils.js create-stellar-asset-contract <assetCode> <issuer>
@@ -135,8 +131,6 @@ ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC
 
 # Result: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 ```
-
-**Note:** If you're using the Axelar ITS Portal UI, it will automatically call this function to deploy the Soroban contract.
 
 **Chain A (Stellar):**
 
@@ -192,7 +186,6 @@ ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAdd
 
 For MINT_BURN token managers, you must transfer minter permissions to the token manager on both chains:
 
-**Get Token Manager Address:**
 
 ```bash
 # Get token manager address on the destination chain
