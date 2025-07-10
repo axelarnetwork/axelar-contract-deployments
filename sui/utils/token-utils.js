@@ -41,9 +41,17 @@ async function newCoinManagementLocked(config, itsConfig, tokenType) {
     return [txBuilder, coinManagement];
 }
 
-async function saveTokenDeployment(packageId, contracts, symbol, TokenId, TreasuryCap, Metadata) {
+async function saveTokenDeployment(
+    address,    // package id
+    tokenType,  // coin type <T>
+    contracts,  // contracts object (from json config)
+    symbol,     // token symbol
+    TokenId,    // ITS token id 
+    TreasuryCap,// sui::coin::TreasuryCap
+    Metadata    // sui::coin::CoinMetadata
+) {
     contracts[symbol.toUpperCase()] = {
-        address: packageId,
+        address,
         typeArgument: tokenType,
         decimals,
         objects: {

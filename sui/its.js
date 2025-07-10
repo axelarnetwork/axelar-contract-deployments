@@ -157,7 +157,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     );
 
     // Save the deployed token info in the contracts object
-    saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, tokenId, treasuryCap, metadata);
 }
 
 // register_coin_from_metadata
@@ -193,7 +193,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     );
 
     // Save the deployed token info in the contracts object
-    saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, tokenId, treasuryCap, metadata);
 }
 
 // register_custom_coin
