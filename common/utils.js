@@ -344,7 +344,10 @@ const tokenManagerTypes = {
  * @throws {Error} If the token manager type is not valid for the specified chain type
  */
 const isValidLinkType = (chainType, tokenManagerType) => {
-    // Validate that tokenManagerType is a valid number and one of the supported types
+    if (!chainType) {
+        throw new Error(`Chain type is required but was not provided (received: ${chainType})`);
+    }
+
     const validTokenManagerTypes = Object.values(tokenManagerTypes);
     if (!isNumber(tokenManagerType) || !validTokenManagerTypes.includes(tokenManagerType)) {
         throw new Error(`Invalid token manager type: ${tokenManagerType}. Must be one of: ${validTokenManagerTypes.join(', ')}`);
@@ -363,7 +366,7 @@ const isValidLinkType = (chainType, tokenManagerType) => {
 
     const rules = chainRules[chainType];
     if (!rules) {
-        throw new Error(`Unsupported chain type: ${chainType}`);
+        throw new Error(`Unsupported chain type: ${chainType}. Supported chain types: ${Object.keys(chainRules).join(', ')}`);
     }
 
     const isValid = rules.allowed ? rules.allowed.includes(tokenManagerType) : !rules.forbidden.includes(tokenManagerType);
