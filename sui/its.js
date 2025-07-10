@@ -225,15 +225,15 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     });
 
     console.log({
-        args: { 
+        args: {
             InterchainTokenService,
             deployerChannel,
             deployerChannelAddress,
             salt,
             metadata,
-            coinManagement
+            coinManagement,
         },
-        typedArgs: { tokenType }
+        typedArgs: { tokenType },
     });
 
     // Register deployed token (from info)

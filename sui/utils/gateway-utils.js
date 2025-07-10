@@ -16,10 +16,9 @@ async function newChannel(config, gatewayAddress) {
     txBuilder.tx.transferObjects([channel], config.walletAddress);
 
     const result = await broadcastFromTxBuilder(txBuilder, config.keypair, `Create gateway channel`, config.options, {
-            showEvents: true,
-        }
-    );
-    
+        showEvents: true,
+    });
+
     const channelId = result.events[0].parsedJson.id;
 
     return [channelId, deployerChannelAddress];
