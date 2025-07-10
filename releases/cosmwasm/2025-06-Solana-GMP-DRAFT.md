@@ -369,6 +369,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 [[handlers]]
 type = "MultisigSigner"
 cosmwasm_contract = "$MULTISIG"
+
 [[handlers]]
 type="SolanaMsgVerifier"
 http_url=[http_url]
