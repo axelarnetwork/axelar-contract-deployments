@@ -307,9 +307,10 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(client);
 
-    const [tokenId, symbol] = args;
-    if (!tokenId || !symbol) throw new Error('token id and token symbol are required');
-
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+    
+    const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
 
     await txBuilder.moveCall({
@@ -418,10 +419,10 @@ if (require.main === module) {
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
-        .command('migrate-coin-metadata <token-id> <symbol>')
+        .command('migrate-coin-metadata <symbol>')
         .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
-        .action((tokenId, tokenSymbol, options) => {
-            mainProcessor(migrateCoinMetadata, options, [tokenId, tokenSymbol], processCommand);
+        .action((symbol, options) => {
+            mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
         });
 
     program.addCommand(registerCoinFromInfoProgram);
