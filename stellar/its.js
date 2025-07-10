@@ -93,7 +93,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
+async function deployRemoteInterchainToken(wallet, config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
@@ -130,7 +130,7 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
+async function deployRemoteCanonicalToken(wallet, config, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
     const [tokenAddress, destinationChain] = args;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
