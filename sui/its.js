@@ -182,7 +182,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
         typeArguments: [tokenType],
     });
 
-    const tokenId = await broadcastFromTxBuilder(
+    const result = await broadcastFromTxBuilder(
         txBuilder,
         keypair,
         `Register coin (${symbol}) from Coin Metadata in InterchainTokenService`,
@@ -191,6 +191,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
             showEvents: true,
         },
     );
+    const tokenId = result.events[0].parsedJson.token_id.id;
 
     // Save the deployed token info in the contracts object
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
@@ -230,7 +231,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         typeArguments: [tokenType],
     });
 
-    const tokenId = await broadcastFromTxBuilder(
+    const result = await broadcastFromTxBuilder(
         txBuilder,
         keypair,
         `Register custom coin (${symbol}) in InterchainTokenService`,
@@ -239,6 +240,8 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
             showEvents: true,
         },
     );
+
+    const tokenId = result.events[0].parsedJson.token_id.id;
 
     // Save the deployed token info in the contracts object
     saveTokenDeployment(packageId, contracts, symbol, tokenId, treasuryCap, metadata);
