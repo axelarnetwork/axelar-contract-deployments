@@ -4,6 +4,9 @@
 
 This document describes the process for linking existing tokens across different chains using the Interchain Token Service (ITS) Hub.
 
+For detailed design specifications and architecture, see **ARC-1: ITS Hub Multi-Chain Token Linking**:
+https://github.com/axelarnetwork/arcs/blob/main/arcs/arc-1.md
+
 The token linking feature enables:
 
 - Linking existing tokens across connected Amplifier chains via ITS Hub
@@ -21,29 +24,16 @@ Before linking tokens, ITS Hub needs to know about each token's details (address
 
 Once metadata is registered, you can link tokens by specifying which tokens on different chains should be connected.
 
-### Decimal Scaling
-
-ITS Hub automatically handles decimal scaling between linked tokens:
-
-- **Stellar Token**: 7 decimals (1 USDC = 10,000,000 units)
-- **EVM Token**: 18 decimals (1 USDC = 1,000,000,000,000,000,000 units)
-- **Scaling Factor**: 10^(18-7) = 10^11
-
-When transferring 1 USDC from Stellar to EVM:
-
-- Stellar: 10,000,000 units locked/burned
-- EVM: 1,000,000,000,000,000,000 units unlocked/minted
-
 ## Link Token Flow
 
 ```
 1. User controls Token A (Stellar) and Token B (EVM)
-2. User → ITS Stellar: registerTokenMetadata(Token A) → ITS Hub
-3. User → ITS EVM: registerTokenMetadata(Token B) → ITS Hub
+2. User → ITS Stellar: registerTokenMetadata(Token A)
+3. User → ITS EVM: registerTokenMetadata(Token B)
 4. User → ITS Stellar: registerCustomToken() → Deploys Token Manager A
-5. User → ITS Stellar: linkToken() → ITS Hub
-6. ITS Hub: Calculates scaling factor from stored decimals
-7. ITS Hub → ITS EVM: Deploy Token Manager B
+5. User → Verify token metadata is registered on ITS Hub
+6. User → ITS Stellar: linkToken() → Deploys Token Manager B on destination chain
+7. User → Transfer mintership to Token Managers (MINT_BURN type only)
 8. Token linking complete - InterchainTransfer enabled
 ```
 
@@ -51,10 +41,11 @@ When transferring 1 USDC from Stellar to EVM:
 
 Before linking tokens, ensure you have:
 
-1. **Token Control**: You must control both tokens on their respective chains
-2. **Token Metadata**: Both tokens must be registered with their metadata
-3. **Gas Tokens**: Sufficient gas tokens for cross-chain operations
-4. **ITS Deployment**: ITS contracts must be deployed on both chains
+1. **Token Control**: Token permissions depend on the manager type:
+    - **MINT_BURN**: You must have minter permissions for the token on that chain
+    - **LOCK_UNLOCK**: No token control or minter permissions required for that token
+
+    **Note:** Since you cannot link two LOCK_UNLOCK tokens, one token must be MINT_BURN (requiring minter permissions) and the other can be LOCK_UNLOCK (no permissions required).
 
 ## Token Manager Types
 
@@ -62,6 +53,8 @@ The following token manager types are supported:
 
 - `LOCK_UNLOCK` (2): For tokens that are locked on the source chain and unlocked on the destination chain
 - `MINT_BURN` (4): For tokens that are burned on the source chain and minted on the destination chain
+
+**Important:** You cannot have two LOCK_UNLOCK tokens linked together. At most one token can be LOCK_UNLOCK type. The other token must be MINT_BURN type and owned by the issuer with mint rights given to the token manager.
 
 ## Parameters
 
@@ -73,17 +66,26 @@ The following token manager types are supported:
 - `destinationTokenAddress`: Address of the token on the destination chain
 - `type`: Token manager type (LOCK_UNLOCK, MINT_BURN)
 
-**Optional:**
+## Operator Role & Security
 
-- `--operator`: Operator address for the token manager on the destination chain
-- `--gas-token-address`: Gas token address (defaults to XLM on Stellar)
-- `--gas-amount`: Gas amount for cross-chain operations
+The `--operator` parameter specifies an address that controls the token manager on the destination chain.
+
+**Operator can:**
+
+- Set and modify flow limits
+- Pause/unpause token manager operations
+
+**Security:** The operator cannot steal tokens directly, but can modify settings that affect interchain token service. Use trusted addresses only.
+
+**Note:** The deployer account (caller of linkToken) must also be secure, as it has the authority to initiate token linking operations.
 
 ## Step-by-Step Process
 
 ### Step 1: Setup Tokens
 
-Setup Token with decimals on both chains:
+**Note: This step is for deploying test tokens. If you want to use existing tokens, skip this step and proceed to Step 2.**
+
+Deploy Test Tokens on both chains:
 
 **Chain A (Stellar):**
 
@@ -107,6 +109,35 @@ ts-node evm/interchainTokenFactory.js \
 
 ### Step 2: Register Token Metadata
 
+#### For Stellar Classic Assets
+
+If you're using Stellar Classic assets (format: {Symbol-Issuer}), you must deploy a corresponding Soroban contract to make them accessible within Soroban-based contracts:
+
+**Stellar Classic Asset Types:**
+
+- Classic assets follow the {Symbol-Issuer} format
+- Addresses starting with "C" indicate Soroban smart contracts
+- Classic assets can be deployed as Soroban contracts for ITS compatibility
+
+**Note:** If you already have a Soroban contract (address starting with "C"), you can skip the deploy step below and register token metadata directly.
+
+**Deploy Soroban Contract for Classic Asset:**
+
+```bash
+ts-node stellar/token-utils.js create-stellar-asset-contract <assetCode> <issuer>
+```
+
+Example:
+
+```bash
+# For USDC Classic asset (USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN)
+ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+
+# Result: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+```
+
+**Note:** If you're using the Axelar ITS Portal UI, it will automatically call this function to deploy the Soroban contract.
+
 **Chain A (Stellar):**
 
 ```bash
@@ -129,19 +160,64 @@ Register the token on the source chain (Stellar):
 ts-node stellar/its.js register-custom-token <salt> <tokenAddress> <tokenManagerType>
 ```
 
-### Step 4: Link Token
+### Step 4: Verify Token Metadata Registration
+
+Before linking tokens, verify that token metadata is registered on ITS Hub for both chains:
+
+```bash
+# Verify source token metadata (Stellar)
+axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"<sourceChain>","token_address":"<tokenAddress>"}}' --output json
+
+# Verify destination token metadata (EVM)
+axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"<destinationChain>","token_address":"<destinationTokenAddress>"}}' --output json
+```
+
+If either query fails or returns null, ensure you complete Step 2 (Register Token Metadata) before proceeding.
+
+### Step 5: Link Token
 
 Link the token to the destination chain:
+
+- `--operator`: Operator address for the token manager on the destination chain
 
 ```bash
 ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAddress> <tokenManagerType> \
    --gas-amount <amount> \
-   --operator <operator>
+   --operator <operatorAddress>
+```
+
+### Step 6: Transfer Minter Permissions (MINT_BURN Type Only)
+
+**Note: This step is only required if you're using the MINT_BURN token manager type. Skip this step for LOCK_UNLOCK type.**
+
+For MINT_BURN token managers, you must transfer minter permissions to the token manager on both chains:
+
+**Get Token Manager Address:**
+
+```bash
+# Get token manager address on the destination chain
+ts-node evm/its.js --action tokenManagerAddress --tokenId <tokenId> -n <destinationChain>
+```
+
+**Transfer Minter Permissions:**
+
+**On Stellar:**
+
+```bash
+# Transfer minter permissions to token manager (if applicable)
+# This depends on your token's specific implementation
+```
+
+**On EVM:**
+
+```bash
+# Transfer mintership to the token manager
+ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManagerAddress> -n <destinationChain>
 ```
 
 ## Examples
 
-### Example 1: Link USDC Tokens with LOCK_UNLOCK
+### Example 1: Link Ethereum USDC (LOCK_UNLOCK) with your own USDC contract on Stellar (MINT_BURN)
 
 Link USDC tokens with different decimals (7 decimals on Stellar, 18 decimals on EVM):
 
@@ -154,32 +230,18 @@ ts-node stellar/its.js register-token-metadata CB64D3G...USDC --gas-amount 10000
 # Register USDC metadata on EVM (18 decimals)
 ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
 
-# Register custom token on Stellar
-ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC LOCK_UNLOCK
+# Register custom token on Stellar (MINT_BURN type since you control this token)
+ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
 
-# Link token to EVM
-ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000
+# Verify token metadata is registered on ITS Hub
+axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"stellar","token_address":"CB64D3G...USDC"}}' --output json
+axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"evm_chain","token_address":"0xa0b86a33...USDC"}}' --output json
 
-# Interchain Token Transfer
-ts-node stellar/its.js interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
-```
+# Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
+ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
 
-### Example 2: Link Custom Token with MINT_BURN
-
-```bash
-# Register custom token metadata on both chains
-ts-node stellar/its.js register-token-metadata <stellarTokenAddress> --gas-amount 10000000
-ts-node evm/its.js --action registerTokenMetadata --tokenAddress <ethereumTokenAddress> -n evm_chain
-
-# Register and link using MINT_BURN type
-ts-node stellar/its.js register-custom-token <salt> <stellarTokenAddress> MINT_BURN
-ts-node stellar/its.js link-token <salt> evm_chain <ethereumTokenAddress> MINT_BURN --gas-amount 10000000 --operator <operatorAddress>
-
-# Get token Manager on EVM
-ts-node evm/its.js --action tokenManagerAddress --tokenId <tokenId> -n evm_chain
-
-# Transfer mintership on EVM
-ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManager> -n evm_chain
+# Transfer minter permissions to token manager on Stellar (for MINT_BURN type)
+# This depends on your token's specific implementation
 
 # Interchain Token Transfer
 ts-node stellar/its.js interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
@@ -221,10 +283,7 @@ Solution: Use a different salt value for the linking operation.
 
 ## Best Practices & Security
 
-1. **Salt Management**: Use unique, cryptographically secure salts for each token linking operation
-2. **Gas Estimation**: Always estimate gas costs before executing operations
-3. **Token Verification**: Verify token addresses and decimals before linking
-4. **Token Control**: Ensure you have proper control over both tokens
-5. **Operator Security**: Use secure operator addresses with appropriate permissions
-6. **Transaction Verification**: Check gas amount and token permissions if transactions fail
-7. **Chain Connectivity**: Ensure both chains are connected to ITS Hub
+1. **Salt Management**: Use unique salts for each token linking operation. Salt can be any string, it must to be unique per token ID being linked
+2. **Token Control**: Ensure you have proper control over both tokens
+3. **Operator Security**: Use secure operator addresses with appropriate permissions
+4. **Transaction Verification**: If transactions fail, ensure mint permissions are transferred to the ITS token manager for MINT_BURN type tokens
