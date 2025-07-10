@@ -195,8 +195,8 @@ async function deployAll(config, wallet, chain, options) {
             },
         },
         // Deploy only the appropriate token implementation based on chain type
-        [isHyperliquidChain(chain) ? 'hyperliquidInterchainToken' : 'interchainToken']: {
-            name: isHyperliquidChain(chain) ? 'Hyperliquid Interchain Token' : 'Interchain Token',
+        interchainToken: {
+            name: 'Interchain Token',
             contractName: isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken',
             async deploy() {
                 return deployContract(
