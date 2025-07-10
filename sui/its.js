@@ -233,15 +233,9 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         typeArguments: [tokenType],
     });
 
-    const result = await broadcastFromTxBuilder(
-        txBuilder,
-        keypair,
-        `Register custom coin (${symbol}) in InterchainTokenService`,
-        options,
-        {
-            showEvents: true,
-        },
-    );
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register custom coin (${symbol}) in InterchainTokenService`, options, {
+        showEvents: true,
+    });
 
     const tokenId = result.events[0].parsedJson.token_id.id;
 
