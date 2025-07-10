@@ -79,9 +79,6 @@ async function deployAll(config, wallet, chain, options) {
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
 
-    contracts[contractName] = contractConfig;
-    contracts[itsFactoryContractName] = itsFactoryContractConfig;
-
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
     const gasOptions = await getGasOptions(chain, options, contractName);
@@ -97,16 +94,6 @@ async function deployAll(config, wallet, chain, options) {
               provider: wallet.provider,
           });
 
-    if (!isValidAddress(interchainTokenService)) {
-        throw new Error(`Invalid ITS address: ${interchainTokenService}`);
-    }
-
-    if (options.reuseProxy) {
-        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
-    } else {
-        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
-    }
-
     const interchainTokenFactory = options.reuseProxy
         ? itsFactoryContractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
@@ -117,15 +104,21 @@ async function deployAll(config, wallet, chain, options) {
               provider: wallet.provider,
           });
 
-    if (!isValidAddress(interchainTokenFactory)) {
-        throw new Error(`Invalid Interchain Token Factory address: ${interchainTokenFactory}`);
-    }
-
     if (options.reuseProxy) {
+        if (!isValidAddress(interchainTokenService) || !isValidAddress(interchainTokenFactory)) {
+            printError('No ITS contract found for chain', chain.name);
+            return;
+        }
+
+        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
         printInfo('Reusing existing Interchain Token Factory proxy', interchainTokenFactory);
     } else {
+        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
         printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
     }
+
+    contracts[contractName] = contractConfig;
+    contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     // Register all EVM chains that ITS is or will be deployed on.
     const itsChains = Object.values(config.chains).filter(
@@ -390,17 +383,8 @@ async function deploy(config, chain, options) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey, provider);
-    const contractName = 'InterchainTokenService';
 
     await printWalletInfo(wallet, options);
-
-    const contracts = chain.contracts;
-    const contractConfig = contracts[contractName] || {};
-
-    contractConfig.salt = salt;
-    contractConfig.deployer = wallet.address;
-
-    contracts[contractName] = contractConfig;
 
     const operatorAddress = options.operatorAddress || wallet.address;
 
@@ -422,11 +406,13 @@ async function upgrade(_, chain, options) {
     await printWalletInfo(wallet, options);
 
     const contracts = chain.contracts;
-    const contractConfig = contracts[contractName] || {};
-    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
+    const contractConfig = contracts[contractName];
+    const itsFactoryContractConfig = contracts[itsFactoryContractName];
 
-    contracts[contractName] = contractConfig;
-    contracts[itsFactoryContractName] = itsFactoryContractConfig;
+    if (!contractConfig || !itsFactoryContractConfig) {
+        printError('No ITS contract found for chain', chain.name);
+        return;
+    }
 
     printInfo(`Upgrading Interchain Token Service.`);
 
