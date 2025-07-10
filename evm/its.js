@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const {
     getDefaultProvider,
-    utils: { hexZeroPad, toUtf8Bytes, keccak256 },
+    utils: { hexZeroPad, toUtf8Bytes, keccak256, parseUnits, formatUnits },
     BigNumber,
     Contract,
 } = ethers;
@@ -28,6 +28,7 @@ const {
     getChainConfigByAxelarId,
     isConsensusChain,
     encodeITSDestination,
+    printTokenInfo,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -75,7 +76,9 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 }
 
 async function getTrustedChainsAndAddresses(config, interchainTokenService) {
-    const allChains = Object.values(config.chains).map((chain) => chain.axelarId);
+    const allChains = Object.values(config.chains)
+        .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
+        .map((chain) => chain.axelarId);
 
     // If ITS Hub is deployed, register it as a trusted chain as well
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
@@ -202,7 +205,7 @@ async function processCommand(config, chain, action, options) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
-            break;
+            return interchainTokenAddress;
         }
 
         case 'interchain-token-id': {
@@ -330,9 +333,11 @@ async function processCommand(config, chain, action, options) {
                 wallet,
             );
 
+            await printTokenInfo(await interchainTokenService.registeredTokenAddress(tokenIdBytes32), provider);
+
             const implementationType = (await tokenManager.implementationType()).toNumber();
             const decimals = await token.decimals();
-            const amountInUnits = BigNumber.from(amount).mul(BigNumber.from(10).pow(decimals));
+            const amountInUnits = parseUnits(amount, decimals);
             const balance = await token.balanceOf(wallet.address);
 
             if (balance.lt(amountInUnits)) {
@@ -361,7 +366,7 @@ async function processCommand(config, chain, action, options) {
                 { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
-            break;
+            return tx.hash;
         }
 
         case 'register-token-metadata': {
@@ -730,7 +735,7 @@ async function processCommand(config, chain, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    await mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
 }
 
 if (require.main === module) {
@@ -948,4 +953,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChainsAndAddresses, isValidDestinationChain };
