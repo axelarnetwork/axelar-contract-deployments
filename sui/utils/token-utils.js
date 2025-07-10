@@ -42,13 +42,14 @@ async function newCoinManagementLocked(config, itsConfig, tokenType) {
 }
 
 async function saveTokenDeployment(
-    address,    // package id
-    tokenType,  // coin type <T>
-    contracts,  // contracts object (from json config)
-    symbol,     // token symbol
-    TokenId,    // ITS token id 
-    TreasuryCap,// sui::coin::TreasuryCap
-    Metadata    // sui::coin::CoinMetadata
+    address, // package id
+    tokenType, // coin type <T>
+    contracts, // contracts object (from json config)
+    symbol, // token symbol
+    decimals, // token decimals
+    TokenId, // ITS token id
+    TreasuryCap, // sui::coin::TreasuryCap
+    Metadata, // sui::coin::CoinMetadata
 ) {
     contracts[symbol.toUpperCase()] = {
         address,

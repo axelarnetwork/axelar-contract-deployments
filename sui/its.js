@@ -157,7 +157,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     );
 
     // Save the deployed token info in the contracts object
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
 // register_coin_from_metadata
@@ -193,7 +193,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     );
 
     // Save the deployed token info in the contracts object
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
 // register_custom_coin
@@ -309,7 +309,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 
     const symbol = args;
     if (!symbol) throw new Error('token symbol is required');
-    
+
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
 
