@@ -24,7 +24,6 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
-    isConsensusChain,
     isHyperliquidChain,
     getITSHubAddress,
     parseTrustedChains,
@@ -48,14 +47,12 @@ async function deployAll(config, wallet, chain, options) {
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
-    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
 
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
-    const interchainTokenServiceContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
     const ServiceContract = getContractJSON(
         isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
@@ -133,7 +130,7 @@ async function deployAll(config, wallet, chain, options) {
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+    const itsHubAddress = getITSHubAddress(config);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
@@ -423,9 +420,11 @@ async function upgrade(_, chain, options) {
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
+    const InterchainTokenService = getContractJSON(
+        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        artifactPath,
+    );
     const gasOptions = await getGasOptions(chain, options, contractName);
-    const interchainTokenServiceContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
-    const InterchainTokenService = getContractJSON(interchainTokenServiceContractName, artifactPath);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
 
