@@ -6,5 +6,4 @@ module.exports = {
     ...require('./cli-utils'),
     ...require('./LedgerSigner'),
     ...require('./token-utils'),
-    ...require('./gateway-utils'),
 };
