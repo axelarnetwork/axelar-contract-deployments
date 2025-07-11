@@ -7,12 +7,10 @@ const { Command, Option } = require('commander');
 const {
     printInfo,
     validateParameters,
-    isHyperliquidChain,
     getContractJSON,
     getGasOptions,
-    loadConfig,
-    getChainConfig,
-    printError,
+    mainProcessor,
+    isHyperliquidChain,
 } = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { httpPost } = require('../common/utils');
@@ -48,9 +46,8 @@ function constructPhantomAgent(hash, source) {
 
 async function signL1Action(wallet, action, activePool, nonce, chain) {
     const hash = actionHash(action, activePool, nonce);
-    const phantomAgent = constructPhantomAgent(hash, chain.hypercore.source);
-
-    const domain = chain.hypercore.domain;
+    const phantomAgent = constructPhantomAgent(hash, chain.hypercore?.source);
+    const domain = chain.hypercore?.domain;
 
     const agent = [
         { name: 'source', type: 'string' },
@@ -63,8 +60,8 @@ async function signL1Action(wallet, action, activePool, nonce, chain) {
     return { r: sig.r, s: sig.s, v: sig.v };
 }
 
-async function updateBlockSize(wallet, config, chain, args, options) {
-    const [blockSize] = args;
+async function updateBlockSize(wallet, chain, options) {
+    const [blockSize] = options.args;
     validateParameters({
         isNonEmptyString: { blockSize },
     });
@@ -90,8 +87,8 @@ async function updateBlockSize(wallet, config, chain, args, options) {
     return result;
 }
 
-async function deployer(wallet, config, chain, args) {
-    const [tokenId] = args;
+async function deployer(wallet, chain, options) {
+    const [tokenId] = options.args;
     validateParameters({
         isNonEmptyString: { tokenId },
     });
@@ -122,8 +119,8 @@ async function deployer(wallet, config, chain, args) {
     }
 }
 
-async function updateTokenDeployer(wallet, config, chain, args, options) {
-    const [tokenId, deployer] = args;
+async function updateTokenDeployer(wallet, chain, options) {
+    const [tokenId, deployer] = options.args;
     validateParameters({
         isNonEmptyString: { tokenId },
         isValidAddress: { deployer },
@@ -160,7 +157,7 @@ async function updateTokenDeployer(wallet, config, chain, args, options) {
         throw new Error('Wallet does not have permission to update deployers. Must be service owner or operator.');
     }
 
-    const gasOptions = await getGasOptions(chain, options, 'InterchainTokenService');
+    const gasOptions = await getGasOptions(chain, options, 'HyperliquidInterchainTokenService');
     const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
     await handleTx(tx, chain, service, 'updateTokenDeployer');
 
@@ -169,44 +166,29 @@ async function updateTokenDeployer(wallet, config, chain, args, options) {
 }
 
 async function main(processor, args, options) {
-    if (!options.env) {
-        throw new Error('Environment was not provided');
-    }
+    options.args = args;
+    return mainProcessor(options, (config, chain, options) => {
+        if (!isHyperliquidChain(chain)) {
+            throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
+        }
 
-    if (!options.chainNames) {
-        throw new Error('Chain names were not provided');
-    }
+        const rpc = chain.rpc;
+        const provider = getDefaultProvider(rpc);
+        const wallet = new Wallet(options.privateKey, provider);
 
-    printInfo('Environment', options.env);
-
-    const config = loadConfig(options.env);
-
-    const chainName = options.chainNames.split(',')[0].trim();
-    const chain = getChainConfig(config, chainName);
-
-    if (!chain) {
-        throw new Error(`Chain "${chainName}" is not defined in the config`);
-    }
-
-    if (!isHyperliquidChain(chain)) {
-        throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
-    }
-
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-    const wallet = new Wallet(options.privateKey, provider);
-
-    await processor(wallet, config, chain, args, options);
+        return processor(wallet, chain, options);
+    });
 }
 
-async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlocks, chain) {
+async function switchHyperliquidBlockSize(options, useBigBlocks, chain) {
     const blockType = useBigBlocks ? 'big' : 'small';
+    options.args = [blockType];
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(options.privateKey, provider);
 
     try {
-        await updateBlockSize(wallet, config, chain, [blockType], options);
+        await updateBlockSize(wallet, chain, options);
     } catch (error) {
         throw error;
     }

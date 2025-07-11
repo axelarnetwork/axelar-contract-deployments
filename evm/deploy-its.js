@@ -56,6 +56,10 @@ async function deployAll(config, wallet, chain, options) {
 
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
     const interchainTokenServiceContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
+    const ServiceContract = getContractJSON(
+        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService', 
+        artifactPath
+    );
 
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
@@ -261,7 +265,7 @@ async function deployAll(config, wallet, chain, options) {
                 return deployContract(
                     proxyDeployMethod,
                     wallet,
-                    InterchainTokenService,
+                    ServiceContract,
                     args,
                     getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,
@@ -346,7 +350,7 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
-            await switchHyperliquidBlockSize(options, config, gasOptions, true, chain);
+            await switchHyperliquidBlockSize(options, true, chain);
         }
 
         printInfo(`Deploying ${deployment.name}`);
@@ -362,7 +366,7 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
-            await switchHyperliquidBlockSize(options, config, gasOptions, false, chain);
+            await switchHyperliquidBlockSize(options, false, chain);
         }
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);
