@@ -398,38 +398,6 @@ async function deploy(config, chain, options) {
     await deployAll(config, wallet, chain, options);
 }
 
-/**
- * Validates that the correct chain-specific implementations are deployed
- * @param {Object} contractConfig - The contract configuration
- * @param {boolean} isHyperliquidChain - Whether this is a Hyperliquid chain
- * @param {string} chainName - The chain name for error messages
- */
-function validateChainSpecificDeployments(contractConfig, isHyperliquidChain, chainName) {
-    const requiredDeployments = [];
-
-    if (isHyperliquidChain) {
-        if (!contractConfig.hyperliquidInterchainToken) {
-            requiredDeployments.push('hyperliquidInterchainToken');
-        }
-        if (!contractConfig.hyperliquidInterchainTokenDeployer) {
-            requiredDeployments.push('hyperliquidInterchainTokenDeployer');
-        }
-    } else {
-        if (!contractConfig.interchainToken) {
-            requiredDeployments.push('interchainToken');
-        }
-        if (!contractConfig.interchainTokenDeployer) {
-            requiredDeployments.push('interchainTokenDeployer');
-        }
-    }
-
-    if (requiredDeployments.length > 0) {
-        throw new Error(
-            `Missing required deployments for ${chainName}: ${requiredDeployments.join(', ')}. ` + `Please run a full deployment first.`,
-        );
-    }
-}
-
 async function upgrade(_, chain, options) {
     const { artifactPath, privateKey, predictOnly } = options;
 
@@ -452,9 +420,6 @@ async function upgrade(_, chain, options) {
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
-
-    validateChainSpecificDeployments(contractConfig, isHyperliquidChain(chain), chain.name);
-
     const interchainTokenServiceContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
     const InterchainTokenService = getContractJSON(interchainTokenServiceContractName, artifactPath);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
