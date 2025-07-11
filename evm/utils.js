@@ -337,9 +337,24 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         bytecode = await provider.getCode(contractObject.address);
     } else if (contractObject.deployedBytecode) {
         // Contract factory
-        bytecode = contractObject.deployedBytecode;
+        if (typeof contractObject.deployedBytecode === 'string') {
+            bytecode = contractObject.deployedBytecode;
+        } else if (typeof contractObject.deployedBytecode === 'object' && contractObject.deployedBytecode.object) {
+            bytecode = contractObject.deployedBytecode.object;
+        } else {
+            throw new Error('Invalid deployedBytecode format in contract JSON.');
+        }
+    } else if (contractObject.bytecode) {
+        // Contract JSON object
+        if (typeof contractObject.bytecode === 'string') {
+            bytecode = contractObject.bytecode;
+        } else if (typeof contractObject.bytecode === 'object' && contractObject.bytecode.object) {
+            bytecode = contractObject.bytecode.object;
+        } else {
+            throw new Error('Invalid bytecode format in contract JSON.');
+        }
     } else {
-        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
+        throw new Error('Invalid contract object. Expected ethers.js Contract, ContractFactory, or contract JSON with bytecode.');
     }
 
     if (bytecode === '0x') {
@@ -672,7 +687,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 
     if (chains.length === 0) {
-        throw new Error('Chain names were not provided');
+        // throw new Error('Chain names were not provided');
     }
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
@@ -825,11 +840,14 @@ function findContractPath(dir, contractName) {
 
 function getContractPath(contractName) {
     const searchDirs = [
+        // Prioritize native-token-transfers ERC1967Proxy
+        ...(contractName === 'ERC1967Proxy' ? [
+            path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
+        ] : []),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
-        path.join(findProjectRoot(__dirname), 'node_modules', '@openzeppelin', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
@@ -1132,14 +1150,41 @@ const linkLibrariesInBytecode = (contractBytecode, libraries = {}) => {
  * This creates a new contract JSON with the linked bytecode.
  */
 const linkLibrariesInContractJson = (contractJson, libraries = {}) => {
-    const linkedBytecode = linkLibrariesInBytecode(contractJson.bytecode, libraries);
-    const linkedDeployedBytecode = linkLibrariesInBytecode(contractJson.deployedBytecode, libraries);
+    // Handle Foundry-style contract JSON with bytecode.object
+    let bytecodeToLink = contractJson.bytecode;
+    let deployedBytecodeToLink = contractJson.deployedBytecode;
+    
+    if (typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
+        bytecodeToLink = contractJson.bytecode.object;
+    }
+    
+    if (typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
+        deployedBytecodeToLink = contractJson.deployedBytecode.object;
+    }
+    
+    const linkedBytecode = linkLibrariesInBytecode(bytecodeToLink, libraries);
+    const linkedDeployedBytecode = linkLibrariesInBytecode(deployedBytecodeToLink, libraries);
 
-    return {
-        ...contractJson,
-        bytecode: linkedBytecode,
-        deployedBytecode: linkedDeployedBytecode,
-    };
+    // Return the same structure as the original contract JSON
+    if (typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
+        return {
+            ...contractJson,
+            bytecode: {
+                ...contractJson.bytecode,
+                object: linkedBytecode
+            },
+            deployedBytecode: {
+                ...contractJson.deployedBytecode,
+                object: linkedDeployedBytecode
+            }
+        };
+    } else {
+        return {
+            ...contractJson,
+            bytecode: linkedBytecode,
+            deployedBytecode: linkedDeployedBytecode,
+        };
+    }
 };
 
 module.exports = {

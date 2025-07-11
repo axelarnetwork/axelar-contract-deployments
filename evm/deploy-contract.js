@@ -207,7 +207,7 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
 
             // If forContract is specified, try to get implementation from config
             if (forContract && config[forContract]?.address) {
-                const implementationAddress = config[forContract].address;
+                const implementationAddress = config[forContract].implementation;
                 printInfo(`Using implementation address from ${forContract}: ${implementationAddress}`);
                 return [implementationAddress, proxyData];
             }
@@ -305,72 +305,15 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function updateConfig(
-    contractName,
-    contract,
-    contractConfig,
-    options,
-    wallet,
-    deployMethod,
-    codehash,
-    predeployCodehash,
-    salt,
-    constructorArgs,
-) {
-    switch (contractName) {
-        case 'ERC1967Proxy': {
-            const targetContract = options.forContract;
-            if (targetContract && contractConfig) {
-                // Get implementation address from constructor args
-                const implementationAddress = constructorArgs[0];
-                // Only store if this proxy points to the target contract's implementation
-                if (implementationAddress === contractConfig.address) {
-                    contractConfig.proxyAddress = contract.address;
-                    contractConfig.proxyDeployer = wallet.address;
-                    contractConfig.proxyDeploymentMethod = deployMethod;
-                    contractConfig.proxyCodehash = codehash;
-                    contractConfig.proxyData = constructorArgs[1] || '0x';
-                    if (deployMethod !== 'create') {
-                        contractConfig.proxySalt = salt;
-                    }
-                    printInfo(`Stored proxy address ${contract.address} for ${targetContract}`);
-                }
-            }
-            break;
-        }
-        case 'AxelarTransceiver': {
-            contractConfig.address = contract.address;
-            contractConfig.deployer = wallet.address;
-            contractConfig.deploymentMethod = deployMethod;
-            contractConfig.codehash = codehash;
-            contractConfig.predeployCodehash = predeployCodehash;
-            contractConfig.gateway = await contract.gateway();
-            contractConfig.gasService = await contract.gasService();
-            contractConfig.gmpManager = await contract.nttManager();
-            if (deployMethod !== 'create') {
-                contractConfig.salt = salt;
-            }
-            break;
-        }
-        default: {
-            contractConfig.address = contract.address;
-            contractConfig.deployer = wallet.address;
-            contractConfig.deploymentMethod = deployMethod;
-            contractConfig.codehash = codehash;
-            contractConfig.predeployCodehash = predeployCodehash;
-            if (deployMethod !== 'create') {
-                contractConfig.salt = salt;
-            }
-        }
-    }
-}
+
 
 /**
  * Processes the deployment command for a specific chain.
  * Handles contract deployment, verification, and configuration updates.
  */
 async function processCommand(config, chain, options) {
-    const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
+    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
+    let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     if (!chain.contracts) {
@@ -390,7 +333,7 @@ async function processCommand(config, chain, options) {
                 `Contract ${options.forContract} not found in chain configuration. Available contracts: ${Object.keys(contracts).join(', ')}`,
             );
         }
-        if (contractConfig.proxyAddress && options.skipExisting) {
+        if (contractConfig.address && options.skipExisting) {
             printWarn(`Skipping proxy deployment for ${options.forContract} deployment on ${chain.name} because it is already deployed.`);
             return;
         }
@@ -436,6 +379,10 @@ async function processCommand(config, chain, options) {
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
+    // For ERC1967Proxy and AxelarTransceiver, always use 'create' deployment
+    if (contractName === 'ERC1967Proxy' || contractName === 'AxelarTransceiver') {
+        deployMethod = 'create';
+    }
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
 
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
@@ -501,22 +448,45 @@ async function processCommand(config, chain, options) {
     const codehash = await getBytecodeHash(contract, chain.axelarId);
     printInfo('Deployed Contract bytecode hash', codehash);
 
-    await updateConfig(
-        contractName,
-        contract,
-        contractConfig,
-        options,
-        wallet,
-        deployMethod,
-        codehash,
-        predeployCodehash,
-        salt,
-        constructorArgs,
-    );
+    // Update configuration following the same pattern as other scripts
+    if (contractName === 'ERC1967Proxy') {
+        const targetContract = options.forContract;
+        if (targetContract && contractConfig) {
+            // Get implementation address from constructor args
+            const implementationAddress = constructorArgs[0];
+            // Only store if this proxy points to the target contract's implementation
+            if (implementationAddress === contractConfig.address) {
+                contractConfig.address = contract.address;
+                contractConfig.deployer = wallet.address;
+                contractConfig.deploymentMethod = deployMethod;
+                contractConfig.codehash = codehash;
+                if (deployMethod !== 'create') {
+                    contractConfig.salt = salt;
+                }
+            }
+        }
+    } else if (contractName === 'AxelarTransceiver') {
+        contractConfig.implementation = contract.address;
+        contractConfig.gateway = await contract.gateway();
+        contractConfig.gasService = await contract.gasService();
+        contractConfig.gmpManager = await contract.nttManager();
+    } else {
+
+        // Standard configuration update for all other contracts
+        contractConfig.address = contract.address;
+        contractConfig.deployer = wallet.address;
+        contractConfig.deploymentMethod = deployMethod;
+        contractConfig.codehash = codehash;
+        contractConfig.predeployCodehash = predeployCodehash;
+
+        if (deployMethod !== 'create') {
+            contractConfig.salt = salt;
+        }
+    }
 
     saveConfig(config, options.env);
 
-    printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
+    printInfo(`${chain.name} | ${contractName}`, contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address);
 
     await checkContract(contractName, contract, contractConfig);
 

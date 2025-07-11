@@ -80,11 +80,21 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ### ERC1967Proxy
 
+This repository uses the ERC1967Proxy compiled from the native-token-transfers repository instead of OZ dependencies. To generate ERC1967Proxy again, follow these steps:
+
+```bash
+git clone https://github.com/wormhole-foundation/native-token-transfers.git
+cd ./evm
+forge build --contracts lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol
+```
+
 The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify which contract this proxy is for:
 
 ```bash
-ts-node evm/deploy-contract.js -e testnet -n ethereum -c ERC1967Proxy --forContract AxelarTransceiver -m create2
+ts-node evm/deploy-contract.js -e testnet -n ethereum -c ERC1967Proxy --forContract AxelarTransceiver
 ```
+
+**Note**: This deployment uses the ERC1967Proxy compiled from the native-token-transfers repository (Foundry compilation) instead of OpenZeppelin dependencies. The proxy is located in `evm/legacy/ERC1967Proxy.json`. See the [ERC1967Proxy Setup](#erc1967proxy-setup) section above for compilation instructions.
 
 The proxy deployment will:
 - Use the implementation address from the specified contract's config
@@ -96,11 +106,12 @@ The proxy deployment will:
 Deploy the AxelarTransceiver contract using the updated `deploy-contract.js` script:
 
 ```bash
-ts-node evm/deploy-contract.js -e testnet -n ethereum -c AxelarTransceiver --gmpManager <NTT_MANAGER_ADDRESS> -m create2 --libraries '{"TransceiverStructs":"0x..."}'
+ts-node evm/deploy-contract.js -e testnet -n ethereum -c AxelarTransceiver --gmpManager <GMP_MANAGER_ADDRESS> --libraries '{"@wormhole-foundation/native_token_transfer/libraries/TransceiverStructs.sol:TransceiverStructs":"$TRANASCEIVER_STRUCTS_ADDRESS"}'
+
 ```
 
 **Important**:
-- The `--gmpManager` parameter should be the NTT Manager address, not a GMP manager. The contract constructor expects the NTT Manager as the third parameter.
+- The `--gmpManager` parameter should be the GMP Manager address,
 - The `--libraries` parameter is required to link the `TransceiverStructs` library. You must provide the deployed address of the TransceiverStructs library.
 
 The deployment script will:
@@ -115,13 +126,13 @@ After deploying the AxelarTransceiver contract, you can perform post-deployment 
 
 ```bash
 # Initialize the transceiver contract
-ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --initialize
+ts-node evm/axelar-transceiver.ts --initialize --artifactPath path/to/axelar-contract-deployments/evm/legacy/AxelarTransceiver.json
 
 # Transfer pauser capability to a new address
-ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --pauserAddress 0x...
+ts-node evm/axelar-transceiver.ts --pauserAddress 0x... 
 
 # Perform both operations
-ts-node evm/axelar-transceiver.ts -e testnet -n ethereum --initialize --pauserAddress 0x...
+ts-node evm/axelar-transceiver.ts --initialize --pauserAddress 0x... --artifactPath path/to/axelar-contract-deployments/evm/legacy/AxelarTransceiver.json 
 ```
 
 **Available Operations:**
