@@ -166,17 +166,17 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const { contractAddress } = instantiate2
         ? await client.instantiate2(
-              account.address,
-              contractConfig.codeId,
-              getSalt(salt, contractName, chainName),
-              initMsg,
-              contractLabel,
-              initFee,
-              { admin },
-          )
+            account.address,
+            contractConfig.codeId,
+            getSalt(salt, contractName, chainName),
+            initMsg,
+            contractLabel,
+            initFee,
+            { admin },
+        )
         : await client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
-              admin,
-          });
+            admin,
+        });
 
     return contractAddress;
 };
@@ -315,7 +315,14 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
     } = contracts;
-    const { adminAddress, governanceAddress, serviceName, votingThreshold, blockExpiry, confirmationHeight } = contractConfig;
+    const {
+        adminAddress,
+        governanceAddress,
+        serviceName,
+        votingThreshold,
+        blockExpiry,
+        confirmationHeight,
+    } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -417,8 +424,8 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     if (gatewayAddress !== undefined && gatewayAddress !== sourceGatewayAddress) {
         throw new Error(
             `Address mismatch for [${chainName}] in config:\n` +
-                `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
-                `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
+            `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
+            `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
         );
     }
 
@@ -518,11 +525,14 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
+
+    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                VotingVerifier: {
+                [verifierContract]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -665,6 +675,9 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
+
+    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+
     const {
         axelar: { contracts, chainId: axelarChainId },
     } = config;
@@ -673,14 +686,23 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        VotingVerifier: {
+        [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
         Gateway: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+    const {
+        adminAddress,
+        governanceAddress,
+        domainSeparator,
+        signingThreshold,
+        serviceName,
+        verifierSetDiffThreshold,
+        encoder,
+        keyType,
+    } =
         contractConfig;
 
     if (!validateAddress(routerAddress)) {
@@ -1147,6 +1169,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
+    StacksVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1163,6 +1189,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
+    StacksMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeAxelarnetGatewayInstantiateMsg,
@@ -1175,6 +1205,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
     },
+    ItsStacksTranslator: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
+    }
 };
 
 module.exports = {
