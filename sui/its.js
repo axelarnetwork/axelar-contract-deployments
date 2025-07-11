@@ -269,11 +269,7 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
-    program.addCommand(setFlowLimitsProgram);
-    program.addCommand(addTrustedChainsProgram);
-    program.addCommand(removeTrustedChainsProgram);
-
-    // v1 its release
+    // v1 release
     const registerCoinFromInfoProgram = new Command()
         .name('register-coin-from-info')
         .command('register-coin-from-info <symbol> <name> <decimals>')
@@ -290,31 +286,6 @@ if (require.main === module) {
             mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
         });
 
-    const registerCustomCoinProgram = new Command()
-        .name('register-custom-coin')
-        .command('register-custom-coin <symbol> <name> <decimals>')
-        .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
-        .action((symbol, name, decimals, options) => {
-            mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
-        });
-
-    // TODO: <token-type> (and maybe <link-params>?) would be better as options
-    // const linkCoinProgram = new Command()
-    //     .name('link-coin')
-    //     .command('link-coin <destination-chain> <destination-address> <token-type> <link-params>')
-    //     .description(`TODO: describe link-coin and params`)
-    //     .action((destinationChain, destinationTokenAddress, tokenManagerType, linkParams, options) => {
-    //         mainProcessor(linkCoin, options, [destinationChain, destinationTokenAddress, tokenManagerType, linkParams], processCommand);
-    //     });
-
-    // const registerCoinMetadataProgram = new Command()
-    //     .name('register-coin-metadata')
-    //     .command('register-coin-metadata <symbol>')
-    //     .description(`TODO: descript register-coin-metadata`)
-    //     .action((tokenSymbol, options) => {
-    //         mainProcessor(registerCoinMetadata, options, tokenSymbol, processCommand);
-    //     });
-
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <symbol>')
@@ -323,11 +294,14 @@ if (require.main === module) {
             mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
         });
 
+    // v0
+    program.addCommand(setFlowLimitsProgram);
+    program.addCommand(addTrustedChainsProgram);
+    program.addCommand(removeTrustedChainsProgram);
+
+    // v1
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
-    program.addCommand(registerCustomCoinProgram);
-    // program.addCommand(linkCoinProgram);
-    // program.addCommand(registerCoinMetadataProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     // finalize program
