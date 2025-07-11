@@ -180,6 +180,3 @@ jobs:
         run: |
           ts-node evm/deploy-its.js -s "v1.0.0" -m create2 -y --gasOptions \
           '{"gasLimit": 9000000,"gasPriceAdjustment": 1.1}'
-
-      - name: InterchainTokenService remove trusted chain
-        run: node evm/its.js remove-trusted-chains all -y
