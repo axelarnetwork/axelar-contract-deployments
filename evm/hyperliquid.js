@@ -41,8 +41,6 @@ function actionHash(action, activePool, nonce) {
 
 function constructPhantomAgent(hash, source) {
     return {
-        // hypercore utilizes the same chainID for both mainnet and testnet
-        // and the source is used to determine to which chain the transaction is sent
         source: source,
         connectionId: hash,
     };
