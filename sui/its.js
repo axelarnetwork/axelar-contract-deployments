@@ -221,24 +221,15 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Salt
-    const deployerChannelId = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::id`,
-        arguments: [deployerChannel],
-    });
-    const deployerChannelAddress = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::to_address`,
-        arguments: [deployerChannelId],
-    });
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [deployerChannelAddress],
+        arguments: [walletAddress],
     });
 
     console.log({
         args: {
             InterchainTokenService,
             deployerChannel,
-            deployerChannelAddress,
             salt,
             metadata,
             coinManagement,
