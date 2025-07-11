@@ -17,7 +17,6 @@ const {
     getGasOptions,
     printWalletInfo,
     printTokenInfo,
-    isHyperliquidChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
