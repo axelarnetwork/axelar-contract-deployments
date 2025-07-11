@@ -39,23 +39,20 @@ function actionHash(action, activePool, nonce) {
     return keccak256(data);
 }
 
-function constructPhantomAgent(hash, isMainnet) {
+function constructPhantomAgent(hash, source) {
     return {
         // hypercore utilizes the same chainID for both mainnet and testnet
         // and the source is used to determine to which chain the transaction is sent
-        source: isMainnet ? 'a' : 'b',
+        source: source,
         connectionId: hash,
     };
 }
 
-async function signL1Action(wallet, action, activePool, nonce, isMainnet, chain) {
+async function signL1Action(wallet, action, activePool, nonce, chain) {
     const hash = actionHash(action, activePool, nonce);
-    const phantomAgent = constructPhantomAgent(hash, isMainnet);
+    const phantomAgent = constructPhantomAgent(hash, chain.hypercore.source);
 
     const domain = chain.hypercore.domain;
-    if (!domain) {
-        throw new Error('hypercore domain information is required');
-    }
 
     const agent = [
         { name: 'source', type: 'string' },
@@ -82,7 +79,7 @@ async function updateBlockSize(wallet, config, chain, args, options) {
 
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
     const nonce = Date.now();
-    const signature = await signL1Action(wallet, action, null, nonce, network === 'mainnet', chain);
+    const signature = await signL1Action(wallet, action, null, nonce, chain);
     const payload = { action, signature, nonce };
     const endpoint = `${chain.hypercore.url}/exchange`;
     const result = await httpPost(endpoint, payload);

@@ -64,7 +64,8 @@ npm ci
         "verifyingContract": "0x0000000000000000000000000000000000000000",
         "version": "1",
     },
-    "url": "https://api.hyperliquid-testnet.xyz"
+    "url": "https://api.hyperliquid-testnet.xyz",
+    "source": "b"
   },
   "contracts": {}
 }
@@ -95,7 +96,8 @@ npm ci
         "verifyingContract": "0x0000000000000000000000000000000000000000",
         "version": "1",
     },
-    "url": "https://api.hyperliquid.xyz"
+    "url": "https://api.hyperliquid.xyz",
+    "source": "a"
   },
   "contracts": {}
 }

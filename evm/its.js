@@ -464,11 +464,15 @@ async function processCommand(config, chain, action, options) {
                 return;
             }
 
-            for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
-                const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+            const data = [];
 
-                await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+            for (const trustedChain of trustedChains) {
+                const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
+                data.push(tx.data);
             }
+
+            const multicall = await interchainTokenService.multicall(data);
+            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainSet');
 
             break;
         }
