@@ -210,7 +210,9 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const deployConfig = { client, keypair, options, walletAddress };
 
     // Channel
-    const [deployerChannel, deployerChannelAddress] = await newChannel(deployConfig, AxelarGateway.address);
+    const deployerChannel = options.channel 
+        ? options.channel
+        : await newChannel(deployConfig, AxelarGateway.address);
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
@@ -219,9 +221,17 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Salt
+    const deployerChannelId = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::channel::id`,
+        arguments: [deployerChannel],
+    });
+    const deployerChannelAddress = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::channel::to_address`,
+        arguments: [deployerChannelId],
+    });
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [walletAddress],
+        arguments: [deployerChannelAddress],
     });
 
     console.log({
