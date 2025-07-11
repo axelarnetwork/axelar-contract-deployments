@@ -132,6 +132,9 @@ jobs:
       - name: Upgrade ITS using create2
         run: ts-node evm/deploy-its.js -m create2 -u -y
 
+      - name: InterchainTokenService set hub
+        run: ts-node evm/its.js set-trusted-chains axelar axelar1xyz -y
+
       - name: InterchainTokenService set trusted chain
         run: ts-node evm/its.js set-trusted-chains remote hub -y
 

@@ -264,7 +264,7 @@ async function deployAll(config, wallet, chain, options) {
         },
         implementation: {
             name: 'Interchain Token Service Implementation',
-            contractName: InterchainTokenService,
+            contractName: 'InterchainTokenService',
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
