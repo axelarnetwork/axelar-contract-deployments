@@ -11,9 +11,9 @@ const {
     AnchorMode,
     broadcastTransaction,
     Cl,
-    fetchCallReadOnlyFunction,
+    fetchCallReadOnlyFunction, privateKeyToAddress,
 } = require('@stacks/transactions');
-const { getVerificationParams, getTokenTxId } = require('./utils/its-utils');
+const { getVerificationParams, getTokenTxId, getCanonicalInterchainTokenId } = require('./utils/its-utils');
 const { validateParameters } = require('../common');
 
 async function registerTokenManager(privateKey, networkType, chain, args, options) {
@@ -42,19 +42,7 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
         throw new Error(`Contract InterchainTokenServiceImpl not yet deployed`);
     }
 
-    const itsFactoryImplAddress = contracts.InterchainTokenFactoryImpl.address.split('.');
-    const res = await fetchCallReadOnlyFunction({
-        contractAddress: itsFactoryImplAddress[0],
-        contractName: itsFactoryImplAddress[1],
-        functionName: 'get-canonical-interchain-token-id',
-        functionArgs: [
-            Cl.address(contracts.InterchainTokenServiceImpl.address),
-            Cl.address(contracts[contractName].token),
-        ],
-        senderAddress: itsFactoryImplAddress[0],
-        network: networkType,
-    });
-    const interchainTokenId = `0x${res.value.value}`;
+    const interchainTokenId = getCanonicalInterchainTokenId(contracts[contractName].token);
 
     printInfo(`Registering token manager ${contractName} for token ${contracts[contractName].token} on Stacks ITS`);
 
