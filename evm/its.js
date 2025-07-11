@@ -465,8 +465,8 @@ async function processCommand(config, chain, action, options) {
             }
 
             const data = [];
-            for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
-                const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, trustedAddress, gasOptions);
+            for (const [trustedChain] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
+                const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain);
                 data.push(tx.data);
             }
 
