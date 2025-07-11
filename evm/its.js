@@ -22,10 +22,7 @@ const {
     getGasOptions,
     isNonEmptyString,
     isValidChain,
-    getChainConfig,
-    parseTrustedChains,
     encodeITSDestination,
-    INTERCHAIN_TRANSFER,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
 } = require('./utils');
@@ -36,7 +33,6 @@ const InterchainTokenService = getContractJSON('InterchainTokenService');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const ITokenManager = getContractJSON('ITokenManager');
-const IOwnable = getContractJSON('IOwnable');
 const { addOptionsToCommands } = require('../common');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
@@ -421,10 +417,10 @@ async function processCommand(config, chain, action, options) {
 
         case 'set-trusted-chains': {
             const trustedChains = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
+            const owner = await interchainTokenService.owner();
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can be performed by contract owner: ${owner}`);
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
             if (prompt(`Proceed with setting trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
@@ -446,10 +442,10 @@ async function processCommand(config, chain, action, options) {
 
         case 'remove-trusted-chains': {
             const trustedChains = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
+            const owner = await interchainTokenService.owner();
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can be performed by contract owner: ${owner}`);
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
 
             if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
@@ -471,8 +467,8 @@ async function processCommand(config, chain, action, options) {
 
         case 'set-pause-status': {
             const [pauseStatus] = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
+            const owner = await interchainTokenService.owner();
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can only be performed by contract owner: ${owner}`);
             }
