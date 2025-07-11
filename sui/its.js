@@ -207,6 +207,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 
     const symbol = args;
     if (!symbol) throw new Error('token symbol is required');
+    if (!contracts[symbol.toUpperCase()]) throw new Error('token not found in deployments history');
 
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
