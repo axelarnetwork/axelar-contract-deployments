@@ -188,10 +188,29 @@ OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
+8. Transfer ownership for contracts
+
+- 8.1 Transfer Operators ownership
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Testnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Mainnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
 
 ```bash
-# Only for mainnet and official testnet connection
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x9f5CDBc370B00C0dF52cf2619FA95907508108df
+```
+
+- 8.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+
+```bash
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
