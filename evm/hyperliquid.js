@@ -1,0 +1,225 @@
+'use strict';
+
+const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } = require('ethers');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const { Command, Option } = require('commander');
+const { printInfo, validateParameters, getContractJSON, getGasOptions, mainProcessor, isHyperliquidChain } = require('./utils');
+const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
+const { httpPost } = require('../common/utils');
+const { handleTx } = require('./its');
+const execAsync = promisify(exec);
+const msgpack = require('msgpack-lite');
+const { keccak256 } = require('ethers/lib/utils');
+
+function addressToBytes(address) {
+    return Buffer.from(address.replace('0x', ''), 'hex');
+}
+
+function actionHash(action, activePool, nonce) {
+    const actionData = msgpack.encode(action);
+    const nonceBuffer = Buffer.alloc(8);
+    nonceBuffer.writeBigUInt64BE(BigInt(nonce));
+
+    const vaultBuffer =
+        activePool === null || activePool === undefined
+            ? Buffer.from([0x00])
+            : Buffer.concat([Buffer.from([0x01]), addressToBytes(activePool)]);
+
+    const data = Buffer.concat([actionData, nonceBuffer, vaultBuffer]);
+    return keccak256(data);
+}
+
+function constructPhantomAgent(hash, source) {
+    return {
+        source: source,
+        connectionId: hash,
+    };
+}
+
+async function signL1Action(wallet, action, activePool, nonce, chain) {
+    const hash = actionHash(action, activePool, nonce);
+    const phantomAgent = constructPhantomAgent(hash, chain.hypercore?.source);
+    const domain = chain.hypercore?.domain;
+
+    const agent = [
+        { name: 'source', type: 'string' },
+        { name: 'connectionId', type: 'bytes32' },
+    ];
+
+    const signature = await wallet._signTypedData(domain, { Agent: agent }, phantomAgent);
+    const sig = ethers.utils.splitSignature(signature);
+
+    return { r: sig.r, s: sig.s, v: sig.v };
+}
+
+async function updateBlockSize(wallet, chain, options) {
+    const [blockSize] = options.args;
+    validateParameters({
+        isNonEmptyString: { blockSize },
+    });
+
+    const useBig = blockSize === 'big';
+    const network = chain.networkType;
+
+    printInfo('Block size', blockSize);
+    printInfo('Network', network);
+
+    const action = { type: 'evmUserModify', usingBigBlocks: useBig };
+    const nonce = Date.now();
+    const signature = await signL1Action(wallet, action, null, nonce, chain);
+    const payload = { action, signature, nonce };
+    const endpoint = `${chain.hypercore.url}/exchange`;
+    const result = await httpPost(endpoint, payload);
+
+    if (result.status !== 'ok') {
+        throw new Error(result);
+    }
+
+    printInfo('Result', result);
+    return result;
+}
+
+async function deployer(wallet, chain, options) {
+    const [tokenId] = options.args;
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const contracts = chain.contracts;
+    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
+    const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
+
+    validateParameters({
+        isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
+    });
+
+    const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+
+    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+
+    const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+    printInfo('Token address', tokenAddress);
+
+    try {
+        const TokenContract = getContractJSON('HyperliquidInterchainToken');
+        const token = new Contract(tokenAddress, TokenContract.abi, wallet);
+
+        const currentDeployer = await token.deployer();
+        printInfo('Current deployer', currentDeployer);
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function updateTokenDeployer(wallet, chain, options) {
+    const [tokenId, deployer] = options.args;
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidAddress: { deployer },
+    });
+
+    const contracts = chain.contracts;
+    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
+    const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
+
+    validateParameters({
+        isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
+    });
+
+    const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+
+    const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
+    printInfo('Token address', tokenAddress);
+
+    const ServiceContract = getContractJSON('HyperliquidInterchainTokenService');
+    const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
+
+    const TokenContract = getContractJSON('HyperliquidInterchainToken');
+    const token = new Contract(tokenAddress, TokenContract.abi, wallet);
+
+    const currentDeployer = await token.deployer();
+    printInfo('Current deployer', currentDeployer);
+    printInfo('New deployer', deployer);
+
+    const serviceOwner = await service.owner();
+    const isOperator = await service.isOperator(wallet.address);
+
+    if (wallet.address.toLowerCase() !== serviceOwner.toLowerCase() && !isOperator) {
+        throw new Error('Wallet does not have permission to update deployers. Must be service owner or operator.');
+    }
+
+    const gasOptions = await getGasOptions(chain, options, 'HyperliquidInterchainTokenService');
+    const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
+    await handleTx(tx, chain, service, 'updateTokenDeployer');
+
+    const updatedDeployer = await token.deployer();
+    printInfo('Updated deployer', updatedDeployer);
+}
+
+async function main(processor, args, options) {
+    options.args = args;
+    return mainProcessor(options, (config, chain, options) => {
+        if (!isHyperliquidChain(chain)) {
+            throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
+        }
+
+        const rpc = chain.rpc;
+        const provider = getDefaultProvider(rpc);
+        const wallet = new Wallet(options.privateKey, provider);
+
+        return processor(wallet, chain, options);
+    });
+}
+
+async function switchHyperliquidBlockSize(options, useBigBlocks, chain) {
+    const blockType = useBigBlocks ? 'big' : 'small';
+    options.args = [blockType];
+    const rpc = chain.rpc;
+    const provider = getDefaultProvider(rpc);
+    const wallet = new Wallet(options.privateKey, provider);
+
+    try {
+        await updateBlockSize(wallet, chain, options);
+    } catch (error) {
+        throw error;
+    }
+}
+
+function shouldUseBigBlocks(key) {
+    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
+}
+
+if (require.main === module) {
+    const program = new Command();
+
+    program.name('hyperliquid').description('Hyperliquid chain management commands');
+
+    program
+        .command('update-block-size <blockSize>')
+        .description('Update Hyperliquid block size')
+        .action((blockSize, options) => {
+            main(updateBlockSize, [blockSize], options);
+        });
+
+    program
+        .command('deployer <tokenId>')
+        .description('Get deployer address for a Hyperliquid interchain token')
+        .action((tokenId, options) => {
+            main(deployer, [tokenId], options);
+        });
+
+    program
+        .command('update-token-deployer <tokenId> <deployer>')
+        .description('Update deployer address for a Hyperliquid interchain token')
+        .action((tokenId, deployer, options) => {
+            main(updateTokenDeployer, [tokenId, deployer], options);
+        });
+
+    addOptionsToCommands(program, addEvmOptions, { privateKey: true });
+
+    program.parse();
+}
+
+module.exports = { updateBlockSize, switchHyperliquidBlockSize, shouldUseBigBlocks, deployer, updateTokenDeployer };

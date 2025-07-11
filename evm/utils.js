@@ -60,6 +60,10 @@ const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/ID
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
+const getITSHubAddress = (config) => {
+    return config?.axelar?.contracts?.InterchainTokenService?.address;
+};
+
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
@@ -1052,6 +1056,15 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+/**
+ * Determines if a chain is a Hyperliquid chain based on its name or axelarId
+ * @param {Object} chain - The chain object containing name and axelarId properties
+ * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
+ */
+const isHyperliquidChain = (chain) => {
+    return chain.axelarId.toLowerCase().includes('hyperliquid');
+};
+
 const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
 const INTERCHAIN_TRANSFER_WITH_METADATA = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
 
@@ -1130,8 +1143,10 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    isHyperliquidChain,
     INTERCHAIN_TRANSFER,
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
     printTokenInfo,
+    getITSHubAddress,
 };
