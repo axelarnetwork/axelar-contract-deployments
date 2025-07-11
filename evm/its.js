@@ -27,6 +27,7 @@ const {
     encodeITSDestination,
     INTERCHAIN_TRANSFER,
     printTokenInfo,
+    INTERCHAIN_TRANSFER_WITH_METADATA,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -77,13 +78,6 @@ async function getTrustedChains(config, interchainTokenService) {
     const chains = Object.values(config.chains)
         .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
         .map((chain) => chain.axelarId);
-
-    // If ITS Hub is deployed, register it as a trusted chain as well
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-
-    if (itsHubAddress) {
-        chains.push(config.axelar.axelarId);
-    }
 
     const trustedChains = [];
 
@@ -306,16 +300,13 @@ async function processCommand(config, chain, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue } = options;
+            const { gasValue, metadata } = options;
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue }
+                isValidNumber: { amount, gasValue },
+                isValidCalldata: { metadata },
             });
-
-            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
-                throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
-            }
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
@@ -353,11 +344,13 @@ async function processCommand(config, chain, action, options) {
             printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
 
-            const tx = await interchainTokenService[INTERCHAIN_TRANSFER](
+            const tx = await interchainTokenService[INTERCHAIN_TRANSFER_WITH_METADATA](
                 tokenIdBytes32,
                 destinationChain,
                 itsDestinationAddress,
                 amountInUnits,
+                metadata,
+                gasValue,
                 { value: gasValue, ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
@@ -413,18 +406,11 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'is-trusted-chain': {
-            const itsChain = args;
-            const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
+            const [itsChain] = args;
 
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can be performed by contract owner: ${owner}`);
-            }
+            validateParameters({ isNonEmptyString: { itsChain } });
 
-            const trustedChain = getChainConfig(config, itsChain.toLowerCase(), { skipCheck: true })?.axelarId || itsChain.toLowerCase();
-
-            validateParameters({ isNonEmptyString: { trustedChain } });
-
-            if (await interchainTokenService.isTrustedChain(trustedChain)) {
+            if (await interchainTokenService.isTrustedChain(itsChain)) {
                 printInfo(`${itsChain} is a trusted chain`);
             } else {
                 printInfo(`${itsChain} is not a trusted chain`);

@@ -1052,7 +1052,8 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
-const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256)';
+const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
+const INTERCHAIN_TRANSFER_WITH_METADATA = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
 
 const deriveAccounts = async (mnemonic, quantity) => {
     const hdNode = HDNode.fromMnemonic(mnemonic);
@@ -1130,6 +1131,7 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     INTERCHAIN_TRANSFER,
+    INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
     printTokenInfo,
 };

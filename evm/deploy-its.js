@@ -24,6 +24,7 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
+    parseTrustedChains,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
@@ -84,7 +85,7 @@ async function deployAll(config, wallet, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
     const deployOptions = getDeployOptions(deployMethod, salt, chain);
 
-    const interchainTokenService = options.reuseProxy
+    const interchainTokenService = contractConfig['address'] = options.reuseProxy
         ? contractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: proxySalt,
@@ -94,7 +95,7 @@ async function deployAll(config, wallet, chain, options) {
               provider: wallet.provider,
           });
 
-    const interchainTokenFactory = options.reuseProxy
+    const interchainTokenFactory = itsFactoryContractConfig['address'] = options.reuseProxy
         ? itsFactoryContractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: factorySalt,
@@ -120,22 +121,8 @@ async function deployAll(config, wallet, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    // Register all EVM chains that ITS is or will be deployed on.
-    const itsChains = Object.values(config.chains).filter(
-        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.address,
-    );
-    const trustedChains = itsChains.map((chain) => chain.axelarId);
-
-    // If ITS Hub is deployed, register it as a trusted chain as well
+    const trustedChains = parseTrustedChains(config, ['all']);
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-
-    if (itsHubAddress) {
-        if (!config.axelar?.axelarId) {
-            throw new Error('Axelar ID for Axelar chain is not set');
-        }
-
-        trustedChains.push(config.axelar?.axelarId);
-    }
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
