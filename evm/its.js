@@ -420,26 +420,11 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'set-trusted-chains': {
-            const [itsChain] = args;
+            const trustedChains = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
-            }
-
-            validateParameters({ isNonEmptyString: { itsChain } });
-
-            let trustedChains;
-
-            if (itsChain === 'all') {
-                trustedChains = parseTrustedChains(config, [itsChain]);
-            } else {
-                const trustedChain =
-                    getChainConfig(config, itsChain.toLowerCase(), { skipCheck: true })?.axelarId || itsChain.toLowerCase();
-
-                validateParameters({ isNonEmptyString: { trustedChain } });
-
-                trustedChains = [trustedChain];
             }
 
             if (prompt(`Proceed with setting trusted chain(s): ${trustedChains}?`, yes)) {
@@ -460,30 +445,11 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'remove-trusted-chains': {
-            const [itsChain] = args;
+            const trustedChains = args;
             const owner = await new Contract(interchainTokenService.address, IOwnable.abi, wallet).owner();
 
             if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
-            }
-
-            let trustedChains;
-
-            if (itsChain === 'all') {
-                trustedChains = parseTrustedChains(config, [itsChain]);
-            } else {
-                const trustedChain = config.chains[itsChain.toLowerCase()]?.axelarId;
-
-                if (trustedChain === undefined) {
-                    throw new Error(`Invalid chain: ${trustedChain}`);
-                }
-
-                if (!(await interchainTokenService.isTrustedChain(trustedChain))) {
-                    printError(`Not a trusted chain ${trustedChain}`);
-                    return;
-                }
-
-                trustedChains = [trustedChain];
             }
 
             if (prompt(`Proceed with removing trusted chain(s): ${trustedChains}?`, yes)) {
@@ -795,23 +761,23 @@ if (require.main === module) {
         .description('Is trusted chain')
         .argument('<its-chain>', 'ITS chain')
         .action((itsChain, options, cmd) => {
-            main(cmd.name(), itsChain, options);
+            main(cmd.name(), [itsChain], options);
         });
 
     program
         .command('set-trusted-chains')
         .description('Set trusted chains')
-        .argument('<its-chain>', 'ITS chain')
-        .action((itsChain, options, cmd) => {
-            main(cmd.name(), [itsChain], options);
+        .argument('<chains...>', 'Chains to trust')
+        .action((chains, options, cmd) => {
+            main(cmd.name(), chains, options);
         });
 
     program
         .command('remove-trusted-chains')
         .description('Remove trusted chains')
-        .argument('<trusted-chain>', 'Trusted chain')
-        .action((trustedChain, options, cmd) => {
-            main(cmd.name(), [trustedChain], options);
+        .argument('<chains...>', 'Chains to not trust')
+        .action((chains, options, cmd) => {
+            main(cmd.name(), chains, options);
         });
 
     program
