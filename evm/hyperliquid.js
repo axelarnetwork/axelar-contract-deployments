@@ -85,7 +85,7 @@ async function updateBlockSize(wallet, config, chain, args, options) {
     const result = await httpPost(endpoint, payload);
 
     if (result.status !== 'ok') {
-        throw new Error(result.response || result);
+        throw new Error(result);
     }
 
     printInfo('Result', result);
@@ -106,10 +106,8 @@ async function deployer(wallet, config, chain, args) {
         isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
     });
 
-    const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
     const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-    const interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactory.abi, wallet);
     const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
 
     const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
@@ -122,16 +120,7 @@ async function deployer(wallet, config, chain, args) {
         const currentDeployer = await token.deployer();
         printInfo('Current deployer', currentDeployer);
     } catch (error) {
-        if (error.message.includes('deployer is not a function') || error.message.includes('execution reverted')) {
-            const factoryDeployer = await interchainTokenFactory.getTokenDeployer(tokenId);
-            if (factoryDeployer !== AddressZero) {
-                printInfo('Factory deployer', factoryDeployer);
-            } else {
-                printError('Token does not support deployer retrieval and no factory record found');
-            }
-        } else {
-            throw error;
-        }
+        throw error;
     }
 }
 
