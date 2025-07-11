@@ -823,17 +823,13 @@ function findContractPath(dir, contractName) {
     }
 }
 
-function getContractPath(contractName, projectRoot = '') {
-    if (projectRoot === '') {
-        projectRoot = path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network');
-    }
-
-    projectRoot = path.resolve(projectRoot);
-
+function getContractPath(contractName) {
     const searchDirs = [
-        path.join(projectRoot, 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'axelar-cgp-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@openzeppelin', 'contracts'),
     ];
 
     for (const dir of searchDirs) {
@@ -1090,6 +1086,64 @@ async function printTokenInfo(tokenAddress, provider) {
     }
 }
 
+/**
+ * Links libraries in contract bytecode without deploying.
+ * Manually replaces library placeholders in bytecode with actual addresses.
+ * Handles multiple occurrences of the same placeholder.
+ */
+const linkLibrariesInBytecode = (contractBytecode, libraries = {}) => {
+    let linkedBytecode = contractBytecode;
+
+    // Replace library placeholders with actual addresses
+    for (const [libraryFullyQualifiedName, libraryAddress] of Object.entries(libraries)) {
+        // Try both hash-based and old-style placeholders
+        const libraryNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(libraryFullyQualifiedName));
+
+        // Handle library names with or without colons
+        const parts = libraryFullyQualifiedName.split(':');
+        const libraryName = parts.length > 1 ? parts[1] : parts[0];
+
+        const hashPlaceholder = `__$${libraryNameHash.slice(2, 36)}$__`;
+        const oldStylePlaceholder40 = `__${libraryName}`.padEnd(40, '_');
+
+        const addressWithoutPrefix = libraryAddress.replace('0x', '');
+
+        if (linkedBytecode.includes(hashPlaceholder)) {
+            // Use replaceAll to handle multiple occurrences
+            linkedBytecode = linkedBytecode.replaceAll(hashPlaceholder, addressWithoutPrefix);
+            printInfo(
+                `Replaced hash placeholder for ${libraryFullyQualifiedName} (${(linkedBytecode.match(new RegExp(addressWithoutPrefix, 'g')) || []).length} occurrences)`,
+            );
+        } else if (linkedBytecode.includes(oldStylePlaceholder40)) {
+            // Use replaceAll to handle multiple occurrences
+            linkedBytecode = linkedBytecode.replaceAll(oldStylePlaceholder40, addressWithoutPrefix);
+            printInfo(
+                `Replaced old-style placeholder for ${libraryFullyQualifiedName} (${(linkedBytecode.match(new RegExp(addressWithoutPrefix, 'g')) || []).length} occurrences)`,
+            );
+        } else {
+            printError(`Library placeholder not found for ${libraryFullyQualifiedName}`);
+            throw new Error(`Library placeholder not found for ${libraryFullyQualifiedName}`);
+        }
+    }
+
+    return linkedBytecode;
+};
+
+/**
+ * Links libraries in contract bytecode and returns the linked contract JSON.
+ * This creates a new contract JSON with the linked bytecode.
+ */
+const linkLibrariesInContractJson = (contractJson, libraries = {}) => {
+    const linkedBytecode = linkLibrariesInBytecode(contractJson.bytecode, libraries);
+    const linkedDeployedBytecode = linkLibrariesInBytecode(contractJson.deployedBytecode, libraries);
+
+    return {
+        ...contractJson,
+        bytecode: linkedBytecode,
+        deployedBytecode: linkedDeployedBytecode,
+    };
+};
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1134,4 +1188,6 @@ module.exports = {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
     printTokenInfo,
+    linkLibrariesInBytecode,
+    linkLibrariesInContractJson,
 };
