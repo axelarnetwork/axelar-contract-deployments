@@ -221,21 +221,21 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     });
 
     // Channel
-    const channel = options.channel 
+    const channel = options.channel
         ? options.channel
         : await txBuilder.moveCall({
-            target: `${AxelarGateway.address}::channel::new`,
-        });
+              target: `${AxelarGateway.address}::channel::new`,
+          });
 
     // Register deployed token (from info)
     const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [
             InterchainTokenService,
-            
+
             // XXX todo: this type should be correct (&Channel), determine why it's throwing `TypeMismatch`
             channel,
-            
+
             salt,
             metadata,
             coinManagement,
@@ -243,10 +243,8 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
         typeArguments: [tokenType],
     });
 
-    if (options.channel)
-        txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
-    else 
-        txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+    if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
 
     const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register custom coin (${symbol}) in InterchainTokenService`, options, {
         showEvents: true,
