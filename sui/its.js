@@ -246,7 +246,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
     else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
 
-    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register custom coin (${symbol}) in InterchainTokenService`, options, {
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
         showEvents: true,
     });
 
