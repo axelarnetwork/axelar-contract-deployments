@@ -427,7 +427,7 @@ async function processCommand(config, chain, action, options) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
 
-            if (prompt(`Proceed with setting trusted chain(s): ${trustedChains}?`, yes)) {
+            if (prompt(`Proceed with setting trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
@@ -452,7 +452,7 @@ async function processCommand(config, chain, action, options) {
                 throw new Error(`${action} can be performed by contract owner: ${owner}`);
             }
 
-            if (prompt(`Proceed with removing trusted chain(s): ${trustedChains}?`, yes)) {
+            if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
