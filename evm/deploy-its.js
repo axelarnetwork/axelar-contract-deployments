@@ -283,6 +283,7 @@ async function deployAll(config, wallet, chain, options) {
                 contractConfig.predeployCodehash = predeployCodehash;
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
+                printInfo('ITS Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -317,6 +318,7 @@ async function deployAll(config, wallet, chain, options) {
             contractName: 'InterchainProxy',
             async deploy() {
                 const args = [itsFactoryContractConfig.implementation, wallet.address, '0x'];
+                printInfo('ITS Factory Proxy args', args);
 
                 return deployContract(
                     proxyDeployMethod,
@@ -461,6 +463,8 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Proxy`, contract.address);
 
     const currImplementation = await contract.implementation();
+    printInfo(`Current ITS implementation`, currImplementation);
+    printInfo(`New ITS implementation`, contractConfig.implementation);
 
     if (currImplementation === contractConfig.implementation) {
         printWarn(`ITS implementation is already up to date`);
@@ -488,6 +492,8 @@ async function upgrade(_, chain, options) {
     printInfo(`ITS Factory Proxy`, itsFactory.address);
 
     const factoryImplementation = await itsFactory.implementation();
+    printInfo(`Current ITS Factory implementation`, factoryImplementation);
+    printInfo(`New ITS Factory implementation`, itsFactoryContractConfig.implementation);
 
     if (factoryImplementation === itsFactoryContractConfig.implementation) {
         printWarn(`ITS Factory implementation is already up to date`);
