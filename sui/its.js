@@ -199,6 +199,63 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
+// register_custom_coin
+async function registerCustomCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+    const deployConfig = { client, keypair, options, walletAddress };
+
+    // Deploy token on Sui
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // New CoinManagement<T>
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+
+    // Salt
+    const salt = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [walletAddress],
+    });
+
+    // Channel
+    const channel = options.channel
+        ? options.channel
+        : await txBuilder.moveCall({
+              target: `${AxelarGateway.address}::channel::new`,
+          });
+
+    // Register deployed token (from info)
+    const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
+        arguments: [
+            InterchainTokenService,
+
+            // XXX todo: this type should be correct (&Channel), determine why it's throwing `TypeMismatch`
+            channel,
+
+            salt,
+            metadata,
+            coinManagement,
+        ],
+        typeArguments: [tokenType],
+    });
+
+    if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register custom coin (${symbol}) in InterchainTokenService`, options, {
+        showEvents: true,
+    });
+
+    const tokenId = result.events[0].parsedJson.token_id.id;
+
+    // Save the deployed token
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+}
+
 // migrate_coin_metadata
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
@@ -285,6 +342,14 @@ if (require.main === module) {
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
         });
+    
+    const registerCustomCoinProgram = new Command()
+        .name('register-custom-coin')
+        .command('register-custom-coin <symbol> <name> <decimals>')
+        .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
+        });
 
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
@@ -302,6 +367,7 @@ if (require.main === module) {
     // v1
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
+    program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
 
     // finalize program
