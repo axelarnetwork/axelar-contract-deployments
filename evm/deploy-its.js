@@ -85,7 +85,7 @@ async function deployAll(config, wallet, chain, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
     const deployOptions = getDeployOptions(deployMethod, salt, chain);
 
-    const interchainTokenService = contractConfig['address'] = options.reuseProxy
+    const interchainTokenService = (contractConfig['address'] = options.reuseProxy
         ? contractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: proxySalt,
@@ -93,9 +93,9 @@ async function deployAll(config, wallet, chain, options) {
               contractJson: proxyJSON,
               constructorArgs: [],
               provider: wallet.provider,
-          });
+          }));
 
-    const interchainTokenFactory = itsFactoryContractConfig['address'] = options.reuseProxy
+    const interchainTokenFactory = (itsFactoryContractConfig['address'] = options.reuseProxy
         ? itsFactoryContractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: factorySalt,
@@ -103,7 +103,7 @@ async function deployAll(config, wallet, chain, options) {
               contractJSON: proxyJSON,
               constructorArgs: [],
               provider: wallet.provider,
-          });
+          }));
 
     if (options.reuseProxy) {
         if (!isValidAddress(interchainTokenService) || !isValidAddress(interchainTokenFactory)) {

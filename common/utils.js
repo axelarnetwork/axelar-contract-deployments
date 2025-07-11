@@ -580,8 +580,7 @@ const tryItsEdgeContract = (chainConfig) => {
 };
 
 const itsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
-        tryItsEdgeContract(chainConfig);
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
 
     if (!itsEdgeContract) {
         throw new Error(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
