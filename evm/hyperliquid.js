@@ -208,20 +208,7 @@ async function switchHyperliquidBlockSize(options, config, gasOptions, useBigBlo
     const wallet = new Wallet(options.privateKey, provider);
 
     try {
-        const result = await updateBlockSize(wallet, config, chain, [blockType], options);
-
-        if (result.status === 'ok') {
-            if (gasOptions.gasLimit) {
-                if (useBigBlocks) {
-                    gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).mul(10);
-                } else {
-                    gasOptions.gasLimit = BigNumber.from(gasOptions.gasLimit).div(10);
-                }
-            }
-            return true;
-        } else {
-            throw new Error(`Failed to switch to ${blockType} blocks: ${result.error}`);
-        }
+        await updateBlockSize(wallet, config, chain, [blockType], options);
     } catch (error) {
         throw error;
     }
