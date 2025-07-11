@@ -4,14 +4,7 @@ const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } =
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { Command, Option } = require('commander');
-const {
-    printInfo,
-    validateParameters,
-    getContractJSON,
-    getGasOptions,
-    mainProcessor,
-    isHyperliquidChain,
-} = require('./utils');
+const { printInfo, validateParameters, getContractJSON, getGasOptions, mainProcessor, isHyperliquidChain } = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { httpPost } = require('../common/utils');
 const { handleTx } = require('./its');

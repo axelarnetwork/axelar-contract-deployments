@@ -57,8 +57,8 @@ async function deployAll(config, wallet, chain, options) {
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
     const interchainTokenServiceContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService';
     const ServiceContract = getContractJSON(
-        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService', 
-        artifactPath
+        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        artifactPath,
     );
 
     const contractConfig = contracts[contractName] || {};
