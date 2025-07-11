@@ -1,7 +1,8 @@
-const { Cl, BytesReader, deserializeTransaction } = require('@stacks/transactions');
+const { Cl, BytesReader, deserializeTransaction, serializeCVBytes } = require('@stacks/transactions');
 const { intToHex } = require('@stacks/common');
 const { bytesToHex, hexToBytes } = require("@noble/hashes/utils");
 const { sha512_256 } = require("@noble/hashes/sha512");
+const { keccak256 } = require('@ethersproject/keccak256');
 
 /**
  * Utils for constructing verification proof for Stacks
@@ -246,7 +247,40 @@ async function getTokenTxId(contract, rpc) {
     return json.tx_id;
 }
 
+function getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress) {
+    const prefixCanonicalTokenSalt = keccak256(
+        serializeCVBytes(Cl.stringAscii("canonical-token-salt")),
+    );
+    // `stacks` is a const in ITS Factory
+    const chainNameHash = keccak256(serializeCVBytes(Cl.stringAscii("stacks")));
+
+    return keccak256(
+        Buffer.concat([
+            Buffer.from(prefixCanonicalTokenSalt.slice(2), 'hex'),
+            Buffer.from(chainNameHash.slice(2), 'hex'),
+            serializeCVBytes(Cl.principal(tokenAddress)),
+        ]),
+    );
+}
+
+function getCanonicalInterchainTokenId(tokenAddress) {
+    const factorySalt = getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress);
+
+    const interchainTokenIdPrefix = keccak256(
+        serializeCVBytes(Cl.stringAscii("its-interchain-token-id")),
+    );
+
+    return keccak256(
+        Buffer.concat([
+            Buffer.from(interchainTokenIdPrefix.slice(2), 'hex'),
+            serializeCVBytes(Cl.principal('ST000000000000000000002AMW42H')), // null address in `stacks`
+            Buffer.from(factorySalt.slice(2), 'hex'),
+        ]),
+    );
+}
+
 module.exports = {
     getVerificationParams,
     getTokenTxId,
+    getCanonicalInterchainTokenId,
 };
