@@ -602,18 +602,6 @@ const getCurrentVerifierSet = async (config, chain) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const itsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
-        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
-        chainConfig.contracts.InterchainTokenService?.address;
-
-    if (!itsEdgeContract) {
-        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
-    }
-
-    return itsEdgeContract;
-};
-
 const downloadContractCode = async (url, contractName, version) => {
     const tempDir = path.join(process.cwd(), 'artifacts');
 
@@ -643,9 +631,19 @@ const tryItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+const itsEdgeContract = (chainConfig) => {
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+
+    if (!itsEdgeContract) {
+        throw new Error(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
+    }
+
+    return itsEdgeContract;
+};
+
 const itsEdgeChains = (config) =>
     Object.values(config.chains)
-        .filter(itsEdgeContract)
+        .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
 const parseTrustedChains = (config, trustedChains) => {
