@@ -19,7 +19,8 @@ const {
     printTokenInfo,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
-const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
+const { getDeploymentSalt, handleTx } = require('./its');
+const { isValidDestinationChain } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');

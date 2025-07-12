@@ -636,4 +636,5 @@ module.exports = {
     generateKeypair,
     isFriendbotSupported,
     assetToScVal,
+    isHexString,
 };

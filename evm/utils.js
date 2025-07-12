@@ -951,16 +951,6 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
-    const chains = config.chains;
-
-    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
-
-    if (!validChain) {
-        throw new Error(`Invalid destination chain: ${chainName}`);
-    }
-}
-
 async function relayTransaction(options, chain, contract, method, params, nativeValue = 0, gasOptions = {}, expectedEvent = null) {
     if (options.relayerAPI) {
         const result = await httpPost(options.relayerAPI, {
@@ -1123,7 +1113,6 @@ module.exports = {
     getGasOptions,
     getSaltFromKey,
     getDeployOptions,
-    isValidChain,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,

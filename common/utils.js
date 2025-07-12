@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify, defaultAbiCoder },
+    utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -325,6 +325,57 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/// Token Manager Types supported by ITS
+/// These are the standardized token manager implementations across all chains
+const tokenManagerTypes = {
+    INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
+
+/**
+ * Validates if a token manager type is supported for link token operations on a specific chain.
+ * Different chains may have different supported token manager types for linking tokens.
+ *
+ * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
+ * @param {number} tokenManagerType - The token manager type to validate
+ * @throws {Error} If the token manager type is not valid for the specified chain type
+ */
+const isValidLinkType = (chainType, tokenManagerType) => {
+    if (!chainType) {
+        throw new Error(`Chain type is required but was not provided (received: ${chainType})`);
+    }
+
+    const validTokenManagerTypes = Object.values(tokenManagerTypes);
+    if (!isNumber(tokenManagerType) || !validTokenManagerTypes.includes(tokenManagerType)) {
+        throw new Error(`Invalid token manager type: ${tokenManagerType}. Must be one of: ${validTokenManagerTypes.join(', ')}`);
+    }
+
+    const chainRules = {
+        evm: {
+            forbidden: [tokenManagerTypes.INTERCHAIN_TOKEN],
+            validate: (type) => !chainRules.evm.forbidden.includes(type),
+            errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
+        },
+        stellar: {
+            allowed: [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN],
+            validate: (type) => chainRules.stellar.allowed.includes(type),
+            errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
+        },
+    };
+
+    const rules = chainRules[chainType];
+    if (!rules) {
+        throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
+    }
+
+    if (!rules.validate(tokenManagerType)) {
+        throw new Error(`Invalid token manager type ${tokenManagerType} for chain type ${chainType}: ${rules.errorMsg}`);
+    }
+};
+
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
@@ -338,6 +389,7 @@ const validationFunctions = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isHexString,
 };
 
 function validateParameters(parameters) {
@@ -646,6 +698,37 @@ const getProposalConfig = (config, env, key) => {
     }
 };
 
+/**
+ * Validates if a chain name is valid in the config.
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} chainName - The chain name to validate
+ * @throws {Error} If the chain is not valid
+ */
+function isValidChain(config, chainName) {
+    const chains = config.chains;
+
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
+}
+
+/**
+ * Validates if a destination chain is valid (allows empty string).
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} destinationChain - The destination chain to validate
+ */
+function isValidDestinationChain(config, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    isValidChain(config, destinationChain);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -667,6 +750,7 @@ module.exports = {
     isNumberArray,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isHexString,
     copyObject,
     httpGet,
     httpPost,
@@ -704,4 +788,8 @@ module.exports = {
     asciiToBytes,
     encodeITSDestination,
     getProposalConfig,
+    tokenManagerTypes,
+    isValidLinkType,
+    isValidChain,
+    isValidDestinationChain,
 };
