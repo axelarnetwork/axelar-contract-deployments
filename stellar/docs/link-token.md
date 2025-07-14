@@ -9,7 +9,7 @@ https://github.com/axelarnetwork/arcs/blob/main/arcs/arc-1.md
 
 The token linking feature enables:
 
-- Linking existing tokens across connected Amplifier chains via ITS Hub
+- Linking custom tokens deployed on Stellar with tokens on EVM chains
 - Supporting tokens with different decimal precisions through automatic scaling
 
 ## How It Works
@@ -200,6 +200,8 @@ ts-node stellar/its.js add-minter <interchainTokenAddress> <tokenManagerAddress>
 ```
 
 **On EVM:**
+
+Update the private key in `.env` to EVM wallet
 
 ```bash
 # Get token manager address on the destination chain

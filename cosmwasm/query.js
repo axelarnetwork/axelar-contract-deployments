@@ -33,17 +33,6 @@ async function rewards(client, config, _, options) {
 
 async function customTokens(client, config, args, _) {
     const [chainName, tokenAddress] = args;
-
-    if (!chainName) {
-        printWarn('Chain name is required for custom tokens query');
-        return;
-    }
-
-    if (!tokenAddress) {
-        printWarn('Token address is required for custom tokens query');
-        return;
-    }
-
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     if (!itsHubAddress) {
