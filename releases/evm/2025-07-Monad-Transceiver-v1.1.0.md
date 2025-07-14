@@ -35,8 +35,6 @@ CHAIN=xyz
 
 | `Network`            | `deployer address`                           |
 |----------------------|----------------------------------------------|
-| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
@@ -56,14 +54,14 @@ CHAIN=xyz
 ```bash
 ENV=xyz
 CHAIN=xyz
-OPERATORS_ADDRESS=0x..
 ```
 
-2. Set address of deployed `gmpManager` to the `AxelarTransceiver` section in your chain config:
+2. Set address of deployed `gmpManager` & `TransceiverStructs` to the `AxelarTransceiver` section in your chain config:
 
 ```json
 "AxelarTransceiver": {
-  "gmpManager": "$GMP_MANAGER_ADDRESS"
+  "gmpManager": "$GMP_MANAGER_ADDRESS",
+  "TransceiverStructs": "$TRANSCEIVER_STRUCTS_ADDRESS"
 }
 ```
 
@@ -107,17 +105,6 @@ ts-node evm/deploy-contract.js \
 ts-node evm/axelar-transceiver.js initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
-| `Network`            | `OPERATORS_ADDRESS`                          |
-|----------------------|----------------------------------------------|
-| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
-
-6. Transfer pauser role 
-
-```bash
-ts-node evm/axelar-transceiver.js transfer-pauser $OPERATORS_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
-```
-
 ## Registration (Wormhole's End)
 
 - Note: These commands can only be called by `owner` of gmpManager contract.
@@ -128,7 +115,7 @@ ts-node evm/axelar-transceiver.js transfer-pauser $OPERATORS_ADDRESS --artifactP
 ENV=xyz
 CHAIN=xyz
 PRIVATE_KEY=0x.. # Owner of gmpManager contract
-THRESHOLD_VALUE=2
+THRESHOLD_VALUE=2 # Unconfirmed
 ```
 
 | `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
@@ -146,15 +133,11 @@ ts-node evm/axelar-transceiver.js set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR
 
 3. Set AxelarTransceiver contract on gmpManger
 
-<TODO>
-
 ```bash
 GmpMangerProxy.setTransceiver(address AxelarTransceiverProxy)
 ```
 
 4. Update threshold value
-
-<TODO>
 
 Note: 
 - Threshold is not auto-increased to avoid breaking in-flight message redemption.
