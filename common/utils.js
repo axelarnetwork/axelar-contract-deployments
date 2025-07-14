@@ -345,12 +345,11 @@ const tokenManagerTypes = {
  * @throws {Error} If the token manager type is not valid for the specified chain type
  */
 const validateLinkType = (chainType, type) => {
-    const validTokenManagerTypeStrings = Object.keys(tokenManagerTypes);
-    if (!validTokenManagerTypeStrings.includes(type)) {
-        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${validTokenManagerTypeStrings.join(', ')}`);
-    }
+    const tokenManagerType = tokenManagerTypes[type];
 
-    const tokenManagerTypeValue = tokenManagerTypes[type];
+    if (tokenManagerType === undefined) {
+        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${Object.keys(tokenManagerTypes).join(', ')}`);
+    }
 
     const chainRules = {
         evm: {
@@ -368,11 +367,11 @@ const validateLinkType = (chainType, type) => {
         throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
     }
 
-    if (!rules.validate(tokenManagerTypeValue)) {
+    if (!rules.validate(tokenManagerType)) {
         throw new Error(`Invalid token manager type ${type} for chain type ${chainType}: ${rules.errorMsg}`);
     }
 
-    return tokenManagerTypeValue;
+    return tokenManagerType;
 };
 
 const validationFunctions = {
@@ -718,7 +717,7 @@ function validateChain(config, chainName) {
  * @param {Object} config - The configuration object
  * @param {string} destinationChain - The destination chain to validate
  */
-function isValidDestinationChain(config, destinationChain) {
+function validateDestinationChain(config, destinationChain) {
     if (destinationChain === '') {
         return;
     }
@@ -788,5 +787,5 @@ module.exports = {
     tokenManagerTypes,
     validateLinkType,
     validateChain,
-    isValidDestinationChain,
+    validateDestinationChain,
 };

@@ -25,7 +25,7 @@ const {
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
 } = require('./utils');
-const { isValidDestinationChain, tokenManagerTypes, validateLinkType, getChainConfigByAxelarId } = require('../common/utils');
+const { validateDestinationChain, tokenManagerTypes, validateLinkType, getChainConfigByAxelarId } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -568,7 +568,7 @@ async function processCommand(config, chain, action, options) {
                 isValidNumber: { gasValue },
                 isNonEmptyString: { type },
             });
-            isValidDestinationChain(config, destinationChain);
+            validateDestinationChain(config, destinationChain);
 
             const tokenManagerType = validateLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, type);
 
@@ -821,4 +821,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, validateDestinationChain };
