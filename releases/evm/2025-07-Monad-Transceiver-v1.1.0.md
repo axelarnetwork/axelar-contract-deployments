@@ -1,9 +1,9 @@
 ## Monad Transceiver Deployment v1.1.0
 
-|                | **Owner**                                                                  |
-|----------------|----------------------------------------------------------------------------|
-| **Created By** | @AttissNgo <attiss@interoplabs.io>, @blockchainguyy <ayush@interoplabs.io> |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io>                                     |
+|                | **Owner**                                                                     |
+|----------------|-------------------------------------------------------------------------------|
+| **Created By** | @kulikthebird <tomasz@interoplabs.io>, @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>                                        |
 
 | **Network**          | **Deployment Status** | **Date** |
 |----------------------|-----------------------|----------|
@@ -12,13 +12,9 @@
 | **Testnet**          | -                     | TBD      |
 | **Mainnet**          | -                     | TBD      |
 
-<!-- TODO -->
-<!-- [Release]() -->
-
 ## Background
 
-- This is the Monad Axelar/Wormhole Transceiver release.
-    <!-- TODO: provide context for partnership, differences from ITS -->
+- This is the Monad Axelar/Wormhole Transceiver release. This release deploys AxelarTransceive & ERC1967Proxy from example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
 
 ## Deployment
 
@@ -37,90 +33,121 @@ ENV=xyz
 CHAIN=monad
 ```
 
-| Network              | `deployer address`                           |
+| `Network`            | `deployer address`                           |
 |----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
-### Create Transceiver Artifacts
+## AxelarTransceiver and ERC1967 Proxy Deployment
 
-Prerequisite: install Foundry (TODO: provide link)
+### Prerequisites
 
-<!-- or use Hardhat?? -->
-
-1. Clone Transceiver repo: https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth
-2. `cd` into `example-wormhole-axelar-wsteth` and run `forge build` to create artifacts
-
-- contracts will be compiled and ABIs generated in `out/` directory
-
-### AxelarTrnasceiver Deployments
+1. Install Foundry: https://github.com/foundry-rs/foundry
+2. Clone Transceiver repo: `git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git`
+3. `cd` into `example-wormhole-axelar-wsteth` 
+4. Get address of already deployed transceiverStructs library and set value:
+`TRANSCEIVER_STRUCTS_ADDRESS=0x..`
+5. Run: `forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:$TRANSCEIVER_STRUCTS_ADDRESS"`
 
 1. Set Environment Variables
 
 ```bash
 ENV=xyz
 CHAIN=xyz
-```
-
-1. Set paths to artifacts in `.env` in this directory:
-
-```bash
-TRANSCEIVER_STRUCTS_ADDRESS=0x..
-GMP_MANAGER_ADDRESS=0x..
-OPERATORS_ADDRESS=Ox..
-PROXY_SALT="AXELAR_TRANSCEIVER v1.1.0"
+OPERATORS_ADDRESS=0x..
 THRESHOLD_VALUE=2
 ```
 
-2. Deploy AxelarTransceiver contract
+2. Set address of deployed `gmpManager` to the `AxelarTransceiver` section in your chain config:
 
-```bash
-ts-node evm/deploy-contract.js -c AxelarTransceiver --gmpManager $GMP_MANAGER_ADDRESS -m create2 --libraries '{"TransceiverStructs":"$TRANSCEIVER_STRUCTS_ADDRESS"}'
+```json
+"AxelarTransceiver": {
+  "gmpManager": "$GMP_MANAGER_ADDRESS"
+}
 ```
 
-3. Deploy ERC1967Proxy 
+3. Deploy AxelarTransceiver contract
+
+- Notes:
+    - We use `create` method to deploy, because AxelarTransceiver deployer will be used to initialize the contract
+    - `--artifactPath` is required for AxelarTransceiver deployment and should point to example-wormhole-axelar-wsteth/out/
+    - The `gmpManager` address is automatically read from the chain config (`AxelarTransceiver.gmpManager`)
+    - Library Linking: Pre-linked artifacts are generated and required libraries are already linked
 
 ```bash
-ts-node evm/deploy-contract.js -c ERC1967Proxy --forContract AxelarTransceiver
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
-4. Initialize AxelarTransceiver 
+4. Deploy ERC1967Proxy 
 
-Initialize step will set
-- GmpManger's owner as `owner` of AxelarTransceiver contract
-- Deployer as `pauser` of AxelarTransceiver contract
+- Notes:
+    - We use `create` method to deploy for ERC1967Proxy of AxelarTransceiver, to maintain consistency
+    - `--artifactPath` is required for ERC1967Proxy deployment and should point to example-wormhole-axelar-wsteth/out/
+    - `--forContract` is required flag & should have value `AxelarTransceiver`
 
 ```bash
-ts-node evm/axelar-transceiver.ts --initialize
+ts-node evm/deploy-contract.js \
+  -c ERC1967Proxy \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --forContract AxelarTransceiver
 ```
 
-5. Set Axelar Chain ID
+5. Initialize AxelarTransceiver 
+
+- Initialize step will set
+    - GmpManger's owner as `owner` of AxelarTransceiver contract
+    - Deployer as `pauser` of AxelarTransceiver contract
 
 ```bash
-ts-node evm/axelar-transceiver.ts --setAxelarChainId <id> <chain>
+ts-node evm/axelar-transceiver.js initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 6. Transfer pauser role 
 
 ```bash
-ts-node evm/axelar-transceiver.ts --pauserAddress $OPERATORS_ADDRESS
+ts-node evm/axelar-transceiver.js transfer-pauser $OPERATORS_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 ## Registration (Wormhole's End)
 
-1. Set AxelarTransceiver contract on gmpManger
+- Note: These commands can only be called by `owner` of gmpManager contract.
 
-This can only be called by owner of gmpManager.
+1. Set Environment Variables
+
+```bash
+ENV=xyz
+CHAIN=xyz
+PRIVATE_KEY=0x.. # Owner of gmpManager contract
+```
+
+| `Network`   | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
+|-------------|---------------------|---------------------|-----------------------|
+| **Testnet** |                     |                     |                       |
+| **Mainnet** |                     |                     |                       |
+
+2. Set Axelar Chain ID
+
+```bash
+ts-node evm/axelar-transceiver.js set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+```
+
+3. Set AxelarTransceiver contract on gmpManger
+
+<TODO>
 
 ```bash
 GmpMangerProxy.setTransceiver(address AxelarTransceiverProxy)
 ```
 
-2. Update threshold value
+4. Update threshold value
 
-This can only be called by owner of gmpManager.
+<TODO>
 
 Note: 
 - Threshold is not auto-increased to avoid breaking in-flight message redemption.
@@ -132,7 +159,7 @@ GmpMangerPxoxy.setThreshold(uint8 $THRESHOLD_VALUE)
 
 ### Verify Contracts
 
-<!-- TODO: what is needed here? -->
+Manually verify both contracts i.e. AxelarTransceiver & ERC1967Proxy, foundry artifacts can be found on example-wormhole-axelar-wsteth repo.
 
 ## Checklist
 
