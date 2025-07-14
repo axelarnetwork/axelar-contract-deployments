@@ -436,7 +436,10 @@ async function processCommand(config, chain, options) {
 
     saveConfig(config, options.env);
 
-    printInfo(`${chain.name} | ${contractName}`, contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address);
+    printInfo(
+        `${chain.name} | ${contractName}`,
+        contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address,
+    );
 
     await checkContract(contractName, contract, contractConfig);
 

@@ -645,7 +645,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     }
 
     if (chains.length === 0) {
-        // throw new Error('Chain names were not provided');
+        throw new Error('Chain names were not provided');
     }
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
@@ -833,21 +833,21 @@ function getContractJSON(contractName, artifactPath) {
 
     try {
         const contractJson = require(contractPath);
-        
+
         // Handle Foundry JSON format which doesn't have contractName and sourceName
         if (!contractJson.contractName && contractJson.abi) {
             contractJson.contractName = contractName;
             contractJson.sourceName = `${contractName}.sol`;
         }
-        
+
         if (contractJson.bytecode && typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
             contractJson.bytecode = contractJson.bytecode.object;
         }
-        
+
         if (contractJson.deployedBytecode && typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
             contractJson.deployedBytecode = contractJson.deployedBytecode.object;
         }
-        
+
         return contractJson;
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);

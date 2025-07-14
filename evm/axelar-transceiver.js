@@ -2,7 +2,17 @@
 
 const { Command, Option } = require('commander');
 const { addEvmOptions } = require('./cli-utils');
-const { getContractJSON, mainProcessor, printError, printInfo, printWarn, saveConfig, printWalletInfo, getGasOptions, prompt } = require('./utils');
+const {
+    getContractJSON,
+    mainProcessor,
+    printError,
+    printInfo,
+    printWarn,
+    saveConfig,
+    printWalletInfo,
+    getGasOptions,
+    prompt,
+} = require('./utils');
 const { Contract, Wallet, getDefaultProvider, utils } = require('ethers');
 
 async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, options) {
@@ -30,7 +40,7 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
 
         // Call initialize with ETH value since it's payable
         const initTx = await transceiverContract.initialize({
-            ...gasOptions
+            ...gasOptions,
         });
         printInfo('Transaction hash', initTx.hash);
         printInfo('Waiting for transaction confirmation...');
@@ -49,7 +59,6 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
             printInfo('AxelarTransceiver is already initialized');
         } else {
             printError('Failed to initialize transceiver', errorMessage);
-
         }
     }
 }
@@ -70,7 +79,7 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
         const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
 
         const transferTx = await transceiverContract.transferPauserCapability(pauserAddress, {
-            ...gasOptions
+            ...gasOptions,
         });
         printInfo('Transaction hash', transferTx.hash);
         printInfo('Waiting for transaction confirmation...');
