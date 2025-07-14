@@ -1,25 +1,5 @@
 'use strict';
 
-/**
- * @fileoverview EVM Contract Deployment Script
- *
- * This script provides functionality to deploy various Axelar contracts on EVM-compatible chains.
- * It supports multiple deployment methods (create, create2, create3) and handles contract
- * verification, configuration management, and deployment validation.
- *
- * Supported contract types:
- * - AxelarServiceGovernance: Governance contract for Axelar services
- * - InterchainProposalSender: Contract for sending interchain proposals
- * - InterchainGovernance: Interchain governance contract
- * - Multisig: Multi-signature wallet contract
- * - Operators: Operator management contract
- * - ConstAddressDeployer: Constant address deployer contract
- * - Create3Deployer: Create3 deployment contract
- * - TokenDeployer: Token deployment contract
- * - ERC1967Proxy: ERC1967 proxy contract
- * - AxelarTransceiver: Transceiver contract
- */
-
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -201,29 +181,24 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         }
 
         case 'ERC1967Proxy': {
-            // Handle proxy-specific arguments
             const forContract = options.forContract;
             const proxyData = options.proxyData || '0x';
 
-            // If forContract is specified, try to get implementation from config
-            if (forContract && config[forContract]?.address) {
+            if (forContract && config[forContract]?.implementation) {
                 const implementationAddress = config[forContract].implementation;
                 printInfo(`Using implementation address from ${forContract}: ${implementationAddress}`);
                 return [implementationAddress, proxyData];
             }
 
-            // Fallback to explicit args if provided
             const args = options.args ? JSON.parse(options.args) : [];
             if (args.length >= 2) {
                 return args;
             }
 
-            // If forContract was specified but not found, throw error
             if (forContract) {
                 throw new Error(`Proxy for ${forContract} requires implementation address to be present in the config.`);
             }
 
-            // If no forContract and no explicit args, throw error
             throw new Error(`ERC1967Proxy requires implementation address and init data.`);
         }
     }
@@ -231,9 +206,6 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
     throw new Error(`${contractName} is not supported.`);
 }
 
-/**
- * Validates deployed contract configuration by checking contract state against expected values.
- */
 async function checkContract(contractName, contract, contractConfig) {
     switch (contractName) {
         case 'Operators': {
@@ -305,12 +277,6 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-
-
-/**
- * Processes the deployment command for a specific chain.
- * Handles contract deployment, verification, and configuration updates.
- */
 async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
     let { deployMethod } = options;
@@ -379,10 +345,6 @@ async function processCommand(config, chain, options) {
 
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
-    // For ERC1967Proxy and AxelarTransceiver, always use 'create' deployment
-    if (contractName === 'ERC1967Proxy' || contractName === 'AxelarTransceiver') {
-        deployMethod = 'create';
-    }
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
 
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
@@ -448,22 +410,11 @@ async function processCommand(config, chain, options) {
     const codehash = await getBytecodeHash(contract, chain.axelarId);
     printInfo('Deployed Contract bytecode hash', codehash);
 
-    // Update configuration following the same pattern as other scripts
+    // Update configuration
     if (contractName === 'ERC1967Proxy') {
         const targetContract = options.forContract;
-        if (targetContract && contractConfig) {
-            // Get implementation address from constructor args
-            const implementationAddress = constructorArgs[0];
-            // Only store if this proxy points to the target contract's implementation
-            if (implementationAddress === contractConfig.address) {
-                contractConfig.address = contract.address;
-                contractConfig.deployer = wallet.address;
-                contractConfig.deploymentMethod = deployMethod;
-                contractConfig.codehash = codehash;
-                if (deployMethod !== 'create') {
-                    contractConfig.salt = salt;
-                }
-            }
+        if (targetContract && contractConfig && constructorArgs[0] === contractConfig.implementation) {
+            contractConfig.address = contract.address;
         }
     } else if (contractName === 'AxelarTransceiver') {
         contractConfig.implementation = contract.address;
@@ -471,17 +422,16 @@ async function processCommand(config, chain, options) {
         contractConfig.gasService = await contract.gasService();
         contractConfig.gmpManager = await contract.nttManager();
     } else {
-
-        // Standard configuration update for all other contracts
         contractConfig.address = contract.address;
-        contractConfig.deployer = wallet.address;
-        contractConfig.deploymentMethod = deployMethod;
-        contractConfig.codehash = codehash;
         contractConfig.predeployCodehash = predeployCodehash;
+    }
 
-        if (deployMethod !== 'create') {
-            contractConfig.salt = salt;
-        }
+    // Common fields for all contracts
+    contractConfig.deployer = wallet.address;
+    contractConfig.deploymentMethod = deployMethod;
+    contractConfig.codehash = codehash;
+    if (deployMethod !== 'create') {
+        contractConfig.salt = salt;
     }
 
     saveConfig(config, options.env);

@@ -175,12 +175,6 @@ const isBytes32Array = (arr) => {
     return true;
 };
 
-/**
- * Determines if a given input is a valid keccak256 hash.
- *
- * @param {string} input - The string to validate.
- * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
- */
 function isKeccak256Hash(input) {
     // Ensure it's a string of 66 characters length and starts with '0x'
     if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
@@ -193,12 +187,6 @@ function isKeccak256Hash(input) {
     return hexPattern.test(input.slice(2));
 }
 
-/**
- * Determines if a given input is a valid calldata for Solidity.
- *
- * @param {string} input - The string to validate.
- * @returns {boolean} - Returns true if the input is a valid calldata, false otherwise.
- */
 function isValidCalldata(input) {
     if (input === '0x') {
         return true;
@@ -314,14 +302,6 @@ function validateParameters(parameters) {
     }
 }
 
-/**
- * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
- * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
- * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
- * @param {string} chain - The chain name
- * @param {Object} provider - The provider to use for online deployment
- * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
- */
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
@@ -404,20 +384,6 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     };
 };
 
-/**
- * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
- * @param {string} deployer - Sender address that's triggering the contract deployment
- * @param {string} deployMethod - 'create', 'create2', 'create3'
- * @param {Object} options - Options for the deployment
- * @param {string} options.deployerContract - Address of the contract that will deploy the contract
- * @param {string} options.contractJson - Compiled contract to be deployed
- * @param {any[]} options.constructorArgs - Arguments for the contract constructor
- * @param {string} options.salt - Salt for the deployment
- * @param {number} options.nonce - Nonce for the deployment
- * @param {boolean} options.offline - Whether to compute address offline or use an online provider to get the nonce/deployed address
- * @param {Object} options.provider - Provider to use for online deployment
- * @returns {Promise<string>} - The predicted contract address
- */
 const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
     switch (deployMethod) {
         case 'create': {
@@ -648,14 +614,6 @@ const deployContract = async (
     }
 };
 
-/**
- * Check if a specific event was emitted in a transaction receipt.
- *
- * @param {object} receipt - The transaction receipt object.
- * @param {object} contract - The ethers.js contract instance.
- * @param {string} eventName - The name of the event.
- * @return {boolean} - Returns true if the event was emitted, false otherwise.
- */
 function wasEventEmitted(receipt, contract, eventName) {
     const event = contract.filters[eventName]();
 
@@ -840,10 +798,6 @@ function findContractPath(dir, contractName) {
 
 function getContractPath(contractName) {
     const searchDirs = [
-        // Prioritize native-token-transfers ERC1967Proxy
-        ...(contractName === 'ERC1967Proxy' ? [
-            path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
-        ] : []),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
         path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
@@ -866,6 +820,11 @@ function getContractPath(contractName) {
 function getContractJSON(contractName, artifactPath) {
     let contractPath;
 
+    // Require artifactPath for specific contracts
+    if (['AxelarTransceiver', 'ERC1967Proxy'].includes(contractName) && !artifactPath) {
+        throw new Error(`${contractName} requires --artifactPath to be specified. Please provide the path to the compiled artifacts.`);
+    }
+
     if (artifactPath) {
         contractPath = artifactPath.endsWith('.json') ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
     } else {
@@ -874,6 +833,21 @@ function getContractJSON(contractName, artifactPath) {
 
     try {
         const contractJson = require(contractPath);
+        
+        // Handle Foundry JSON format which doesn't have contractName and sourceName
+        if (!contractJson.contractName && contractJson.abi) {
+            contractJson.contractName = contractName;
+            contractJson.sourceName = `${contractName}.sol`;
+        }
+        
+        if (contractJson.bytecode && typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
+            contractJson.bytecode = contractJson.bytecode.object;
+        }
+        
+        if (contractJson.deployedBytecode && typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
+            contractJson.deployedBytecode = contractJson.deployedBytecode.object;
+        }
+        
         return contractJson;
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
@@ -885,27 +859,6 @@ function getQualifiedContractName(contractName) {
     return `${contractJSON.sourceName}:${contractJSON.contractName}`;
 }
 
-/**
- * Retrieves gas options for contract interactions.
- *
- * This function determines the appropriate gas options for a given transaction.
- * It supports offline scenarios and applies gas price adjustments if specified.
- *
- * @param {Object} chain - The chain config object.
- * @param {Object} options - Script options, including the 'offline' flag.
- * @param {String} contractName - The name of the contract to deploy/interact with.
- * @param {Object} defaultGasOptions - Optional default gas options if none are provided in the chain or contract configs.
- *
- * @returns {Object} An object containing gas options for the transaction.
- *
- * @throws {Error} Throws an error if gas options are invalid and/or fetching the gas price fails when gasPriceAdjustment is present.
- *
- * Note:
- * - If 'options.gasOptions' is present, cli gas options override any config values.
- * - If 'options.offline' is true, static gas options from the contract or chain config are used.
- * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
- *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
- */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline, gasOptions: gasOptionsCli } = options;
 
@@ -1150,41 +1103,14 @@ const linkLibrariesInBytecode = (contractBytecode, libraries = {}) => {
  * This creates a new contract JSON with the linked bytecode.
  */
 const linkLibrariesInContractJson = (contractJson, libraries = {}) => {
-    // Handle Foundry-style contract JSON with bytecode.object
-    let bytecodeToLink = contractJson.bytecode;
-    let deployedBytecodeToLink = contractJson.deployedBytecode;
-    
-    if (typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
-        bytecodeToLink = contractJson.bytecode.object;
-    }
-    
-    if (typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
-        deployedBytecodeToLink = contractJson.deployedBytecode.object;
-    }
-    
-    const linkedBytecode = linkLibrariesInBytecode(bytecodeToLink, libraries);
-    const linkedDeployedBytecode = linkLibrariesInBytecode(deployedBytecodeToLink, libraries);
+    const linkedBytecode = linkLibrariesInBytecode(contractJson.bytecode, libraries);
+    const linkedDeployedBytecode = linkLibrariesInBytecode(contractJson.deployedBytecode, libraries);
 
-    // Return the same structure as the original contract JSON
-    if (typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
-        return {
-            ...contractJson,
-            bytecode: {
-                ...contractJson.bytecode,
-                object: linkedBytecode
-            },
-            deployedBytecode: {
-                ...contractJson.deployedBytecode,
-                object: linkedDeployedBytecode
-            }
-        };
-    } else {
-        return {
-            ...contractJson,
-            bytecode: linkedBytecode,
-            deployedBytecode: linkedDeployedBytecode,
-        };
-    }
+    return {
+        ...contractJson,
+        bytecode: linkedBytecode,
+        deployedBytecode: linkedDeployedBytecode,
+    };
 };
 
 module.exports = {

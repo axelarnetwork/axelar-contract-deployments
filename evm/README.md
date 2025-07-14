@@ -76,49 +76,64 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
-## Proxy and Transceiver Deployment
+## AxelarTransceiver and ERC1967 Proxy Deployment
+
+### Prerequisites
+
+AxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar-wsteth repo. Generate build using following commands:
+
+```bash
+git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
+forge build --out out
+```
+
+### AxelarTransceiver
+
+To deploy the AxelarTransceiver contract:
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  -m create \
+  --gmpManager <GMP_MANAGER_ADDRESS> \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --libraries '{"lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs":"<LIBRARY_ADDRESS>"}'
+```
+
+**Important**:
+- **Use `create`** method to deploy, as deployer of AxelarTransceiver will be used to initialize the contract, don't use `create2` or `create3`
+- **`--artifactPath` is required** for AxelarTransceiver deployment
+- The `--gmpManager` parameter should be the GMPManager address (previously called nttManager)
+- The `--libraries` parameter is required to link the `TransceiverStructs` library. You must provide the address of an already deployed TransceiverStructs library
+
+The deployment script will:
+- Validate the gateway, gas service, and GMP manager addresses
+- Deploy the contract with the correct constructor arguments
+- Store configuration including gateway, gas service, and GMP manager addresses
+- Verify the deployed contract state matches the original constructor arguments
 
 ### ERC1967Proxy
 
-This repository uses the ERC1967Proxy compiled from the native-token-transfers repository instead of OZ dependencies. To generate ERC1967Proxy again, follow these steps:
+The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify the contract like this:
 
 ```bash
-git clone https://github.com/wormhole-foundation/native-token-transfers.git
-cd ./evm
-forge build --contracts lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol
+ts-node evm/deploy-contract.js \
+  -c ERC1967Proxy \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --forContract AxelarTransceiver
 ```
 
-The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify which contract this proxy is for:
-
-```bash
-ts-node evm/deploy-contract.js -e testnet -n ethereum -c ERC1967Proxy --forContract AxelarTransceiver
-```
-
-**Note**: This deployment uses the ERC1967Proxy compiled from the native-token-transfers repository (Foundry compilation) instead of OpenZeppelin dependencies. The proxy is located in `evm/legacy/ERC1967Proxy.json`. See the [ERC1967Proxy Setup](#erc1967proxy-setup) section above for compilation instructions.
+**Important**:
+- **Use `create`** method to deploy for ERC1967Proxy of AxelarTransceiver, as deployer will be used to initialize the contract
+- **`--artifactPath` is required** for ERC1967Proxy deployment
+- **Default deployment method is `create`** (standard nonce-based deployment)
+- Use `-m create2` or `-m create3` for deterministic deployments if needed
 
 The proxy deployment will:
 - Use the implementation address from the specified contract's config
 - Store the proxy address in the target contract's configuration
 - Support custom initialization data via `--proxyData` (defaults to "0x")
-
-### AxelarTransceiver
-
-Deploy the AxelarTransceiver contract using the updated `deploy-contract.js` script:
-
-```bash
-ts-node evm/deploy-contract.js -e testnet -n ethereum -c AxelarTransceiver --gmpManager <GMP_MANAGER_ADDRESS> --libraries '{"@wormhole-foundation/native_token_transfer/libraries/TransceiverStructs.sol:TransceiverStructs":"$TRANASCEIVER_STRUCTS_ADDRESS"}'
-
-```
-
-**Important**:
-- The `--gmpManager` parameter should be the GMP Manager address,
-- The `--libraries` parameter is required to link the `TransceiverStructs` library. You must provide the deployed address of the TransceiverStructs library.
-
-The deployment script will:
-- Validate the gateway, gas service, and NTT manager addresses
-- Deploy the contract with the correct constructor arguments
-- Store configuration including gateway, gas service, and NTT manager addresses
-- Verify the deployed contract state matches the original constructor arguments
 
 ### AxelarTransceiver Post-Deployment Operations
 
@@ -126,13 +141,13 @@ After deploying the AxelarTransceiver contract, you can perform post-deployment 
 
 ```bash
 # Initialize the transceiver contract
-ts-node evm/axelar-transceiver.ts --initialize --artifactPath path/to/axelar-contract-deployments/evm/legacy/AxelarTransceiver.json
+ts-node evm/axelar-transceiver.js --initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 
 # Transfer pauser capability to a new address
-ts-node evm/axelar-transceiver.ts --pauserAddress 0x... 
+ts-node evm/axelar-transceiver.js --pauserAddress 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 
 # Perform both operations
-ts-node evm/axelar-transceiver.ts --initialize --pauserAddress 0x... --artifactPath path/to/axelar-contract-deployments/evm/legacy/AxelarTransceiver.json 
+ts-node evm/axelar-transceiver.js --initialize --pauserAddress 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 **Available Operations:**
