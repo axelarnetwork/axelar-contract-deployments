@@ -334,6 +334,33 @@ ts-node stellar/its.js remove-flow-limit [token-id]
 ts-node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
+#### Get Deployed Token Manager
+
+```bash
+ts-node stellar/its.js deployed-token-manager [token-id]
+
+# Example
+ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
+#### Check if Address is Minter
+
+```bash
+ts-node stellar/its.js is-minter [token-address] [minter-address]
+```
+
+#### Add Minter
+
+```bash
+ts-node stellar/its.js add-minter [token-address] [minter-address]
+```
+
+#### Remove Minter
+
+```bash
+ts-node stellar/its.js remove-minter [token-address] [minter-address]
+```
+
 ## TTL extension and state archival recovery
 
 All Soroban storage entries, including contract instances, have a 'time to live' (`ttl`) after which entries will be archived and no longer accessible until restored. The following commands can be used to extend `ttl` or restore archived contract instances.

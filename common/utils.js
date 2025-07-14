@@ -340,28 +340,25 @@ const tokenManagerTypes = {
  * Different chains may have different supported token manager types for linking tokens.
  *
  * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
- * @param {number} tokenManagerType - The token manager type to validate
+ * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN')
+ * @returns {number} The validated token manager type value
  * @throws {Error} If the token manager type is not valid for the specified chain type
  */
-const isValidLinkType = (chainType, tokenManagerType) => {
-    if (!chainType) {
-        throw new Error(`Chain type is required but was not provided (received: ${chainType})`);
+const validateLinkType = (chainType, type) => {
+    const validTokenManagerTypeStrings = Object.keys(tokenManagerTypes);
+    if (!validTokenManagerTypeStrings.includes(type)) {
+        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${validTokenManagerTypeStrings.join(', ')}`);
     }
 
-    const validTokenManagerTypes = Object.values(tokenManagerTypes);
-    if (!isNumber(tokenManagerType) || !validTokenManagerTypes.includes(tokenManagerType)) {
-        throw new Error(`Invalid token manager type: ${tokenManagerType}. Must be one of: ${validTokenManagerTypes.join(', ')}`);
-    }
+    const tokenManagerTypeValue = tokenManagerTypes[type];
 
     const chainRules = {
         evm: {
-            forbidden: [tokenManagerTypes.INTERCHAIN_TOKEN],
-            validate: (type) => !chainRules.evm.forbidden.includes(type),
+            validate: (type) => ![tokenManagerTypes.INTERCHAIN_TOKEN].includes(type),
             errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
         },
         stellar: {
-            allowed: [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN],
-            validate: (type) => chainRules.stellar.allowed.includes(type),
+            validate: (type) => [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN].includes(type),
             errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
         },
     };
@@ -371,9 +368,11 @@ const isValidLinkType = (chainType, tokenManagerType) => {
         throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
     }
 
-    if (!rules.validate(tokenManagerType)) {
-        throw new Error(`Invalid token manager type ${tokenManagerType} for chain type ${chainType}: ${rules.errorMsg}`);
+    if (!rules.validate(tokenManagerTypeValue)) {
+        throw new Error(`Invalid token manager type ${type} for chain type ${chainType}: ${rules.errorMsg}`);
     }
+
+    return tokenManagerTypeValue;
 };
 
 const validationFunctions = {
@@ -705,10 +704,8 @@ const getProposalConfig = (config, env, key) => {
  * @param {string} chainName - The chain name to validate
  * @throws {Error} If the chain is not valid
  */
-function isValidChain(config, chainName) {
-    const chains = config.chains;
-
-    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+function validateChain(config, chainName) {
+    const validChain = Object.values(config.chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
         throw new Error(`Invalid destination chain: ${chainName}`);
@@ -726,7 +723,7 @@ function isValidDestinationChain(config, destinationChain) {
         return;
     }
 
-    isValidChain(config, destinationChain);
+    validateChain(config, destinationChain);
 }
 
 module.exports = {
@@ -789,7 +786,7 @@ module.exports = {
     encodeITSDestination,
     getProposalConfig,
     tokenManagerTypes,
-    isValidLinkType,
-    isValidChain,
+    validateLinkType,
+    validateChain,
     isValidDestinationChain,
 };

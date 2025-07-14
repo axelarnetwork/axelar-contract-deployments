@@ -1,6 +1,17 @@
 'use strict';
 
-import { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
+import {
+    Address,
+    BASE_FEE,
+    Horizon,
+    Keypair,
+    Networks,
+    TransactionBuilder,
+    authorizeInvocation,
+    nativeToScVal,
+    rpc,
+    xdr,
+} from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 

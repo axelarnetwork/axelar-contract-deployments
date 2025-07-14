@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Operation, Address } = require('@stellar/stellar-sdk');
 const { Command, Option, Argument } = require('commander');
 const {
     saveConfig,
@@ -25,7 +25,7 @@ const {
     saltToBytes32,
     serializeValue,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, isValidLinkType } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config, args);
@@ -241,6 +241,110 @@ async function removeFlowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Successfully removed flow limit');
 }
 
+async function interchainTokenAddress(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+
+    const operation = contract.call('interchain_token_address', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get interchain token address', options);
+    const tokenAddress = serializeValue(returnValue.value());
+
+    printInfo(`Interchain Token Address`, tokenAddress);
+
+    return tokenAddress;
+}
+
+async function deployedTokenManager(wallet, _, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+
+    const operation = contract.call('deployed_token_manager', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get deployed token manager', options);
+    const tokenManagerAddress = serializeValue(returnValue.value());
+
+    printInfo(`Deployed Token Manager Address`, tokenManagerAddress);
+
+    return tokenManagerAddress;
+}
+
+async function checkIsMinter(tokenContract, minter, wallet, chain, options) {
+    const operation = tokenContract.call('is_minter', addressToScVal(minter));
+    const returnValue = await broadcast(operation, wallet, chain, 'Check if minter', options);
+    return returnValue.value();
+}
+
+async function isMinter(wallet, _, chain, _contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    const tokenContract = new Contract(tokenAddress);
+    const isMinterResult = await checkIsMinter(tokenContract, minter, wallet, chain, options);
+
+    printInfo(`Is Minter`, isMinterResult);
+
+    return isMinterResult;
+}
+
+async function addMinter(wallet, _, chain, _contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    // Check if minter already exists
+    const tokenContract = new Contract(tokenAddress);
+    const isMinterAlready = await checkIsMinter(tokenContract, minter, wallet, chain, options);
+
+    if (isMinterAlready) {
+        printWarn('Minter already exists', minter);
+        return;
+    }
+
+    const operation = tokenContract.call('add_minter', addressToScVal(minter));
+
+    await broadcast(operation, wallet, chain, 'Add Minter', options);
+    printInfo('Successfully added minter', minter);
+}
+
+async function removeMinter(wallet, _, chain, _contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    const tokenContract = new Contract(tokenAddress);
+
+    // Check if minter exists
+    const isMinterExists = await checkIsMinter(tokenContract, minter, wallet, chain, options);
+
+    if (!isMinterExists) {
+        printWarn('Minter does not exist', minter);
+        return;
+    }
+
+    const operation = tokenContract.call('remove_minter', addressToScVal(minter));
+
+    await broadcast(operation, wallet, chain, 'Remove Minter', options);
+    printInfo('Successfully removed minter', minter);
+}
+
 async function registerTokenMetadata(wallet, _, chain, contract, args, options) {
     const [tokenAddress] = args;
     const spender = addressToScVal(wallet.publicKey());
@@ -269,10 +373,10 @@ async function registerCustomToken(wallet, _, chain, contract, args, options) {
 
     validateParameters({
         isValidStellarAddress: { tokenAddress },
+        isNonEmptyString: { type },
     });
 
-    const tokenManagerType = tokenManagerTypes[type];
-    isValidLinkType(chain.chainType, tokenManagerType);
+    const tokenManagerType = validateLinkType(chain.chainType, type);
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
@@ -299,12 +403,11 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     validateParameters({
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
-        isNonEmptyString: { destinationChain, destinationTokenAddress },
+        isNonEmptyString: { destinationChain, destinationTokenAddress, type },
     });
     isValidDestinationChain(config, destinationChain);
 
-    const tokenManagerType = tokenManagerTypes[type];
-    isValidLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, tokenManagerType);
+    const tokenManagerType = validateLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, type);
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
@@ -475,6 +578,41 @@ if (require.main === module) {
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
             mainProcessor(removeFlowLimit, [tokenId], options);
+        });
+
+    program
+        .command('interchain-token-address <tokenId>')
+        .description('Get the interchain token address with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(interchainTokenAddress, [tokenId], options);
+        });
+
+    program
+        .command('deployed-token-manager <tokenId>')
+        .description('Get the deployed token manager address with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(deployedTokenManager, [tokenId], options);
+        });
+
+    program
+        .command('is-minter <tokenAddress> <minter>')
+        .description('Check if an address is a minter for the interchain token')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(isMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('add-minter <tokenAddress> <minter>')
+        .description('Add minter to the interchain token')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(addMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('remove-minter <tokenAddress> <minter>')
+        .description('Remove minter from the interchain token')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(removeMinter, [tokenAddress, minter], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

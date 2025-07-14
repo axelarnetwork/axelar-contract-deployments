@@ -117,8 +117,6 @@ If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't
 
 - Classic assets follow the {Symbol-Issuer} format
 
-
-
 ```bash
 ts-node stellar/token-utils.js create-stellar-asset-contract <assetCode> <issuer>
 ```
@@ -186,24 +184,27 @@ ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAdd
 
 For MINT_BURN token managers, you must transfer minter permissions to the token manager on both chains:
 
-
-```bash
-# Get token manager address on the destination chain
-ts-node evm/its.js --action tokenManagerAddress --tokenId <tokenId> -n <destinationChain>
-```
-
-**Transfer Minter Permissions:**
+**Transfer or Add Minter Permissions to the token manager:**
 
 **On Stellar:**
 
 ```bash
-# Transfer minter permissions to token manager (if applicable)
-# This depends on your token's specific implementation
+# Get the interchain token address
+ts-node stellar/its.js interchain-token-address <tokenId>
+
+# Get token manager address
+ts-node stellar/its.js deployed-token-manager <tokenId>
+
+# Add token manager as a minter
+ts-node stellar/its.js add-minter <interchainTokenAddress> <tokenManagerAddress>
 ```
 
 **On EVM:**
 
 ```bash
+# Get token manager address on the destination chain
+ts-node evm/its.js --action tokenManagerAddress --tokenId <tokenId> -n <destinationChain>
+
 # Transfer mintership to the token manager
 ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManagerAddress> -n <destinationChain>
 ```
