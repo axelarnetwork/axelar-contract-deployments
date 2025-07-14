@@ -84,27 +84,26 @@ AxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar
 
 ```bash
 git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
-forge build --out out
+forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:<$TRANSCEIVER_STRUCTS_ADDRESS>"
 ```
 
 ### AxelarTransceiver
 
-To deploy the AxelarTransceiver contract:
+Please ensure you have generated pre-linked artifacts. To deploy the AxelarTransceiver contract, run:
 
 ```bash
 ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
   --gmpManager <GMP_MANAGER_ADDRESS> \
-  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --libraries '{"lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs":"<LIBRARY_ADDRESS>"}'
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 **Important**:
-- **Use `create`** method to deploy, as deployer of AxelarTransceiver will be used to initialize the contract, don't use `create2` or `create3`
+- **Use `create`** method to deploy, as deployer of AxelarTransceiver will be used to initialize the contract, avoid usiing `create2` or `create3`
 - **`--artifactPath` is required** for AxelarTransceiver deployment
 - The `--gmpManager` parameter should be the GMPManager address (previously called nttManager)
-- The `--libraries` parameter is required to link the `TransceiverStructs` library. You must provide the address of an already deployed TransceiverStructs library
+- **Library Linking**: Pre-linked artifacts are generated and requierd libraries library is already linked
 
 The deployment script will:
 - Validate the gateway, gas service, and GMP manager addresses

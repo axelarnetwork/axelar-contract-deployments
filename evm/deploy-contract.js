@@ -26,7 +26,6 @@ const {
     isContract,
     getContractJSON,
     getDeployOptions,
-    linkLibrariesInContractJson,
     validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -325,21 +324,7 @@ async function processCommand(config, chain, options) {
     const contractJson = getContractJSON(contractName, artifactPath);
     const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
 
-    // Parse libraries option if provided
-    let linkedContractJson = contractJson;
-    if (options.libraries) {
-        let libraries;
-        try {
-            libraries = JSON.parse(options.libraries);
-            console.log('Parsed libraries:', libraries);
-        } catch (error) {
-            console.log('JSON parse error:', error.message);
-            throw new Error(`Invalid libraries JSON format: ${options.libraries}`);
-        }
-        linkedContractJson = linkLibrariesInContractJson(contractJson, libraries);
-    }
-
-    const predeployCodehash = await getBytecodeHash(linkedContractJson, chain.axelarId);
+    const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -350,7 +335,7 @@ async function processCommand(config, chain, options) {
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
         deployerContract,
-        contractJson: linkedContractJson,
+        contractJson: contractJson,
         constructorArgs,
         provider: wallet.provider,
     });
@@ -399,7 +384,7 @@ async function processCommand(config, chain, options) {
     const contract = await deployContract(
         deployMethod,
         wallet,
-        linkedContractJson,
+        contractJson,
         constructorArgs,
         { salt, deployerContract },
         gasOptions,
@@ -475,12 +460,7 @@ if (require.main === module) {
     program.addOption(new Option('--args <args>', 'custom deployment args'));
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
-    program.addOption(
-        new Option(
-            '--libraries <libraries>',
-            'JSON string of library addresses to link (e.g., \'{"full/path/Contract.sol:TransceiverStructs":"0x..."}\')',
-        ),
-    );
+
     program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
 
     program.action((options) => {

@@ -108,11 +108,11 @@ async function setAxelarChainId(proxyAddress, artifactPath, wallet, chainId, cha
     if (!transceiverAddress || transceiverAddress.trim() === '') {
         throw new Error(`Invalid transceiver address: ${transceiverAddress}`);
     }
-    
+
     try {
         const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
         const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet);
-        
+
         printInfo(`Setting Axelar chain ID mapping:`);
         printInfo(`  Wormhole Chain ID: ${chainId}`);
         printInfo(`  Axelar Chain Name: ${chainName}`);
