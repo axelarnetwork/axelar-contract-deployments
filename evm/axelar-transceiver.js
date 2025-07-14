@@ -16,7 +16,7 @@ const {
 } = require('./utils');
 const { Contract, Wallet, getDefaultProvider, utils } = require('ethers');
 
-async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, options) {
+async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, options, config) {
     try {
         await printWalletInfo(wallet);
 
@@ -49,6 +49,9 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
         const receipt = await initTx.wait();
         printInfo('Transaction confirmed in block', receipt.blockNumber);
         printInfo('AxelarTransceiver initialized successfully');
+
+        // Read addresses from contract state after initialization
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -64,7 +67,28 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
     }
 }
 
-async function transferPauserCapability(proxyAddress, artifactPath, wallet, pauserAddress, chain, options) {
+async function readInitializationState(transceiverContract, receipt, wallet, chain, options, config) {
+    try {
+        const pauser = await transceiverContract.pauser();
+        const owner = await transceiverContract.owner();
+
+        printInfo('Pauser', pauser);
+        printInfo('Owner', owner);
+
+        if (!chain.contracts.AxelarTransceiver) {
+            chain.contracts.AxelarTransceiver = {};
+        }
+
+        chain.contracts.AxelarTransceiver.pauser = pauser;
+        chain.contracts.AxelarTransceiver.owner = owner;
+        saveConfig(config, options.env);
+    } catch (error) {
+        printError('Failed to read initialization state:', error.message);
+        throw error;
+    }
+}
+
+async function transferPauserCapability(proxyAddress, artifactPath, wallet, pauserAddress, chain, options, config) {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
     }
@@ -85,8 +109,10 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
         printInfo('Transaction hash', transferTx.hash);
         printInfo('Waiting for transaction confirmation...');
 
-        await transferTx.wait();
+        const receipt = await transferTx.wait();
         printInfo('Pauser capability transferred successfully');
+
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('OwnableUnauthorizedAccount') || errorMessage.includes('CallerNotNttManager')) {
@@ -168,7 +194,7 @@ async function processCommand(config, chain, action, options) {
 
     switch (action) {
         case 'initialize': {
-            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, config);
             break;
         }
 
@@ -177,7 +203,7 @@ async function processCommand(config, chain, action, options) {
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, config);
             break;
         }
 
