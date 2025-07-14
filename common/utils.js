@@ -624,7 +624,7 @@ function asciiToBytes(string) {
     return hexlify(Buffer.from(string, 'ascii'));
 }
 
-function trySolanaAddressBytesFromBase58(string) {
+function solanaAddressBytesFromBase58(string) {
     const decoded = bs58.default.decode(string);
     if (decoded.length !== 32) {
         throw new Error(`Invalid Solana address: ${string}`);
@@ -654,7 +654,7 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
 
         case 'svm':
             validateParameters({ isValidSvmAddressFormat: { destinationAddress } });
-            return trySolanaAddressBytesFromBase58(destinationAddress);
+            return solanaAddressBytesFromBase58(destinationAddress);
 
         case 'xrpl':
             // TODO: validate XRPL address format
