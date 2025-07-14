@@ -170,8 +170,19 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         case 'AxelarTransceiver': {
             const gateway = config.AxelarGateway?.address;
             const gasService = config.AxelarGasService?.address;
-            const gmpManager = options.gmpManager;
+            const gmpManager = config.AxelarTransceiver?.gmpManager;
 
+            if (!isAddress(gateway)) {
+                throw new Error(`Missing AxelarGateway address in the chain info.`);
+            }
+
+            if (!isAddress(gasService)) {
+                throw new Error(`Missing AxelarGasService address in the chain info.`);
+            }
+
+            if (!isAddress(gmpManager)) {
+                throw new Error(`Missing AxelarTransceiver.gmpManager address in the chain info.`);
+            }
             validateParameters({
                 isAddress: { gateway, gasService, gmpManager },
             });
@@ -461,7 +472,6 @@ if (require.main === module) {
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
 
-    program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
 
     program.action((options) => {
         main(options);

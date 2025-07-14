@@ -89,24 +89,33 @@ forge build --out out --libraries "lib/example-native-token-transfers/evm/src/li
 
 ### AxelarTransceiver
 
-Please ensure you have generated pre-linked artifacts. To deploy the AxelarTransceiver contract, run:
+Please ensure you have generated pre-linked artifacts.
+
+Set address of deployed `gmpManager` to the `AxelarTransceiver` section in your chain config:
+
+```json
+"AxelarTransceiver": {
+  "gmpManager": "0x..."
+}
+```
+
+To deploy the AxelarTransceiver contract, run:
 
 ```bash
 ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
-  --gmpManager <GMP_MANAGER_ADDRESS> \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 **Important**:
-- **Use `create`** method to deploy, as deployer of AxelarTransceiver will be used to initialize the contract, avoid usiing `create2` or `create3`
+- **Use `create`** method to deploy, as deployer of AxelarTransceiver will be used to initialize the contract, avoid using `create2` or `create3`
 - **`--artifactPath` is required** for AxelarTransceiver deployment
-- The `--gmpManager` parameter should be the GMPManager address (previously called nttManager)
-- **Library Linking**: Pre-linked artifacts are generated and requierd libraries library is already linked
+- The GMP Manager address is automatically read from the chain config (`AxelarTransceiver.gmpManager`)
+- **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
 
 The deployment script will:
-- Validate the gateway, gas service, and GMP manager addresses
+- Validate the gateway, gas service, and GMP manager addresses from the chain configuration
 - Deploy the contract with the correct constructor arguments
 - Store configuration including gateway, gas service, and GMP manager addresses
 - Verify the deployed contract state matches the original constructor arguments
@@ -125,7 +134,7 @@ ts-node evm/deploy-contract.js \
 
 **Important**:
 - **Use `create`** method to deploy for ERC1967Proxy of AxelarTransceiver, as deployer will be used to initialize the contract
-- **`--artifactPath` is required** for ERC1967Proxy deployment
+- **`--artifactPath` is required** for ERC1967Proxy deployment 
 - **Default deployment method is `create`** (standard nonce-based deployment)
 - Use `-m create2` or `-m create3` for deterministic deployments if needed
 

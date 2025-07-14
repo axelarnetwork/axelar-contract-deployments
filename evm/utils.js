@@ -316,7 +316,8 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
         provider = contractObject.provider;
         bytecode = await provider.getCode(contractObject.address);
     } else if (contractObject.deployedBytecode) {
-        // Contract factory
+        // Get bytecode from contract factory
+        // Foundry outputs bytecode as an object with metadata, extract the actual bytecode
         if (typeof contractObject.deployedBytecode === 'string') {
             bytecode = contractObject.deployedBytecode;
         } else if (typeof contractObject.deployedBytecode === 'object' && contractObject.deployedBytecode.object) {
