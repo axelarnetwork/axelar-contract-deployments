@@ -32,9 +32,16 @@ solana-keygen new
 # Address
 solana address
 
-# Generate a new keypair and overwrite the previously generated one
-solana-keygen new --force
+# Generate a new keypair
+solana-keygen new
 
+```
+Depending on whether it's desired to manage different deployer keys per environment, it is possible to output the key file 
+to a different location and configure it accrodingly for use in subsequent requests with the Solana CLI:
+
+```bash
+solana-keygen new -o /path/to/my/keys/folder/{deployer-{env}.json}
+solana config set --keypair /path/to/my/keys/folder/{deployer-{env}.json}
 ```
 
 5. Devnet funds can be obtained via [this link](https://faucet.solana.com/) or using the Solana CLI:
