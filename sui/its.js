@@ -474,8 +474,6 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
-    //[symbol, name, decimals, destinationChain, destinationAddress]
-
     // v0
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
