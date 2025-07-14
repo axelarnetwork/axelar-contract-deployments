@@ -1,19 +1,12 @@
-const { Command } = require('commander');
-const { Contract, Wallet, getDefaultProvider, utils } = require('ethers');
+import { Command } from 'commander';
+import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
+import { addOptionsToCommands } from '../common';
+import { prompt as promptUser } from '../common';
+import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn, saveConfig } from './utils';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { addEvmOptions } = require('./cli-utils');
-const { addOptionsToCommands } = require('../common');
-const {
-    getContractJSON,
-    mainProcessor,
-    printError,
-    printInfo,
-    printWarn,
-    saveConfig,
-    printWalletInfo,
-    getGasOptions,
-    prompt: promptUser,
-} = require('./utils');
 
 // Type definitions
 interface ChainConfig {
@@ -67,11 +60,16 @@ interface TransactionReceipt {
 }
 
 interface TransceiverContract extends InstanceType<typeof Contract> {
-    initialize: (options?: GasOptions) => Promise<any>;
+    initialize: (options?: GasOptions) => Promise<{ hash: string; wait: () => Promise<TransactionReceipt> }>;
     pauser: () => Promise<string>;
     owner: () => Promise<string>;
-    transferPauserCapability: (address: string, options?: GasOptions) => Promise<any>;
-    setAxelarChainId: (chainId: number, chainName: string, transceiverAddress: string, options?: GasOptions) => Promise<any>;
+    transferPauserCapability: (address: string, options?: GasOptions) => Promise<{ hash: string; wait: () => Promise<TransactionReceipt> }>;
+    setAxelarChainId: (
+        chainId: number,
+        chainName: string,
+        transceiverAddress: string,
+        options?: GasOptions,
+    ) => Promise<{ hash: string; wait: () => Promise<TransactionReceipt> }>;
 }
 
 async function initializeTransceiver(
@@ -80,7 +78,7 @@ async function initializeTransceiver(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config
+    config: Config,
 ): Promise<void> {
     try {
         await printWalletInfo(wallet);
@@ -111,7 +109,7 @@ async function initializeTransceiver(
         printInfo('Transaction hash', initTx.hash);
         printInfo('Waiting for transaction confirmation...');
 
-        const receipt = await initTx.wait() as TransactionReceipt;
+        const receipt = (await initTx.wait()) as TransactionReceipt;
         printInfo('Transaction confirmed in block', receipt.blockNumber.toString());
         printInfo('AxelarTransceiver initialized successfully');
 
@@ -138,7 +136,7 @@ async function readInitializationState(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config
+    config: Config,
 ): Promise<void> {
     try {
         const pauser = await transceiverContract.pauser();
@@ -171,7 +169,7 @@ async function transferPauserCapability(
     pauserAddress: string,
     chain: ChainConfig,
     options: Options,
-    config: Config
+    config: Config,
 ): Promise<void> {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
@@ -193,7 +191,7 @@ async function transferPauserCapability(
         printInfo('Transaction hash', transferTx.hash);
         printInfo('Waiting for transaction confirmation...');
 
-        const receipt = await transferTx.wait() as TransactionReceipt;
+        const receipt = (await transferTx.wait()) as TransactionReceipt;
         printInfo('Pauser capability transferred successfully');
 
         await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
@@ -216,7 +214,7 @@ async function setAxelarChainId(
     chainName: string,
     transceiverAddress: string,
     chain: ChainConfig,
-    options: Options
+    options: Options,
 ): Promise<void> {
     if (!chainId || chainId <= 0) {
         throw new Error(`Invalid chain ID: ${chainId}`);
@@ -268,12 +266,7 @@ async function setAxelarChainId(
     }
 }
 
-async function processCommand(
-    config: Config,
-    chain: ChainConfig,
-    action: string,
-    options: Options
-): Promise<void> {
+async function processCommand(config: Config, chain: ChainConfig, action: string, options: Options): Promise<void> {
     const { env, artifactPath, privateKey, args } = options;
 
     if (!chain.contracts?.AxelarTransceiver?.address) {
@@ -322,11 +315,9 @@ async function processCommand(
     saveConfig(config, env);
 }
 
-async function main(action: string, args: string[], options: Options): Promise<any[]> {
+async function main(action: string, args: string[], options: Options): Promise<void[]> {
     options.args = args;
-    return mainProcessor(options, (config: Config, chain: ChainConfig, options: Options) => 
-        processCommand(config, chain, action, options)
-    );
+    return mainProcessor(options, (config: Config, chain: ChainConfig, options: Options) => processCommand(config, chain, action, options));
 }
 
 if (require.main === module) {
