@@ -292,7 +292,7 @@ ts-node stellar/its.js register-custom-token [salt] [token-address] [token-manag
 #### Link Token
 
 ```bash
-ts-node stellar/its.js link-token <salt> <destination-chain> <destination-token-address> <token-manager-type> --gas-amount [amount] --operator [operator]
+ts-node stellar/its.js link-token [salt] [destination-chain] [destination-token-address] [token-manager-type] --gas-amount [amount] --operator [operator]
 ```
 
 #### Interchain Transfer

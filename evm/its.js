@@ -563,7 +563,7 @@ async function processCommand(config, chain, action, options) {
 
             validateParameters({
                 isValidTokenId: { tokenId },
-                isNonEmptyString: { destinationChain },
+                isString: { destinationChain },
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue },
                 isNonEmptyString: { type },

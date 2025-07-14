@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the process for linking existing tokens across different chains using the Interchain Token Service (ITS) Hub.
+This document explains how to link custom tokens on Stellar to other chains using the Interchain Token Service (ITS).
 
 For detailed design specifications and architecture, see **ARC-1: ITS Hub Multi-Chain Token Linking**:
 https://github.com/axelarnetwork/arcs/blob/main/arcs/arc-1.md
@@ -33,7 +33,7 @@ Once metadata is registered, you can link tokens by specifying which tokens on d
 4. User → ITS Stellar: registerCustomToken() → Deploys Token Manager A
 5. User → Verify token metadata is registered on ITS Hub
 6. User → ITS Stellar: linkToken() → Deploys Token Manager B on destination chain
-7. User → Transfer mintership to Token Managers (MINT_BURN type only)
+7. User → Transfer or add mintership to the Token Manager (MINT_BURN type only)
 8. Token linking complete - InterchainTransfer enabled
 ```
 
@@ -64,7 +64,7 @@ The following token manager types are supported:
 - `tokenAddress`: Address of the token to be linked
 - `destinationChain`: Name of the destination chain
 - `destinationTokenAddress`: Address of the token on the destination chain
-- `type`: Token manager type (LOCK_UNLOCK, MINT_BURN)
+- `type`: Token manager type (e.g. LOCK_UNLOCK, MINT_BURN)
 
 ## Operator Role & Security
 
@@ -213,16 +213,18 @@ ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --m
 
 ### Example 1: Link Ethereum USDC (LOCK_UNLOCK) with your own USDC contract on Stellar (MINT_BURN)
 
-Link USDC tokens with different decimals (7 decimals on Stellar, 18 decimals on EVM):
+Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stellar):
 
 ```bash
-# USDC already exists on both chains
+# Register USDC metadata on EVM (18 decimals)
+ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
+
+# If using a classic Stellar asset, create the corresponding Soroban contract first
+ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+# Result: CB64D3G...USDC (use this address below)
 
 # Register USDC metadata on Stellar (7 decimals)
 ts-node stellar/its.js register-token-metadata CB64D3G...USDC --gas-amount 10000000
-
-# Register USDC metadata on EVM (18 decimals)
-ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
 
 # Register custom token on Stellar (MINT_BURN type since you control this token)
 ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
