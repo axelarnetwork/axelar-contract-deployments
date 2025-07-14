@@ -301,10 +301,10 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | TBD                 |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | TBD                 |
-| **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | TBD                 |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | TBD                 |
+| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
+| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
+| **Testnet**          | `14845`          | `[\"7\", \"10\"]`         | `100`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         |  TBD                |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
