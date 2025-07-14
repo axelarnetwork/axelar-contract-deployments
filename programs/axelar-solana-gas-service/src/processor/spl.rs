@@ -35,7 +35,7 @@ fn ensure_valid_config_pda(config_pda: &AccountInfo<'_>, program_id: &Pubkey) ->
     config_pda.check_initialized_pda_without_deserialization(program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+    assert_valid_config_pda(config.bump, &config.salt, &config.operator, config_pda.key)?;
     Ok(())
 }
 
@@ -223,7 +223,7 @@ pub(crate) fn collect_fees_spl(
     }
 
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let receiver_account = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let config_pda_ata = next_account_info(accounts)?;
@@ -234,13 +234,13 @@ pub(crate) fn collect_fees_spl(
     ensure_valid_config_pda(config_pda, program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    // Check: Authority mtaches
-    if authority.key != &config.authority {
+    // Check: Operator matches
+    if operator.key != &config.operator {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
-    // Check: Authority is signer
-    if !authority.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -273,7 +273,7 @@ pub(crate) fn collect_fees_spl(
         &[&[
             seed_prefixes::CONFIG_SEED,
             &config.salt,
-            config.authority.as_ref(),
+            config.operator.as_ref(),
             &[config.bump],
         ]],
     )?;
@@ -295,7 +295,7 @@ pub(crate) fn refund_spl(
     }
 
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let receiver_account = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let config_pda_ata = next_account_info(accounts)?;
@@ -306,13 +306,13 @@ pub(crate) fn refund_spl(
     ensure_valid_config_pda(config_pda, program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    // Check: Authority mtaches
-    if authority.key != &config.authority {
+    // Check: Operator matches
+    if operator.key != &config.operator {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
-    // Check: Authority is signer
-    if !authority.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -345,7 +345,7 @@ pub(crate) fn refund_spl(
         &[&[
             seed_prefixes::CONFIG_SEED,
             &config.salt,
-            config.authority.as_ref(),
+            config.operator.as_ref(),
             &[config.bump],
         ]],
     )?;

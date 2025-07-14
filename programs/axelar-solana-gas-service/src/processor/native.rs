@@ -67,7 +67,7 @@ fn try_load_config(
     config_pda.check_initialized_pda_without_deserialization(program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    assert_valid_config_pda(config.bump, &config.salt, &config.authority, config_pda.key)?;
+    assert_valid_config_pda(config.bump, &config.salt, &config.operator, config_pda.key)?;
     Ok(*config)
 }
 
@@ -122,7 +122,7 @@ pub(crate) fn collect_fees_native(
     }
 
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
 
@@ -130,14 +130,14 @@ pub(crate) fn collect_fees_native(
         // Check: Valid Config PDA
         let config = try_load_config(program_id, config_pda)?;
 
-        // Check: Authority mtaches
-        if authority.key != &config.authority {
+        // Check: Operator matches
+        if operator.key != &config.operator {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
-    // Check: Authority is signer
-    if !authority.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -154,7 +154,7 @@ pub(crate) fn refund_native(
     fees: u64,
 ) -> ProgramResult {
     let accounts = &mut accounts.iter();
-    let authority = next_account_info(accounts)?;
+    let operator = next_account_info(accounts)?;
     let receiver = next_account_info(accounts)?;
     let config_pda = next_account_info(accounts)?;
 
@@ -162,14 +162,14 @@ pub(crate) fn refund_native(
         // Check: Valid Config PDA
         let config = try_load_config(program_id, config_pda)?;
 
-        // Check: Authority mtaches
-        if authority.key != &config.authority {
+        // Check: Operator matches
+        if operator.key != &config.operator {
             return Err(ProgramError::InvalidAccountOwner);
         }
     }
 
-    // Check: Authority is signer
-    if !authority.is_signer {
+    // Check: Operator is signer
+    if !operator.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 

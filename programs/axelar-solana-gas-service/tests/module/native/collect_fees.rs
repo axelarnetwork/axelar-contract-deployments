@@ -27,7 +27,7 @@ async fn test_receive_funds() {
     let sol_amount = 1_000_000;
     let ix = axelar_solana_gas_service::instructions::collect_native_fees_instruction(
         &axelar_solana_gas_service::ID,
-        &gas_utils.config_authority.pubkey(),
+        &gas_utils.operator.pubkey(),
         &gas_utils.config_pda,
         &receiver.pubkey(),
         sol_amount,
@@ -40,8 +40,8 @@ async fn test_receive_funds() {
             &[
                 // pays for tx
                 &test_fixture.payer.insecure_clone(),
-                // authority for config pda deduction
-                &gas_utils.config_authority,
+                // operator for config pda deduction
+                &gas_utils.operator,
             ],
         )
         .await
@@ -84,7 +84,7 @@ async fn test_refund_native_fails_if_not_signed_by_authority() {
     let sol_amount = 1_000_000;
     let mut ix = axelar_solana_gas_service::instructions::collect_native_fees_instruction(
         &axelar_solana_gas_service::ID,
-        &gas_utils.config_authority.pubkey(),
+        &gas_utils.operator.pubkey(),
         &gas_utils.config_pda,
         &receiver.pubkey(),
         sol_amount,

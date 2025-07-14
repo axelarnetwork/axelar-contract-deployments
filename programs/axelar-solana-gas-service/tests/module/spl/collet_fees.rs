@@ -47,7 +47,7 @@ async fn test_collect_spl_fees(#[case] token_program_id: Pubkey) {
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::collect_spl_fees_instruction(
         &axelar_solana_gas_service::ID,
-        &gas_utils.config_authority.pubkey(),
+        &gas_utils.operator.pubkey(),
         &token_program_id,
         &mint,
         &gas_utils.config_pda,
@@ -65,8 +65,8 @@ async fn test_collect_spl_fees(#[case] token_program_id: Pubkey) {
             &[
                 // pays for transaction fees
                 &test_fixture.payer.insecure_clone(),
-                // authority must be a signer
-                &gas_utils.config_authority,
+                // operator must be a signer
+                &gas_utils.operator,
             ],
         )
         .await

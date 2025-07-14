@@ -20,7 +20,7 @@ async fn test_successfully_initialize_config() {
     assert_eq!(
         config,
         Config {
-            authority: gas_utils.config_authority.pubkey(),
+            operator: gas_utils.operator.pubkey(),
             salt: gas_utils.salt,
             bump: config.bump
         }
@@ -41,14 +41,10 @@ async fn test_different_salts_give_new_configs() {
         let (config_pda, bump) = axelar_solana_gas_service::get_config_pda(
             &axelar_solana_gas_service::ID,
             &salt,
-            &gas_utils.config_authority.pubkey(),
+            &gas_utils.operator.pubkey(),
         );
         let _res = test_fixture
-            .init_gas_config_with_params(
-                gas_utils.config_authority.insecure_clone(),
-                config_pda,
-                salt,
-            )
+            .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await
             .unwrap();
         // Assert
@@ -56,7 +52,7 @@ async fn test_different_salts_give_new_configs() {
         assert_eq!(
             config,
             Config {
-                authority: gas_utils.config_authority.pubkey(),
+                operator: gas_utils.operator.pubkey(),
                 salt,
                 bump
             }
@@ -69,14 +65,10 @@ async fn test_different_salts_give_new_configs() {
         let (config_pda, _bump) = axelar_solana_gas_service::get_config_pda(
             &axelar_solana_gas_service::ID,
             &salt,
-            &gas_utils.config_authority.pubkey(),
+            &gas_utils.operator.pubkey(),
         );
         let res = test_fixture
-            .init_gas_config_with_params(
-                gas_utils.config_authority.insecure_clone(),
-                config_pda,
-                salt,
-            )
+            .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await;
         assert!(res.is_err());
     }

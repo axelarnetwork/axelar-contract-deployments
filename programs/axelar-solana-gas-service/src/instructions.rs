@@ -18,9 +18,9 @@ pub enum GasServiceInstruction {
     ///
     /// Accounts expected:
     /// 0. `[signer, writable]` The account (`payer`) paying for PDA creation
-    /// 1. `[]` The `authority` account of this PDA.
-    /// 1. `[writable]` The `config_pda` account to be created.
-    /// 2. `[]` The `system_program` account.
+    /// 1. `[]` The `operator` account of this PDA.
+    /// 2. `[writable]` The `config_pda` account to be created.
+    /// 3. `[]` The `system_program` account.
     Initialize {
         /// A unique 32-byte array used as a seed in deriving the config PDA.
         salt: [u8; 32],
@@ -69,7 +69,7 @@ pub enum PayWithSplToken {
         refund_address: Pubkey,
     },
 
-    /// Collect fees that have accrued in SPL tokens (authority only).
+    /// Collect fees that have accrued in SPL tokens (operator only).
     CollectFees {
         /// The amount of SPL tokens to be collected as fees.
         amount: u64,
@@ -77,7 +77,7 @@ pub enum PayWithSplToken {
         decimals: u8,
     },
 
-    /// Refund previously collected SPL token fees (authority only).
+    /// Refund previously collected SPL token fees (operator only).
     Refund {
         /// A 64-byte unique transaction identifier
         tx_hash: [u8; 64],
@@ -132,10 +132,10 @@ pub enum PayWithNativeToken {
         refund_address: Pubkey,
     },
 
-    /// Collect accrued native SOL fees (authority only).
+    /// Collect accrued native SOL fees (operator only).
     ///
     /// Accounts expected:
-    /// 1. `[signer, read-only]` The `authority` account authorized to collect fees.
+    /// 1. `[signer, read-only]` The `operator` account authorized to collect fees.
     /// 2. `[writable]` The `config_pda` account holding the accrued lamports to collect.
     /// 3. `[writable]` The `receiver` account where the collected lamports will be sent.
     CollectFees {
@@ -143,10 +143,10 @@ pub enum PayWithNativeToken {
         amount: u64,
     },
 
-    /// Refund previously collected native SOL fees (authority only).
+    /// Refund previously collected native SOL fees (operator only).
     ///
     /// Accounts expected:
-    /// 1. `[signer, read-only]` The `authority` account authorized to issue refunds.
+    /// 1. `[signer, read-only]` The `operator` account authorized to issue refunds.
     /// 2. `[writable]` The `receiver` account that will receive the refunded lamports.
     /// 3. `[writable]` The `config_pda` account from which lamports are refunded.
     Refund {
@@ -166,7 +166,7 @@ pub enum PayWithNativeToken {
 pub fn init_config(
     program_id: &Pubkey,
     payer: &Pubkey,
-    authority: &Pubkey,
+    operator: &Pubkey,
     config_pda: &Pubkey,
     salt: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
@@ -174,7 +174,7 @@ pub fn init_config(
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*config_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
@@ -259,13 +259,13 @@ pub fn add_native_gas_instruction(
     })
 }
 
-/// Builds an instruction for the authority to collect native SOL fees.
+/// Builds an instruction for the operator to collect native SOL fees.
 ///
 /// # Errors
 /// - ix data cannot be serialized
 pub fn collect_native_fees_instruction(
     program_id: &Pubkey,
-    authority: &Pubkey,
+    operator: &Pubkey,
     config_pda: &Pubkey,
     receiver: &Pubkey,
     amount: u64,
@@ -275,7 +275,7 @@ pub fn collect_native_fees_instruction(
     ))?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*config_pda, false),
         AccountMeta::new(*receiver, false),
     ];
@@ -287,13 +287,13 @@ pub fn collect_native_fees_instruction(
     })
 }
 
-/// Builds an instruction for the authority to refund previously collected native SOL fees.
+/// Builds an instruction for the operator to refund previously collected native SOL fees.
 ///
 /// # Errors
 /// - ix data cannot be serialized
 pub fn refund_native_fees_instruction(
     program_id: &Pubkey,
-    authority: &Pubkey,
+    operator: &Pubkey,
     receiver: &Pubkey,
     config_pda: &Pubkey,
     tx_hash: [u8; 64],
@@ -307,7 +307,7 @@ pub fn refund_native_fees_instruction(
     }))?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*receiver, false),
         AccountMeta::new(*config_pda, false),
     ];
@@ -420,14 +420,14 @@ pub fn add_spl_gas_instruction(
     })
 }
 
-/// Builds an instruction for the authority to collect SPL fees.
+/// Builds an instruction for the operator to collect SPL fees.
 ///
 /// # Errors
 /// - ix data cannot be serialized
 #[allow(clippy::too_many_arguments)]
 pub fn collect_spl_fees_instruction(
     program_id: &Pubkey,
-    authority: &Pubkey,
+    operator: &Pubkey,
     token_program_id: &Pubkey,
     mint: &Pubkey,
     config_pda: &Pubkey,
@@ -441,7 +441,7 @@ pub fn collect_spl_fees_instruction(
     ))?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*receiver, false),
         AccountMeta::new_readonly(*config_pda, false),
         AccountMeta::new(*config_pda_ata, false),
@@ -456,14 +456,14 @@ pub fn collect_spl_fees_instruction(
     })
 }
 
-/// Builds an instruction for the authority to refund previously collected SPL fees.
+/// Builds an instruction for the operator to refund previously collected SPL fees.
 ///
 /// # Errors
 /// - ix data cannot be serialized
 #[allow(clippy::too_many_arguments)]
 pub fn refund_spl_fees_instruction(
     program_id: &Pubkey,
-    authority: &Pubkey,
+    operator: &Pubkey,
     token_program_id: &Pubkey,
     mint: &Pubkey,
     config_pda: &Pubkey,
@@ -482,7 +482,7 @@ pub fn refund_spl_fees_instruction(
     }))?;
 
     let accounts = vec![
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(*receiver, false),
         AccountMeta::new_readonly(*config_pda, false),
         AccountMeta::new(*config_pda_ata, false),

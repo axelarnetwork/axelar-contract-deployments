@@ -31,7 +31,7 @@ async fn test_refund_native() {
     let log_index = 1232;
     let ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
         &axelar_solana_gas_service::ID,
-        &gas_utils.config_authority.pubkey(),
+        &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
         &gas_utils.config_pda,
         tx_hash,
@@ -46,8 +46,8 @@ async fn test_refund_native() {
             &[
                 // pays for tx
                 &test_fixture.payer.insecure_clone(),
-                // authority for config pda deduction
-                &gas_utils.config_authority,
+                // operator for config pda deduction
+                &gas_utils.operator,
             ],
         )
         .await
@@ -111,7 +111,7 @@ async fn test_refund_native_fails_if_not_signed_by_authority() {
     let log_index = 1232;
     let mut ix = axelar_solana_gas_service::instructions::refund_native_fees_instruction(
         &axelar_solana_gas_service::ID,
-        &gas_utils.config_authority.pubkey(),
+        &gas_utils.operator.pubkey(),
         &refunded_user.pubkey(),
         &gas_utils.config_pda,
         tx_hash,
