@@ -472,7 +472,6 @@ if (require.main === module) {
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
 
-
     program.action((options) => {
         main(options);
     });
