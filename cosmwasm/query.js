@@ -5,7 +5,7 @@ const { loadConfig, printInfo, printWarn } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, options) {
+async function rewards(client, config, _, options) {
     const { chainName } = options;
 
     const rewardsContractAddresses = {
@@ -31,7 +31,38 @@ async function rewards(client, config, options) {
     }
 }
 
-const mainProcessor = async (processor, options) => {
+async function customTokens(client, config, args, _) {
+    const [chainName, tokenAddress] = args;
+
+    if (!chainName) {
+        printWarn('Chain name is required for custom tokens query');
+        return;
+    }
+
+    if (!tokenAddress) {
+        printWarn('Token address is required for custom tokens query');
+        return;
+    }
+
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            custom_tokens: { chain: chainName, token_address: tokenAddress },
+        });
+
+        printInfo(`Custom token metadata for ${tokenAddress} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch custom token metadata for ${tokenAddress} on ${chainName}`, error?.message || String(error));
+    }
+}
+
+const mainProcessor = async (processor, args, options) => {
     const { env } = options;
     const config = loadConfig(env);
 
@@ -40,7 +71,7 @@ const mainProcessor = async (processor, options) => {
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await processor(client, config, options);
+    await processor(client, config, args, options);
 };
 
 const programHandler = () => {
@@ -52,10 +83,18 @@ const programHandler = () => {
         .command('rewards')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
-            mainProcessor(rewards, options);
+            mainProcessor(rewards, [], options);
+        });
+
+    const customTokensCmd = program
+        .command('custom-tokens <chainName> <tokenAddress>')
+        .description('Query custom token metadata from ITS Hub')
+        .action((chainName, tokenAddress, options) => {
+            mainProcessor(customTokens, [chainName, tokenAddress], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);
+    addAmplifierQueryOptions(customTokensCmd);
 
     program.parse();
 };

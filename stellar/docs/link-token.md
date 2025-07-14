@@ -158,10 +158,10 @@ Before linking tokens, verify that token metadata is registered on ITS Hub for b
 
 ```bash
 # Verify source token metadata (Stellar)
-axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"<sourceChain>","token_address":"<tokenAddress>"}}' --output json
+ts-node cosmwasm/query.js custom-tokens <sourceChain> <tokenAddress>
 
 # Verify destination token metadata (EVM)
-axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"<destinationChain>","token_address":"<destinationTokenAddress>"}}' --output json
+ts-node cosmwasm/query.js custom-tokens <destinationChain> <destinationTokenAddress>
 ```
 
 If either query fails or returns null, ensure you complete Step 2 (Register Token Metadata) before proceeding.
@@ -228,8 +228,8 @@ ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...US
 ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
 
 # Verify token metadata is registered on ITS Hub
-axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"stellar","token_address":"CB64D3G...USDC"}}' --output json
-axelard query wasm contract-state smart $ITS_HUB_ADDRESS '{"custom_tokens":{"chain":"evm_chain","token_address":"0xa0b86a33...USDC"}}' --output json
+ts-node cosmwasm/query.js custom-tokens stellar CB64D3G...USDC
+ts-node cosmwasm/query.js custom-tokens evm_chain 0xa0b86a33...USDC
 
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
 ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
