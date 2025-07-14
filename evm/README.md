@@ -149,13 +149,13 @@ After deploying the AxelarTransceiver contract, you can perform post-deployment 
 
 ```bash
 # Initialize the transceiver contract
-ts-node evm/axelar-transceiver.js initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 
 # Transfer pauser capability to a new address
-ts-node evm/axelar-transceiver.js transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 
 # Set Chain ID mapping
-ts-node evm/axelar-transceiver.js set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress>  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress>  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 **Available Operations:**

@@ -1,6 +1,6 @@
-'use strict';
-
 const { Command } = require('commander');
+const { Contract, Wallet, getDefaultProvider, utils } = require('ethers');
+
 const { addEvmOptions } = require('./cli-utils');
 const { addOptionsToCommands } = require('../common');
 const {
@@ -12,17 +12,82 @@ const {
     saveConfig,
     printWalletInfo,
     getGasOptions,
-    prompt,
+    prompt: promptUser,
 } = require('./utils');
-const { Contract, Wallet, getDefaultProvider, utils } = require('ethers');
 
-async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, options, config) {
+// Type definitions
+interface ChainConfig {
+    name: string;
+    rpc: string;
+    contracts?: {
+        AxelarTransceiver?: {
+            address?: string;
+            pauser?: string;
+            owner?: string;
+        };
+    };
+    confirmations?: number;
+}
+
+interface Options {
+    env: string;
+    artifactPath: string;
+    privateKey: string;
+    args: string[];
+    yes?: boolean;
+    chainNames?: string;
+    skipChains?: string;
+    startFromChain?: string;
+    parallel?: boolean;
+    saveChainSeparately?: boolean;
+    gasOptions?: string;
+    verify?: boolean;
+    contractName?: string;
+    deployMethod?: string;
+    salt?: string;
+    skipExisting?: boolean;
+    upgrade?: boolean;
+    predictOnly?: boolean;
+}
+
+interface Config {
+    chains: Record<string, ChainConfig>;
+}
+
+interface GasOptions {
+    gasLimit?: number;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+}
+
+interface TransactionReceipt {
+    blockNumber: number;
+    hash: string;
+}
+
+interface TransceiverContract extends InstanceType<typeof Contract> {
+    initialize: (options?: GasOptions) => Promise<any>;
+    pauser: () => Promise<string>;
+    owner: () => Promise<string>;
+    transferPauserCapability: (address: string, options?: GasOptions) => Promise<any>;
+    setAxelarChainId: (chainId: number, chainName: string, transceiverAddress: string, options?: GasOptions) => Promise<any>;
+}
+
+async function initializeTransceiver(
+    proxyAddress: string,
+    artifactPath: string,
+    wallet: InstanceType<typeof Wallet>,
+    chain: ChainConfig,
+    options: Options,
+    config: Config
+): Promise<void> {
     try {
         await printWalletInfo(wallet);
 
         const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
 
-        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet);
+        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
 
         printInfo('Transceiver contract address', proxyAddress);
 
@@ -35,7 +100,7 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
 
         const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
 
-        if (prompt(`Proceed with AxelarTransceiver initialization on ${chain.name}?`, options.yes)) {
+        if (promptUser(`Proceed with AxelarTransceiver initialization on ${chain.name}?`, options.yes)) {
             return;
         }
 
@@ -46,8 +111,8 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
         printInfo('Transaction hash', initTx.hash);
         printInfo('Waiting for transaction confirmation...');
 
-        const receipt = await initTx.wait();
-        printInfo('Transaction confirmed in block', receipt.blockNumber);
+        const receipt = await initTx.wait() as TransactionReceipt;
+        printInfo('Transaction confirmed in block', receipt.blockNumber.toString());
         printInfo('AxelarTransceiver initialized successfully');
 
         // Read addresses from contract state after initialization
@@ -67,7 +132,14 @@ async function initializeTransceiver(proxyAddress, artifactPath, wallet, chain, 
     }
 }
 
-async function readInitializationState(transceiverContract, receipt, wallet, chain, options, config) {
+async function readInitializationState(
+    transceiverContract: TransceiverContract,
+    receipt: TransactionReceipt,
+    wallet: InstanceType<typeof Wallet>,
+    chain: ChainConfig,
+    options: Options,
+    config: Config
+): Promise<void> {
     try {
         const pauser = await transceiverContract.pauser();
         const owner = await transceiverContract.owner();
@@ -75,6 +147,9 @@ async function readInitializationState(transceiverContract, receipt, wallet, cha
         printInfo('Pauser', pauser);
         printInfo('Owner', owner);
 
+        if (!chain.contracts) {
+            chain.contracts = {};
+        }
         if (!chain.contracts.AxelarTransceiver) {
             chain.contracts.AxelarTransceiver = {};
         }
@@ -83,21 +158,30 @@ async function readInitializationState(transceiverContract, receipt, wallet, cha
         chain.contracts.AxelarTransceiver.owner = owner;
         saveConfig(config, options.env);
     } catch (error) {
-        printError('Failed to read initialization state:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        printError('Failed to read initialization state:', errorMessage);
         throw error;
     }
 }
 
-async function transferPauserCapability(proxyAddress, artifactPath, wallet, pauserAddress, chain, options, config) {
+async function transferPauserCapability(
+    proxyAddress: string,
+    artifactPath: string,
+    wallet: InstanceType<typeof Wallet>,
+    pauserAddress: string,
+    chain: ChainConfig,
+    options: Options,
+    config: Config
+): Promise<void> {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
     }
     try {
         const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
-        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet);
+        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
         printInfo(`Transferring pauser capability to ${pauserAddress}...`);
 
-        if (prompt(`Proceed with transferring pauser capability to ${pauserAddress}?`, options.yes)) {
+        if (promptUser(`Proceed with transferring pauser capability to ${pauserAddress}?`, options.yes)) {
             return;
         }
 
@@ -109,7 +193,7 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
         printInfo('Transaction hash', transferTx.hash);
         printInfo('Waiting for transaction confirmation...');
 
-        const receipt = await transferTx.wait();
+        const receipt = await transferTx.wait() as TransactionReceipt;
         printInfo('Pauser capability transferred successfully');
 
         await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
@@ -124,7 +208,16 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
     }
 }
 
-async function setAxelarChainId(proxyAddress, artifactPath, wallet, chainId, chainName, transceiverAddress, chain, options) {
+async function setAxelarChainId(
+    proxyAddress: string,
+    artifactPath: string,
+    wallet: InstanceType<typeof Wallet>,
+    chainId: number,
+    chainName: string,
+    transceiverAddress: string,
+    chain: ChainConfig,
+    options: Options
+): Promise<void> {
     if (!chainId || chainId <= 0) {
         throw new Error(`Invalid chain ID: ${chainId}`);
     }
@@ -137,14 +230,14 @@ async function setAxelarChainId(proxyAddress, artifactPath, wallet, chainId, cha
 
     try {
         const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
-        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet);
+        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
 
         printInfo(`Setting Axelar chain ID mapping:`);
         printInfo(`  Wormhole Chain ID: ${chainId}`);
         printInfo(`  Axelar Chain Name: ${chainName}`);
         printInfo(`  Transceiver Address: ${transceiverAddress}`);
 
-        if (prompt(`Proceed with setting Axelar chain ID mapping?`, options.yes)) {
+        if (promptUser(`Proceed with setting Axelar chain ID mapping?`, options.yes)) {
             return;
         }
 
@@ -175,7 +268,12 @@ async function setAxelarChainId(proxyAddress, artifactPath, wallet, chainId, cha
     }
 }
 
-async function processCommand(config, chain, action, options) {
+async function processCommand(
+    config: Config,
+    chain: ChainConfig,
+    action: string,
+    options: Options
+): Promise<void> {
     const { env, artifactPath, privateKey, args } = options;
 
     if (!chain.contracts?.AxelarTransceiver?.address) {
@@ -208,10 +306,11 @@ async function processCommand(config, chain, action, options) {
         }
 
         case 'set-axelar-chain-id': {
-            const [chainId, chainName, targetTransceiverAddress] = args;
-            if (!chainId || !chainName || !targetTransceiverAddress) {
+            const [chainIdStr, chainName, targetTransceiverAddress] = args;
+            if (!chainIdStr || !chainName || !targetTransceiverAddress) {
                 throw new Error('chainId, chainName, and targetTransceiverAddress are required for set-axelar-chain-id command');
             }
+            const chainId = parseInt(chainIdStr, 10);
             await setAxelarChainId(transceiverAddress, artifactPath, wallet, chainId, chainName, targetTransceiverAddress, chain, options);
             break;
         }
@@ -223,9 +322,11 @@ async function processCommand(config, chain, action, options) {
     saveConfig(config, env);
 }
 
-async function main(action, args, options) {
+async function main(action: string, args: string[], options: Options): Promise<any[]> {
     options.args = args;
-    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (config: Config, chain: ChainConfig, options: Options) => 
+        processCommand(config, chain, action, options)
+    );
 }
 
 if (require.main === module) {
@@ -235,7 +336,7 @@ if (require.main === module) {
     program
         .command('initialize')
         .description('Initialize the AxelarTransceiver contract')
-        .action((options, cmd) => {
+        .action((options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [], options);
         });
 
@@ -243,7 +344,7 @@ if (require.main === module) {
         .command('transfer-pauser')
         .description('Transfer pauser capability to a new address')
         .argument('<pauser-address>', 'Address to transfer pauser capability to')
-        .action((pauserAddress, options, cmd) => {
+        .action((pauserAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [pauserAddress], options);
         });
 
@@ -253,7 +354,7 @@ if (require.main === module) {
         .argument('<chain-id>', 'Wormhole chain ID for the target chain')
         .argument('<chain-name>', 'Axelar chain name for the target chain')
         .argument('<transceiver-address>', 'Address of the transceiver on the target chain')
-        .action((chainId, chainName, transceiverAddress, options, cmd) => {
+        .action((chainId: string, chainName: string, transceiverAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [chainId, chainName, transceiverAddress], options);
         });
 
