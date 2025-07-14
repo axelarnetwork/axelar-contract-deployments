@@ -1,7 +1,8 @@
 'use strict';
 
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 const { addEvmOptions } = require('./cli-utils');
+const { addOptionsToCommands } = require('../common');
 const {
     getContractJSON,
     mainProcessor,
@@ -97,8 +98,59 @@ async function transferPauserCapability(proxyAddress, artifactPath, wallet, paus
     }
 }
 
-async function processTransceiverOperations(config, chain, options) {
-    const { env, artifactPath, privateKey, initialize, pauserAddress } = options;
+async function setAxelarChainId(proxyAddress, artifactPath, wallet, chainId, chainName, transceiverAddress, chain, options) {
+    if (!chainId || chainId <= 0) {
+        throw new Error(`Invalid chain ID: ${chainId}`);
+    }
+    if (!chainName || chainName.trim() === '') {
+        throw new Error(`Invalid chain name: ${chainName}`);
+    }
+    if (!transceiverAddress || transceiverAddress.trim() === '') {
+        throw new Error(`Invalid transceiver address: ${transceiverAddress}`);
+    }
+    
+    try {
+        const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
+        const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet);
+        
+        printInfo(`Setting Axelar chain ID mapping:`);
+        printInfo(`  Wormhole Chain ID: ${chainId}`);
+        printInfo(`  Axelar Chain Name: ${chainName}`);
+        printInfo(`  Transceiver Address: ${transceiverAddress}`);
+
+        if (prompt(`Proceed with setting Axelar chain ID mapping?`, options.yes)) {
+            return;
+        }
+
+        const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
+
+        const setChainIdTx = await transceiverContract.setAxelarChainId(chainId, chainName, transceiverAddress, {
+            ...gasOptions,
+        });
+        printInfo('Transaction hash', setChainIdTx.hash);
+        printInfo('Waiting for transaction confirmation...');
+
+        await setChainIdTx.wait();
+        printInfo('Axelar chain ID mapping set successfully');
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('OwnableUnauthorizedAccount')) {
+            printError('Insufficient permissions to set Axelar chain ID mapping');
+        } else if (errorMessage.includes('ChainIdAlreadySet')) {
+            printWarn('Chain ID is already set:', errorMessage);
+        } else if (errorMessage.includes('AxelarChainIdAlreadySet')) {
+            printWarn('Axelar chain ID is already set:', errorMessage);
+        } else if (errorMessage.includes('InvalidChainIdParams')) {
+            printError('Invalid chain ID parameters provided');
+        } else {
+            printError('Failed to set Axelar chain ID mapping:', errorMessage);
+        }
+        throw error;
+    }
+}
+
+async function processCommand(config, chain, action, options) {
+    const { env, artifactPath, privateKey, args } = options;
 
     if (!chain.contracts?.AxelarTransceiver?.address) {
         printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
@@ -111,41 +163,82 @@ async function processTransceiverOperations(config, chain, options) {
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
 
-    printInfo(`Processing AxelarTransceiver operations for chain: ${chain.name}`);
+    printInfo(`Processing AxelarTransceiver operation: ${action} for chain: ${chain.name}`);
     printInfo(`Transceiver address: ${transceiverAddress}`);
 
-    if (initialize) {
-        await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
-    } else {
-        printInfo('Initialize flag is false, skipping initialization');
-    }
+    switch (action) {
+        case 'initialize': {
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
+            break;
+        }
 
-    if (pauserAddress) {
-        await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
+        case 'transfer-pauser': {
+            const [pauserAddress] = args;
+            if (!pauserAddress) {
+                throw new Error('Pauser address is required for transfer-pauser command');
+            }
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
+            break;
+        }
+
+        case 'set-axelar-chain-id': {
+            const [chainId, chainName, targetTransceiverAddress] = args;
+            if (!chainId || !chainName || !targetTransceiverAddress) {
+                throw new Error('chainId, chainName, and targetTransceiverAddress are required for set-axelar-chain-id command');
+            }
+            await setAxelarChainId(transceiverAddress, artifactPath, wallet, chainId, chainName, targetTransceiverAddress, chain, options);
+            break;
+        }
+
+        default:
+            throw new Error(`Unknown action: ${action}`);
     }
 
     saveConfig(config, env);
 }
 
-async function main(options) {
-    await mainProcessor(options, processTransceiverOperations);
+async function main(action, args, options) {
+    options.args = args;
+    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
 }
 
 if (require.main === module) {
     const program = new Command();
     program.name('axelar-transceiver').description('Manage AxelarTransceiver operations');
-    addEvmOptions(program, {
+
+    program
+        .command('initialize')
+        .description('Initialize the AxelarTransceiver contract')
+        .action((options, cmd) => {
+            main(cmd.name(), [], options);
+        });
+
+    program
+        .command('transfer-pauser')
+        .description('Transfer pauser capability to a new address')
+        .argument('<pauser-address>', 'Address to transfer pauser capability to')
+        .action((pauserAddress, options, cmd) => {
+            main(cmd.name(), [pauserAddress], options);
+        });
+
+    program
+        .command('set-axelar-chain-id')
+        .description('Set Axelar chain ID mapping for cross-chain communication')
+        .argument('<chain-id>', 'Wormhole chain ID for the target chain')
+        .argument('<chain-name>', 'Axelar chain name for the target chain')
+        .argument('<transceiver-address>', 'Address of the transceiver on the target chain')
+        .action((chainId, chainName, transceiverAddress, options, cmd) => {
+            main(cmd.name(), [chainId, chainName, transceiverAddress], options);
+        });
+
+    addOptionsToCommands(program, addEvmOptions, {
         artifactPath: true,
         contractName: false,
         ignoreChainNames: false,
         ignorePrivateKey: false,
     });
-    program.addOption(new Option('--initialize', 'Initialize the transceiver').default(false));
-    program.addOption(new Option('--pauserAddress <pauserAddress>', 'Address to transfer pauser capability to').env('PAUSER_ADDRESS'));
-    program.action((options) => {
-        main(options);
-    });
+
     program.parse();
 }
 
-module.exports = { processTransceiverOperations };
+module.exports = { processTransceiverOperations: processCommand };
