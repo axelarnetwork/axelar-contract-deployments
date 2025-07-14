@@ -93,6 +93,13 @@ Deploy Test Tokens on both chains:
 ts-node stellar/its.js deploy-interchain-token <name> <symbol> <decimal> <salt> <initialSupply>
 ```
 
+**Alternative - Create a Stellar classic asset:**
+
+```bash
+# Optional trust limit (defaults to 1000000000 if not specified)
+ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
+```
+
 **Chain B (EVM):**
 
 ```bash
@@ -182,22 +189,13 @@ ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAdd
 
 **Note: This step is only required if you're using the MINT_BURN token manager type. Skip this step for LOCK_UNLOCK type.**
 
-For MINT_BURN token managers, you must transfer minter permissions to the token manager on both chains:
-
-**Transfer or Add Minter Permissions to the token manager:**
+For MINT_BURN token managers, minter permissions must be granted to the token manager:
 
 **On Stellar:**
 
-```bash
-# Get the interchain token address
-ts-node stellar/its.js interchain-token-address <tokenId>
+No additional minter setup is required due to Stellar's account abstraction, which eliminates the need for manual minter management. The system automatically handles minter permissions for token managers.
 
-# Get token manager address
-ts-node stellar/its.js deployed-token-manager <tokenId>
-
-# Add token manager as a minter
-ts-node stellar/its.js add-minter <interchainTokenAddress> <tokenManagerAddress>
-```
+However, users must establish a trustline to hold and transact the interchain token. A trustline is an explicit permission that allows your Stellar account to hold and transact a specific non-XLM asset issued by another account. You must opt-in via a trustline before you can receive or send that asset.
 
 **On EVM:**
 
@@ -213,7 +211,7 @@ ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --m
 
 ## Examples
 
-### Example 1: Link Ethereum USDC (LOCK_UNLOCK) with your own USDC contract on Stellar (MINT_BURN)
+### Example 1: Link Ethereum USDC (LOCK_UNLOCK) with your own asset on Stellar (MINT_BURN)
 
 Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stellar):
 
@@ -221,7 +219,10 @@ Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stel
 # Register USDC metadata on EVM (18 decimals)
 ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
 
-# If using a classic Stellar asset, create the corresponding Soroban contract first
+# If you want to create a new Stellar classic asset
+ts-node stellar/token-utils.js create-stellar-classic-asset ABC GAGPN3HFDMPFHMHNZA2WYHB4EM24VIE7QYI4PD7JBY73B6IVYLBSL6SY
+
+# If using a classic Stellar asset, Soroban contract should be created
 ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 # Result: CB64D3G...USDC (use this address below)
 
@@ -237,13 +238,6 @@ ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
 
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
 ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
-
-# Add minter permissions to token manager on Stellar (for MINT_BURN type)
-# Get token manager address
-ts-node stellar/its.js deployed-token-manager 0x226fa0...
-
-# Add token manager as a minter
-ts-node stellar/its.js add-minter <interchainTokenAddress> <tokenManagerAddress>
 
 # Interchain Token Transfer
 ts-node stellar/its.js interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000

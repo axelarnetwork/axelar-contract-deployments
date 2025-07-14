@@ -1,9 +1,9 @@
 'use strict';
 
-const { Asset, Contract } = require('@stellar/stellar-sdk');
+const { Asset, Contract, Operation } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
-const { loadConfig, addOptionsToCommands, getChainConfig, printInfo, validateParameters, prompt } = require('../common');
-const { addBaseOptions, broadcast, getWallet, serializeValue, assetToScVal } = require('./utils');
+const { loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError, validateParameters, prompt } = require('../common');
+const { addBaseOptions, broadcast, broadcastHorizon, getWallet, serializeValue, assetToScVal } = require('./utils');
 
 async function createStellarAssetContract(wallet, _config, chain, contract, args, options) {
     const [assetCode, issuer] = args;
@@ -20,6 +20,29 @@ async function createStellarAssetContract(wallet, _config, chain, contract, args
     const returnValue = await broadcast(operation, wallet, chain, 'create_stellar_asset_contract', options);
 
     printInfo('Stellar asset contract address', serializeValue(returnValue.value()));
+}
+
+async function createStellarClassicAsset(wallet, _config, chain, _contract, args, options) {
+    const [assetCode, issuer, limit] = args;
+
+    validateParameters({
+        isValidStellarAddress: { issuer },
+        isNonEmptyString: { assetCode },
+    });
+
+    const trustLimit = limit || '1000000000'; // Default to a large limit if not specified
+
+    const asset = new Asset(assetCode, issuer);
+
+    const changeTrustOperation = Operation.changeTrust({
+        asset: asset,
+        limit: trustLimit,
+        source: wallet.publicKey(),
+    });
+
+    await broadcastHorizon(changeTrustOperation, wallet, chain, 'Create Trustline', options);
+
+    printInfo(`Successfully created trustline for ${assetCode} issued by ${issuer} with limit ${trustLimit}`);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -51,6 +74,13 @@ if (require.main === module) {
     program.command('create-stellar-asset-contract <assetCode> <issuer>').action((assetCode, issuer, options) => {
         mainProcessor(createStellarAssetContract, [assetCode, issuer], options);
     });
+
+    program
+        .command('create-stellar-classic-asset <assetCode> <issuer> [limit]')
+        .description('Create a trustline for a Stellar classic asset')
+        .action((assetCode, issuer, limit, options) => {
+            mainProcessor(createStellarClassicAsset, [assetCode, issuer, limit], options);
+        });
 
     addOptionsToCommands(program, addBaseOptions);
 

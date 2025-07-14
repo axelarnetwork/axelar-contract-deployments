@@ -343,23 +343,19 @@ ts-node stellar/its.js deployed-token-manager [token-id]
 ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
 
-#### Check if Address is Minter
+#### Create Stellar Classic Asset
+
+Create a Stellar classic asset with trustline
 
 ```bash
-ts-node stellar/its.js is-minter [token-address] [minter-address]
+ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
 ```
 
-#### Add Minter
+**Parameters:**
 
-```bash
-ts-node stellar/its.js add-minter [token-address] [minter-address]
-```
-
-#### Remove Minter
-
-```bash
-ts-node stellar/its.js remove-minter [token-address] [minter-address]
-```
+- `asset-code`: The code of the Stellar asset (e.g., "USDC")
+- `issuer`: The issuer address of the Stellar asset
+- `limit`: Optional trust limit (defaults to 1000000000 if not specified)
 
 ## TTL extension and state archival recovery
 

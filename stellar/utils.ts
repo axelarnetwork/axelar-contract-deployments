@@ -234,6 +234,37 @@ async function broadcast(operation, wallet, chain, action, options: Options, sim
     return sendTransaction(tx, server, action, options);
 }
 
+async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
+    // Convert RPC URL to Horizon URL
+    const horizonUrl = chain.rpc.replace('/soroban/rpc', '');
+    const server = new Horizon.Server(horizonUrl);
+
+    try {
+        const account = await server.loadAccount(wallet.publicKey());
+
+        const transactionBuilder = new TransactionBuilder(account, {
+            fee: BASE_FEE,
+            networkPassphrase: getNetworkPassphrase(chain.networkType),
+        });
+
+        const operationsArray = Array.isArray(operations) ? operations : [operations];
+        operationsArray.forEach((operation) => {
+            transactionBuilder.addOperation(operation);
+        });
+
+        const transaction = transactionBuilder.setTimeout(30).build();
+        transaction.sign(wallet);
+
+        const result = await server.submitTransaction(transaction);
+
+        printInfo(`Successfully executed ${action}`, `Transaction hash: ${result.hash}`);
+
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to execute ${action}: ${error.message}`);
+    }
+}
+
 function getAssetCode(balance, chain) {
     return balance.asset_type === 'native' ? chain.tokenSymbol : balance.asset_code;
 }
@@ -623,6 +654,7 @@ module.exports = {
     prepareTransaction,
     sendTransaction,
     broadcast,
+    broadcastHorizon,
     getWallet,
     estimateCost,
     getNetworkPassphrase,
