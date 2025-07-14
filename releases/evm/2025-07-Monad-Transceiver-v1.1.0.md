@@ -102,7 +102,7 @@ ts-node evm/deploy-contract.js \
     - Deployer as `pauser` of AxelarTransceiver contract
 
 ```bash
-ts-node evm/axelar-transceiver.js initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 ## Registration (Wormhole's End)
@@ -128,7 +128,7 @@ THRESHOLD_VALUE=2 # Unconfirmed
 2. Set Axelar Chain ID
 
 ```bash
-ts-node evm/axelar-transceiver.js set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 3. Set AxelarTransceiver contract on gmpManger
