@@ -1379,8 +1379,7 @@
         "TokenManagerSample": {
           "address": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.token-manager-sample3",
           "deployer": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N",
-          "token": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.sample-sip-0103",
-          "interchainTokenId": "0x3517d048473a687a250f6854607283aab24b05542ac7b94e92efb9f9c5b99743"
+          "token": "ST3DQ6RSC0R0Z3TDBBTA0FMETE08ZX88MK9TZCD6N.sample-sip-0103"
         },
         "HelloWorld": {
           "address": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.hello-world",

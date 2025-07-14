@@ -43,7 +43,7 @@ async function processCommand(config, chain, options) {
 
     printInfo('Preparing contracts using address', stacksAddress);
 
-    const contractBasePath = path.resolve('./stacks/contracts');
+    const contractBasePath = path.resolve(options.basePath);
 
     for (const filename in CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES) {
         const times = CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES[filename];
@@ -85,6 +85,10 @@ if (require.main === module) {
     program
         .name('prepare-contracts')
         .description('Prepare the contracts')
+        .addOption(
+            new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts')
+                .makeOptionMandatory(true)
+        )
         .action((options) => {
             mainProcessor(options, processCommand);
         });

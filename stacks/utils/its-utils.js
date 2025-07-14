@@ -4,6 +4,12 @@ const { bytesToHex, hexToBytes } = require("@noble/hashes/utils");
 const { sha512_256 } = require("@noble/hashes/sha512");
 const { keccak256 } = require('@ethersproject/keccak256');
 
+const STACKS_NULL_ADDRESS = 'ST000000000000000000002AMW42H';
+
+const STACKS_CHAIN_NAME = "stacks";
+const ITS_SALT_CANONICAL = "canonical-token-salt";
+const ITS_PREFIX_INTERCHAIN = "its-interchain-token-id";
+
 /**
  * Utils for constructing verification proof for Stacks
  */
@@ -249,10 +255,10 @@ async function getTokenTxId(contract, rpc) {
 
 function getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress) {
     const prefixCanonicalTokenSalt = keccak256(
-        serializeCVBytes(Cl.stringAscii("canonical-token-salt")),
+        serializeCVBytes(Cl.stringAscii(ITS_SALT_CANONICAL)),
     );
     // `stacks` is a const in ITS Factory
-    const chainNameHash = keccak256(serializeCVBytes(Cl.stringAscii("stacks")));
+    const chainNameHash = keccak256(serializeCVBytes(Cl.stringAscii(STACKS_CHAIN_NAME)));
 
     return keccak256(
         Buffer.concat([
@@ -267,13 +273,13 @@ function getCanonicalInterchainTokenId(tokenAddress) {
     const factorySalt = getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress);
 
     const interchainTokenIdPrefix = keccak256(
-        serializeCVBytes(Cl.stringAscii("its-interchain-token-id")),
+        serializeCVBytes(Cl.stringAscii(ITS_PREFIX_INTERCHAIN)),
     );
 
     return keccak256(
         Buffer.concat([
             Buffer.from(interchainTokenIdPrefix.slice(2), 'hex'),
-            serializeCVBytes(Cl.principal('ST000000000000000000002AMW42H')), // null address in `stacks`
+            serializeCVBytes(Cl.principal(STACKS_NULL_ADDRESS)),
             Buffer.from(factorySalt.slice(2), 'hex'),
         ]),
     );

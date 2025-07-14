@@ -24,7 +24,7 @@ async function getContractSource(chain, options, networkType) {
         const source = await fetchCallReadOnlyFunction({
             contractAddress: verifyOnchainAddress[0],
             contractName: verifyOnchainAddress[1],
-            functionName: "get-token-manager-source",
+            functionName: 'get-token-manager-source',
             functionArgs: [],
             senderAddress: verifyOnchainAddress[0],
             network: networkType,
@@ -33,7 +33,7 @@ async function getContractSource(chain, options, networkType) {
         return source.value;
     }
 
-    const contractBasePath = path.resolve('./stacks/contracts');
+    const contractBasePath = path.resolve(options.basePath);
     const filePath = path.join(contractBasePath, `${options.contract}.clar`);
 
     if (!fs.existsSync(filePath)) {
@@ -97,6 +97,10 @@ if (require.main === module) {
         .addOption(new Option('-c, --contract <contract>', 'The contract to deploy').makeOptionMandatory(true))
         .addOption(new Option('-n, --name <name>', 'The name of the contract'))
         .addOption(new Option('-v, --version <version>', 'The version of the contract'))
+        .addOption(
+            new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts')
+                .makeOptionMandatory(true)
+        )
         .action((options) => {
             mainProcessor(options, processCommand);
         });

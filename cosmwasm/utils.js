@@ -525,7 +525,6 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-
     const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
 
     const {
@@ -675,7 +674,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-
     const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
 
     const {

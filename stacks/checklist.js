@@ -11,7 +11,6 @@ const {
     AnchorMode,
     broadcastTransaction,
     Cl,
-    fetchCallReadOnlyFunction, privateKeyToAddress,
 } = require('@stacks/transactions');
 const { getVerificationParams, getTokenTxId, getCanonicalInterchainTokenId } = require('./utils/its-utils');
 const { validateParameters } = require('../common');
@@ -74,12 +73,6 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
         network: networkType,
     });
 
-    // Update chain configuration
-    contracts[contractName] = {
-        ...contracts[contractName],
-        interchainTokenId,
-    };
-
     printInfo(`Finished registering canonical token with tokenId ${interchainTokenId} for token ${contracts[contractName].token}`, result.txid);
 }
 
@@ -97,9 +90,6 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
     }
     if (!contracts[contractName]?.token) {
         throw new Error(`Contract ${contractName} does not have a token registered yet`);
-    }
-    if (!contracts[contractName]?.interchainTokenId) {
-        throw new Error(`Contract ${contractName} not yet registered with ITS`);
     }
     if (!contracts.InterchainTokenFactory?.address) {
         throw new Error(`Contract InterchainTokenFactory not yet deployed`);
@@ -165,9 +155,6 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
     if (!contracts[contractName]?.token) {
         throw new Error(`Contract ${contractName} does not have a token registered yet`);
     }
-    if (!contracts[contractName]?.interchainTokenId) {
-        throw new Error(`Contract ${contractName} not yet registered with ITS`);
-    }
     if (!contracts.InterchainTokenService?.address) {
         throw new Error(`Contract InterchainTokenService not yet deployed`);
     }
@@ -181,7 +168,9 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
         throw new Error(`Contract InterchainTokenServiceImpl not yet deployed`);
     }
 
-    printInfo(`Transferring ${options.value} of token ${contracts[contractName].token} to destination chain ${options.destinationChain} and destination address ${options.destinationAddress}`);
+    const interchainTokenId = options?.interchainTokenId || getCanonicalInterchainTokenId(contracts[contractName].token);
+
+    printInfo(`Transferring ${options.value} of token ${contracts[contractName].token} with interchain token id ${interchainTokenId} to destination chain ${options.destinationChain} and destination address ${options.destinationAddress}`);
 
     const itsAddress = contracts.InterchainTokenService.address.split('.');
     const registerTransaction = await makeContractCall({
@@ -194,7 +183,7 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
             Cl.address(contracts.InterchainTokenServiceImpl.address),
             Cl.address(contracts[contractName].address),
             Cl.address(contracts[contractName].token),
-            Cl.bufferFromHex(contracts[contractName].interchainTokenId),
+            Cl.bufferFromHex(interchainTokenId),
             Cl.stringAscii(options.destinationChain),
             Cl.bufferFromHex(options.destinationAddress),
             Cl.uint(options.value),
@@ -308,6 +297,7 @@ if (require.main === module) {
         .addOption(new Option('--destinationAddress <destinationAddress>', 'the address to transfer to in the destination chain format as hex').makeOptionMandatory(true))
         .addOption(new Option('--value <value>', 'the amount of token to transfer').makeOptionMandatory(true))
         .addOption(new Option('--gasValue <gasValue>', 'the gas value to use when paying cross chain gas').makeOptionMandatory(true))
+        .addOption(new Option('--interchainTokenId <interchainTokenId>', 'the interchain token id of the token, defaults to computed canonical interchain token id'))
         .action((contractName, options) => {
             mainProcessor(interchainTransfer, options, [contractName], processCommand);
         });

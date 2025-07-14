@@ -126,3 +126,4 @@ sui/move
 .idea
 
 .stellar/
+*.clar
