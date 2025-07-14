@@ -25,12 +25,12 @@ Ensure that [Monad GMP](../evm/2025-05-Monad-GMP-v6.0.4.md) is deployed first.
 npm ci
 ```
 
-Create an `.env` config. `CHAIN` should be set to `monad`.
+Create an `.env` config.
 
 ```yaml
 PRIVATE_KEY=xyz
 ENV=xyz
-CHAIN=monad
+CHAIN=xyz
 ```
 
 | `Network`            | `deployer address`                           |
@@ -126,10 +126,12 @@ CHAIN=xyz
 PRIVATE_KEY=0x.. # Owner of gmpManager contract
 ```
 
-| `Network`   | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
-|-------------|---------------------|---------------------|-----------------------|
-| **Testnet** |                     |                     |                       |
-| **Mainnet** |                     |                     |                       |
+| `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
+|-------------|----------|---------------------|---------------------|-----------------------|
+| **Testnet** | Ethereum |                     | `ethereum-sepolia`  |                       |
+|             | Monad    |                     | `monad`             |                       |
+| **Mainnet** | Ethereum |                     | `ethereum`          |                       |
+|             | Monad    |                     | `monad`             |                       |
 
 2. Set Axelar Chain ID
 
