@@ -57,7 +57,6 @@ CHAIN=xyz
 ENV=xyz
 CHAIN=xyz
 OPERATORS_ADDRESS=0x..
-THRESHOLD_VALUE=2
 ```
 
 2. Set address of deployed `gmpManager` to the `AxelarTransceiver` section in your chain config:
@@ -108,6 +107,11 @@ ts-node evm/deploy-contract.js \
 ts-node evm/axelar-transceiver.js initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
+| `Network`            | `OPERATORS_ADDRESS`                          |
+|----------------------|----------------------------------------------|
+| **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Mainnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+
 6. Transfer pauser role 
 
 ```bash
@@ -124,6 +128,7 @@ ts-node evm/axelar-transceiver.js transfer-pauser $OPERATORS_ADDRESS --artifactP
 ENV=xyz
 CHAIN=xyz
 PRIVATE_KEY=0x.. # Owner of gmpManager contract
+THRESHOLD_VALUE=2
 ```
 
 | `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
