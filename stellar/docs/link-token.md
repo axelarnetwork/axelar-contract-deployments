@@ -228,18 +228,22 @@ ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC
 # Register USDC metadata on Stellar (7 decimals)
 ts-node stellar/its.js register-token-metadata CB64D3G...USDC --gas-amount 10000000
 
-# Register custom token on Stellar (MINT_BURN type since you control this token)
-ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
-
 # Verify token metadata is registered on ITS Hub
 ts-node cosmwasm/query.js custom-tokens stellar CB64D3G...USDC
 ts-node cosmwasm/query.js custom-tokens evm_chain 0xa0b86a33...USDC
 
+# Register custom token on Stellar (MINT_BURN type since you control this token)
+ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
+
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
 ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
 
-# Transfer minter permissions to token manager on Stellar (for MINT_BURN type)
-# This depends on your token's specific implementation
+# Add minter permissions to token manager on Stellar (for MINT_BURN type)
+# Get token manager address
+ts-node stellar/its.js deployed-token-manager 0x226fa0...
+
+# Add token manager as a minter
+ts-node stellar/its.js add-minter <interchainTokenAddress> <tokenManagerAddress>
 
 # Interchain Token Transfer
 ts-node stellar/its.js interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
