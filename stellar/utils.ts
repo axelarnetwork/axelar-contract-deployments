@@ -235,9 +235,7 @@ async function broadcast(operation, wallet, chain, action, options: Options, sim
 }
 
 async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
-    // Convert RPC URL to Horizon URL
-    const horizonUrl = chain.rpc.replace('/soroban/rpc', '');
-    const server = new Horizon.Server(horizonUrl);
+    const server = new Horizon.Server(chain.horizonRpc);
 
     try {
         const account = await server.loadAccount(wallet.publicKey());
