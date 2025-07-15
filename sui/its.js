@@ -179,7 +179,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
-    // Register deployed token (from info)
+    // Register deployed token (from metadata)
     await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_from_metadata`,
         arguments: [InterchainTokenService, metadata, coinManagement],
