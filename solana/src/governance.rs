@@ -170,7 +170,7 @@ fn init(
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
-        ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
+        ADDRESS_KEY: axelar_solana_governance::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
         GOVERNANCE_ADDRESS_KEY: init_args.governance_address,
