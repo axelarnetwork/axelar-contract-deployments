@@ -181,9 +181,9 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownership for contracts
+9. Transfer ownership for contracts
 
-- 8.1 Transfer Operators ownership
+- 9.1 Transfer Operators ownership
 
 | Network              | New Owner Address                            |
 |----------------------|----------------------------------------------|
@@ -196,7 +196,7 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x9f5CDBc370B00C0dF52cf2619FA95907508108df
 ```
 
-- 8.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+- 9.2 Transfer AxelarGateway ownership (mainnet and testnet only)
 
 | Network     | New Owner Address                            |
 |-------------|----------------------------------------------|

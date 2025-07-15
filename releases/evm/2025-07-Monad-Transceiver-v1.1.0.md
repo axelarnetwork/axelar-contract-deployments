@@ -14,7 +14,7 @@
 
 ## Background
 
-- This is the Monad Axelar/Wormhole Transceiver release. This release deploys AxelarTransceive & ERC1967Proxy from example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
+- This is the Monad Axelar/Wormhole Transceiver release. This release deploys AxelarTransceiver & ERC1967Proxy  contracts from the example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
 
 ## Deployment
 
@@ -98,7 +98,7 @@ ts-node evm/deploy-contract.js \
 5. Initialize AxelarTransceiver 
 
 - Initialize step will set
-    - GmpManger's owner as `owner` of AxelarTransceiver contract
+    - GmpManager's owner as `owner` of AxelarTransceiver contract
     - Deployer as `pauser` of AxelarTransceiver contract
 
 ```bash
@@ -131,10 +131,10 @@ THRESHOLD_VALUE=2 # Unconfirmed
 ts-node evm/axelar-transceiver.ts set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
-3. Set AxelarTransceiver contract on gmpManger
+3. Set AxelarTransceiver contract on GmpManager
 
 ```bash
-GmpMangerProxy.setTransceiver(address AxelarTransceiverProxy)
+GmpManagerProxy.setTransceiver(address AxelarTransceiverProxy)
 ```
 
 4. Update threshold value
@@ -144,7 +144,7 @@ Note:
 - The owner must manually update it after all chains adopt the AxelarTransceiver
 
 ```bash
-GmpMangerPxoxy.setThreshold(uint8 $THRESHOLD_VALUE)
+GmpManagerPxoxy.setThreshold(uint8 $THRESHOLD_VALUE)
 ```
 
 ### Verify Contracts
