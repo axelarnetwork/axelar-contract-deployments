@@ -156,4 +156,22 @@ Manually verify both contracts i.e. AxelarTransceiver & ERC1967Proxy, foundry ar
 
 ## Checklist
 
-<!-- TODO: need tests -->
+### Ethereum -> Monad 
+
+1. Initiate a transaction from ethereum to monad on [Bridge](https://monadbridge.com/)
+
+2. Open up tx on ethereum explorer like [this](https://sepolia.etherscan.io/tx/0x417d5fadffecc197921ddf6893bdc0a3cc1b74059d293fdacc49cfefa830129c)
+
+3. Go to logs section and check for `SendTransceiverMessage` event, you'll find two transactions, with Transceiver address for both Wormhole and Axelar.
+
+4. Crosscheck deployed `AxelarTransceiver` address, AxelarTransceiver should emit `RelayingInfo` event 
+
+### Monad -> Ethereum
+
+1. Initiate a transaction from monad to ethereum on [Bridge](https://monadbridge.com/)
+
+2. Open up transaction on monad explorer
+
+3. Go to logs section and check for `SendTransceiverMessage` event, you'll find two transactions, with Transceiver address for both Wormhole and Axelar.
+
+4. Crosscheck deployed `AxelarTransceiver` address, AxelarTransceiver should emit `RelayingInfo` event 
