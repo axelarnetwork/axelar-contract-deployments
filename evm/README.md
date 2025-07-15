@@ -80,12 +80,14 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ### Prerequisites
 
-AxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar-wsteth repo. Generate build using following commands:
+AxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar-wsteth repo. Generate build using the following commands:
 
 ```bash
 git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
 forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:<$TRANSCEIVER_STRUCTS_ADDRESS>"
 ```
+
+- Note: Pre-linked artifacts will be generated, i.e. TransceiverStructs library will be linked. This step is mandatory to deploy `AxelarTransceiver` contract.
 
 ### AxelarTransceiver
 

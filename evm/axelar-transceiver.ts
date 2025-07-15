@@ -1,8 +1,7 @@
 import { Command } from 'commander';
 import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
-import { addOptionsToCommands } from '../common';
-import { prompt as promptUser } from '../common';
+import { addOptionsToCommands, prompt as promptUser } from '../common';
 import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn, saveConfig } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
