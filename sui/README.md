@@ -432,6 +432,25 @@ Remove trusted chains
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+Register coin from info (i.e. symbol, name and decimals)
+
+```bash
+ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
+```
+
+Register coin from metadata (i.e. [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
+
+```bash
+ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
+```
+
+Migrate coin metadata
+_Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
+
+```bash
+ts-node sui/its.js migrate-coin-metadata <symbol>
+```
+
 ## Sui Contract Verification
 
 This script generates a `verification` folder inside the `move` directory, which contains ZIP files for each contract to be used for verification. Before zipping, a `deps` subdirectory is added to each contract, and the local dependency paths in the `Move.toml` file are updated to reference the `deps` folder. 
