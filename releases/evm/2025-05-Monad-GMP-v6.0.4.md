@@ -207,6 +207,11 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x9f
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
+- 9.3 Transfer AxelarGateway ownership (testnet only)
+
+```bash
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+```
 
 ## Checklist
 
