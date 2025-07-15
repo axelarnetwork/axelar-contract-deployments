@@ -293,16 +293,13 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Deploy source token on Sui (Token A)
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
-    // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to 
+    // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to
     // ITS Hub to register token data in ITS hub.
     let tx = new Transaction();
 
     let messageTicket = tx.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-        arguments: [
-            tx.object(InterchainTokenService),
-            tx.object(metadata),
-        ],
+        arguments: [tx.object(InterchainTokenService), tx.object(metadata)],
         typeArguments: [tokenType],
     });
 
@@ -317,7 +314,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     await broadcast(client, keypair, tx, `Register Token Metadata (${symbol})`, options);
 
-    // User calls registerCustomToken on ITS Chain A to register the token on the source chain. 
+    // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
     tx = new Transaction();
 
@@ -333,7 +330,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         : tx.moveCall({
               target: `${AxelarGateway.address}::channel::new`,
           });
-    
+
     const channelId = tx.moveCall({
         target: `${AxelarGateway.address}::channel::id`,
         arguments: [channel],
@@ -352,22 +349,16 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     const [tokenId, treasuryCapReclaimer] = tx.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
-        arguments: [
-            tx.object(InterchainTokenService),
-            tx.object(channelId),
-            salt,
-            metadata,
-            coinManagement,
-        ],
+        arguments: [tx.object(InterchainTokenService), tx.object(channelId), salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 
     if (options.channel) tx.transferObjects([treasuryCapReclaimer], walletAddress);
     else tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
-    
+
     await broadcast(client, keypair, tx, 'Register Custom Coin', options);
 
-    // User then calls linkToken on ITS Chain A with the destination token address for Chain B. 
+    // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
     tx = new Transaction();
 
@@ -382,7 +373,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             tx.moveCall({
                 target: `${itsConfig.address}::token_manager_type::lock_unlock`,
             }),
-            bcs.string().serialize("TODO: link params").toBytes(),
+            bcs.string().serialize('TODO: link params').toBytes(),
         ],
         typeArguments: [tokenType],
     });
@@ -406,7 +397,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         tokenId,
         sourceToken.treasuryCap,
         sourceToken.metadata,
-        [linkedToken]
+        [linkedToken],
     );
 }
 
@@ -495,7 +486,9 @@ if (require.main === module) {
     const linkCoinProgram = new Command()
         .name('link-coin')
         .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
-        .description(`Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`)
+        .description(
+            `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
+        )
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
