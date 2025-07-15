@@ -409,8 +409,11 @@ async function processCommand(config, chain, options) {
     // Update configuration
     if (contractName === 'ERC1967Proxy') {
         const targetContract = options.forContract;
-        if (targetContract && contractConfig && constructorArgs[0] === contractConfig.implementation) {
+        if (targetContract && contractConfig) {
             contractConfig.address = contract.address;
+            if (constructorArgs[0] !== contractConfig.implementation) {
+                printWarn(`Proxy deployed with implementation ${constructorArgs[0]} but contract config has implementation ${contractConfig.implementation}`);
+            }
         }
     } else if (contractName === 'AxelarTransceiver') {
         contractConfig.implementation = contract.address;

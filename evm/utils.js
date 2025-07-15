@@ -309,11 +309,11 @@ async function getBytecodeFromAddress(address, provider) {
     return await provider.getCode(address);
 }
 
-function getBytecodeFromContractInstance(contractObject) {
+async function getBytecodeFromContractInstance(contractObject) {
     if (!contractObject.provider) {
         throw new Error('Contract instance must have a provider');
     }
-    return getBytecodeFromAddress(contractObject.address, contractObject.provider);
+    return await getBytecodeFromAddress(contractObject.address, contractObject.provider);
 }
 
 function getBytecodeFromDeployedBytecode(contractObject) {
