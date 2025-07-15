@@ -1,9 +1,11 @@
 const { Command } = require('commander');
+const { Transaction } = require('@mysten/sui/transactions');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
+    broadcast,
     broadcastFromTxBuilder,
     deployTokenFromInfo,
     getWallet,
@@ -293,46 +295,66 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to 
     // ITS Hub to register token data in ITS hub.
-    let txBuilder = new TxBuilder(client), coinManagement;
+    let tx = new Transaction();
 
-    let messageTicket = await txBuilder.moveCall({
+    let messageTicket = tx.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-        arguments: [InterchainTokenService, metadata],
+        arguments: [
+            tx.object(InterchainTokenService),
+            tx.object(metadata),
+        ],
         typeArguments: [tokenType],
     });
 
-    await txBuilder.moveCall({
+    tx.moveCall({
         target: `${AxelarGateway.address}::gateway::send_message`,
-        arguments: [Gateway, messageTicket],
+        arguments: [
+            tx.object(Gateway),
+            // XXX: CommandArgumentError { arg_idx: 1, kind: TypeMismatch } in command 1
+            messageTicket,
+        ],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Register Token Metadata (Token A)', options);
+    await broadcast(client, keypair, tx, `Register Token Metadata (${symbol})`, options);
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain. 
     // A token manager is deployed on the source chain corresponding to the tokenId.
+    tx = new Transaction();
 
     // CoinManagement<T>
-    [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const coinManagement = tx.moveCall({
+        target: `${itsConfig.address}::coin_management::new_locked`,
+        typeArguments: [tokenType],
+    });
 
     // Channel
     const channel = options.channel
         ? options.channel
-        : await txBuilder.moveCall({
+        : tx.moveCall({
               target: `${AxelarGateway.address}::channel::new`,
           });
-
-    // Salt
-    const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [walletAddress],
+    
+    const channelId = tx.moveCall({
+        target: `${AxelarGateway.address}::channel::id`,
+        arguments: [channel],
     });
 
-    const [tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+    const channelAddress = tx.moveCall({
+        target: `${AxelarGateway.address}::channel::to_address`,
+        arguments: [channelId],
+    });
+
+    // Salt
+    const salt = tx.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [channelAddress],
+    });
+
+    const [tokenId, treasuryCapReclaimer] = tx.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [
-            InterchainTokenService,
-            // XXX todo: this type should be correct (&Channel), determine why it's throwing `TypeMismatch`
-            channel,
+            tx.object(InterchainTokenService),
+            tx.object(channelId),
             salt,
             metadata,
             coinManagement,
@@ -340,20 +362,24 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         typeArguments: [tokenType],
     });
 
-    if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
-    else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+    if (options.channel) tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    else tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+    
+    await broadcast(client, keypair, tx, 'Register Custom Coin', options);
 
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B. 
     // This submits a LinkToken msg type to ITS Hub.
-    messageTicket = await txBuilder.moveCall({
+    tx = new Transaction();
+
+    messageTicket = tx.moveCall({
         target: `${itsConfig.address}::interchain_token_service::link_token`,
         arguments: [
-            InterchainTokenService,
-            channel,
+            tx.object(InterchainTokenService),
+            tx.object(channelId),
             salt,
             destinationChain,
             bcs.string().serialize(destinationAddress).toBytes(),
-            await txBuilder.moveCall({
+            tx.moveCall({
                 target: `${itsConfig.address}::token_manager_type::lock_unlock`,
             }),
             bcs.string().serialize("TODO: link params").toBytes(),
@@ -361,10 +387,12 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         typeArguments: [tokenType],
     });
 
-    await txBuilder.moveCall({
+    tx.moveCall({
         target: `${AxelarGateway.address}::gateway::send_message`,
         arguments: [Gateway, messageTicket],
     });
+
+
 
     // Linked tokens (source / destination)
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
