@@ -392,8 +392,6 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         arguments: [Gateway, messageTicket],
     });
 
-
-
     // Linked tokens (source / destination)
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
     const linkedToken = { destinationChain, destinationAddress };
