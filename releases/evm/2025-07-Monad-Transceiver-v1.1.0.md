@@ -47,7 +47,12 @@ CHAIN=xyz
 3. `cd` into `example-wormhole-axelar-wsteth` 
 4. Get address of already deployed transceiverStructs library and set value:
 `TRANSCEIVER_STRUCTS_ADDRESS=0x..`
+
+- Note: Deployed `TRANSCEIVER_STRUCTS_ADDRESS` should be confirmed with Wormhole for each chain
+
 5. Run: `forge build --out out --libraries "lib/example-native-token-transfers/evm/src/libraries/TransceiverStructs.sol:TransceiverStructs:$TRANSCEIVER_STRUCTS_ADDRESS"`
+
+### Deployment
 
 1. Set Environment Variables
 
@@ -69,7 +74,6 @@ CHAIN=xyz
 
 - Notes:
     - We use `create` method to deploy, because AxelarTransceiver deployer will be used to initialize the contract
-    - `--artifactPath` is required for AxelarTransceiver deployment and should point to example-wormhole-axelar-wsteth/out/
     - The `gmpManager` address is automatically read from the chain config (`AxelarTransceiver.gmpManager`)
     - Library Linking: Pre-linked artifacts are generated and required libraries are already linked
 
@@ -84,7 +88,6 @@ ts-node evm/deploy-contract.js \
 
 - Notes:
     - We use `create` method to deploy for ERC1967Proxy of AxelarTransceiver, to maintain consistency
-    - `--artifactPath` is required for ERC1967Proxy deployment and should point to example-wormhole-axelar-wsteth/out/
     - `--forContract` is required flag & should have value `AxelarTransceiver`
 
 ```bash
