@@ -302,38 +302,57 @@ function validateParameters(parameters) {
     }
 }
 
+async function getBytecodeFromAddress(address, provider) {
+    if (!provider) {
+        throw new Error('Provider must be provided for address');
+    }
+    return await provider.getCode(address);
+}
+
+function getBytecodeFromContractInstance(contractObject) {
+    if (!contractObject.provider) {
+        throw new Error('Contract instance must have a provider');
+    }
+    return getBytecodeFromAddress(contractObject.address, contractObject.provider);
+}
+
+function getBytecodeFromDeployedBytecode(contractObject) {
+    const deployedBytecode = contractObject.deployedBytecode;
+
+    if (typeof deployedBytecode === 'string') {
+        return deployedBytecode;
+    } else if (typeof deployedBytecode === 'object' && deployedBytecode.object) {
+        return deployedBytecode.object;
+    } else {
+        throw new Error('Invalid deployedBytecode format in contract JSON.');
+    }
+}
+
+function getBytecodeFromBytecode(contractObject) {
+    const bytecode = contractObject.bytecode;
+
+    if (typeof bytecode === 'string') {
+        return bytecode;
+    } else if (typeof bytecode === 'object' && bytecode.object) {
+        return bytecode.object;
+    } else {
+        throw new Error('Invalid bytecode format in contract JSON.');
+    }
+}
+
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
     if (isNonEmptyString(contractObject)) {
-        if (provider === null) {
-            throw new Error('Provider must be provided for chain');
-        }
-
-        bytecode = await provider.getCode(contractObject);
+        bytecode = await getBytecodeFromAddress(contractObject, provider);
     } else if (contractObject.address) {
         // Contract instance
-        provider = contractObject.provider;
-        bytecode = await provider.getCode(contractObject.address);
+        bytecode = await getBytecodeFromContractInstance(contractObject);
     } else if (contractObject.deployedBytecode) {
-        // Get bytecode from contract factory
         // Foundry outputs bytecode as an object with metadata, extract the actual bytecode
-        if (typeof contractObject.deployedBytecode === 'string') {
-            bytecode = contractObject.deployedBytecode;
-        } else if (typeof contractObject.deployedBytecode === 'object' && contractObject.deployedBytecode.object) {
-            bytecode = contractObject.deployedBytecode.object;
-        } else {
-            throw new Error('Invalid deployedBytecode format in contract JSON.');
-        }
+        bytecode = getBytecodeFromDeployedBytecode(contractObject);
     } else if (contractObject.bytecode) {
-        // Contract JSON object
-        if (typeof contractObject.bytecode === 'string') {
-            bytecode = contractObject.bytecode;
-        } else if (typeof contractObject.bytecode === 'object' && contractObject.bytecode.object) {
-            bytecode = contractObject.bytecode.object;
-        } else {
-            throw new Error('Invalid bytecode format in contract JSON.');
-        }
+        bytecode = getBytecodeFromBytecode(contractObject);
     } else {
         throw new Error('Invalid contract object. Expected ethers.js Contract, ContractFactory, or contract JSON with bytecode.');
     }
@@ -345,7 +364,6 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     if (chain.toLowerCase() === 'polygon-zkevm') {
         throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
     }
-
     return keccak256(bytecode);
 }
 
