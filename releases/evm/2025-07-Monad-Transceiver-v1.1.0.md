@@ -14,7 +14,9 @@
 
 ## Background
 
-- This is the Monad Axelar/Wormhole Transceiver release. This release deploys AxelarTransceiver & ERC1967Proxy  contracts from the example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
+- This is the Monad Axelar/Wormhole Transceiver release. Wormhole uses their own fork of OpenZeppelin contract, thus we are using external repo to deploy contracts.
+
+- This release deploys AxelarTransceiver & ERC1967Proxy contracts from the example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
 
 ## Deployment
 
