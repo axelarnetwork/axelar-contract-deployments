@@ -112,11 +112,10 @@ async function updateTokenDeployer(wallet, chain, args, options) {
     });
 
     const contracts = chain.contracts;
-    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
 
     validateParameters({
-        isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
+        isValidAddress: { interchainTokenServiceAddress },
     });
 
     const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -167,20 +166,10 @@ async function main(processor, args, options) {
 
 async function switchHyperliquidBlockSize(options, useBigBlocks, chain) {
     const blockType = useBigBlocks ? 'big' : 'small';
-    options.args = [blockType];
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(options.privateKey, provider);
-
-    try {
-        await updateBlockSize(wallet, chain, options);
-    } catch (error) {
-        throw error;
-    }
-}
-
-function shouldUseBigBlocks(key) {
-    return key === 'implementation' || key === 'interchainTokenFactoryImplementation';
+    await updateBlockSize(wallet, chain, [blockType]);
 }
 
 if (require.main === module) {
@@ -209,9 +198,9 @@ if (require.main === module) {
             main(updateTokenDeployer, [tokenId, deployer], options);
         });
 
-    addOptionsToCommands(program, addEvmOptions, { privateKey: true });
+    addOptionsToCommands(program, addEvmOptions);
 
     program.parse();
 }
 
-module.exports = { updateBlockSize, switchHyperliquidBlockSize, shouldUseBigBlocks, deployer, updateTokenDeployer };
+module.exports = { switchHyperliquidBlockSize};

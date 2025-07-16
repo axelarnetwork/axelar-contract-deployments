@@ -30,7 +30,7 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
-const { switchHyperliquidBlockSize, shouldUseBigBlocks } = require('./hyperliquid');
+const { switchHyperliquidBlockSize } = require('./hyperliquid');
 
 /**
  * Function that handles the ITS deployment with chain-specific token support.
@@ -244,6 +244,7 @@ async function deployAll(config, wallet, chain, options) {
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
+            useHyperliquidBigBlocks: isHyperliquidChain(chain) ? true : false,
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
@@ -301,6 +302,7 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
             contractName: 'InterchainTokenFactory',
+            useHyperliquidBigBlocks: isHyperliquidChain(chain) ? true : false,
             async deploy() {
                 return deployContract(
                     deployMethod,
@@ -346,36 +348,43 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
-        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
+        if (deployment.useHyperliquidBigBlocks) {
             await switchHyperliquidBlockSize(options, true, chain);
         }
 
         printInfo(`Deploying ${deployment.name}`);
 
-        const contract = await deployment.deploy();
+        try {
+            const contract = await deployment.deploy();
 
-        if (key === 'interchainTokenFactoryImplementation') {
-            itsFactoryContractConfig.implementation = contract.address;
-        } else if (key === 'interchainTokenFactory') {
-            itsFactoryContractConfig.address = contract.address;
-        } else {
-            contractConfig[key] = contract.address;
-        }
+            if (key === 'interchainTokenFactoryImplementation') {
+                itsFactoryContractConfig.implementation = contract.address;
+            } else if (key === 'interchainTokenFactory') {
+                itsFactoryContractConfig.address = contract.address;
+            } else {
+                contractConfig[key] = contract.address;
+            }
 
-        if (isHyperliquidChain(chain) && shouldUseBigBlocks(key)) {
-            await switchHyperliquidBlockSize(options, false, chain);
-        }
+            printInfo(`Deployed ${deployment.name} at ${contract.address}`);
 
-        printInfo(`Deployed ${deployment.name} at ${contract.address}`);
+            saveConfig(config, options.env);
 
-        saveConfig(config, options.env);
+            if (chain.chainId !== 31337) {
+                await sleep(5000);
+            }
 
-        if (chain.chainId !== 31337) {
-            await sleep(5000);
-        }
-
-        if (!(await isContract(contract.address, provider))) {
-            throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
+            if (!(await isContract(contract.address, provider))) {
+                throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
+            }
+        } catch (error) {
+            if (deployment.useHyperliquidBigBlocks) {
+                await switchHyperliquidBlockSize(options, false, chain);
+            }
+            throw error;
+        } finally {
+            if (deployment.useHyperliquidBigBlocks) {
+                await switchHyperliquidBlockSize(options, false, chain);
+            }
         }
     }
 }

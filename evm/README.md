@@ -85,10 +85,10 @@ The Hyperliquid chain uses a dual architecture block model with fast blocks (2 s
 ts-node evm/hyperliquid.js update-block-size <small|big>
 
 # Get token deployer
-ts-node evm/hyperliquid.js deployer --token-id <id>
+ts-node evm/hyperliquid.js deployer <id>
 
 # Update token deployer
-ts-node evm/hyperliquid.js update-token-deployer --token-id <id> --deployer <address>
+ts-node evm/hyperliquid.js update-token-deployer <id> <address>
 ```
 ## Governance
 
