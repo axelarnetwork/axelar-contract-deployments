@@ -3,9 +3,9 @@ use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use crate::AxelarNetwork;
 use crate::types::ChainsInfoFile;
 use crate::types::NetworkType;
-use crate::AxelarNetwork;
 
 #[derive(Debug)]
 pub(crate) struct Config {
