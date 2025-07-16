@@ -22,6 +22,7 @@ pub(crate) enum NetworkType {
 #[derive(ArgEnum, Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum AxelarNetwork {
     DevnetAmplifier,
+    Stagenet,
     Testnet,
     Mainnet,
     None,
@@ -33,6 +34,7 @@ impl FromStr for AxelarNetwork {
     fn from_str(s: &str) -> eyre::Result<Self> {
         s.contains("devnet-amplifier")
             .then_some(AxelarNetwork::DevnetAmplifier)
+            .or_else(|| s.contains("stagenet").then_some(AxelarNetwork::Stagenet))
             .or_else(|| s.contains("testnet").then_some(AxelarNetwork::Testnet))
             .or_else(|| s.contains("mainnet").then_some(AxelarNetwork::Mainnet))
             .ok_or_else(|| eyre!("Invalid Axelar network type: {s}"))
@@ -62,9 +64,10 @@ impl From<ChainsInfoFile> for String {
 impl From<AxelarNetwork> for ChainsInfoFile {
     fn from(value: AxelarNetwork) -> Self {
         match value {
-            AxelarNetwork::Mainnet => Self("mainnet.json".to_owned()),
-            AxelarNetwork::Testnet => Self("testnet.json".to_owned()),
             AxelarNetwork::DevnetAmplifier => Self("devnet-amplifier.json".to_owned()),
+            AxelarNetwork::Stagenet => Self("stagenet.json".to_owned()),
+            AxelarNetwork::Testnet => Self("testnet.json".to_owned()),
+            AxelarNetwork::Mainnet => Self("mainnet.json".to_owned()),
             AxelarNetwork::None => Self("local.json".to_owned()),
         }
     }
@@ -74,12 +77,11 @@ pub(crate) struct ChainAxelarId(pub(crate) String);
 
 impl From<NetworkType> for ChainAxelarId {
     fn from(value: NetworkType) -> Self {
-        // Currently all network types use the same Axelar ID prefix
         match value {
-            NetworkType::Local
-            | NetworkType::Devnet
-            | NetworkType::Testnet
-            | NetworkType::Mainnet => Self("solana".to_owned()),
+            NetworkType::Local => Self("solana-local".to_owned()),
+            NetworkType::Devnet => Self("solana-devnet".to_owned()),
+            NetworkType::Testnet => Self("solana-testnet".to_owned()),
+            NetworkType::Mainnet => Self("solana".to_owned()),
         }
     }
 }
