@@ -268,6 +268,10 @@ async function setAxelarChainId(
 async function processCommand(config: Config, chain: ChainConfig, action: string, options: Options): Promise<void> {
     const { env, artifactPath, privateKey, args } = options;
 
+    if (!artifactPath) {
+        throw new Error('--artifactPath is required. Please provide the path to the compiled artifacts.');
+    }
+
     if (!chain.contracts?.AxelarTransceiver?.address) {
         printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
         throw new Error('AxelarTransceiver address not found in configuration');

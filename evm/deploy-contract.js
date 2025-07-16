@@ -5,7 +5,7 @@ const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, keccak256, toUtf8Bytes },
+    utils: { keccak256, toUtf8Bytes },
 } = ethers;
 const { Command, Option } = require('commander');
 const {
@@ -13,9 +13,6 @@ const {
     printWarn,
     printError,
     getGasOptions,
-    isNonEmptyString,
-    isNumber,
-    isAddressArray,
     getBytecodeHash,
     printWalletInfo,
     getDeployedAddress,
@@ -47,36 +44,18 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
             const gateway = config.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-
-            if (!isNonEmptyString(governanceChain)) {
-                throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
-            }
-
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
-
-            if (!isNonEmptyString(governanceAddress)) {
-                throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
-            }
-
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-
-            if (!isNumber(minimumTimeDelay)) {
-                throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
-            }
-
             const multisig = contractConfig.multisig;
 
-            if (!isAddress(multisig)) {
-                throw new Error(`Missing AxelarServiceGovernance.multisig address in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway, multisig },
+                isNonEmptyString: { governanceChain, governanceAddress },
+                isNumber: { minimumTimeDelay },
+            });
 
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
         }
@@ -85,59 +64,38 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             const gateway = config.AxelarGateway?.address;
             const gasService = config.AxelarGasService?.address;
 
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            if (!isAddress(gasService)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway, gasService },
+            });
 
             return [gateway, gasService];
         }
 
         case 'InterchainGovernance': {
             const gateway = config.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-
-            if (!isNonEmptyString(governanceChain)) {
-                throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
-            }
-
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
-
-            if (!isNonEmptyString(governanceAddress)) {
-                throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
-            }
-
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
-            if (!isNumber(minimumTimeDelay)) {
-                throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway },
+                isNonEmptyString: { governanceChain, governanceAddress },
+                isNumber: { minimumTimeDelay },
+            });
 
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay];
         }
 
         case 'Multisig': {
             const signers = contractConfig.signers;
-
-            if (!isAddressArray(signers)) {
-                throw new Error(`Missing Multisig.signers in the chain info.`);
-            }
-
             const threshold = contractConfig.threshold;
 
-            if (!isNumber(threshold)) {
-                throw new Error(`Missing Multisig.threshold in the chain info.`);
-            }
+            validateParameters({
+                isAddressArray: { signers },
+                isNumber: { threshold },
+            });
 
             return [signers, threshold];
         }
@@ -148,8 +106,10 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             if (!owner) {
                 owner = wallet.address;
                 contractConfig.owner = owner;
-            } else if (!isAddress(owner)) {
-                throw new Error(`Invalid Operators.owner in the chain info.`);
+            } else {
+                validateParameters({
+                    isAddress: { owner },
+                });
             }
 
             return [owner];
@@ -172,17 +132,6 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             const gasService = config.AxelarGasService?.address;
             const gmpManager = config.AxelarTransceiver?.gmpManager;
 
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            if (!isAddress(gasService)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
-
-            if (!isAddress(gmpManager)) {
-                throw new Error(`Missing AxelarTransceiver.gmpManager address in the chain info.`);
-            }
             validateParameters({
                 isAddress: { gateway, gasService, gmpManager },
             });
@@ -331,6 +280,10 @@ async function processCommand(config, chain, options) {
     await printWalletInfo(wallet);
 
     printInfo('Contract name', contractName);
+
+    if (['AxelarTransceiver', 'ERC1967Proxy'].includes(contractName) && !artifactPath) {
+        printError(`--artifactPath is required. Please provide the path to the compiled artifacts.`);
+    }
 
     const contractJson = getContractJSON(contractName, artifactPath);
     const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);

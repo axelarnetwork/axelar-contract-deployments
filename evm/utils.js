@@ -293,6 +293,9 @@ function validateParameters(parameters) {
 
         for (const paramKey of Object.keys(paramsObj)) {
             const paramValue = paramsObj[paramKey];
+            if (paramValue === undefined) {
+                throw new Error(`${paramKey} is not defined. Probably missing in the chain config.`);
+            }
             const isValid = validatorFunction(paramValue);
 
             if (!isValid) {
@@ -836,13 +839,26 @@ function getContractPath(contractName) {
     throw new Error(`Contract path for ${contractName} must be entered manually.`);
 }
 
+function normalizeContractJSON(contractJson, contractName) {
+    // Handle Foundry JSON format which doesn't have contractName and sourceName
+    if (!contractJson.contractName && contractJson.abi) {
+        contractJson.contractName = contractName;
+        contractJson.sourceName = `${contractName}.sol`;
+    }
+
+    if (contractJson.bytecode && typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
+        contractJson.bytecode = contractJson.bytecode.object;
+    }
+
+    if (contractJson.deployedBytecode && typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
+        contractJson.deployedBytecode = contractJson.deployedBytecode.object;
+    }
+
+    return contractJson;
+}
+
 function getContractJSON(contractName, artifactPath) {
     let contractPath;
-
-    // Require artifactPath for specific contracts
-    if (['AxelarTransceiver', 'ERC1967Proxy'].includes(contractName) && !artifactPath) {
-        throw new Error(`${contractName} requires --artifactPath to be specified. Please provide the path to the compiled artifacts.`);
-    }
 
     if (artifactPath) {
         contractPath = artifactPath.endsWith('.json') ? artifactPath : artifactPath + contractName + '.sol/' + contractName + '.json';
@@ -852,22 +868,7 @@ function getContractJSON(contractName, artifactPath) {
 
     try {
         const contractJson = require(contractPath);
-
-        // Handle Foundry JSON format which doesn't have contractName and sourceName
-        if (!contractJson.contractName && contractJson.abi) {
-            contractJson.contractName = contractName;
-            contractJson.sourceName = `${contractName}.sol`;
-        }
-
-        if (contractJson.bytecode && typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
-            contractJson.bytecode = contractJson.bytecode.object;
-        }
-
-        if (contractJson.deployedBytecode && typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
-            contractJson.deployedBytecode = contractJson.deployedBytecode.object;
-        }
-
-        return contractJson;
+        return normalizeContractJSON(contractJson, contractName);
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
     }
@@ -1105,6 +1106,7 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
+    normalizeContractJSON,
     isBytes32Array,
     getGasOptions,
     getSaltFromKey,
