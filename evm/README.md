@@ -88,7 +88,7 @@ ts-node evm/hyperliquid.js update-block-size <small|big>
 ts-node evm/hyperliquid.js deployer <token-id>
 
 # Update token deployer
-ts-node evm/hyperliquid.js update-token-deployer <id> <address>
+ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
 ```
 ## Governance
 
