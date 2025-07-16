@@ -35,10 +35,10 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-| `Network`            | `deployer address`                           |
-|----------------------|----------------------------------------------|
-| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| `Network`   | `deployer address`                           |
+|-------------|----------------------------------------------|
+| **Testnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ## AxelarTransceiver and ERC1967 Proxy Deployment
 
@@ -47,6 +47,14 @@ CHAIN=xyz
 1. Install Foundry: https://github.com/foundry-rs/foundry
 2. Clone Transceiver repo: `git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git`
 3. `cd` into `example-wormhole-axelar-wsteth` 
+
+| `NETWORK`   | `CHAIN`  | `TRANSCEIVER_STRUCTS_ADDRESS` | `GMP_MANAGER_ADDRESS` |
+|-------------|----------|-------------------------------|-----------------------|
+| **Testnet** | Ethereum |                               |                       |
+|             | Monad    |                               |                       |
+| **Mainnet** | Ethereum |                               |                       |
+|             | Monad    |                               |                       |
+
 4. Get address of already deployed transceiverStructs library and set value:
 `TRANSCEIVER_STRUCTS_ADDRESS=0x..`
 
@@ -63,7 +71,7 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-2. Set address of deployed `gmpManager` & `TransceiverStructs` to the `AxelarTransceiver` section in your chain config:
+2. Set address of deployed `gmpManager` & `TransceiverStructs` to the `config.chains.$CHAIN.contracts.AxelarTransceiver` section in your chain config:
 
 ```json
 "AxelarTransceiver": {
