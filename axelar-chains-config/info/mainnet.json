@@ -3239,6 +3239,16 @@
         "name": "Hyperliquid Explorer",
         "url": "https://app.hyperliquid.xyz/explorer"
       },
+      "hypercore":{
+        "domain": {
+          "chainId": 1337,
+            "name": "Exchange",
+            "verifyingContract": "0x0000000000000000000000000000000000000000",
+            "version": "1",
+        },
+        "url": "https://api.hyperliquid.xyz",
+        "source": "a"
+      },
       "contracts": {}
     }
   },
