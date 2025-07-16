@@ -244,7 +244,7 @@ async function deployAll(config, wallet, chain, options) {
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
-            useHyperliquidBigBlocks: isHyperliquidChain(chain) ? true : false,
+            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
