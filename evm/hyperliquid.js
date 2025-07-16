@@ -192,7 +192,7 @@ if (require.main === module) {
         });
 
     program
-        .command('update-token-deployer <tokenId> <deployer>')
+        .command('update-token-deployer <token-id> <deployer>')
         .description('Update deployer address for a Hyperliquid interchain token')
         .action((tokenId, deployer, options) => {
             main(updateTokenDeployer, [tokenId, deployer], options);
