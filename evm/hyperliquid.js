@@ -185,7 +185,7 @@ if (require.main === module) {
         });
 
     program
-        .command('deployer <tokenId>')
+        .command('deployer <token-id>')
         .description('Get deployer address for a Hyperliquid interchain token')
         .action((tokenId, options) => {
             main(deployer, [tokenId], options);
