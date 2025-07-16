@@ -297,14 +297,14 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     let messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-        arguments: [tx.object(InterchainTokenService), tx.object(metadata)],
+        arguments: [InterchainTokenService, metadata],
         typeArguments: [tokenType],
     });
 
     await txBuilder.moveCall({
         target: `${AxelarGateway.address}::gateway::send_message`,
         arguments: [
-            tx.object(Gateway),
+            Gateway,
             // XXX: CommandArgumentError { arg_idx: 1, kind: TypeMismatch } in command 1
             messageTicket,
         ],
