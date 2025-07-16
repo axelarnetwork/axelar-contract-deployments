@@ -1057,7 +1057,7 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
 /**
- * Determines if a chain is a Hyperliquid chain based on its name or axelarId
+ * Determines if a chain is a Hyperliquid chain based on its axelarId
  * @param {Object} chain - The chain object containing name and axelarId properties
  * @returns {boolean} - Returns true if the chain is a Hyperliquid chain, false otherwise
  */
