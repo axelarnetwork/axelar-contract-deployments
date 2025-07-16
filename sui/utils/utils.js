@@ -9,7 +9,7 @@ const {
     constants: { HashZero },
 } = ethers;
 const fs = require('fs');
-const { fromB64, toB64 } = require('@mysten/bcs');
+const { fromBase64, toBase64 } = require('@mysten/bcs');
 const {
     updateMoveToml,
     copyMovePackage,
@@ -54,7 +54,7 @@ const getBcsBytesByObjectId = async (client, objectId) => {
             showBcs: true,
         },
     });
-    return fromB64(response.data.bcs.bcsBytes);
+    return fromBase64(response.data.bcs.bcsBytes);
 };
 
 const deployPackage = async (packageName, client, keypair, options = {}) => {
@@ -279,11 +279,12 @@ const saveGeneratedTx = async (tx, message, client, options) => {
     validateParameters({ isNonEmptyString: { txFilePath } });
 
     const txBytes = await tx.build({ client });
-    const txB64Bytes = toB64(txBytes);
+    const txB64Bytes = toBase64(txBytes);
 
     writeJSON({ message, status: 'PENDING', unsignedTx: txB64Bytes }, txFilePath);
     printInfo(`Unsigned transaction`, txFilePath);
 };
+
 
 const isAllowed = async (client, keypair, chain, exec, options) => {
     const addError = (tx) => {

@@ -394,7 +394,7 @@ async function checkVersionControl(version, options) {
         for (const allowedFunction of allowedFunctions) {
             const allowed = await isAllowed(client, keypair, chain, functions[allowedFunction], options);
             const color = allowed ? chalk.green : chalk.red;
-            console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+            console.log(`${allowedFunction} is ${color(allowed ? 'allowed' : 'disallowed')}`);
         }
     }
 
@@ -404,7 +404,7 @@ async function checkVersionControl(version, options) {
         for (const disallowedFunction of disallowedFunctions) {
             const allowed = await isAllowed(client, keypair, chain, functions[disallowedFunction], options);
             const color = allowed ? chalk.red : chalk.green;
-            console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'dissalowed')}`);
+            console.log(`${disallowedFunction} is ${color(allowed ? 'allowed' : 'disallowed')}`);
         }
     }
 }
