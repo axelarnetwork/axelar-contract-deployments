@@ -165,7 +165,7 @@ ts-node sui/deploy-contract.js deploy RelayerDiscovery
 ### ITS
 
 ```bash
-ts-node sui/deploy-contract.js deploy ITS
+ts-node sui/deploy-contract.js deploy InterchainTokenService
 ```
 
 ### Squid
