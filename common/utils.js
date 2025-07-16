@@ -337,7 +337,7 @@ function isValidStellarContract(address) {
  * @returns {boolean} - True if the address is valid, false otherwise
  */
 function isValidSvmAddressFormat(address) {
-    return SVM_BASE58_ADDRESS_REGEX.test(address)
+    return SVM_BASE58_ADDRESS_REGEX.test(address);
 }
 
 const validationFunctions = {
