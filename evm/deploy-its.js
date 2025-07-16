@@ -51,9 +51,10 @@ async function deployAll(config, wallet, chain, options) {
     const contractName = 'InterchainTokenService';
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
-
+    
+    // Deploy only the appropriate token implementation based on chain type
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
-    const ServiceContract = getContractJSON(
+    const InterchainTokenService = getContractJSON(
         isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
     );
@@ -176,10 +177,9 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        // Deploy only the appropriate token implementation based on chain type
         interchainToken: {
             name: 'Interchain Token',
-            contractName: interchainTokenContractName,
+            contractName: 'InterchainToken',
             async deploy() {
                 return deployContract(
                     deployMethod,
@@ -262,7 +262,7 @@ async function deployAll(config, wallet, chain, options) {
                 return deployContract(
                     proxyDeployMethod,
                     wallet,
-                    ServiceContract,
+                    InterchainTokenService,
                     args,
                     getDeployOptions(proxyDeployMethod, implementationSalt, chain),
                     gasOptions,

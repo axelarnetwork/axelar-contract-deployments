@@ -53,8 +53,8 @@ async function signL1Action(wallet, action, activePool, nonce, chain) {
     return { r: sig.r, s: sig.s, v: sig.v };
 }
 
-async function updateBlockSize(wallet, chain, options) {
-    const [blockSize] = options.args;
+async function updateBlockSize(wallet, chain, args) {
+    const [blockSize] = args;
     validateParameters({
         isNonEmptyString: { blockSize },
     });
@@ -80,30 +80,22 @@ async function updateBlockSize(wallet, chain, options) {
     return result;
 }
 
-async function deployer(wallet, chain, options) {
-    const [tokenId] = options.args;
+async function deployer(wallet, chain, args) {
+    const [tokenId] = args;
     validateParameters({
         isNonEmptyString: { tokenId },
     });
 
-    const contracts = chain.contracts;
-    const interchainTokenFactoryAddress = contracts.InterchainTokenFactory?.address;
-    const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
-
-    validateParameters({
-        isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress },
-    });
-
     const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+    const interchainTokenService = new Contract(chain.contracts.InterchainTokenService?.address, IInterchainTokenService.abi, wallet);
 
     const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
     printInfo('Token address', tokenAddress);
 
     try {
-        const TokenContract = getContractJSON('HyperliquidInterchainToken');
-        const token = new Contract(tokenAddress, TokenContract.abi, wallet);
+        const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
+        const token = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
 
         const currentDeployer = await token.deployer();
         printInfo('Current deployer', currentDeployer);
@@ -112,8 +104,8 @@ async function deployer(wallet, chain, options) {
     }
 }
 
-async function updateTokenDeployer(wallet, chain, options) {
-    const [tokenId, deployer] = options.args;
+async function updateTokenDeployer(wallet, chain, args, options) {
+    const [tokenId, deployer] = args;
     validateParameters({
         isNonEmptyString: { tokenId },
         isValidAddress: { deployer },
@@ -133,11 +125,11 @@ async function updateTokenDeployer(wallet, chain, options) {
     const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenId);
     printInfo('Token address', tokenAddress);
 
-    const ServiceContract = getContractJSON('HyperliquidInterchainTokenService');
-    const service = new Contract(interchainTokenServiceAddress, ServiceContract.abi, wallet);
+    const InterchainTokenService = getContractJSON('HyperliquidInterchainTokenService');
+    const service = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
 
-    const TokenContract = getContractJSON('HyperliquidInterchainToken');
-    const token = new Contract(tokenAddress, TokenContract.abi, wallet);
+    const HyperliquidInterchainToken = getContractJSON('HyperliquidInterchainToken');
+    const token = new Contract(tokenAddress, HyperliquidInterchainToken.abi, wallet);
 
     const currentDeployer = await token.deployer();
     printInfo('Current deployer', currentDeployer);
@@ -151,6 +143,7 @@ async function updateTokenDeployer(wallet, chain, options) {
     }
 
     const gasOptions = await getGasOptions(chain, options, 'HyperliquidInterchainTokenService');
+    
     const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
     await handleTx(tx, chain, service, 'updateTokenDeployer');
 
