@@ -1,14 +1,11 @@
 'use strict';
 
-const { Wallet, ethers, getDefaultProvider, Contract, AddressZero, BigNumber } = require('ethers');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const { Command, Option } = require('commander');
+const { Wallet, ethers, getDefaultProvider, Contract } = require('ethers');
+const { Command, Argument } = require('commander');
 const { printInfo, validateParameters, getContractJSON, getGasOptions, mainProcessor, isHyperliquidChain } = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { httpPost } = require('../common/utils');
 const { handleTx } = require('./its');
-const execAsync = promisify(exec);
 const msgpack = require('msgpack-lite');
 const { keccak256 } = require('ethers/lib/utils');
 
@@ -111,8 +108,7 @@ async function updateTokenDeployer(wallet, chain, args, options) {
         isValidAddress: { deployer },
     });
 
-    const contracts = chain.contracts;
-    const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
+    const interchainTokenServiceAddress = chain.contracts.InterchainTokenService?.address;
 
     validateParameters({
         isValidAddress: { interchainTokenServiceAddress },
@@ -178,7 +174,8 @@ if (require.main === module) {
     program.name('hyperliquid').description('Hyperliquid chain management commands');
 
     program
-        .command('update-block-size <block-size>')
+        .command('update-block-size')
+        .addArgument(new Argument('<block-size>', 'block size to use').choices(['big', 'small']))
         .description('Update Hyperliquid block size')
         .action((blockSize, options) => {
             main(updateBlockSize, [blockSize], options);

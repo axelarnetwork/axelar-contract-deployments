@@ -25,9 +25,9 @@ const {
     getDeployedAddress,
     wasEventEmitted,
     isHyperliquidChain,
-    getITSHubAddress,
     parseTrustedChains,
 } = require('./utils');
+const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 const { switchHyperliquidBlockSize } = require('./hyperliquid');
@@ -131,7 +131,7 @@ async function deployAll(config, wallet, chain, options) {
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = getITSHubAddress(config);
+    const itsHubAddress = itsHubContractAddress(config);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
@@ -354,37 +354,33 @@ async function deployAll(config, wallet, chain, options) {
 
         printInfo(`Deploying ${deployment.name}`);
 
+        let contract;
         try {
-            const contract = await deployment.deploy();
-
-            if (key === 'interchainTokenFactoryImplementation') {
-                itsFactoryContractConfig.implementation = contract.address;
-            } else if (key === 'interchainTokenFactory') {
-                itsFactoryContractConfig.address = contract.address;
-            } else {
-                contractConfig[key] = contract.address;
-            }
-
-            printInfo(`Deployed ${deployment.name} at ${contract.address}`);
-
-            saveConfig(config, options.env);
-
-            if (chain.chainId !== 31337) {
-                await sleep(5000);
-            }
-
-            if (!(await isContract(contract.address, provider))) {
-                throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
-            }
-        } catch (error) {
-            if (deployment.useHyperliquidBigBlocks) {
-                await switchHyperliquidBlockSize(options, false, chain);
-            }
-            throw error;
+            contract = await deployment.deploy();
         } finally {
             if (deployment.useHyperliquidBigBlocks) {
                 await switchHyperliquidBlockSize(options, false, chain);
             }
+        }
+
+        if (key === 'interchainTokenFactoryImplementation') {
+            itsFactoryContractConfig.implementation = contract.address;
+        } else if (key === 'interchainTokenFactory') {
+            itsFactoryContractConfig.address = contract.address;
+        } else {
+            contractConfig[key] = contract.address;
+        }
+
+        printInfo(`Deployed ${deployment.name} at ${contract.address}`);
+
+        saveConfig(config, options.env);
+
+        if (chain.chainId !== 31337) {
+            await sleep(5000);
+        }
+
+        if (!(await isContract(contract.address, provider))) {
+            throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
         }
     }
 }
