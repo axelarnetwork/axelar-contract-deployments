@@ -159,7 +159,6 @@ async function updateTokenDeployer(wallet, chain, options) {
 }
 
 async function main(processor, args, options) {
-    options.args = args;
     return mainProcessor(options, (config, chain, options) => {
         if (!isHyperliquidChain(chain)) {
             throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
@@ -169,7 +168,7 @@ async function main(processor, args, options) {
         const provider = getDefaultProvider(rpc);
         const wallet = new Wallet(options.privateKey, provider);
 
-        return processor(wallet, chain, options);
+        return processor(wallet, chain, args, options);
     });
 }
 
