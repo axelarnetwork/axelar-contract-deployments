@@ -432,6 +432,8 @@ Remove trusted chains
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+## Register Coins
+
 Register coin from info (i.e. symbol, name and decimals)
 
 ```bash
@@ -443,6 +445,8 @@ Register coin from metadata (i.e. [sui::coin::CoinMetadata](https://docs.sui.io/
 ```bash
 ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
 ```
+
+## Migrating Legacy Coin Registrations
 
 Migrate coin metadata
 _Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
