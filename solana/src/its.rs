@@ -1203,10 +1203,12 @@ fn interchain_transfer(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let timestamp: i64 = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_secs()
-        .try_into()?;
+    let timestamp: i64 = args.timestamp.unwrap_or(
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs()
+            .try_into()?,
+    );
 
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
@@ -1239,10 +1241,12 @@ fn call_contract_with_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let timestamp: i64 = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_secs()
-        .try_into()?;
+    let timestamp: i64 = args.timestamp.unwrap_or(
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs()
+            .try_into()?,
+    );
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
@@ -1276,10 +1280,12 @@ fn call_contract_with_interchain_token_offchain_data(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let timestamp: i64 = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_secs()
-        .try_into()?;
+    let timestamp: i64 = args.timestamp.unwrap_or(
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs()
+            .try_into()?,
+    );
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let destination_address = decode_its_destination(
         &chains_info,
