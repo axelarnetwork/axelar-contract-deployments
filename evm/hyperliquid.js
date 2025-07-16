@@ -80,7 +80,7 @@ async function updateBlockSize(wallet, chain, args) {
     return result;
 }
 
-async function deployer(wallet, chain, args) {
+async function deployer(wallet, chain, args, _options) {
     const [tokenId] = args;
     validateParameters({
         isNonEmptyString: { tokenId },
