@@ -55,7 +55,7 @@ async function deployAll(config, wallet, chain, options) {
     // Deploy only the appropriate token implementation based on chain type
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
     const InterchainTokenService = getContractJSON(
-        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
     );
 
@@ -426,7 +426,7 @@ async function upgrade(_, chain, options) {
     printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
     const InterchainTokenService = getContractJSON(
-        isHyperliquidChain ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
     );
     const gasOptions = await getGasOptions(chain, options, contractName);
