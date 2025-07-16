@@ -178,7 +178,7 @@ if (require.main === module) {
     program.name('hyperliquid').description('Hyperliquid chain management commands');
 
     program
-        .command('update-block-size <blockSize>')
+        .command('update-block-size <block-size>')
         .description('Update Hyperliquid block size')
         .action((blockSize, options) => {
             main(updateBlockSize, [blockSize], options);
