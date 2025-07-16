@@ -142,7 +142,7 @@ async function updateTokenDeployer(wallet, chain, args, options) {
     }
 
     const gasOptions = await getGasOptions(chain, options, 'HyperliquidInterchainTokenService');
-    
+
     const tx = await service.updateTokenDeployer(tokenId, deployer, gasOptions);
     await handleTx(tx, chain, service, 'updateTokenDeployer');
 
@@ -203,4 +203,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { switchHyperliquidBlockSize};
+module.exports = { switchHyperliquidBlockSize };

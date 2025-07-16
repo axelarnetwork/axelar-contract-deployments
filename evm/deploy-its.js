@@ -51,7 +51,7 @@ async function deployAll(config, wallet, chain, options) {
     const contractName = 'InterchainTokenService';
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
-    
+
     // Deploy only the appropriate token implementation based on chain type
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
     const InterchainTokenService = getContractJSON(
