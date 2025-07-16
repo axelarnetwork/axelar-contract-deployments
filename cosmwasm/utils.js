@@ -224,6 +224,7 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         Rewards: { address: rewardsAddress },
+        Coordinator: { address: coordinator }
     } = contracts;
     const { adminAddress, governanceAddress, blockExpiry } = contractConfig;
 
@@ -243,11 +244,16 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
+    if (!validateAddress(coordinator)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
     return {
         admin_address: adminAddress,
         governance_address: governanceAddress,
         rewards_address: rewardsAddress,
         block_expiry: toBigNumberString(blockExpiry),
+        coordinator_address: coordinator,
     };
 };
 
