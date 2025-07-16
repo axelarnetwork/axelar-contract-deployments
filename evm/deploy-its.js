@@ -302,7 +302,7 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
             contractName: 'InterchainTokenFactory',
-            useHyperliquidBigBlocks: isHyperliquidChain(chain) ? true : false,
+            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 return deployContract(
                     deployMethod,
