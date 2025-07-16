@@ -74,11 +74,12 @@ pub(crate) struct ChainAxelarId(pub(crate) String);
 
 impl From<NetworkType> for ChainAxelarId {
     fn from(value: NetworkType) -> Self {
+        // Currently all network types use the same Axelar ID prefix
         match value {
-            NetworkType::Local => Self("solana".to_owned()),
-            NetworkType::Devnet => Self("solana".to_owned()),
-            NetworkType::Testnet => Self("solana".to_owned()),
-            NetworkType::Mainnet => Self("solana".to_owned()),
+            NetworkType::Local
+            | NetworkType::Devnet
+            | NetworkType::Testnet
+            | NetworkType::Mainnet => Self("solana".to_owned()),
         }
     }
 }

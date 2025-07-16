@@ -217,7 +217,7 @@ enum QueryInstructionSubcommand {
 
 #[tokio::main]
 async fn main() {
-    let _ = dotenv().ok();
+    let _: Option<PathBuf> = dotenv().ok();
 
     if let Err(e) = run().await {
         eprintln!("\nError: {e:?}");
@@ -231,8 +231,7 @@ async fn run() -> eyre::Result<()> {
 
     let maybe_solana_config = solana_cli_config::CONFIG_FILE
         .as_ref()
-        .map(|config_file| solana_cli_config::Config::load(config_file).ok())
-        .flatten();
+        .and_then(|config_file| solana_cli_config::Config::load(config_file).ok());
     let url = cli
         .url
         .or_else(|| maybe_solana_config.as_ref().map(|c| c.json_rpc_url.clone()))

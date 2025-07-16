@@ -1006,7 +1006,7 @@ fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> 
             println!("Message status: {status}");
         }
         None => eyre::bail!("Failed to deserialize message data"),
-    };
+    }
 
     Ok(())
 }
