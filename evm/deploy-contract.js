@@ -1,31 +1,11 @@
 'use strict';
 
-/**
- * @fileoverview EVM Contract Deployment Script
- *
- * This script provides functionality to deploy various Axelar contracts on EVM-compatible chains.
- * It supports multiple deployment methods (create, create2, create3) and handles contract
- * verification, configuration management, and deployment validation.
- *
- * Supported contract types:
- * - AxelarServiceGovernance: Governance contract for Axelar services
- * - InterchainProposalSender: Contract for sending interchain proposals
- * - InterchainGovernance: Interchain governance contract
- * - Multisig: Multi-signature wallet contract
- * - Operators: Operator management contract
- * - ConstAddressDeployer: Constant address deployer contract
- * - Create3Deployer: Create3 deployment contract
- * - TokenDeployer: Token deployment contract
- * - ERC1967Proxy: ERC1967 proxy contract
- * - AxelarTransceiver: Transceiver contract
- */
-
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
     Wallet,
     getDefaultProvider,
-    utils: { isAddress, keccak256, toUtf8Bytes },
+    utils: { keccak256, toUtf8Bytes },
 } = ethers;
 const { Command, Option } = require('commander');
 const {
@@ -33,9 +13,6 @@ const {
     printWarn,
     printError,
     getGasOptions,
-    isNonEmptyString,
-    isNumber,
-    isAddressArray,
     getBytecodeHash,
     printWalletInfo,
     getDeployedAddress,
@@ -46,7 +23,6 @@ const {
     isContract,
     getContractJSON,
     getDeployOptions,
-    linkLibrariesInContractJson,
     validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -68,36 +44,18 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
             const gateway = config.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-
-            if (!isNonEmptyString(governanceChain)) {
-                throw new Error(`Missing AxelarServiceGovernance.governanceChain in the chain info.`);
-            }
-
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
-
-            if (!isNonEmptyString(governanceAddress)) {
-                throw new Error(`Missing AxelarServiceGovernance.governanceAddress in the chain info.`);
-            }
-
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
-
-            if (!isNumber(minimumTimeDelay)) {
-                throw new Error(`Missing AxelarServiceGovernance.minimumTimeDelay in the chain info.`);
-            }
-
             const multisig = contractConfig.multisig;
 
-            if (!isAddress(multisig)) {
-                throw new Error(`Missing AxelarServiceGovernance.multisig address in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway, multisig },
+                isNonEmptyString: { governanceChain, governanceAddress },
+                isNumber: { minimumTimeDelay },
+            });
 
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay, multisig];
         }
@@ -106,59 +64,38 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             const gateway = config.AxelarGateway?.address;
             const gasService = config.AxelarGasService?.address;
 
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
-            if (!isAddress(gasService)) {
-                throw new Error(`Missing AxelarGasService address in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway, gasService },
+            });
 
             return [gateway, gasService];
         }
 
         case 'InterchainGovernance': {
             const gateway = config.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
-                throw new Error(`Missing AxelarGateway address in the chain info.`);
-            }
-
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
-
-            if (!isNonEmptyString(governanceChain)) {
-                throw new Error(`Missing InterchainGovernance.governanceChain in the chain info.`);
-            }
-
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
             contractConfig.governanceAddress = governanceAddress;
-
-            if (!isNonEmptyString(governanceAddress)) {
-                throw new Error(`Missing InterchainGovernance.governanceAddress in the chain info.`);
-            }
-
             const minimumTimeDelay = contractConfig.minimumTimeDelay;
 
-            if (!isNumber(minimumTimeDelay)) {
-                throw new Error(`Missing InterchainGovernance.minimumTimeDelay in the chain info.`);
-            }
+            validateParameters({
+                isAddress: { gateway },
+                isNonEmptyString: { governanceChain, governanceAddress },
+                isNumber: { minimumTimeDelay },
+            });
 
             return [gateway, governanceChain, governanceAddress, minimumTimeDelay];
         }
 
         case 'Multisig': {
             const signers = contractConfig.signers;
-
-            if (!isAddressArray(signers)) {
-                throw new Error(`Missing Multisig.signers in the chain info.`);
-            }
-
             const threshold = contractConfig.threshold;
 
-            if (!isNumber(threshold)) {
-                throw new Error(`Missing Multisig.threshold in the chain info.`);
-            }
+            validateParameters({
+                isAddressArray: { signers },
+                isNumber: { threshold },
+            });
 
             return [signers, threshold];
         }
@@ -169,8 +106,10 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             if (!owner) {
                 owner = wallet.address;
                 contractConfig.owner = owner;
-            } else if (!isAddress(owner)) {
-                throw new Error(`Invalid Operators.owner in the chain info.`);
+            } else {
+                validateParameters({
+                    isAddress: { owner },
+                });
             }
 
             return [owner];
@@ -191,7 +130,11 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         case 'AxelarTransceiver': {
             const gateway = config.AxelarGateway?.address;
             const gasService = config.AxelarGasService?.address;
-            const gmpManager = options.gmpManager;
+            const gmpManager = options.gmpManager ? options.gmpManager : config.AxelarTransceiver.gmpManager;
+
+            if (!options.gmpManager) {
+                printWarn(`--gmpManager is not provided. Using gmpManager from chain config.`);
+            }
 
             validateParameters({
                 isAddress: { gateway, gasService, gmpManager },
@@ -201,39 +144,22 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         }
 
         case 'ERC1967Proxy': {
-            // Handle proxy-specific arguments
             const forContract = options.forContract;
             const proxyData = options.proxyData || '0x';
 
-            // If forContract is specified, try to get implementation from config
-            if (forContract && config[forContract]?.address) {
-                const implementationAddress = config[forContract].address;
-                printInfo(`Using implementation address from ${forContract}: ${implementationAddress}`);
-                return [implementationAddress, proxyData];
-            }
+            const implementationAddress = config[forContract]?.implementation;
 
-            // Fallback to explicit args if provided
-            const args = options.args ? JSON.parse(options.args) : [];
-            if (args.length >= 2) {
-                return args;
-            }
+            validateParameters({
+                isAddress: { implementationAddress },
+            });
 
-            // If forContract was specified but not found, throw error
-            if (forContract) {
-                throw new Error(`Proxy for ${forContract} requires implementation address to be present in the config.`);
-            }
-
-            // If no forContract and no explicit args, throw error
-            throw new Error(`ERC1967Proxy requires implementation address and init data.`);
+            return [implementationAddress, proxyData];
         }
     }
 
     throw new Error(`${contractName} is not supported.`);
 }
 
-/**
- * Validates deployed contract configuration by checking contract state against expected values.
- */
 async function checkContract(contractName, contract, contractConfig) {
     switch (contractName) {
         case 'Operators': {
@@ -305,72 +231,9 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function updateConfig(
-    contractName,
-    contract,
-    contractConfig,
-    options,
-    wallet,
-    deployMethod,
-    codehash,
-    predeployCodehash,
-    salt,
-    constructorArgs,
-) {
-    switch (contractName) {
-        case 'ERC1967Proxy': {
-            const targetContract = options.forContract;
-            if (targetContract && contractConfig) {
-                // Get implementation address from constructor args
-                const implementationAddress = constructorArgs[0];
-                // Only store if this proxy points to the target contract's implementation
-                if (implementationAddress === contractConfig.address) {
-                    contractConfig.proxyAddress = contract.address;
-                    contractConfig.proxyDeployer = wallet.address;
-                    contractConfig.proxyDeploymentMethod = deployMethod;
-                    contractConfig.proxyCodehash = codehash;
-                    contractConfig.proxyData = constructorArgs[1] || '0x';
-                    if (deployMethod !== 'create') {
-                        contractConfig.proxySalt = salt;
-                    }
-                    printInfo(`Stored proxy address ${contract.address} for ${targetContract}`);
-                }
-            }
-            break;
-        }
-        case 'AxelarTransceiver': {
-            contractConfig.address = contract.address;
-            contractConfig.deployer = wallet.address;
-            contractConfig.deploymentMethod = deployMethod;
-            contractConfig.codehash = codehash;
-            contractConfig.predeployCodehash = predeployCodehash;
-            contractConfig.gateway = await contract.gateway();
-            contractConfig.gasService = await contract.gasService();
-            contractConfig.gmpManager = await contract.nttManager();
-            if (deployMethod !== 'create') {
-                contractConfig.salt = salt;
-            }
-            break;
-        }
-        default: {
-            contractConfig.address = contract.address;
-            contractConfig.deployer = wallet.address;
-            contractConfig.deploymentMethod = deployMethod;
-            contractConfig.codehash = codehash;
-            contractConfig.predeployCodehash = predeployCodehash;
-            if (deployMethod !== 'create') {
-                contractConfig.salt = salt;
-            }
-        }
-    }
-}
-
-/**
- * Processes the deployment command for a specific chain.
- * Handles contract deployment, verification, and configuration updates.
- */
 async function processCommand(config, chain, options) {
-    const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
+    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
+    let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     if (!chain.contracts) {
@@ -380,28 +243,59 @@ async function processCommand(config, chain, options) {
     const contracts = chain.contracts;
 
     let contractConfig;
-    if (contractName === 'ERC1967Proxy') {
-        if (!options.forContract) {
-            throw new Error('ERC1967Proxy requires --forContract option to specify which contract this proxy is for.');
+    switch (contractName) {
+        case 'ERC1967Proxy': {
+            if (!artifactPath) {
+                printError(`--artifactPath is required. Please provide the path to the compiled artifacts.`);
+                return;
+            }
+
+            if (!options.forContract) {
+                printError('--forContract is required. Please specify which contract this proxy is for.');
+                return;
+            }
+            contractConfig = contracts[options.forContract];
+            if (!contractConfig) {
+                printError(`Contract ${options.forContract} not found in chain config.`);
+                return;
+            }
+
+            if (contractConfig.address && options.skipExisting) {
+                printWarn(`Skipping ${options.forContract} on ${chain.name} because it is already deployed.`);
+                return;
+            }
+            break;
         }
-        contractConfig = contracts[options.forContract];
-        if (!contractConfig) {
-            throw new Error(
-                `Contract ${options.forContract} not found in chain configuration. Available contracts: ${Object.keys(contracts).join(', ')}`,
-            );
+
+        case 'AxelarTransceiver': {
+            if (!artifactPath) {
+                printError('--artifactPath is required. Please provide the path to the compiled artifacts.');
+                return;
+            }
+
+            if (!contracts[contractName]) {
+                contracts[contractName] = {};
+            }
+            contractConfig = contracts[contractName];
+
+            if (contractConfig.implementation && options.skipExisting) {
+                printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+                return;
+            }
+            break;
         }
-        if (contractConfig.proxyAddress && options.skipExisting) {
-            printWarn(`Skipping proxy deployment for ${options.forContract} deployment on ${chain.name} because it is already deployed.`);
-            return;
-        }
-    } else {
-        if (!contracts[contractName]) {
-            contracts[contractName] = {};
-        }
-        contractConfig = contracts[contractName];
-        if (contractConfig.address && options.skipExisting) {
-            printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
-            return;
+
+        default: {
+            if (!contracts[contractName]) {
+                contracts[contractName] = {};
+            }
+            contractConfig = contracts[contractName];
+
+            if (contractConfig.address && options.skipExisting) {
+                printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
+                return;
+            }
+            break;
         }
     }
 
@@ -416,21 +310,7 @@ async function processCommand(config, chain, options) {
     const contractJson = getContractJSON(contractName, artifactPath);
     const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
 
-    // Parse libraries option if provided
-    let linkedContractJson = contractJson;
-    if (options.libraries) {
-        let libraries;
-        try {
-            libraries = JSON.parse(options.libraries);
-            console.log('Parsed libraries:', libraries);
-        } catch (error) {
-            console.log('JSON parse error:', error.message);
-            throw new Error(`Invalid libraries JSON format: ${options.libraries}`);
-        }
-        linkedContractJson = linkLibrariesInContractJson(contractJson, libraries);
-    }
-
-    const predeployCodehash = await getBytecodeHash(linkedContractJson, chain.axelarId);
+    const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -441,7 +321,7 @@ async function processCommand(config, chain, options) {
     const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
         salt,
         deployerContract,
-        contractJson: linkedContractJson,
+        contractJson: contractJson,
         constructorArgs,
         provider: wallet.provider,
     });
@@ -490,7 +370,7 @@ async function processCommand(config, chain, options) {
     const contract = await deployContract(
         deployMethod,
         wallet,
-        linkedContractJson,
+        contractJson,
         constructorArgs,
         { salt, deployerContract },
         gasOptions,
@@ -501,22 +381,41 @@ async function processCommand(config, chain, options) {
     const codehash = await getBytecodeHash(contract, chain.axelarId);
     printInfo('Deployed Contract bytecode hash', codehash);
 
-    await updateConfig(
-        contractName,
-        contract,
-        contractConfig,
-        options,
-        wallet,
-        deployMethod,
-        codehash,
-        predeployCodehash,
-        salt,
-        constructorArgs,
-    );
+    // Update configuration
+    if (contractName === 'ERC1967Proxy') {
+        const targetContract = options.forContract;
+        if (targetContract && contractConfig) {
+            contractConfig.address = contract.address;
+            if (constructorArgs[0] !== contractConfig.implementation) {
+                printWarn(
+                    `Proxy deployed with implementation ${constructorArgs[0]} but contract config has implementation ${contractConfig.implementation}`,
+                );
+            }
+        }
+    } else if (contractName === 'AxelarTransceiver') {
+        contractConfig.implementation = contract.address;
+        contractConfig.gateway = await contract.gateway();
+        contractConfig.gasService = await contract.gasService();
+        contractConfig.gmpManager = await contract.nttManager();
+    } else {
+        contractConfig.address = contract.address;
+        contractConfig.predeployCodehash = predeployCodehash;
+    }
+
+    // Common fields for all contracts
+    contractConfig.deployer = wallet.address;
+    contractConfig.deploymentMethod = deployMethod;
+    contractConfig.codehash = codehash;
+    if (deployMethod !== 'create') {
+        contractConfig.salt = salt;
+    }
 
     saveConfig(config, options.env);
 
-    printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
+    printInfo(
+        `${chain.name} | ${contractName}`,
+        contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address,
+    );
 
     await checkContract(contractName, contract, contractConfig);
 
@@ -552,13 +451,7 @@ if (require.main === module) {
     program.addOption(new Option('--args <args>', 'custom deployment args'));
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
-    program.addOption(
-        new Option(
-            '--libraries <libraries>',
-            'JSON string of library addresses to link (e.g., \'{"full/path/Contract.sol:TransceiverStructs":"0x..."}\')',
-        ),
-    );
-    program.addOption(new Option('--gmpManager <address>', 'GMP Manager address for AxelarTransceiver'));
+    program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
 
     program.action((options) => {
         main(options);
