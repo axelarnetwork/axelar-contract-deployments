@@ -2,7 +2,15 @@
 
 const { Wallet, ethers, getDefaultProvider, Contract } = require('ethers');
 const { Command, Argument } = require('commander');
-const { printInfo, validateParameters, getContractJSON, getGasOptions, mainProcessor, isHyperliquidChain, printWalletInfo } = require('./utils');
+const {
+    printInfo,
+    validateParameters,
+    getContractJSON,
+    getGasOptions,
+    mainProcessor,
+    isHyperliquidChain,
+    printWalletInfo,
+} = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { httpPost } = require('../common/utils');
 const { handleTx } = require('./its');
