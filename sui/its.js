@@ -228,21 +228,28 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     });
 
     // Register deployed token (from info)
-    const [tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+    const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [InterchainTokenService, channel, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 
-    // XXX: treasuryCapReclaimer is an option and fails with `TypeMismatch` if we try to transfer it
-    // and fails with `UnusedValueWithoutDrop` if we don't try to transfer it. Unclear atm, how to 
-    // unwrap or use it correctly
-    const transferObjects = options.channel ? [treasuryCapReclaimer] : [treasuryCapReclaimer, channel];
-    txBuilder.tx.transferObjects(transferObjects, walletAddress);
+    await txBuilder.moveCall({
+        target: `${STD_PACKAGE_ID}::option::destroy_none`,
+        arguments: [treasuryCapReclaimer],
+        typeArguments: [
+            [itsConfig.structs.TreasuryCapReclaimer, "<", tokenType, ">"].join("")
+        ],
+    });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
+    if (!options.channel) txBuilder.tx.transferObjects([channel], walletAddress);
+
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
         showEvents: true,
     });
+    const tokenId = result.events.filter(evt => {
+        return (evt.parsedJson.token_id) ? true : false;
+    })[0].parsedJson.token_id.id;
 
     // Save the deployed token
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
@@ -313,25 +320,15 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
               target: `${AxelarGateway.address}::channel::new`,
           });
 
-    const channelId = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::id`,
-        arguments: [channel],
-    });
-
-    const channelAddress = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::channel::to_address`,
-        arguments: [channelId],
-    });
-
     // Salt
     const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [channelAddress],
+        target: `${AxelarGateway.address}::bytes32::from_address`,
+        arguments: [walletAddress],
     });
 
     const [tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
-        arguments: [InterchainTokenService, channelId, salt, metadata, coinManagement],
+        arguments: [InterchainTokenService, channel, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 
@@ -352,7 +349,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         target: `${itsConfig.address}::interchain_token_service::link_token`,
         arguments: [
             InterchainTokenService,
-            channelId,
+            channel,
             salt,
             destinationChain,
             bcs.string().serialize(destinationAddress).toBytes(),
