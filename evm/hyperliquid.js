@@ -69,8 +69,8 @@ async function updateBlockSize(wallet, chain, args) {
     const endpoint = `${chain.hypercore.url}/exchange`;
     const result = await httpPost(endpoint, payload);
 
-    if (result.status !== 'ok') {
-        throw new Error(result);
+    if (!result || result.status !== 'ok') {
+        throw new Error(`Failed to update block size: ${result}`);
     }
 
     printInfo('Result', result);
