@@ -313,14 +313,14 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
     // Channel
-    const channel = options.channel
+    let channel = options.channel
         ? options.channel
         : await txBuilder.moveCall({
               target: `${AxelarGateway.address}::channel::new`,
           });
 
     // Salt
-    const salt = await txBuilder.moveCall({
+    let salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [walletAddress],
     });
@@ -340,10 +340,17 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     if (!options.channel) txBuilder.tx.transferObjects([channel], walletAddress);
 
-    const registerResult = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol})`, options);
+    const registerResult = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
+        showEvents: true,
+    });
     const tokenId = registerResult.events.filter((evt) => {
         return evt.parsedJson.token_id ? true : false;
     })[0].parsedJson.token_id.id;
+
+    // If the channel object went out of bounds resolve its object id
+    if (!options.channel) channel = registerResult.events.filter((evt) => {
+        return evt.transactionModule == "channel" ? true : false;
+    })[0].parsedJson.id;
 
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
@@ -353,8 +360,14 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         target: `${itsConfig.address}::token_manager_type::lock_unlock`,
     });
 
+    // Refresh salt to bring it in bounds
+    salt = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [walletAddress],
+    });
+
     messageTicket = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::link_token`,
+        target: `${itsConfig.address}::interchain_token_service::link_coin`,
         arguments: [
             InterchainTokenService,
             channel,
@@ -363,8 +376,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             bcs.string().serialize(destinationAddress).toBytes(),
             tokenManagerType,
             bcs.string().serialize('TODO: link params').toBytes(),
-        ],
-        typeArguments: [tokenType],
+        ]
     });
 
     await txBuilder.moveCall({
@@ -372,7 +384,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         arguments: [Gateway, messageTicket],
     });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Link Token (${symbol})`, options);
+    await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (${symbol})`, options);
 
     // Linked tokens (source / destination)
     const sourceToken = { metadata, packageId, tokenType, treasuryCap };
