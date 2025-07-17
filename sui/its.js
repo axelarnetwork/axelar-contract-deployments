@@ -237,9 +237,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     await txBuilder.moveCall({
         target: `${STD_PACKAGE_ID}::option::destroy_none`,
         arguments: [treasuryCapReclaimer],
-        typeArguments: [
-            [itsConfig.structs.TreasuryCapReclaimer, "<", tokenType, ">"].join("")
-        ],
+        typeArguments: [[itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('')],
     });
 
     if (!options.channel) txBuilder.tx.transferObjects([channel], walletAddress);
@@ -247,8 +245,8 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
         showEvents: true,
     });
-    const tokenId = result.events.filter(evt => {
-        return (evt.parsedJson.token_id) ? true : false;
+    const tokenId = result.events.filter((evt) => {
+        return evt.parsedJson.token_id ? true : false;
     })[0].parsedJson.token_id.id;
 
     // Save the deployed token
@@ -292,7 +290,8 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to
     // ITS Hub to register token data in ITS hub.
-    let txBuilder = new TxBuilder(client), coinManagement;
+    let txBuilder = new TxBuilder(client),
+        coinManagement;
 
     let messageTicket = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
