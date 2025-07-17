@@ -164,6 +164,21 @@ ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarC
 - **Initialization**: Calls the `initialize()` function on the AxelarTransceiver contract. The script handles cases where the contract is already initialized gracefully.
 - **Pauser Transfer**: Transfers the pauser capability to a specified address using `transferPauserCapability()`. Requires appropriate permissions.
 
+## Hyperliquid
+
+The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to set an account to used a specific block size, to query the deployer address of an interchain token, and to update the deployer address of an interchain token. The supported commands are:
+
+```bash
+# Update block size
+ts-node evm/hyperliquid.js update-block-size <small|big>
+
+# Get token deployer
+ts-node evm/hyperliquid.js deployer <token-id>
+
+# Update token deployer
+ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
+```
+
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
