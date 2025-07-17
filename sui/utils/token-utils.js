@@ -62,7 +62,7 @@ async function saveTokenDeployment(
             Metadata,
         },
     };
-    if (linkedTokens.length) contracts[symbol.toUpperCase()] = linkedTokens;
+    if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
 }
 
 module.exports = {
