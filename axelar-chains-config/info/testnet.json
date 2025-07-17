@@ -3555,12 +3555,12 @@
         "lastUploadedCodeId": 26
       },
       "InterchainTokenService": {
-        "storeCodeProposalId": "275",
-        "storeCodeProposalCodeHash": "36c758c8e36951369ff2b5f9590485edab6c302e7c1b385415ecc6e08185d738",
+        "storeCodeProposalId": "341",
+        "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
         "adminAddress": "axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "lastUploadedCodeId": 43,
-        "codeId": 43,
+        "lastUploadedCodeId": 59,
+        "codeId": 59,
         "address": "axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr",
         "sui": {
           "maxUintBits": 64,
@@ -3633,6 +3633,14 @@
         "storeCodeProposalId": "310",
         "storeCodeProposalCodeHash": "9c626d4ab34d3e8cd7426b72ad476b8adce05bed3274ca1b35523e66bbcf7688",
         "lastUploadedCodeId": 55
+      },
+      "ItsAbiTranslator": {
+        "storeCodeProposalId": "342",
+        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758",
+        "lastUploadedCodeId": 60,
+        "codeId": 60,
+        "instantiateProposalId": "343",
+        "address": "axelar1mla7j6dwvenszzajk64ee7hwlccl09p356mdc2akjwfus2fxdazs0wdmq8"
       }
     },
     "axelarId": "axelar",
