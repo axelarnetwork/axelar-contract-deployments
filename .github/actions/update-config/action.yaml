@@ -52,7 +52,7 @@ runs:
         echo "Generating config for $NETWORK"
         poetry run python generate.py --network "$NETWORK" gen-configs all-configs
         git add --all
-        git commit -m "chore: update generated configuration files for ${{ inputs.network }}"
+        git commit -m "chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
         git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
 
     - name: Create Pull Request
@@ -97,5 +97,5 @@ runs:
             --repo "${{ inputs.config_repo }}" \
             --squash \
             --admin \
-            --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE"
+            --subject "$PR_TITLE"
         echo "PR #$PR_NUMBER merged successfully."
