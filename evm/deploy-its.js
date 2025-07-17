@@ -24,13 +24,16 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
+    isHyperliquidChain,
     parseTrustedChains,
 } = require('./utils');
+const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
+const { switchHyperliquidBlockSize } = require('./hyperliquid');
 
 /**
- * Function that handles the ITS deployment.
+ * Function that handles the ITS deployment with chain-specific token support.
  * @param {*} wallet
  * @param {*} chain
  * @param {*} deployOptions
@@ -44,11 +47,17 @@ async function deployAll(config, wallet, chain, options) {
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
-    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
+
+    // Deploy only the appropriate token implementation based on chain type
+    const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
+    const InterchainTokenService = getContractJSON(
+        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        artifactPath,
+    );
 
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
@@ -122,7 +131,7 @@ async function deployAll(config, wallet, chain, options) {
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
     const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+    const itsHubAddress = itsHubContractAddress(config);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
@@ -175,7 +184,7 @@ async function deployAll(config, wallet, chain, options) {
                 return deployContract(
                     deployMethod,
                     wallet,
-                    getContractJSON('InterchainToken', artifactPath),
+                    getContractJSON(interchainTokenContractName, artifactPath),
                     [interchainTokenService],
                     deployOptions,
                     gasOptions,
@@ -235,6 +244,7 @@ async function deployAll(config, wallet, chain, options) {
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
+            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
@@ -292,6 +302,7 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
             contractName: 'InterchainTokenFactory',
+            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 return deployContract(
                     deployMethod,
@@ -337,9 +348,20 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
+        if (deployment.useHyperliquidBigBlocks) {
+            await switchHyperliquidBlockSize(options, true, chain);
+        }
+
         printInfo(`Deploying ${deployment.name}`);
 
-        const contract = await deployment.deploy();
+        let contract;
+        try {
+            contract = await deployment.deploy();
+        } finally {
+            if (deployment.useHyperliquidBigBlocks) {
+                await switchHyperliquidBlockSize(options, false, chain);
+            }
+        }
 
         if (key === 'interchainTokenFactoryImplementation') {
             itsFactoryContractConfig.implementation = contract.address;
@@ -401,9 +423,12 @@ async function upgrade(_, chain, options) {
         return;
     }
 
-    printInfo(`Upgrading Interchain Token Service.`);
+    printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
 
-    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
+    const InterchainTokenService = getContractJSON(
+        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
+        artifactPath,
+    );
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
@@ -484,7 +509,9 @@ async function main(options) {
 if (require.main === module) {
     const program = new Command();
 
-    program.name('deploy-its').description('Deploy interchain token service and interchain token factory');
+    program
+        .name('deploy-its')
+        .description('Deploy interchain token service and interchain token factory with chain-specific token support');
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),

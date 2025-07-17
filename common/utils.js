@@ -199,6 +199,10 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     );
 };
 
+const itsHubContractAddress = (config) => {
+    return config?.axelar?.contracts?.InterchainTokenService?.address;
+};
+
 /**
  * Parses the input string into an array of arguments, recognizing and converting
  * to the following types: boolean, number, array, and string.
@@ -734,4 +738,5 @@ module.exports = {
     asciiToBytes,
     encodeITSDestination,
     getProposalConfig,
+    itsHubContractAddress,
 };
