@@ -9,9 +9,9 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
-use axelar_solana_gateway::BytemuckedPda;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
+use axelar_solana_gateway::BytemuckedPda;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
@@ -31,17 +31,17 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use solana_transaction_status::UiTransactionEncoding;
 
 use crate::config::Config;
-use crate::multisig_prover_types::Uint128Extensions;
 use crate::multisig_prover_types::msg::ProofStatus;
+use crate::multisig_prover_types::Uint128Extensions;
 use crate::types::{
     LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet, SigningVerifierSet,
     SolanaTransactionParams,
 };
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
-    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
+    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
+    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -97,7 +97,7 @@ pub(crate) struct MessageStatusArgs {
     source_chain: String,
 
     /// Message ID
-    full: String,
+    message_id: String,
 }
 
 #[derive(Parser, Debug)]
@@ -984,7 +984,7 @@ fn events(args: EventsArgs, config: &Config) -> eyre::Result<()> {
 
 fn message_status(args: MessageStatusArgs, config: &Config) -> eyre::Result<()> {
     let rpc_client = RpcClient::new(config.url.clone());
-    let command_id = command_id(&args.source_chain, &args.full);
+    let command_id = command_id(&args.source_chain, &args.message_id);
     let (incoming_message_pda, _) = axelar_solana_gateway::get_incoming_message_pda(&command_id);
     let raw_incoming_message =
         rpc_client
