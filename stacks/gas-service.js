@@ -12,7 +12,6 @@ const {
     broadcastTransaction,
     Cl,
 } = require('@stacks/transactions');
-const { parseSuiUnitAmount } = require('../sui/utils');
 
 async function collectFees(stacksAddress, privateKey, networkType, chain, args, options) {
     const contracts = chain.contracts;
@@ -29,7 +28,7 @@ async function collectFees(stacksAddress, privateKey, networkType, chain, args, 
     const receiver = options.receiver || stacksAddress;
 
     const gasServiceAddress = contracts.GasService.address.split('.');
-    const registerTransaction = await makeContractCall({
+    const collectFeesTransaction = await makeContractCall({
         contractAddress: gasServiceAddress[0],
         contractName: gasServiceAddress[1],
         functionName: 'collect-fees',
@@ -45,7 +44,7 @@ async function collectFees(stacksAddress, privateKey, networkType, chain, args, 
         fee: 10_000,
     });
     const result = await broadcastTransaction({
-        transaction: registerTransaction,
+        transaction: collectFeesTransaction,
         network: networkType,
     });
 
@@ -74,7 +73,7 @@ if (require.main === module) {
         .description('Collect fees from gas service contract')
         .command('collect-fees')
         .option('--receiver <receiver>', 'Receiver address. Default is the sender address.')
-        .requiredOption('--amount <amount>', 'Amount to collect gas', parseSuiUnitAmount)
+        .requiredOption('--amount <amount>', 'Amount to collect gas')
         .action((options) => {
             mainProcessor(collectFees, options, [], processCommand);
         });

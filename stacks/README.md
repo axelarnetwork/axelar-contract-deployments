@@ -35,7 +35,7 @@ In order to deploy all the contracts required by the Stacks integration, please 
 node stacks/gas-service.js collect-fees --amount 1000000 --receiver <optional stacks receiver address>
 ```
 
-## Setup Trusted Address
+### Setup Trusted Address
 
 Set trusted address
 
@@ -53,4 +53,16 @@ Remove trusted addresses
 
 ```bash
 node stacks/its.js remove-trusted-address <sourceChain> <sourceChain2> ...
+```
+
+### Setup Governance
+
+```bash
+ts-node stacks/setup-contract.js Governance --governanceChain "[governance chain]" --governanceAddress "[governance address]"
+```
+
+### Set owner
+
+```bash
+ts-node stacks/governance.js set-owner <Gateway|InterchainTokenFactory|InterchainTokenService> "[governance address]"
 ```
