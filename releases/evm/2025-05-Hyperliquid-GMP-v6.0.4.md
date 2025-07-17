@@ -104,7 +104,7 @@ npm ci
 ```
 
 
-Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.   
+Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.
 
 1. Fund the following addresses with native tokens on chain:
 
@@ -141,11 +141,11 @@ a. For any deployer key that needs to switch to large block the account must be 
 
 b. For the Gateway and AxelarGasService deployer keys switch to large blocks using the provided script. Once the .env parameters are set execute:
    ```bash
-   ts-node evm/hyperliquid.js --action updateBlockSize --blockSize big
+   ts-node evm/hyperliquid.js update-block-size big
    ```
 c. After release is complete the deployer keys can changed to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks by executing:
    ```bash
-   ts-node evm/hyperliquid.js --action updateBlockSize --blockSize small
+   ts-node evm/hyperliquid.js update-block-size small
    ```
 
 3. Deploy `ConstAddrDeployer`:
@@ -240,7 +240,7 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{
 10. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
 
 ```bash
-# Only for mainnet and official testnet connection
+# Only for mainnet and testnet connection
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
@@ -299,7 +299,7 @@ ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [co
 
 ## Note
 
-**SSL Compatibility**: Some users may encounter SSL certificate verification issues when connecting to the Hyperliquid testnet API endpoint (`https://api.hyperliquid-testnet.xyz`). 
+**SSL Compatibility**: Some users may encounter SSL certificate verification issues when connecting to the Hyperliquid testnet API endpoint (`https://api.hyperliquid-testnet.xyz`).
 
 **Recommended Solutions**:
 1. **Update OpenSSL**: Ensure you have OpenSSL 3.5 or greater installed
