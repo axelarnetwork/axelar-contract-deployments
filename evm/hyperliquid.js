@@ -2,7 +2,15 @@
 
 const { Wallet, ethers, getDefaultProvider, Contract } = require('ethers');
 const { Command, Argument } = require('commander');
-const { printInfo, validateParameters, getContractJSON, getGasOptions, mainProcessor, isHyperliquidChain } = require('./utils');
+const {
+    printInfo,
+    validateParameters,
+    getContractJSON,
+    getGasOptions,
+    mainProcessor,
+    isHyperliquidChain,
+    printWalletInfo,
+} = require('./utils');
 const { addEvmOptions, addOptionsToCommands } = require('./cli-utils');
 const { httpPost } = require('../common/utils');
 const { handleTx } = require('./its');
@@ -147,7 +155,7 @@ async function updateTokenDeployer(wallet, chain, args, options) {
 }
 
 async function main(processor, args, options) {
-    return mainProcessor(options, (config, chain, options) => {
+    return mainProcessor(options, async (_config, chain, options) => {
         if (!isHyperliquidChain(chain)) {
             throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
         }
@@ -156,7 +164,9 @@ async function main(processor, args, options) {
         const provider = getDefaultProvider(rpc);
         const wallet = new Wallet(options.privateKey, provider);
 
-        return processor(wallet, chain, args, options);
+        await printWalletInfo(wallet);
+
+        return await processor(wallet, chain, args, options);
     });
 }
 
