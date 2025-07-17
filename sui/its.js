@@ -321,20 +321,29 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // Salt
     const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::from_address`,
+        target: `${AxelarGateway.address}::bytes32::new`,
         arguments: [walletAddress],
     });
 
-    const [tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+    // Register deployed token (from info)
+    const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [InterchainTokenService, channel, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 
-    if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
-    else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+    await txBuilder.moveCall({
+        target: `${STD_PACKAGE_ID}::option::destroy_none`,
+        arguments: [treasuryCapReclaimer],
+        typeArguments: [[itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('')],
+    });
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol})`, options);
+    if (!options.channel) txBuilder.tx.transferObjects([channel], walletAddress);
+
+    const registerResult = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol})`, options);
+    const tokenId = registerResult.events.filter((evt) => {
+        return evt.parsedJson.token_id ? true : false;
+    })[0].parsedJson.token_id.id;
 
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
