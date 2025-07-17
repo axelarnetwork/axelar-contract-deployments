@@ -340,17 +340,24 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     if (!options.channel) txBuilder.tx.transferObjects([channel], walletAddress);
 
-    const registerResult = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
-        showEvents: true,
-    });
+    const registerResult = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register Custom Coin (${symbol}) in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
     const tokenId = registerResult.events.filter((evt) => {
         return evt.parsedJson.token_id ? true : false;
     })[0].parsedJson.token_id.id;
 
     // If the channel object went out of bounds resolve its object id
-    if (!options.channel) channel = registerResult.events.filter((evt) => {
-        return evt.transactionModule == "channel" ? true : false;
-    })[0].parsedJson.id;
+    if (!options.channel)
+        channel = registerResult.events.filter((evt) => {
+            return evt.transactionModule == 'channel' ? true : false;
+        })[0].parsedJson.id;
 
     // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
     // This submits a LinkToken msg type to ITS Hub.
@@ -376,7 +383,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             bcs.string().serialize(destinationAddress).toBytes(),
             tokenManagerType,
             bcs.string().serialize('TODO: link params').toBytes(),
-        ]
+        ],
     });
 
     await txBuilder.moveCall({
