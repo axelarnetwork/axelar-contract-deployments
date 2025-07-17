@@ -23,7 +23,7 @@ on:
 
 concurrency:
   group: merge-configs
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
