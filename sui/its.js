@@ -214,12 +214,6 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     // New CoinManagement<T>
     const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
 
-    // Salt
-    const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [walletAddress],
-    });
-
     // Channel
     const channel = options.channel
         ? options.channel
@@ -227,30 +221,28 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
               target: `${AxelarGateway.address}::channel::new`,
           });
 
+    // Salt
+    const salt = await txBuilder.moveCall({
+        target: `${AxelarGateway.address}::bytes32::new`,
+        arguments: [walletAddress],
+    });
+
     // Register deployed token (from info)
-    const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+    const [tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
-        arguments: [
-            InterchainTokenService,
-
-            // XXX todo: this type should be correct (&Channel), determine why it's throwing `TypeMismatch`
-            channel,
-
-            salt,
-            metadata,
-            coinManagement,
-        ],
+        arguments: [InterchainTokenService, channel, salt, metadata, coinManagement],
         typeArguments: [tokenType],
     });
 
-    if (options.channel) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
-    else txBuilder.tx.transferObjects([treasuryCapReclaimer, channel], walletAddress);
+    // XXX: treasuryCapReclaimer is an option and fails with `TypeMismatch` if we try to transfer it
+    // and fails with `UnusedValueWithoutDrop` if we don't try to transfer it. Unclear atm, how to 
+    // unwrap or use it correctly
+    const transferObjects = options.channel ? [treasuryCapReclaimer] : [treasuryCapReclaimer, channel];
+    txBuilder.tx.transferObjects(transferObjects, walletAddress);
 
-    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
+    await broadcastFromTxBuilder(txBuilder, keypair, `Register Custom Coin (${symbol}) in InterchainTokenService`, options, {
         showEvents: true,
     });
-
-    const tokenId = result.events[0].parsedJson.token_id.id;
 
     // Save the deployed token
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
@@ -303,11 +295,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     await txBuilder.moveCall({
         target: `${AxelarGateway.address}::gateway::send_message`,
-        arguments: [
-            Gateway,
-            // XXX: CommandArgumentError { arg_idx: 1, kind: TypeMismatch } in command 1
-            messageTicket,
-        ],
+        arguments: [Gateway, messageTicket],
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, `Register Token Metadata (${symbol})`, options);
