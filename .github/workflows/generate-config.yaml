@@ -7,6 +7,7 @@ jobs:
   reusable-update-config:
     if: github.event.pull_request.merged == true
     strategy:
+      fail-fast: false
       matrix:
         include:
           - network: mainnet
