@@ -1,6 +1,6 @@
 'use strict';
 
-const { Contract, nativeToScVal, Operation, Address } = require('@stellar/stellar-sdk');
+const { Contract, nativeToScVal, Operation, Address, authorizeInvocation, rpc, xdr } = require('@stellar/stellar-sdk');
 const { Command, Option, Argument } = require('commander');
 const {
     saveConfig,
@@ -24,6 +24,8 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
@@ -370,6 +372,85 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
+async function createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain) {
+    const publicKey = wallet.publicKey();
+    const networkPassphrase = getNetworkPassphrase(chain.networkType);
+
+    // 20 seems a reasonable number of ledgers to allow for the operation to take effect
+    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
+
+    const mintAuth = createAuthorizedFunc(Address.fromString(tokenAddress), 'mint', [recipientScVal, amountScVal]);
+    const executeAuth = createAuthorizedFunc(Address.fromString(tokenManager), 'execute', [
+        tokenAddressScVal,
+        nativeToScVal('mint', { type: 'symbol' }),
+        nativeToScVal([recipientScVal, amountScVal]),
+    ]);
+
+    const [mintInvocation, executeInvocation] = [
+        new xdr.SorobanAuthorizedInvocation({ function: mintAuth, subInvocations: [] }),
+        new xdr.SorobanAuthorizedInvocation({ function: executeAuth, subInvocations: [] }),
+    ];
+
+    return Promise.all([
+        authorizeInvocation(wallet, validUntil, mintInvocation, publicKey, networkPassphrase),
+        authorizeInvocation(wallet, validUntil, executeInvocation, publicKey, networkPassphrase),
+    ]);
+}
+
+async function testExecute(wallet, _, chain, contract, args, options) {
+    const [recipient, tokenAddress, tokenManager, amount] = args;
+
+    validateParameters({
+        isValidStellarAddress: { recipient, tokenAddress, tokenManager },
+        isValidNumber: { amount },
+    });
+
+    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
+    const tokenAddressScVal = nativeToScVal(tokenAddress, { type: 'address' });
+    const tokenManagerScVal = nativeToScVal(tokenManager, { type: 'address' });
+    const amountScVal = nativeToScVal(amount, { type: 'i128' });
+
+    let operation;
+
+    try {
+        const tokenContract = new Contract(tokenAddress);
+        const isMinterOperation = tokenContract.call('is_minter', nativeToScVal(tokenManager, { type: 'address' }));
+        await broadcast(isMinterOperation, wallet, chain, 'Check Is Minter', { ...options, simulate: true });
+
+        printInfo('Token manager is minter, calling without auth');
+        operation = contract.call('test_execute', recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal);
+    } catch (error) {
+        printInfo('Cannot check minter status, calling with auth');
+        operation = Operation.invokeContractFunction({
+            contract: contract.contractId(),
+            function: 'test_execute',
+            args: [recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal],
+            auth: await createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain),
+        });
+    }
+
+    await broadcast(operation, wallet, chain, 'Test Execute', options);
+    printInfo('Successfully executed test for recipient', recipient);
+}
+
+async function addMinter(wallet, _, chain, contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    const operation = contract.call(
+        'add_minter',
+        nativeToScVal(tokenAddress, { type: 'address' }),
+        nativeToScVal(minter, { type: 'address' }),
+    );
+
+    await broadcast(operation, wallet, chain, 'Add Minter', options);
+    printInfo('Successfully added minter for token', tokenAddress);
+    printInfo('Minter address', minter);
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
@@ -526,6 +607,20 @@ if (require.main === module) {
         .description('Get the deployed token manager address with the given token id')
         .action((tokenId, options) => {
             mainProcessor(deployedTokenManager, [tokenId], options);
+        });
+
+    program
+        .command('test-execute <recipient> <tokenAddress> <tokenManager> <amount>')
+        .description('test execute')
+        .action((recipient, tokenAddress, tokenManager, amount, options) => {
+            mainProcessor(testExecute, [recipient, tokenAddress, tokenManager, amount], options);
+        });
+
+    program
+        .command('add-minter <tokenAddress> <minter>')
+        .description('Add a minter to a token contract via ITS (only operator)')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(addMinter, [tokenAddress, minter], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
