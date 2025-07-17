@@ -20,9 +20,15 @@ on:
         required: true
       CONFIG_REPO:
         required: true
+
+concurrency:
+  group: merge-configs
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
+
 jobs:
   update-config:
     env:
