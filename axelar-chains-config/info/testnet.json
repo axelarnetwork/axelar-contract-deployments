@@ -3089,7 +3089,7 @@
       "name": "Hyperliquid",
       "axelarId": "hyperliquid",
       "chainId": 998,
-      "rpc": "https://spectrum-01.simplystaking.xyz/hyperliquid-tn-rpc/evm",
+      "rpc": "https://rpc.hyperliquid-testnet.xyz/evm",
       "tokenSymbol": "HYPE",
       "confirmations": 1,
       "finality": "finalized",
