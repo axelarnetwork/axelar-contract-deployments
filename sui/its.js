@@ -382,7 +382,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
             destinationChain, // This assumes the chain is already added as a trusted chain
             bcs.string().serialize(destinationAddress).toBytes(),
             tokenManagerType,
-            bcs.string().serialize('TODO: link params').toBytes(),
+            bcs.string().serialize('link params').toBytes(), // TODO: what value should go here?
         ],
     });
 
