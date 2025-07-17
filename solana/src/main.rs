@@ -48,6 +48,10 @@ struct Cli {
     #[clap(long, env = "ENV", arg_enum)]
     env: AxelarNetwork,
 
+    /// Axelar chainId to be used in chain config files.
+    #[clap(long, env = "CHAIN_ID")]
+    chain_id: String,
+
     /// URL for Solana's JSON RPC or moniker (or their first letter):  [mainnet-beta, testnet,
     /// devnet, localhost]". Defaults to the value set in the Solana CLI config.
     #[clap(
@@ -237,7 +241,13 @@ async fn run() -> eyre::Result<()> {
         .or_else(|| maybe_solana_config.as_ref().map(|c| c.json_rpc_url.clone()))
         .ok_or_else(|| eyre!("No URL provided and no Solana CLI config found"))?;
 
-    let config = Config::new(url, cli.output_dir, cli.chains_info_dir, cli.env)?;
+    let config = Config::new(
+        url,
+        cli.output_dir,
+        cli.chains_info_dir,
+        cli.env,
+        cli.chain_id,
+    )?;
 
     match cli.command {
         Command::Send(args) => {

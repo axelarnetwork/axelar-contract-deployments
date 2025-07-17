@@ -73,19 +73,6 @@ impl From<AxelarNetwork> for ChainsInfoFile {
     }
 }
 
-pub(crate) struct ChainAxelarId(pub(crate) String);
-
-impl From<NetworkType> for ChainAxelarId {
-    fn from(value: NetworkType) -> Self {
-        match value {
-            NetworkType::Local => Self("solana-local".to_owned()),
-            NetworkType::Devnet => Self("solana-devnet".to_owned()),
-            NetworkType::Testnet => Self("solana-testnet".to_owned()),
-            NetworkType::Mainnet => Self("solana".to_owned()),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct SolanaTransactionParams {
     pub(crate) fee_payer: String,

@@ -11,7 +11,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
-use crate::types::{ChainAxelarId, SerializableSolanaTransaction, SolanaTransactionParams};
+use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
     ITS_KEY, OPERATOR_KEY, SOLANA_CHAIN_KEY, UPGRADE_AUTHORITY_KEY, decode_its_destination,
@@ -942,7 +942,7 @@ fn init(
     Ok(vec![axelar_solana_its::instruction::initialize(
         *fee_payer,
         init_args.operator,
-        ChainAxelarId::from(config.network_type).0,
+        config.chain_id.to_owned(),
         its_hub_address,
     )?])
 }

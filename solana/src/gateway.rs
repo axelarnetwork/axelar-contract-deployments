@@ -34,8 +34,8 @@ use crate::config::Config;
 use crate::multisig_prover_types::Uint128Extensions;
 use crate::multisig_prover_types::msg::ProofStatus;
 use crate::types::{
-    ChainAxelarId, LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet,
-    SigningVerifierSet, SolanaTransactionParams,
+    LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet, SigningVerifierSet,
+    SolanaTransactionParams,
 };
 use crate::utils::{
     self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
@@ -356,8 +356,8 @@ async fn get_verifier_set(
     } else {
         let multisig_prover_address = {
             let address = String::deserialize(
-                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY]
-                    [ChainAxelarId::from(config.network_type).0][ADDRESS_KEY],
+                &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain_id]
+                    [ADDRESS_KEY],
             )?;
 
             cosmrs::AccountId::from_str(&address).unwrap()
@@ -501,8 +501,7 @@ async fn init(
     let payer = *fee_payer;
     let upgrade_authority = payer;
 
-    chains_info[CHAINS_KEY][ChainAxelarId::from(config.network_type).0][CONTRACTS_KEY]
-        [GATEWAY_KEY] = json!({
+    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GATEWAY_KEY] = json!({
         ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
@@ -584,7 +583,7 @@ fn approve(
             id: approve_args.message_id,
         },
         source_address: approve_args.source_address,
-        destination_chain: ChainAxelarId::from(config.network_type).0,
+        destination_chain: config.chain_id.clone(),
         destination_address: approve_args.destination_address,
         payload_hash,
     };
@@ -685,8 +684,8 @@ async fn submit_proof(
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let multisig_prover_address = {
         let address = String::deserialize(
-            &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY]
-                [ChainAxelarId::from(config.network_type).0][ADDRESS_KEY],
+            &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][&config.chain_id]
+                [ADDRESS_KEY],
         )?;
 
         cosmrs::AccountId::from_str(&address).unwrap()
@@ -829,7 +828,7 @@ async fn execute(
             id: execute_args.message_id,
         },
         source_address: execute_args.source_address,
-        destination_chain: ChainAxelarId::from(config.network_type).0,
+        destination_chain: config.chain_id.clone(),
         destination_address: execute_args.destination_address,
         payload_hash: solana_sdk::keccak::hashv(&[&hex::decode(
             execute_args
