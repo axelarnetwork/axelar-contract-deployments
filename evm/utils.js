@@ -293,6 +293,9 @@ function validateParameters(parameters) {
 
         for (const paramKey of Object.keys(paramsObj)) {
             const paramValue = paramsObj[paramKey];
+            if (paramValue === undefined) {
+                throw new Error(`${paramKey} is not defined. Missing in the chain config.`);
+            }
             const isValid = validatorFunction(paramValue);
 
             if (!isValid) {
