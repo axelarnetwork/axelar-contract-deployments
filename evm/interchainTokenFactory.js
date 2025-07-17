@@ -17,14 +17,15 @@ const {
     getGasOptions,
     printWalletInfo,
     printTokenInfo,
+    isValidChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
-const { getDeploymentSalt, handleTx, isValidDestinationChain } = require('./its');
+const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -214,7 +215,8 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidDestinationChain(config, destinationChain);
+            // TODO tkulik: isValidChain - Maybe we can do that in the main processor?
+            isValidChain(config, destinationChain);
 
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,

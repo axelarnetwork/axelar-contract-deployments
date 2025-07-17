@@ -110,15 +110,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-function isValidDestinationChain(config, destinationChain) {
-    if (destinationChain === '') {
-        return;
-    }
-
-    isValidChain(config, destinationChain);
-}
-
-async function processCommand(config, chain, action, options) {
+async function processCommand(_constAxelarNetwork, chain, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -336,6 +328,7 @@ async function processCommand(config, chain, action, options) {
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
+            // TODO tkulik: encodeITSDestination - Maybe we can do that in the main processor?
             const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
@@ -512,6 +505,7 @@ async function processCommand(config, chain, action, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
+            // TODO tkulik: getTrustedChains - Maybe we can do that in the main processor?
             const trustedChains = await getTrustedChains(config, interchainTokenService);
             printInfo('Trusted chains', trustedChains);
 
@@ -587,7 +581,9 @@ async function processCommand(config, chain, action, options) {
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
-            isValidDestinationChain(config, destinationChain);
+
+            // TODO tkulik: isValidChain - Maybe we can do that in the main processor?
+            isValidChain(config, destinationChain);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
@@ -630,7 +626,7 @@ async function processCommand(config, chain, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (constAxelarNetwork, chain, options) => processCommand(constAxelarNetwork, chain, action, options));
 }
 
 if (require.main === module) {
@@ -838,4 +834,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains };

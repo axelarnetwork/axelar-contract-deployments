@@ -57,7 +57,6 @@ const {
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
@@ -486,13 +485,13 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMBatch = async (config, chain, batchID = '') => {
-    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (constAxelarNetwork, chain, batchID = '') => {
+    const batch = await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+const getAmplifierVerifiers = async (constAxelarNetwork, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(constAxelarNetwork, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -504,7 +503,7 @@ const getAmplifierVerifiers = async (config, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
+const getEVMAddresses = async (constAxelarNetwork, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -512,8 +511,8 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(constAxelarNetwork, chain)
+        : await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -523,14 +522,6 @@ const getEVMAddresses = async (config, chain, options = {}) => {
 
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
-
-function loadParallelExecutionConfig(env, chain) {
-    return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
-function saveParallelExecutionConfig(config, env, chain) {
-    writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
-}
 
 async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
@@ -693,70 +684,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
-    if (options.parallel && chains.length > 1) {
-        const cmds = process.argv.filter((command) => command);
-        let chainCommandIndex = -1;
-        let skipPrompt = false;
-
-        for (let commandIndex = 0; commandIndex < cmds.length; commandIndex++) {
-            const cmd = cmds[commandIndex];
-
-            if (cmd === '-n' || cmd === '--chainName' || cmd === '--chainNames') {
-                chainCommandIndex = commandIndex;
-            } else if (cmd === '--parallel') {
-                cmds[commandIndex] = '--saveChainSeparately';
-            } else if (cmd === '-y' || cmd === '--yes') {
-                skipPrompt = true;
-            }
-        }
-
-        if (!skipPrompt) {
-            cmds.push('-y');
-        }
-
-        const successfullChains = [];
-
-        const executeChain = (chainName) => {
-            const chain = config.chains[chainName.toLowerCase()];
-
-            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-                printWarn('Skipping chain', chain.name);
-                return Promise.resolve();
-            }
-
-            return new Promise((resolve) => {
-                cmds[chainCommandIndex + 1] = chainName;
-
-                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
-                    printInfo('-------------------------------------------------------');
-                    printInfo(`Logs for ${chainName}`, stdout);
-
-                    if (error) {
-                        printError(`Error while running script for ${chainName}`, error);
-                    } else {
-                        successfullChains.push(chainName);
-                        printInfo(`Finished running script for chain`, chainName);
-                    }
-
-                    resolve();
-                });
-            });
-        };
-
-        await Promise.all(chains.map(executeChain));
-
-        if (save) {
-            for (const chainName of successfullChains) {
-                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
-            }
-
-            saveConfig(config, options.env);
-        }
-
-        return;
-    }
-
     let results = [];
+    const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
@@ -769,7 +698,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config, chain, options);
+            const result = await processCommand(constAxelarNetwork, chain, options);
 
             if (result) {
                 results.push(result);
@@ -781,14 +710,10 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
                 throw error;
             }
         }
+    }
 
-        if (save) {
-            if (options.saveChainSeparately) {
-                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
-            } else {
-                saveConfig(config, options.env);
-            }
-        }
+    if (save) {
+        saveConfig(config, options.env);
     }
 
     return results;
@@ -952,8 +877,11 @@ function validateGasOptions(gasOptions) {
 }
 
 function isValidChain(config, chainName) {
-    const chains = config.chains;
+    if (chainName === '') {
+        return;
+    }
 
+    const chains = config.chains;
     const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
@@ -1013,7 +941,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(config, chain, options) {
+async function getWeightedSigners(constAxelarNetwork, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1030,7 +958,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(constAxelarNetwork, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {

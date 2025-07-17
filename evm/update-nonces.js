@@ -9,7 +9,7 @@ const { mainProcessor, printInfo, prompt } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { env, rpc, yes } = options;
     let { addresses } = options;
     const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);

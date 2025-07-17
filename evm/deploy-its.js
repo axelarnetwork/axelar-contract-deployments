@@ -138,6 +138,7 @@ async function deployAll(config, wallet, chain, options) {
         printInfo('Trusted chains', trustedChains);
     }
 
+    // TODO tkulik: Why do we need to check the existing address?
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
@@ -385,7 +386,7 @@ async function deployAll(config, wallet, chain, options) {
     }
 }
 
-async function deploy(config, chain, options) {
+async function deploy(_, chain, options) {
     const { privateKey, salt } = options;
 
     const rpc = chain.rpc;
@@ -401,10 +402,10 @@ async function deploy(config, chain, options) {
         throw new Error(`Invalid operator address: ${operatorAddress}`);
     }
 
-    await deployAll(config, wallet, chain, options);
+    await deployAll(_, wallet, chain, options);
 }
 
-async function upgrade(_, chain, options) {
+async function upgrade(chain, options) {
     const { artifactPath, privateKey, predictOnly } = options;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -494,11 +495,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     if (options.upgrade) {
-        await upgrade(config, chain, options);
+        await upgrade(chain, options);
     } else {
-        await deploy(config, chain, options);
+        await deploy(chain, options);
     }
 }
 

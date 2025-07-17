@@ -28,7 +28,7 @@ function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
 
-async function getImplementationArgs(contractName, config, options) {
+async function getImplementationArgs(contractName, contracts, options) {
     let args;
 
     try {
@@ -37,7 +37,7 @@ async function getImplementationArgs(contractName, config, options) {
         console.error('Error parsing args:\n', error.message);
     }
 
-    const contractConfig = config[contractName];
+    const contractConfig = contracts[contractName];
     Object.assign(contractConfig, args);
 
     switch (contractName) {
@@ -57,16 +57,16 @@ async function getImplementationArgs(contractName, config, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+                console.log(`${contracts.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
-                throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+                throw new Error(`${contracts.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = config.AxelarGateway?.address;
+            const gateway = contracts.AxelarGateway?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
@@ -110,7 +110,7 @@ function getUpgradeArgs(contractName) {
 /*
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  */
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 

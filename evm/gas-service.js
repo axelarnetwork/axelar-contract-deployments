@@ -71,7 +71,8 @@ async function getFeeData(api, sourceChain, destinationChain) {
     return feesCache[key];
 }
 
-async function getGasUpdates(config, env, chain, destinationChains) {
+// TODO tkulik: Why do we need to check all the chains in the getGasUpdates?
+async function getGasUpdates(config, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
 
     validateParameters({
@@ -209,7 +210,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     };
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress, yes } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
@@ -257,7 +258,7 @@ async function processCommand(config, chain, options) {
 
             const payload = options.payload || '0x';
 
-            const api = config.axelar.axelarscanApi;
+            const api = constAxelarNetwork.axelarscanApi;
 
             printInfo(`Estimating cross-chain gas fee from ${chain.axelarId} to ${destinationChain}`);
 
@@ -290,7 +291,7 @@ async function processCommand(config, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, chain, chains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');

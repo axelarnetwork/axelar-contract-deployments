@@ -79,7 +79,7 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
     }
 }
 
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const {
         env,
         contractName,
