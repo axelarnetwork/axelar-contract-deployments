@@ -217,8 +217,7 @@ pub(crate) fn domain_separator(
     let router_address = String::deserialize(
         &chains_info[CHAINS_KEY][AXELAR_KEY][CONTRACTS_KEY][ROUTER_KEY][ADDRESS_KEY],
     )?;
-    let chain_id =
-        String::deserialize(&chains_info[CHAINS_KEY][AXELAR_KEY][ADDRESS_KEY][CHAIN_ID_KEY])?;
+    let chain_id = String::deserialize(&chains_info[CHAINS_KEY][AXELAR_KEY][CHAIN_ID_KEY])?;
 
     Ok(hashv(&[
         axelar_id.as_bytes(),
