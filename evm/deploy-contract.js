@@ -211,7 +211,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { env, artifactPath, contractName, deployMethod, privateKey, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -275,6 +275,8 @@ async function processCommand(config, chain, options) {
 
     let existingAddress, existingCodeHash;
 
+
+    // TODO tkulik: Why do we need to check the existing address?
     for (const chainConfig of Object.values(config.chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
         existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
@@ -324,8 +326,6 @@ async function processCommand(config, chain, options) {
     if (deployMethod !== 'create') {
         contractConfig.salt = salt;
     }
-
-    saveConfig(config, options.env);
 
     printInfo(`${chain.name} | ${contractName}`, contractConfig.address);
 

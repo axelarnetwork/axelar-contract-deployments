@@ -468,7 +468,7 @@ const getAmplifierContractOnchainConfig = async (config, chain) => {
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(config, chain, options) {
+async function getDomainSeparator(constAxelarNetwork, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -484,8 +484,8 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     const {
-        axelar: { contracts, chainId },
-    } = config;
+        contracts, chainId,
+    } = constAxelarNetwork;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -547,17 +547,17 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (config, chain, multisigSessionId) => {
+const getMultisigProof = async (constAxelarNetwork, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
+    const value = await client.queryContractSmart(constAxelarNetwork.contracts.MultisigProver[chain].address, query);
     return value;
 };
 
-const getCurrentVerifierSet = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getCurrentVerifierSet = async (constAxelarNetwork, chain) => {
+    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
+        constAxelarNetwork.contracts.MultisigProver[chain].address,
         'current_verifier_set',
     );
 

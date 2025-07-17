@@ -20,7 +20,7 @@ function updateFinalityWaitTime(approxFinalityWaitTime, chain, update) {
     }
 }
 
-async function processCommand(_config, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     let { confirmations, attempts, blockTime, delay } = options;
 
     const rpc = options.rpc || chain.rpc;
