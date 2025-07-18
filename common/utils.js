@@ -20,6 +20,8 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
+const kebabToPascal = (str) => str.replace(/-./g, (match) => match.charAt(1).toUpperCase()).replace(/^./, (match) => match.toUpperCase());
+
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
@@ -445,14 +447,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getAmplifierContractOnchainConfig = async (config, chain) => {
+const getAmplifierContractOnchainConfig = async (config, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts.MultisigProver[chain].address, key);
+    const value = await client.queryContractRaw(config.axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(config, chain, options) {
+async function getDomainSeparator(config, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -494,7 +496,7 @@ async function getDomainSeparator(config, chain, options) {
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(config, chain.axelarId)).domain_separator);
+    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(config, chain.axelarId, contract)).domain_separator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -538,10 +540,10 @@ const getMultisigProof = async (config, chain, multisigSessionId) => {
     return value;
 };
 
-const getCurrentVerifierSet = async (config, chain) => {
+const getCurrentVerifierSet = async (config, chain, contract = 'MultisigProver') => {
     const client = await CosmWasmClient.connect(config.axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
+        config.axelar.contracts[contract][chain].address,
         'current_verifier_set',
     );
 
@@ -695,6 +697,7 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
+    kebabToPascal,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
