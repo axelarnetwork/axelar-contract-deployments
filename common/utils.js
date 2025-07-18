@@ -199,8 +199,8 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     );
 };
 
-const itsHubContractAddress = (config) => {
-    return config?.axelar?.contracts?.InterchainTokenService?.address;
+const itsHubContractAddress = (constAxelarNetwork) => {
+    return constAxelarNetwork?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -483,9 +483,7 @@ async function getDomainSeparator(constAxelarNetwork, chain, options) {
         return options.domainSeparator;
     }
 
-    const {
-        contracts, chainId,
-    } = constAxelarNetwork;
+    const { contracts, chainId } = constAxelarNetwork;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -519,12 +517,13 @@ async function getDomainSeparator(constAxelarNetwork, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName, options = {}) => {
+const getChainConfig = (chainsSnapshot, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }
 
-    const chainConfig = config.chains[chainName] || config[chainName];
+    // TODO tkulik: const chainConfig = chainsSnapshot[chainName] || config[chainName];
+    const chainConfig = chainsSnapshot[chainName];
 
     if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
@@ -609,13 +608,13 @@ const itsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-const itsEdgeChains = (config) =>
-    Object.values(config.chains)
+const itsEdgeChains = (chainsSnapshot) =>
+    Object.values(chainsSnapshot)
         .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
-const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
+const parseTrustedChains = (chainsSnapshot, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chainsSnapshot) : trustedChains;
 };
 
 const readContractCode = (options) => {
@@ -642,8 +641,8 @@ function solanaAddressBytesFromBase58(string) {
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
-function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+function encodeITSDestination(chainsSnapshot, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(chainsSnapshot, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
         case undefined:

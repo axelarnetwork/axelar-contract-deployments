@@ -11,7 +11,7 @@ const { Command, Option } = require('commander');
 const {
     printInfo,
     prompt,
-    mainProcessor,
+    mainProcessorSequential,
     validateParameters,
     getContractJSON,
     getGasOptions,
@@ -25,7 +25,7 @@ const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -215,8 +215,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            // TODO tkulik: isValidChain - Maybe we can do that in the main processor?
-            isValidChain(config, destinationChain);
+            isValidChain(chainsSnapshot, destinationChain);
 
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
@@ -301,7 +300,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorSequential(options, processCommand);
 }
 
 if (require.main === module) {

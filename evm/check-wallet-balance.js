@@ -4,7 +4,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { getDefaultProvider, BigNumber } = ethers;
 
-const { printError, mainProcessor } = require('./utils');
+const { printError, mainProcessorConcurrent } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getNonceFileData } = require('./sign-utils');
 
@@ -44,7 +44,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

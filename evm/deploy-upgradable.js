@@ -20,7 +20,7 @@ const {
     prompt,
     getGasOptions,
     getDeployOptions,
-    mainProcessor,
+    mainProcessorConcurrent,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
@@ -289,7 +289,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

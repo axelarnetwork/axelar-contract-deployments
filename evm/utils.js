@@ -638,23 +638,13 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
-    if (!options.env) {
-        throw new Error('Environment was not provided');
-    }
-
-    printInfo('Environment', options.env);
-
-    const config = loadConfig(options.env);
-    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
-
-    let chains = [];
-
-    if (options.chainNames === 'all') {
+const getChains = (config, chainNames, skipChains, startFromChain) => {
+    let chains;
+    if (chainNames === 'all') {
         chains = Object.keys(config.chains);
         chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
-    } else if (options.chainNames) {
-        chains = options.chainNames.split(',');
+    } else if (chainNames) {
+        chains = chainNames.split(',');
         chains.forEach((chain) => {
             if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
                 throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
@@ -668,15 +658,18 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
 
-    if (options.startFromChain) {
-        const startIndex = chains.findIndex((chain) => chain === options.startFromChain.toLowerCase());
+    if (startFromChain) {
+        const startIndex = chains.findIndex((chain) => chain === startFromChain.toLowerCase());
 
         if (startIndex === -1) {
-            throw new Error(`Chain ${options.startFromChain} is not defined in the info file`);
+            throw new Error(`Chain ${startFromChain} is not defined in the info file`);
         }
 
         chains = chains.slice(startIndex);
     }
+
+    const chainsToSkip = (skipChains || '').split(',').map((str) => str.trim().toLowerCase());
+    chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
 
     for (const chainName of chains) {
         if (config.chains[chainName.toLowerCase()] === undefined) {
@@ -684,21 +677,29 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
+    return chains;
+};
+
+const mainProcessorSequential = async (options, processCommand, save = true) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
     let results = [];
+    const chainsSnapshot = chains.slice(); // TODO tkulik: does that works as a deep copy?
     const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-            printWarn('Skipping chain', chain.name);
-            continue;
-        }
-
-        console.log('');
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(constAxelarNetwork, chain, options);
+            const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
 
             if (result) {
                 results.push(result);
@@ -706,7 +707,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
-            if (!catchErr && !options.ignoreError) {
+            if (!options.ignoreError) {
                 throw error;
             }
         }
@@ -721,8 +722,39 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
     return results;
 };
 
+const mainProcessorConcurrent = async (options, processCommand, save = true) => {
+    // TODO tkulik: what to do with the logger?
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
+    let promiseResults = [];
+    const constAxelarNetwork = config.axelar;
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        printInfo('Chain', chain.name, chalk.cyan);
+        promiseResults.push(processCommand(constAxelarNetwork, chain, options));
+    }
+
+    const results = (await Promise.all(promiseResults)).filter((result) => result !== undefined);
+
+    create2DeployedContractsValidation(config, results);
+
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
+    return results;
+};
+
 // TODO tkulik: post validation of the create2 deployed contracts
-function create2DeployedContractsValidation(config, results) {
+function create2DeployedContractsValidation(config) {
     let existingAddress;
     for (const chainConfig of Object.values(config.chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
@@ -938,13 +970,11 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
+function isValidChain(chainsSnapshot, chainName) {
     if (chainName === '') {
         return;
     }
-
-    const chains = config.chains;
-    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+    const validChain = Object.values(chainsSnapshot).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
         throw new Error(`Invalid destination chain: ${chainName}`);
@@ -1108,7 +1138,8 @@ module.exports = {
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
-    mainProcessor,
+    mainProcessorConcurrent,
+    mainProcessorSequential,
     getContractPath,
     getContractJSON,
     isBytes32Array,

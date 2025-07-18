@@ -9,7 +9,7 @@ const {
     BigNumber,
 } = ethers;
 
-const { printInfo, mainProcessor, prompt } = require('./utils');
+const { printInfo, mainProcessorConcurrent, prompt } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 const defaultGasLimit = 3e6;
@@ -95,7 +95,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, true);
+    await mainProcessorConcurrent(options, processCommand, true);
 }
 
 if (require.main === module) {

@@ -3,7 +3,7 @@
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const { Command } = require('commander');
-const { mainProcessor, printWalletInfo } = require('./utils');
+const { mainProcessorConcurrent, printWalletInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
@@ -15,7 +15,7 @@ async function processCommand(_, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

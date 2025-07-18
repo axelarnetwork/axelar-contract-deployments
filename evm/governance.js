@@ -21,7 +21,7 @@ const {
     printWarn,
     getBytecodeHash,
     isValidAddress,
-    mainProcessor,
+    mainProcessorConcurrent,
     isValidDecimal,
     prompt,
     isValidCalldata,
@@ -464,7 +464,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 async function main(options) {
     proposals = [];
 
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 
     const proposal = {
         title: 'Interchain Governance Proposal',

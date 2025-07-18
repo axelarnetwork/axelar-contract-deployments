@@ -17,7 +17,7 @@ const {
     isNonEmptyStringArray,
     isNumberArray,
     isValidAddress,
-    mainProcessor,
+    mainProcessorConcurrent,
     isValidDecimal,
     prompt,
     isBytes32Array,
@@ -363,7 +363,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false);
+    await mainProcessorConcurrent(options, processCommand, false);
 }
 
 if (require.main === module) {

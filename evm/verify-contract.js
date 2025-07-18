@@ -14,7 +14,7 @@ const {
     getEVMAddresses,
     printInfo,
     printError,
-    mainProcessor,
+    mainProcessorSequential,
     getContractJSON,
     validateParameters,
     verifyContractByName,
@@ -72,7 +72,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
     );
 }
 
-async function processCommand(constAxelarNetwork, chain, options) {
+async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options) {
     const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
@@ -230,8 +230,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
 
             const itsHubAddress = constAxelarNetwork.contracts?.InterchainTokenService?.address;
 
-            // TODO tkulik: getTrustedChains - Maybe we can do that in the main processor?
-            const trustedChains = await getTrustedChains(config, its);
+            const trustedChains = await getTrustedChains(chainsSnapshot, its);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]'],
@@ -331,7 +330,8 @@ async function processCommand(constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false, true);
+    // TODO tkulik: catchErr - why we need to catch the error here?
+    await mainProcessorSequential(options, processCommand, false);
 }
 
 if (require.main === module) {
