@@ -5,7 +5,7 @@ const { loadConfig, printInfo, printWarn } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, _, options) {
+async function rewards(client, config, _args, options) {
     const { chainName } = options;
 
     const rewardsContractAddresses = {
@@ -31,7 +31,7 @@ async function rewards(client, config, _, options) {
     }
 }
 
-async function customTokens(client, config, args, _) {
+async function customTokens(client, config, args, _options) {
     const [chainName, tokenAddress] = args;
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 

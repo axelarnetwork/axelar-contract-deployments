@@ -32,6 +32,9 @@ const TRANSACTION_TIMEOUT = 30;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
 
+// Ledger extension for authorization operations
+const LEDGER_EXTENSION_FOR_AUTH = 20;
+
 // TODO: Need to be migrated to Pascal Case
 const SUPPORTED_CONTRACTS = new Set([
     'AxelarExample',
@@ -79,6 +82,17 @@ function getNetworkPassphrase(networkType: NetworkType) {
         default:
             throw new Error(`Unknown network type: ${networkType}`);
     }
+}
+
+/**
+ * Calculates the validUntil ledger sequence for authorization operations
+ * @param {Object} chain - Chain configuration object containing RPC URL
+ * @returns {Promise<number>} - The ledger sequence number until which the authorization is valid
+ */
+async function getAuthValidUntilLedger(chain) {
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const latestLedger = await server.getLatestLedger();
+    return latestLedger.sequence + LEDGER_EXTENSION_FOR_AUTH;
 }
 
 const addBaseOptions = (command: Command, options: Options = {}) => {
@@ -656,6 +670,7 @@ module.exports = {
     getWallet,
     estimateCost,
     getNetworkPassphrase,
+    getAuthValidUntilLedger,
     addBaseOptions,
     getNewSigners,
     serializeValue,

@@ -26,6 +26,7 @@ const {
     serializeValue,
     createAuthorizedFunc,
     getNetworkPassphrase,
+    getAuthValidUntilLedger,
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
@@ -68,7 +69,7 @@ async function removeTrustedChains(wallet, config, chain, contract, args, option
     await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
 }
 
-async function deployInterchainToken(wallet, _, chain, contract, args, options) {
+async function deployInterchainToken(wallet, _config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const minter = caller;
     const [symbol, name, decimal, salt, initialSupply] = args;
@@ -95,7 +96,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function deployRemoteInterchainToken(wallet, config, chain, contract, args, options) {
+async function deployRemoteInterchainToken(wallet, _config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
@@ -122,7 +123,7 @@ async function deployRemoteInterchainToken(wallet, config, chain, contract, args
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function registerCanonicalToken(wallet, _, chain, contract, args, options) {
+async function registerCanonicalToken(wallet, _config, chain, contract, args, options) {
     const [tokenAddress] = args;
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
@@ -131,7 +132,7 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function deployRemoteCanonicalToken(wallet, config, chain, contract, args, options) {
+async function deployRemoteCanonicalToken(wallet, _config, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
     const [tokenAddress, destinationChain] = args;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
@@ -183,7 +184,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
-async function execute(wallet, _, chain, contract, args, options) {
+async function execute(wallet, _config, chain, contract, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const operation = contract.call(
@@ -197,7 +198,7 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
-async function flowLimit(wallet, _, chain, contract, args, options) {
+async function flowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -212,7 +213,7 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Flow Limit', flowLimit || 'No limit set');
 }
 
-async function setFlowLimit(wallet, _, chain, contract, args, options) {
+async function setFlowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId, flowLimit] = args;
 
     validateParameters({
@@ -228,7 +229,7 @@ async function setFlowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Successfully set flow limit', flowLimit);
 }
 
-async function removeFlowLimit(wallet, _, chain, contract, args, options) {
+async function removeFlowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -243,7 +244,7 @@ async function removeFlowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Successfully removed flow limit');
 }
 
-async function interchainTokenAddress(wallet, _, chain, contract, args, options) {
+async function interchainTokenAddress(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -262,7 +263,7 @@ async function interchainTokenAddress(wallet, _, chain, contract, args, options)
     return tokenAddress;
 }
 
-async function deployedTokenManager(wallet, _, chain, contract, args, options) {
+async function deployedTokenManager(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -281,7 +282,7 @@ async function deployedTokenManager(wallet, _, chain, contract, args, options) {
     return tokenManagerAddress;
 }
 
-async function registerTokenMetadata(wallet, _, chain, contract, args, options) {
+async function registerTokenMetadata(wallet, _config, chain, contract, args, options) {
     const [tokenAddress] = args;
     const spender = addressToScVal(wallet.publicKey());
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
@@ -302,7 +303,7 @@ async function registerTokenMetadata(wallet, _, chain, contract, args, options) 
     await broadcast(operation, wallet, chain, 'Token Metadata Registered', options);
 }
 
-async function registerCustomToken(wallet, _, chain, contract, args, options) {
+async function registerCustomToken(wallet, _config, chain, contract, args, options) {
     const deployer = addressToScVal(wallet.publicKey());
     const [salt, tokenAddress, type] = args;
     const saltBytes32 = saltToBytes32(salt);
@@ -376,8 +377,7 @@ async function createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, re
     const publicKey = wallet.publicKey();
     const networkPassphrase = getNetworkPassphrase(chain.networkType);
 
-    // 20 seems a reasonable number of ledgers to allow for the operation to take effect
-    const validUntil = await new rpc.Server(chain.rpc).getLatestLedger().then((info) => info.sequence + 20);
+    const validUntil = await getAuthValidUntilLedger(chain);
 
     const mintAuth = createAuthorizedFunc(Address.fromString(tokenAddress), 'mint', [recipientScVal, amountScVal]);
     const executeAuth = createAuthorizedFunc(Address.fromString(tokenManager), 'execute', [
@@ -397,7 +397,7 @@ async function createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, re
     ]);
 }
 
-async function testExecute(wallet, _, chain, contract, args, options) {
+async function testExecute(wallet, _config, chain, contract, args, options) {
     const [recipient, tokenAddress, tokenManager, amount] = args;
 
     validateParameters({
