@@ -105,7 +105,7 @@ program
                 gasServiceAddress,
                 beginCell().endCell(),
                 toNano('0.05'), // will be sent with transfer notification to gas service
-                beginCell().storeAddress(jettonMinterAddress).storeAddress(jettonWalletAddress).endCell(), // forward payload
+                beginCell().storeAddress(jettonMinterAddress).endCell(), // forward payload
             );
 
             console.log('Transaction result:', res);
@@ -123,7 +123,6 @@ program
             'Pay Jetton Gas',
             buildPayJettonGasForContractCallMessage(
                 jettonMinterAddress,
-                jettonWalletAddress,
                 jettonToSend,
                 destinationChain,
                 destinationAddress,
@@ -224,7 +223,7 @@ program
                 gasServiceAddress,
                 beginCell().endCell(),
                 toNano('0.05'), // will be sent with transfer notification to gas service
-                beginCell().storeAddress(jettonMinterAddress).storeAddress(jettonWalletAddress).endCell(), // forward payload
+                beginCell().storeAddress(jettonMinterAddress).endCell(), // forward payload
             );
 
             console.log('Transaction result:', res);
