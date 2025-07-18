@@ -57,7 +57,6 @@ const {
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
@@ -486,13 +485,13 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMBatch = async (config, chain, batchID = '') => {
-    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (constAxelarNetwork, chain, batchID = '') => {
+    const batch = await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+const getAmplifierVerifiers = async (constAxelarNetwork, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(constAxelarNetwork, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -504,7 +503,7 @@ const getAmplifierVerifiers = async (config, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
+const getEVMAddresses = async (constAxelarNetwork, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -512,8 +511,8 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(constAxelarNetwork, chain)
+        : await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -523,14 +522,6 @@ const getEVMAddresses = async (config, chain, options = {}) => {
 
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
-
-function loadParallelExecutionConfig(env, chain) {
-    return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
-function saveParallelExecutionConfig(config, env, chain) {
-    writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
-}
 
 async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
@@ -647,23 +638,13 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
-const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
-    if (!options.env) {
-        throw new Error('Environment was not provided');
-    }
-
-    printInfo('Environment', options.env);
-
-    const config = loadConfig(options.env);
-    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
-
-    let chains = [];
-
-    if (options.chainNames === 'all') {
+const getChains = (config, chainNames, skipChains, startFromChain) => {
+    let chains;
+    if (chainNames === 'all') {
         chains = Object.keys(config.chains);
         chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
-    } else if (options.chainNames) {
-        chains = options.chainNames.split(',');
+    } else if (chainNames) {
+        chains = chainNames.split(',');
         chains.forEach((chain) => {
             if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
                 throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
@@ -677,15 +658,18 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
 
     chains = chains.map((chain) => chain.trim().toLowerCase());
 
-    if (options.startFromChain) {
-        const startIndex = chains.findIndex((chain) => chain === options.startFromChain.toLowerCase());
+    if (startFromChain) {
+        const startIndex = chains.findIndex((chain) => chain === startFromChain.toLowerCase());
 
         if (startIndex === -1) {
-            throw new Error(`Chain ${options.startFromChain} is not defined in the info file`);
+            throw new Error(`Chain ${startFromChain} is not defined in the info file`);
         }
 
         chains = chains.slice(startIndex);
     }
+
+    const chainsToSkip = (skipChains || '').split(',').map((str) => str.trim().toLowerCase());
+    chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
 
     for (const chainName of chains) {
         if (config.chains[chainName.toLowerCase()] === undefined) {
@@ -693,83 +677,29 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
-    if (options.parallel && chains.length > 1) {
-        const cmds = process.argv.filter((command) => command);
-        let chainCommandIndex = -1;
-        let skipPrompt = false;
+    return chains;
+};
 
-        for (let commandIndex = 0; commandIndex < cmds.length; commandIndex++) {
-            const cmd = cmds[commandIndex];
-
-            if (cmd === '-n' || cmd === '--chainName' || cmd === '--chainNames') {
-                chainCommandIndex = commandIndex;
-            } else if (cmd === '--parallel') {
-                cmds[commandIndex] = '--saveChainSeparately';
-            } else if (cmd === '-y' || cmd === '--yes') {
-                skipPrompt = true;
-            }
-        }
-
-        if (!skipPrompt) {
-            cmds.push('-y');
-        }
-
-        const successfullChains = [];
-
-        const executeChain = (chainName) => {
-            const chain = config.chains[chainName.toLowerCase()];
-
-            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-                printWarn('Skipping chain', chain.name);
-                return Promise.resolve();
-            }
-
-            return new Promise((resolve) => {
-                cmds[chainCommandIndex + 1] = chainName;
-
-                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
-                    printInfo('-------------------------------------------------------');
-                    printInfo(`Logs for ${chainName}`, stdout);
-
-                    if (error) {
-                        printError(`Error while running script for ${chainName}`, error);
-                    } else {
-                        successfullChains.push(chainName);
-                        printInfo(`Finished running script for chain`, chainName);
-                    }
-
-                    resolve();
-                });
-            });
-        };
-
-        await Promise.all(chains.map(executeChain));
-
-        if (save) {
-            for (const chainName of successfullChains) {
-                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
-            }
-
-            saveConfig(config, options.env);
-        }
-
-        return;
+const mainProcessorSequential = async (options, processCommand, save = true) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
     }
 
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
     let results = [];
+    const chainsSnapshot = chains.slice(); // TODO tkulik: does that works as a deep copy?
+    const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-            printWarn('Skipping chain', chain.name);
-            continue;
-        }
-
-        console.log('');
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config, chain, options);
+            const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
 
             if (result) {
                 results.push(result);
@@ -777,22 +707,111 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
-            if (!catchErr && !options.ignoreError) {
+            if (!options.ignoreError) {
                 throw error;
-            }
-        }
-
-        if (save) {
-            if (options.saveChainSeparately) {
-                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
-            } else {
-                saveConfig(config, options.env);
             }
         }
     }
 
+    create2DeployedContractsValidation(config, results);
+
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
     return results;
 };
+
+const mainProcessorConcurrent = async (options, processCommand, save = true) => {
+    // TODO tkulik: what to do with the logger?
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
+    let promiseResults = [];
+    const constAxelarNetwork = config.axelar;
+    for (const chainName of chains) {
+        const chain = config.chains[chainName.toLowerCase()];
+
+        printInfo('Chain', chain.name, chalk.cyan);
+        promiseResults.push(processCommand(constAxelarNetwork, chain, options));
+    }
+
+    const results = (await Promise.all(promiseResults)).filter((result) => result !== undefined);
+
+    create2DeployedContractsValidation(config, results);
+
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
+    return results;
+};
+
+// TODO tkulik: post validation of the create2 deployed contracts
+function create2DeployedContractsValidation(config) {
+    let existingAddress;
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
+
+    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
+        printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    let existingCodeHash;
+
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
+
+    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+
+    if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
+        printWarn(
+            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
+        );
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
+    }
+}
 
 function getConfigByChainId(chainId, config) {
     for (const chain of Object.values(config.chains)) {
@@ -951,10 +970,11 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
-    const chains = config.chains;
-
-    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
+function isValidChain(chainsSnapshot, chainName) {
+    if (chainName === '') {
+        return;
+    }
+    const validChain = Object.values(chainsSnapshot).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
         throw new Error(`Invalid destination chain: ${chainName}`);
@@ -1013,7 +1033,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(config, chain, options) {
+async function getWeightedSigners(constAxelarNetwork, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1030,7 +1050,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(constAxelarNetwork, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -1118,7 +1138,8 @@ module.exports = {
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
-    mainProcessor,
+    mainProcessorConcurrent,
+    mainProcessorSequential,
     getContractPath,
     getContractJSON,
     isBytes32Array,

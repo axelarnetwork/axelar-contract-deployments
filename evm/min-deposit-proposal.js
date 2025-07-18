@@ -2,11 +2,11 @@
 
 const { Command, Option } = require('commander');
 const { addBaseOptions } = require('./cli-utils');
-const { mainProcessor, printInfo, isValidNumber, isValidAddress } = require('./utils');
+const { mainProcessorConcurrent, printInfo, isValidNumber, isValidAddress } = require('./utils');
 
 const values = [];
 
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { address, deposit } = options;
 
     const contracts = chain.contracts;
@@ -41,7 +41,7 @@ async function processCommand(_, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 
     const paramChange = {
         title: 'Update min deposit for governance proposals',

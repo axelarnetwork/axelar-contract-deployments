@@ -197,8 +197,8 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     );
 };
 
-const itsHubContractAddress = (config) => {
-    return config?.axelar?.contracts?.InterchainTokenService?.address;
+const itsHubContractAddress = (constAxelarNetwork) => {
+    return constAxelarNetwork?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -452,7 +452,7 @@ const getAmplifierContractOnchainConfig = async (config, chain) => {
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(config, chain, options) {
+async function getDomainSeparator(constAxelarNetwork, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -467,9 +467,7 @@ async function getDomainSeparator(config, chain, options) {
         return options.domainSeparator;
     }
 
-    const {
-        axelar: { contracts, chainId },
-    } = config;
+    const { contracts, chainId } = constAxelarNetwork;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -503,12 +501,13 @@ async function getDomainSeparator(config, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName, options = {}) => {
+const getChainConfig = (chainsSnapshot, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }
 
-    const chainConfig = config.chains[chainName] || config[chainName];
+    // TODO tkulik: const chainConfig = chainsSnapshot[chainName] || config[chainName];
+    const chainConfig = chainsSnapshot[chainName];
 
     if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
@@ -531,17 +530,17 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (config, chain, multisigSessionId) => {
+const getMultisigProof = async (constAxelarNetwork, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
+    const value = await client.queryContractSmart(constAxelarNetwork.contracts.MultisigProver[chain].address, query);
     return value;
 };
 
-const getCurrentVerifierSet = async (config, chain) => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getCurrentVerifierSet = async (constAxelarNetwork, chain) => {
+    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts.MultisigProver[chain].address,
+        constAxelarNetwork.contracts.MultisigProver[chain].address,
         'current_verifier_set',
     );
 
@@ -593,13 +592,13 @@ const itsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-const itsEdgeChains = (config) =>
-    Object.values(config.chains)
+const itsEdgeChains = (chainsSnapshot) =>
+    Object.values(chainsSnapshot)
         .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
-const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
+const parseTrustedChains = (chainsSnapshot, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chainsSnapshot) : trustedChains;
 };
 
 const readContractCode = (options) => {
@@ -617,8 +616,8 @@ function asciiToBytes(string) {
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
-function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+function encodeITSDestination(chainsSnapshot, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(chainsSnapshot, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
         case undefined:

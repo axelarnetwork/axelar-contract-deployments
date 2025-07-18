@@ -21,7 +21,7 @@ const {
     printWarn,
     getBytecodeHash,
     isValidAddress,
-    mainProcessor,
+    mainProcessorConcurrent,
     isValidDecimal,
     prompt,
     isValidCalldata,
@@ -195,7 +195,7 @@ function getGovernanceProposal(commandType, target, calldata, nativeValue, eta) 
     return defaultAbiCoder.encode(types, values);
 }
 
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, options) {
     const { contractName, address, action, proposalAction, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;
@@ -464,7 +464,7 @@ async function processCommand(_, chain, options) {
 async function main(options) {
     proposals = [];
 
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 
     const proposal = {
         title: 'Interchain Governance Proposal',
