@@ -224,6 +224,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
                 isAddress: { target },
             });
 
+            // TODO tkulik: getGasUpdates - it uses config
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, chain, chains);
 
             if (chainsToUpdate.length === 0) {

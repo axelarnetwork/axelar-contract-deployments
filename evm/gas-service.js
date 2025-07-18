@@ -71,7 +71,6 @@ async function getFeeData(api, sourceChain, destinationChain) {
     return feesCache[key];
 }
 
-// TODO tkulik: Why do we need to check all the chains in the getGasUpdates?
 async function getGasUpdates(config, chain, destinationChains) {
     const api = config.axelar.axelarscanApi;
 
@@ -291,6 +290,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
+            // TODO tkulik: getGasUpdates - it uses config
             const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, chain, chains);
 
             if (chainsToUpdate.length === 0) {

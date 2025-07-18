@@ -29,14 +29,14 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
-async function getConstructorArgs(contractName, config, wallet, options) {
+async function getConstructorArgs(contractName, contracts, wallet, options) {
     const args = options.args ? JSON.parse(options.args) : {};
-    const contractConfig = config[contractName];
+    const contractConfig = contracts[contractName];
     Object.assign(contractConfig, args);
 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
-            const gateway = config.AxelarGateway?.address;
+            const gateway = contracts.AxelarGateway?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
@@ -72,8 +72,8 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         }
 
         case 'InterchainProposalSender': {
-            const gateway = config.AxelarGateway?.address;
-            const gasService = config.AxelarGasService?.address;
+            const gateway = contracts.AxelarGateway?.address;
+            const gasService = contracts.AxelarGasService?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
@@ -87,7 +87,7 @@ async function getConstructorArgs(contractName, config, wallet, options) {
         }
 
         case 'InterchainGovernance': {
-            const gateway = config.AxelarGateway?.address;
+            const gateway = contracts.AxelarGateway?.address;
 
             if (!isAddress(gateway)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
@@ -272,32 +272,6 @@ async function processCommand(_constAxelarNetwork, chain, options) {
     printInfo('Deployment method', deployMethod);
     printInfo('Deployer contract', deployerContract);
     printInfo(`${contractName} will be deployed to`, predictedAddress, chalk.cyan);
-
-    let existingAddress, existingCodeHash;
-
-
-    // TODO tkulik: Why do we need to check the existing address?
-    for (const chainConfig of Object.values(config.chains)) {
-        existingAddress = chainConfig.contracts?.[contractName]?.address;
-        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
-
-        if (existingAddress !== undefined) {
-            break;
-        }
-    }
-
-    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
-
-        if (predeployCodehash !== existingCodeHash) {
-            printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
-            );
-        }
-
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
-        printWarn('This is NOT required if the deployments are done by different integrators');
-    }
 
     if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;

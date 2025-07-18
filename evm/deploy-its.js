@@ -9,7 +9,6 @@ const {
 const {
     deployContract,
     printWalletInfo,
-    saveConfig,
     printInfo,
     printWarn,
     printError,
@@ -130,31 +129,13 @@ async function deployAll(config, wallet, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
+    // TODO tkulik: parseTrustedChains - it uses config
     const trustedChains = parseTrustedChains(config, ['all']);
     const itsHubAddress = itsHubContractAddress(config);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
-    }
-
-    // TODO tkulik: Why do we need to check the existing address?
-    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
-
-    if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
-        printWarn(
-            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
-        );
-
-        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
-
-        if (predeployCodehash !== existingCodeHash) {
-            printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
-            );
-        }
-
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
     }
 
     if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
@@ -373,8 +354,6 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);
-
-        saveConfig(config, options.env);
 
         if (chain.chainId !== 31337) {
             await sleep(5000);

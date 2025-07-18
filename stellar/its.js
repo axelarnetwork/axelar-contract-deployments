@@ -151,7 +151,6 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidNumber: { gasAmount },
     });
 
-    // TODO tkulik: encodeITSDestination - Maybe we can do that in the main processor?
     const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
     printInfo('Encoded ITS destination address', itsDestinationAddress);
