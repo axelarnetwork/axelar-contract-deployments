@@ -2516,7 +2516,7 @@
       "name": "Sui",
       "axelarId": "sui",
       "networkType": "mainnet",
-      "rpc": "https://sui-rpc.publicnode.com",
+      "rpc": "https://sui-mainnet.public.blastapi.io",
       "tokenSymbol": "SUI",
       "decimals": 9,
       "chainType": "sui",
