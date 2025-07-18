@@ -19,6 +19,7 @@ const GAS_SERVICE_CMD_OPTIONS = [
 ];
 
 const GATEWAY_CMD_OPTIONS = [
+    new Option('--owner <owner>', 'owner for the gateway'),
     new Option('--operator <operator>', 'operator for the gateway'),
     new Option('--minimumRotationDelay <minimumRotationDelay>', 'minium delay for signer rotations (in second)')
         .argParser((val) => parseInt(val))
@@ -63,7 +64,7 @@ function getGasServiceFunctionArgs(config, chain, options) {
 
 async function getGatewayFunctionArgs(config, chain, options) {
     validateParameters({
-        isNonEmptyString: { operator: options.operator },
+        isNonEmptyString: { operator: options.operator, owner: options.owner },
         isValidNumber: {
             minimumRotationDelay: options.minimumRotationDelay,
             previousSignerRetention: options.previousSignerRetention,
@@ -83,6 +84,7 @@ async function getGatewayFunctionArgs(config, chain, options) {
     return {
         functionArgs: [
             Cl.bufferFromHex(claritySigners),
+            standardPrincipalCV(options.owner),
             standardPrincipalCV(options.operator),
             Cl.bufferFromHex(domainSeparator),
             Cl.uint(options.minimumRotationDelay),
@@ -95,6 +97,7 @@ async function getGatewayFunctionArgs(config, chain, options) {
                 nonce,
             },
             claritySigners,
+            owner: options.owner,
             operator: options.operator,
             domainSeparator,
             minimumRotationDelay: options.minimumRotationDelay,
