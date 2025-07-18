@@ -154,16 +154,6 @@ async function deploy(constAxelarNetwork, chain, options) {
         printInfo('Predicted proxy address', proxyAddress, chalk.cyan);
     }
 
-    // TODO tkulik: Why do we need to check the existing address?
-    const existingAddress = config.chains.arbitrum?.contracts?.[contractName]?.address;
-
-    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
-        printWarn(
-            `Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} on chain ${config.chains.arbitrum.name}.`,
-        );
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
-    }
-
     printInfo('Is verification enabled?', verify ? 'y' : 'n');
 
     if (await isContract(proxyAddress, wallet.provider)) {

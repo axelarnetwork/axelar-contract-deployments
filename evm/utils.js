@@ -712,12 +712,74 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         }
     }
 
+    create2DeployedContractsValidation(config, results);
+
     if (save) {
         saveConfig(config, options.env);
     }
 
     return results;
 };
+
+// TODO tkulik: post validation of the create2 deployed contracts
+function create2DeployedContractsValidation(config, results) {
+    let existingAddress;
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
+
+    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
+        printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    let existingCodeHash;
+
+    for (const chainConfig of Object.values(config.chains)) {
+        existingAddress = chainConfig.contracts?.[contractName]?.address;
+        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
+
+        if (existingAddress !== undefined) {
+            break;
+        }
+    }
+
+    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
+        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
+        printWarn('This is NOT required if the deployments are done by different integrators');
+    }
+
+    existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+
+    if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
+        printWarn(
+            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
+        );
+
+        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+
+        if (predeployCodehash !== existingCodeHash) {
+            printWarn(
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
+            );
+        }
+
+        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
+    }
+}
 
 function getConfigByChainId(chainId, config) {
     for (const chain of Object.values(config.chains)) {

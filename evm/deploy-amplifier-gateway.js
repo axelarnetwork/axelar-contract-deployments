@@ -113,23 +113,6 @@ async function deploy(constAxelarNetwork, chain, options) {
         printInfo('Predicted gateway proxy address', proxyAddress, chalk.cyan);
     }
 
-    let existingAddress;
-
-    // TODO tkulik: Why do we need to check the existing address?
-    for (const chainConfig of Object.values(config.chains)) {
-        existingAddress = chainConfig.contracts?.[contractName]?.address;
-
-        if (existingAddress !== undefined) {
-            break;
-        }
-    }
-
-    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
-        printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
-        printWarn('This is NOT required if the deployments are done by different integrators');
-    }
-
     if (await isContract(proxyAddress, wallet.provider)) {
         printError(`Contract already deployed at predicted address "${proxyAddress}"!`);
     }
