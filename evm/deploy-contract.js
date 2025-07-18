@@ -2,6 +2,7 @@
 
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
+const { Contract } = ethers;
 const {
     Wallet,
     getDefaultProvider,
@@ -26,6 +27,22 @@ const {
     validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
+
+async function performAxelarTransceiverUpgrade(proxyAddress, newImplementationAddress, contractAbi, wallet, gasOptions) {
+    const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
+
+    const owner = await proxyContract.owner();
+    if (owner !== wallet.address) {
+        printError(`Wallet ${wallet.address} is not the owner of the transceiver. Owner is ${owner}`);
+        printError('Please use previous implementation address in the config, if required.');
+        throw new Error('Not authorized to upgrade transceiver');
+    }
+
+    const upgradeTx = await proxyContract.upgrade(newImplementationAddress, gasOptions);
+    await upgradeTx.wait();
+
+    printInfo('Upgrade completed successfully');
+}
 
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
@@ -232,7 +249,7 @@ async function checkContract(contractName, contract, contractConfig) {
 }
 
 async function processCommand(config, chain, options) {
-    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
+    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade } = options;
     let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -277,6 +294,16 @@ async function processCommand(config, chain, options) {
                 contracts[contractName] = {};
             }
             contractConfig = contracts[contractName];
+
+            // Handle upgrade case
+            if (upgrade) {
+                if (!contractConfig.implementation) {
+                    printError(`AxelarTransceiver is not deployed on ${chain.name}. Cannot upgrade.`);
+                    return;
+                }
+                printInfo(`Upgrading AxelarTransceiver on ${chain.name}`);
+                printInfo('Current implementation:', contractConfig.implementation);
+            }
 
             if (contractConfig.implementation && options.skipExisting) {
                 printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
@@ -417,6 +444,10 @@ async function processCommand(config, chain, options) {
         contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address,
     );
 
+    if (contractName === 'AxelarTransceiver' && upgrade) {
+        await performAxelarTransceiverUpgrade(contractConfig.implementation, contract.address, contractJson.abi, wallet, gasOptions);
+    }
+
     await checkContract(contractName, contract, contractConfig);
 
     return contract;
@@ -452,6 +483,7 @@ if (require.main === module) {
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
     program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
+    program.addOption(new Option('--upgrade', 'upgrade an existing AxelarTransceiver contract'));
 
     program.action((options) => {
         main(options);
@@ -460,4 +492,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { processCommand, getConstructorArgs };
+module.exports = { processCommand, getConstructorArgs, performAxelarTransceiverUpgrade };
