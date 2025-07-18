@@ -1,5 +1,6 @@
 //! # Governance program
 
+use program_utils::ensure_single_feature;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -11,6 +12,18 @@ pub mod processor;
 pub mod sol_types;
 pub mod state;
 
+ensure_single_feature!("devnet-amplifier", "stagenet", "testnet", "mainnet");
+
+#[cfg(feature = "devnet-amplifier")]
+solana_program::declare_id!("govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9");
+
+#[cfg(feature = "stagenet")]
+solana_program::declare_id!("govXsQZx7cZcMBWQWkk4gq8eoA4MKkYi3G1sCzLPcqa");
+
+#[cfg(feature = "testnet")]
+solana_program::declare_id!("goveBmEV286hz1LLGRurkSXD5fgRYEmiVFMXK4Vp6zk");
+
+#[cfg(feature = "mainnet")]
 solana_program::declare_id!("gov1111111111111111111111111111111111111111");
 
 /// Checks that the supplied program ID is the correct one

@@ -7,11 +7,24 @@ pub mod state;
 
 // Export current sdk types for downstream users building with a different sdk
 // version.
+use program_utils::ensure_single_feature;
 pub use solana_program;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
+ensure_single_feature!("devnet-amplifier", "stagenet", "testnet", "mainnet");
+
+#[cfg(feature = "devnet-amplifier")]
+solana_program::declare_id!("gasd4em72NAm7faq5dvjN5GkXE59dUkTThWmYDX95bK");
+
+#[cfg(feature = "stagenet")]
+solana_program::declare_id!("gaspfz1SLfPr1zmackMVMgShjkuCGPZ5taN8wAfwreW");
+
+#[cfg(feature = "testnet")]
+solana_program::declare_id!("gaspFGXoWNNMMaYGhJoNRMNAp8R3srFeBmKAoeLgSYy");
+
+#[cfg(feature = "mainnet")]
 solana_program::declare_id!("gas1111111111111111111111111111111111111111");
 
 /// Seed prefixes for PDAs created by this program

@@ -7,6 +7,7 @@ pub mod state;
 
 pub use bytemuck;
 pub use num_traits;
+pub use program_utils::ensure_single_feature;
 pub use program_utils::pda::BytemuckedPda;
 
 // Export current sdk types for downstream users building with a different sdk
@@ -16,6 +17,18 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::{Pubkey, PubkeyError};
 
+ensure_single_feature!("devnet-amplifier", "stagenet", "testnet", "mainnet");
+
+#[cfg(feature = "devnet-amplifier")]
+solana_program::declare_id!("gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp");
+
+#[cfg(feature = "stagenet")]
+solana_program::declare_id!("gtwqQzBirGUVdAUDt17WWYnVfPoydn9eAazDJb7gFUs");
+
+#[cfg(feature = "testnet")]
+solana_program::declare_id!("gtwShW9qgckMsZKijtRkNnyZHL4CU1BjZMftWiu7fGW");
+
+#[cfg(feature = "mainnet")]
 solana_program::declare_id!("gtw1111111111111111111111111111111111111111");
 
 /// Seed prefixes for different PDAs initialized by the Gateway

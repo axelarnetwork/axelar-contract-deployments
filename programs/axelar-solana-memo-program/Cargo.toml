@@ -10,15 +10,40 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
+devnet-amplifier = [
+    "axelar-executable/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier",
+    "axelar-solana-its/devnet-amplifier",
+    "program-utils/devnet-amplifier"
+]
+stagenet = [
+    "axelar-executable/stagenet",
+    "axelar-solana-gateway/stagenet",
+    "axelar-solana-its/stagenet",
+    "program-utils/stagenet"
+]
+testnet = [
+    "axelar-executable/testnet",
+    "axelar-solana-gateway/testnet",
+    "axelar-solana-its/testnet",
+    "program-utils/testnet"
+]
+mainnet = [
+    "axelar-solana-gateway/mainnet",
+    "axelar-solana-its/mainnet",
+    "axelar-executable/mainnet",
+    "program-utils/mainnet"
+]
+default = ["devnet-amplifier"]
 
 [dependencies]
-axelar-executable = { workspace = true }
+axelar-executable = { workspace = true, default-features = false }
 axelar-solana-encoding.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 borsh.workspace = true
 mpl-token-metadata.workspace = true
-program-utils = { workspace = true }
+program-utils = { workspace = true, default-features = false }
 solana-program.workspace = true
 
 [dev-dependencies]
@@ -33,6 +58,3 @@ pretty_assertions.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-
-[build-dependencies]
-anyhow.workspace = true

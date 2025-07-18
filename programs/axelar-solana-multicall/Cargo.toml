@@ -13,10 +13,35 @@ workspace = true
 [features]
 no-entrypoint = []
 test-sbf = []
+devnet-amplifier = [
+    "axelar-executable/devnet-amplifier",
+    "axelar-solana-gateway-test-fixtures/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier",
+    "axelar-solana-memo-program/devnet-amplifier"
+]
+stagenet = [
+    "axelar-executable/stagenet",
+    "axelar-solana-gateway-test-fixtures/stagenet",
+    "axelar-solana-gateway/stagenet",
+    "axelar-solana-memo-program/stagenet",
+]
+testnet = [
+    "axelar-executable/testnet",
+    "axelar-solana-gateway-test-fixtures/testnet",
+    "axelar-solana-gateway/testnet",
+    "axelar-solana-memo-program/testnet",
+]
+mainnet = [
+    "axelar-executable/mainnet",
+    "axelar-solana-gateway-test-fixtures/mainnet",
+    "axelar-solana-gateway/mainnet",
+    "axelar-solana-memo-program/mainnet",
+]
+default = ["devnet-amplifier"]
 
 [dependencies]
 alloy-sol-types.workspace = true
-axelar-executable.workspace = true
+axelar-executable = { workspace = true, default-features = false }
 borsh.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
 solana-program.workspace = true
@@ -30,6 +55,3 @@ evm-contracts-test-suite.workspace = true
 itertools.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
-
-[build-dependencies]
-anyhow.workspace = true

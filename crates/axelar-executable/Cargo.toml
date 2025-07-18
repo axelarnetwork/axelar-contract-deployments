@@ -10,8 +10,9 @@ workspace = true
 [lib]
 crate-type = ["cdylib", "lib"]
 
+
 [dependencies]
-axelar-solana-gateway.workspace = true
+axelar-solana-gateway = { workspace = true, default-features = false }
 borsh.workspace = true
 solana-program.workspace = true
 axelar-solana-encoding.workspace = true
@@ -28,3 +29,22 @@ test-log.workspace = true
 tokio.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 rand.workspace = true
+
+[features]
+devnet-amplifier = [
+    "axelar-solana-gateway-test-fixtures/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier"
+]
+stagenet = [
+    "axelar-solana-gateway-test-fixtures/stagenet",
+    "axelar-solana-gateway/stagenet"
+]
+testnet = [
+    "axelar-solana-gateway-test-fixtures/testnet",
+    "axelar-solana-gateway/testnet"
+]
+mainnet = [
+    "axelar-solana-gateway-test-fixtures/mainnet",
+    "axelar-solana-gateway/mainnet"
+]
+default = ["devnet-amplifier"]

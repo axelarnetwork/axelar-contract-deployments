@@ -11,10 +11,23 @@ mod entrypoint;
 pub mod instruction;
 pub mod processor;
 pub mod state;
+use program_utils::ensure_single_feature;
 pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::Counter;
 
+ensure_single_feature!("devnet-amplifier", "stagenet", "testnet", "mainnet");
+
+#[cfg(feature = "devnet-amplifier")]
+solana_program::declare_id!("memPJFxP6H6bjEKpUSJ4KC7C4dKAfNE3xWrTpJBKDwN");
+
+#[cfg(feature = "stagenet")]
+solana_program::declare_id!("memdp6koMvx6Bneq1BJvtf7YEKNQDiNmnMFfE6fP691");
+
+#[cfg(feature = "testnet")]
+solana_program::declare_id!("memgw1yvm5Q4MVzsTyyz7MdzMUtB1wZC8HeH2ZJABh2");
+
+#[cfg(feature = "mainnet")]
 solana_program::declare_id!("mem1111111111111111111111111111111111111111");
 
 /// Derives interchain token service root PDA

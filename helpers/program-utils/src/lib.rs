@@ -39,6 +39,34 @@ pub fn check_program_account(program_id: &Pubkey, check_f: fn(&Pubkey) -> bool) 
     Ok(())
 }
 
+/// Macro to ensure exactly one feature from a list is enabled
+#[macro_export]
+macro_rules! ensure_single_feature {
+    ($($feature:literal),+) => {
+        // Check that at least one feature is enabled
+        #[cfg(not(any($(feature = $feature),+)))]
+        compile_error!(concat!("Exactly one of these features must be enabled: ", $(stringify!($feature), ", "),+));
+
+        // Generate all pair combinations to check mutual exclusivity
+        ensure_single_feature!(@pairs [] $($feature),+);
+    };
+
+    // Helper to generate all pairs
+    (@pairs [$($processed:literal),*] $first:literal $(,$rest:literal)*) => {
+        // Check current element against all processed elements
+        $(
+            #[cfg(all(feature = $first, feature = $processed))]
+            compile_error!(concat!("Features '", $first, "' and '", $processed, "' are mutually exclusive"));
+        )*
+
+        // Continue with the rest
+        ensure_single_feature!(@pairs [$($processed,)* $first] $($rest),*);
+    };
+
+    // Base case: no more elements to process
+    (@pairs [$($processed:literal),*]) => {};
+}
+
 /// Converts a little-endian 256-bit unsigned integer to a 64-bit unsigned
 /// integer.
 ///

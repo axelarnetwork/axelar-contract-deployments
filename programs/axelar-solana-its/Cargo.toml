@@ -13,11 +13,44 @@ workspace = true
 [features]
 no-entrypoint = []
 test-sbf = []
+devnet-amplifier = [
+    "axelar-executable/devnet-amplifier",
+    "axelar-solana-gas-service/devnet-amplifier",
+    "axelar-solana-gateway-test-fixtures/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier",
+    "axelar-solana-memo-program/devnet-amplifier",
+    "program-utils/devnet-amplifier"
+]
+stagenet = [
+    "axelar-executable/stagenet",
+    "axelar-solana-gas-service/stagenet",
+    "axelar-solana-gateway-test-fixtures/stagenet",
+    "axelar-solana-gateway/stagenet",
+    "axelar-solana-memo-program/stagenet",
+    "program-utils/stagenet"
+]
+testnet = [
+    "axelar-executable/testnet",
+    "axelar-solana-gas-service/testnet",
+    "axelar-solana-gateway-test-fixtures/testnet",
+    "axelar-solana-gateway/testnet",
+    "axelar-solana-memo-program/testnet",
+    "program-utils/testnet"
+]
+mainnet = [
+    "axelar-executable/mainnet",
+    "axelar-solana-gas-service/mainnet",
+    "axelar-solana-gateway-test-fixtures/mainnet",
+    "axelar-solana-gateway/mainnet",
+    "axelar-solana-memo-program/mainnet",
+    "program-utils/mainnet"
+]
+default = ["devnet-amplifier"]
 
 [dependencies]
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
-axelar-executable.workspace = true
+axelar-executable = { workspace = true, default-features = false }
 axelar-message-primitives.workspace = true
 axelar-solana-encoding.workspace = true
 axelar-solana-gas-service = { workspace = true, features = ["no-entrypoint"] }
@@ -27,7 +60,7 @@ borsh.workspace = true
 interchain-token-transfer-gmp.workspace = true
 itertools.workspace = true
 mpl-token-metadata.workspace = true
-program-utils.workspace = true
+program-utils = { workspace = true, default-features = false }
 role-management.workspace = true
 solana-program.workspace = true
 spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
@@ -44,6 +77,3 @@ rstest.workspace = true
 solana-program-test.workspace = true
 solana-sdk.workspace = true
 test-context.workspace = true
-
-[build-dependencies]
-anyhow.workspace = true

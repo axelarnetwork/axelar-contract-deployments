@@ -8,7 +8,7 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
-axelar-solana-gateway.workspace = true
+axelar-solana-gateway = { workspace = true, default-features = false }
 axelar-solana-gas-service-events.workspace = true
 event-utils.workspace = true
 tracing.workspace = true
@@ -21,3 +21,10 @@ test-log.workspace = true
 
 [lints]
 workspace = true
+
+[features]
+devnet-amplifier = ["axelar-solana-gateway/devnet-amplifier"]
+stagenet = ["axelar-solana-gateway/stagenet"]
+testnet = ["axelar-solana-gateway/testnet"]
+mainnet = ["axelar-solana-gateway/mainnet"]
+default = ["devnet-amplifier"]

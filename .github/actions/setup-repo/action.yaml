@@ -21,7 +21,7 @@ runs:
         cache-on-failure: true
         cache-provider: ${{ inputs.rust-cache }}
         workspaces: |
-          solana
+          .
 
     # we rely on foundry for some specific tests
     - name: Install Foundry
@@ -51,5 +51,5 @@ runs:
     - name: Install deps for rust check and docs
       shell: bash
       run: |
-        sudo apt install -y pkg-config libusb-1.0-0-dev libftdi1-dev
-        sudo apt-get install libudev-dev
+        sudo apt-get install -y pkg-config libusb-1.0-0-dev libftdi1-dev
+        sudo apt-get install -y libudev-dev

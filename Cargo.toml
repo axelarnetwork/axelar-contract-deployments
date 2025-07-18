@@ -171,29 +171,29 @@ quote = "1"
 proc-macro2 = "1"
 
 # solana programs
-axelar-solana-its = { path = "programs/axelar-solana-its" }
-axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service" }
-axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program" }
-axelar-solana-multicall = { path = "programs/axelar-solana-multicall" }
-axelar-solana-gateway = { path = "programs/axelar-solana-gateway" }
-dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway" }
-axelar-solana-governance = { path = "programs/axelar-solana-governance" }
+axelar-solana-its = { path = "programs/axelar-solana-its", default-features = false }
+axelar-solana-gas-service = { path = "programs/axelar-solana-gas-service", default-features = false }
+axelar-solana-memo-program = { path = "programs/axelar-solana-memo-program", default-features = false }
+axelar-solana-multicall = { path = "programs/axelar-solana-multicall", default-features = false }
+axelar-solana-gateway = { path = "programs/axelar-solana-gateway", default-features = false }
+dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway", default-features = false }
+axelar-solana-governance = { path = "programs/axelar-solana-governance", default-features = false }
 
 # helper crates
-axelar-executable = { path = "crates/axelar-executable" }
+axelar-executable = { path = "crates/axelar-executable", default-features = false }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-solana-gas-service-events = { path = "crates/axelar-solana-gas-service-events" }
-axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures" }
+axelar-solana-gateway-test-fixtures = { path = "crates/axelar-solana-gateway-test-fixtures", default-features = false }
 event-utils = { path = "crates/event-utils" }
 event-macros = { path = "crates/event-macros" }
 evm-contracts-rs = { path = "helpers/evm-contracts-rs" }
 evm-contracts-test-suite = { path = "helpers/evm-contracts-test-suite" }
-gateway-event-stack = { path = "crates/gateway-event-stack" }
+gateway-event-stack = { path = "crates/gateway-event-stack", default-features = false }
 governance-gmp = { path = "helpers/governance-gmp" }
 interchain-token-transfer-gmp = { path = "helpers/interchain-token-transfer-gmp" }
-its-instruction-builder = { path = "helpers/its-instruction-builder" }
-program-utils = { path = "helpers/program-utils" }
+its-instruction-builder = { path = "helpers/its-instruction-builder", default-features = false }
+program-utils = { path = "helpers/program-utils", default-features = false }
 role-management = { path = "helpers/role-management" }
 
 [workspace.metadata.cargo-machete]

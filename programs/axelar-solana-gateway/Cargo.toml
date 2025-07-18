@@ -14,6 +14,23 @@ crate-type = ["cdylib", "lib"]
 [features]
 no-entrypoint = []
 test-sbf = []
+devnet-amplifier = [
+    "axelar-solana-gateway-test-fixtures/devnet-amplifier",
+    "program-utils/devnet-amplifier",
+]
+stagenet = [
+    "axelar-solana-gateway-test-fixtures/stagenet",
+    "program-utils/stagenet",
+]
+testnet = [
+    "axelar-solana-gateway-test-fixtures/testnet",
+    "program-utils/testnet",
+]
+mainnet = [
+    "axelar-solana-gateway-test-fixtures/mainnet",
+    "program-utils/mainnet", 
+]
+default = ["devnet-amplifier"]
 
 [dependencies]
 axelar-message-primitives.workspace = true
@@ -47,6 +64,3 @@ typed-builder.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 rstest.workspace = true
 pretty_assertions.workspace = true
-
-[build-dependencies]
-anyhow.workspace = true
