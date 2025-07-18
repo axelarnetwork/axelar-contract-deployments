@@ -16,7 +16,7 @@ const {
     parseArgs,
     prompt,
     getGasOptions,
-    mainProcessor,
+    mainProcessorSequential,
     validateParameters,
     getContractJSON,
     printWarn,
@@ -25,17 +25,8 @@ const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 const { getWallet } = require('./sign-utils');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
-    const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
-        args,
-        chains,
-        yes,
-    } = options;
+async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options) {
+    const { env, contractName, address, action, privateKey, args, chains, yes } = options;
 
     const argsArray = args ? parseArgs(args) : [];
 
@@ -224,8 +215,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
                 isAddress: { target },
             });
 
-            // TODO tkulik: getGasUpdates - it uses config
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(constAxelarNetwork, chainsSnapshot, chain, chains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
@@ -269,7 +259,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorSequential(options, processCommand);
 
     printFailedChainUpdates();
 }

@@ -12,7 +12,7 @@ const {
     printWalletInfo,
     printWarn,
     printError,
-    mainProcessor,
+    mainProcessorSequential,
     prompt,
     getContractJSON,
     getGasOptions,
@@ -71,22 +71,22 @@ async function getFeeData(api, sourceChain, destinationChain) {
     return feesCache[key];
 }
 
-async function getGasUpdates(config, chain, destinationChains) {
-    const api = config.axelar.axelarscanApi;
+async function getGasUpdates(constAxelarNetwork, chainsSnapshot, chain, destinationChains) {
+    const api = constAxelarNetwork.axelarscanApi;
 
     validateParameters({
         isNonEmptyStringArray: { destinationChains },
     });
 
     if (destinationChains.includes('all')) {
-        destinationChains = Object.keys(config.chains);
+        destinationChains = Object.keys(chainsSnapshot);
     }
 
-    const referenceChain = Object.values(config.chains)[0];
+    const referenceChain = Object.values(chainsSnapshot)[0];
 
     let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
-            const destinationConfig = config.chains[destinationChain];
+            const destinationConfig = chainsSnapshot[destinationChain];
 
             if (!destinationConfig) {
                 printError(`Error: chain ${destinationChain} not found in config.`);
@@ -173,7 +173,7 @@ async function getGasUpdates(config, chain, destinationChains) {
     // Adding lowercase chain names for case insensitivity
     gasUpdates.forEach((update) => {
         const { chain: destination, gasInfo } = update;
-        const { axelarId, onchainGasEstimate: { chainName } = {} } = config.chains[destination];
+        const { axelarId, onchainGasEstimate: { chainName } = {} } = chainsSnapshot[destination];
 
         update.chain = axelarId;
 
@@ -209,7 +209,7 @@ async function getGasUpdates(config, chain, destinationChains) {
     };
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options) {
     const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress, yes } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
@@ -290,8 +290,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            // TODO tkulik: getGasUpdates - it uses config
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(constAxelarNetwork, chainsSnapshot, chain, chains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
@@ -332,7 +331,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false);
+    await mainProcessorSequential(options, processCommand, false);
 
     printFailedChainUpdates();
 }

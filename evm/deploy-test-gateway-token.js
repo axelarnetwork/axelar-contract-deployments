@@ -10,7 +10,7 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 
-const { mainProcessor, getContractJSON, printInfo } = require('./utils');
+const { mainProcessorConcurrent, getContractJSON, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function getCommandId(gateway) {
@@ -42,7 +42,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false);
+    await mainProcessorConcurrent(options, processCommand, false);
 }
 
 if (require.main === module) {

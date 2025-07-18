@@ -5,7 +5,7 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
+const { printInfo, mainProcessorConcurrent, isKeccak256Hash, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_constAxelarNetwork, chain, options) {
@@ -35,7 +35,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

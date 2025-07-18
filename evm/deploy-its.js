@@ -13,7 +13,7 @@ const {
     printWarn,
     printError,
     getContractJSON,
-    mainProcessor,
+    mainProcessorSequential,
     prompt,
     sleep,
     getBytecodeHash,
@@ -41,7 +41,7 @@ const { switchHyperliquidBlockSize } = require('./hyperliquid');
  * @param {*} verifyOptions
  */
 
-async function deployAll(config, wallet, chain, options) {
+async function deployAll(constAxelarNetwork, chainsSnapshot, wallet, chain, options) {
     const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -129,9 +129,8 @@ async function deployAll(config, wallet, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    // TODO tkulik: parseTrustedChains - it uses config
-    const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = itsHubContractAddress(config);
+    const trustedChains = parseTrustedChains(chainsSnapshot, ['all']);
+    const itsHubAddress = itsHubContractAddress(constAxelarNetwork);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
@@ -365,7 +364,7 @@ async function deployAll(config, wallet, chain, options) {
     }
 }
 
-async function deploy(_, chain, options) {
+async function deploy(constAxelarNetwork, chainsSnapshot, chain, options) {
     const { privateKey, salt } = options;
 
     const rpc = chain.rpc;
@@ -381,7 +380,7 @@ async function deploy(_, chain, options) {
         throw new Error(`Invalid operator address: ${operatorAddress}`);
     }
 
-    await deployAll(_, wallet, chain, options);
+    await deployAll(constAxelarNetwork, chainsSnapshot, wallet, chain, options);
 }
 
 async function upgrade(chain, options) {
@@ -474,16 +473,16 @@ async function upgrade(chain, options) {
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options) {
     if (options.upgrade) {
         await upgrade(chain, options);
     } else {
-        await deploy(chain, options);
+        await deploy(constAxelarNetwork, chainsSnapshot, chain, options);
     }
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorSequential(options, processCommand);
 }
 
 if (require.main === module) {

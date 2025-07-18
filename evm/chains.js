@@ -1,7 +1,7 @@
 'use strict';
 
 const { Command } = require('commander');
-const { mainProcessor, printInfo } = require('./utils');
+const { mainProcessorConcurrent, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function processCommand(_constAxelarNetwork, chain, _options) {
@@ -9,7 +9,7 @@ async function processCommand(_constAxelarNetwork, chain, _options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

@@ -19,7 +19,7 @@ const {
     printWalletInfo,
     printWarn,
     prompt,
-    mainProcessor,
+    mainProcessorConcurrent,
     deployContract,
     getGasOptions,
     getWeightedSigners,
@@ -365,7 +365,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 async function programHandler() {

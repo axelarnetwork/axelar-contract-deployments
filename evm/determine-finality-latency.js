@@ -5,7 +5,7 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessor, sleep } = require('./utils');
+const { printInfo, mainProcessorConcurrent, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 function updateFinality(finality, chain, update) {
@@ -79,7 +79,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {

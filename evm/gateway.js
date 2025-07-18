@@ -19,7 +19,7 @@ const {
     isValidAddress,
     validateParameters,
     wasEventEmitted,
-    mainProcessor,
+    mainProcessorConcurrent,
     printError,
     getGasOptions,
     httpGet,
@@ -510,7 +510,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand);
+    await mainProcessorConcurrent(options, processCommand);
 }
 
 if (require.main === module) {
