@@ -15,8 +15,8 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     const channel = config.options.channel
         ? config.options.channel
         : await txBuilder.moveCall({
-                target: `${AxelarGateway.address}::channel::new`,
-            });
+              target: `${AxelarGateway.address}::channel::new`,
+          });
 
     // Salt
     const salt = await txBuilder.moveCall({
@@ -39,9 +39,15 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
 
     if (!config.options.channel) txBuilder.tx.transferObjects([channel], config.walletAddress);
 
-    const result = await broadcastFromTxBuilder(txBuilder, config.keypair, `Register Custom Coin (${coinSymbol}) in InterchainTokenService`, config.options, {
-        showEvents: true,
-    });
+    const result = await broadcastFromTxBuilder(
+        txBuilder,
+        config.keypair,
+        `Register Custom Coin (${coinSymbol}) in InterchainTokenService`,
+        config.options,
+        {
+            showEvents: true,
+        },
+    );
 
     const tokenEvent = result.events.filter((evt) => {
         return evt.parsedJson.token_id ? true : false;
@@ -51,8 +57,8 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
         return evt.transactionModule == 'channel' ? true : false;
     })[0];
 
-    const tokenId = (tokenEvent.parsedJson.token_id.id) ? tokenEvent.parsedJson.token_id.id : null;
-    const channelId = (channelEvent.parsedJson.id) ? channelEvent.parsedJson.id : null;
+    const tokenId = tokenEvent.parsedJson.token_id.id ? tokenEvent.parsedJson.token_id.id : null;
+    const channelId = channelEvent.parsedJson.id ? channelEvent.parsedJson.id : null;
 
     return [tokenId, channelId];
 }
