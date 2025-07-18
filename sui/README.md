@@ -446,13 +446,32 @@ Register coin from metadata (i.e. [sui::coin::CoinMetadata](https://docs.sui.io/
 ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
 ```
 
+Register custom coin
+
+If a `channel` id is present in `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the registration will automatically be created.
+
+```bash
+ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
+```
+
 ## Migrating Legacy Coin Registrations
 
 Migrate coin metadata
+
 _Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
 
 ```bash
 ts-node sui/its.js migrate-coin-metadata <symbol>
+```
+
+## Link Coins
+
+Link coin
+
+Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transaction will automatically be created.
+
+```bash
+ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
 ## Sui Contract Verification

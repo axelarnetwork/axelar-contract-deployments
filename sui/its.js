@@ -1,4 +1,4 @@
-const { Command } = require('commander');
+const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
@@ -400,6 +400,7 @@ if (require.main === module) {
         .name('register-custom-coin')
         .command('register-custom-coin <symbol> <name> <decimals>')
         .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
+        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
@@ -418,6 +419,7 @@ if (require.main === module) {
         .description(
             `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
         )
+        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
         .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
