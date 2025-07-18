@@ -22,7 +22,7 @@ use combine::CombineArgs;
 use dotenvy::dotenv;
 use eyre::eyre;
 use generate::GenerateArgs;
-use send::{SendArgs, sign_and_send_transactions};
+use send::{sign_and_send_transactions, SendArgs};
 use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -43,10 +43,6 @@ use crate::sign::sign_solana_transaction;
 struct Cli {
     #[clap(subcommand)]
     command: Command,
-
-    /// Axelar environment to use. Options: [mainnet, testnet, devnet-amplifier, local].
-    #[clap(long, env = "ENV", arg_enum)]
-    env: AxelarNetwork,
 
     /// Axelar chainId to be used in chain config files.
     #[clap(long, env = "CHAIN_ID")]
@@ -241,11 +237,23 @@ async fn run() -> eyre::Result<()> {
         .or_else(|| maybe_solana_config.as_ref().map(|c| c.json_rpc_url.clone()))
         .ok_or_else(|| eyre!("No URL provided and no Solana CLI config found"))?;
 
+    #[cfg(feature = "devnet-amplifier")]
+    let axelar_env = AxelarNetwork::DevnetAmplifier;
+
+    #[cfg(feature = "stagenet")]
+    let axelar_env = AxelarNetwork::Stagenet;
+
+    #[cfg(feature = "testnet")]
+    let axelar_env = AxelarNetwork::Testnet;
+
+    #[cfg(feature = "mainnet")]
+    let axelar_env = AxelarNetwork::Mainnet;
+
     let config = Config::new(
         url,
         cli.output_dir,
         cli.chains_info_dir,
-        cli.env,
+        axelar_env,
         cli.chain_id,
     )?;
 

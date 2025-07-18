@@ -13,9 +13,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, SOLANA_CHAIN_KEY, UPGRADE_AUTHORITY_KEY, decode_its_destination,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, SOLANA_CHAIN_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -532,11 +532,6 @@ pub(crate) struct InterchainTransferArgs {
     #[clap(long)]
     source_account: Pubkey,
 
-    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
-    /// set, tries to use the TokenManager PDA.
-    #[clap(long)]
-    authority: Option<Pubkey>,
-
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
@@ -586,11 +581,6 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     /// The token account from which tokens should transferred
     #[clap(long)]
     source_account: Pubkey,
-
-    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
-    /// set, tries to use the TokenManager PDA.
-    #[clap(long)]
-    authority: Option<Pubkey>,
 
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
@@ -646,11 +636,6 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     /// The token account from which tokens should transferred
     #[clap(long)]
     source_account: Pubkey,
-
-    /// The authority with rights to transfer the tokens (i.e.: owner, delegate authority). If not
-    /// set, tries to use the TokenManager PDA.
-    #[clap(long)]
-    authority: Option<Pubkey>,
 
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
@@ -1220,7 +1205,6 @@ fn interchain_transfer(
     Ok(vec![axelar_solana_its::instruction::interchain_transfer(
         *fee_payer,
         args.source_account,
-        args.authority,
         args.token_id,
         args.destination_chain,
         destination_address,
@@ -1257,7 +1241,6 @@ fn call_contract_with_interchain_token(
         axelar_solana_its::instruction::call_contract_with_interchain_token(
             *fee_payer,
             args.source_account,
-            args.authority,
             args.token_id,
             args.destination_chain,
             destination_address,
@@ -1297,7 +1280,6 @@ fn call_contract_with_interchain_token_offchain_data(
         axelar_solana_its::instruction::call_contract_with_interchain_token_offchain_data(
             *fee_payer,
             args.source_account,
-            args.authority,
             args.token_id,
             args.destination_chain,
             destination_address,
