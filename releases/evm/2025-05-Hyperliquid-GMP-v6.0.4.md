@@ -57,6 +57,16 @@ npm ci
     "name": "Hyperliquid-testnet Explorer",
     "url": "https://app.hyperliquid-testnet.xyz/explorer"
   },
+  "hypercore":{
+    "domain": {
+      "chainId": 1337,
+        "name": "Exchange",
+        "verifyingContract": "0x0000000000000000000000000000000000000000",
+        "version": "1",
+    },
+    "url": "https://api.hyperliquid-testnet.xyz",
+    "source": "b"
+  },
   "contracts": {}
 }
 ```
@@ -79,11 +89,22 @@ npm ci
     "name": "Hyperliquid Explorer",
     "url": "https://app.hyperliquid.xyz/explorer"
   },
+  "hypercore":{
+    "domain": {
+      "chainId": 1337,
+        "name": "Exchange",
+        "verifyingContract": "0x0000000000000000000000000000000000000000",
+        "version": "1",
+    },
+    "url": "https://api.hyperliquid.xyz",
+    "source": "a"
+  },
   "contracts": {}
 }
 ```
 
-Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.   
+
+Ensure python3 is installed on your system, recomended version is 3.10, but was tested succesfully with 3.13.
 
 1. Fund the following addresses with native tokens on chain:
 
@@ -102,28 +123,7 @@ Hyperliquid EVM uses a dual architecture block model:
 
 Contract deployments exceed the fast block gas limit and will require that each deployer key be permissioned to use the slow block model. Additional instructtions are provided if accounts needs to be converted back to fast block to utilize the faster finalization rate.
 
-a. Clone the Hyperliquid Python SDK. This document was prepared using release v0.13 (commit hash: 583a96dc0af53c6d0b4eed06afb5a5c08481821d):
-   ```bash
-   git clone https://github.com/hyperliquid-dex/hyperliquid-python-sdk.git
-   cd hyperliquid-python-sdk
-   ```
-
-b. Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file:
-   #### For devnet-amplifier, testnet and stagenet
-   ```bash
-   address, info, exchange = example_utils.setup(constants.TESTNET_API_URL, skip_ws=True)
-   ``` 
-
-   #### For mainnet
-   ```bash
-   address, info, exchange = example_utils.setup(constants.MAINNET_API_URL, skip_ws=True)
-   ``` 
-   - Comment out or delete:
-   ```bash
-   print(exchange.use_big_blocks(False))
-   ``` 
-
-c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to procure and swap funds are:
+a. For any deployer key that needs to switch to large block the account must be pre-funded with HYPE on both HyperCore and Hyperliquid EVM. Steps to procure and swap funds are:
    #### For devnet-amplifier, testnet and stagenet
     - Provision USDC funds: from their faucet at: https://app.hyperliquid-testnet.xyz/drip. Faucet requires account exist on mainnet.
     - Use their trading app https://app.hyperliquid-testnet.xyz/trade and connect wallet.
@@ -136,24 +136,17 @@ c. Fund one account with HYPE on both HyperCore and Hyperliquid EVM. Steps to pr
     - Buy HYPE with USDC balance
     - Under `balances` section connect wallet again to perform an EVM transfer.
 
-    Note: Above flow has been tested. In order to preserve nonces do not transfer funds from EVM to Hypercore
+    Note: Above flow has been tested. In order to preserve nonces do not transfer funds from EVM to Hypercore. A seperate key can be used to provision all funds and transfered to the corresponding deployer keys.
 
-d. Update the `./hyperliquid-python-sdk/examples/config.json`:
 
-- Set the main funded account as the secret_key
-- Set the deployer address as the account_address
-
-e. Run the script:
-```bash
-python3 examples/basic_evm_use_big_blocks.py
-```
-
-Steps `c`, `d` and `e` needs to be repeated for each deployer key.  
-
-f. Delete private key information from `./hyperliquid-python-sdk/examples/config.json`
-
-After release is complete the deployer keys can set to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks. To disable slow/big blocks Edit the `./hyperliquid-python-sdk/examples/basic_evm_use_big_blocks.py` file to add back `print(exchange.use_big_blocks(True))` and rerun step `d` and `e`
-
+b. For the Gateway and AxelarGasService deployer keys switch to large blocks using the provided script. Once the .env parameters are set execute:
+   ```bash
+   ts-node evm/hyperliquid.js update-block-size big
+   ```
+c. After release is complete the deployer keys can changed to utilize fast blocks again to enable faster operations that dont require larger gas limits of slow blocks by executing:
+   ```bash
+   ts-node evm/hyperliquid.js update-block-size small
+   ```
 
 3. Deploy `ConstAddrDeployer`:
 
@@ -244,11 +237,16 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-10. Transfer ownerships for gateway, operators and gas service contracts on `mainnet` and `testnet`
+10. Transfer ownership on mainnet and testnet
 
 ```bash
-# Only for mainnet and official testnet connection
+# For mainnet and testnet
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+# For testnet
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
+
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist
@@ -302,3 +300,15 @@ ts-node evm/gateway.js -n $CHAIN --action submitProof --multisigSessionId [multi
 ```bash
 ts-node evm/gateway.js -n $CHAIN --action isContractCallApproved --commandID [command-id] --sourceChain [destination-chain] --sourceAddress [source-address] --destination [destination-address] --payloadHash [payload-hash]
 ```
+
+
+## Note
+
+**SSL Compatibility**: Some users may encounter SSL certificate verification issues when connecting to the Hyperliquid testnet API endpoint (`https://api.hyperliquid-testnet.xyz`).
+
+**Recommended Solutions**:
+1. **Update OpenSSL**: Ensure you have OpenSSL 3.5 or greater installed
+2. **Update Node.js**: Make sure Node.js is linked to the latest OpenSSL version
+3. **Alternative**: If issues persist, try running commands from a different geographical location using a VPN
+
+These SSL issues are typically resolved by updating to the latest OpenSSL and Node.js versions.

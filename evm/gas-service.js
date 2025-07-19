@@ -316,7 +316,7 @@ async function processCommand(config, chain, options) {
                 );
             } catch (error) {
                 for (let i = 0; i < chainsToUpdate.length; i++) {
-                    addFailedChainUpdate(chain.name, chainsToUpdate[i]);
+                    addFailedChainUpdate(chain.axelarId, chainsToUpdate[i]);
                 }
 
                 printError(error);

@@ -15,7 +15,6 @@ async function processCommand(_, chain, options) {
     const { privateKey, offline, env } = options;
     let { amount: amountStr, recipients, nonceOffset } = options;
 
-    const chainName = chain.name.toLowerCase();
     const provider = getDefaultProvider(chain.rpc);
 
     recipients = options.recipients.split(',').map((str) => str.trim());
@@ -70,7 +69,7 @@ async function processCommand(_, chain, options) {
         const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
         if (offline) {
-            const filePath = `./tx/signed-tx-${env}-send-tokens-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
+            const filePath = `./tx/signed-tx-${env}-send-tokens-${chain.axelarId.toLowerCase()}-address-${address}-nonce-${baseTx.nonce}.json`;
             printInfo(`Storing signed Tx offline in file ${filePath}`);
 
             // Storing the fields in the data that will be stored in file

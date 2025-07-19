@@ -80,7 +80,7 @@ const signTransaction = async (wallet, chain, tx, options = {}) => {
         };
 
         if (tx.nonce === undefined) {
-            tx.nonce = getLocalNonce(options.env, chain.name.toLowerCase(), address);
+            tx.nonce = getLocalNonce(options.env, chain.axelarId, address);
 
             if (tx.nonce === undefined) {
                 throw new Error(`Nonce is missing for ${address} on ${chain.name} in nonces.json`);
@@ -270,7 +270,7 @@ const updateNonceFileData = (nonceData) => {
 
 const getLocalNonce = (env, chainName, signerAddress) => {
     const nonceData = getNonceFileData();
-    const chainData = nonceData[env] ? nonceData[env][chainName] : undefined;
+    const chainData = nonceData[env] ? nonceData[env][chainName.toLowerCase()] : undefined;
     return chainData ? chainData[signerAddress] : undefined;
 };
 

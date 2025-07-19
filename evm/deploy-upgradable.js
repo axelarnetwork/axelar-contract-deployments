@@ -112,7 +112,7 @@ function getUpgradeArgs(contractName) {
  */
 async function processCommand(_, chain, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
-    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.name } : null;
+    const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 
     if (deployMethod === 'create3' && (contractName === 'AxelarGasService' || contractName === 'AxelarDepositService')) {
         printError(`${deployMethod} not supported for ${contractName}`);
@@ -180,7 +180,7 @@ async function processCommand(_, chain, options) {
             },
             gasOptions,
             verifyOptions,
-            chain.name,
+            chain.axelarId,
             options,
         );
 

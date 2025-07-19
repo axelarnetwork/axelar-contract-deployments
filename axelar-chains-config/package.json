@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint '**/*.js'",
     "test": "vitest",
-    "prettier": "prettier --write '**/*.js' 'info/*.json' 'package.json'",
+    "prettier": "prettier --write '**/*.{js,ts}' 'info/*.json' 'package.json'",
     "build": "rm -rf dist && tsc"
   },
   "author": "axelar-network",
@@ -19,7 +19,7 @@
   "devDependencies": {
     "eslint": "^8.49.0",
     "jsonschema": "^1.4.1",
-    "prettier": "^3.3.2",
+    "prettier": "^3.6.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "vitest": "^0.34.4"

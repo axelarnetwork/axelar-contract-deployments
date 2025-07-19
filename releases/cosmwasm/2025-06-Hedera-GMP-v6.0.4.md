@@ -1,35 +1,35 @@
-# MonadGMP Amplifier v6.0.4
+# Hedera GMP v6.0.4
 
-|                | **Owner**                                 |
-| -------------- | ----------------------------------------- |
-| **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
+|                | **Owner**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | Completed             | 2025-05-22      |
-| **Stagenet**         | Completed             | 2025-05-29      |
-| **Testnet**          | Completed             | 2025-06-05      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | Completed             | 2024-09-18 |
+| **Testnet**          | Completed             | 2024-09-18 |
+| **Mainnet**          | Completed             | 2025-06-12 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
-- [VotingVerifier v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0) 
-- [Gateway v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1) 
-- [MultisigProver v6.0.4](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
+- [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
+- [Gateway v1.1.1](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/gateway-v1.1.1)
+- [MultisigProver v1.1.1](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-prover-v1.1.1)
 
 ## Background
 
-These are the instructions for deploying Amplifier contracts for `Monad` connection.
+These are the instructions for deploying Amplifier contracts for Hedera chain connection.
 
 ### Pre-requisites
 
-Predict the [External Gateway](../evm/2025-05-Monad-GMP-v6.0.4.md) address, as `VotingVerifier` deployment requires the `sourceGatewayAddress` which is the External Gateway address.
+Predict the [External Gateway](../evm/2025-04-Hedera-GMP-v6.0.4.md) address, as `VotingVerifier` needs the `sourceGatewayAddress` which is the External Gateway address.
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
-| **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
+| **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Testnet**          | `3600`                 | `create`         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
@@ -38,12 +38,12 @@ ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDel
 
 ## Deployment
 
-- Create an `.env` config
+- Create an `.env` config. `CHAIN` should be set to `hedera` for all networks.
 
 ```yaml
-MNEMONIC=<cosm wasm deployer key mnemonic>
-ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+MNEMONIC=xyz
+ENV=xyz
+CHAIN=xyz
 ```
 
 | Network              | `deployer address`                              |
@@ -85,7 +85,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
   "sourceGatewayAddress": "[external gateway address]",
   "votingThreshold": "[voting threshold]",
   "blockExpiry": 10,
-  "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
+  "confirmationHeight": 1,
   "msgIdFormat": "hex_tx_hash_and_event_index",
   "addressFormat": "eip55"
 }
@@ -111,7 +111,7 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 | **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
 | **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
-`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
+`CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades
 
 1. Instantiate `VotingVerifier`
 
@@ -133,7 +133,7 @@ ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeI
 
 4. Set environment variables
 
-- These variables are network-specific
+- Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
 VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
@@ -161,8 +161,6 @@ EPOCH_DURATION=[epoch duration according to the environment]
 
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
-- Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
-
 5. Register Gateway at the Router
 
 ```bash
@@ -177,21 +175,6 @@ ts-node cosmwasm/submit-proposal.js execute \
       \"msg_id_format\": \"hex_tx_hash_and_event_index\"
       }
     }"
-```
-
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
 ```
 
 6. Register prover contract on coordinator
@@ -209,7 +192,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig Prover on Multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -225,24 +208,16 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
-```
-
 8. Create reward pool for voting verifier
 
 #### Rewards
 
 | Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
-| **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
-| **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Devnet-amplifier** | `100`            | `["7", "10"]`             | `100`               |
+| **Stagenet**         | `600`            | `["7", "10"]`             | `100`               |
+| **Testnet**          | `600`            | `["7", "10"]`             | `100`               |
+| **Mainnet**          | `14845`          | `["8", "10"]`             | `1100000000`        |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -286,7 +261,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+10.  Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
@@ -294,22 +269,62 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-Check reward pool to confirm funding worked:
+11. Confirm proposals have passed
+
+- Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
+  - "Register Gateway for `$CHAIN`"
+  - "Register Multisig Prover for `$CHAIN`"
+  - "Authorize Multisig Prover for `$CHAIN`"
+  - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
+  - "Create pool for `$CHAIN` in axelar multisig"
+  - (optional) "Register `$CHAIN` on ITS Hub"
+
+- Check Gateway registered at Router
+```bash
+axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
+# You should see something like this:
+{
+  "data": {
+    "name": \"$CHAIN\",
+    "gateway": {
+      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
+    },
+    "frozen_status": 0,
+    "msg_id_format": "hex_tx_hash_and_event_index"
+  }
+}
+```
+
+- Check Multisig Prover authorized on Multisig
+```bash
+axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
+# Result should look like:
+{
+  "data": true
+}
+```
+
+- Check reward pool to confirm funding worked:
 
 ```bash
 ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+12. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
-| Network              | `http_url`        |
-| -------------------- | ----------------- |
-| **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
-| **Stagenet**         | https://testnet-rpc.monad.xyz |
-| **Testnet**          | https://testnet-rpc.monad.xyz |
-| **Mainnet**          | [mainnet RPC URL] |
+| Network              | `http_url`                    |
+| -------------------- | ----------------------------- |
+| **Devnet-amplifier** | https://testnet.hashio.io/api |
+| **Stagenet**         | https://testnet.hashio.io/api |
+| **Testnet**          | https://testnet.hashio.io/api |
+| **Mainnet**          | https://mainnet.hashio.io/api |
 
 ```bash
+[[handlers]]
+chain_name="$CHAIN"
+cosmwasm_contract="$MULTISIG"
+type="MultisigSigner"
+
 [[handlers]]
 chain_finalization="RPCFinalizedBlock"
 chain_name="$CHAIN"
@@ -325,13 +340,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-12. Update `ampd` with the `$CHAIN` chain configuration.
+13. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-13. Create genesis verifier set
+14. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
@@ -339,8 +354,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 5                   |
-| **Mainnet**          | 5                   |
+| **Testnet**          | 21                  |
+| **Mainnet**          | 25                  |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2
@@ -354,4 +369,4 @@ axelard q wasm contract-state smart $MULTISIG_PROVER '"current_verifier_set"'
 
 ## Checklist
 
-The [GMP checklist for $CHAIN](../evm/2025-05-Monad-GMP-v6.0.4.md) will test GMP calls.
+The [Hedera GMP checklist](../evm/2025-04-Hedera-GMP-v6.0.4.md) will test GMP calls.

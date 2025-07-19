@@ -2,92 +2,92 @@ name: Setup Stellar CLI & Network
 description: Install Stellar CLI and start a local Stellar network
 
 runs:
-    using: 'composite'
-    steps:
-        - name: Install stable Rust toolchain
-          uses: dtolnay/rust-toolchain@stable
+  using: 'composite'
+  steps:
+    - name: Install stable Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
 
-        - name: Install Stellar CLI
-          shell: bash
-          run: cargo install --locked stellar-cli --version 22.2.0 --features opt
+    - name: Install Stellar CLI
+      shell: bash
+      run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
-        - name: Set environment variables
-          id: env
-          shell: bash
-          run: |
-              RPC=http://localhost:8000
-              echo "horizon_rpc=$RPC/" >> $GITHUB_OUTPUT
-              echo "soroban_rpc=$RPC/soroban/rpc" >> $GITHUB_OUTPUT
-              echo "friendbot=$RPC/friendbot" >> $GITHUB_OUTPUT
-              echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
+    - name: Set environment variables
+      id: env
+      shell: bash
+      run: |
+        RPC=http://localhost:8000
+        echo "horizon_rpc=$RPC/" >> $GITHUB_OUTPUT
+        echo "soroban_rpc=$RPC/soroban/rpc" >> $GITHUB_OUTPUT
+        echo "friendbot=$RPC/friendbot" >> $GITHUB_OUTPUT
+        echo "network_passphrase='Standalone Network ; February 2017'" >> $GITHUB_OUTPUT
 
-        - name: Start Stellar local network
-          shell: bash
-          run: |
-              stellar container start local --protocol-version 22
+    - name: Start Stellar local network
+      shell: bash
+      run: |
+        stellar container start local --protocol-version 22 --limits unlimited
 
-        - name: Wait for Stellar network
-          shell: bash
-          run: |
-              MAX_WAIT=120
-              ELAPSED=0
+    - name: Wait for Stellar network
+      shell: bash
+      run: |
+        MAX_WAIT=120
+        ELAPSED=0
 
-              echo "Waiting for Stellar network to become ready..."
-              while true; do
-                echo "Checking Friendbot: ${{ steps.env.outputs.friendbot }} ..."
-                if curl -s "${{ steps.env.outputs.friendbot }}" | grep -q '"status"'; then
-                    echo "✅ Stellar Network is ready"
-                    exit 0
-                fi
+        echo "Waiting for Stellar network to become ready..."
+        while true; do
+          echo "Checking Friendbot: ${{ steps.env.outputs.friendbot }} ..."
+          if curl -s "${{ steps.env.outputs.friendbot }}" | grep -q '"status"'; then
+              echo "✅ Stellar Network is ready"
+              exit 0
+          fi
 
-                sleep 2
-                ELAPSED=$((ELAPSED + 2))
+          sleep 2
+          ELAPSED=$((ELAPSED + 2))
 
-                if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
-                  echo "Timed out after $MAX_WAIT seconds waiting for Stellar network."
-                  exit 1
-                fi
+          if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
+            echo "Timed out after $MAX_WAIT seconds waiting for Stellar network."
+            exit 1
+          fi
 
-                echo "  - Stellar Network not ready yet"
+          echo "  - Stellar Network not ready yet"
 
-              done
+        done
 
-        - name: Add as configured network
-          shell: bash
-          run: |
-              stellar network add local \
-                --rpc-url "${{ steps.env.outputs.soroban_rpc }}" \
-                --network-passphrase "${{ steps.env.outputs.network_passphrase }}"
+    - name: Add as configured network
+      shell: bash
+      run: |
+        stellar network add local \
+          --rpc-url "${{ steps.env.outputs.soroban_rpc }}" \
+          --network-passphrase "${{ steps.env.outputs.network_passphrase }}"
 
-        - name: Prepare local.json
-          shell: bash
-          run: |
-              echo '{
-                  "chains": {
-                      "stellar": {
-                          "name": "Stellar",
-                          "axelarId": "stellar",
-                          "networkType": "local",
-                          "chainType": "stellar",
-                          "tokenSymbol": "XLM",
-                          "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
-                          "rpc": "${{ steps.env.outputs.soroban_rpc }}",
-                          "horizonRpc": "${{ steps.env.outputs.horizon_rpc }}",
-                          "contracts": {}
-                      }
-                  }
-              }' > ./axelar-chains-config/info/local.json
+    - name: Prepare local.json
+      shell: bash
+      run: |
+        echo '{
+            "chains": {
+                "stellar": {
+                    "name": "Stellar",
+                    "axelarId": "stellar",
+                    "networkType": "local",
+                    "chainType": "stellar",
+                    "tokenSymbol": "XLM",
+                    "tokenAddress": "CDMLFMKMMD7MWZP3FKUBZPVHTUEDLSX4BYGYKH4GCESXYHS3IHQ4EIG4",
+                    "rpc": "${{ steps.env.outputs.soroban_rpc }}",
+                    "horizonRpc": "${{ steps.env.outputs.horizon_rpc }}",
+                    "contracts": {}
+                }
+            }
+        }' > ./axelar-chains-config/info/local.json
 
-        - name: Display local.json
-          shell: bash
-          run: cat ./axelar-chains-config/info/local.json
+    - name: Display local.json
+      shell: bash
+      run: cat ./axelar-chains-config/info/local.json
 
-        - name: Prepare .env
-          shell: bash
-          run: |
-              # Since the root account is derived from the network passphrase, it can be safely considered static.
-              echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
-              echo "ACCOUNT_ID=GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI" >> .env
-              echo "ENV=local" >> .env
-              echo "CHAIN=stellar" >> .env
-              echo "YES=true" >> .env
+    - name: Prepare .env
+      shell: bash
+      run: |
+        # Since the root account is derived from the network passphrase, it can be safely considered static.
+        echo "PRIVATE_KEY=SC5O7VZUXDJ6JBDSZ74DSERXL7W3Y5LTOAMRF7RQRL3TAGAPS7LUVG3L" >> .env
+        echo "ACCOUNT_ID=GBZXN7PIRZGNMHGA7MUUUF4GWPY5AYPV6LY4UV2GL6VJGIQRXFDNMADI" >> .env
+        echo "ENV=local" >> .env
+        echo "CHAIN=stellar" >> .env
+        echo "YES=true" >> .env

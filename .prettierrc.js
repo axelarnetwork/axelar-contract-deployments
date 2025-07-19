@@ -1,6 +1,4 @@
-import { Config } from 'prettier';
-
-const config: Config = {
+module.exports = {
     printWidth: 140,
     singleQuote: true,
     tabWidth: 4,
@@ -13,12 +11,6 @@ const config: Config = {
     endOfLine: 'auto', // maintains existing line endings
     proseWrap: 'preserve', // don't change line wrapping
     overrides: [
-        {
-            files: '*.sol',
-            options: {
-                explicitTypes: 'always',
-            },
-        },
         {
             files: '*.js',
             options: {
@@ -46,5 +38,3 @@ const config: Config = {
         },
     ],
 };
-
-export default config;

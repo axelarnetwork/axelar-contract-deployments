@@ -67,7 +67,7 @@ jobs:
       - name: Setup Stellar network
         uses: ./.github/actions/setup-stellar
 
-     ###### Environment Variables ######
+      ###### Environment Variables ######
 
       - name: Prepare Environment Variables
         id: env_vars
@@ -96,7 +96,7 @@ jobs:
           ITS_HUB_ADDRESS='its_hub_address'
           echo "itsHubAddress=$ITS_HUB_ADDRESS" >> $GITHUB_OUTPUT
 
-     ###### ITS Hub Config ######
+      ###### ITS Hub Config ######
 
       - name: Set ITS Hub Address
         run: |
@@ -234,4 +234,3 @@ jobs:
         run: |
           ts-node stellar/deploy-contract deploy AxelarOperators --version 1.1.0
           ts-node stellar/deploy-contract upgrade AxelarOperators --version 1.1.1 --migration-data '[]'
-

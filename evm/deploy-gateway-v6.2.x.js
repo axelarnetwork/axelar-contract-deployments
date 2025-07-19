@@ -382,7 +382,7 @@ async function deploy(config, chain, options) {
     if (verify) {
         // Verify contracts at the end to avoid deployment failures in the middle
         for (const contract of contractsToVerify) {
-            await verifyContract(options.env, chain.name, contract.address, contract.params);
+            await verifyContract(options.env, chain.axelarId, contract.address, contract.params);
         }
 
         printInfo('Verified all contracts!');
@@ -392,7 +392,6 @@ async function deploy(config, chain, options) {
 async function upgrade(_, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
-    const chainName = chain.name.toLowerCase();
 
     const rpc = options.rpc || chain.rpc;
     const provider = getDefaultProvider(rpc);
@@ -465,7 +464,7 @@ async function upgrade(_, chain, options) {
     const { baseTx, signedTx } = await signTransaction(wallet, chain, tx, options);
 
     if (offline) {
-        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chainName}-address-${address}-nonce-${baseTx.nonce}.json`;
+        const filePath = `./tx/signed-tx-${env}-gateway-upgrade-${chain.axelarId.toLowerCase()}-address-${address}-nonce-${baseTx.nonce}.json`;
         printInfo(`Storing signed Tx offline in file ${filePath}`);
 
         // Storing the fields in the data that will be stored in file

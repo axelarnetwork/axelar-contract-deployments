@@ -18,7 +18,7 @@ async function processCommand(_, chain, options) {
         return;
     }
 
-    const chainName = chain.name.toLowerCase();
+    const chainName = chain.axelarId.toLowerCase();
     const nonceData = getNonceFileData();
 
     if (!nonceData[env]) {
