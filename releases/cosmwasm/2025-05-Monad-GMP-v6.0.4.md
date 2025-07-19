@@ -9,7 +9,7 @@
 | -------------------- | --------------------- | -------- |
 | **Devnet Amplifier** | Completed             | 2025-05-22      |
 | **Stagenet**         | Completed             | 2025-05-29      |
-| **Testnet**          | -                     | TBD      |
+| **Testnet**          | Completed             | 2025-06-05      |
 | **Mainnet**          | -                     | TBD      |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
@@ -306,7 +306,7 @@ ts-node cosmwasm/query.js rewards -n $CHAIN
 | -------------------- | ----------------- |
 | **Devnet-amplifier** | https://testnet-rpc.monad.xyz |
 | **Stagenet**         | https://testnet-rpc.monad.xyz |
-| **Testnet**          | [testnet RPC URL] |
+| **Testnet**          | https://testnet-rpc.monad.xyz |
 | **Mainnet**          | [mainnet RPC URL] |
 
 ```bash

@@ -20,8 +20,6 @@ const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLo
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
 
-const camelToTitle = (str) => str.replace(/([A-Z])/g, (group) => ` ${group}`).replace(/^./, (firstChar) => firstChar.toUpperCase());
-
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
 
@@ -197,6 +195,10 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
         time,
         new Error(`Timeout calling Axelarscan API: ${method}`),
     );
+};
+
+const itsHubContractAddress = (config) => {
+    return config?.axelar?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -552,18 +554,6 @@ const getCurrentVerifierSet = async (config, chain) => {
 
 const calculateDomainSeparator = (chain, router, network) => keccak256(Buffer.from(`${chain}${router}${network}`));
 
-const itsEdgeContract = (chainConfig) => {
-    const itsEdgeContract =
-        chainConfig.contracts.InterchainTokenService?.objects?.ChannelId || // sui
-        chainConfig.contracts.InterchainTokenService?.address;
-
-    if (!itsEdgeContract) {
-        printError(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
-    }
-
-    return itsEdgeContract;
-};
-
 const downloadContractCode = async (url, contractName, version) => {
     const tempDir = path.join(process.cwd(), 'artifacts');
 
@@ -593,9 +583,19 @@ const tryItsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
+const itsEdgeContract = (chainConfig) => {
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+
+    if (!itsEdgeContract) {
+        throw new Error(`Missing InterchainTokenService edge contract for chain: ${chainConfig.name}`);
+    }
+
+    return itsEdgeContract;
+};
+
 const itsEdgeChains = (config) =>
     Object.values(config.chains)
-        .filter(itsEdgeContract)
+        .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
 const parseTrustedChains = (config, trustedChains) => {
@@ -695,7 +695,6 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
-    camelToTitle,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
@@ -709,4 +708,5 @@ module.exports = {
     asciiToBytes,
     encodeITSDestination,
     getProposalConfig,
+    itsHubContractAddress,
 };

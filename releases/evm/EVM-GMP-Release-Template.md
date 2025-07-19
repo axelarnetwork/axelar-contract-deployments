@@ -59,6 +59,10 @@ npm ci
   }
 ```
 
+#### Live network testing
+
+Perform [Live network testing](https://github.com/axelarnetwork/axelar-cgp-solidity?tab=readme-ov-file#live-network-testing) in order to verify that the RPC endpoint is EVM-compatible and the Axelar gateway can be deployed on the external network. It is recommended to run the `RpcCompatibility` and `AxelarGateway` test groups.
+
 #### Mainnet
 
 ```bash
@@ -160,7 +164,7 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 
 | Network              | `operators`                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------ |
-| **Devnet-amplifier** | `<your operator address>`                                                                  |
+| **Devnet-amplifier** | `0x01c793e1F8185a2527C5a2Ef3b4a3FBCb8982690`, `0xDb32E08fd5d6823E7f0298963E487d5df4e54b1E` |
 | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
 | **Testnet**          | `0x8f23e84c49624a22e8c252684129910509ade4e2`, `0x3b401fa00191acb03c24ebb7754fe35d34dd1abd` |
 | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
@@ -184,10 +188,29 @@ OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-9. Transfer ownership for Gateway, Operators and Gas Service contracts on `mainnet` and `testnet`
+8. Transfer ownership for contracts
+
+- 8.1 Transfer Operators ownership
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Testnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Mainnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
 
 ```bash
-# Only for mainnet and official testnet connection
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x9f5CDBc370B00C0dF52cf2619FA95907508108df
+```
+
+- 8.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+
+```bash
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 

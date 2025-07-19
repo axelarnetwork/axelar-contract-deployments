@@ -1,21 +1,13 @@
 'use strict';
 
-import {
-    Keypair,
-    rpc,
-    Horizon,
-    TransactionBuilder,
-    Networks,
-    BASE_FEE,
-    Address,
-    xdr,
-    nativeToScVal,
-} from '@stellar/stellar-sdk';
-import { downloadContractCode, VERSION_REGEX, SHORT_COMMIT_HASH_REGEX } from '../common/utils';
-import { printInfo, sleep, addEnvOption, getCurrentVerifierSet } from '../common';
+import { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
+
+import { addEnvOption, getCurrentVerifierSet, printInfo, sleep } from '../common';
+import { SHORT_COMMIT_HASH_REGEX, VERSION_REGEX, downloadContractCode } from '../common/utils';
 import { itsCustomMigrationDataToScValV112 } from './type-utils';
+
 const {
     utils: { arrayify, hexZeroPad, id, isHexString, keccak256 },
     BigNumber,
@@ -40,6 +32,7 @@ const SUPPORTED_CONTRACTS = new Set([
     'InterchainTokenService',
     'Upgrader',
     'Multicall',
+    'TokenUtils',
 ]);
 
 type NetworkType = 'local' | 'futurenet' | 'testnet' | 'mainnet';
@@ -187,7 +180,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         }
 
         const transactionMeta = getResponse.resultMetaXdr;
-        const returnValue = transactionMeta.v3().sorobanMeta().returnValue();
+        const returnValue = transactionMeta.v4().sorobanMeta().returnValue();
 
         if (options && options.verbose) {
             printInfo('Transaction result', returnValue.value());
@@ -309,7 +302,6 @@ async function estimateCost(tx, server) {
         ram: Number(response.cost.memBytes),
 
         min_resource_fee: response.minResourceFee,
-        ledger_read_bytes: sorobanTransactionData.resources().readBytes(),
         ledger_write_bytes: sorobanTransactionData.resources().writeBytes(),
         ledger_entry_reads: sorobanTransactionData.resources().footprint().readOnly().length,
         ledger_entry_writes: sorobanTransactionData.resources().footprint().readWrite().length,
@@ -608,6 +600,10 @@ function isFriendbotSupported(networkType) {
     }
 }
 
+function assetToScVal(asset) {
+    return nativeToScVal(Buffer.from(asset.toXDRObject().toXDR('base64'), 'base64'), { type: 'bytes' });
+}
+
 module.exports = {
     stellarCmd,
     ASSET_TYPE_NATIVE,
@@ -638,4 +634,5 @@ module.exports = {
     sanitizeMigrationData,
     generateKeypair,
     isFriendbotSupported,
+    assetToScVal,
 };

@@ -58,21 +58,25 @@ ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 
 Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
 
-## Register &lt;ChainName&gt; ITS on ITS Hub
-
-```bash
-ts-node cosmwasm/submit-proposal.js \
-    its-hub-register-chains $CHAIN \
-    -t "Register $CHAIN on ITS Hub" \
-    -d "Register $CHAIN on ITS Hub" 
-```
-
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 
-Set `<ChainName>` as trusted chain on remote ITS contracts for EVM and non-EVM chains.
+#### Note: Ensure that &lt;ChainName&gt; is registered on ITS hub
 
+Set `<ChainName>` as trusted chain on all EVM chains
 ```bash
 ts-node evm/its.js set-trusted-chains $CHAIN hub -n all
+```
+
+Set `<ChainName>` as trusted chain on Sui
+
+```bash
+ts-node sui/its.js add-trusted-chains $CHAIN
+```
+
+Set `<ChainName>` as trusted chain on Stellar
+
+```bash
+ts-node stellar/its.js add-trusted-chains $CHAIN
 ```
 
 ## Checklist
@@ -85,18 +89,49 @@ The following checks should be performed after the rollout.
 ts-node evm/its.js checks -n $CHAIN -y
 ```
 
-- Run the following for two EVM chains (one Amplifier, one consensus, with different decimals for each token)
+- Verify the token manager proxy contract once an ITS token is deployed on `<ChainName>` and then mark it as a proxy.
+
+- EVM Checklist
 
 ```bash
-# Create a token on chain. Substitute the `minter-address` below with the deployer key
+# Create a token on `<ChainName>`
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --initialSupply 10000 --salt "salt1234" -n $CHAIN
 
 # Deploy token to a remote chain
- ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue 1000000000000000000 -y -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [tokenId] [recipient] 1 --gasValue 1000000000000000000 -n $CHAIN
+ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from remote chain
-ts-node evm/its.js interchain-transfer $CHAIN [tokenId] [destination-address] 1 --gasValue 1000000000000000000 -n [destination-chain]
+ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
+```
+
+- Sui Checklist
+
+```bash
+# Deploy Token on sui
+ts-node sui/its-example deploy-token --origin TST "Test Token" 6
+
+# Send Token Deployment to `<ChainName>`
+ts-node sui/its-example send-deployment TST $CHAIN [gas-value]
+
+# Send Token to `<ChainName>`
+ts-node sui/its-example send-token TST $CHAIN [destination-address] [gas-value] 1
+
+# Send token back to sui from `<ChainName>`
+ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId [token-id] --destinationAddress [recipient] --amount 1 --gasValue [gas-value] -n $CHAIN
+```
+
+- Stellar Checklist
+
+```bash
+# Deploy token to a stellar from `<ChainName>`
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+
+# Transfer token to stellar
+ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+
+# Transfer token back from stellar
+ts-node stellar/its.js interchain-transfer [token-id] $CHAIN [destination-address] 1 --gas-amount [gas-amount]
 ```

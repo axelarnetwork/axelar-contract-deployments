@@ -76,6 +76,20 @@ ts-node evm/deploy-its -e testnet -n ethereum -s '[salt]' --proxySalt 'v1.0.0' -
 Change the `-s SALT` to derive a new address. Production deployments use the release version, e.g. `v1.2.1`.
 `proxySalt` is used to derive the same address as a deployment on an existing chain.
 
+## Hyperliquid
+
+The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to set an account to used a specific block size, to query the deployer address of an interchain token, and to update the deployer address of an interchain token. The supported commands are:
+
+```bash
+# Update block size
+ts-node evm/hyperliquid.js update-block-size <small|big>
+
+# Get token deployer
+ts-node evm/hyperliquid.js deployer <token-id>
+
+# Update token deployer
+ts-node evm/hyperliquid.js update-token-deployer <token-id> <address>
+```
 ## Governance
 
 A governance contract is used to manage some contracts such as the AxelarGateway, ITS, ITS Factory etc. The governance is controlled by the native PoS based governance mechanism of Axelar.
