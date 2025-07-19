@@ -113,25 +113,63 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
-1. Instantiate `VotingVerifier`
+
+1. Instantiate **Gateway**, **Verifier** and **Prover** contracts useing **Coordinator**
+
+TODO: This should be covered by a new script:
 
 ```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node cosmwasm/submit-proposal.js execute \
+  -c Coordinator \
+  -t "Instantiate Gateway, Verifier and Prover for $CHAIN using Coordinator" \
+  -d "Instantiate Gateway, Verifier and Prover for $CHAIN using Coordinator" \
+  --msg "{
+    \"instantiate_chain_contracts\": {
+      \"chain\": \"$CHAIN\",
+        \"deployment_name\": [unique deployment name],
+        \"salt\": [some random salt],
+        \"params\": {
+          \"gateway\": {
+            \"code_id\": u64,
+            \"label\": String,
+          },
+          \"verifier\": {
+            \"code_id\": u64,
+            \"label\": String,
+            \"msg\": {
+              \"governance_address\": nonempty::String,
+              \"service_name\": nonempty::String,
+              \"source_gateway_address\": nonempty::String,
+              \"voting_threshold\": MajorityThreshold,
+              \"block_expiry\": nonempty::Uint64,
+              \"confirmation_height\": u64,
+              \"source_chain\": ChainName,
+              \"rewards_address\": nonempty::String,
+              \"msg_id_format\": MessageIdFormat,
+              \"address_format\": AddressFormat,
+            }
+          },
+          \"prover\": {
+            \"code_id\": u64,
+            \"label\": String,
+            \"msg\": {
+              \"governance_address\": String,
+              \"multisig_address\": String,
+              \"signing_threshold\": MajorityThreshold,
+              \"service_name\": String,
+              \"chain_name\": ChainName,
+              \"verifier_set_diff_threshold\": u32,
+              \"encoder\": Encoder,
+              \"key_type\": KeyType,
+              \"domain_separator\": Hash,
+            }
+          }
+        }
+      }
+    }"
 ```
 
-2. Instantiate `Gateway`
-
-```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
-```
-
-3. Instantiate `MultisigProver`
-
-```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
-```
-
-4. Set environment variables
+2. Set environment variables
 
 - These variables are network-specific
 
@@ -163,54 +201,39 @@ EPOCH_DURATION=[epoch duration according to the environment]
 
 - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
-5. Register Gateway at the Router
 
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Router \
-  -t "Register Gateway for $CHAIN" \
-  -d "Register Gateway address for $CHAIN at Router contract" \
-  --msg "{
-    \"register_chain\": {
-      \"chain\": \"$CHAIN\",
-      \"gateway_address\": \"$GATEWAY\",
-      \"msg_id_format\": \"hex_tx_hash_and_event_index\"
-      }
-    }"
-```
-
-6. Register prover contract on coordinator
-
+3. Register a new deployment in the **Coordinator** contract:
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
-  -t "Register Multisig Prover for $CHAIN" \
-  -d "Register Multisig Prover address for $CHAIN at Coordinator contract" \
+  -t "Register a new deployment for $CHAIN at Coordinator contract" \
+  -d "Register a new deployment for $CHAIN at Coordinator contract" \
   --msg "{
-    \"register_prover_contract\": {
-      \"chain_name\": \"$CHAIN\",
-      \"new_prover_addr\": \"$MULTISIG_PROVER\"
-    }
-  }"
+    \"register_deployment\": {
+      \"deployment_name\": [Same deployment as in 1st step],
+    }"
 ```
 
-7. Authorize `$CHAIN` Multisig Prover on Multisig
 
+TODO: Authorize `$CHAIN` Multisig Prover on Multisig covered by Register deployments: https://github.com/axelarnetwork/axelar-amplifier/pull/953
+
+4. Register the new chain in the **Coordinator** contract:
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
-  -t "Authorize Multisig Prover for $CHAIN" \
-  -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
+  -c Coordinator \
+  -t "Register a new deployment for $CHAIN at Coordinator contract" \
+  -d "Register a new deployment for $CHAIN at Coordinator contract" \
   --msg "{
-    \"authorize_callers\": {
-      \"contracts\": {
-        \"$MULTISIG_PROVER\": \"$CHAIN\"
-      }
-    }
-  }"
+    \"register_deployment\": {
+        \"chain_name\": $CHAIN,
+        \"prover_address\": String,
+        \"gateway_address\": String,
+        \"voting_verifier_address\": String,
+    }"
 ```
 
-8. Create reward pool for voting verifier
+
+5. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -241,7 +264,8 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Create reward pool for multisig
+
+6. Create reward pool for multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -263,7 +287,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-10. Register ITS edge contract on ITS Hub
+7. Register ITS edge contract on ITS Hub
 
 Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
 
@@ -291,7 +315,7 @@ ts-node cosmwasm/submit-proposal.js \
 
 - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
-11. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+8. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
@@ -299,7 +323,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-12. Confirm proposals have passed
+9. Confirm proposals have passed
 
 - Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
   - "Register Gateway for `$CHAIN`"
@@ -340,7 +364,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-13. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+10. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
@@ -370,13 +394,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-14. Update `ampd` with the `$CHAIN` chain configuration.
+11. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-15. Create genesis verifier set
+12. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
