@@ -180,7 +180,7 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
         }
 
         const transactionMeta = getResponse.resultMetaXdr;
-        const returnValue = transactionMeta.v3().sorobanMeta().returnValue();
+        const returnValue = transactionMeta.v4().sorobanMeta().returnValue();
 
         if (options && options.verbose) {
             printInfo('Transaction result', returnValue.value());
@@ -302,7 +302,6 @@ async function estimateCost(tx, server) {
         ram: Number(response.cost.memBytes),
 
         min_resource_fee: response.minResourceFee,
-        ledger_read_bytes: sorobanTransactionData.resources().readBytes(),
         ledger_write_bytes: sorobanTransactionData.resources().writeBytes(),
         ledger_entry_reads: sorobanTransactionData.resources().footprint().readOnly().length,
         ledger_entry_writes: sorobanTransactionData.resources().footprint().readWrite().length,
