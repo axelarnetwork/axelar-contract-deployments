@@ -273,7 +273,14 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
-    const [tokenId, channelId, saltAddress] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
+    const [tokenId, channelId, saltAddress] = await registerCustomCoinUtil(
+        deployConfig,
+        itsConfig,
+        AxelarGateway,
+        symbol,
+        metadata,
+        tokenType,
+    );
 
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
     if (!options.channel && !channelId) throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
