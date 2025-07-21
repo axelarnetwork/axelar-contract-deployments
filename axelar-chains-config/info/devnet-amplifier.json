@@ -630,9 +630,9 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
-    "solana": {
+    "solana-2": {
       "name": "Solana",
-      "axelarId": "solana",
+      "axelarId": "solana-2",
       "rpc": "https://api.devnet.solana.com",
       "chainType": "svm",
       "decimals": 9,
@@ -1479,7 +1479,7 @@
           "codeId": 854,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl"
         },
-        "solana": {
+        "solana-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
           "sourceGatewayAddress": "gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp",
@@ -1559,7 +1559,7 @@
           "codeId": 848,
           "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
         },
-        "solana": {
+        "solana-2": {
           "codeId": 1426,
           "address": "axelar1n8yyn0s7w90k4axwegxnp7593vhzn0ea2rnntqgzd4563qnpd7sqqjzqz3"
         },
@@ -1698,7 +1698,7 @@
           "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
           "address": "axelar1mfn6hevkpj54qkkdy2rznp2azgvqff0rt2cegmflxgqfm0nqx20q6aqnp5"
         },
-        "solana": {
+        "solana-2": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "signingThreshold": [
