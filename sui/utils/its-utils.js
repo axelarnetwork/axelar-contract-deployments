@@ -49,16 +49,19 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
         },
     );
 
-    const tokenEvent = result.events.filter((evt) => {
+    let tokenEvent = result.events.filter((evt) => {
         return evt.parsedJson.token_id ? true : false;
     })[0];
 
-    const channelEvent = result.events.filter((evt) => {
+    let channelEvent = result.events.filter((evt) => {
         return evt.transactionModule == 'channel' ? true : false;
     })[0];
 
-    const tokenId = tokenEvent.parsedJson.token_id.id ? tokenEvent.parsedJson.token_id.id : null;
-    const channelId = channelEvent.parsedJson.id ? channelEvent.parsedJson.id : null;
+    if (!tokenEvent) tokenEvent = { parsedJson: {} };
+    if (!channelEvent) channelEvent = { parsedJson: {} };
+
+    const tokenId = tokenEvent.parsedJson.hasOwnProperty('token_id') ? tokenEvent.parsedJson.token_id.id : null;
+    const channelId = channelEvent.parsedJson.hasOwnProperty('id') ? channelEvent.parsedJson.id : null;
 
     return [tokenId, channelId];
 }
