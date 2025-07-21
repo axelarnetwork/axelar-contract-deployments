@@ -212,7 +212,7 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Register deployed token (custom)
-    const [tokenId, _channelId] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
+    const [tokenId, _channelId, _salt] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
     // Save the deployed token
@@ -273,7 +273,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
 
     // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
     // A token manager is deployed on the source chain corresponding to the tokenId.
-    const [tokenId, channelId] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
+    const [tokenId, channelId, saltAddress] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
 
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
     if (!options.channel && !channelId) throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
@@ -291,7 +291,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Salt
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [createSaltAddress()],
+        arguments: [saltAddress],
     });
 
     messageTicket = await txBuilder.moveCall({

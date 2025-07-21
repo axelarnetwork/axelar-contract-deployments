@@ -20,9 +20,10 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
           });
 
     // Salt
+    const saltAddress = createSaltAddress();
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [createSaltAddress()],
+        arguments: [saltAddress],
     });
 
     // Register deployed token (from info)
@@ -64,7 +65,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     const tokenId = tokenEvent.parsedJson.hasOwnProperty('token_id') ? tokenEvent.parsedJson.token_id.id : null;
     const channelId = channelEvent.parsedJson.hasOwnProperty('id') ? channelEvent.parsedJson.id : null;
 
-    return [tokenId, channelId];
+    return [tokenId, channelId, saltAddress];
 }
 
 function createSaltAddress() {
