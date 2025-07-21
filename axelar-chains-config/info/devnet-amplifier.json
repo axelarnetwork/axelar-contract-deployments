@@ -1388,7 +1388,7 @@
           "codeId": 854,
           "address": "axelar1252ahkw208d08ls64atp2pql4cnl9naxy7ahhq3lrthvq3spseys26l8xj"
         },
-        "lastUploadedCodeId": 854,
+        "lastUploadedCodeId": 1425,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1490,7 +1490,9 @@
           "blockExpiry": 10,
           "confirmationHeight": 31,
           "msgIdFormat": "base58_solana_tx_signature_and_event_index",
-          "addressFormat": "base58_solana"
+          "addressFormat": "base58_solana",
+          "codeId": 1425,
+          "address": "axelar1dfvjms4w6vrrg9nsa6exy9rmyw0jx22uv90ftsgsgesv0a94tg0q5dctke"
         },
         "monad": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1530,7 +1532,7 @@
           "codeId": 848,
           "address": "axelar1agyunp32jwynnkrf92wuvac2xa7cvgthtk5yr3wh7jypg59zjjqqsqf36s"
         },
-        "lastUploadedCodeId": 848,
+        "lastUploadedCodeId": 1426,
         "eth-sepolia": {
           "codeId": 848,
           "address": "axelar18zrymnzgdmutdjhqlfsslzy4yvzw8uylysjwqlq4uk4muq3qx30qde39qz"
@@ -1558,6 +1560,8 @@
           "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
         },
         "solana": {
+          "codeId": 1426,
+          "address": "axelar1n8yyn0s7w90k4axwegxnp7593vhzn0ea2rnntqgzd4563qnpd7sqqjzqz3"
         },
         "monad": {
           "codeId": 848,
@@ -1600,7 +1604,7 @@
           "codeId": 855,
           "address": "axelar1p22kz5jr7a9ruu8ypg40smual0uagl64dwvz5xt042vu8fa7l7dsl3wx8q"
         },
-        "lastUploadedCodeId": 855,
+        "lastUploadedCodeId": 1427,
         "eth-sepolia": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
@@ -1705,7 +1709,9 @@
           "verifierSetDiffThreshold": 0,
           "encoder": "solana",
           "keyType": "ecdsa",
-          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af"
+          "domainSeparator": "0x25175689654ca91a6e0a80f7716bb966a67bb1162c9b89889eed7cfc4f03a6af",
+          "codeId": 1427,
+          "address": "axelar12cmtt8pl2gay7wzwf2w6ft7nvnd6rsk0jm8ed43fg6tjzymdap6s5vkhfn"
         },
         "monad": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
