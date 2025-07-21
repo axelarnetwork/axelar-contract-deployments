@@ -645,9 +645,14 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
     } else if (chainNames) {
         chains = chainNames.split(',');
+        // Validate that all specified chains exist in config before processing
         chains.forEach((chain) => {
-            if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
-                throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
+            const trimmedChain = chain.trim();
+            if (!config.chains[trimmedChain]) {
+                throw new Error(`Chain "${trimmedChain}" is not defined in the config file`);
+            }
+            if (config.chains[trimmedChain].chainType && config.chains[trimmedChain].chainType !== 'evm') {
+                throw new Error(`Cannot run script for a non EVM chain: ${trimmedChain}`);
             }
         });
     }
@@ -671,9 +676,11 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     const chainsToSkip = (skipChains || '').split(',').map((str) => str.trim().toLowerCase());
     chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
 
+    // Final validation - ensure all chains exist in config (case-insensitive)
     for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
+        const chainExists = Object.keys(config.chains).some((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        if (!chainExists) {
+            throw new Error(`Chain "${chainName}" is not defined in the config file`);
         }
     }
 
@@ -691,10 +698,14 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
     const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
 
     let results = [];
-    const chainsSnapshot = chains.slice(); // TODO tkulik: does that works as a deep copy?
+
+    // Creates a deep copy of the chains config - preparing a snapshot of the chains config
+    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
     const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
+        // Find the correct case-sensitive chain key
+        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        const chain = config.chains[chainKey];
 
         printInfo('Chain', chain.name, chalk.cyan);
 
@@ -724,6 +735,7 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
 
 const mainProcessorConcurrent = async (options, processCommand, save = true) => {
     // TODO tkulik: what to do with the logger?
+    // TODO tkulik: what to do with the prompts?
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
@@ -736,7 +748,9 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
     let promiseResults = [];
     const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
+        // Find the correct case-sensitive chain key
+        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        const chain = config.chains[chainKey];
 
         printInfo('Chain', chain.name, chalk.cyan);
         promiseResults.push(processCommand(constAxelarNetwork, chain, options));
@@ -753,63 +767,77 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
     return results;
 };
 
-// TODO tkulik: post validation of the create2 deployed contracts
 function create2DeployedContractsValidation(config) {
-    let existingAddress;
-    for (const chainConfig of Object.values(config.chains)) {
-        existingAddress = chainConfig.contracts?.[contractName]?.address;
+    // Prepare a list of all contract configurations from config.chains with chain information
+    const allContracts = Object.values(config.chains).flatMap((chain) =>
+        chain.contracts
+            ? Object.entries(chain.contracts).map(([contractName, contractConfig]) => ({
+                  contractName,
+                  deployMethod: contractConfig.deploymentMethod,
+                  address: contractConfig.address,
+                  predeployCodehash: contractConfig.predeployCodehash,
+                  chainName: chain.name,
+              }))
+            : [],
+    );
 
-        if (existingAddress !== undefined) {
-            break;
+    // Filter allContracts by deployMethod === 'create2'
+    const create2Contracts = allContracts.filter((contract) => contract.deployMethod === 'create2');
+
+    // Group create2Contracts by contractName
+    const create2ContractsByName = {};
+    for (const contract of create2Contracts) {
+        if (!create2ContractsByName[contract.contractName]) {
+            create2ContractsByName[contract.contractName] = [];
         }
+        create2ContractsByName[contract.contractName].push({
+            deployMethod: contract.deployMethod,
+            address: contract.address,
+            predeployCodehash: contract.predeployCodehash,
+            chainName: contract.chainName,
+        });
     }
+    // Check for contracts deployed with more than one address using create2
+    for (const [contractName, deployments] of Object.entries(create2ContractsByName)) {
+        // Filter out undefined or empty addresses
+        const validDeployments = deployments.filter((deployment) => !!deployment.address);
+        const uniqueAddresses = Array.from(new Set(validDeployments.map((deployment) => deployment.address)));
 
-    if (existingAddress !== undefined && proxyAddress !== existingAddress) {
-        printWarn(`Predicted address ${proxyAddress} does not match existing deployment ${existingAddress} in chain configs.`);
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
-        printWarn('This is NOT required if the deployments are done by different integrators');
-    }
+        if (uniqueAddresses.length > 1) {
+            const addressToChains = {};
+            validDeployments.forEach((deployment) => {
+                if (!addressToChains[deployment.address]) {
+                    addressToChains[deployment.address] = [];
+                }
+                addressToChains[deployment.address].push(deployment.chainName);
+            });
 
-    let existingCodeHash;
+            const addressDetails = uniqueAddresses.map((addr) => `${addr} (chains: ${addressToChains[addr].join(', ')})`).join(', ');
 
-    for (const chainConfig of Object.values(config.chains)) {
-        existingAddress = chainConfig.contracts?.[contractName]?.address;
-        existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
-
-        if (existingAddress !== undefined) {
-            break;
-        }
-    }
-
-    if (existingAddress !== undefined && predictedAddress !== existingAddress) {
-        printWarn(`Predicted address ${predictedAddress} does not match existing deployment ${existingAddress} in chain configs.`);
-
-        if (predeployCodehash !== existingCodeHash) {
             printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} in chain configs.`,
+                `Contract "${contractName}" is deployed with multiple addresses (${uniqueAddresses.length}) using create2: ${addressDetails}`,
             );
         }
 
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode.');
-        printWarn('This is NOT required if the deployments are done by different integrators');
-    }
+        // Check for contracts with different predeployCodehash values
+        const validCodeHashDeployments = deployments.filter((deployment) => !!deployment.predeployCodehash);
+        const uniqueCodeHashes = Array.from(new Set(validCodeHashDeployments.map((deployment) => deployment.predeployCodehash)));
 
-    existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+        if (uniqueCodeHashes.length > 1) {
+            const hashToChains = {};
+            validCodeHashDeployments.forEach((deployment) => {
+                if (!hashToChains[deployment.predeployCodehash]) {
+                    hashToChains[deployment.predeployCodehash] = [];
+                }
+                hashToChains[deployment.predeployCodehash].push(deployment.chainName);
+            });
 
-    if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
-        printWarn(
-            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
-        );
+            const hashDetails = uniqueCodeHashes.map((hash) => `${hash} (chains: ${hashToChains[hash].join(', ')})`).join(', ');
 
-        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
-
-        if (predeployCodehash !== existingCodeHash) {
             printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
+                `Contract "${contractName}" has multiple predeployCodehash values (${uniqueCodeHashes.length}) using create2: ${hashDetails}`,
             );
         }
-
-        printWarn('For official deployment, recheck the deployer, salt, args, or contract bytecode');
     }
 }
 
