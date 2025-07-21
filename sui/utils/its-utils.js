@@ -1,3 +1,4 @@
+const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
@@ -21,7 +22,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     // Salt
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [config.walletAddress], // TODO: salt should be created from channel::to_address?
+        arguments: [createSaltAddress()],
     });
 
     // Register deployed token (from info)
@@ -66,4 +67,10 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     return [tokenId, channelId];
 }
 
-module.exports = { registerCustomCoinUtil };
+function createSaltAddress() {
+    const keypair = new Ed25519Keypair();
+    const address = keypair.getPublicKey().toSuiAddress();
+    return address;
+}
+
+module.exports = { createSaltAddress, registerCustomCoinUtil };

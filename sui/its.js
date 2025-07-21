@@ -5,6 +5,7 @@ const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
+    createSaltAddress,
     deployTokenFromInfo,
     getWallet,
     newCoinManagementLocked,
@@ -290,7 +291,7 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     // Salt
     const salt = await txBuilder.moveCall({
         target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [walletAddress],
+        arguments: [createSaltAddress()],
     });
 
     messageTicket = await txBuilder.moveCall({
