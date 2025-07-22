@@ -46,7 +46,7 @@ let asyncLocalLoggerStorage = new AsyncLocalStorage();
 const printMsg = (msg) => {
     const stream = asyncLocalLoggerStorage?.getStore();
     if (stream) {
-        stream.write(`${msg}`);
+        stream.write(`${msg}\n`);
     } else {
         console.log(`${msg}`);
     }
@@ -60,9 +60,9 @@ const printInfo = (msg, info = '', colour = chalk.green) => {
     }
 
     if (info) {
-        printMsg(`${msg}: ${colour(info)}\n`);
+        printMsg(`${msg}: ${colour(info)}`);
     } else {
-        printMsg(`${msg}\n`);
+        printMsg(`${msg}`);
     }
 };
 
@@ -71,7 +71,7 @@ const printWarn = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    printMsg(`${chalk.italic.yellow(msg)}\n`);
+    printMsg(`${chalk.italic.yellow(msg)}`);
 };
 
 const printError = (msg, info = '') => {
@@ -79,7 +79,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    printMsg(`${chalk.bold.red(msg)}\n`);
+    printMsg(`${chalk.bold.red(msg)}`);
 };
 
 const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
@@ -87,7 +87,7 @@ const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
         msg = `${msg}: ${info}`;
     }
 
-    printMsg(`${colour(msg)}\n`);
+    printMsg(`${colour(msg)}`);
 };
 
 const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
@@ -750,4 +750,5 @@ module.exports = {
     getProposalConfig,
     itsHubContractAddress,
     asyncLocalLoggerStorage,
+    printMsg,
 };

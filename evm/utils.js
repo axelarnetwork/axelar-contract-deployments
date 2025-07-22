@@ -49,6 +49,7 @@ const {
     getSaltFromKey,
     getCurrentVerifierSet,
     asyncLocalLoggerStorage,
+    printMsg,
 } = require('../common');
 const {
     create3DeployContract,
@@ -708,7 +709,6 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
 };
 
 const mainProcessorConcurrent = async (options, processCommand, save = true) => {
-    // TODO tkulik: what to do with the prompts?
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
@@ -743,39 +743,50 @@ const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsS
     }
 };
 
-const chainHandler = async (options, processCommand, save = true, parallel = false) => {
-    const config = loadConfig(options.env);
-    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
-
-    let promiseResults = [];
-    let results = [];
-    const constAxelarNetwork = config.axelar;
-    for (const chainName of chains) {
-        // Find the correct case-sensitive chain key
-        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
-        const chain = config.chains[chainKey];
-        const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
-        if (parallel) {
-            promiseResults.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
-        } else {
-            printInfo('Chain', chain.name, chalk.cyan);
-            try {
-                const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
-                if (result) {
-                    results.push(result);
-                }
-            } catch (error) {
-                printError(`Failed with error on ${chain.name}`, error.message);
-                if (!options.ignoreError) {
-                    throw error;
-                }
-            }
+const sequentialChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
+    printInfo('Chain', chain.name, chalk.cyan);
+    try {
+        return await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+    } catch (error) {
+        printError(`Failed with error on ${chain.name}`, error.message);
+        if (!options.ignoreError) {
+            throw error;
         }
     }
+};
+
+const chainHandler = async (options, processCommand, save = true, parallel = false) => {
+    const config = loadConfig(options.env);
+    const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
+    let results = [];
+    const constAxelarNetwork = config.axelar;
+    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
+
+    // Find the correct case-sensitive chain key
+    const chains = chainNames.map((chainName) => {
+        const chainKey = Object.keys(chainsSnapshot).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        const chain = config.chains[chainKey];
+        return chain;
+    });
 
     if (parallel) {
-        results = (await Promise.all(promiseResults)).filter((result) => result !== undefined);
+        results.push(await asyncChainTask(processCommand, constAxelarNetwork, chains[0], chainsSnapshot, options));
+    } else {
+        results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chains[0], chainsSnapshot, options));
     }
+    options.yes = true;
+    printMsg('');
+    for (const chain of chains.slice(1)) {
+        if (parallel) {
+            results.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+        } else {
+            results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+        }
+        printMsg('');
+    }
+
+    results = (await Promise.all(results)).filter((result) => result !== undefined);
 
     create2DeployedContractsValidation(config);
 
