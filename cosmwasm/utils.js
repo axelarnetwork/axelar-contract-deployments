@@ -952,7 +952,7 @@ const getExecuteContractParams = (config, options, chainName) => {
             contracts: { [contractName]: contractConfig },
         },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),
@@ -974,7 +974,7 @@ const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),

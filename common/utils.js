@@ -522,7 +522,6 @@ const getChainConfig = (chainsSnapshot, chainName, options = {}) => {
         return undefined;
     }
 
-    // TODO tkulik: const chainConfig = chainsSnapshot[chainName] || config[chainName];
     const chainConfig = chainsSnapshot[chainName];
 
     if (!options.skipCheck && !chainConfig) {
