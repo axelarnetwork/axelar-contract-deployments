@@ -630,6 +630,21 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1
     },
+    "solana": {
+      "name": "Solana",
+      "axelarId": "solana",
+      "rpc": "https://api.devnet.solana.com",
+      "chainType": "svm",
+      "decimals": 9,
+      "finality": "31",
+      "approxFinalityWaitTime": 1,
+      "tokenSymbol": "SOL",
+      "explorer": {
+        "name": "Solana Explorer",
+        "url": "https://explorer.solana.com/?cluster=devnet"
+      },
+      "contracts": {}
+    },
     "stellar-2025-q1": {
       "name": "Stellar",
       "axelarId": "stellar-2025-q1",
@@ -1460,6 +1475,21 @@
           "codeId": 854,
           "address": "axelar1a4e4aful6hchmxd3cffurz24pca52wmt3pf78rsmzglzujnueqgq7eypgl"
         },
+        "solana": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 31,
+          "msgIdFormat": "base58_solana_tx_signature_and_event_index",
+          "addressFormat": "base58_solana",
+          "codeId": 57,
+          "address": ""
+        },
         "monad": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
           "serviceName": "validators",
@@ -1524,6 +1554,10 @@
         "plume-2": {
           "codeId": 848,
           "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
+        },
+        "solana": {
+          "codeId": 58,
+          "address": ""
         },
         "monad": {
           "codeId": 848,
@@ -1659,6 +1693,21 @@
           "codeId": 855,
           "domainSeparator": "0x974a372dccb2a81196b546432ad388af9cb49d0a5e4567d444c51ea63edb62f9",
           "address": "axelar1mfn6hevkpj54qkkdy2rznp2azgvqff0rt2cegmflxgqfm0nqx20q6aqnp5"
+        },
+        "solana": {
+          "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "adminAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "solana",
+          "keyType": "ecdsa",
+          "codeId": 59,
+          "domainSeparator": "0x98a0e9190ca7659c70ba1f84df95eeb0932224611ec553ee9dc709aa46ac08f6",
+          "address": ""
         },
         "monad": {
           "governanceAddress": "axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9",
