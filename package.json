@@ -38,6 +38,7 @@
     "@stellar/stellar-sdk": "v14.0.0-rc.3",
     "abort-controller": "^3.0.0",
     "axios": "^1.7.2",
+    "bs58": "^6.0.0",
     "csv-parser": "^3.0.0",
     "msgpack-lite": "^0.1.26",
     "path": "^0.12.7",
