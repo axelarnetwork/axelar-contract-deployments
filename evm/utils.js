@@ -21,6 +21,7 @@ const {
     BigNumber,
     Wallet,
 } = ethers;
+const { Writable } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
@@ -47,6 +48,7 @@ const {
     timeout,
     getSaltFromKey,
     getCurrentVerifierSet,
+    asyncLocalLoggerStorage,
 } = require('../common');
 const {
     create3DeployContract,
@@ -71,7 +73,7 @@ const deployCreate = async (wallet, contractJson, args = [], options = {}, verif
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log('FAILED VERIFICATION!!');
+            printError('FAILED VERIFICATION!!');
         }
     }
 
@@ -110,7 +112,7 @@ const deployCreate2 = async (
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log(`FAILED VERIFICATION!! ${e}`);
+            printError(`FAILED VERIFICATION!! ${e}`);
         }
     }
 
@@ -141,7 +143,7 @@ const deployCreate3 = async (
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log(`FAILED VERIFICATION!! ${e}`);
+            printError(`FAILED VERIFICATION!! ${e}`);
         }
     }
 
@@ -706,7 +708,6 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
 };
 
 const mainProcessorConcurrent = async (options, processCommand, save = true) => {
-    // TODO tkulik: what to do with the logger?
     // TODO tkulik: what to do with the prompts?
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -714,10 +715,32 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
     printInfo('Environment', options.env);
     return await chainHandler(
         options,
-        (constAxelarNetwork, chain, chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, options),
+        (constAxelarNetwork, chain, _chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, options),
         save,
         options.parallel,
     );
+};
+
+const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
+    let output = '';
+    try {
+        let stream = new Writable({
+            write(chunk, _encoding, callback) {
+                output += chunk.toString();
+                callback();
+            },
+        });
+        const result = await asyncLocalLoggerStorage.run(stream, () => {
+            printInfo('Chain', chain.name, chalk.cyan);
+            return processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+        });
+        console.log(output);
+        return result;
+    } catch (error) {
+        printError(`Error processing chain ${chain.name}: ${error.message}`);
+        console.log(output);
+        return undefined;
+    }
 };
 
 const chainHandler = async (options, processCommand, save = true, parallel = false) => {
@@ -725,27 +748,36 @@ const chainHandler = async (options, processCommand, save = true, parallel = fal
     const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
 
     let promiseResults = [];
+    let results = [];
     const constAxelarNetwork = config.axelar;
     for (const chainName of chains) {
         // Find the correct case-sensitive chain key
         const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
         const chain = config.chains[chainKey];
-
-        printInfo('Chain', chain.name, chalk.cyan);
         const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
         if (parallel) {
-            promiseResults.push(processCommand(constAxelarNetwork, chain, chainsSnapshot, options));
+            promiseResults.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
         } else {
-            const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
-            if (result) {
-                results.push(result);
+            printInfo('Chain', chain.name, chalk.cyan);
+            try {
+                const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+                if (result) {
+                    results.push(result);
+                }
+            } catch (error) {
+                printError(`Failed with error on ${chain.name}`, error.message);
+                if (!options.ignoreError) {
+                    throw error;
+                }
             }
         }
     }
 
-    const results = parallel ? (await Promise.all(promiseResults)).filter((result) => result !== undefined) : promiseResults;
+    if (parallel) {
+        results = (await Promise.all(promiseResults)).filter((result) => result !== undefined);
+    }
 
-    create2DeployedContractsValidation(config, results);
+    create2DeployedContractsValidation(config);
 
     if (save) {
         saveConfig(config, options.env);

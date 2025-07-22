@@ -465,7 +465,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
             };
 
             const data = defaultAbiCoder.encode(['uint8', WEIGHTED_SIGNERS_TYPE], [1, newSigners]);
-            console.log(JSON.stringify(newSigners, null, 2));
+            printInfo(JSON.stringify(newSigners, null, 2));
             const proof = await getWeightedSignersProof(data, HashZero, weightedSigners, [wallet]);
             const tx = await gateway.rotateSigners(newSigners, proof, gasOptions);
 

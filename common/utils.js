@@ -16,6 +16,7 @@ const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
+const { AsyncLocalStorage } = require('async_hooks');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -40,6 +41,17 @@ const writeJSON = (data, name) => {
     });
 };
 
+let asyncLocalLoggerStorage = new AsyncLocalStorage();
+
+const printMsg = (msg) => {
+    const stream = asyncLocalLoggerStorage?.getStore();
+    if (stream) {
+        stream.write(`${msg}`);
+    } else {
+        console.log(`${msg}`);
+    }
+};
+
 const printInfo = (msg, info = '', colour = chalk.green) => {
     if (typeof info === 'boolean') {
         info = String(info);
@@ -48,9 +60,9 @@ const printInfo = (msg, info = '', colour = chalk.green) => {
     }
 
     if (info) {
-        console.log(`${msg}: ${colour(info)}\n`);
+        printMsg(`${msg}: ${colour(info)}\n`);
     } else {
-        console.log(`${msg}\n`);
+        printMsg(`${msg}\n`);
     }
 };
 
@@ -59,7 +71,7 @@ const printWarn = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.italic.yellow(msg)}\n`);
+    printMsg(`${chalk.italic.yellow(msg)}\n`);
 };
 
 const printError = (msg, info = '') => {
@@ -67,7 +79,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${chalk.bold.red(msg)}\n`);
+    printMsg(`${chalk.bold.red(msg)}\n`);
 };
 
 const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
@@ -75,15 +87,15 @@ const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {
         msg = `${msg}: ${info}`;
     }
 
-    console.log(`${colour(msg)}\n`);
+    printMsg(`${colour(msg)}\n`);
 };
 
 const printDivider = (char = '-', width = process.stdout.columns, colour = chalk.bold.white) => {
-    console.log(colour(char.repeat(width)));
+    printMsg(colour(char.repeat(width)));
 };
 
 function printLog(log) {
-    console.log(JSON.stringify({ log }, null, 2));
+    printMsg(JSON.stringify({ log }, null, 2));
 }
 
 const isString = (arg) => {
@@ -737,4 +749,5 @@ module.exports = {
     encodeITSDestination,
     getProposalConfig,
     itsHubContractAddress,
+    asyncLocalLoggerStorage,
 };

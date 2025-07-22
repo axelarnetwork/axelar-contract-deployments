@@ -34,7 +34,7 @@ async function getImplementationArgs(contractName, contracts, options) {
     try {
         args = options.args ? JSON.parse(options.args) : {};
     } catch (error) {
-        console.error('Error parsing args:\n', error.message);
+        printError('Error parsing args:\n', error.message);
     }
 
     const contractConfig = contracts[contractName];
@@ -57,7 +57,7 @@ async function getImplementationArgs(contractName, contracts, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                console.log(`${contracts.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+                printInfo(`${contracts.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
@@ -186,8 +186,8 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 
         contractConfig.implementation = await contract.implementation();
 
-        console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
-        console.log(`${chain.name} | Upgraded.`);
+        printInfo(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
+        printInfo(`${chain.name} | Upgraded.`);
     } else {
         const setupArgs = getInitArgs(contractName, contracts);
         printInfo('Proxy setup args', setupArgs);
