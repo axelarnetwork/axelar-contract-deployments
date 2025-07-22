@@ -40,6 +40,7 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
     const owner = await proxyContract.owner();
     if (owner !== wallet.address) {
         printError(`Wallet ${wallet.address} is not the owner of the transceiver. Owner is ${owner}`);
+        return;
     }
 
     const currImplementation = await proxyContract.implementation();
