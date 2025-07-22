@@ -81,6 +81,10 @@ const addAmplifierOptions = (program, options) => {
     if (options.runAs) {
         program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
     }
+
+    if (options.translatorAddress) {
+        program.addOption(new Option('--translator-address <translatorAddress>', 'override ItsAbiTranslator address from config'));
+    }
 };
 
 const addAmplifierQueryOptions = (program) => {
