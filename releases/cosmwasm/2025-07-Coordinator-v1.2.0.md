@@ -10,7 +10,7 @@
 
 
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/multisig-v2.1.0)
+<!-- [Release](...) -->
 
 ## Background
 
