@@ -5,7 +5,6 @@ const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
-    createSaltAddress,
     deployTokenFromInfo,
     getWallet,
     newCoinManagementLocked,
@@ -248,23 +247,39 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
-
-    let txBuilder = new TxBuilder(client);
+    const txBuilder = new TxBuilder(client);
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
-    // Register deployed token (custom)
-    const [tokenId, _channelId, _salt] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
-
     // Option<TreasuryCap<T>> 
-    const target = options.treasuryCap 
+    const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('')
+    const target = options.treasuryCapReclaimer 
         ? `${STD_PACKAGE_ID}::option::some` 
         : `${STD_PACKAGE_ID}::option::none`;
-    const arguments = options.treasuryCap ? [] : [treasuryCap];
-    const typeArguments = [[itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('')];
+    const arguments = options.treasuryCapReclaimer ? [treasuryCap] : [];
+    const typeArguments = [treasuryCapReclaimerType];
     const treasuryCapOption = await txBuilder.moveCall({ target, arguments, typeArguments });
+
+
+    // create TokenId
+    const tokenId = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_info`,
+        arguments: [
+            await txBuilder.moveCall({
+                target: `${AxelarGateway.address}::bytes32::from_bytes`,
+                arguments: [bcs.string().serialize("sui").toBytes()],
+            }),
+            name, 
+            symbol,
+            decimals,
+            bcs.bool().serialize(false),
+            options.treasuryCapReclaimer 
+                ? bcs.bool().serialize(true) 
+                : bcs.bool().serialize(false),
+        ],
+        typeArguments: [tokenType],
+    });
 
     // give_unlinked_coin<T>
     const treasuryCapReclaimer = await txBuilder.moveCall({
@@ -278,7 +293,16 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
         typeArguments: [tokenType],
     });
 
-    if (options.treasuryCap) txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    if (options.treasuryCapReclaimer)
+        txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    else
+        await txBuilder.moveCall({
+            target: `${STD_PACKAGE_ID}::option::destroy_none`,
+            arguments: [treasuryCapReclaimer],
+            typeArguments: [treasuryCapReclaimerType],
+        });
+    
+    await broadcastFromTxBuilder(txBuilder, keypair, `Give Unlinked Coin (${symbol})`, options);
 
     // Save the deployed token
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);    
@@ -469,7 +493,7 @@ if (require.main === module) {
         .name('give-unlinked-coin')
         .command('give-unlinked-coin <symbol> <name> <decimals>')
         .description(
-            `Deploy a coin on Sui, register it as custom coin and give its treasury capability to ITS.`,
+            `Deploy a coin on Sui and give its treasury capability to ITS.`,
         )
         .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
         .action((symbol, name, decimals, options) => {
