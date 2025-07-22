@@ -32,7 +32,7 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
     const proxyAddress = contractConfig.address;
 
     validateParameters({
-        isAddress: { proxyAddress }
+        isAddress: { proxyAddress },
     });
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
