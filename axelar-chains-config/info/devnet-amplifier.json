@@ -646,6 +646,24 @@
       "contracts": {
         "AxelarGateway": {
           "address": "gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp"
+        },
+        "AxelarGasService": {
+          "address": "gasd4em72NAm7faq5dvjN5GkXE59dUkTThWmYDX95bK",
+          "configAccount": "GQ3Yde4evoph1qnogmb8VASZgqzXUxbVKx4oxnNbcZK9"
+        },
+        "InterchainGovernance": {
+          "address": "govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9",
+          "configAccount": "Bj7r2VugtM6odjLX9YdWtDsrZfSKLQFbfoc5hTL9qVhe",
+          "upgradeAuthority": "upaLVW6xkpeVB2g3h2KBqqFCNrWdnrAb6J6PRcqKtTe",
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "governanceChain": "Axelarnet",
+          "minimumTimeDelay": 3600
+        },
+        "InterchainTokenService": {
+          "address": "itsqybuNsChBo3LgVhCWWnTJVJdoVTUJaodmqQcG6z7",
+          "configAccount": "8JYHzvaw7EQdck2xus8rqxELRSfD5iqi4aQx7UMFkswZ",
+          "upgradeAuthority": "upaLVW6xkpeVB2g3h2KBqqFCNrWdnrAb6J6PRcqKtTe",
+          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k"
         }
       }
     },
@@ -1366,6 +1384,10 @@
         },
         "stellar-2025-q1": {
           "maxUintBits": 127,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "solana-2": {
+          "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 255
         },
         "storeCodeProposalId": "989",
