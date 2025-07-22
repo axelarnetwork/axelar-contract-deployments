@@ -124,7 +124,7 @@ The deployment script will:
 
 ### Upgrade AxelarTransceiver
 
-To upgrade an existing AxelarTransceiver implementation while keeping the same proxy, follow these steps:
+To upgrade an existing AxelarTransceiver implementation, follow these steps:
 
 #### Deploy New Implementation (Reuse Existing Proxy)
 

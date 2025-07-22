@@ -46,7 +46,7 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
     printInfo(`New implementation`, newImplementation);
 
     if (currImplementation === newImplementation) {
-        printWarn(`AxelarTransceiver implementation is already up to date`);
+        printError(`AxelarTransceiver implementation is already up to date`);
         return;
     }
 
