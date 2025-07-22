@@ -692,45 +692,17 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
         throw new Error('Environment was not provided');
     }
 
-    printInfo('Environment', options.env);
-
-    const config = loadConfig(options.env);
-    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
-
-    let results = [];
-
-    // Creates a deep copy of the chains config - preparing a snapshot of the chains config
-    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
-    const constAxelarNetwork = config.axelar;
-    for (const chainName of chains) {
-        // Find the correct case-sensitive chain key
-        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
-        const chain = config.chains[chainKey];
-
-        printInfo('Chain', chain.name, chalk.cyan);
-
-        try {
-            const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
-
-            if (result) {
-                results.push(result);
-            }
-        } catch (error) {
-            printError(`Failed with error on ${chain.name}`, error.message);
-
-            if (!options.ignoreError) {
-                throw error;
-            }
-        }
+    if (options.parallel) {
+        printError('Parallel mode is not supported for sequential deployment');
+        return;
     }
 
-    create2DeployedContractsValidation(config, results);
-
-    if (save) {
-        saveConfig(config, options.env);
-    }
-
-    return results;
+    return await chainHandler(
+        options,
+        (constAxelarNetwork, chain, chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, chainsSnapshot, options),
+        save,
+        false,
+    );
 };
 
 const mainProcessorConcurrent = async (options, processCommand, save = true) => {
@@ -739,9 +711,16 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
-
     printInfo('Environment', options.env);
+    return await chainHandler(
+        options,
+        (constAxelarNetwork, chain, chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, options),
+        save,
+        options.parallel,
+    );
+};
 
+const chainHandler = async (options, processCommand, save = true, parallel = false) => {
     const config = loadConfig(options.env);
     const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
 
@@ -753,10 +732,18 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
         const chain = config.chains[chainKey];
 
         printInfo('Chain', chain.name, chalk.cyan);
-        promiseResults.push(processCommand(constAxelarNetwork, chain, options));
+        const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
+        if (parallel) {
+            promiseResults.push(processCommand(constAxelarNetwork, chain, chainsSnapshot, options));
+        } else {
+            const result = await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+            if (result) {
+                results.push(result);
+            }
+        }
     }
 
-    const results = (await Promise.all(promiseResults)).filter((result) => result !== undefined);
+    const results = parallel ? (await Promise.all(promiseResults)).filter((result) => result !== undefined) : promiseResults;
 
     create2DeployedContractsValidation(config, results);
 
