@@ -31,6 +31,10 @@ const { addEvmOptions } = require('./cli-utils');
 async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
     const proxyAddress = contractConfig.address;
 
+    validateParameters({
+        isAddress: { proxyAddress }
+    });
+
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
 
     const owner = await proxyContract.owner();
