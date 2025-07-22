@@ -330,8 +330,9 @@ async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options
 }
 
 async function main(options) {
-    // TODO tkulik: catchErr - why we need to catch the error here?
-    await mainProcessorSequential(options, processCommand, false);
+    // Set ignoreError to true to maintain the original resilient behavior
+    // where verification failures on one chain don't stop verification on other chains
+    await mainProcessorSequential({ ...options, ignoreError: true }, processCommand, false);
 }
 
 if (require.main === module) {
