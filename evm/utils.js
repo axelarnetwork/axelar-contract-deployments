@@ -648,13 +648,14 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
     } else if (chainNames) {
         chains = chainNames.split(',');
-        // Validate that all specified chains exist in config before processing
+        // Validate that all specified chains exist in config before processing (case-insensitive)
         chains.forEach((chain) => {
             const trimmedChain = chain.trim();
-            if (!config.chains[trimmedChain]) {
+            const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === trimmedChain.toLowerCase());
+            if (!chainKey) {
                 throw new Error(`Chain "${trimmedChain}" is not defined in the config file`);
             }
-            if (config.chains[trimmedChain].chainType && config.chains[trimmedChain].chainType !== 'evm') {
+            if (config.chains[chainKey].chainType && config.chains[chainKey].chainType !== 'evm') {
                 throw new Error(`Cannot run script for a non EVM chain: ${trimmedChain}`);
             }
         });
@@ -722,11 +723,11 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
 };
 
 const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
-    let output = '';
+    let loggerOutput = '';
     try {
         let stream = new Writable({
             write(chunk, _encoding, callback) {
-                output += chunk.toString();
+                loggerOutput += chunk.toString();
                 callback();
             },
         });
@@ -734,11 +735,11 @@ const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsS
             printInfo('Chain', chain.name, chalk.cyan);
             return processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
         });
-        console.log(output);
+        console.log(loggerOutput);
         return result;
     } catch (error) {
         printError(`Error processing chain ${chain.name}: ${error.message}`);
-        console.log(output);
+        console.log(loggerOutput);
         return undefined;
     }
 };
@@ -763,21 +764,20 @@ const chainHandler = async (options, processCommand, save = true, parallel = fal
     const constAxelarNetwork = config.axelar;
     const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
 
-    // Find the correct case-sensitive chain key
+    // Find the correct case-sensitive chain key and get chain data from chainsSnapshot
     const chains = chainNames.map((chainName) => {
         const chainKey = Object.keys(chainsSnapshot).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        if (!chainKey) {
+            throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
+        }
         const chain = config.chains[chainKey];
+        if (!chain) {
+            throw new Error(`Chain data for "${chainName}" is undefined`);
+        }
         return chain;
     });
 
-    if (parallel) {
-        results.push(await asyncChainTask(processCommand, constAxelarNetwork, chains[0], chainsSnapshot, options));
-    } else {
-        results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chains[0], chainsSnapshot, options));
-    }
-    options.yes = true;
-    printMsg('');
-    for (const chain of chains.slice(1)) {
+    for (const chain of chains) {
         if (parallel) {
             results.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
         } else {
@@ -845,7 +845,7 @@ function create2DeployedContractsValidation(config) {
             const addressDetails = uniqueAddresses.map((addr) => `${addr} (chains: ${addressToChains[addr].join(', ')})`).join(', ');
 
             printWarn(
-                `Contract "${contractName}" is deployed with multiple addresses (${uniqueAddresses.length}) using create2: ${addressDetails}`,
+                `Contract "${contractName}" is deployed with multiple addresses (${uniqueAddresses.length}) using create2: ${addressDetails}\n`,
             );
         }
 
@@ -865,7 +865,7 @@ function create2DeployedContractsValidation(config) {
             const hashDetails = uniqueCodeHashes.map((hash) => `${hash} (chains: ${hashToChains[hash].join(', ')})`).join(', ');
 
             printWarn(
-                `Contract "${contractName}" has multiple predeployCodehash values (${uniqueCodeHashes.length}) using create2: ${hashDetails}`,
+                `Contract "${contractName}" has multiple predeployCodehash values (${uniqueCodeHashes.length}) using create2: ${hashDetails}\n`,
             );
         }
     }

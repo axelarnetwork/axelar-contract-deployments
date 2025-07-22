@@ -15,7 +15,7 @@ const {
     printError,
     printWalletInfo,
     wasEventEmitted,
-    mainProcessorConcurrent,
+    mainProcessorSequential,
     validateParameters,
     getContractJSON,
     isValidTokenId,

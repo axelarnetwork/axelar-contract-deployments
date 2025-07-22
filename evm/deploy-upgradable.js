@@ -28,7 +28,7 @@ function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
 
-async function getImplementationArgs(contractName, contracts, options) {
+async function getImplementationArgs(contractName, contracts, chain, options) {
     let args;
 
     try {
@@ -57,13 +57,13 @@ async function getImplementationArgs(contractName, contracts, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                printInfo(`${contracts.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+                printInfo(`${chain.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
-                throw new Error(`${contracts.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+                throw new Error(`${chain.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
             const gateway = contracts.AxelarGateway?.address;
@@ -141,7 +141,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractName, contracts, options);
+    const implArgs = await getImplementationArgs(contractName, contracts, chain, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
