@@ -243,7 +243,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 
 // give_unlinked_coin
 async function giveUnlinkedCoin(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
     const { InterchainTokenService } = itsConfig.objects;
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
@@ -469,9 +469,9 @@ if (require.main === module) {
         .name('give-unlinked-coin')
         .command('give-unlinked-coin <symbol> <name> <decimals>')
         .description(
-            `Deploy a source coin on SUI and register it in ITS using custom registration, then give ITS the coin's treasury capability. To retain the ability to reclaim the treasury capability, use the "--treasuryCap" option.`,
+            `Deploy a coin on Sui, register it as custom coin and give its treasury capability to ITS.`,
         )
-        .addOption(new Option('--treasuryCap', 'Pass this flag to retain the ability to reclaim the treasury capability'))
+        .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
         .action((symbol, name, decimals, options) => {
             mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
         });
