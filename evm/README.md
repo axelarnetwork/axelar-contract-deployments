@@ -122,6 +122,30 @@ The deployment script will:
 - Store configuration including gateway, gas service, and GMP manager addresses
 - Verify the deployed contract state matches the original constructor arguments
 
+### Upgrade AxelarTransceiver
+
+To upgrade an existing AxelarTransceiver implementation while keeping the same proxy, follow these steps:
+
+#### Deploy New Implementation (Reuse Existing Proxy)
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  -m create \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --reuseProxy
+```
+
+#### Upgrade Proxy to Point to New Implementation
+
+```bash
+ts-node evm/deploy-contract.js \
+  -c AxelarTransceiver \
+  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --upgrade
+```
+
+
 ### ERC1967Proxy
 
 The `deploy-contract.js` script supports deploying ERC1967Proxy contracts for any contract. Use the `--forContract` option to specify the contract like this:
