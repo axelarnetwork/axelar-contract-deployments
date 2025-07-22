@@ -37,23 +37,10 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
 
-    const owner = await proxyContract.owner();
-    if (owner !== wallet.address) {
-        printError(`Wallet ${wallet.address} is not the owner of the transceiver. Owner is ${owner}`);
-        return;
-    }
-
-    const currImplementation = await proxyContract.implementation();
     const newImplementation = contractConfig.implementation;
 
     printInfo(`AxelarTransceiver Proxy`, proxyAddress);
-    printInfo(`Current implementation`, currImplementation);
     printInfo(`New implementation`, newImplementation);
-
-    if (currImplementation === newImplementation) {
-        printError(`AxelarTransceiver implementation is already up to date`);
-        return;
-    }
 
     if (prompt(`Proceed with upgrade on AxelarTransceiver on ${chain.name}?`, options.yes)) {
         return;
