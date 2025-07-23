@@ -9,9 +9,9 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
+use axelar_solana_gateway::BytemuckedPda;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
-use axelar_solana_gateway::BytemuckedPda;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
@@ -31,17 +31,17 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use solana_transaction_status::UiTransactionEncoding;
 
 use crate::config::Config;
-use crate::multisig_prover_types::msg::ProofStatus;
 use crate::multisig_prover_types::Uint128Extensions;
+use crate::multisig_prover_types::msg::ProofStatus;
 use crate::types::{
     LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet, SigningVerifierSet,
     SolanaTransactionParams,
 };
 use crate::utils::{
-    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY,
-    DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY,
-    OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
+    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
+    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
+    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
@@ -493,7 +493,6 @@ async fn init(
     )
     .await?;
     let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
-    println!("{}", hex::encode(&domain_separator));
     let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
         NativeHasher,
     >(&verifier_set, &domain_separator)?;

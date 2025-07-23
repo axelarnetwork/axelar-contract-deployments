@@ -23,7 +23,7 @@ use combine::CombineArgs;
 use dotenvy::dotenv;
 use eyre::eyre;
 use generate::GenerateArgs;
-use send::{sign_and_send_transactions, SendArgs};
+use send::{SendArgs, sign_and_send_transactions};
 use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -103,7 +103,7 @@ enum Command {
 struct SendCommandArgs {
     /// Signing key identifier (path for keypair file or usb ledger). Defaults to the keypair
     /// set in the Solana CLI config.
-    #[clap(long, env = "PRIVATE_KEY")]
+    #[clap(long, env = "SOLANA_PRIVATE_KEY")]
     fee_payer: Option<String>,
 
     /// List of signing key identifiers (path for keypair file or usb ledger)
@@ -219,6 +219,10 @@ enum QueryInstructionSubcommand {
     /// Commands to query data from the AxelarGateway program on Solana
     #[clap(subcommand)]
     Gateway(gateway::QueryCommands),
+
+    // Commands to query data from InterchainTokenService program on Solana
+    #[clap(subcommand)]
+    Its(its::QueryCommands),
 }
 
 #[tokio::main]
@@ -326,6 +330,9 @@ async fn run() -> eyre::Result<()> {
             QueryInstructionSubcommand::Gateway(command) => {
                 gateway::query(command, &config)?;
             }
+            QueryInstructionSubcommand::Its(command) => {
+                its::query(command, &config)?;
+            }
         },
     }
     Ok(())
@@ -347,8 +354,6 @@ async fn build_transaction(
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
         }
-        InstructionSubcommand::Memo(command) => {
-            memo::build_transaction(fee_payer, command, config)
-        }
+        InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
     }
 }

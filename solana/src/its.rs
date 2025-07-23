@@ -4,9 +4,11 @@ use std::str::FromStr;
 use std::time::SystemTime;
 
 use axelar_solana_its::state;
-use clap::{Parser, Subcommand};
+use axelar_solana_its::state::token_manager::TokenManager;
+use clap::{Args, Parser, Subcommand};
 use eyre::eyre;
 use serde::Deserialize;
+use solana_client::rpc_client::RpcClient;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::transaction::Transaction as SolanaTransaction;
@@ -99,6 +101,19 @@ pub(crate) enum Commands {
     /// Interchain Token specific commands
     #[clap(subcommand)]
     InterchainToken(InterchainTokenCommand),
+}
+
+/// Commands for querying ITS related data
+#[derive(Subcommand, Debug)]
+pub(crate) enum QueryCommands {
+    /// Get TokenManager details
+    TokenManager(TokenManagerArgs),
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct TokenManagerArgs {
+    /// The interchain token ID associated with the mint
+    token_id: String,
 }
 
 #[derive(Subcommand, Debug)]
@@ -717,11 +732,11 @@ fn hash_salt(s: &str) -> eyre::Result<[u8; 32]> {
 }
 
 fn parse_hex_vec(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
-    hex::decode(s.strip_prefix("0x").unwrap_or(s))
+    hex::decode(s.trim_start_matches("0x"))
 }
 
 fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
-    let decoded: [u8; 32] = hex::decode(s.strip_prefix("0x").unwrap_or(s))?
+    let decoded: [u8; 32] = hex::decode(s.trim_start_matches("0x"))?
         .try_into()
         .map_err(|_| eyre!("Invalid hex string length. Expected 32 bytes."))?;
 
@@ -1034,7 +1049,13 @@ fn register_canonical_interchain_token(
     args: RegisterCanonicalInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::canonical_interchain_token_id(&args.mint);
-    println!("Token ID: {}", hex::encode(token_id));
+
+    println!("------------------------------------------");
+    println!("\u{1FA99} Token details:");
+    println!();
+    println!("- Interchain Token ID: {}", hex::encode(token_id));
+    println!("- Mint Address: {}", args.mint);
+    println!("------------------------------------------");
 
     Ok(vec![
         axelar_solana_its::instruction::register_canonical_interchain_token(
@@ -1069,7 +1090,15 @@ fn deploy_interchain_token(
     args: DeployInterchainTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::interchain_token_id(fee_payer, &args.salt);
-    println!("Token ID: {}", hex::encode(token_id));
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (mint, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id);
+
+    println!("------------------------------------------");
+    println!("\u{1FA99} Token details:");
+    println!();
+    println!("- Interchain Token ID: {}", hex::encode(token_id));
+    println!("- Mint Address: {mint}");
+    println!("------------------------------------------");
 
     Ok(vec![
         axelar_solana_its::instruction::deploy_interchain_token(
@@ -1154,7 +1183,13 @@ fn register_custom_token(
     args: RegisterCustomTokenArgs,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::linked_token_id(fee_payer, &args.salt);
-    println!("Token ID: {}", hex::encode(token_id));
+
+    println!("------------------------------------------");
+    println!("\u{1FA99} Token details:");
+    println!();
+    println!("- Interchain Token ID: {}", hex::encode(token_id));
+    println!("- Mint Address: {}", args.mint);
+    println!("------------------------------------------");
 
     Ok(vec![axelar_solana_its::instruction::register_custom_token(
         *fee_payer,
@@ -1485,4 +1520,35 @@ fn interchain_token_accept_mintership(
             args.from,
         )?,
     ])
+}
+
+pub(crate) fn query(command: QueryCommands, config: &Config) -> eyre::Result<()> {
+    match command {
+        QueryCommands::TokenManager(mint_args) => get_token_manager(mint_args, config),
+    }
+}
+
+fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()> {
+    use borsh::BorshDeserialize as _;
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let token_id: [u8; 32] = hex::decode(args.token_id.trim_start_matches("0x"))?
+        .try_into()
+        .expect("invalid token_id");
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+    let account = rpc_client.get_account(&token_manager_pda)?;
+    let token_manager = TokenManager::try_from_slice(&account.data)?;
+
+    println!("------------------------------------------");
+    println!("\u{1FA99} TokenManager details:");
+    println!();
+    println!("- Interchain Token ID: {}", args.token_id);
+    println!("- Mint Address: {}", token_manager.token_address);
+    println!("- Type: {:#?}", token_manager.ty);
+    println!("- Flow Limit: {}", token_manager.flow_limit);
+    println!("------------------------------------------");
+
+    Ok(())
 }
