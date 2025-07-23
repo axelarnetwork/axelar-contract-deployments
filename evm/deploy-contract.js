@@ -259,6 +259,7 @@ async function checkContract(contractName, contract, contractConfig) {
 
 async function processCommand(config, chain, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy } = options;
+
     let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -496,6 +497,7 @@ if (require.main === module) {
     program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy contract (useful for upgrade deployments)'));
 
+
     program.action((options) => {
         main(options);
     });
@@ -503,4 +505,5 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { processCommand, getConstructorArgs, upgradeAxelarTransceiver };
+
+module.exports = { processCommand, getConstructorArgs };
