@@ -642,53 +642,70 @@ function wasEventEmitted(receipt, contract, eventName) {
 }
 
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    let chains;
-    if (chainNames === 'all') {
-        chains = Object.keys(config.chains);
-        chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
-    } else if (chainNames) {
-        chains = chainNames.split(',');
-        // Validate that all specified chains exist in config before processing (case-insensitive)
-        chains.forEach((chain) => {
-            const trimmedChain = chain.trim();
-            const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === trimmedChain.toLowerCase());
-            if (!chainKey) {
-                throw new Error(`Chain "${trimmedChain}" is not defined in the config file`);
-            }
-            if (config.chains[chainKey].chainType && config.chains[chainKey].chainType !== 'evm') {
-                throw new Error(`Cannot run script for a non EVM chain: ${trimmedChain}`);
-            }
-        });
-    }
+    // Helper function to find chain key case-insensitively
+    const findChainKey = (chainName) => {
+        return Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+    };
 
-    if (chains.length === 0) {
+    // Helper function to validate chain is EVM
+    const validateEVMChain = (chainKey, chainName) => {
+        const chain = config.chains[chainKey];
+        if (chain.chainType && chain.chainType !== 'evm') {
+            throw new Error(`Cannot run script for a non EVM chain: ${chainName}`);
+        }
+    };
+
+    let chains;
+
+    // Initialize chains based on input
+    if (chainNames === 'all') {
+        // Get all EVM chains
+        chains = Object.keys(config.chains).filter(
+            (chainKey) => !config.chains[chainKey].chainType || config.chains[chainKey].chainType === 'evm',
+        );
+    } else if (chainNames) {
+        // Parse and validate specified chains
+        const chainNamesList = chainNames.split(',').map((name) => name.trim());
+        chains = [];
+
+        for (const chainName of chainNamesList) {
+            const chainKey = findChainKey(chainName);
+            if (!chainKey) {
+                throw new Error(`Chain "${chainName}" is not defined in the config file`);
+            }
+            validateEVMChain(chainKey, chainName);
+            chains.push(chainKey); // Use the actual config key to preserve case
+        }
+    } else {
         throw new Error('Chain names were not provided');
     }
 
-    chains = chains.map((chain) => chain.trim().toLowerCase());
+    if (chains.length === 0) {
+        throw new Error('No valid chains found');
+    }
 
+    // Apply startFromChain filter
     if (startFromChain) {
-        const startIndex = chains.findIndex((chain) => chain === startFromChain.toLowerCase());
+        const startChainKey = findChainKey(startFromChain);
+        if (!startChainKey) {
+            throw new Error(`Chain ${startFromChain} is not defined in the config file`);
+        }
 
+        const startIndex = chains.findIndex((chain) => chain.toLowerCase() === startChainKey.toLowerCase());
         if (startIndex === -1) {
-            throw new Error(`Chain ${startFromChain} is not defined in the info file`);
+            throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
         }
 
         chains = chains.slice(startIndex);
     }
 
-    const chainsToSkip = (skipChains || '').split(',').map((str) => str.trim().toLowerCase());
-    chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
-
-    // Final validation - ensure all chains exist in config (case-insensitive)
-    for (const chainName of chains) {
-        const chainExists = Object.keys(config.chains).some((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
-        if (!chainExists) {
-            throw new Error(`Chain "${chainName}" is not defined in the config file`);
-        }
+    // Apply skip chains filter
+    if (skipChains) {
+        const chainsToSkip = skipChains.split(',').map((str) => str.trim().toLowerCase());
+        chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
     }
 
-    return chains;
+    return chains.map((chain) => chain.toLowerCase());
 };
 
 const mainProcessorSequential = async (options, processCommand, save = true) => {
