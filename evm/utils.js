@@ -641,6 +641,20 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+/**
+ * Retrieves and filters a list of EVM chains based on specified criteria.
+ *
+ * This function processes chain selection based on various input parameters and returns
+ * a filtered list of chain names that meet the specified criteria. It supports
+ * case-insensitive chain name matching and validates that all chains are EVM-compatible.
+ *
+ * @returns {Array<string>} Array of lowercase chain names that meet the filtering criteria
+ * @throws {Error} If no chain names are provided
+ * @throws {Error} If a specified chain is not defined in the config file
+ * @throws {Error} If a specified chain is not an EVM chain
+ * @throws {Error} If no valid chains are found after filtering
+ * @throws {Error} If startFromChain is specified but not found in the selected chain list
+ */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
     // Helper function to find chain key case-insensitively
     const findChainKey = (chainName) => {
@@ -708,6 +722,26 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     return chains.map((chain) => chain.toLowerCase());
 };
 
+/**
+ * Processes chains sequentially (one after another) using the provided command function.
+ *
+ * This function executes the processCommand for each chain in the specified order,
+ * waiting for each operation to complete before moving to the next chain. This is
+ * useful when operations need to be performed in a specific order or when parallel
+ * execution could cause issues (e.g., resource conflicts, rate limiting).
+ *
+ * @returns {Promise<Array>} Array of results from processing each chain
+ * @throws {Error} If environment is not provided or parallel mode is enabled
+ *
+ * @example
+ * await mainProcessorSequential(
+ *   { env: 'testnet', chainNames: 'ethereum,polygon' },
+ *   async (constAxelarNetwork, chain, chainsSnapshot, options) => {
+ *     // Process each chain sequentially
+ *     return await deployContract(chain);
+ *   }
+ * );
+ */
 const mainProcessorSequential = async (options, processCommand, save = true) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -726,6 +760,25 @@ const mainProcessorSequential = async (options, processCommand, save = true) => 
     );
 };
 
+/**
+ * Processes chains concurrently (in parallel) using the provided command function.
+ *
+ * This function executes the processCommand for multiple chains simultaneously,
+ * which can significantly improve performance when processing many chains. The
+ * function supports both parallel and sequential execution modes based on the
+ * options.parallel flag.
+ * @returns {Promise<Array>} Array of results from processing each chain
+ * @throws {Error} If environment is not provided
+ *
+ * @example
+ * await mainProcessorConcurrent(
+ *   { env: 'testnet', chainNames: 'ethereum,polygon', parallel: true },
+ *   async (constAxelarNetwork, chain, options) => {
+ *     // Process chains concurrently for better performance
+ *     return await deployContract(chain);
+ *   }
+ * );
+ */
 const mainProcessorConcurrent = async (options, processCommand, save = true) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -733,6 +786,7 @@ const mainProcessorConcurrent = async (options, processCommand, save = true) => 
     printInfo('Environment', options.env);
     return await chainHandler(
         options,
+        // chainsSnapshot is not used in the concurrent processCommand execution
         (constAxelarNetwork, chain, _chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, options),
         save,
         options.parallel,
@@ -805,7 +859,8 @@ const chainHandler = async (options, processCommand, save = true, parallel = fal
 
     results = (await Promise.all(results)).filter((result) => result !== undefined);
 
-    create2DeployedContractsValidation(config);
+    // Check all contracts deployed with create2 method
+    create2DeployedContractsValidation(config.chains);
 
     if (save) {
         saveConfig(config, options.env);
@@ -814,9 +869,9 @@ const chainHandler = async (options, processCommand, save = true, parallel = fal
     return results;
 };
 
-function create2DeployedContractsValidation(config) {
+function create2DeployedContractsValidation(chains) {
     // Prepare a list of all contract configurations from config.chains with chain information
-    const allContracts = Object.values(config.chains).flatMap((chain) =>
+    const allContracts = Object.values(chains).flatMap((chain) =>
         chain.contracts
             ? Object.entries(chain.contracts).map(([contractName, contractConfig]) => ({
                   contractName,
