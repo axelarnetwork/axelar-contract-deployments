@@ -82,7 +82,7 @@ bee1192a8ae1d8928127bbb23e259cfadf817b930c5176cf83f7985240a7254a  wasm/xrpl_mult
 4. Store `XRPLMultisigProver` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js store \
+ts-node cosmwasm/submit-proposal.js store \
   -c XrplMultisigProver \
   -t "Upload XRPLMultisigProver contract v1.4.1" \
   -d "Upload XRPLMultisigProver contract v1.4.1" \
@@ -94,7 +94,7 @@ node cosmwasm/submit-proposal.js store \
 6. Migrate `XRPLMultisigProver` contract.
 
 ```bash
-node cosmwasm/submit-proposal.js migrate \
+ts-node cosmwasm/submit-proposal.js migrate \
   -c XrplMultisigProver \
   -t "Migrate XRPLMultisigProver to v1.4.1" \
   -d "Migrate XRPLMultisigProver to v1.4.1" \

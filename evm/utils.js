@@ -719,10 +719,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         const executeChain = (chainName) => {
             const chain = config.chains[chainName.toLowerCase()];
 
-            if (
-                chainsToSkip.includes(chain.name.toLowerCase()) ||
-                chain.status === 'deactive'
-            ) {
+            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
                 printWarn('Skipping chain', chain.name);
                 return Promise.resolve();
             }
@@ -759,13 +756,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
 
-        if (
-            chainsToSkip.includes(chain.name.toLowerCase()) ||
-            chain.status === 'deactive'
-        ) {
+        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
             printWarn('Skipping chain', chain.name);
             continue;
         }
@@ -774,7 +769,11 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            await processCommand(config, chain, options);
+            const result = await processCommand(config, chain, options);
+
+            if (result) {
+                results.push(result);
+            }
         } catch (error) {
             printError(`Failed with error on ${chain.name}`, error.message);
 
@@ -791,6 +790,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
             }
         }
     }
+
+    return results;
 };
 
 function getConfigByChainId(chainId, config) {
@@ -893,7 +894,6 @@ function getQualifiedContractName(contractName) {
  */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline, gasOptions: gasOptionsCli } = options;
-
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
 
     let gasOptions;
@@ -1052,6 +1052,11 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
+const isHyperliquidChain = (chain) => chain.axelarId.toLowerCase().includes('hyperliquid');
+
+const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
+const INTERCHAIN_TRANSFER_WITH_METADATA = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
+
 const deriveAccounts = async (mnemonic, quantity) => {
     const hdNode = HDNode.fromMnemonic(mnemonic);
     const accounts = [];
@@ -1070,6 +1075,22 @@ const deriveAccounts = async (mnemonic, quantity) => {
 
     return accounts;
 };
+
+async function printTokenInfo(tokenAddress, provider) {
+    try {
+        const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, provider);
+        const [name, symbol, decimals] = await Promise.all([token.name(), token.symbol(), token.decimals()]);
+
+        printInfo(`Token name`, name);
+        printInfo(`Token symbol`, symbol);
+        printInfo(`Token decimals`, decimals);
+
+        return { name, symbol, decimals };
+    } catch (error) {
+        printError(`Could not fetch token information for ${tokenAddress}: ${error.message}`);
+        throw error;
+    }
+}
 
 module.exports = {
     ...require('../common/utils'),
@@ -1111,5 +1132,9 @@ module.exports = {
     getQualifiedContractName,
     verifyContractByName,
     isConsensusChain,
+    isHyperliquidChain,
+    INTERCHAIN_TRANSFER,
+    INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
+    printTokenInfo,
 };
