@@ -3162,6 +3162,23 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         }
       }
+    },
+    "zksync": {
+      "name": "ZKSync",
+      "axelarId": "zksync",
+      "chainId": 300,
+      "rpc": "https://sepolia.era.zksync.dev",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Memento Explorer",
+        "url": "https://sepolia.explorer.zksync.io"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
