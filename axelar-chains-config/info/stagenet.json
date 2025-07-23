@@ -1,7 +1,7 @@
 {
   "chains": {
     "avalanche": {
-      "name": "Avalanche Test",
+      "name": "Avalanche",
       "axelarId": "avalanche",
       "chainId": 43113,
       "rpc": "https://api.avax-test.network/ext/bc/C/rpc",
