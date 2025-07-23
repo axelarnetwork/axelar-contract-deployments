@@ -203,13 +203,13 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPE
 | **Mainnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
-ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner NEW_GATEWAY_OWNER_ADDRESS
+ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner $NEW_GATEWAY_OWNER_ADDRESS
 ```
 
 - 9.3 Transfer AxelarGasService ownership (testnet only)
 
 ```bash
-ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner NEW_GATEWAY_OWNER_ADDRESS
+ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner $NEW_GATEWAY_OWNER_ADDRESS
 ```
 
 ## Checklist
