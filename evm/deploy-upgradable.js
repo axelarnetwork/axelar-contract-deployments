@@ -1,5 +1,17 @@
 'use strict';
 
+/**
+ * @fileoverview EVM Upgradable Contract Deployment Script
+ *
+ * This script provides functionality to deploy upgradable contracts using the proxy pattern
+ * on EVM-compatible chains. It supports multiple deployment methods (create, create2, create3)
+ * and handles contract verification, configuration management, and deployment validation.
+ *
+ * Supported upgradable contract types:
+ * - AxelarGasService: Gas service contract with upgrade capability
+ * - AxelarDepositService: Deposit service contract with upgrade capability
+ */
+
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
 const {
@@ -24,6 +36,9 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
+/**
+ * Creates a proxy contract instance for interacting with an upgradable contract.
+ */
 function getProxy(wallet, proxyAddress) {
     return new Contract(proxyAddress, IUpgradable.abi, wallet);
 }
@@ -79,6 +94,9 @@ async function getImplementationArgs(contractName, contracts, chain, options) {
     throw new Error(`${contractName} is not supported.`);
 }
 
+/**
+ * Generates initialization arguments for proxy setup.
+ */
 function getInitArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
@@ -93,6 +111,9 @@ function getInitArgs(contractName) {
     throw new Error(`${contractName} is not supported.`);
 }
 
+/**
+ * Generates upgrade arguments for contract upgrades.
+ */
 function getUpgradeArgs(contractName) {
     switch (contractName) {
         case 'AxelarGasService': {
@@ -107,8 +128,9 @@ function getUpgradeArgs(contractName) {
     throw new Error(`${contractName} is not supported.`);
 }
 
-/*
+/**
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
+ * This function handles both initial deployment and upgrades of upgradable contracts.
  */
 async function processCommand(_constAxelarNetwork, chain, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
@@ -285,9 +307,15 @@ async function processCommand(_constAxelarNetwork, chain, options) {
         if (owner !== wallet.address) {
             printError(`${chain.name} | Signer ${wallet.address} does not match contract owner ${owner} for chain ${chain.name} in info.`);
         }
+
+        return contract;
     }
 }
 
+/**
+ * Main entry point for the deploy-upgradable script.
+ * Processes deployment options and executes the deployment across specified chains.
+ */
 async function main(options) {
     await mainProcessorConcurrent(options, processCommand);
 }
