@@ -497,13 +497,11 @@ if (require.main === module) {
     program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy contract (useful for upgrade deployments)'));
 
-
     program.action((options) => {
         main(options);
     });
 
     program.parse();
 }
-
 
 module.exports = { processCommand, getConstructorArgs };
