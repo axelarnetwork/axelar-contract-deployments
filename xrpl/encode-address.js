@@ -2,7 +2,7 @@ const { Command } = require('commander');
 const { hex } = require('./utils');
 const { printInfo, printError } = require('../common');
 
-function encodeStringToHex(inputString) {
+function tokenSymbolToCurrencyCode(tokenSymbol) {
     if (inputString.length <= 3) {
         throw new Error('String must be longer than 3 characters');
     }
