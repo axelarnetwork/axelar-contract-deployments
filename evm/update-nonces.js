@@ -5,11 +5,11 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 
-const { mainProcessorConcurrent, printInfo, prompt } = require('./utils');
+const { mainProcessor, printInfo, prompt } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getNonceFromProvider, getNonceFileData, updateNonceFileData } = require('./sign-utils');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const { env, rpc, yes } = options;
     let { addresses } = options;
     const provider = rpc ? getDefaultProvider(rpc) : getDefaultProvider(chain.rpc);
@@ -51,7 +51,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

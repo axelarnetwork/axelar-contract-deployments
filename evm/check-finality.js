@@ -5,10 +5,10 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessorConcurrent, isKeccak256Hash, sleep } = require('./utils');
+const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const txHash = options.txHash;
 
     if (!isKeccak256Hash(txHash)) {
@@ -35,7 +35,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

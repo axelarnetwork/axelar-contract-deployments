@@ -17,7 +17,7 @@ const {
     isNonEmptyStringArray,
     isNumberArray,
     isValidAddress,
-    mainProcessorConcurrent,
+    mainProcessor,
     isValidDecimal,
     prompt,
     isBytes32Array,
@@ -79,7 +79,7 @@ async function preExecutionChecks(multisigContract, action, wallet, target, call
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const {
         env,
         contractName,
@@ -363,7 +363,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand, false);
+    await mainProcessor(options, processCommand, false);
 }
 
 if (require.main === module) {

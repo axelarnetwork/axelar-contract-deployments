@@ -12,7 +12,7 @@ const {
     printWalletInfo,
     printWarn,
     printError,
-    mainProcessorSequential,
+    mainProcessor,
     prompt,
     getContractJSON,
     getGasOptions,
@@ -331,7 +331,7 @@ async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options
 }
 
 async function main(options) {
-    await mainProcessorSequential(options, processCommand, false);
+    await mainProcessor(options, processCommand, false);
 
     printFailedChainUpdates();
 }

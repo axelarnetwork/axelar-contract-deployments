@@ -10,14 +10,14 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 
-const { mainProcessorConcurrent, getContractJSON, printInfo } = require('./utils');
+const { mainProcessor, getContractJSON, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 async function getCommandId(gateway) {
     return hexlify(randomBytes(32));
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     printInfo('This script is for testing deployment, not for deployment in production');
     const provider = new JsonRpcProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);
@@ -42,7 +42,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand, false);
+    await mainProcessor(options, processCommand, false);
 }
 
 if (require.main === module) {

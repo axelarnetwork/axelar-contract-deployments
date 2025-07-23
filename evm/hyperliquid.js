@@ -7,7 +7,7 @@ const {
     validateParameters,
     getContractJSON,
     getGasOptions,
-    mainProcessorConcurrent,
+    mainProcessor,
     isHyperliquidChain,
     printWalletInfo,
 } = require('./utils');
@@ -155,7 +155,7 @@ async function updateTokenDeployer(wallet, chain, args, options) {
 }
 
 async function main(processor, args, options) {
-    return mainProcessorConcurrent(options, async (_config, chain, options) => {
+    return mainProcessor(options, async (_config, chain, _chainsSnapshot, options) => {
         if (!isHyperliquidChain(chain)) {
             throw new Error(`Chain "${chain.name}" is not supported. This script only works on Hyperliquid chains.`);
         }

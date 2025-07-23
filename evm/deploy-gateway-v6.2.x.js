@@ -23,7 +23,7 @@ const {
     printWalletInfo,
     printWarn,
     prompt,
-    mainProcessorConcurrent,
+    mainProcessor,
     isContract,
     deployContract,
     getGasOptions,
@@ -478,7 +478,7 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(constAxelarNetwork, chain, options) {
+async function processCommand(constAxelarNetwork, chain, _chainsSnapshot, options) {
     if (!options.upgrade) {
         await deploy(constAxelarNetwork, chain, options);
     } else {
@@ -487,7 +487,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 async function programHandler() {

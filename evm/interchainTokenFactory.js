@@ -11,7 +11,7 @@ const { Command, Option } = require('commander');
 const {
     printInfo,
     prompt,
-    mainProcessorSequential,
+    mainProcessor,
     validateParameters,
     getContractJSON,
     getGasOptions,
@@ -300,7 +300,7 @@ async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, option
 }
 
 async function main(options) {
-    await mainProcessorSequential(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

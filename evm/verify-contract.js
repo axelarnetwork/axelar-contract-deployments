@@ -14,7 +14,7 @@ const {
     getEVMAddresses,
     printInfo,
     printError,
-    mainProcessorSequential,
+    mainProcessor,
     getContractJSON,
     validateParameters,
     verifyContractByName,
@@ -332,7 +332,7 @@ async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options
 async function main(options) {
     // Set ignoreError to true to maintain the original resilient behavior
     // where verification failures on one chain don't stop verification on other chains
-    await mainProcessorSequential({ ...options, ignoreError: true }, processCommand, false);
+    await mainProcessor({ ...options, ignoreError: true }, processCommand, false);
 }
 
 if (require.main === module) {

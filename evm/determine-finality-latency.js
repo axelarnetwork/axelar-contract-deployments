@@ -5,7 +5,7 @@ const {
     providers: { JsonRpcProvider },
 } = ethers;
 const { Command, Option } = require('commander');
-const { printInfo, mainProcessorConcurrent, sleep } = require('./utils');
+const { printInfo, mainProcessor, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 function updateFinality(finality, chain, update) {
@@ -20,7 +20,7 @@ function updateFinalityWaitTime(approxFinalityWaitTime, chain, update) {
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     let { confirmations, attempts, blockTime, delay } = options;
 
     const rpc = options.rpc || chain.rpc;
@@ -79,7 +79,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

@@ -7,20 +7,11 @@ const {
     getDefaultProvider,
     utils: { parseEther, parseUnits },
 } = ethers;
-const {
-    printInfo,
-    printError,
-    printWalletInfo,
-    isAddressArray,
-    mainProcessorConcurrent,
-    isValidDecimal,
-    prompt,
-    getGasOptions,
-} = require('./utils');
+const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, isValidDecimal, prompt, getGasOptions } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const { privateKey, offline, env } = options;
     let { amount: amountStr, recipients, nonceOffset } = options;
 
@@ -97,7 +88,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

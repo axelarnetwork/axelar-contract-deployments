@@ -3,11 +3,11 @@
 const { ethers } = require('hardhat');
 const { getDefaultProvider } = ethers;
 const { Command } = require('commander');
-const { mainProcessorConcurrent, printWalletInfo } = require('./utils');
+const { mainProcessor, printWalletInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
-async function processCommand(_, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const provider = getDefaultProvider(chain.rpc);
 
     const wallet = await getWallet(options.privateKey, provider);
@@ -15,7 +15,7 @@ async function processCommand(_, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

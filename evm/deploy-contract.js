@@ -19,7 +19,7 @@ const {
     deployContract,
     saveConfig,
     prompt,
-    mainProcessorConcurrent,
+    mainProcessor,
     isContract,
     getContractJSON,
     getDeployOptions,
@@ -231,7 +231,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
     let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
@@ -401,7 +401,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
  * Processes deployment options and executes the deployment across specified chains.
  */
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

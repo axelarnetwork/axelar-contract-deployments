@@ -9,7 +9,7 @@ const {
     BigNumber,
 } = ethers;
 
-const { printInfo, mainProcessorConcurrent, prompt } = require('./utils');
+const { printInfo, mainProcessor, prompt } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
 const defaultGasLimit = 3e6;
@@ -54,7 +54,7 @@ async function getBaseFee(provider) {
     return block.baseFeePerGas;
 }
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const { env, rpc, yes } = options;
     const provider = getDefaultProvider(rpc || chain.rpc);
 
@@ -95,7 +95,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand, true);
+    await mainProcessor(options, processCommand, true);
 }
 
 if (require.main === module) {

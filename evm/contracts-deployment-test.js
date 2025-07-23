@@ -8,10 +8,10 @@ const {
 } = ethers;
 const { Command, Option } = require('commander');
 
-const { mainProcessorConcurrent } = require('./utils');
+const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_constAxelarNetwork, chain, options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));
     const deploymentMethod = options.env === 'testnet' ? 'create' : 'create2';
     const collector = wallet.address;
@@ -54,7 +54,7 @@ async function processCommand(_constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand, false);
+    await mainProcessor(options, processCommand, false);
 }
 
 if (require.main === module) {

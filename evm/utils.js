@@ -718,74 +718,63 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
 };
 
 /**
- * Processes chains sequentially (one after another) using the provided command function.
- *
- * This function executes the processCommand for each chain in the specified order,
- * waiting for each operation to complete before moving to the next chain. This is
- * useful when operations need to be performed in a specific order or when parallel
- * execution could cause issues (e.g., resource conflicts, rate limiting).
- *
- * @returns {Promise<Array>} Array of results from processing each chain
- * @throws {Error} If environment is not provided or parallel mode is enabled
- *
- * @example
- * await mainProcessorSequential(
- *   { env: 'testnet', chainNames: 'ethereum,polygon' },
- *   async (constAxelarNetwork, chain, chainsSnapshot, options) => {
- *     // Process each chain sequentially
- *     return await deployContract(chain);
- *   }
- * );
- */
-const mainProcessorSequential = async (options, processCommand, save = true) => {
-    if (!options.env) {
-        throw new Error('Environment was not provided');
-    }
-
-    if (options.parallel) {
-        printError('Parallel mode is not supported for sequential deployment');
-        return;
-    }
-
-    return await chainHandler(
-        options,
-        (constAxelarNetwork, chain, chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, chainsSnapshot, options),
-        save,
-        false,
-    );
-};
-
-/**
  * Processes chains concurrently (in parallel) using the provided command function.
  *
  * This function executes the processCommand for multiple chains simultaneously,
  * which can significantly improve performance when processing many chains. The
  * function supports both parallel and sequential execution modes based on the
  * options.parallel flag.
+ *
  * @returns {Promise<Array>} Array of results from processing each chain
  * @throws {Error} If environment is not provided
- *
- * @example
- * await mainProcessorConcurrent(
- *   { env: 'testnet', chainNames: 'ethereum,polygon', parallel: true },
- *   async (constAxelarNetwork, chain, options) => {
- *     // Process chains concurrently for better performance
- *     return await deployContract(chain);
- *   }
- * );
+ * @throws {Error} If chain configuration is invalid
+ * @throws {Error} If processCommand fails and ignoreError is false
  */
-const mainProcessorConcurrent = async (options, processCommand, save = true) => {
+const mainProcessor = async (options, processCommand, save = true) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
     }
     printInfo('Environment', options.env);
-    return await chainHandler(
-        options,
-        // chainsSnapshot is not used in the concurrent processCommand execution
-        (constAxelarNetwork, chain, _chainsSnapshot, options) => processCommand(constAxelarNetwork, chain, options),
-        save,
-        options.parallel,
-    );
+
+    const config = loadConfig(options.env);
+    const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+
+    let results = [];
+    const constAxelarNetwork = config.axelar;
+    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
+
+    // Find the correct case-sensitive chain key and get chain data from chainsSnapshot
+    const chains = chainNames.map((chainName) => {
+        const chainKey = Object.keys(chainsSnapshot).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        if (!chainKey) {
+            throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
+        }
+        const chain = config.chains[chainKey];
+        if (!chain) {
+            throw new Error(`Chain data for "${chainName}" is undefined`);
+        }
+        return chain;
+    });
+
+    for (const chain of chains) {
+        if (options.parallel) {
+            results.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+        } else {
+            results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+        }
+        printMsg('');
+    }
+
+    results = (await Promise.all(results)).filter((result) => result !== undefined);
+
+    // Check all contracts deployed with create2 method
+    create2DeployedContractsValidation(config.chains);
+
+    if (save) {
+        saveConfig(config, options.env);
+    }
+
+    return results;
 };
 
 const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
@@ -820,48 +809,6 @@ const sequentialChainTask = async (processCommand, constAxelarNetwork, chain, ch
             throw error;
         }
     }
-};
-
-const chainHandler = async (options, processCommand, save = true, parallel = false) => {
-    const config = loadConfig(options.env);
-    const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
-
-    let results = [];
-    const constAxelarNetwork = config.axelar;
-    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
-
-    // Find the correct case-sensitive chain key and get chain data from chainsSnapshot
-    const chains = chainNames.map((chainName) => {
-        const chainKey = Object.keys(chainsSnapshot).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
-        if (!chainKey) {
-            throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
-        }
-        const chain = config.chains[chainKey];
-        if (!chain) {
-            throw new Error(`Chain data for "${chainName}" is undefined`);
-        }
-        return chain;
-    });
-
-    for (const chain of chains) {
-        if (parallel) {
-            results.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
-        } else {
-            results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
-        }
-        printMsg('');
-    }
-
-    results = (await Promise.all(results)).filter((result) => result !== undefined);
-
-    // Check all contracts deployed with create2 method
-    create2DeployedContractsValidation(config.chains);
-
-    if (save) {
-        saveConfig(config, options.env);
-    }
-
-    return results;
 };
 
 function create2DeployedContractsValidation(chains) {
@@ -1255,8 +1202,7 @@ module.exports = {
     isValidPrivateKey,
     isValidTokenId,
     verifyContract,
-    mainProcessorConcurrent,
-    mainProcessorSequential,
+    mainProcessor,
     getContractPath,
     getContractJSON,
     normalizeContractJSON,

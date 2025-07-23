@@ -19,7 +19,7 @@ const {
     isValidAddress,
     validateParameters,
     wasEventEmitted,
-    mainProcessorConcurrent,
+    mainProcessor,
     printError,
     getGasOptions,
     httpGet,
@@ -62,7 +62,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-async function processCommand(constAxelarNetwork, chain, options) {
+async function processCommand(constAxelarNetwork, chain, _chainsSnapshot, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -510,7 +510,7 @@ async function processCommand(constAxelarNetwork, chain, options) {
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

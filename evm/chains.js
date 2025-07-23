@@ -1,15 +1,15 @@
 'use strict';
 
 const { Command } = require('commander');
-const { mainProcessorConcurrent, printInfo } = require('./utils');
+const { mainProcessor, printInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_constAxelarNetwork, chain, _options) {
+async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, _options) {
     printInfo('Axelar Chain Name', chain.axelarId);
 }
 
 async function main(options) {
-    await mainProcessorConcurrent(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {

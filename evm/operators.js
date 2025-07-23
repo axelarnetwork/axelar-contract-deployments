@@ -16,7 +16,7 @@ const {
     parseArgs,
     prompt,
     getGasOptions,
-    mainProcessorSequential,
+    mainProcessor,
     validateParameters,
     getContractJSON,
     printWarn,
@@ -259,7 +259,7 @@ async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options
 }
 
 async function main(options) {
-    await mainProcessorSequential(options, processCommand);
+    await mainProcessor(options, processCommand);
 
     printFailedChainUpdates();
 }

@@ -15,7 +15,7 @@ const {
     printError,
     printWalletInfo,
     wasEventEmitted,
-    mainProcessorSequential,
+    mainProcessor,
     validateParameters,
     getContractJSON,
     isValidTokenId,
@@ -623,7 +623,7 @@ async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, action
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessorSequential(options, (constAxelarNetwork, chain, chainsSnapshot, options) =>
+    return mainProcessor(options, (constAxelarNetwork, chain, chainsSnapshot, options) =>
         processCommand(constAxelarNetwork, chain, chainsSnapshot, action, options),
     );
 }

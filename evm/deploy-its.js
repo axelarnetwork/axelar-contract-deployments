@@ -13,7 +13,7 @@ const {
     printWarn,
     printError,
     getContractJSON,
-    mainProcessorSequential,
+    mainProcessor,
     prompt,
     sleep,
     getBytecodeHash,
@@ -482,7 +482,7 @@ async function processCommand(constAxelarNetwork, chain, chainsSnapshot, options
 }
 
 async function main(options) {
-    await mainProcessorSequential(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
