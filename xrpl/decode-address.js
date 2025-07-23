@@ -27,8 +27,7 @@ if (require.main === module) {
     program.name('decode-address').description('Decode XRPL account ID to raw bytes.').argument('<address>', 'XRPL account ID to decode');
 
     program.action((address) => {
-        const result = processCommand(address);
-        // You can use the result if needed
+        processCommand(address);
     });
 
     program.parse();
