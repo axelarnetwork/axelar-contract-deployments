@@ -277,9 +277,9 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const target = options.treasuryCapReclaimer 
         ? `${STD_PACKAGE_ID}::option::some`
         : `${STD_PACKAGE_ID}::option::none`;
-    const arguments = options.treasuryCapReclaimer ? [treasuryCap] : [];
+    const args = options.treasuryCapReclaimer ? [treasuryCap] : [];
     const typeArguments = [`${SUI_PACKAGE_ID}::coin::TreasuryCap<${tokenType}>`];
-    const treasuryCapOption = await txBuilder.moveCall({ target, arguments, typeArguments });
+    const treasuryCapOption = await txBuilder.moveCall({ target, arguments: args, typeArguments });
 
     // give_unlinked_coin<T>
     const treasuryCapReclaimerOption = await txBuilder.moveCall({
