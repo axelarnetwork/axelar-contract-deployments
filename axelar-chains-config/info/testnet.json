@@ -240,7 +240,7 @@
       "approxFinalityWaitTime": 40
     },
     "fantom": {
-      "name": "Fantom",
+      "name": "Fantom Test",
       "axelarId": "Fantom",
       "chainId": 4002,
       "rpc": "https://rpc.testnet.fantom.network",
