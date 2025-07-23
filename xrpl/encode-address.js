@@ -6,10 +6,10 @@ function encodeStringToHex(inputString) {
     if (inputString.length <= 3) {
         throw new Error('String must be longer than 3 characters');
     }
-    
+
     const hexString = hex(inputString).toUpperCase();
     const paddedHex = hexString + '0'.repeat(Math.max(0, 40 - hexString.length));
-    
+
     return paddedHex;
 }
 
@@ -41,5 +41,5 @@ if (require.main === module) {
 
 module.exports = {
     encodeStringToHex,
-    processCommand
+    processCommand,
 };
