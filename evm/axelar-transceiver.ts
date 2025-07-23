@@ -2,15 +2,7 @@ import { Command } from 'commander';
 import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
 import { addOptionsToCommands, prompt as promptUser } from '../common';
-import {
-    getContractJSON,
-    getGasOptions,
-    mainProcessorConcurrent,
-    printError,
-    printInfo,
-    printWalletInfo,
-    printWarn,
-} from './utils';
+import { getContractJSON, getGasOptions, mainProcessorConcurrent, printError, printInfo, printWalletInfo, printWarn } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { addEvmOptions } = require('./cli-utils');
