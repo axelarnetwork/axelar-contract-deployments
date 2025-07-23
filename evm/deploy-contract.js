@@ -37,6 +37,7 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
 
+    // only be called when the new AxelarTransceiver implementation is deployed, part of the two-step upgrade process
     const newImplementation = contractConfig.implementation;
 
     printInfo(`AxelarTransceiver Proxy`, proxyAddress);
