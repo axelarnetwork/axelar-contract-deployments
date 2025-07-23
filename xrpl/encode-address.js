@@ -3,43 +3,38 @@ const { hex } = require('./utils');
 const { printInfo, printError } = require('../common');
 
 function tokenSymbolToCurrencyCode(tokenSymbol) {
-    if (inputString.length <= 3) {
-        throw new Error('String must be longer than 3 characters');
+    if (tokenSymbol.length <= 3) {
+        return tokenSymbol;
     }
 
-    const hexString = hex(inputString).toUpperCase();
+    const hexString = hex(tokenSymbol).toUpperCase();
     const paddedHex = hexString + '0'.repeat(Math.max(0, 40 - hexString.length));
 
     return paddedHex;
 }
 
 function processCommand(inputString) {
-    try {
-        const result = encodeStringToHex(inputString);
-        printInfo('Input string', inputString);
-        printInfo('Hex representation', result);
-        return result;
-    } catch (error) {
-        printError('Failed to encode string to hex', error.message);
-        process.exit(1);
-    }
+    const result = tokenSymbolToCurrencyCode(inputString);
+    printInfo('Input string', inputString);
+    printInfo('Hex representation', result);
+    return result;
 }
 
 if (require.main === module) {
     const program = new Command();
 
     program
-        .name('encode-address')
-        .description('Convert strings to 40-character padded hex representation.')
-        .argument('<string>', 'The string to convert to hex (must be longer than 3 characters)')
-        .action((inputString) => {
-            processCommand(inputString);
+        .name('token')
+        .description('Convert token symbol to 40-character padded hex representation if longer than 3 characters.')
+        .argument('<token-symbol>', 'The token symbol to convert to XRPL currency code')
+        .action((tokenSymbol) => {
+            processCommand(tokenSymbol);
         });
 
     program.parse();
 }
 
 module.exports = {
-    encodeStringToHex,
+    tokenSymbolToCurrencyCode,
     processCommand,
 };
