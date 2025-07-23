@@ -404,21 +404,3 @@ Here's an example:
 ```bash
 ts-node xrpl/account-set.js -e testnet -n xrpl --multisign --account rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg --transferRate 0 --tickSize 6 --domain axelar.foundation --flag 14
 ```
-
-
-### Encode String to Hex
-
-For tokens that have more than 3 characters, the padded hex format is required to ensure proper encoding in XRPL transactions.
-
-```bash
-node xrpl/encode-address.js <string> [options]
-```
-
-Examples:
-
-```bash
-
-node xrpl/encode-address.js "USDC.axl"
-# Output:
-# Input string: USDC.axl
-# Hex representation: 555344432E61786C000000000000000000000000
