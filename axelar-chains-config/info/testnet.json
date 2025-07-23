@@ -3162,6 +3162,23 @@
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
         }
       }
+    },
+    "memento": {
+      "name": "memento",
+      "axelarId": "memento",
+      "chainId": 2129,
+      "rpc": "",
+      "tokenSymbol": "ETH",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Memento Explorer",
+        "url": "https://memento.zeeve.online"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
