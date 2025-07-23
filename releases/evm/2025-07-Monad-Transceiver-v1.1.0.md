@@ -157,7 +157,7 @@ Note:
 - The owner must manually update it after all chains adopt the AxelarTransceiver
 
 ```bash
-GmpManagerPxoxy.setThreshold(uint8 $THRESHOLD_VALUE)
+GmpManagerProxy.setThreshold(uint8 $THRESHOLD_VALUE)
 ```
 
 ### Verify Contracts
