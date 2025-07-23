@@ -264,13 +264,13 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Register deployed token (custom)
-    const [tokenAddress, _channelId, saltAddress] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
-    if (!tokenAddress) throw new Error(`error resolving token id from registration tx, got ${tokenAddress}`);
+    const [tokenId, _channelId, saltAddress] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
+    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
     // TokenId
-    const tokenId = await txBuilder.moveCall({
+    const tokenIdObject = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_address`,
-        arguments: [tokenAddress],
+        arguments: [tokenId],
     });
 
     // Option<TreasuryCap<T>>
@@ -286,7 +286,7 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
         target: `${itsConfig.address}::interchain_token_service::give_unlinked_coin`,
         arguments: [
             InterchainTokenService,
-            tokenId,
+            tokenIdObject,
             metadata,
             treasuryCapOption,
         ],
