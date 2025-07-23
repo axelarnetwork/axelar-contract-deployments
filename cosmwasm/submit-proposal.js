@@ -48,7 +48,7 @@ const {
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const predictAddress = async (client, contractConfig, options) => {
@@ -178,6 +178,12 @@ const execute = async (client, wallet, config, options) => {
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
+    const itsAbiTranslator = options.translatorAddress || config.axelar?.contracts?.ItsAbiTranslator?.address;
+    
+    if (!itsAbiTranslator) {
+        throw new Error('ItsAbiTranslator address is required for registerItsChain');
+    }
+
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
@@ -185,6 +191,7 @@ const registerItsChain = async (client, wallet, config, options) => {
         return {
             chain: chainConfig.axelarId,
             its_edge_contract: itsEdgeContract(chainConfig),
+            msg_translator: itsAbiTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
@@ -331,7 +338,7 @@ const programHandler = () => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true, translatorAddress: true });
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
