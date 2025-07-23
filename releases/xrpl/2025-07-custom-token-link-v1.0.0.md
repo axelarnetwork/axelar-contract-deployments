@@ -1,0 +1,147 @@
+# XRPL ITS Integration - Generic Token Deployment
+
+|                | **Details**                              |
+| -------------- | -------------------------------------- |
+| **Created By** | @isi8787 <isaac@interoplabs.io>          |
+| **Deployment** | @isi8787 <isaac@interoplabs.io> |
+
+| **Network**          | **Deployment Status** | **Date**   |
+| -------------------- | --------------------- | ---------- |
+| **Mainnet**          | TBD                   | TBD        |
+
+## Background
+
+This release provides a generic template for performing custom token linking from an EVM chain to XRPL using the Axelar Interchain Token Service (ITS). 
+
+## Pre-Deployment Setup
+
+Create an `.env` config. Use `all` for `CHAINS` to run the cmd for every EVM chain, or set a specific chain.
+
+```yaml
+PRIVATE_KEY=xyz
+ENV=xyz
+CHAINS=xyz
+```
+
+### 1. Token Symbol Pre-Calculation
+
+Before starting the deployment, you need to generate the XRPL Currency Code for your token symbol.
+
+**Command:**
+```bash
+ts-node xrpl/encode-token.js <TOKEN_SYMBOL>
+```
+
+### 2. Environment Variables Setup
+
+Set the following environment variables before running the deployment commands:
+
+```bash
+# Token Details
+XRPL_CURRENCY_CODE="<GENERATED_CURRENCY_CODE>"
+XRPL_ISSUER="<XRPL_ISSUER_ADDRESS>"
+TOKEN_ADDRESS="<CONTRACT_ADDRESS>"
+
+
+# Contract Addresses
+XRPL_GATEWAY=
+AXELARNET_GATEWAY=
+ITS_HUB=
+
+# Deployment Parameters
+SALT="<RANDOM_SALT>"
+```
+
+## Deployment Steps
+
+### 1. Token Metadata Registration on XRPL Gateway
+
+**Command:**
+```bash
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata":{"xrpl_token":{"issued":{"currency":"'$XRPL_CURRENCY_CODE'","issuer":"'$XRPL_ISSUER'"}}}}'
+```
+
+**Extract Values from Command Output:**
+```bash
+# Extract the following values from the previous transaction results
+MESSAGE_ID= #message_id
+PAYLOAD= #payload
+XRPL_TOKEN_ADDRESS='0x' +  #token_address
+
+**Extracted Values Example:**
+- **Message ID**: `0x8b49b5ccfb893269a5c263693805874cdeb3c932633ba0301094403c77dad839`
+- **Token Address**: `373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32`
+- **Payload**: `00000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000004b373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32000000000000000000000000000000000000000000`
+```
+
+### 2. Execute Message on the Axelarnet Gateway
+
+```bash
+axelard tx wasm execute $AXELARNET_GATEWAY '{"execute":{"cc_id":{"source_chain":"xrpl","message_id":"'$MESSAGE_ID'"},"payload":"'$PAYLOAD'"}}'
+```
+
+### 3. Token Metadata Registration on Ethereum
+
+```bash
+ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue 1000000000000000000
+```
+
+Wait for GMP Transaction to finish executing before proceeding
+
+### 4. Custom Token Registration
+
+```bash
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType 4 --operator [operator address] --salt $SALT
+```
+Note: the GMP transaction is a two step process and only the first leg to the ITS Hub is required to succeed 
+
+From the output set the token Id for subsequent steps
+```bash
+TOKEN_ID= #tokenID from result without 0x prefix
+```
+
+### 5. Token Linking
+
+```bash
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType 4 --linkParams "0x" --salt $SALT --gasValue 1000000000000000000
+```
+
+### 6. XRPL Token Instance Registration
+
+**Command:**
+```bash
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance":{"token_id":"'$TOKEN_ID'","chain":"'$CHAIN'","decimals":15}}'
+```
+
+### 7. XRPL Remote Token Registration
+
+**Command:**
+```bash
+axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token":{"token_id":"'$TOKEN_ID'","xrpl_currency":"'$XRPL_CURRENCY_CODE'"}}'
+```
+
+### 8. Get Token Manager Address
+
+**Command:**
+```bash
+ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
+```
+
+From the output obtain the token manager address for next step
+
+### 9. Mintership Transfer
+
+**Command:**
+```bash
+ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
+```
+
+## Cross-Chain Transfer Testing
+
+To test the connection reference document [2025-02-v.1.0.0.md](./2025-02-v.1.0.0.md).
+
+** Note ensure that the destination address being used has a trust-line set with the new currency. This can be performed using the following command using a funded XRPL account:
+
+```bash
+node xrpl/trust-set.js -n xrpl $XRPL_CURRENCY_CODE $XRPL_ISSUER --limit 99999999999999990000000000000000000000000000000000000000000000000000000000000000000000000
+```
