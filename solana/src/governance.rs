@@ -8,12 +8,11 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
-use crate::utils::SOLANA_CHAIN_KEY;
 use crate::utils::{
+    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GOVERNANCE_ADDRESS_KEY,
+    GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY, UPGRADE_AUTHORITY_KEY,
     fetch_latest_blockhash, parse_account_meta_string, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY,
-    GOVERNANCE_ADDRESS_KEY, GOVERNANCE_CHAIN_KEY, GOVERNANCE_KEY, MINIMUM_PROPOSAL_ETA_DELAY_KEY,
-    UPGRADE_AUTHORITY_KEY,
+    write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
@@ -31,19 +30,19 @@ pub(crate) enum Commands {
 #[derive(Args, Debug)]
 pub(crate) struct InitArgs {
     /// The name of the chain in charge of the governance
-    #[clap(short, long)]
+    #[clap(long)]
     governance_chain: String,
 
     /// The address of the governance contract on the governance chain
-    #[clap(short, long)]
+    #[clap(long)]
     governance_address: String,
 
     /// Minimum value (in seconds) for a proposal ETA
-    #[clap(short, long)]
+    #[clap(long)]
     minimum_proposal_eta_delay: u32,
 
     /// The account to receive the operator role on the Interchain Governance program on Solana
-    #[clap(short, long)]
+    #[clap(long)]
     operator: Pubkey,
 }
 
@@ -169,7 +168,7 @@ fn init(
     );
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_governance::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
@@ -180,9 +179,11 @@ fn init(
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
 
-    Ok(vec![IxBuilder::new()
-        .initialize_config(fee_payer, config_pda, governance_config)
-        .build()])
+    Ok(vec![
+        IxBuilder::new()
+            .initialize_config(fee_payer, config_pda, governance_config)
+            .build(),
+    ])
 }
 
 fn execute_proposal(
@@ -233,7 +234,9 @@ fn execute_operator_proposal(
         calldata_bytes,
     );
 
-    Ok(vec![builder
-        .execute_operator_proposal(fee_payer, config_pda, &args.operator)
-        .build()])
+    Ok(vec![
+        builder
+            .execute_operator_proposal(fee_payer, config_pda, &args.operator)
+            .build(),
+    ])
 }

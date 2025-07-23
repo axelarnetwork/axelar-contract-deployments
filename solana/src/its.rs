@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Write;
+use std::str::FromStr;
 use std::time::SystemTime;
 
 use axelar_solana_its::state;
@@ -15,7 +16,7 @@ use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
     decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
     write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
-    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, SOLANA_CHAIN_KEY, UPGRADE_AUTHORITY_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -750,10 +751,13 @@ fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre:
     if let Some(id) = maybe_arg {
         Ok(id)
     } else {
-        let id = Pubkey::deserialize(
-            &chains_info[SOLANA_CHAIN_KEY][CONTRACTS_KEY]
+        let id = Pubkey::from_str(
+            &String::deserialize(&chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY]
                 [GAS_SERVICE_KEY][ADDRESS_KEY],
-        ).map_err(|_| eyre!(
+            )?
+        )
+        .inspect_err(|e| println!("errr {e}"))
+        .map_err(|_| eyre!(
             "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
             Please update the file or pass a value to --gas-service"))?;
 
@@ -769,10 +773,12 @@ fn try_infer_gas_service_config_account(
     if let Some(id) = maybe_arg {
         Ok(id)
     } else {
-        let id = Pubkey::deserialize(
-            &chains_info[SOLANA_CHAIN_KEY][CONTRACTS_KEY]
+        let id = Pubkey::from_str(
+            &String::deserialize(&chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY]
                 [GAS_SERVICE_KEY][CONFIG_ACCOUNT_KEY],
-        ).map_err(|_| eyre!(
+            )?
+        )
+        .map_err(|_| eyre!(
             "Could not get the gas service config PDA from the chains info JSON file. Is it already deployed? \
             Please update the file or pass a value to --gas-config-account"))?;
 
@@ -915,7 +921,7 @@ fn init(
         String::deserialize(&chains_info[AXELAR_KEY][CONTRACTS_KEY][ITS_KEY][ADDRESS_KEY])?;
     let its_root_config = axelar_solana_its::find_its_root_pda().0;
 
-    chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_its::id().to_string(),
         CONFIG_ACCOUNT_KEY: its_root_config.to_string(),
         UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),

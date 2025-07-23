@@ -6,6 +6,7 @@ mod gateway;
 mod generate;
 mod governance;
 mod its;
+mod memo;
 mod misc;
 mod multisig_prover_types;
 mod send;
@@ -106,6 +107,7 @@ struct SendCommandArgs {
     fee_payer: Option<String>,
 
     /// List of signing key identifiers (path for keypair file or usb ledger)
+    #[clap(long, short)]
     signer_keys: Vec<String>,
 
     #[clap(subcommand)]
@@ -151,6 +153,10 @@ enum InstructionSubcommand {
     /// Commands to interface with the InterchainGovernance program on Solana
     #[clap(subcommand)]
     Governance(governance::Commands),
+
+    /// Commands to interface with the AxelarMemo program on Solana
+    #[clap(subcommand)]
+    Memo(memo::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -340,6 +346,9 @@ async fn build_transaction(
         InstructionSubcommand::Its(command) => its::build_transaction(fee_payer, command, config),
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
+        }
+        InstructionSubcommand::Memo(command) => {
+            memo::build_transaction(fee_payer, command, config)
         }
     }
 }

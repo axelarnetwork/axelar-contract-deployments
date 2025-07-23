@@ -492,7 +492,8 @@ async fn init(
         &chains_info,
     )
     .await?;
-    let domain_separator = domain_separator(&chains_info, config.network_type)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
+    println!("{}", hex::encode(&domain_separator));
     let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
         NativeHasher,
     >(&verifier_set, &domain_separator)?;
@@ -569,7 +570,7 @@ fn approve(
     let mut instructions = vec![];
     let chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     let signer_set = build_signing_verifier_set(approve_args.signer.clone(), approve_args.nonce);
-    let domain_separator = domain_separator(&chains_info, config.network_type)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
     let payload_bytes = hex::decode(
         approve_args
             .payload
@@ -642,7 +643,7 @@ async fn rotate(
         &chains_info,
     )
     .await?;
-    let domain_separator = domain_separator(&chains_info, config.network_type)?;
+    let domain_separator = domain_separator(&chains_info, config.network_type, &config.chain_id)?;
     let verifier_set_hash = axelar_solana_encoding::types::verifier_set::verifier_set_hash::<
         NativeHasher,
     >(&signer_set.verifier_set(), &domain_separator)?;
