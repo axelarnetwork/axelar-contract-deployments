@@ -1,11 +1,10 @@
 const { Option, Command } = require('commander');
-const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
-    createSaltAddress,
     deployTokenFromInfo,
     getWallet,
     newCoinManagementLocked,
@@ -259,6 +258,7 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const walletAddress = keypair.toSuiAddress();
     const deployConfig = { client, keypair, options, walletAddress };
     const [symbol, name, decimals] = args;
+    const txBuilder = new TxBuilder(client);
 
     // Deploy token on Sui
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
@@ -267,22 +267,18 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const [tokenAddress, _channelId, saltAddress] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
     if (!tokenAddress) throw new Error(`error resolving token id from registration tx, got ${tokenAddress}`);
 
-    const txBuilder = new TxBuilder(client);
-
     // TokenId
     const tokenId = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_address`,
         arguments: [tokenAddress],
     });
-    //0x2::dynamic_field::Field<0x455f48b0c71b2a7e6c1f1c5507f70c4a719effc72fab931d7ab918d9b1efe9e9::token_id::TokenId, 0x1::type_name::TypeName>
 
-    // Option<TreasuryCap<T>> 
-    const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('')
-    const target = options.treasuryCap 
-        ? `${STD_PACKAGE_ID}::option::some` 
+    // Option<TreasuryCap<T>>
+    const target = options.treasuryCapReclaimer 
+        ? `${STD_PACKAGE_ID}::option::some`
         : `${STD_PACKAGE_ID}::option::none`;
-    const arguments = options.treasuryCap ? [treasuryCap] : [];
-    const typeArguments = [treasuryCapReclaimerType];
+    const arguments = options.treasuryCapReclaimer ? [treasuryCap] : [];
+    const typeArguments = [`${SUI_PACKAGE_ID}::coin::TreasuryCap<${tokenType}>`];
     const treasuryCapOption = await txBuilder.moveCall({ target, arguments, typeArguments });
 
     // give_unlinked_coin<T>
@@ -290,14 +286,16 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
         target: `${itsConfig.address}::interchain_token_service::give_unlinked_coin`,
         arguments: [
             InterchainTokenService,
-            tokenId, //XXX
+            tokenId,
             metadata,
             treasuryCapOption,
         ],
         typeArguments: [tokenType],
     });
 
-    if (options.treasuryCap)
+    // TreasuryCapReclaimer<T>
+    const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('');
+    if (options.treasuryCapReclaimer)
         txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
     else
         await txBuilder.moveCall({
