@@ -60,7 +60,7 @@ const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/ID
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
-const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
+const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}, asdf) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
 
     const contract = await factory.deploy(...args, options);

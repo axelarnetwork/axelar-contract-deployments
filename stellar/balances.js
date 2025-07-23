@@ -16,6 +16,7 @@ if (require.main === module) {
     addBaseOptions(program);
 
     program.action((options) => {
+        const config1 = loadConfig(options.env);
         const config = loadConfig(options.env);
         processCommand(options, config, getChainConfig(config, options.chainName));
     });
