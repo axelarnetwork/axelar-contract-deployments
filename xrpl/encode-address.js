@@ -2,32 +2,22 @@ const { Command } = require('commander');
 const { hex } = require('./utils');
 const { printInfo, printError } = require('../common');
 
-function encodeStringToHex(inputString, options = {}) {
-    const { padding = 40, uppercase = true } = options;
-    
-    let hexString = hex(inputString);
-    
-    if (uppercase) {
-        hexString = hexString.toUpperCase();
+function encodeStringToHex(inputString) {
+    if (inputString.length <= 3) {
+        throw new Error('String must be longer than 3 characters');
     }
     
-    const paddedHex = hexString + '0'.repeat(Math.max(0, padding - hexString.length));
+    const hexString = hex(inputString).toUpperCase();
+    const paddedHex = hexString + '0'.repeat(Math.max(0, 40 - hexString.length));
     
     return paddedHex;
 }
 
-function processCommand(inputString, options) {
+function processCommand(inputString) {
     try {
-        const result = encodeStringToHex(inputString, options);
-        
-        if (options.format === 'detailed') {
-            printInfo('Input string', inputString);
-            printInfo('Hex representation', result);
-            printInfo('Hex length', result.length.toString());
-        } else {
-            console.log(result);
-        }
-        
+        const result = encodeStringToHex(inputString);
+        printInfo('Input string', inputString);
+        printInfo('Hex representation', result);
         return result;
     } catch (error) {
         printError('Failed to encode string to hex', error.message);
@@ -40,28 +30,10 @@ if (require.main === module) {
 
     program
         .name('encode-address')
-        .description('Convert strings to hex representation with padding.')
-        .argument('<string>', 'The string to convert to hex')
-        .option('-p, --padding <number>', 'Number of characters to pad to', '40')
-        .option('--no-uppercase', 'Keep hex in lowercase')
-        .option('-f, --format <format>', 'Output format: simple or detailed', 'simple')
-        .action((inputString, options) => {
-            const padding = parseInt(options.padding);
-            if (isNaN(padding) || padding < 0) {
-                printError('Invalid padding value', 'Padding must be a positive number');
-                process.exit(1);
-            }
-            
-            if (!['simple', 'detailed'].includes(options.format)) {
-                printError('Invalid format', 'Format must be simple or detailed');
-                process.exit(1);
-            }
-            
-            processCommand(inputString, {
-                padding,
-                uppercase: options.uppercase,
-                format: options.format
-            });
+        .description('Convert strings to 40-character padded hex representation.')
+        .argument('<string>', 'The string to convert to hex (must be longer than 3 characters)')
+        .action((inputString) => {
+            processCommand(inputString);
         });
 
     program.parse();
