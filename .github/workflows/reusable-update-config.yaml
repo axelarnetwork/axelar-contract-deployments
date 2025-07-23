@@ -20,9 +20,11 @@ on:
         required: true
       CONFIG_REPO:
         required: true
+
 permissions:
   contents: read
   pull-requests: read
+
 jobs:
   update-config:
     env:

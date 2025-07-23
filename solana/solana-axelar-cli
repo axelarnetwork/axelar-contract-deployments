@@ -1,0 +1,19 @@
+#!/bin/sh
+
+project_dir=$(dirname "${0}")
+chains_info_dir="${project_dir:?}/../axelar-chains-config/info/"
+
+if [ ! -f ${project_dir}/.env ]; then
+    echo ".env file is required"
+    exit 1
+fi
+
+. "${project_dir}/.env"
+
+cargo run \
+    --manifest-path="${project_dir:?}/Cargo.toml" \
+    --no-default-features \
+    --features ${ENV:?Unset. Please set it to one of devnet-amplifier, stagenet, testnet or mainnet} \
+    -- \
+    --chains-info-dir="${chains_info_dir:?}" \
+    "${@}"
