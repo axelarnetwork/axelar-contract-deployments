@@ -41,7 +41,7 @@ ITS_HUB=
 # Deployment Parameters
 SALT="<RANDOM_SALT>"
 TOKEN_MANAGER_TYPE= # Numerical value corresponding to token model (MintBurn, LockUnlock, etc)
-OPERATOR= # User specified address
+OPERATOR="0x" # User specified address or empty bytes
 ```
 
 **_NOTE:_**
