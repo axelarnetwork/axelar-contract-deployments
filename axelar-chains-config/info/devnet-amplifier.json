@@ -654,7 +654,7 @@
         "InterchainGovernance": {
           "address": "govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9",
           "configAccount": "Bj7r2VugtM6odjLX9YdWtDsrZfSKLQFbfoc5hTL9qVhe",
-          "upgradeAuthority": "upaLVW6xkpeVB2g3h2KBqqFCNrWdnrAb6J6PRcqKtTe",
+          "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw",
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "governanceChain": "Axelarnet",
           "minimumTimeDelay": 3600
