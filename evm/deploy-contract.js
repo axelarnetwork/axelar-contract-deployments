@@ -30,15 +30,14 @@ const { addEvmOptions } = require('./cli-utils');
 
 async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
     const proxyAddress = contractConfig.address;
+    // using new AxelarTransceiver contract's address, which is recently deployed; part of the two-step upgrade process
+    const newImplementation = contractConfig.implementation;
 
     validateParameters({
-        isAddress: { proxyAddress },
+        isAddress: { proxyAddress, newImplementation },
     });
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
-
-    // only be called when the new AxelarTransceiver implementation is deployed, part of the two-step upgrade process
-    const newImplementation = contractConfig.implementation;
 
     printInfo(`AxelarTransceiver Proxy`, proxyAddress);
     printInfo(`New implementation`, newImplementation);
