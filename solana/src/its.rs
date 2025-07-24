@@ -16,9 +16,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
-    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
+    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
+    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
+    read_json_file_from_path, write_json_to_file_path,
 };
 
 #[derive(Subcommand, Debug)]
@@ -215,10 +215,6 @@ pub(crate) struct TokenManagerHandoverMintAuthorityArgs {
     /// The mint whose authority will be handed over to the TokenManager
     #[clap(long)]
     mint: Pubkey,
-
-    /// The token program which owns the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
 }
 
 #[derive(Subcommand, Debug)]
@@ -249,10 +245,6 @@ pub(crate) struct InterchainTokenMintArgs {
     /// The token account to which the tokens will be minted
     #[clap(long)]
     to: Pubkey,
-
-    /// The token program which owns the the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
 
     /// The amount of tokens to mint
     #[clap(long)]
@@ -351,10 +343,6 @@ pub(crate) struct RegisterCanonicalInterchainTokenArgs {
     /// The mint account of the canonical token
     #[clap(long)]
     mint: Pubkey,
-
-    /// The token program which owns the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
 }
 
 #[derive(Parser, Debug)]
@@ -467,10 +455,6 @@ pub(crate) struct RegisterTokenMetadataArgs {
     #[clap(long)]
     mint: Pubkey,
 
-    /// The token program which owns the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
     gas_value: u64,
@@ -497,10 +481,6 @@ pub(crate) struct RegisterCustomTokenArgs {
     /// The TokenManager type to use for this token
     #[clap(long, value_parser = parse_token_manager_type)]
     token_manager_type: state::token_manager::Type,
-
-    /// The token program which owns the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
 
     /// An optional account to receive the operator role on the TokenManager associated with the token
     #[clap(long)]
@@ -568,10 +548,6 @@ pub(crate) struct InterchainTransferArgs {
     #[clap(long)]
     mint: Pubkey,
 
-    /// The token program which owns the mint (spl_token or spl_token_2022).
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
     gas_value: u64,
@@ -623,10 +599,6 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     #[clap(long, value_parser = parse_hex_vec)]
     data: Vec<u8>,
 
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
-
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
     gas_value: u64,
@@ -677,10 +649,6 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     /// The call data to be sent to the contract on the destination chain
     #[clap(long, value_parser = parse_hex_vec)]
     data: Vec<u8>,
-
-    /// The token program to use for the mint. This can be either spl_token or spl_token_2022.
-    #[clap(long, value_parser = parse_token_program)]
-    token_program: Pubkey,
 
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
@@ -743,14 +711,6 @@ fn parse_hex_bytes32(s: &str) -> eyre::Result<[u8; 32]> {
     Ok(decoded)
 }
 
-fn parse_token_program(s: &str) -> Result<Pubkey, String> {
-    match s.to_lowercase().as_str() {
-        "spl_token" => Ok(spl_token::id()),
-        "spl_token_2022" => Ok(spl_token_2022::id()),
-        _ => Err(format!("Invalid token program: {s}")),
-    }
-}
-
 fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, String> {
     match s.to_lowercase().as_str() {
         "lockunlock" | "lock_unlock" => Ok(state::token_manager::Type::LockUnlock),
@@ -759,6 +719,12 @@ fn parse_token_manager_type(s: &str) -> Result<state::token_manager::Type, Strin
         "lockunlockfee" | "lock_unlock_fee" => Ok(state::token_manager::Type::LockUnlockFee),
         _ => Err(format!("Invalid token manager type: {s}")),
     }
+}
+
+fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<Pubkey> {
+    let rpc_client = RpcClient::new(config.url.clone());
+    let mint_account = rpc_client.get_account(mint)?;
+    Ok(mint_account.owner)
 }
 
 fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre::Result<Pubkey> {
@@ -821,7 +787,7 @@ pub(crate) fn build_instruction(
             revoke_deploy_remote_interchain_token(fee_payer, args)
         }
         Commands::RegisterCanonicalInterchainToken(args) => {
-            register_canonical_interchain_token(fee_payer, args)
+            register_canonical_interchain_token(fee_payer, args, config)
         }
         Commands::DeployRemoteCanonicalInterchainToken(args) => {
             deploy_remote_canonical_interchain_token(fee_payer, args, config)
@@ -834,7 +800,7 @@ pub(crate) fn build_instruction(
             deploy_remote_interchain_token_with_minter(fee_payer, args, config)
         }
         Commands::RegisterTokenMetadata(args) => register_token_metadata(fee_payer, args, config),
-        Commands::RegisterCustomToken(args) => register_custom_token(fee_payer, args),
+        Commands::RegisterCustomToken(args) => register_custom_token(fee_payer, args, config),
         Commands::LinkToken(args) => link_token(fee_payer, args, config),
         Commands::InterchainTransfer(args) => interchain_transfer(fee_payer, args, config),
         Commands::CallContractWithInterchainToken(args) => {
@@ -867,11 +833,11 @@ pub(crate) fn build_instruction(
                 token_manager_accept_operatorship(fee_payer, args)
             }
             TokenManagerCommand::HandoverMintAuthority(args) => {
-                token_manager_handover_mint_authority(fee_payer, args)
+                token_manager_handover_mint_authority(fee_payer, args, config)
             }
         },
         Commands::InterchainToken(command) => match command {
-            InterchainTokenCommand::Mint(args) => interchain_token_mint(fee_payer, args),
+            InterchainTokenCommand::Mint(args) => interchain_token_mint(fee_payer, args, config),
             InterchainTokenCommand::TransferMintership(args) => {
                 interchain_token_transfer_mintership(fee_payer, args)
             }
@@ -1047,21 +1013,24 @@ fn revoke_deploy_remote_interchain_token(
 fn register_canonical_interchain_token(
     fee_payer: &Pubkey,
     args: RegisterCanonicalInterchainTokenArgs,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::canonical_interchain_token_id(&args.mint);
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
+    println!("- Token Program: {}", token_program);
     println!("------------------------------------------");
 
     Ok(vec![
         axelar_solana_its::instruction::register_canonical_interchain_token(
             *fee_payer,
             args.mint,
-            args.token_program,
+            token_program,
         )?,
     ])
 }
@@ -1166,11 +1135,12 @@ fn register_token_metadata(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::register_token_metadata(
             *fee_payer,
             args.mint,
-            args.token_program,
+            token_program,
             args.gas_value,
             gas_service,
             gas_config_account,
@@ -1181,14 +1151,17 @@ fn register_token_metadata(
 fn register_custom_token(
     fee_payer: &Pubkey,
     args: RegisterCustomTokenArgs,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
     let token_id = axelar_solana_its::linked_token_id(fee_payer, &args.salt);
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
 
     println!("------------------------------------------");
     println!("\u{1FA99} Token details:");
     println!();
     println!("- Interchain Token ID: {}", hex::encode(token_id));
     println!("- Mint Address: {}", args.mint);
+    println!("- Token Program: {}", token_program);
     println!("------------------------------------------");
 
     Ok(vec![axelar_solana_its::instruction::register_custom_token(
@@ -1196,7 +1169,7 @@ fn register_custom_token(
         args.salt,
         args.mint,
         args.token_manager_type,
-        args.token_program,
+        token_program,
         args.operator,
     )?])
 }
@@ -1229,6 +1202,7 @@ fn interchain_transfer(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1251,7 +1225,7 @@ fn interchain_transfer(
         destination_address,
         args.amount,
         args.mint,
-        args.token_program,
+        token_program,
         args.gas_value,
         gas_service,
         gas_config_account,
@@ -1266,6 +1240,7 @@ fn call_contract_with_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1288,7 +1263,7 @@ fn call_contract_with_interchain_token(
             args.amount,
             args.mint,
             args.data,
-            args.token_program,
+            token_program,
             args.gas_value,
             gas_service,
             gas_config_account,
@@ -1304,6 +1279,7 @@ fn call_contract_with_interchain_token_offchain_data(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1327,7 +1303,7 @@ fn call_contract_with_interchain_token_offchain_data(
             args.amount,
             args.mint,
             args.data,
-            args.token_program,
+            token_program,
             args.gas_value,
             gas_service,
             gas_config_account,
@@ -1456,13 +1432,15 @@ fn token_manager_accept_operatorship(
 fn token_manager_handover_mint_authority(
     fee_payer: &Pubkey,
     args: TokenManagerHandoverMintAuthorityArgs,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             *fee_payer,
             args.token_id,
             args.mint,
-            args.token_program,
+            token_program,
         )?,
     ])
 }
@@ -1470,14 +1448,16 @@ fn token_manager_handover_mint_authority(
 fn interchain_token_mint(
     fee_payer: &Pubkey,
     args: InterchainTokenMintArgs,
+    config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
+    let token_program = get_token_program_from_mint(&args.mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::mint(
             args.token_id,
             args.mint,
             args.to,
             *fee_payer, // Payer is the minter in this context
-            args.token_program,
+            token_program,
             args.amount,
         )?,
     ])
