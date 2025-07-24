@@ -1,14 +1,5 @@
 # XRPL ITS Integration - Generic Token Deployment
 
-|                | **Details**                              |
-| -------------- | ---------------------------------------- |
-| **Created By** | @isi8787 <isaac@interoplabs.io>          |
-| **Deployment** |                                          |
-
-| **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Mainnet**          | TBD                   | TBD        |
-
 ## Background
 
 This release provides a generic template for performing custom token linking from an EVM chain to XRPL using the Axelar Interchain Token Service (ITS). 
