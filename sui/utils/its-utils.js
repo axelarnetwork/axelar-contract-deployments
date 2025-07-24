@@ -2,15 +2,21 @@ const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { broadcastFromTxBuilder } = require('./sign-utils');
 
-async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymbol, coinMetadata, coinType) {
+async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymbol, coinMetadata, coinType, treasuryCap = null) {
     const { InterchainTokenService } = itsConfig.objects;
     const txBuilder = new TxBuilder(config.client);
 
     // New CoinManagement<T>
-    const coinManagement = await txBuilder.moveCall({
-        target: `${itsConfig.address}::coin_management::new_locked`,
-        typeArguments: [coinType],
-    });
+    const coinManagement = !treasuryCap 
+        ? await txBuilder.moveCall({
+            target: `${itsConfig.address}::coin_management::new_locked`,
+            typeArguments: [coinType],
+        })
+        : await txBuilder.moveCall({
+            target: `${itsConfig.address}::coin_management::new_with_cap`,
+            arguments: [treasuryCap],
+            typeArguments: [coinType],
+        });
 
     // Channel
     const channel = config.options.channel
@@ -27,16 +33,27 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     });
 
     // Register deployed token (from info)
-    const [_tokenId, treasuryCapReclaimer] = await txBuilder.moveCall({
+    const [_tokenId, treasuryCapReclaimerOption] = await txBuilder.moveCall({
         target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
         arguments: [InterchainTokenService, channel, salt, coinMetadata, coinManagement],
         typeArguments: [coinType],
     });
 
+    // TreasuryCapReclaimer<T>
+    const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', coinType, '>'].join('');
+    if (config.options.treasuryCap) {
+        const treasuryCapReclaimer = await txBuilder.moveCall({
+            target: `${STD_PACKAGE_ID}::option::extract`,
+            arguments: [treasuryCapReclaimerOption],
+            typeArguments: [treasuryCapReclaimerType],
+        });
+
+        txBuilder.tx.transferObjects([treasuryCapReclaimer], config.walletAddress);
+    }
     await txBuilder.moveCall({
         target: `${STD_PACKAGE_ID}::option::destroy_none`,
-        arguments: [treasuryCapReclaimer],
-        typeArguments: [[itsConfig.structs.TreasuryCapReclaimer, '<', coinType, '>'].join('')],
+        arguments: [treasuryCapReclaimerOption],
+        typeArguments: [treasuryCapReclaimerType],
     });
 
     if (!config.options.channel) txBuilder.tx.transferObjects([channel], config.walletAddress);
@@ -65,7 +82,7 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     const tokenId = tokenEvent.parsedJson.hasOwnProperty('token_id') ? tokenEvent.parsedJson.token_id.id : null;
     const channelId = channelEvent.parsedJson.hasOwnProperty('id') ? channelEvent.parsedJson.id : null;
 
-    return [tokenId, channelId, saltAddress];
+    return [tokenId, channelId, saltAddress, result];
 }
 
 function createSaltAddress() {
