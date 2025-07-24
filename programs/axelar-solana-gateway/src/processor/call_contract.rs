@@ -71,6 +71,11 @@ impl Processor {
                 solana_program::msg!("Invalid signing PDA");
                 return Err(GatewayError::InvalidSigningPDA.into());
             }
+
+            if !sender_signing_pda.is_signer {
+                solana_program::msg!("Signing PDA must be a signer");
+                return Err(GatewayError::CallerNotSigner.into());
+            }
         } else {
             // Otherwise, the sender must be a signer
             if !sender.is_signer {
