@@ -2,6 +2,7 @@
 
 const chalk = require('chalk');
 const { ethers } = require('hardhat');
+const { Contract } = ethers;
 const {
     Wallet,
     getDefaultProvider,
@@ -26,6 +27,30 @@ const {
     validateParameters,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
+
+async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
+    const proxyAddress = contractConfig.address;
+    // using new AxelarTransceiver contract's address, which is recently deployed; part of the two-step upgrade process
+    const newImplementation = contractConfig.implementation;
+
+    validateParameters({
+        isAddress: { proxyAddress, newImplementation },
+    });
+
+    const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
+
+    printInfo(`AxelarTransceiver Proxy`, proxyAddress);
+    printInfo(`New implementation`, newImplementation);
+
+    if (prompt(`Proceed with upgrade on AxelarTransceiver on ${chain.name}?`, options.yes)) {
+        return;
+    }
+
+    const upgradeTx = await proxyContract.upgrade(newImplementation, gasOptions);
+    await upgradeTx.wait();
+
+    printInfo('Upgrade completed successfully');
+}
 
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
@@ -232,7 +257,8 @@ async function checkContract(contractName, contract, contractConfig) {
 }
 
 async function processCommand(config, chain, options) {
-    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
+    const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy } = options;
+
     let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -278,6 +304,15 @@ async function processCommand(config, chain, options) {
             }
             contractConfig = contracts[contractName];
 
+            // Handle reuseProxy case
+            if (reuseProxy) {
+                if (!contractConfig.implementation) {
+                    printError(`AxelarTransceiver is not deployed on ${chain.name}. Cannot reuse proxy.`);
+                    return;
+                }
+                printInfo(`Reusing existing AxelarTransceiver proxy on ${chain.name}`);
+            }
+
             if (contractConfig.implementation && options.skipExisting) {
                 printWarn(`Skipping ${contractName} deployment on ${chain.name} because it is already deployed.`);
                 return;
@@ -314,6 +349,12 @@ async function processCommand(config, chain, options) {
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
+    // Handle upgrade for AxelarTransceiver
+    if (upgrade && contractName === 'AxelarTransceiver') {
+        await upgradeAxelarTransceiver(contractConfig, contractJson.abi, wallet, chain, options, gasOptions);
+        return;
+    }
+
     printInfo(`Constructor args for chain ${chain.name}`, constructorArgs);
 
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
@@ -326,7 +367,7 @@ async function processCommand(config, chain, options) {
         provider: wallet.provider,
     });
 
-    if (await isContract(predictedAddress, provider)) {
+    if ((await isContract(predictedAddress, provider)) && !reuseProxy) {
         printWarn(`Contract ${contractName} is already deployed on ${chain.name} at ${predictedAddress}`);
         return;
     }
@@ -442,6 +483,7 @@ if (require.main === module) {
         skipChains: true,
         skipExisting: true,
         predictOnly: true,
+        upgrade: true,
     });
 
     program.addOption(
@@ -452,6 +494,7 @@ if (require.main === module) {
     program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
     program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
+    program.addOption(new Option('--reuseProxy', 'reuse existing proxy contract (useful for upgrade deployments)'));
 
     program.action((options) => {
         main(options);
