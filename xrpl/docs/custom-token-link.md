@@ -102,7 +102,7 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance":{"token_id":"'$TOKEN_ID'","chain":"'$CHAIN'","decimals":15}}'
 ```
 **_NOTE:_**
-The decimal presicion of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
+The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
 XRPL contracts will use directly the ITS Hub instance allowing for user specified values.  
 
 ### 7. XRPL Remote Token Registration
