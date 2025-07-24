@@ -79,7 +79,7 @@ XRPL_TOKEN_ADDRESS='0x' +  #token_address
 axelard tx wasm execute $AXELARNET_GATEWAY '{"execute":{"cc_id":{"source_chain":"xrpl","message_id":"'$MESSAGE_ID'"},"payload":"'$PAYLOAD'"}}'
 ```
 
-### 3. Token Metadata Registration on Ethereum
+### 3. Token Metadata Registration on Source Chain
 
 ```bash
 ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue 1000000000000000000
@@ -87,7 +87,7 @@ ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue 10000000000
 
 Wait for GMP Transaction to finish executing before proceeding
 
-### 4. Custom Token Registration
+### 4. Custom Token Registration on Source Chain
 
 ```bash
 ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType 4 --operator [operator address] --salt $SALT
