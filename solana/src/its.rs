@@ -211,10 +211,6 @@ pub(crate) struct TokenManagerHandoverMintAuthorityArgs {
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
-
-    /// The mint whose authority will be handed over to the TokenManager
-    #[clap(long)]
-    mint: Pubkey,
 }
 
 #[derive(Subcommand, Debug)]
@@ -237,10 +233,6 @@ pub(crate) struct InterchainTokenMintArgs {
     /// The token id of the Interchain Token
     #[clap(long, value_parser = parse_hex_bytes32)]
     token_id: [u8; 32],
-
-    /// The mint account associated with the Interchain Token
-    #[clap(long)]
-    mint: Pubkey,
 
     /// The token account to which the tokens will be minted
     #[clap(long)]
@@ -544,10 +536,6 @@ pub(crate) struct InterchainTransferArgs {
     #[clap(long)]
     amount: u64,
 
-    /// The mint account associated with the Interchain Token
-    #[clap(long)]
-    mint: Pubkey,
-
     /// The amount of gas to pay for the cross-chain transaction
     #[clap(long)]
     gas_value: u64,
@@ -590,10 +578,6 @@ pub(crate) struct CallContractWithInterchainTokenArgs {
     /// The amount of tokens to transfer
     #[clap(long)]
     amount: u64,
-
-    /// The mint account associated with the Interchain Token
-    #[clap(long)]
-    mint: Pubkey,
 
     /// The call data to be sent to the contract on the destination chain
     #[clap(long, value_parser = parse_hex_vec)]
@@ -641,10 +625,6 @@ pub(crate) struct CallContractWithInterchainTokenOffchainDataArgs {
     /// The amount of tokens to transfer
     #[clap(long)]
     amount: u64,
-
-    /// The mint account associated with the Interchain Token
-    #[clap(long)]
-    mint: Pubkey,
 
     /// The call data to be sent to the contract on the destination chain
     #[clap(long, value_parser = parse_hex_vec)]
@@ -725,6 +705,17 @@ fn get_token_program_from_mint(mint: &Pubkey, config: &Config) -> eyre::Result<P
     let rpc_client = RpcClient::new(config.url.clone());
     let mint_account = rpc_client.get_account(mint)?;
     Ok(mint_account.owner)
+}
+
+fn get_mint_from_token_manager(token_id: &[u8; 32], config: &Config) -> eyre::Result<Pubkey> {
+    use borsh::BorshDeserialize as _;
+
+    let rpc_client = RpcClient::new(config.url.clone());
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) = axelar_solana_its::find_token_manager_pda(&its_root_pda, token_id);
+    let account = rpc_client.get_account(&token_manager_pda)?;
+    let token_manager = TokenManager::try_from_slice(&account.data)?;
+    Ok(token_manager.token_address)
 }
 
 fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre::Result<Pubkey> {
@@ -1202,7 +1193,8 @@ fn interchain_transfer(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let token_program = get_token_program_from_mint(&mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1224,7 +1216,7 @@ fn interchain_transfer(
         args.destination_chain,
         destination_address,
         args.amount,
-        args.mint,
+        mint,
         token_program,
         args.gas_value,
         gas_service,
@@ -1240,7 +1232,8 @@ fn call_contract_with_interchain_token(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let token_program = get_token_program_from_mint(&mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1261,7 +1254,7 @@ fn call_contract_with_interchain_token(
             args.destination_chain,
             destination_address,
             args.amount,
-            args.mint,
+            mint,
             args.data,
             token_program,
             args.gas_value,
@@ -1279,7 +1272,8 @@ fn call_contract_with_interchain_token_offchain_data(
 ) -> eyre::Result<Vec<Instruction>> {
     let gas_service = try_infer_gas_service_id(args.gas_service, config)?;
     let gas_config_account = try_infer_gas_service_config_account(args.gas_config_account, config)?;
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let token_program = get_token_program_from_mint(&mint, config)?;
     let timestamp: i64 = args.timestamp.unwrap_or(
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
@@ -1301,7 +1295,7 @@ fn call_contract_with_interchain_token_offchain_data(
             args.destination_chain,
             destination_address,
             args.amount,
-            args.mint,
+            mint,
             args.data,
             token_program,
             args.gas_value,
@@ -1434,12 +1428,13 @@ fn token_manager_handover_mint_authority(
     args: TokenManagerHandoverMintAuthorityArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let token_program = get_token_program_from_mint(&mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::token_manager::handover_mint_authority(
             *fee_payer,
             args.token_id,
-            args.mint,
+            mint,
             token_program,
         )?,
     ])
@@ -1450,11 +1445,12 @@ fn interchain_token_mint(
     args: InterchainTokenMintArgs,
     config: &Config,
 ) -> eyre::Result<Vec<Instruction>> {
-    let token_program = get_token_program_from_mint(&args.mint, config)?;
+    let mint = get_mint_from_token_manager(&args.token_id, config)?;
+    let token_program = get_token_program_from_mint(&mint, config)?;
     Ok(vec![
         axelar_solana_its::instruction::interchain_token::mint(
             args.token_id,
-            args.mint,
+            mint,
             args.to,
             *fee_payer, // Payer is the minter in this context
             token_program,
