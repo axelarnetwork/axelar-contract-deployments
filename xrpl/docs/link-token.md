@@ -42,7 +42,10 @@ ITS_HUB=
 SALT="<RANDOM_SALT>"
 TOKEN_MANAGER_TYPE= # Numerical value corresponding to token model (MintBurn, LockUnlock, etc)
 OPERATOR="0x" # User specified address or empty bytes
+GAS_FEE=  # Estimate using gmp api
 ```
+
+**API Reference:** Estimate using gmp [api](https://docs.axelarscan.io/gmp#estimateITSFee)
 
 **_NOTE:_**
 axelard commands require additional parameters for preparing, signing and broadcasting transactions. 
@@ -86,7 +89,7 @@ axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain
 ### 3. Token Metadata Registration on Source Chain
 
 ```bash
-ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue 1000000000000000000
+ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue $GAS_FEE
 ```
 
 Wait for GMP Transaction to finish executing before proceeding
@@ -108,7 +111,7 @@ TOKEN_ID= #tokenID from result without 0x prefix
 ### 5. Token Linking
 
 ```bash
-ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue 1000000000000000000
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue $GAS_FEE
 ```
 
 ### 6. XRPL Token Instance Registration
