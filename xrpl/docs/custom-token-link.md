@@ -1,4 +1,4 @@
-# XRPL ITS Integration - Generic Token Deployment
+# XRPL ITS Link Token Guide
 
 ## Background
 
