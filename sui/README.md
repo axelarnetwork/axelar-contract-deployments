@@ -432,21 +432,23 @@ Remove trusted chains
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
-## Register Coins
+## Registering Coins
 
-Register coin from info (i.e. symbol, name and decimals)
+### Register Coin from Info (symbol, name and decimals)
 
 ```bash
 ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
 ```
 
-Register coin from metadata (i.e. [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
+### Register Coin from Metadata 
+
+(see: [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
 
 ```bash
 ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
 ```
 
-Register custom coin
+### Register Custom Coin
 
 If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the registration transaction will automatically be created.
 
@@ -456,7 +458,7 @@ ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
 
 ## Migrating Legacy Coin Registrations
 
-Migrate coin metadata
+### Migrate Coin Metadata
 
 _Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned by ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
 
@@ -464,14 +466,40 @@ _Added in v1 to fix coins that were not displaying correctly in wallet softwares
 ts-node sui/its.js migrate-coin-metadata <symbol>
 ```
 
-## Link Coins
+## Coin Linking
 
-Link coin
+### Give Unlinked Coin
+
+Deploys a coin on Sui, registers it as custom coin and gives its treasury capability to ITS. Treasury capability will be reclaimable if the `--treasuryCapReclaimer` flag is passed to the command options.
+
+```bash
+ts-node sui/its give-unlinked-coin [options] <symbol> <name> <decimals>
+```
+
+### Link Coin
 
 Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
 
 ```bash
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
+```
+
+## Treasury Management & Mint/Burn Capabilities
+
+### Remove Treasury Cap
+
+Transfers the coin's `TreasuryCap` to the coin deployer and reclaims mint/burn permission from ITS.
+
+```bash
+ts-node sui/its remove-treasury-cap [options] <symbol>
+```
+
+### Restore Treasury Cap
+
+Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mint/burn permission back to ITS.
+
+```bash
+ts-node sui/its restore-treasury-cap [options] <symbol>
 ```
 
 ## Sui Contract Verification
