@@ -1,0 +1,102 @@
+name: Update Config
+description: Generate config and update external repository via PR.
+inputs:
+  network:
+    required: true
+    description: 'The network that needs to be updated'
+  source_repo:
+    required: true
+    description: 'the repo name that has triggered the PR creation.'
+  config_repo:
+    required: true
+    description: 'The repository on which the configs are set'
+  cicd_token:
+    required: true
+    description: 'The paths used to check on the network changes'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout current repository
+      uses: actions/checkout@v4
+
+    - name: Checkout external config repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.config_repo }}
+        path: config-repo
+        token: ${{ inputs.cicd_token }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get install -y jq
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Setup Branch Name
+      shell: bash
+      id: branch-name
+      run: echo "branch=feat/config-update-${{ inputs.network }}-$(date +'%Y-%m-%d-%H-%M-%S')" >> "$GITHUB_OUTPUT"
+
+    - name: Create branch and generate config
+      shell: bash
+      run: |
+        cd config-repo
+        poetry install --no-interaction
+
+        git config --local user.email "devops@interoplabs.io"
+        git config --local user.name "Interop Labs CI"
+        git checkout -b ${{ steps.branch-name.outputs.branch }}
+
+        NETWORK=${{ inputs.network }}
+        echo "Generating config for $NETWORK"
+        poetry run python generate.py --network "$NETWORK" gen-configs all-configs
+        git add --all
+        git commit -m "chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
+        git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
+
+    - name: Create Pull Request
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.cicd_token }}
+      id: create_pr
+      run: |
+        cd config-repo
+        PR_TITLE="chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
+        PR_BODY="Auto-generated PR with updated configuration files"
+        PR_HEAD="${{ steps.branch-name.outputs.branch }}"
+        PR_BASE="main"
+
+        echo "Creating PR: $PR_TITLE"
+        CREATE_PR_URL=$(gh pr create \
+          --repo "${{ inputs.config_repo }}" \
+          --title "$PR_TITLE" \
+          --body "$PR_BODY" \
+          --head "$PR_HEAD" \
+          --base "$PR_BASE")
+        CREATE_PR_EXIT_CODE=$?
+
+        if [ "$CREATE_PR_EXIT_CODE" -ne 0 ]; then
+            echo "Failed to create PR."
+            exit 1
+        fi
+        PR_NUMBER=$(gh pr view "$CREATE_PR_URL" --repo "${{ inputs.config_repo }}" --json number -q .number)
+        echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+        echo "PR_TITLE=$PR_TITLE" >> "$GITHUB_ENV"
+
+    - name: Merge Pull Request
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.cicd_token }}
+      run: |
+        cd config-repo
+        PR_NUMBER=${{ env.PR_NUMBER }}
+
+        gh pr update-branch "$PR_NUMBER" --repo "${{ inputs.config_repo }}"
+
+        gh pr merge "$PR_NUMBER" \
+            --repo "${{ inputs.config_repo }}" \
+            --squash \
+            --admin \
+            --subject "${{ env.PR_TITLE }} (#$PR_NUMBER)"
+        echo "PR #$PR_NUMBER merged successfully."
