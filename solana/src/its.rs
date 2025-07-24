@@ -1510,7 +1510,7 @@ fn get_token_manager(args: TokenManagerArgs, config: &Config) -> eyre::Result<()
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
     let token_id: [u8; 32] = hex::decode(args.token_id.trim_start_matches("0x"))?
         .try_into()
-        .expect("invalid token_id");
+        .map_err(|vec| eyre!("invalid token id: {vec:?}"))?;
     let (token_manager_pda, _) =
         axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
     let account = rpc_client.get_account(&token_manager_pda)?;
