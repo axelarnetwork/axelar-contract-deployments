@@ -44,9 +44,19 @@ const writeJSON = (data, name) => {
 let asyncLocalLoggerStorage = new AsyncLocalStorage();
 
 const printMsg = (msg) => {
-    const stream = asyncLocalLoggerStorage?.getStore();
-    if (stream) {
-        stream.write(`${msg}\n`);
+    const streams = asyncLocalLoggerStorage?.getStore();
+    if (streams?.stdStream) {
+        streams.stdStream.write(`${msg}\n`);
+    } else {
+        console.log(`${msg}`);
+    }
+};
+
+const printErrorMsg = (msg) => {
+    const streams = asyncLocalLoggerStorage?.getStore();
+    if (streams?.errorStream && streams?.stdStream) {
+        streams.errorStream.write(`${msg}\n`);
+        streams.stdStream.write(`${msg}\n`);
     } else {
         console.log(`${msg}`);
     }
@@ -79,7 +89,7 @@ const printError = (msg, info = '') => {
         msg = `${msg}: ${info}`;
     }
 
-    printMsg(`${chalk.bold.red(msg)}`);
+    printErrorMsg(`${chalk.bold.red(msg)}`);
 };
 
 const printHighlight = (msg, info = '', colour = chalk.bgBlue) => {

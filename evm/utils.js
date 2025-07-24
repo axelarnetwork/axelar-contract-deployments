@@ -752,9 +752,14 @@ const mainProcessor = async (options, processCommand, save = true) => {
         return chain;
     });
 
+    let failedChains = {};
     for (const chain of chains) {
         if (options.parallel) {
-            results.push(asyncChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options));
+            const { result, loggerError } = await asyncChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options);
+            results.push(result);
+            if (loggerError) {
+                failedChains[chain.name] = loggerError;
+            }
         } else {
             results.push(await sequentialChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options));
         }
@@ -766,6 +771,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
     // Check all contracts deployed with create2 method
     create2DeployedContractsValidation(config.chains);
 
+    for (const [chainName, loggerError] of Object.entries(failedChains)) {
+        printError(`Failed with error on ${chainName}: ${loggerError}`);
+    }
+
     if (save) {
         saveConfig(config, options.env);
     }
@@ -775,24 +784,32 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
 const asyncChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
     let loggerOutput = '';
-    try {
-        let stream = new Writable({
-            write(chunk, _encoding, callback) {
-                loggerOutput += chunk.toString();
-                callback();
-            },
-        });
-        const result = await asyncLocalLoggerStorage.run(stream, () => {
+    let loggerError = '';
+    let result;
+
+    const stdStream = new Writable({
+        write(chunk, _encoding, callback) {
+            loggerOutput += chunk.toString();
+            callback();
+        },
+    });
+    const errorStream = new Writable({
+        write(chunk, _encoding, callback) {
+            loggerError += chunk.toString();
+            callback();
+        },
+    });
+    result = await asyncLocalLoggerStorage.run({ stdStream, errorStream }, () => {
+        try {
             printInfo('Chain', chain.name, chalk.cyan);
             return processCommand(axelarConfig, chain, chainsSnapshot, options);
-        });
-        console.log(loggerOutput);
-        return result;
-    } catch (error) {
-        printError(`Error processing chain ${chain.name}: ${error.message}`);
-        console.log(loggerOutput);
-        return undefined;
-    }
+        } catch (error) {
+            printError(`Error processing chain ${chain.name}: ${error.message}`);
+            return undefined;
+        }
+    });
+    console.log(loggerOutput);
+    return { result, loggerError };
 };
 
 const sequentialChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
