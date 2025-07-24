@@ -40,6 +40,8 @@ ITS_HUB=
 
 # Deployment Parameters
 SALT="<RANDOM_SALT>"
+TOKEN_MANAGER_TYPE= # Numerical value corresponding to token model (MintBurn, LockUnlock, etc)
+OPERATOR="0x"
 ```
 
 **_NOTE:_**
@@ -92,7 +94,7 @@ Wait for GMP Transaction to finish executing before proceeding
 ### 4. Custom Token Registration on Source Chain
 
 ```bash
-ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType 4 --operator $OPERATOR --salt $SALT
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --operator $OPERATOR --salt $SALT
 ```
 Note: the GMP transaction is a two step process and only the first leg to the ITS Hub is required to succeed 
 
@@ -122,15 +124,14 @@ XRPL contracts will use the ITS Hub instance directly.
 axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' "${ARGS[@]}"
 ```
 
-### 8. Get Token Manager Address
+**_NOTE:_**
+The following steps depend on the token manager type and underlying source token contract.
+If MintBurn model is selected for the token manager, it must be given mint permission by executing the following steps to transfer mintership:
 
 ```bash
 ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
 ```
-
 From the output obtain the token manager address for next step
-
-### 9. Mintership Transfer
 
 ```bash
 ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
