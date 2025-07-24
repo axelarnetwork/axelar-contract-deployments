@@ -660,10 +660,11 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
 
     // Initialize chains based on input
     if (chainNames === 'all') {
-        // Get all EVM chains
-        chains = Object.keys(config.chains).filter(
-            (chainKey) => !config.chains[chainKey].chainType || config.chains[chainKey].chainType === 'evm',
-        );
+        // Get all EVM chains and filter out deactive ones
+        chains = Object.keys(config.chains).filter((chainKey) => {
+            const chain = config.chains[chainKey];
+            return (!chain.chainType || chain.chainType === 'evm') && chain.status !== 'deactive';
+        });
     } else if (chainNames) {
         // Parse and validate specified chains
         const chainNamesList = chainNames.split(',').map((name) => name.trim());
@@ -673,12 +674,20 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
             const chainKey = findChainKey(chainName);
             if (!chainKey) {
                 printError(`Chain "${chainName}" is not defined in the config file`);
+                continue;
             }
 
             const chain = config.chains[chainKey];
             if (chain.chainType && chain.chainType !== 'evm') {
                 printError(`Cannot run script for a non EVM chain: ${chainName}`);
+                continue;
             }
+
+            if (chain.status === 'deactive') {
+                printWarn(`Skipping deactive chain: ${chainName}`);
+                continue;
+            }
+
             chains.push(chainKey); // Use the actual config key to preserve case
         }
     } else {
@@ -734,8 +743,6 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     const config = loadConfig(options.env);
     const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
-
-    let results = [];
     const axelarConfig = config.axelar;
     const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
 
@@ -753,20 +760,31 @@ const mainProcessor = async (options, processCommand, save = true) => {
     });
 
     let failedChains = {};
+    let promisedChainsResults = [];
+    let results = [];
     for (const chain of chains) {
+        const chainTask = asyncChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options);
         if (options.parallel) {
-            const { result, loggerError } = await asyncChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options);
+            promisedChainsResults.push(chainTask);
+        } else {
+            const { result, loggerError, chainName } = await chainTask;
             results.push(result);
             if (loggerError) {
-                failedChains[chain.name] = loggerError;
+                failedChains[chainName] = loggerError;
             }
-        } else {
-            results.push(await sequentialChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options));
         }
-        printMsg('');
     }
 
-    results = (await Promise.all(results)).filter((result) => result !== undefined);
+    if (options.parallel) {
+        const resultsWithErrLogs = await Promise.all(promisedChainsResults);
+        results = resultsWithErrLogs.map((chainResult) => chainResult.result).filter((chainResult) => chainResult !== undefined);
+        failedChains = resultsWithErrLogs.reduce((acc, result) => {
+            if (result.loggerError) {
+                acc[result.chainName] = result.loggerError;
+            }
+            return acc;
+        }, {});
+    }
 
     console.log(
         'Succeeded chains:',
@@ -791,7 +809,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     return results;
 };
 
-const asyncChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
+const asyncChainTask = (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
     let loggerOutput = '';
     let loggerError = '';
     let result;
@@ -808,29 +826,19 @@ const asyncChainTask = async (processCommand, axelarConfig, chain, chainsSnapsho
             callback();
         },
     });
-    result = await asyncLocalLoggerStorage.run({ stdStream, errorStream }, () => {
+    return asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
-            return processCommand(axelarConfig, chain, chainsSnapshot, options);
+            result = await processCommand(axelarConfig, chain, chainsSnapshot, options);
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
-            return undefined;
+            if (!options.ignoreError) {
+                throw error;
+            }
         }
+        console.log(loggerOutput);
+        return { result, loggerError, chainName: chain.name };
     });
-    console.log(loggerOutput);
-    return { result, loggerError };
-};
-
-const sequentialChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
-    printInfo('Chain', chain.name, chalk.cyan);
-    try {
-        return await processCommand(axelarConfig, chain, chainsSnapshot, options);
-    } catch (error) {
-        printError(`Failed with error on ${chain.name}`, error.message);
-        if (!options.ignoreError) {
-            throw error;
-        }
-    }
 };
 
 function create2DeployedContractsValidation(chains) {
