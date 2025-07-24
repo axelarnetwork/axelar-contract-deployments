@@ -103,7 +103,7 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance":{"token_id":"'
 ```
 **_NOTE:_**
 The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
-XRPL contracts will use directly the ITS Hub instance allowing for user specified values.  
+XRPL contracts will use the ITS Hub instance directly.  
 
 ### 7. XRPL Remote Token Registration
 
