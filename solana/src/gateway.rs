@@ -9,9 +9,9 @@ use axelar_solana_encoding::types::messages::{CrossChainId, Message, Messages};
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
 use axelar_solana_encoding::types::verifier_set::VerifierSet;
-use axelar_solana_gateway::BytemuckedPda;
 use axelar_solana_gateway::state::config::RotationDelaySecs;
 use axelar_solana_gateway::state::incoming_message::command_id;
+use axelar_solana_gateway::BytemuckedPda;
 use clap::{ArgGroup, Args, Parser, Subcommand};
 use cosmrs::proto::cosmwasm::wasm::v1::query_client;
 use eyre::eyre;
@@ -31,18 +31,20 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use solana_transaction_status::UiTransactionEncoding;
 
 use crate::config::Config;
-use crate::multisig_prover_types::Uint128Extensions;
 use crate::multisig_prover_types::msg::ProofStatus;
+use crate::multisig_prover_types::Uint128Extensions;
 use crate::types::{
     LocalSigner, SerializableSolanaTransaction, SerializeableVerifierSet, SigningVerifierSet,
     SolanaTransactionParams,
 };
 use crate::utils::{
-    self, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY,
-    GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY, MULTISIG_PROVER_KEY, OPERATOR_KEY,
-    PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY, domain_separator,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    self, domain_separator, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONNECTION_TYPE_KEY,
+    CONTRACTS_KEY, DOMAIN_SEPARATOR_KEY, GATEWAY_KEY, GRPC_KEY, MINIMUM_ROTATION_DELAY_KEY,
+    MULTISIG_PROVER_KEY, OPERATOR_KEY, PREVIOUS_SIGNERS_RETENTION_KEY, UPGRADE_AUTHORITY_KEY,
 };
+
+const SOLANA_GATEWAY_CONNECTION_TYPE: &str = "amplifier";
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
@@ -503,11 +505,12 @@ async fn init(
 
     chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GATEWAY_KEY] = json!({
         ADDRESS_KEY: axelar_solana_gateway::id().to_string(),
-        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
-        OPERATOR_KEY: init_args.operator.to_string(),
+        CONNECTION_TYPE_KEY: SOLANA_GATEWAY_CONNECTION_TYPE.to_string(),
+        DOMAIN_SEPARATOR_KEY: format!("0x{}", hex::encode(domain_separator)),
         MINIMUM_ROTATION_DELAY_KEY: init_args.minimum_rotation_delay,
+        OPERATOR_KEY: init_args.operator.to_string(),
         PREVIOUS_SIGNERS_RETENTION_KEY: init_args.previous_signers_retention,
-        DOMAIN_SEPARATOR_KEY: hex::encode(domain_separator),
+        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;

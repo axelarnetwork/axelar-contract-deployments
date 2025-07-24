@@ -895,8 +895,8 @@ fn init(
     chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][ITS_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_its::id().to_string(),
         CONFIG_ACCOUNT_KEY: its_root_config.to_string(),
-        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
         OPERATOR_KEY: init_args.operator.to_string(),
+        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;

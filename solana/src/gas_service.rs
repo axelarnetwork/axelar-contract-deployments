@@ -6,8 +6,8 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
+    CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, OPERATOR_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -84,7 +84,9 @@ fn init(
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
     chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GAS_SERVICE_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_gas_service::id().to_string(),
+        OPERATOR_KEY: init_args.operator.to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
+        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;

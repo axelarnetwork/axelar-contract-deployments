@@ -42,6 +42,7 @@ pub(crate) const AXELAR_KEY: &str = "axelar";
 pub(crate) const CHAINS_KEY: &str = "chains";
 pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
 pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
+pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
 pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
 pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
