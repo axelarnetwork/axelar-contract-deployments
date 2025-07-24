@@ -768,6 +768,15 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     results = (await Promise.all(results)).filter((result) => result !== undefined);
 
+    console.log(
+        'Succeeded chains:',
+        chains
+            .filter((chain) => !Object.keys(failedChains).includes(chain.name))
+            .map((chain) => chain.name)
+            .join(', '),
+        '\n',
+    );
+
     // Check all contracts deployed with create2 method
     create2DeployedContractsValidation(config.chains);
 
