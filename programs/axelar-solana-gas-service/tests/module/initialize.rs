@@ -38,11 +38,8 @@ async fn test_different_salts_give_new_configs() {
     let salt_seeds = b"abc";
     for salt_seed in salt_seeds {
         let salt = hashv(&[&[*salt_seed]]).0;
-        let (config_pda, bump) = axelar_solana_gas_service::get_config_pda(
-            &axelar_solana_gas_service::ID,
-            &salt,
-            &gas_utils.operator.pubkey(),
-        );
+        let (config_pda, bump) =
+            axelar_solana_gas_service::get_config_pda(&axelar_solana_gas_service::ID, &salt);
         let _res = test_fixture
             .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await
@@ -62,11 +59,8 @@ async fn test_different_salts_give_new_configs() {
     // assert -- subsequent initializations will revert the tx
     for salt_seed in salt_seeds {
         let salt = hashv(&[&[*salt_seed]]).0;
-        let (config_pda, _bump) = axelar_solana_gas_service::get_config_pda(
-            &axelar_solana_gas_service::ID,
-            &salt,
-            &gas_utils.operator.pubkey(),
-        );
+        let (config_pda, _bump) =
+            axelar_solana_gas_service::get_config_pda(&axelar_solana_gas_service::ID, &salt);
         let res = test_fixture
             .init_gas_config_with_params(gas_utils.operator.insecure_clone(), config_pda, salt)
             .await;
