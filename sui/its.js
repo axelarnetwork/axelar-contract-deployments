@@ -268,7 +268,7 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Register deployed token (custom)
-    const [tokenId, _channelId, saltAddress] = await registerCustomCoinUtil(
+    const [tokenId, _channelId, saltAddress, _result] = await registerCustomCoinUtil(
         deployConfig,
         itsConfig,
         AxelarGateway,
@@ -436,7 +436,7 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
     const symbol = args;
     if (!symbol) throw new Error('token symbol is required');
     if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
-    
+
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
     if (!coin.objects) throw new Error(tcrErrorMsg);
@@ -469,7 +469,7 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     const symbol = args;
     if (!symbol) throw new Error('token symbol is required');
     if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
-    
+
     const coin = contracts[symbol.toUpperCase()];
     const tcErrorMsg = `no TreasuryCap was found for token with symbol ${symbol}`;
     if (!coin.objects) throw new Error(tcErrorMsg);

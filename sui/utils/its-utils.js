@@ -7,16 +7,16 @@ async function registerCustomCoinUtil(config, itsConfig, AxelarGateway, coinSymb
     const txBuilder = new TxBuilder(config.client);
 
     // New CoinManagement<T>
-    const coinManagement = !treasuryCap 
+    const coinManagement = !treasuryCap
         ? await txBuilder.moveCall({
-            target: `${itsConfig.address}::coin_management::new_locked`,
-            typeArguments: [coinType],
-        })
+              target: `${itsConfig.address}::coin_management::new_locked`,
+              typeArguments: [coinType],
+          })
         : await txBuilder.moveCall({
-            target: `${itsConfig.address}::coin_management::new_with_cap`,
-            arguments: [treasuryCap],
-            typeArguments: [coinType],
-        });
+              target: `${itsConfig.address}::coin_management::new_with_cap`,
+              arguments: [treasuryCap],
+              typeArguments: [coinType],
+          });
 
     // Channel
     const channel = config.options.channel
