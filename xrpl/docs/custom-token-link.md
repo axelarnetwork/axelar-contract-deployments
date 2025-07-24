@@ -81,7 +81,7 @@ Wait for GMP Transaction to finish executing before proceeding
 ### 4. Custom Token Registration on Source Chain
 
 ```bash
-ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType 4 --operator [operator address] --salt $SALT
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType 4 --operator $OPERATOR --salt $SALT
 ```
 Note: the GMP transaction is a two step process and only the first leg to the ITS Hub is required to succeed 
 
