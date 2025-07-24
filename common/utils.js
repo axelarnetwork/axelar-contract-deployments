@@ -529,12 +529,12 @@ async function getDomainSeparator(axelarConfig, chain, options) {
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (chainsSnapshot, chainName, options = {}) => {
+const getChainConfig = (chains, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }
 
-    const chainConfig = chainsSnapshot[chainName];
+    const chainConfig = chains[chainName];
 
     if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
