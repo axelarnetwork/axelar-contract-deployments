@@ -656,14 +656,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         return Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
     };
 
-    // Helper function to validate chain is EVM
-    const validateEVMChain = (chainKey, chainName) => {
-        const chain = config.chains[chainKey];
-        if (chain.chainType && chain.chainType !== 'evm') {
-            throw new Error(`Cannot run script for a non EVM chain: ${chainName}`);
-        }
-    };
-
     let chains;
 
     // Initialize chains based on input
@@ -680,9 +672,13 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         for (const chainName of chainNamesList) {
             const chainKey = findChainKey(chainName);
             if (!chainKey) {
-                throw new Error(`Chain "${chainName}" is not defined in the config file`);
+                printError(`Chain "${chainName}" is not defined in the config file`);
             }
-            validateEVMChain(chainKey, chainName);
+
+            const chain = config.chains[chainKey];
+            if (chain.chainType && chain.chainType !== 'evm') {
+                printError(`Cannot run script for a non EVM chain: ${chainName}`);
+            }
             chains.push(chainKey); // Use the actual config key to preserve case
         }
     } else {
