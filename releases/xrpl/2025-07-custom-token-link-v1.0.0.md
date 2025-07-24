@@ -56,7 +56,6 @@ SALT="<RANDOM_SALT>"
 
 ### 1. Token Metadata Registration on XRPL Gateway
 
-**Command:**
 ```bash
 axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata":{"xrpl_token":{"issued":{"currency":"'$XRPL_CURRENCY_CODE'","issuer":"'$XRPL_ISSUER'"}}}}'
 ```
@@ -108,21 +107,21 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 
 ### 6. XRPL Token Instance Registration
 
-**Command:**
 ```bash
 axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance":{"token_id":"'$TOKEN_ID'","chain":"'$CHAIN'","decimals":15}}'
 ```
+**_NOTE:_**
+The decimal presicion of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
+XRPL contracts will use directly the ITS Hub instance allowing for user specified values.  
 
 ### 7. XRPL Remote Token Registration
 
-**Command:**
 ```bash
 axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token":{"token_id":"'$TOKEN_ID'","xrpl_currency":"'$XRPL_CURRENCY_CODE'"}}'
 ```
 
 ### 8. Get Token Manager Address
 
-**Command:**
 ```bash
 ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
 ```
@@ -131,7 +130,6 @@ From the output obtain the token manager address for next step
 
 ### 9. Mintership Transfer
 
-**Command:**
 ```bash
 ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
 ```
@@ -140,7 +138,8 @@ ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
 
 To test the connection reference document [2025-02-v.1.0.0.md](./2025-02-v.1.0.0.md).
 
-** Note ensure that the destination address being used has a trust-line set with the new currency. This can be performed using the following command using a funded XRPL account:
+**_NOTE:_**
+Ensure that the destination address being used has a trust-line set with the new currency. This can be performed using the following command using a funded XRPL account:
 
 ```bash
 node xrpl/trust-set.js -n xrpl $XRPL_CURRENCY_CODE $XRPL_ISSUER --limit 99999999999999990000000000000000000000000000000000000000000000000000000000000000000000000
