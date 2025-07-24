@@ -115,6 +115,8 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 ```
 
 ### 6. XRPL Token Instance Registration
+**_NOTE:_**
+CHAIN is the name for the source chain where token is originally deployed.
 
 ```bash
 axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance": {"token_id": "'$TOKEN_ID'", "chain": "'$CHAIN'", "decimals": 15}}' "${ARGS[@]}"
