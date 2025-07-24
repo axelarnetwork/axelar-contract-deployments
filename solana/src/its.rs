@@ -16,9 +16,9 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY,
-    ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY, decode_its_destination, fetch_latest_blockhash,
-    read_json_file_from_path, write_json_to_file_path,
+    decode_its_destination, fetch_latest_blockhash, read_json_file_from_path,
+    write_json_to_file_path, ADDRESS_KEY, AXELAR_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY,
+    CONTRACTS_KEY, GAS_SERVICE_KEY, ITS_KEY, OPERATOR_KEY, UPGRADE_AUTHORITY_KEY,
 };
 
 #[derive(Subcommand, Debug)]
@@ -728,7 +728,6 @@ fn try_infer_gas_service_id(maybe_arg: Option<Pubkey>, config: &Config) -> eyre:
                 [GAS_SERVICE_KEY][ADDRESS_KEY],
             )?
         )
-        .inspect_err(|e| println!("errr {e}"))
         .map_err(|_| eyre!(
             "Could not get the gas service id from the chains info JSON file. Is it already deployed? \
             Please update the file or pass a value to --gas-service"))?;
