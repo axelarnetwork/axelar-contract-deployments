@@ -52,7 +52,7 @@ runs:
         echo "Generating config for $NETWORK"
         poetry run python generate.py --network "$NETWORK" gen-configs all-configs
         git add --all
-        git commit -m "chore: update generated configuration files for ${{ inputs.network }}"
+        git commit -m "chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
         git push --set-upstream origin ${{ steps.branch-name.outputs.branch }}
 
     - name: Create Pull Request
@@ -82,6 +82,7 @@ runs:
         fi
         PR_NUMBER=$(gh pr view "$CREATE_PR_URL" --repo "${{ inputs.config_repo }}" --json number -q .number)
         echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+        echo "PR_TITLE=$PR_TITLE" >> "$GITHUB_ENV"
 
     - name: Merge Pull Request
       shell: bash
@@ -90,12 +91,12 @@ runs:
       run: |
         cd config-repo
         PR_NUMBER=${{ env.PR_NUMBER }}
-        PR_TITLE="chore: update configs for ${{ inputs.network }} from ${{ inputs.source_repo }}"
 
         gh pr update-branch "$PR_NUMBER" --repo "${{ inputs.config_repo }}"
+
         gh pr merge "$PR_NUMBER" \
             --repo "${{ inputs.config_repo }}" \
             --squash \
             --admin \
-            --subject "chore: merge PR #$PR_NUMBER: $PR_TITLE"
+            --subject "${{ env.PR_TITLE }} (#$PR_NUMBER)"
         echo "PR #$PR_NUMBER merged successfully."
