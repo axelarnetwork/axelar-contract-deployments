@@ -93,7 +93,7 @@ TOKEN_ID= #tokenID from result without 0x prefix
 ### 5. Token Linking
 
 ```bash
-ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType 4 --linkParams "0x" --salt $SALT --gasValue 1000000000000000000
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType 4 --linkParams $OPERATOR --salt $SALT --gasValue 1000000000000000000
 ```
 
 ### 6. XRPL Token Instance Registration
