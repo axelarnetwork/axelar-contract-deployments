@@ -132,7 +132,7 @@ function getUpgradeArgs(contractName) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  * This function handles both initial deployment and upgrades of upgradable contracts.
  */
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 

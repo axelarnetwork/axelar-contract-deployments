@@ -110,7 +110,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, action, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -623,8 +623,8 @@ async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, action
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (constAxelarNetwork, chain, chainsSnapshot, options) =>
-        processCommand(constAxelarNetwork, chain, chainsSnapshot, action, options),
+    return mainProcessor(options, (axelarConfig, chain, chainsSnapshot, options) =>
+        processCommand(axelarConfig, chain, chainsSnapshot, action, options),
     );
 }
 

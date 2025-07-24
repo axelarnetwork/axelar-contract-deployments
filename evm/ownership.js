@@ -14,7 +14,7 @@ const { addBaseOptions } = require('./cli-utils');
 
 const IOwnable = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/interfaces/IOwnable.sol/IOwnable.json');
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const { contractName, address, action, privateKey, newOwner, yes } = options;
 
     const contracts = chain.contracts;

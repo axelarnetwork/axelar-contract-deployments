@@ -7,7 +7,7 @@ const { mainProcessor, printWalletInfo } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getWallet } = require('./sign-utils');
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const provider = getDefaultProvider(chain.rpc);
 
     const wallet = await getWallet(options.privateKey, provider);

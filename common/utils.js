@@ -211,8 +211,8 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     );
 };
 
-const itsHubContractAddress = (constAxelarNetwork) => {
-    return constAxelarNetwork?.contracts?.InterchainTokenService?.address;
+const itsHubContractAddress = (axelarConfig) => {
+    return axelarConfig?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -480,7 +480,7 @@ const getAmplifierContractOnchainConfig = async (config, chain) => {
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(constAxelarNetwork, chain, options) {
+async function getDomainSeparator(axelarConfig, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -495,7 +495,7 @@ async function getDomainSeparator(constAxelarNetwork, chain, options) {
         return options.domainSeparator;
     }
 
-    const { contracts, chainId } = constAxelarNetwork;
+    const { contracts, chainId } = axelarConfig;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -557,17 +557,17 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (constAxelarNetwork, chain, multisigSessionId) => {
+const getMultisigProof = async (axelarConfig, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
-    const value = await client.queryContractSmart(constAxelarNetwork.contracts.MultisigProver[chain].address, query);
+    const client = await CosmWasmClient.connect(axelarConfig.rpc);
+    const value = await client.queryContractSmart(axelarConfig.contracts.MultisigProver[chain].address, query);
     return value;
 };
 
-const getCurrentVerifierSet = async (constAxelarNetwork, chain) => {
-    const client = await CosmWasmClient.connect(constAxelarNetwork.rpc);
+const getCurrentVerifierSet = async (axelarConfig, chain) => {
+    const client = await CosmWasmClient.connect(axelarConfig.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        constAxelarNetwork.contracts.MultisigProver[chain].address,
+        axelarConfig.contracts.MultisigProver[chain].address,
         'current_verifier_set',
     );
 

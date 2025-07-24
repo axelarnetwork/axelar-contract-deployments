@@ -36,13 +36,13 @@ const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-networ
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
 
-async function getSetupParams(constAxelarNetwork, chain, operator, options) {
-    const { signers: signerSets, verifierSetId } = await getWeightedSigners(constAxelarNetwork, chain, options);
+async function getSetupParams(axelarConfig, chain, operator, options) {
+    const { signers: signerSets, verifierSetId } = await getWeightedSigners(axelarConfig, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
     return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
-async function deploy(constAxelarNetwork, chain, options) {
+async function deploy(axelarConfig, chain, options) {
     const { privateKey, reuseProxy, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
@@ -122,7 +122,7 @@ async function deploy(constAxelarNetwork, chain, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = await getDomainSeparator(constAxelarNetwork, chain, options);
+    const domainSeparator = await getDomainSeparator(axelarConfig, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
 
     printInfo(`Deploying gateway implementation contract`);
@@ -159,7 +159,7 @@ async function deploy(constAxelarNetwork, chain, options) {
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
         const operator = options.operator || contractConfig.operator || wallet.address;
-        const { params, verifierSetId } = await getSetupParams(constAxelarNetwork, chain, operator, options);
+        const { params, verifierSetId } = await getSetupParams(axelarConfig, chain, operator, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
@@ -230,7 +230,7 @@ async function deploy(constAxelarNetwork, chain, options) {
     }
 
     if (!reuseProxy) {
-        const { signers: signerSets } = await getWeightedSigners(constAxelarNetwork, chain, options);
+        const { signers: signerSets } = await getWeightedSigners(axelarConfig, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
             const signersHash = keccak256(encodeWeightedSigners(signerSets[i]));
@@ -356,11 +356,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
     if (!options.upgrade) {
-        await deploy(constAxelarNetwork, chain, options);
+        await deploy(axelarConfig, chain, options);
     } else {
-        await upgrade(constAxelarNetwork, chain, options);
+        await upgrade(axelarConfig, chain, options);
     }
 }
 

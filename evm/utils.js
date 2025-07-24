@@ -491,13 +491,13 @@ const getProxy = async (config, chain) => {
     return address;
 };
 
-const getEVMBatch = async (constAxelarNetwork, chain, batchID = '') => {
-    const batch = await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (axelarConfig, chain, batchID = '') => {
+    const batch = await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (constAxelarNetwork, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(constAxelarNetwork, chain);
+const getAmplifierVerifiers = async (axelarConfig, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelarConfig, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -509,7 +509,7 @@ const getAmplifierVerifiers = async (constAxelarNetwork, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (constAxelarNetwork, chain, options = {}) => {
+const getEVMAddresses = async (axelarConfig, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -517,8 +517,8 @@ const getEVMAddresses = async (constAxelarNetwork, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(constAxelarNetwork, chain)
-        : await httpGet(`${constAxelarNetwork.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(axelarConfig, chain)
+        : await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -740,7 +740,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
 
     let results = [];
-    const constAxelarNetwork = config.axelar;
+    const axelarConfig = config.axelar;
     const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
 
     // Find the correct case-sensitive chain key and get chain data from chainsSnapshot
@@ -758,9 +758,9 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     for (const chain of chains) {
         if (options.parallel) {
-            results.push(asyncChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+            results.push(asyncChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options));
         } else {
-            results.push(await sequentialChainTask(processCommand, constAxelarNetwork, chain, chainsSnapshot, options));
+            results.push(await sequentialChainTask(processCommand, axelarConfig, chain, chainsSnapshot, options));
         }
         printMsg('');
     }
@@ -777,7 +777,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     return results;
 };
 
-const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
+const asyncChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
     let loggerOutput = '';
     try {
         let stream = new Writable({
@@ -788,7 +788,7 @@ const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsS
         });
         const result = await asyncLocalLoggerStorage.run(stream, () => {
             printInfo('Chain', chain.name, chalk.cyan);
-            return processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+            return processCommand(axelarConfig, chain, chainsSnapshot, options);
         });
         console.log(loggerOutput);
         return result;
@@ -799,10 +799,10 @@ const asyncChainTask = async (processCommand, constAxelarNetwork, chain, chainsS
     }
 };
 
-const sequentialChainTask = async (processCommand, constAxelarNetwork, chain, chainsSnapshot, options) => {
+const sequentialChainTask = async (processCommand, axelarConfig, chain, chainsSnapshot, options) => {
     printInfo('Chain', chain.name, chalk.cyan);
     try {
-        return await processCommand(constAxelarNetwork, chain, chainsSnapshot, options);
+        return await processCommand(axelarConfig, chain, chainsSnapshot, options);
     } catch (error) {
         printError(`Failed with error on ${chain.name}`, error.message);
         if (!options.ignoreError) {
@@ -1097,7 +1097,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(constAxelarNetwork, chain, options) {
+async function getWeightedSigners(axelarConfig, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1114,7 +1114,7 @@ async function getWeightedSigners(constAxelarNetwork, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(constAxelarNetwork, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(axelarConfig, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {

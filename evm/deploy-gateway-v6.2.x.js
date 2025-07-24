@@ -37,12 +37,12 @@ const AxelarGateway = require('@axelar-network/axelar-cgp-solidity/artifacts/con
 const AxelarAuthWeighted = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/auth/AxelarAuthWeighted.sol/AxelarAuthWeighted.json');
 const TokenDeployer = require('@axelar-network/axelar-cgp-solidity/artifacts/contracts/TokenDeployer.sol/TokenDeployer.json');
 
-async function checkKeyRotation(constAxelarNetwork, chain) {
+async function checkKeyRotation(axelarConfig, chain) {
     let resp;
 
     // check if key rotation is in progress
     try {
-        resp = await httpGet(`${constAxelarNetwork.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
+        resp = await httpGet(`${axelarConfig.lcd}/axelar/multisig/v1beta1/next_key_id/${chain}`);
     } catch (err) {
         return;
     }
@@ -50,24 +50,24 @@ async function checkKeyRotation(constAxelarNetwork, chain) {
     throw new Error(`Key rotation is in progress for ${chain.name}: ${resp}`);
 }
 
-async function getAuthParams(constAxelarNetwork, chain, options) {
+async function getAuthParams(axelarConfig, chain, options) {
     printInfo(`Retrieving validator addresses for ${chain} from Axelar network`);
 
-    await checkKeyRotation(constAxelarNetwork, chain);
+    await checkKeyRotation(axelarConfig, chain);
 
     const params = [];
     const keyIDs = [];
 
     if (options.prevKeyIDs) {
         for (const keyID of options.prevKeyIDs.split(',')) {
-            const { addresses, weights, threshold } = await getEVMAddresses(constAxelarNetwork, chain, { ...options, keyID });
+            const { addresses, weights, threshold } = await getEVMAddresses(axelarConfig, chain, { ...options, keyID });
             printInfo(JSON.stringify({ status: 'old', keyID, addresses, weights, threshold }));
             params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
             keyIDs.push(keyID);
         }
     }
 
-    const { addresses, weights, threshold, keyID } = await getEVMAddresses(constAxelarNetwork, chain, options);
+    const { addresses, weights, threshold, keyID } = await getEVMAddresses(axelarConfig, chain, options);
     printInfo(JSON.stringify({ status: 'latest', keyID, addresses, weights, threshold }));
     params.push(defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold]));
     keyIDs.push(keyID);
@@ -79,7 +79,7 @@ function getProxyParams(governance, mintLimiter) {
     return defaultAbiCoder.encode(['address', 'address', 'bytes'], [governance, mintLimiter, '0x']);
 }
 
-async function deploy(constAxelarNetwork, chain, options) {
+async function deploy(axelarConfig, chain, options) {
     const { privateKey, reuseProxy, reuseHelpers, reuseAuth, verify, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
@@ -142,7 +142,7 @@ async function deploy(constAxelarNetwork, chain, options) {
     let proxyAddress;
 
     if (reuseProxy) {
-        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(constAxelarNetwork, chain.axelarId));
+        proxyAddress = chain.contracts.AxelarGateway?.address || (await getProxy(axelarConfig, chain.axelarId));
         printInfo('Reusing Gateway Proxy address', proxyAddress);
         gateway = gatewayFactory.attach(proxyAddress);
     } else {
@@ -173,7 +173,7 @@ async function deploy(constAxelarNetwork, chain, options) {
     } else {
         printInfo(`Deploying auth contract`);
 
-        const { params, keyIDs } = await getAuthParams(constAxelarNetwork, chain.axelarId, options);
+        const { params, keyIDs } = await getAuthParams(axelarConfig, chain.axelarId, options);
         printInfo('Auth deployment args', params);
 
         contractConfig.startingKeyIDs = keyIDs;
@@ -478,11 +478,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
     if (!options.upgrade) {
-        await deploy(constAxelarNetwork, chain, options);
+        await deploy(axelarConfig, chain, options);
     } else {
-        await upgrade(constAxelarNetwork, chain, options);
+        await upgrade(axelarConfig, chain, options);
     }
 }
 

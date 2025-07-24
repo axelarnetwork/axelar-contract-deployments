@@ -6,7 +6,7 @@ const { mainProcessor, printInfo, isValidNumber, isValidAddress } = require('./u
 
 const values = [];
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const { address, deposit } = options;
 
     const contracts = chain.contracts;

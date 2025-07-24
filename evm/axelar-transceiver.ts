@@ -257,7 +257,7 @@ async function setAxelarChainId(
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain: ChainConfig, action: string, options: Options): Promise<void> {
+async function processCommand(_axelarConfig, chain: ChainConfig, action: string, options: Options): Promise<void> {
     const { artifactPath, privateKey, args } = options;
 
     if (!artifactPath) {
@@ -310,8 +310,8 @@ async function processCommand(_constAxelarNetwork, chain: ChainConfig, action: s
 
 async function main(action: string, args: string[], options: Options): Promise<void[]> {
     options.args = args;
-    return mainProcessor(options, (_constAxelarNetwork, chain: ChainConfig, _chainsSnapshot, options: Options) =>
-        processCommand(_constAxelarNetwork, chain, action, options),
+    return mainProcessor(options, (_axelarConfig, chain: ChainConfig, _chainsSnapshot, options: Options) =>
+        processCommand(_axelarConfig, chain, action, options),
     );
 }
 

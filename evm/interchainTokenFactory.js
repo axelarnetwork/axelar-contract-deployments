@@ -25,7 +25,7 @@ const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-async function processCommand(_constAxelarNetwork, chain, chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;

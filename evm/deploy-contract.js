@@ -231,7 +231,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly } = options;
     let { deployMethod } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;

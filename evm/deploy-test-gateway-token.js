@@ -17,7 +17,7 @@ async function getCommandId(gateway) {
     return hexlify(randomBytes(32));
 }
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     printInfo('This script is for testing deployment, not for deployment in production');
     const provider = new JsonRpcProvider(chain.rpc);
     const wallet = new Wallet(options.privateKey, provider);

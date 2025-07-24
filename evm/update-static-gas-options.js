@@ -54,7 +54,7 @@ async function getBaseFee(provider) {
     return block.baseFeePerGas;
 }
 
-async function processCommand(_constAxelarNetwork, chain, _chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     const { env, rpc, yes } = options;
     const provider = getDefaultProvider(rpc || chain.rpc);
 
