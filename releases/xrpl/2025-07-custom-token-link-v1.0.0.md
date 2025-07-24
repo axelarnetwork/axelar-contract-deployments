@@ -1,9 +1,9 @@
 # XRPL ITS Integration - Generic Token Deployment
 
 |                | **Details**                              |
-| -------------- | -------------------------------------- |
+| -------------- | ---------------------------------------- |
 | **Created By** | @isi8787 <isaac@interoplabs.io>          |
-| **Deployment** | @isi8787 <isaac@interoplabs.io> |
+| **Deployment** |                                          |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
