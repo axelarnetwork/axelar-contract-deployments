@@ -18,7 +18,6 @@ CHAINS=xyz
 
 Before starting the deployment, you need to generate the XRPL Currency Code for your token symbol.
 
-**Command:**
 ```bash
 ts-node xrpl/encode-token.js <TOKEN_SYMBOL>
 ```
@@ -43,12 +42,24 @@ ITS_HUB=
 SALT="<RANDOM_SALT>"
 ```
 
+**_NOTE:_**
+axelard commands require additional parameters for preparing, signing and broadcasting transactions. 
+Reference guide can be accessed [here](https://docs.axelar.dev/learn/cli/) for supported parameters.
+```bash
+# axelard Paramaters
+RPC_URL= # Axelar RPC Node endpoint
+XRPL_PROVER_ADMIN=[xrpl prover admin key name] # Interactions with XRPL_GATEWAY are permissioned
+KEYRING_NAME=[axelard keyring backend name] # Optional depending on where wallet is stored
+AXELAR_CHAIN_ID= # Envioronment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
+ARGS=(--from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
+```
+
 ## Deployment Steps
 
 ### 1. Token Metadata Registration on XRPL Gateway
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata":{"xrpl_token":{"issued":{"currency":"'$XRPL_CURRENCY_CODE'","issuer":"'$XRPL_ISSUER'"}}}}'
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token": {"issued": {"currency": "'$XRPL_CURRENCY_CODE'", "issuer": "'$XRPL_ISSUER'"}}}}' -o text "${ARGS[@]}"
 ```
 
 **Extract Values from Command Output:**
@@ -67,7 +78,7 @@ XRPL_TOKEN_ADDRESS='0x' +  #token_address
 ### 2. Execute Message on the Axelarnet Gateway
 
 ```bash
-axelard tx wasm execute $AXELARNET_GATEWAY '{"execute":{"cc_id":{"source_chain":"xrpl","message_id":"'$MESSAGE_ID'"},"payload":"'$PAYLOAD'"}}'
+axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "xrpl", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' "${ARGS[@]}"
 ```
 
 ### 3. Token Metadata Registration on Source Chain
@@ -99,7 +110,7 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 ### 6. XRPL Token Instance Registration
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance":{"token_id":"'$TOKEN_ID'","chain":"'$CHAIN'","decimals":15}}'
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance": {"token_id": "'$TOKEN_ID'", "chain": "'$CHAIN'", "decimals": 15}}' "${ARGS[@]}"
 ```
 **_NOTE:_**
 The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
@@ -108,7 +119,7 @@ XRPL contracts will use the ITS Hub instance directly.
 ### 7. XRPL Remote Token Registration
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token":{"token_id":"'$TOKEN_ID'","xrpl_currency":"'$XRPL_CURRENCY_CODE'"}}'
+axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' "${ARGS[@]}"
 ```
 
 ### 8. Get Token Manager Address
