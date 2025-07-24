@@ -41,7 +41,7 @@ ITS_HUB=
 # Deployment Parameters
 SALT="<RANDOM_SALT>"
 TOKEN_MANAGER_TYPE= # Numerical value corresponding to token model (MintBurn, LockUnlock, etc)
-OPERATOR="0x"
+OPERATOR= # User specified address
 ```
 
 **_NOTE:_**
@@ -92,6 +92,8 @@ ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue 10000000000
 Wait for GMP Transaction to finish executing before proceeding
 
 ### 4. Custom Token Registration on Source Chain
+**_NOTE:_**
+If no operator defined removed --operator flag
 
 ```bash
 ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --operator $OPERATOR --salt $SALT
@@ -106,7 +108,7 @@ TOKEN_ID= #tokenID from result without 0x prefix
 ### 5. Token Linking
 
 ```bash
-ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType 4 --linkParams $OPERATOR --salt $SALT --gasValue 1000000000000000000
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue 1000000000000000000
 ```
 
 ### 6. XRPL Token Instance Registration
