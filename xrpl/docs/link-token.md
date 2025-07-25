@@ -130,7 +130,7 @@ TOKEN_ID= #tokenID from result without 0x prefix
 
 ### 5. Token Linking
 **_NOTE:_**
-If no operator defined set linkParams to empty bytes `0x`
+If there is no operator defined, set linkParams to empty bytes `0x`
 
 ```bash
 ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue $GAS_FEE
