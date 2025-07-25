@@ -47,10 +47,6 @@ function currencyCodeToTokenSymbol(currencyCode: string): string {
 
     const trimmedHex = currencyCode.replace(/0+$/, '');
 
-    if (trimmedHex === '') {
-        throw new Error(`Invalid currency code: ${currencyCode} results in empty string after trimming trailing zeros`);
-    }
-
     if (trimmedHex.length % 2 !== 0 || trimmedHex.length < 8) {
         throw new Error(`Invalid currency code: ${currencyCode} has invalid hex length after trimming`);
     }
