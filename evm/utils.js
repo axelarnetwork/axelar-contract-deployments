@@ -938,8 +938,10 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
-    const chains = config.chains;
+function isValidChain(chains, chainName) {
+    if (chainName === '') {
+        return;
+    }
 
     const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
