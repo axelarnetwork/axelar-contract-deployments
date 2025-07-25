@@ -13,7 +13,7 @@ function tokenSymbolToCurrencyCode(tokenSymbol) {
         printError(
             `Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`,
         );
-        process.exit(1);
+        return;
     }
     const paddedHex = hexString + '0'.repeat(40 - hexString.length);
 
