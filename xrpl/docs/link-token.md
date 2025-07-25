@@ -154,7 +154,6 @@ XRPL contracts will use the ITS Hub instance directly.
 axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' --from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME "${ARGS[@]}"
 ```
 
-**_NOTE:_**
 The following steps depend on the token manager type and underlying source token contract.
 If MintBurn model is selected for the token manager on the source EVM chain, it must be given mint permission by executing the following steps to transfer mintership.
 
