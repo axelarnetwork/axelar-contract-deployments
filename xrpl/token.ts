@@ -15,9 +15,9 @@ function tokenSymbolToCurrencyCode(tokenSymbol: string): string {
         return tokenSymbol;
     }
 
-    const hexString = hex(tokenSymbol).toUpperCase();
+    const tokenSymbolHex = hex(tokenSymbol).toUpperCase();
 
-    if (hexString.length > 40) {
+    if (tokenSymbolHex.length > 40) {
         throw new Error(
             `Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`,
         );
