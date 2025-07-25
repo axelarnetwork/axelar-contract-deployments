@@ -22,7 +22,7 @@ it must be reused for future linking of the same token to other chains. The priv
 | LockUnlock | 2 |
 | MintBurn | 4 |
 
-**Choose based on your token's cross-chain behavior:**
+Choose based on your token's cross-chain behaviour:
 - Use **2 (LockUnlock)** if you want the source chain token manager to lock tokens when sending ITS transfers to XRPL and unlock tokens when receiving ITS transfers from XRPL.
 - Use **4 (MintBurn)** if you want the source chain token manager to burn tokens when sending ITS transfers to XRPL and mint new tokens when receiving ITS transfers from XRPL.
 
