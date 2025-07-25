@@ -32,7 +32,7 @@ it must be reused for future linking of the same token to other chains. The priv
 Before starting the deployment, you need to generate the XRPL Currency Code for your token symbol.
 
 ```bash
-ts-node xrpl/token.js token-symbol-to-currency-code <TOKEN_SYMBOL>
+ts-node xrpl/token.ts token-symbol-to-currency-code <TOKEN_SYMBOL>
 ```
 
 ### 2. Environment Variables Setup
@@ -58,13 +58,6 @@ OPERATOR="0x" # User specified address or empty bytes
 GAS_FEE=  # Estimate using gmp api
 ```
 **API Reference:** Estimate using gmp [api](https://docs.axelarscan.io/gmp#estimateITSFee)
-
-
-Environment Specific Values From Reference Table
-```bash
-
-```
-
 
 **_NOTE:_**
 `axelard` commands require additional parameters for preparing, signing and broadcasting transactions. 
