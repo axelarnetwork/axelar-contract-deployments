@@ -327,6 +327,38 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
     }
 }
 
+// remove_unlinked_coin
+async function removeUnlinkedCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+
+    const coin = contracts[symbol.toUpperCase()];
+    const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
+    if (!coin.objects) throw new Error(tcrErrorMsg);
+    else if (!coin.objects.TreasuryCapReclaimer) throw new Error(tcrErrorMsg);
+
+    // Receive TreasuryCap
+    const treasuryCap = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::remove_unlinked_coin`,
+        arguments: [InterchainTokenService, coin.objects.TreasuryCapReclaimer],
+        typeArguments: [coin.typeArgument],
+    });
+
+    // Return TreasuryCap to coin deployer (TreasuryCapReclaimer owner)
+    txBuilder.tx.transferObjects([treasuryCap], walletAddress);
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Remove TreasuryCap (${symbol})`, options);
+
+    // Remove TreasuryCapReclaimer as it's been deleted
+    contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
+}
+
 // link_coin
 async function linkCoin(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
@@ -592,6 +624,14 @@ if (require.main === module) {
             mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
         });
 
+    const removeUnlinkedCoinProgram = new Command()
+        .name('remove-unlinked-coin')
+        .command('remove-unlinked-coin <symbol>')
+        .description(`Remove a coin from ITS and return its TreasuryCap to its deployer.`)
+        .action((symbol, options) => {
+            mainProcessor(removeUnlinkedCoin, options, symbol, processCommand);
+        });
+
     const linkCoinProgram = new Command()
         .name('link-coin')
         .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
@@ -630,6 +670,7 @@ if (require.main === module) {
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
     program.addCommand(giveUnlinkedCoinProgram);
+    program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
