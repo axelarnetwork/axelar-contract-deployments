@@ -19,12 +19,12 @@ function tokenSymbolToCurrencyCode(tokenSymbol: string): string {
 
     if (tokenSymbolHex.length > 40) {
         throw new Error(
-            `Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`,
+            `Token symbol "${tokenSymbol}" too long: hex representation (${tokenSymbolHex.length} chars) exceeds xrpl 40-character limit`,
         );
     }
-    const paddedHex = hexString + '0'.repeat(40 - hexString.length);
+    const currencyCode = tokenSymbolHex + '0'.repeat(40 - hexString.length);
 
-    return paddedHex;
+    return currencyCode;
 }
 
 function currencyCodeToTokenSymbol(currencyCode: string): string {
