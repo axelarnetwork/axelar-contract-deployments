@@ -117,7 +117,8 @@
           "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
           "deploymentMethod": "create",
-          "codehash": "0x89bc1dea47364a5f2d3b0d000b12f005731dc6978cb3bc14a8425335e4f5c3e1"
+          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
+          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059"
         }
       },
       "explorer": {
