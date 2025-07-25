@@ -75,13 +75,14 @@ async function getImplementationArgs(contractName, contracts, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                console.log(`${contracts.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+                // Note: chain name is not available in this context, so we'll use a generic message
+                console.log(`AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
-                throw new Error(`${contracts.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+                throw new Error(`Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
             const gateway = contracts.AxelarGateway?.address;
