@@ -121,7 +121,7 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 ```
 
 ### 6. XRPL Token Instance Registration
-CHAIN is the case sensitive value from the axelardId field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed.
+CHAIN is the case sensitive value from the `axelardId` field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed. E.g. `Ethereum` and `xrpl` on mainnet
 
 **_NOTE:_**
 The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of XRPL contracts will use the ITS Hub instance directly. 
