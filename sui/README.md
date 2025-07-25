@@ -229,6 +229,15 @@ policy should be one of the following:
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
+### Migrating Post-Upgrade
+
+After upgrading a package, state migrations (e.g. for [versioned](https://docs.sui.io/references/framework/sui/versioned) packages) can be called using the `migrate` command.
+
+
+```bash
+ts-node sui/deploy-contract.js migrate AxelarGateway
+```
+
 ### Multisig Operations
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
@@ -476,6 +485,14 @@ Deploys a coin on Sui, registers it as custom coin and gives its treasury capabi
 ts-node sui/its give-unlinked-coin [options] <symbol> <name> <decimals>
 ```
 
+### Remove Unlinked Coin
+
+Removes a coin from ITS and returns its TreasuryCap to the caller. Caller must own the coin's TreasuryCapReclaimer.
+
+```bash
+ts-node sui/its remove-unlinked-coin [options] <symbol>
+```
+
 ### Link Coin
 
 Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
@@ -484,7 +501,7 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
-## Treasury Management & Mint/Burn Capabilities
+## Treasury Management
 
 ### Remove Treasury Cap
 
