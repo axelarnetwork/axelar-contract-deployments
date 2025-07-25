@@ -8,7 +8,10 @@ function tokenSymbolToCurrencyCode(tokenSymbol) {
     }
 
     const hexString = hex(tokenSymbol).toUpperCase();
-    const paddedHex = hexString + '0'.repeat(Math.max(0, 40 - hexString.length));
+    // Ensure exactly 40 characters (160-bit) as per XRPL standard
+    const paddedHex = hexString.length > 40 
+        ? hexString.substring(0, 40) 
+        : hexString + '0'.repeat(40 - hexString.length);
 
     return paddedHex;
 }
@@ -18,13 +21,17 @@ function currencyCodeToTokenSymbol(currencyCode) {
         return currencyCode;
     }
 
-    const trimmedHex = currencyCode.replace(/0+$/, '');
-    
-    if (!/^[0-9A-Fa-f]+$/.test(trimmedHex)) {
+    if (currencyCode.length !== 40) {
+        printError(`Invalid currency code: ${currencyCode} must be exactly 40 characters (160-bit hex)`);
+        process.exit(1);
+    }
+
+    if (!/^[0-9A-Fa-f]+$/.test(currencyCode)) {
         printError(`Invalid currency code: ${currencyCode} is not a valid hex string`);
         process.exit(1);
     }
-    
+
+    const trimmedHex = currencyCode.replace(/0+$/, '');
     const buffer = Buffer.from(trimmedHex, 'hex');
     return buffer.toString('utf8');
 }
