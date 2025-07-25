@@ -255,7 +255,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy } = options;
 
     let { deployMethod } = options;

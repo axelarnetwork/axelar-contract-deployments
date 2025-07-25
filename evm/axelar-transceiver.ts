@@ -258,7 +258,7 @@ async function setAxelarChainId(
 }
 
 async function processCommand(_axelarConfig, chain: ChainConfig, action: string, options: Options): Promise<void> {
-    const { env, artifactPath, privateKey, args } = options;
+    const { artifactPath, privateKey, args } = options;
 
     if (!artifactPath) {
         throw new Error('--artifactPath is required. Please provide the path to the compiled artifacts.');

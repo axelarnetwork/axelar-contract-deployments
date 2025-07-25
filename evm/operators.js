@@ -26,18 +26,7 @@ const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTrans
 const { getWallet } = require('./sign-utils');
 
 async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
-    const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
-        args,
-
-        chains,
-
-        yes,
-    } = options;
+    const { env, contractName, address, action, privateKey, args, chains, yes } = options;
 
     const argsArray = args ? parseArgs(args) : [];
 

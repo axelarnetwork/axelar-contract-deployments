@@ -52,7 +52,7 @@ async function getImplementationArgs(contractName, contracts, options) {
     try {
         args = options.args ? JSON.parse(options.args) : {};
     } catch (error) {
-        console.error('Error parsing args:\n', error.message);
+        printError('Error parsing args:\n', error.message);
     }
 
     const contractConfig = contracts[contractName];
@@ -212,8 +212,8 @@ async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
 
         contractConfig.implementation = await contract.implementation();
 
-        console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
-        console.log(`${chain.name} | Upgraded.`);
+        printInfo(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
+        printInfo(`${chain.name} | Upgraded.`);
     } else {
         const setupArgs = getInitArgs(contractName, contracts);
         printInfo('Proxy setup args', setupArgs);
