@@ -285,7 +285,7 @@ async function rotate(keypair, client, config, chain, contractConfig, args, opti
 async function checkVersionControl(version, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
@@ -412,7 +412,7 @@ async function checkVersionControl(version, options) {
 async function testNewField(value, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
@@ -451,7 +451,7 @@ async function testNewField(value, options) {
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
 
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
     await printWalletInfo(keypair, client, chain, options);
 
