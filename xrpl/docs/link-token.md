@@ -17,8 +17,7 @@ CHAINS=xyz
 The private key variable is permanently associated with the custom token registration and linking. The key must be secured since
 it must be reused for future linking of the same token to other chains. The private key is accessed during `evm/*.js` script operations
 
-**Supported Token Manager Type:**
-| Token Model | Value |
+| Token Manager Type | Value |
 |-------------|-------|
 | LockUnlock | 2 |
 | MintBurn | 4 |
