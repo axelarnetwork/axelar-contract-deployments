@@ -58,7 +58,7 @@ GAS_FEE=  # Estimate using gmp api
 **API Reference:** Estimate using gmp [api](https://docs.axelarscan.io/gmp#estimateITSFee)
 
 
-Envioronment Specific Values From Reference Table
+Environment Specific Values From Reference Table
 ```bash
 XRPL_ISSUER=
 XRPL_GATEWAY=
