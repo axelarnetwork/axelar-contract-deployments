@@ -25,7 +25,7 @@ if (require.main === module) {
 
     program
         .name('token')
-        .description('Convert token symbol to 40-character padded hex representation if longer than 3 characters.')
+        .description('Convert token symbol to XRPL Currency Code.')
         .argument('<token-symbol>', 'The token symbol to convert to XRPL currency code')
         .action((tokenSymbol) => {
             processCommand(tokenSymbol);
