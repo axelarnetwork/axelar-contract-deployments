@@ -50,7 +50,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
 
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     printInfo('Environment', options.env);

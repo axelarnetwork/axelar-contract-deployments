@@ -172,7 +172,7 @@ async function combineSignature(chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const fileData = await processor(chain, options);
     saveConfig(config, options.env);
 

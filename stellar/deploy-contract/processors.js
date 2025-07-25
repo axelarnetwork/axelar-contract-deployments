@@ -212,7 +212,7 @@ const uploadWasm = async (wallet, chain, filePath, contractName) => {
 
 const mainProcessor = async (options, processor, contractName) => {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
 
     if (!chain.contracts) {
         chain.contracts = {};

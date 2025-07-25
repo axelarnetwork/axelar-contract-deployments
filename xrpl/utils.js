@@ -339,7 +339,7 @@ async function mainProcessor(processor, options, args, save = true, catchErr = f
 
     const chainName = options.chainName.toLowerCase();
 
-    const chain = getChainConfig(config, chainName);
+    const chain = getChainConfig(config.chains, chainName);
 
     if (!chain) {
         throw new Error(`Chain ${chainName} is not defined in the info file`);
