@@ -13,7 +13,7 @@ function tokenSymbolToCurrencyCode(tokenSymbol) {
     return paddedHex;
 }
 
-function processCommand(inputString) {
+function processCommand(tokenSymbol) {
     const result = tokenSymbolToCurrencyCode(inputString);
     printInfo('Input string', inputString);
     printInfo('Hex representation', result);
