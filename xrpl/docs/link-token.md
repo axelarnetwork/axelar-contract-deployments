@@ -17,13 +17,12 @@ CHAINS=xyz
 The private key variable is permanently associated with the custom token registration and linking. The key must be secured since
 it must be reused for future linking of the same token to other chains. The private key is accessed during `evm/*.js` script operations
 
-**Supported Token Manager Type:**
-| Token Model | Value |
+| Token Manager Type | Value |
 |-------------|-------|
 | LockUnlock | 2 |
 | MintBurn | 4 |
 
-**Choose based on your token's cross-chain behavior:**
+Choose based on your token's cross-chain behaviour:
 - Use **2 (LockUnlock)** if you want the source chain token manager to lock tokens when sending ITS transfers to XRPL and unlock tokens when receiving ITS transfers from XRPL.
 - Use **4 (MintBurn)** if you want the source chain token manager to burn tokens when sending ITS transfers to XRPL and mint new tokens when receiving ITS transfers from XRPL.
 
@@ -67,7 +66,7 @@ RPC_URL= # Axelar RPC Node endpoint
 AXELAR_CHAIN_ID= # Environment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
 XRPL_PROVER_ADMIN= # Operations against the XRPL_GATEWAY are permissioned and must used the xrpl prover key
 KEYRING_NAME=
-ARGS=(--from XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
+ARGS=(--from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
 ```
 
 ## Deployment Steps
@@ -122,7 +121,7 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 ```
 
 ### 6. XRPL Token Instance Registration
-CHAIN is the case sensitive value from the axelardId field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed.
+CHAIN is the case sensitive value from the `axelardId` field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed. E.g. `Ethereum` and `xrpl` on mainnet
 
 **_NOTE:_**
 The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of XRPL contracts will use the ITS Hub instance directly. 
@@ -138,10 +137,21 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'
 ```
 
 
-## Post Link Steps
+## 8. Grant mint role to the token manager
 
 After linking is complete and if the MintBurn model is selected for the token manager then it is necessary to
-grant the token manager mint permissions. 
+grant the token manager mint permissions. Since this logic is token-specific, you'll need to determine the right method to execute for your token.
+If your token inherits from the InterchainToken contract and uses MintBurn, you can run these command to transfer mintership:
+
+```bash
+ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
+```
+
+From the output obtain the token manager address for next step
+
+```bash
+ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
+```
 
 ## Cross-Chain Transfer Testing
 
