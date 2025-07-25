@@ -27,12 +27,12 @@ function currencyCodeToTokenSymbol(currencyCode) {
 
     if (currencyCode.length !== 40) {
         printError(`Invalid currency code: ${currencyCode} must be exactly 40 characters (160-bit hex)`);
-        process.exit(1);
+        return;
     }
 
     if (!/^[0-9A-Fa-f]+$/.test(currencyCode)) {
         printError(`Invalid currency code: ${currencyCode} is not a valid hex string`);
-        process.exit(1);
+        return;
     }
 
     const trimmedHex = currencyCode.replace(/0+$/, '');
@@ -43,7 +43,7 @@ function currencyCodeToTokenSymbol(currencyCode) {
 
     if (trimmedHex.length % 2 !== 0) {
         printError(`Invalid currency code: ${currencyCode} has invalid hex length after trimming`);
-        process.exit(1);
+        return;
     }
 
     const buffer = Buffer.from(trimmedHex, 'hex');
