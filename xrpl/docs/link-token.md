@@ -139,7 +139,7 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'
 
 ## Post Link Steps
 
-After linking is complete and if the MintBurn model is selected for the token manager then it is necessary to
+After linking is complete and if the MintBurn type is selected for the token manager then it is necessary to
 grant the token manager mint permissions. 
 
 ## Cross-Chain Transfer Testing
