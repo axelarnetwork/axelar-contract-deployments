@@ -1,7 +1,17 @@
 const { Command } = require('commander');
-const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
+const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
+const {
+    addBaseOptions,
+    addOptionsToCommands,
+    broadcastFromTxBuilder,
+    deployTokenFromInfo,
+    getWallet,
+    newCoinManagementLocked,
+    printWalletInfo,
+    saveGeneratedTx,
+    saveTokenDeployment,
+} = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
@@ -114,6 +124,103 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Chains', options);
 }
 
+// register_coin_from_info
+async function registerCoinFromInfo(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+    const deployConfig = { client, keypair, options, walletAddress };
+
+    // Deploy token on Sui
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // New CoinManagement<T>
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+
+    // Register deployed token (from info)
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
+        arguments: [InterchainTokenService, name, symbol, decimals, coinManagement],
+        typeArguments: [tokenType],
+    });
+
+    const result = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register coin (${symbol}) from info in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
+
+    const tokenId = result.events[0].parsedJson.token_id.id;
+
+    // Save the deployed token
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+}
+
+// register_coin_from_metadata
+async function registerCoinFromMetadata(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const [symbol, name, decimals] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+    const deployConfig = { client, keypair, options, walletAddress };
+
+    // Deploy token on Sui
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // New CoinManagement<T>
+    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+
+    // Register deployed token (from metadata)
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::register_coin_from_metadata`,
+        arguments: [InterchainTokenService, metadata, coinManagement],
+        typeArguments: [tokenType],
+    });
+
+    const result = await broadcastFromTxBuilder(
+        txBuilder,
+        keypair,
+        `Register coin (${symbol}) from Coin Metadata in InterchainTokenService`,
+        options,
+        {
+            showEvents: true,
+        },
+    );
+    const tokenId = result.events[0].parsedJson.token_id.id;
+
+    // Save the deployed token
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+}
+
+// migrate_coin_metadata
+async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { OperatorCap, InterchainTokenService } = itsConfig.objects;
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+    if (!contracts[symbol.toUpperCase()]) throw new Error('token not found in deployments history');
+
+    const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
+    const tokenType = contracts[symbol.toUpperCase()].typeArgument;
+
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
+        arguments: [InterchainTokenService, OperatorCap, tokenId],
+        typeArguments: [tokenType],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -132,6 +239,8 @@ async function mainProcessor(command, options, args, processor) {
 if (require.main === module) {
     const program = new Command();
     program.name('InterchainTokenService').description('SUI InterchainTokenService scripts');
+
+    // v0 release
 
     // This command is used to setup the trusted chains on the InterchainTokenService contract.
     // The trusted chain is used to verify the message from the source chain.
@@ -161,11 +270,42 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
+    // v1 release
+    const registerCoinFromInfoProgram = new Command()
+        .name('register-coin-from-info')
+        .command('register-coin-from-info <symbol> <name> <decimals>')
+        .description(`Deploy a coin on SUI and register it in ITS using token name, symbol and decimals.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCoinFromInfo, options, [symbol, name, decimals], processCommand);
+        });
+
+    const registerCoinFromMetadataProgram = new Command()
+        .name('register-coin-from-metadata')
+        .command('register-coin-from-metadata <symbol> <name> <decimals>')
+        .description(`Deploy a coin on SUI and register it in ITS using its coin metadata.`)
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
+        });
+
+    const migrateCoinMetadataProgram = new Command()
+        .name('migrate-coin-metadata')
+        .command('migrate-coin-metadata <symbol>')
+        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
+        .action((symbol, options) => {
+            mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
+        });
+
+    // v0
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
 
-    addOptionsToCommands(program, addBaseOptions, { offline: true });
+    // v1
+    program.addCommand(registerCoinFromInfoProgram);
+    program.addCommand(registerCoinFromMetadataProgram);
+    program.addCommand(migrateCoinMetadataProgram);
 
+    // finalize program
+    addOptionsToCommands(program, addBaseOptions, { offline: true });
     program.parse();
 }
