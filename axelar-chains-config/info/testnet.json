@@ -3104,7 +3104,8 @@
           "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
           "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
           "deploymentMethod": "create",
-          "codehash": "0xe3e0fecc60c3b77fd200a867c450fd4268a8af80c4999cfff00139cf51a1a381"
+          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
+          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059"
         }
       }
     },
