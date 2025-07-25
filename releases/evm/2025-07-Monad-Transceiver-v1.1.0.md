@@ -5,12 +5,12 @@
 | **Created By** | @kulikthebird <tomasz@interoplabs.io>, @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>                                        |
 
-| **Network**          | **Deployment Status** | **Date** |
-|----------------------|-----------------------|----------|
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**   |
+|----------------------|-----------------------|------------|
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | In Progress           | 2025-07-25 |
+| **Mainnet**          | -                     | TBD        |
 
 ## Background
 
@@ -35,10 +35,10 @@ ENV=xyz
 CHAIN=xyz
 ```
 
-| `Network`   | `deployer address`                           |
-|-------------|----------------------------------------------|
-| **Testnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| `Network`   | `deployer address`                           | `ITS_OWNER`                                  |
+|-------------|----------------------------------------------|----------------------------------------------|
+| **Testnet** | `0x377F94Ebd3255FfF32511E5C1C471232024189fb` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet** | `0x377F94Ebd3255FfF32511E5C1C471232024189fb` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ## AxelarTransceiver and ERC1967 Proxy Deployment
 
@@ -48,12 +48,12 @@ CHAIN=xyz
 2. Clone Transceiver repo: `git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git`
 3. `cd` into `example-wormhole-axelar-wsteth` 
 
-| `NETWORK`   | `CHAIN`  | `TRANSCEIVER_STRUCTS_ADDRESS` | `GMP_MANAGER_ADDRESS` |
-|-------------|----------|-------------------------------|-----------------------|
-| **Testnet** | Ethereum |                               |                       |
-|             | Monad    |                               |                       |
-| **Mainnet** | Ethereum |                               |                       |
-|             | Monad    |                               |                       |
+| `NETWORK`   | `CHAIN`  | `TRANSCEIVER_STRUCTS_ADDRESS`                | `GMP_MANAGER_ADDRESS`                        |
+|-------------|----------|----------------------------------------------|----------------------------------------------|
+| **Testnet** | Ethereum | `0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6` | `0xdaee3a6b4196e3e46015b364f1dae54ceae74a91` |
+|             | Monad    | `0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6` | `0x641a6608e2959c0D7Fe2a5F267DFDA519ED43d98` |
+| **Mainnet** | Ethereum |                                              |                                              |
+|             | Monad    |                                              |                                              |
 
 4. Get address of already deployed transceiverStructs library and set value:
 `TRANSCEIVER_STRUCTS_ADDRESS=0x..`
@@ -158,6 +158,12 @@ Note:
 
 ```bash
 GmpManagerProxy.setThreshold(uint8 $THRESHOLD_VALUE)
+```
+
+## Transfer Pauser role to ITS owner after registration
+
+```bash
+ts-node evm/axelar-transceiver.ts transfer-pauser $ITS_OWNER --artifactPath path/to/example-wormhole-axelar-wsteth/out/
 ```
 
 ### Verify Contracts
