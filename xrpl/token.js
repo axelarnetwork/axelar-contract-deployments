@@ -34,6 +34,16 @@ function currencyCodeToTokenSymbol(currencyCode) {
     }
 
     const trimmedHex = currencyCode.replace(/0+$/, '');
+    
+    if (trimmedHex === '') {
+        return '';
+    }
+
+    if (trimmedHex.length % 2 !== 0) {
+        printError(`Invalid currency code: ${currencyCode} has invalid hex length after trimming`);
+        process.exit(1);
+    }
+
     const buffer = Buffer.from(trimmedHex, 'hex');
     return buffer.toString('utf8');
 }
