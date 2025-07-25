@@ -110,14 +110,6 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-function isValidDestinationChain(config, destinationChain) {
-    if (destinationChain === '') {
-        return;
-    }
-
-    isValidChain(config, destinationChain);
-}
-
 async function processCommand(config, chain, action, options) {
     const { privateKey, address, yes, args } = options;
 
@@ -587,7 +579,7 @@ async function processCommand(config, chain, action, options) {
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
-            isValidDestinationChain(config, destinationChain);
+            isValidChain(config.chains, destinationChain);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
@@ -838,4 +830,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains };
