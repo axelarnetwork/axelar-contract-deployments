@@ -26,18 +26,7 @@ const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTrans
 const { getWallet } = require('./sign-utils');
 
 async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
-    const {
-        env,
-        contractName,
-        address,
-        action,
-        privateKey,
-        args,
-
-        chains,
-
-        yes,
-    } = options;
+    const { env, contractName, address, action, privateKey, args, chains, yes } = options;
 
     const argsArray = args ? parseArgs(args) : [];
 
@@ -299,7 +288,6 @@ if (require.main === module) {
     // options for updateGasInfo
     program.addOption(new Option('--chains <chains...>', 'Chain names'));
     program.addOption(new Option('--relayerAPI <relayerAPI>', 'Relay the tx through an external relayer API').env('RELAYER_API'));
-    program.addOption(new Option('--ignoreError', 'Ignore errors and proceed to next chain'));
 
     program.action((options) => {
         main(options);

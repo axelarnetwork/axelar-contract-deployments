@@ -110,7 +110,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(axelarConfig, chain, chainsSnapshot, action, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
