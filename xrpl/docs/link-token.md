@@ -139,8 +139,19 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'
 
 ## 8. Grant mint role to the token manager
 
-After linking is complete and if the MintBurn type is selected for the token manager then it is necessary to
-grant the token manager mint permissions. 
+After linking is complete and if the MintBurn model is selected for the token manager then it is necessary to
+grant the token manager mint permissions. Since this logic is token-specific, you'll need to determine the right method to execute for your token.
+If your token inherits from the InterchainToken contract and uses MintBurn, you can run these command to transfer mintership:
+
+```bash
+ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
+```
+
+From the output obtain the token manager address for next step
+
+```bash
+ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
+```
 
 ## Cross-Chain Transfer Testing
 
