@@ -17,41 +17,43 @@ CHAINS=xyz
 The private key variable is permanently associated with the custom token registration and linking. The key must be secured since
 it must be reused for future linking of the same token to other chains. The private key is accessed during `evm/*.js` script operations
 
+**Supported Token Manager Type:**
+| Token Model | Value |
+|-------------|-------|
+| LockUnlock | 2 |
+| MintBurn | 4 |
+
+**Choose based on your token's cross-chain behavior:**
+- Use **2 (LockUnlock)** if you want the source chain token manager to lock tokens when sending ITS transfers to XRPL and unlock tokens when receiving ITS transfers from XRPL.
+- Use **4 (MintBurn)** if you want the source chain token manager to burn tokens when sending ITS transfers to XRPL and mint new tokens when receiving ITS transfers from XRPL.
+
 ### 1. Token Symbol Pre-Calculation
 
 Before starting the deployment, you need to generate the XRPL Currency Code for your token symbol.
 
 ```bash
-ts-node xrpl/encode-token.js <TOKEN_SYMBOL>
+ts-node xrpl/token.js token-symbol-to-currency-code <TOKEN_SYMBOL>
 ```
 
 ### 2. Environment Variables Setup
-
-| Network              | `XRPL_ISSUER` | `XRPL_GATEWAY` |
-| -------------------- | ------------- | ---------------|
-| **Devnet-amplifier** | `rGAbJZEzU6WaYv5y1LfyN7LBBcQJ3TxsKC`            | `axelar1fqy77ptzsspmewy547dappss2j7scy9asju8qqjts67r2tl4k5cqg6zfxa`         |
-| **Stagenet**         | `rpjRVZbKbb5UmSEcgp6C6U4GzQQF4mEpbR`            | `axelar1vr89h7je4zw4hxhdt7aycqq6end3kf9wvj4unv63s8pcenrrutrs88kn57`         |
-| **Testnet**          | `rNrjh1KGZk2jBR3wPfAQnoidtFFYQKbQn2`            | `axelar18qltw4382s5qz0rgzfxz67mr83smk580hewlkfd33l5tmcdp8unqw35glh`         |
-| **Mainnet**          | `rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw`          | `axelar15dsw0qqnvumnsukjtwt040wnelwrglgslqcqsa7d62f2neuv7slq7rq7zd`         |
-
-
-| Network              | `AXELARNET_GATEWAY` | `ITS_HUB`   |
-| -------------------- | ------------------- | ----------- |
-| **Devnet-amplifier** |  `axelar1wvms3cy5hxrgl7uxhkz7yth4qzqum6aaccwkmvafq8z0mgdfxr8qrnvw0k`  |`axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4`              |
-| **Stagenet**         | `axelar1s9amtxejrdlsunwdf0cclhjtezdp6wmurxxnh45gfvtpa2jrsusqv934n6`  | `axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk`            |
-| **Testnet**          |  `axelar1kq687tszm67hr5ws5pqhtchc8uatxur8r4rm4xgclyghetthtlzs9pnqfl` | `axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr`              |
-| **Mainnet**          | `axelar18vsne7lns36uvm8gv2cv5jl2lghts0xm7dvzpqzn70dl56gk9hvsgu9sqg`  | `axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr`       |
-
-Set the following environment variables before running the deployment commands:
+Set the following environment variables before running the deployment commands. For contract addresses reference the 
+`axelar-chains-config/info/<env>.json` for needed values.
 
 ```bash
+# Contract addresses
+XRPL_ISSUER= # xrpl/contracts/InterchainTokenService/address
+XRPL_GATEWAY= # axelar/contracts/XrplGateway/xrpl/address
+AXELARNET_GATEWAY= # axelar/contracts/AxelarnetGateway/address
+ITS_HUB= # axelar/contracts/InterchainTokenService/address
+
 # Token Details
 XRPL_CURRENCY_CODE= # Generated currency from Token Symbol Pre-Calculation 
 TOKEN_ADDRESS= # Token contract address on the native source chain 
 
 # Deployment Parameters
 SALT= # Random Salt
-TOKEN_MANAGER_TYPE= # Numerical value corresponding to token model (MintBurn, LockUnlock, etc)
+TOKEN_MANAGER_TYPE=
+
 OPERATOR="0x" # User specified address or empty bytes
 GAS_FEE=  # Estimate using gmp api
 ```
@@ -60,10 +62,7 @@ GAS_FEE=  # Estimate using gmp api
 
 Environment Specific Values From Reference Table
 ```bash
-XRPL_ISSUER=
-XRPL_GATEWAY=
-AXELARNET_GATEWAY=
-ITS_HUB=
+
 ```
 
 
@@ -73,19 +72,16 @@ Reference guide can be accessed [here](https://docs.axelar.dev/learn/cli/) for s
 ```bash
 RPC_URL= # Axelar RPC Node endpoint
 AXELAR_CHAIN_ID= # Environment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
-ARGS=(--chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
-```
-**_NOTE:_**
-Operations against the XRPL_GATEWAY are permissioned and must used the xrpl multisig admin key
-```bash
-XRPL_PROVER_ADMIN=
+XRPL_PROVER_ADMIN= # Operations against the XRPL_GATEWAY are permissioned and must used the xrpl prover key
 KEYRING_NAME=
+ARGS=(--from XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
 ```
+
 ## Deployment Steps
 
 ### 1. Token Metadata Registration on XRPL Gateway
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token": {"issued": {"currency": "'$XRPL_CURRENCY_CODE'", "issuer": "'$XRPL_ISSUER'"}}}}' -o text --from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME  "${ARGS[@]}"
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token": {"issued": {"currency": "'$XRPL_CURRENCY_CODE'", "issuer": "'$XRPL_ISSUER'"}}}}' -o text "${ARGS[@]}"
 ```
 
 **Extract Values from Command Output:**
@@ -101,10 +97,8 @@ XRPL_TOKEN_ADDRESS='0x' +  # token_address
 ```
 
 ### 2. Execute Message on the Axelarnet Gateway
-**_NOTE:_**
-Manual relay operation can be executed by any funded axelar key including the xrpl multisig key
 ```bash
-axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "xrpl", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' --from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME "${ARGS[@]}"
+axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "xrpl", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' "${ARGS[@]}"
 ```
 
 ### 3. Token Metadata Registration on Source Chain
@@ -116,7 +110,6 @@ ts-node evm/its.js register-token-metadata $TOKEN_ADDRESS --gasValue $GAS_FEE
 Wait for GMP Transaction to finish executing before proceeding
 
 ### 4. Custom Token Registration on Source Chain
-**_NOTE:_**
 If no operator defined remove the --operator flag
 ```bash
 ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress $TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --operator $OPERATOR --salt $SALT
@@ -128,46 +121,39 @@ TOKEN_ID=
 ```
 
 ### 5. Token Linking
-**_NOTE:_**
 If there is no operator defined, set linkParams to empty bytes `0x`
+This transaction executes a GMP message where only the first leg to the ITS Hub is required to succeed.
 
 ```bash
 ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl --destinationTokenAddress $XRPL_TOKEN_ADDRESS --tokenManagerType $TOKEN_MANAGER_TYPE --linkParams $OPERATOR --salt $SALT --gasValue $GAS_FEE
 ```
 
 ### 6. XRPL Token Instance Registration
+CHAIN is the case sensitive value from the axelardId field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed.
+
 **_NOTE:_**
-CHAIN is the name for the source chain where token is originally deployed.
+The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of XRPL contracts will use the ITS Hub instance directly. 
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance": {"token_id": "'$TOKEN_ID'", "chain": "'$CHAIN'", "decimals": 15}}' --from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME "${ARGS[@]}"
+axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance": {"token_id": "'$TOKEN_ID'", "chain": "'$CHAIN'", "decimals": 15}}' "${ARGS[@]}"
 ```
-**_NOTE:_**
-The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of 
-XRPL contracts will use the ITS Hub instance directly.  
+
 
 ### 7. XRPL Remote Token Registration
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' --from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME "${ARGS[@]}"
+axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' "${ARGS[@]}"
 ```
 
-The following steps depend on the token manager type and underlying source token contract.
-If MintBurn model is selected for the token manager on the source EVM chain, it must be given mint permission by executing the following steps to transfer mintership.
 
-```bash
-ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
-```
-From the output obtain the token manager address for next step
+## Post Link Steps
 
-```bash
-ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
-```
+After linking is complete and if the MintBurn model is selected for the token manager then it is necessary to
+grant the token manager mint permissions. 
 
 ## Cross-Chain Transfer Testing
 
 To test the connection reference document [2025-02-v.1.0.0.md](./2025-02-v.1.0.0.md).
 
-**_NOTE:_**
 Ensure that the destination address being used has a trust-line set with the new currency. This can be performed using the following command using a funded XRPL account. In the .env PRIVATE_KEY must be set to the seed value for a funded XRPL account.
 
 ```bash
