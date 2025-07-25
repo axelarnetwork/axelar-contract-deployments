@@ -229,6 +229,15 @@ policy should be one of the following:
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
+### Migrating Post-Upgrade
+
+After upgrading a package, state migrations (e.g. for [versioned](https://docs.sui.io/references/framework/sui/versioned) packages) can be called using the `migrate` command.
+
+
+```bash
+ts-node sui/deploy-contract.js migrate AxelarGateway
+```
+
 ### Multisig Operations
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
