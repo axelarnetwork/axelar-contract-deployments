@@ -51,6 +51,7 @@ async function saveTokenDeployment(
     TreasuryCap, // sui::coin::TreasuryCap
     Metadata, // sui::coin::CoinMetadata
     linkedTokens = [], // [{chain, address, linkParams}]
+    saltAddress = null, // address used for Bytes32::new for custom coin registrations and link_coin
 ) {
     contracts[symbol.toUpperCase()] = {
         address,
@@ -63,6 +64,7 @@ async function saveTokenDeployment(
         },
     };
     if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
+    if (saltAddress) contracts[symbol.toUpperCase()].saltAddress = saltAddress;
 }
 
 module.exports = {

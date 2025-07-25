@@ -1,12 +1,12 @@
 const { Option, Command } = require('commander');
-const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
+const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
-    createSaltAddress,
     deployTokenFromInfo,
+    getObjectIdsByObjectTypes,
     getWallet,
     newCoinManagementLocked,
     printWalletInfo,
@@ -212,11 +212,25 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // Register deployed token (custom)
-    const [tokenId, _channelId, _salt] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
+    const [tokenId, _channelId, saltAddress, result] = await registerCustomCoinUtil(
+        deployConfig,
+        itsConfig,
+        AxelarGateway,
+        symbol,
+        metadata,
+        tokenType,
+        options.treasuryCap ? treasuryCap : false,
+    );
     if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
 
     // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], saltAddress);
+
+    // Save TreasuryCapReclaimer to coin config (if exists)
+    if (options.treasuryCap && contracts[symbol.toUpperCase()]) {
+        const [treasuryCapReclaimerId] = getObjectIdsByObjectTypes(result, [`TreasuryCapReclaimer<${tokenType}>`]);
+        contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
+    }
 }
 
 // migrate_coin_metadata
@@ -227,7 +241,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
 
     const symbol = args;
     if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error('token not found in deployments history');
+    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments history`);
 
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
@@ -239,6 +253,78 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
+}
+
+// give_unlinked_coin
+async function giveUnlinkedCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+    const deployConfig = { client, keypair, options, walletAddress };
+    const [symbol, name, decimals] = args;
+    const txBuilder = new TxBuilder(client);
+
+    // Deploy token on Sui
+    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+    // Register deployed token (custom)
+    const [tokenId, _channelId, saltAddress, _result] = await registerCustomCoinUtil(
+        deployConfig,
+        itsConfig,
+        AxelarGateway,
+        symbol,
+        metadata,
+        tokenType,
+    );
+    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
+
+    // TokenId
+    const tokenIdObject = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_address`,
+        arguments: [tokenId],
+    });
+
+    // Option<TreasuryCap<T>>
+    const target = options.treasuryCapReclaimer ? `${STD_PACKAGE_ID}::option::some` : `${STD_PACKAGE_ID}::option::none`;
+    const callArguments = options.treasuryCapReclaimer ? [treasuryCap] : [];
+    const typeArguments = [`${SUI_PACKAGE_ID}::coin::TreasuryCap<${tokenType}>`];
+    const treasuryCapOption = await txBuilder.moveCall({ target, arguments: callArguments, typeArguments });
+
+    // give_unlinked_coin<T>
+    const treasuryCapReclaimerOption = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::give_unlinked_coin`,
+        arguments: [InterchainTokenService, tokenIdObject, metadata, treasuryCapOption],
+        typeArguments: [tokenType],
+    });
+
+    // TreasuryCapReclaimer<T>
+    const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', tokenType, '>'].join('');
+    if (options.treasuryCapReclaimer) {
+        const treasuryCapReclaimer = await txBuilder.moveCall({
+            target: `${STD_PACKAGE_ID}::option::extract`,
+            arguments: [treasuryCapReclaimerOption],
+            typeArguments: [treasuryCapReclaimerType],
+        });
+
+        txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+    }
+
+    await txBuilder.moveCall({
+        target: `${STD_PACKAGE_ID}::option::destroy_none`,
+        arguments: [treasuryCapReclaimerOption],
+        typeArguments: [treasuryCapReclaimerType],
+    });
+
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Give Unlinked Coin (${symbol})`, options);
+
+    // Save the deployed token
+    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata, [], saltAddress);
+
+    // Save TreasuryCapReclaimer to coin config (if exists)
+    if (options.treasuryCapReclaimer && contracts[symbol.toUpperCase()]) {
+        const [treasuryCapReclaimerId] = getObjectIdsByObjectTypes(result, [`TreasuryCapReclaimer<${tokenType}>`]);
+        contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
+    }
 }
 
 // link_coin
@@ -336,7 +422,81 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
         sourceToken.treasuryCap,
         sourceToken.metadata,
         [linkedToken],
+        saltAddress,
     );
+}
+
+// remove_treasury_cap
+async function removeTreasuryCap(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+
+    const coin = contracts[symbol.toUpperCase()];
+    const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
+    if (!coin.objects) throw new Error(tcrErrorMsg);
+    else if (!coin.objects.TreasuryCapReclaimer) throw new Error(tcrErrorMsg);
+
+    // Receive TreasuryCap
+    const treasuryCap = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::remove_treasury_cap`,
+        arguments: [InterchainTokenService, coin.objects.TreasuryCapReclaimer],
+        typeArguments: [coin.typeArgument],
+    });
+
+    // Return TreasuryCap to coin deployer (TreasuryCapReclaimer owner)
+    // coin will be unusable by ITS until `restore_treasury_cap` is called
+    txBuilder.tx.transferObjects([treasuryCap], walletAddress);
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Remove TreasuryCap (${symbol})`, options);
+
+    // Remove TreasuryCapReclaimer as it's been deleted
+    contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
+}
+
+// restore_treasury_cap
+async function restoreTreasuryCap(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    if (!symbol) throw new Error('token symbol is required');
+    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+
+    const coin = contracts[symbol.toUpperCase()];
+    const tcErrorMsg = `no TreasuryCap was found for token with symbol ${symbol}`;
+    if (!coin.objects) throw new Error(tcErrorMsg);
+    else if (!coin.objects.TreasuryCap) throw new Error(tcErrorMsg);
+
+    // TokenId
+    const tokenId = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_address`,
+        arguments: [coin.objects.TokenId],
+    });
+
+    // Receive TreasuryCapReclaimer
+    const treasuryCapReclaimer = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::restore_treasury_cap`,
+        arguments: [InterchainTokenService, coin.objects.TreasuryCap, tokenId],
+        typeArguments: [coin.typeArgument],
+    });
+
+    // Return TreasuryCapReclaimer to coin deployer (TreasuryCap owner)
+    // coin will be usable again by ITS
+    txBuilder.tx.transferObjects([treasuryCapReclaimer], walletAddress);
+
+    const result = await broadcastFromTxBuilder(txBuilder, keypair, `Restore TreasuryCap (${symbol})`, options);
+
+    // Save TreasuryCapReclaimer to coin config
+    const [treasuryCapReclaimerId] = getObjectIdsByObjectTypes(result, [`TreasuryCapReclaimer<${coin.typeArgument}>`]);
+    contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -410,6 +570,7 @@ if (require.main === module) {
         .command('register-custom-coin <symbol> <name> <decimals>')
         .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
         .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
+        .addOption(new Option('--treasuryCap', `Give the coin's TreasuryCap to ITS`))
         .action((symbol, name, decimals, options) => {
             mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
         });
@@ -417,9 +578,18 @@ if (require.main === module) {
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <symbol>')
-        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
+        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1.`)
         .action((symbol, options) => {
             mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
+        });
+
+    const giveUnlinkedCoinProgram = new Command()
+        .name('give-unlinked-coin')
+        .command('give-unlinked-coin <symbol> <name> <decimals>')
+        .description(`Deploy a coin on Sui, register it as custom coin and give its treasury capability to ITS.`)
+        .addOption(new Option('--treasuryCapReclaimer', 'Pass this flag to retain the ability to reclaim the treasury capability'))
+        .action((symbol, name, decimals, options) => {
+            mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
         });
 
     const linkCoinProgram = new Command()
@@ -433,6 +603,22 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
+    const removeTreasuryCapProgram = new Command()
+        .name('remove-treasury-cap')
+        .command('remove-treasury-cap <symbol>')
+        .description(`Transfer a coin's TreasuryCap to the deployer to reclaim mint/burn permission from ITS.`)
+        .action((symbol, options) => {
+            mainProcessor(removeTreasuryCap, options, symbol, processCommand);
+        });
+
+    const restoreTreasuryCapProgram = new Command()
+        .name('restore-treasury-cap')
+        .command('restore-treasury-cap <symbol>')
+        .description(`Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mint/burn permission back to ITS.`)
+        .action((symbol, options) => {
+            mainProcessor(restoreTreasuryCap, options, symbol, processCommand);
+        });
+
     // v0
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
@@ -443,7 +629,10 @@ if (require.main === module) {
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
+    program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(removeTreasuryCapProgram);
+    program.addCommand(restoreTreasuryCapProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
