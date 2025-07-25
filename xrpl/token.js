@@ -43,6 +43,12 @@ function processDecodeCommand(currencyCode) {
     return tokenSymbol;
 }
 
+
+/**
+ * XRPL Token Symbol <-> Currency Code Converter
+ * Implements XRPL currency code standards as documented at:
+ * https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
+*/
 if (require.main === module) {
     const program = new Command();
 
