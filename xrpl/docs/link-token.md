@@ -46,7 +46,7 @@ Set the following environment variables before running the deployment commands:
 
 ```bash
 # Token Details
-XRPL_CURRENCY_CODE= #Generated currency from Token Symbol Pre-Calculation 
+XRPL_CURRENCY_CODE= # Generated currency from Token Symbol Pre-Calculation 
 TOKEN_ADDRESS= # Token contract address on the native source chain 
 
 # Deployment Parameters
