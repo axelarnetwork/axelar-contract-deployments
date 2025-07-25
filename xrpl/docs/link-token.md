@@ -91,9 +91,9 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token"
 **Extract Values from Command Output:**
 ```bash
 # Extract the following values from the previous transaction results
-MESSAGE_ID= #message_id
-PAYLOAD= #payload
-XRPL_TOKEN_ADDRESS='0x' +  #token_address
+MESSAGE_ID= # message_id
+PAYLOAD= # payload
+XRPL_TOKEN_ADDRESS='0x' +  # token_address
 
 **Extracted Values Example:**
 - **Message ID**: `0x8b49b5ccfb893269a5c263693805874cdeb3c932633ba0301094403c77dad839`
