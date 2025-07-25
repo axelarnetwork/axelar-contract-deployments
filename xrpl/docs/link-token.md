@@ -71,9 +71,8 @@ ITS_HUB=
 `axelard` commands require additional parameters for preparing, signing and broadcasting transactions. 
 Reference guide can be accessed [here](https://docs.axelar.dev/learn/cli/) for supported parameters.
 ```bash
-# axelard Paramaters
 RPC_URL= # Axelar RPC Node endpoint
-AXELAR_CHAIN_ID= # Envioronment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
+AXELAR_CHAIN_ID= # Environment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
 ARGS=(--chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
 ```
 **_NOTE:_**
