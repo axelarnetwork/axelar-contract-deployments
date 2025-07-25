@@ -492,7 +492,7 @@ Deploys a source coin and links it with a destination chain coin. If a `channel`
 ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
 ```
 
-## Coin Management
+## Treasury Management
 
 ### Remove Treasury Cap
 
