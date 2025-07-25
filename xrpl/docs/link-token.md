@@ -125,7 +125,7 @@ Note: the GMP transaction is a two step process and only the first leg to the IT
 
 From the output set the token Id without `0x` prefix for subsequent steps
 ```bash
-TOKEN_ID= #tokenID from result without 0x prefix
+TOKEN_ID=
 ```
 
 ### 5. Token Linking
