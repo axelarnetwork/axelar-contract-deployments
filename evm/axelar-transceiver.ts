@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
 import { addOptionsToCommands, prompt as promptUser } from '../common';
-import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn, saveConfig } from './utils';
+import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { addEvmOptions } = require('./cli-utils');
@@ -42,10 +42,6 @@ interface Options {
     predictOnly?: boolean;
 }
 
-interface Config {
-    chains: Record<string, ChainConfig>;
-}
-
 interface GasOptions {
     gasLimit?: number;
     gasPrice?: string;
@@ -77,7 +73,6 @@ async function initializeTransceiver(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     try {
         await printWalletInfo(wallet);
@@ -113,7 +108,7 @@ async function initializeTransceiver(
         printInfo('AxelarTransceiver initialized successfully');
 
         // Read addresses from contract state after initialization
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -135,7 +130,6 @@ async function readInitializationState(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     try {
         const pauser = await transceiverContract.pauser();
@@ -153,7 +147,6 @@ async function readInitializationState(
 
         chain.contracts.AxelarTransceiver.pauser = pauser;
         chain.contracts.AxelarTransceiver.owner = owner;
-        saveConfig(config, options.env);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         printError('Failed to read initialization state:', errorMessage);
@@ -168,7 +161,6 @@ async function transferPauserCapability(
     pauserAddress: string,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
@@ -193,7 +185,7 @@ async function transferPauserCapability(
         const receipt = (await transferTx.wait()) as TransactionReceipt;
         printInfo('Pauser capability transferred successfully');
 
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('OwnableUnauthorizedAccount') || errorMessage.includes('CallerNotNttManager')) {
@@ -265,7 +257,7 @@ async function setAxelarChainId(
     }
 }
 
-async function processCommand(config: Config, chain: ChainConfig, action: string, options: Options): Promise<void> {
+async function processCommand(_axelarConfig, chain: ChainConfig, action: string, options: Options): Promise<void> {
     const { env, artifactPath, privateKey, args } = options;
 
     if (!artifactPath) {
@@ -288,7 +280,7 @@ async function processCommand(config: Config, chain: ChainConfig, action: string
 
     switch (action) {
         case 'initialize': {
-            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, config);
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
             break;
         }
 
@@ -297,7 +289,7 @@ async function processCommand(config: Config, chain: ChainConfig, action: string
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, config);
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
             break;
         }
 
@@ -314,13 +306,13 @@ async function processCommand(config: Config, chain: ChainConfig, action: string
         default:
             throw new Error(`Unknown action: ${action}`);
     }
-
-    saveConfig(config, env);
 }
 
 async function main(action: string, args: string[], options: Options): Promise<void[]> {
     options.args = args;
-    return mainProcessor(options, (config: Config, chain: ChainConfig, options: Options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (_axelarConfig, chain: ChainConfig, _chainsSnapshot, options: Options) =>
+        processCommand(_axelarConfig, chain, action, options),
+    );
 }
 
 if (require.main === module) {

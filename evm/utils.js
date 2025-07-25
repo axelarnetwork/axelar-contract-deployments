@@ -484,18 +484,18 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
     }
 };
 
-const getProxy = async (config, chain) => {
-    const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
+const getProxy = async (axelarConfig, chain) => {
+    const address = (await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
 };
 
-const getEVMBatch = async (config, chain, batchID = '') => {
-    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (axelarConfig, chain, batchID = '') => {
+    const batch = await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+const getAmplifierVerifiers = async (axelarConfig, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelarConfig, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -507,7 +507,7 @@ const getAmplifierVerifiers = async (config, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
+const getEVMAddresses = async (axelarConfig, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -515,8 +515,8 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(axelarConfig, chain)
+        : await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -751,6 +751,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
+
     let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
@@ -764,7 +766,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config, chain, options);
+            const result = await processCommand(config.axelar, chain, chainsSnapshot, options);
 
             if (result) {
                 results.push(result);
@@ -1002,7 +1004,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(config, chain, options) {
+async function getWeightedSigners(axelarConfig, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1019,7 +1021,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(axelarConfig, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {

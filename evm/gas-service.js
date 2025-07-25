@@ -71,22 +71,22 @@ async function getFeeData(api, sourceChain, destinationChain) {
     return feesCache[key];
 }
 
-async function getGasUpdates(config, env, chain, destinationChains) {
-    const api = config.axelar.axelarscanApi;
+async function getGasUpdates(axelarConfig, chain, chainsSnapshot, destinationChains) {
+    const api = axelarConfig.axelarscanApi;
 
     validateParameters({
         isNonEmptyStringArray: { destinationChains },
     });
 
     if (destinationChains.includes('all')) {
-        destinationChains = Object.keys(config.chains);
+        destinationChains = Object.keys(chainsSnapshot);
     }
 
-    const referenceChain = Object.values(config.chains)[0];
+    const referenceChain = Object.values(chainsSnapshot)[0];
 
     let gasUpdates = await Promise.all(
         destinationChains.map(async (destinationChain) => {
-            const destinationConfig = config.chains[destinationChain];
+            const destinationConfig = chainsSnapshot[destinationChain];
 
             if (!destinationConfig) {
                 printError(`Error: chain ${destinationChain} not found in config.`);
@@ -173,7 +173,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     // Adding lowercase chain names for case insensitivity
     gasUpdates.forEach((update) => {
         const { chain: destination, gasInfo } = update;
-        const { axelarId, onchainGasEstimate: { chainName } = {} } = config.chains[destination];
+        const { axelarId, onchainGasEstimate: { chainName } = {} } = chainsSnapshot[destination];
 
         update.chain = axelarId;
 
@@ -209,7 +209,7 @@ async function getGasUpdates(config, env, chain, destinationChains) {
     };
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
     const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress, yes } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
@@ -257,7 +257,7 @@ async function processCommand(config, chain, options) {
 
             const payload = options.payload || '0x';
 
-            const api = config.axelar.axelarscanApi;
+            const api = axelarConfig.axelarscanApi;
 
             printInfo(`Estimating cross-chain gas fee from ${chain.axelarId} to ${destinationChain}`);
 
@@ -290,7 +290,7 @@ async function processCommand(config, chain, options) {
                 isNonEmptyStringArray: { chains },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(config, env, chain, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelarConfig, chain, chainsSnapshot, chains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
