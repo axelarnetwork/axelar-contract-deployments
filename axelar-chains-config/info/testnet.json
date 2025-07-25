@@ -118,7 +118,9 @@
           "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
           "deploymentMethod": "create",
           "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
-          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059"
+          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059",
+          "pauser": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
         }
       },
       "explorer": {
