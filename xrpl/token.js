@@ -8,9 +8,11 @@ function tokenSymbolToCurrencyCode(tokenSymbol) {
     }
 
     const hexString = hex(tokenSymbol).toUpperCase();
-    
+
     if (hexString.length > 40) {
-        printError(`Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`);
+        printError(
+            `Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`,
+        );
         process.exit(1);
     }
     const paddedHex = hexString + '0'.repeat(40 - hexString.length);
@@ -34,7 +36,7 @@ function currencyCodeToTokenSymbol(currencyCode) {
     }
 
     const trimmedHex = currencyCode.replace(/0+$/, '');
-    
+
     if (trimmedHex === '') {
         return '';
     }
@@ -62,18 +64,15 @@ function processDecodeCommand(currencyCode) {
     return tokenSymbol;
 }
 
-
 /**
  * XRPL Token Symbol <-> Currency Code Converter
  * Implements XRPL currency code standards as documented at:
  * https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
-*/
+ */
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('token')
-        .description('Convert between token symbols and XRPL Currency Codes.');
+    program.name('token').description('Convert between token symbols and XRPL Currency Codes.');
 
     program
         .command('encode')
