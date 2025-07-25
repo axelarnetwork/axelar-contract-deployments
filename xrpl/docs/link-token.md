@@ -156,7 +156,7 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'
 
 **_NOTE:_**
 The following steps depend on the token manager type and underlying source token contract.
-If MintBurn model is selected for the token manager, it must be given mint permission by executing the following steps to transfer mintership.
+If MintBurn model is selected for the token manager on the source EVM chain, it must be given mint permission by executing the following steps to transfer mintership.
 
 ```bash
 ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
