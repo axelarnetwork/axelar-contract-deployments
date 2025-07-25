@@ -22,7 +22,7 @@ function tokenSymbolToCurrencyCode(tokenSymbol: string): string {
             `Token symbol "${tokenSymbol}" too long: hex representation (${tokenSymbolHex.length} chars) exceeds xrpl 40-character limit`,
         );
     }
-    const currencyCode = tokenSymbolHex + '0'.repeat(40 - hexString.length);
+    const currencyCode = tokenSymbolHex + '0'.repeat(40 - tokenSymbolHex.length);
 
     return currencyCode;
 }
@@ -45,22 +45,22 @@ function currencyCodeToTokenSymbol(currencyCode: string): string {
         throw new Error(`Invalid currency code: ${currencyCode} is not a valid hex string`);
     }
 
-    const trimmedHex = currencyCode.replace(/0+$/, '');
+    const trimmedcurrencyCode = currencyCode.replace(/0+$/, '');
 
-    if (trimmedHex.length % 2 !== 0 || trimmedHex.length < 8) {
+    if (trimmedcurrencyCode.length % 2 !== 0 || trimmedcurrencyCode.length < 8) {
         throw new Error(`Invalid currency code: ${currencyCode} has invalid hex length after trimming`);
     }
 
-    const buffer = Buffer.from(trimmedHex, 'hex');
+    const buffer = Buffer.from(trimmedcurrencyCode, 'hex');
     const tokenSymbol = buffer.toString('ascii');
 
-    if (result.length <= 3) {
+    if (tokenSymbol.length <= 3) {
         throw new Error(
-            `Invalid currency code: ${currencyCode} decodes to "${result}" which is ≤3 characters and would be ambiguous with standard currency codes`,
+            `Invalid currency code: ${currencyCode} decodes to "${tokenSymbol}" which is ≤3 characters and would be ambiguous with standard currency codes`,
         );
     }
 
-    return result;
+    return tokenSymbol;
 }
 
 function processTokenSymbolToCurrencyCode(tokenSymbol: string): string {
