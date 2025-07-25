@@ -1,6 +1,7 @@
 import { Command } from 'commander';
-import { hex } from './utils';
+
 import { printInfo } from '../common';
+import { hex } from './utils';
 
 const STANDARD_CURRENCY_CHARS = /^[A-Za-z0-9?!@#$%^&*<>(){}[\]|]+$/;
 
@@ -56,9 +57,11 @@ function currencyCodeToTokenSymbol(currencyCode: string): string {
 
     const buffer = Buffer.from(trimmedHex, 'hex');
     const result = buffer.toString('ascii');
-    
+
     if (result.length <= 3) {
-        throw new Error(`Invalid currency code: ${currencyCode} decodes to "${result}" which is ≤3 characters and would be ambiguous with standard currency codes`);
+        throw new Error(
+            `Invalid currency code: ${currencyCode} decodes to "${result}" which is ≤3 characters and would be ambiguous with standard currency codes`,
+        );
     }
 
     return result;
@@ -107,9 +110,4 @@ if (require.main === module) {
     program.parse();
 }
 
-export {
-    tokenSymbolToCurrencyCode,
-    currencyCodeToTokenSymbol,
-    processTokenSymbolToCurrencyCode,
-    processCurrencyCodeToTokenSymbol,
-};
+export { tokenSymbolToCurrencyCode, currencyCodeToTokenSymbol, processTokenSymbolToCurrencyCode, processCurrencyCodeToTokenSymbol };
