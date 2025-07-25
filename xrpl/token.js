@@ -8,10 +8,12 @@ function tokenSymbolToCurrencyCode(tokenSymbol) {
     }
 
     const hexString = hex(tokenSymbol).toUpperCase();
-    // Ensure exactly 40 characters (160-bit) as per XRPL standard
-    const paddedHex = hexString.length > 40 
-        ? hexString.substring(0, 40) 
-        : hexString + '0'.repeat(40 - hexString.length);
+    
+    if (hexString.length > 40) {
+        printError(`Token symbol "${tokenSymbol}" too long: hex representation (${hexString.length} chars) exceeds xrpl 40-character limit`);
+        process.exit(1);
+    }
+    const paddedHex = hexString + '0'.repeat(40 - hexString.length);
 
     return paddedHex;
 }
