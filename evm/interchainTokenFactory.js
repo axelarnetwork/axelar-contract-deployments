@@ -25,7 +25,7 @@ const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -215,7 +215,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidChain(config.chains, destinationChain);
+            isValidChain(chainsSnapshot, destinationChain);
 
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,

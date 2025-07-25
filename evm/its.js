@@ -70,8 +70,8 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function getTrustedChains(config, interchainTokenService) {
-    const chains = Object.values(config.chains)
+async function getTrustedChains(chainsSnapshot, interchainTokenService) {
+    const chains = Object.values(chainsSnapshot)
         .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
         .map((chain) => chain.axelarId);
 
@@ -110,7 +110,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(config, chain, action, options) {
+async function processCommand(axelarConfig, chain, chainsSnapshot, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -328,7 +328,7 @@ async function processCommand(config, chain, action, options) {
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
-            const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+            const itsDestinationAddress = encodeITSDestination(chainsSnapshot, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
             printInfo('Encoded ITS destination address', itsDestinationAddress);
 
@@ -504,7 +504,7 @@ async function processCommand(config, chain, action, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
-            const trustedChains = await getTrustedChains(config, interchainTokenService);
+            const trustedChains = await getTrustedChains(chainsSnapshot, interchainTokenService);
             printInfo('Trusted chains', trustedChains);
 
             const gateway = await interchainTokenService.gateway();
@@ -579,7 +579,7 @@ async function processCommand(config, chain, action, options) {
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
-            isValidChain(config.chains, destinationChain);
+            isValidChain(chainsSnapshot, destinationChain);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
@@ -622,7 +622,9 @@ async function processCommand(config, chain, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (axelarConfig, chain, chainsSnapshot, options) =>
+        processCommand(axelarConfig, chain, chainsSnapshot, action, options),
+    );
 }
 
 if (require.main === module) {

@@ -22,7 +22,7 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChains } = require('./its');
 
-async function verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options) {
+async function verifyConsensusGateway(axelarConfig, chain, contractConfig, env, wallet, verifyOptions, options) {
     const contractJson = getContractJSON('AxelarGateway');
     const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
 
@@ -31,7 +31,7 @@ async function verifyConsensusGateway(config, chain, contractConfig, env, wallet
     const auth = await gateway.authModule();
     const tokenDeployer = await gateway.tokenDeployer();
 
-    const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
+    const { addresses, weights, threshold } = await getEVMAddresses(axelarConfig, chain.axelarId, {
         keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
     });
     const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
@@ -72,7 +72,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
     );
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
     const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
@@ -153,7 +153,7 @@ async function processCommand(config, chain, options) {
             if (contractConfig.connectionType === 'amplifier') {
                 verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options);
             } else if (contractConfig.connectionType === 'consensus') {
-                verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options);
+                verifyConsensusGateway(axelarConfig, chain, contractConfig, env, wallet, verifyOptions, options);
             } else {
                 throw new Error(`Incompatible Gateway connection type`);
             }
@@ -228,8 +228,8 @@ async function processCommand(config, chain, options) {
             const tokenManager = await its.tokenManager();
             const tokenHandler = await its.tokenHandler();
 
-            const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-            const trustedChains = await getTrustedChains(config, its);
+            const itsHubAddress = axelarConfig.contracts?.InterchainTokenService?.address;
+            const trustedChains = await getTrustedChains(chainsSnapshot, its);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]'],
