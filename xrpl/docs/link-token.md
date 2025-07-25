@@ -66,7 +66,7 @@ RPC_URL= # Axelar RPC Node endpoint
 AXELAR_CHAIN_ID= # Environment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
 XRPL_PROVER_ADMIN= # Operations against the XRPL_GATEWAY are permissioned and must used the xrpl prover key
 KEYRING_NAME=
-ARGS=(--from XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
+ARGS=(--from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
 ```
 
 ## Deployment Steps
