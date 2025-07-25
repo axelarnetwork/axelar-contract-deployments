@@ -476,6 +476,14 @@ Deploys a coin on Sui, registers it as custom coin and gives its treasury capabi
 ts-node sui/its give-unlinked-coin [options] <symbol> <name> <decimals>
 ```
 
+### Remove Unlinked Coin
+
+Removes a coin from ITS and returns its TreasuryCap to the caller. Caller must own the coin's TreasuryCapReclaimer.
+
+```bash
+ts-node sui/its remove-unlinked-coin [options] <symbol>
+```
+
 ### Link Coin
 
 Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
