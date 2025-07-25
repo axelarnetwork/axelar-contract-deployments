@@ -99,7 +99,7 @@
           "implementation": "0xe833E9662cb0A811AA3b1746280AB43507B61946",
           "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66"
         },
-        "AxelarTransceiver": {
+        "AxelarTransceiver-old": {
           "salt": "Transceiver 1.1.0",
           "deployer": "0xc28a80699B5914a29465971E6ac5a40370C4f29b",
           "implementation": "0xcc6e5c994de73e8a115263b1b512e29b2026df55",
@@ -108,6 +108,16 @@
           "wstETH token": "0xB82381A3fBD3FaFA77B3a7bE693342618240067b",
           "NttManager": "0x8B715EAf61A7DdF61C67d5D46687c796D1f47146",
           "wormholeChainId": 10002
+        },
+        "AxelarTransceiver": {
+          "gmpManager": "0xDaeE3A6B4196E3e46015b364F1DAe54CEAE74A91",
+          "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
+          "implementation": "0xaEd2ff6B22fD2207Fb5D640e7ea5d1552F5D28CF",
+          "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "deploymentMethod": "create",
+          "codehash": "0x89bc1dea47364a5f2d3b0d000b12f005731dc6978cb3bc14a8425335e4f5c3e1"
         }
       },
       "explorer": {
