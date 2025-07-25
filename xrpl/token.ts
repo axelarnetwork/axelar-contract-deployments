@@ -56,7 +56,7 @@ function currencyCodeToTokenSymbol(currencyCode: string): string {
     }
 
     const buffer = Buffer.from(trimmedHex, 'hex');
-    const result = buffer.toString('ascii');
+    const tokenSymbol = buffer.toString('ascii');
 
     if (result.length <= 3) {
         throw new Error(
