@@ -455,16 +455,16 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
     // OwnerCap
     const ownerErr = `Cannot find owner of specified contract: ${packageName}`;
     if (!contractConfig.objects) throw new Error(ownerErr);
-    const ownerCap = contractConfig.objects.OwnerCap
+    const ownerCap = contractConfig.objects.OwnerCap;
     if (!ownerCap) throw new Error(ownerErr);
 
     const builder = new TxBuilder(client);
 
     switch (packageName) {
-        case "InterchainTokenService": {
-            const InterchainTokenService = contractConfig.objects.InterchainTokenService
+        case 'InterchainTokenService': {
+            const InterchainTokenService = contractConfig.objects.InterchainTokenService;
 
-            if (typeof InterchainTokenService !== "string") throw new Error(`Cannot find object of specified contract: ${packageName}`);
+            if (typeof InterchainTokenService !== 'string') throw new Error(`Cannot find object of specified contract: ${packageName}`);
 
             await builder.moveCall({
                 target: `${contractConfig.address}::interchain_token_service::migrate`,
