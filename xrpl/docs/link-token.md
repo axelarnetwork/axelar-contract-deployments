@@ -60,12 +60,6 @@ GAS_FEE=  # Estimate using gmp api
 **API Reference:** Estimate using gmp [api](https://docs.axelarscan.io/gmp#estimateITSFee)
 
 
-Environment Specific Values From Reference Table
-```bash
-
-```
-
-
 **_NOTE:_**
 `axelard` commands require additional parameters for preparing, signing and broadcasting transactions. 
 Reference guide can be accessed [here](https://docs.axelar.dev/learn/cli/) for supported parameters.
@@ -74,7 +68,7 @@ RPC_URL= # Axelar RPC Node endpoint
 AXELAR_CHAIN_ID= # Environment specific Axelar chain id (axelar-dojo-1, axelar-testnet-lisbon-3)
 XRPL_PROVER_ADMIN= # Operations against the XRPL_GATEWAY are permissioned and must used the xrpl prover key
 KEYRING_NAME=
-ARGS=(--from XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
+ARGS=(--from $XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELAR_CHAIN_ID --gas auto --gas-adjustment 1.5 --node $RPC_URL)
 ```
 
 ## Deployment Steps
