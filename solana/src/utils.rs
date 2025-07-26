@@ -14,7 +14,6 @@ use solana_sdk::account_utils::StateMut;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::Instruction;
-use solana_sdk::keccak::hashv;
 use solana_sdk::nonce::state::Versions;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signature;
@@ -39,12 +38,11 @@ pub(crate) fn create_compute_budget_instructions(
 }
 
 pub(crate) const ADDRESS_KEY: &str = "address";
-pub(crate) const AXELAR_ID_KEY: &str = "axelarId";
 pub(crate) const AXELAR_KEY: &str = "axelar";
 pub(crate) const CHAINS_KEY: &str = "chains";
-pub(crate) const CHAIN_ID_KEY: &str = "chainId";
 pub(crate) const CHAIN_TYPE_KEY: &str = "chainType";
 pub(crate) const CONFIG_ACCOUNT_KEY: &str = "configAccount";
+pub(crate) const CONNECTION_TYPE_KEY: &str = "connectionType";
 pub(crate) const CONTRACTS_KEY: &str = "contracts";
 pub(crate) const DOMAIN_SEPARATOR_KEY: &str = "domainSeparator";
 pub(crate) const GAS_SERVICE_KEY: &str = "AxelarGasService";
@@ -59,8 +57,6 @@ pub(crate) const MINIMUM_ROTATION_DELAY_KEY: &str = "minimumRotationDelay";
 pub(crate) const MULTISIG_PROVER_KEY: &str = "MultisigProver";
 pub(crate) const OPERATOR_KEY: &str = "operator";
 pub(crate) const PREVIOUS_SIGNERS_RETENTION_KEY: &str = "previousSignersRetention";
-pub(crate) const ROUTER_KEY: &str = "Router";
-pub(crate) const SOLANA_CHAIN_KEY: &str = "solana";
 pub(crate) const UPGRADE_AUTHORITY_KEY: &str = "upgradeAuthority";
 
 pub(crate) fn read_json_file<T: DeserializeOwned>(file: &File) -> eyre::Result<T> {
@@ -208,23 +204,22 @@ pub(crate) fn print_transaction_result(
 pub(crate) fn domain_separator(
     chains_info: &serde_json::Value,
     network_type: NetworkType,
+    chain_id: &str,
 ) -> eyre::Result<[u8; 32]> {
     if network_type == NetworkType::Local {
         return Ok([0; 32]);
     }
 
-    let axelar_id = String::deserialize(&chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][AXELAR_ID_KEY])?;
-    let router_address = String::deserialize(
-        &chains_info[CHAINS_KEY][AXELAR_KEY][CONTRACTS_KEY][ROUTER_KEY][ADDRESS_KEY],
+    let from_multisig_prover = String::deserialize(
+        &chains_info[AXELAR_KEY][CONTRACTS_KEY][MULTISIG_PROVER_KEY][chain_id]
+            [DOMAIN_SEPARATOR_KEY],
     )?;
-    let chain_id = String::deserialize(&chains_info[CHAINS_KEY][AXELAR_KEY][CHAIN_ID_KEY])?;
 
-    Ok(hashv(&[
-        axelar_id.as_bytes(),
-        router_address.as_bytes(),
-        chain_id.as_bytes(),
-    ])
-    .to_bytes())
+    let domain_separator: [u8; 32] = hex::decode(from_multisig_prover.trim_start_matches("0x"))?
+        .try_into()
+        .expect("invalid domain separator");
+
+    Ok(domain_separator)
 }
 
 pub(crate) fn parse_secret_key(raw: &str) -> eyre::Result<SecretKey> {

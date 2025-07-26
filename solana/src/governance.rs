@@ -8,7 +8,7 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
-use crate::utils::SOLANA_CHAIN_KEY;
+use crate::utils::OPERATOR_KEY;
 use crate::utils::{
     fetch_latest_blockhash, parse_account_meta_string, read_json_file_from_path,
     write_json_to_file_path, ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY,
@@ -31,19 +31,19 @@ pub(crate) enum Commands {
 #[derive(Args, Debug)]
 pub(crate) struct InitArgs {
     /// The name of the chain in charge of the governance
-    #[clap(short, long)]
+    #[clap(long)]
     governance_chain: String,
 
     /// The address of the governance contract on the governance chain
-    #[clap(short, long)]
+    #[clap(long)]
     governance_address: String,
 
     /// Minimum value (in seconds) for a proposal ETA
-    #[clap(short, long)]
+    #[clap(long)]
     minimum_proposal_eta_delay: u32,
 
     /// The account to receive the operator role on the Interchain Governance program on Solana
-    #[clap(short, long)]
+    #[clap(long)]
     operator: Pubkey,
 }
 
@@ -169,13 +169,14 @@ fn init(
     );
 
     let mut chains_info: serde_json::Value = read_json_file_from_path(&config.chains_info_file)?;
-    chains_info[CHAINS_KEY][SOLANA_CHAIN_KEY][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
+    chains_info[CHAINS_KEY][&config.chain_id][CONTRACTS_KEY][GOVERNANCE_KEY] = serde_json::json!({
         ADDRESS_KEY: axelar_solana_governance::id().to_string(),
         CONFIG_ACCOUNT_KEY: config_pda.to_string(),
-        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
         GOVERNANCE_ADDRESS_KEY: init_args.governance_address,
         GOVERNANCE_CHAIN_KEY: init_args.governance_chain,
         MINIMUM_PROPOSAL_ETA_DELAY_KEY: init_args.minimum_proposal_eta_delay,
+        OPERATOR_KEY: init_args.operator.to_string(),
+        UPGRADE_AUTHORITY_KEY: fee_payer.to_string(),
     });
 
     write_json_to_file_path(&chains_info, &config.chains_info_file)?;
