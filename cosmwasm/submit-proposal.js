@@ -178,7 +178,7 @@ const execute = async (client, wallet, config, options) => {
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
-    const itsAbiTranslator = options.translatorAddress || config.axelar?.contracts?.ItsAbiTranslator?.address;
+    const itsAbiTranslator = options.itsTranslatorAddress || config.axelar?.contracts?.ItsAbiTranslator?.address;
     
     if (!itsAbiTranslator) {
         throw new Error('ItsAbiTranslator address is required for registerItsChain');
@@ -338,7 +338,7 @@ const programHandler = () => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true, translatorAddress: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true, itsTranslatorAddress: true });
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')

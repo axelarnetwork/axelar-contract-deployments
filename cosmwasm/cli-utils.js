@@ -82,8 +82,8 @@ const addAmplifierOptions = (program, options) => {
         program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
     }
 
-    if (options.translatorAddress) {
-        program.addOption(new Option('--translator-address <translatorAddress>', 'override ItsAbiTranslator address from config'));
+    if (options.itsTranslatorAddress) {
+        program.addOption(new Option('--its-translator-address <itsTranslatorAddress>', 'address for the message translation contract associated with the chain being registered on ITS Hub'));
     }
 };
 
