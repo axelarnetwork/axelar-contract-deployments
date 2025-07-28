@@ -357,7 +357,7 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     // Return TreasuryCap to coin deployer (TreasuryCapReclaimer owner)
     txBuilder.tx.transferObjects([treasuryCap], walletAddress);
 
-    await broadcastFromTxBuilder(txBuilder, keypair, `Remove TreasuryCap (${symbol})`, options);
+    await broadcastFromTxBuilder(txBuilder, keypair, `Remove Unlinked Coin (${symbol})`, options);
 
     // Remove TreasuryCapReclaimer as it's been deleted
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
