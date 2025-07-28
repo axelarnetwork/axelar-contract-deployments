@@ -1,0 +1,30 @@
+name: Update config
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  reusable-update-config:
+    if: github.event.pull_request.merged == true
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - network: mainnet
+            files: axelar-chains-config/info/mainnet.json
+          - network: testnet
+            files: axelar-chains-config/info/testnet.json
+          - network: stagenet
+            files: axelar-chains-config/info/stagenet.json
+          - network: devnet-amplifier
+            files: axelar-chains-config/info/devnet-amplifier.json
+    uses: ./.github/workflows/reusable-update-config.yaml
+    with:
+      source_repo: axelar-contract-deployments
+      network: ${{ matrix.network }}
+      files: ${{ matrix.files }}
+    secrets:
+      SOURCE_REPO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CHAINS_REPO_CICD_TOKEN: ${{ secrets.CHAINS_REPO_CICD_TOKEN }}
+      CONFIG_REPO: ${{ secrets.CONFIG_REPO }}
