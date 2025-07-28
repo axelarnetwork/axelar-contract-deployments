@@ -92,7 +92,7 @@ const isString = (arg) => {
 
 const isNonArrayObject = (arg) => {
     return typeof arg === 'object' && Array.isArray(arg) === false;
-}
+};
 
 const isNonEmptyString = (arg) => {
     return isString(arg) && arg !== '';

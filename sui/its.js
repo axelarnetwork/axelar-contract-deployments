@@ -242,7 +242,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const symbol = args;
     validateParameters({
         isNonEmptyString: { symbol },
-        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     });
 
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
@@ -339,7 +339,7 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     const symbol = args;
     validateParameters({
         isNonEmptyString: { symbol },
-        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     });
 
     const coin = contracts[symbol.toUpperCase()];
@@ -472,7 +472,7 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
     const symbol = args;
     validateParameters({
         isNonEmptyString: { symbol },
-        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     });
 
     const coin = contracts[symbol.toUpperCase()];
@@ -507,7 +507,7 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     const symbol = args;
     validateParameters({
         isNonEmptyString: { symbol },
-        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
     });
 
     const coin = contracts[symbol.toUpperCase()];
