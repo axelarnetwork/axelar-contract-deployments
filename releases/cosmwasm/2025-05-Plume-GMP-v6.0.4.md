@@ -3,14 +3,14 @@
 |                | **Owner**                          |
 | -------------- | ---------------------------------- |
 | **Created By** | @AttissNgo <attiss@interoplabs.io> |
-| **Deployment** |                                    |
+| **Deployment** | @AttissNgo <attiss@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
 | **Devnet Amplifier** | Completed             | 2025-04-30 |
-| **Stagenet**         | -                     | TBD        |
-| **Testnet**          | -                     | TBD        |
-| **Mainnet**          | -                     | TBD        |
+| **Stagenet**         | Completed             | 2025-05-06 |
+| **Testnet**          | Completed             | 2025-05-27 |
+| **Mainnet**          | Completed             | 2025-06-10 |
 
 - [Amplifier Releases](https://github.com/axelarnetwork/axelar-amplifier/releases)
 - [VotingVerifier v1.1.0](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/voting-verifier-v1.1.0)
@@ -28,12 +28,12 @@ Predict the [External Gateway](../evm/2025-05-Plume-GMP-v6.0.4.md) address, as `
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
 | -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
-| **Stagenet**         | `300`                  | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
+| **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 | **Mainnet**          | `86400`                | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
 
 ```bash
-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
+ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDelay [minimumRotationDelay] --predictOnly
 ```
 
 ## Deployment
@@ -116,19 +116,19 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 1. Instantiate `VotingVerifier`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 2. Instantiate `Gateway`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 3. Instantiate `MultisigProver`
 
 ```bash
-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 4. Set environment variables
@@ -164,10 +164,14 @@ EPOCH_DURATION=[epoch duration according to the environment]
 - `--runAs $RUN_AS_ACCOUNT` is only required for devnet-amplifier. Do not use `--runAs` for stagenet, testnet, or mainnet.
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 
+### Create proposals
+
+Create all proposals so that integration is not blocked by voting. Include [ITS Hub Registration](../evm/2025-05-Plume-ITS-v2.1.0.md) if possible.
+
 5. Register Gateway at the Router
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Router \
   -t "Register Gateway for $CHAIN" \
   -d "Register Gateway address for $CHAIN at Router contract" \
@@ -197,41 +201,10 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
 }
 ```
 
-6. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
-
-| Network              | `http_url`                    |
-| -------------------- | ----------------------------- |
-| **Devnet-amplifier** | https://testnet-rpc.plume.org |
-| **Stagenet**         | https://testnet-rpc.plume.org |
-| **Testnet**          | https://testnet-rpc.plume.org |
-| **Mainnet**          | TBD                           |
+6. Register prover contract on coordinator
 
 ```bash
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmMsgVerifier"
-
-[[handlers]]
-chain_finalization="RPCFinalizedBlock"
-chain_name="$CHAIN"
-chain_rpc_url=[http url]
-cosmwasm_contract="$VOTING_VERIFIER"
-type="EvmVerifierSetVerifier"
-```
-
-7. Update ampd with the `$CHAIN` chain configuration.
-
-```bash
-ampd register-chain-support "[service name]" $CHAIN
-```
-
-8. Register prover contract on coordinator
-
-```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Coordinator \
   -t "Register Multisig Prover for $CHAIN" \
   -d "Register Multisig Prover address for $CHAIN at Coordinator contract" \
@@ -245,10 +218,10 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-9. Authorize `$CHAIN` Multisig prover on Multisig
+7. Authorize `$CHAIN` Multisig prover on Multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Multisig \
   -t "Authorize Multisig Prover for $CHAIN" \
   -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
@@ -271,7 +244,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 }
 ```
 
-10. Create reward pool for voting verifier
+8. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -280,10 +253,10 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
 | **Testnet**          | `600`            | `[\"7\", \"10\"]`         | `100`               |
-| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `TBD`               |
+| **Mainnet**          | `14845`          | `[\"8\", \"10\"]`         | `1100000000`        |
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in $CHAIN voting verifier" \
   -d "Create pool for $CHAIN in $CHAIN voting verifier" \
@@ -304,10 +277,10 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-11. Create reward pool for multisig
+9. Create reward pool for multisig
 
 ```bash
-node cosmwasm/submit-proposal.js execute \
+ts-node cosmwasm/submit-proposal.js execute \
   -c Rewards \
   -t "Create pool for $CHAIN in axelar multisig" \
   -d "Create pool for $CHAIN in axelar multisig" \
@@ -328,7 +301,7 @@ node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-12. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+10. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
     Add Rewards:
 
 ```bash
@@ -339,7 +312,43 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 Check reward pool to confirm funding worked:
 
 ```bash
-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards -n $CHAIN
+```
+
+11. Update ampd with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+
+| Network              | `http_url`                    |
+| -------------------- | ----------------------------- |
+| **Devnet-amplifier** | https://testnet-rpc.plume.org |
+| **Stagenet**         | https://testnet-rpc.plume.org |
+| **Testnet**          | https://testnet-rpc.plume.org |
+| **Mainnet**          | https://rpc.plume.org         |
+
+```bash
+[[handlers]]
+chain_name="$CHAIN"
+cosmwasm_contract="$MULTISIG"
+type="MultisigSigner"
+
+[[handlers]]
+chain_finalization="RPCFinalizedBlock"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmMsgVerifier"
+
+[[handlers]]
+chain_finalization="RPCFinalizedBlock"
+chain_name="$CHAIN"
+chain_rpc_url=[http url]
+cosmwasm_contract="$VOTING_VERIFIER"
+type="EvmVerifierSetVerifier"
+```
+
+12. Update ampd with the `$CHAIN` chain configuration.
+
+```bash
+ampd register-chain-support "[service name]" $CHAIN
 ```
 
 13. Create genesis verifier set
@@ -350,8 +359,8 @@ Note that this step can only be run once a sufficient number of verifiers have r
 | -------------------- | ------------------- |
 | **Devnet-amplifier** | 3                   |
 | **Stagenet**         | 3                   |
-| **Testnet**          | 21                  |
-| **Mainnet**          | 25                  |
+| **Testnet**          | 5                   |
+| **Mainnet**          | 5                   |
 
 ```bash
 axelard tx wasm execute $MULTISIG_PROVER '"update_verifier_set"' --from $PROVER_ADMIN --gas auto --gas-adjustment 1.2

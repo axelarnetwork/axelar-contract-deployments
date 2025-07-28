@@ -20,7 +20,7 @@ const {
     verifyContractByName,
 } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
-const { getTrustedChainsAndAddresses } = require('./its');
+const { getTrustedChains } = require('./its');
 
 async function verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options) {
     const contractJson = getContractJSON('AxelarGateway');
@@ -37,10 +37,10 @@ async function verifyConsensusGateway(config, chain, contractConfig, env, wallet
     const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
     const setupParams = defaultAbiCoder.encode(['address', 'address', 'bytes'], [contractConfig.deployer, contractConfig.deployer, '0x']);
 
-    await verifyContract(env, chain.name, auth, [authParams], verifyOptions);
-    await verifyContract(env, chain.name, tokenDeployer, [], verifyOptions);
-    await verifyContract(env, chain.name, implementation, [auth, tokenDeployer], verifyOptions);
-    await verifyContract(env, chain.name, contractConfig.address, [implementation, setupParams], verifyOptions);
+    await verifyContract(env, chain.axelarId, auth, [authParams], verifyOptions);
+    await verifyContract(env, chain.axelarId, tokenDeployer, [], verifyOptions);
+    await verifyContract(env, chain.axelarId, implementation, [auth, tokenDeployer], verifyOptions);
+    await verifyContract(env, chain.axelarId, contractConfig.address, [implementation, setupParams], verifyOptions);
 }
 
 async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options) {
@@ -55,7 +55,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
 
     verifyContractByName(
         env,
-        chain.name,
+        chain.axelarId,
         'AxelarAmplifierGateway',
         implementation,
         [previousSignersRetention, domainSeparator, minimumRotationDelay],
@@ -64,7 +64,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
 
     verifyContractByName(
         env,
-        chain.name,
+        chain.axelarId,
         'AxelarAmplifierGatewayProxy',
         amplifierGateway.address,
         contractConfig.proxyDeploymentArgs,
@@ -227,13 +227,13 @@ async function processCommand(config, chain, options) {
 
             const tokenManager = await its.tokenManager();
             const tokenHandler = await its.tokenHandler();
-            const gatewayCaller = await its.gatewayCaller();
 
-            const [trustedChains, trustedAddresses] = await getTrustedChainsAndAddresses(config, its);
+            const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+            const trustedChains = await getTrustedChains(config, its);
 
             const setupParams = defaultAbiCoder.encode(
-                ['address', 'string', 'string[]', 'string[]'],
-                [contractConfig.deployer, chain.axelarId, trustedChains, trustedAddresses],
+                ['address', 'string', 'string[]'],
+                [contractConfig.deployer, chain.axelarId, trustedChains],
             );
 
             await verifyContract(env, chain.axelarId, tokenManagerDeployer, [], verifyOptions);
@@ -244,7 +244,6 @@ async function processCommand(config, chain, options) {
             await verifyContract(
                 env,
                 chain.axelarId,
-                gatewayCaller,
                 [chain.contracts.AxelarGateway.address, chain.contracts.AxelarGasService.address],
                 verifyOptions,
             );
@@ -259,9 +258,9 @@ async function processCommand(config, chain, options) {
                     chain.contracts.AxelarGasService.address,
                     interchainTokenFactory,
                     chain.axelarId,
+                    itsHubAddress,
                     tokenManager,
                     tokenHandler,
-                    gatewayCaller,
                 ],
                 verifyOptions,
             );
