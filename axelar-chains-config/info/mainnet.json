@@ -3743,7 +3743,11 @@
       },
       "ItsAbiTranslator": {
         "storeCodeProposalId": "365",
-        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758"
+        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758",
+        "lastUploadedCodeId": 39,
+        "codeId": 39,
+        "instantiateProposalId": "366",
+        "address": ""
       }
     }
   }
