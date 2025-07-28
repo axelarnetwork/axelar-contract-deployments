@@ -91,6 +91,7 @@ const isString = (arg) => {
 };
 
 const isNonArrayObject = (arg) => {
+    if (!arg) return false;
     return typeof arg === 'object' && Array.isArray(arg) === false;
 };
 
