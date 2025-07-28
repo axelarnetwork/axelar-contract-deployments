@@ -23,6 +23,14 @@ pub enum GasServiceInstruction {
     /// 3. `[]` The `system_program` account.
     Initialize,
 
+    /// Transfer operatorship of the gas service to a new operator.
+    ///
+    /// Accounts expected:
+    /// 0. `[signer, writable]` The current `operator` account
+    /// 1. `[]` The new `operator` account to transfer operatorship to
+    /// 2. `[writable]` The `config_pda` account
+    TransferOperatorship,
+
     /// Use SPL tokens to pay for gas-related operations.
     SplToken(PayWithSplToken),
 
@@ -169,6 +177,30 @@ pub fn init_config(payer: &Pubkey, operator: &Pubkey) -> Result<Instruction, Pro
         AccountMeta::new_readonly(*operator, true),
         AccountMeta::new(config_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
+    ];
+
+    Ok(Instruction {
+        program_id: crate::ID,
+        accounts,
+        data: ix_data,
+    })
+}
+
+/// Builds an instruction to transfer operatorship of the gas service.
+///
+/// # Errors
+/// - if the instruction could not be serialized
+pub fn transfer_operatorship(
+    current_operator: &Pubkey,
+    new_operator: &Pubkey,
+) -> Result<Instruction, ProgramError> {
+    let ix_data = borsh::to_vec(&GasServiceInstruction::TransferOperatorship)?;
+    let (config_pda, _bump) = crate::get_config_pda();
+
+    let accounts = vec![
+        AccountMeta::new(*current_operator, true),
+        AccountMeta::new_readonly(*new_operator, false),
+        AccountMeta::new(config_pda, false),
     ];
 
     Ok(Instruction {

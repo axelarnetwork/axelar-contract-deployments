@@ -14,11 +14,13 @@ use self::{
         add_native_gas, collect_fees_native, process_pay_native_for_contract_call, refund_native,
     },
     spl::{add_spl_gas, collect_fees_spl, process_pay_spl_for_contract_call, refund_spl},
+    transfer_operatorship::process_transfer_operatorship,
 };
 
 mod initialize;
 mod native;
 mod spl;
+mod transfer_operatorship;
 
 /// Processes an instruction.
 ///
@@ -35,6 +37,9 @@ pub fn process_instruction(
 
     match instruction {
         GasServiceInstruction::Initialize => process_initialize_config(program_id, accounts),
+        GasServiceInstruction::TransferOperatorship => {
+            process_transfer_operatorship(program_id, accounts)
+        }
         GasServiceInstruction::SplToken(ix) => match ix {
             PayWithSplToken::ForContractCall {
                 destination_chain,
