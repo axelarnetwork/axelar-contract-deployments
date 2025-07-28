@@ -655,7 +655,7 @@
         },
         "AxelarGasService": {
           "address": "gasd4em72NAm7faq5dvjN5GkXE59dUkTThWmYDX95bK",
-          "configAccount": "GQ3Yde4evoph1qnogmb8VASZgqzXUxbVKx4oxnNbcZK9"
+          "configAccount": "GQ3Yde4evoph1qnogmb8VASZgqzXUxbVKx4oxnNbcZK9",
           "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
           "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
         },
@@ -665,7 +665,7 @@
           "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
           "governanceChain": "Axelarnet",
           "minimumTimeDelay": 3600,
-          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k"
+          "operator": "gopDbjxoihakmMHEbNqyh32Fk3az3Pcuv9jeEhDTr3k",
           "upgradeAuthority": "upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw"
         },
         "InterchainTokenService": {
