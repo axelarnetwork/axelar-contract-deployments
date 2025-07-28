@@ -83,7 +83,12 @@ const addAmplifierOptions = (program, options) => {
     }
 
     if (options.itsTranslatorAddress) {
-        program.addOption(new Option('--its-translator-address <itsTranslatorAddress>', 'address for the message translation contract associated with the chain being registered on ITS Hub'));
+        program.addOption(
+            new Option(
+                '--its-translator-address <itsTranslatorAddress>',
+                'address for the message translation contract associated with the chain being registered on ITS Hub',
+            ),
+        );
     }
 };
 
