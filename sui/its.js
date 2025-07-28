@@ -1,16 +1,14 @@
-const { Option, Command } = require('commander');
+const { Command } = require('commander');
 const { STD_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
-    createSaltAddress,
     deployTokenFromInfo,
     getWallet,
     newCoinManagementLocked,
     printWalletInfo,
-    registerCustomCoinUtil,
     saveGeneratedTx,
     saveTokenDeployment,
 } = require('./utils');
@@ -201,24 +199,6 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 }
 
-// register_custom_coin
-async function registerCustomCoin(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
-    const walletAddress = keypair.toSuiAddress();
-    const deployConfig = { client, keypair, options, walletAddress };
-    const [symbol, name, decimals] = args;
-
-    // Deploy token on Sui
-    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
-
-    // Register deployed token (custom)
-    const [tokenId, _channelId, _salt] = await registerCustomCoinUtil(deployConfig, itsConfig, AxelarGateway, symbol, metadata, tokenType);
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
-
-    // Save the deployed token
-    saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
-}
-
 // migrate_coin_metadata
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
@@ -239,104 +219,6 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     });
 
     await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
-}
-
-// link_coin
-async function linkCoin(keypair, client, config, contracts, args, options) {
-    const { InterchainTokenService: itsConfig, AxelarGateway } = contracts;
-    const { InterchainTokenService } = itsConfig.objects;
-    const { Gateway } = AxelarGateway.objects;
-    const [symbol, name, decimals, destinationChain, destinationAddress] = args;
-
-    const walletAddress = keypair.toSuiAddress();
-    const deployConfig = { client, keypair, options, walletAddress };
-
-    // Deploy source token on Sui (Token A)
-    const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
-
-    // User calls registerTokenMetadata on ITS Chain A to submit a RegisterTokenMetadata msg type to
-    // ITS Hub to register token data in ITS hub.
-    let txBuilder = new TxBuilder(client);
-
-    let messageTicket = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-        arguments: [InterchainTokenService, metadata],
-        typeArguments: [tokenType],
-    });
-
-    await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::send_message`,
-        arguments: [Gateway, messageTicket],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Register Token Metadata (${symbol})`, options);
-
-    // User calls registerCustomToken on ITS Chain A to register the token on the source chain.
-    // A token manager is deployed on the source chain corresponding to the tokenId.
-    const [tokenId, channelId, saltAddress] = await registerCustomCoinUtil(
-        deployConfig,
-        itsConfig,
-        AxelarGateway,
-        symbol,
-        metadata,
-        tokenType,
-    );
-
-    if (!tokenId) throw new Error(`error resolving token id from registration tx, got ${tokenId}`);
-    if (!options.channel && !channelId) throw new Error(`error resolving channel id from registration tx, got ${channelId}`);
-
-    const channel = options.channel ? options.channel : channelId;
-
-    // User then calls linkToken on ITS Chain A with the destination token address for Chain B.
-    // This submits a LinkToken msg type to ITS Hub.
-    txBuilder = new TxBuilder(client);
-
-    const tokenManagerType = await txBuilder.moveCall({
-        target: `${itsConfig.address}::token_manager_type::lock_unlock`,
-    });
-
-    // Salt
-    const salt = await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::bytes32::new`,
-        arguments: [saltAddress],
-    });
-
-    messageTicket = await txBuilder.moveCall({
-        target: `${itsConfig.address}::interchain_token_service::link_coin`,
-        arguments: [
-            InterchainTokenService,
-            channel,
-            salt,
-            destinationChain, // This assumes the chain is already added as a trusted chain
-            bcs.string().serialize(destinationAddress).toBytes(),
-            tokenManagerType,
-            bcs.string().serialize('link params').toBytes(), // TODO: what value should go here?
-        ],
-    });
-
-    await txBuilder.moveCall({
-        target: `${AxelarGateway.address}::gateway::send_message`,
-        arguments: [Gateway, messageTicket],
-    });
-
-    await broadcastFromTxBuilder(txBuilder, keypair, `Link Coin (${symbol})`, options);
-
-    // Linked tokens (source / destination)
-    const sourceToken = { metadata, packageId, tokenType, treasuryCap };
-    const linkedToken = { destinationChain, destinationAddress };
-
-    // Save deployed tokens
-    saveTokenDeployment(
-        sourceToken.packageId,
-        sourceToken.tokenType,
-        contracts,
-        symbol,
-        decimals,
-        tokenId,
-        sourceToken.treasuryCap,
-        sourceToken.metadata,
-        [linkedToken],
-    );
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -405,32 +287,12 @@ if (require.main === module) {
             mainProcessor(registerCoinFromMetadata, options, [symbol, name, decimals], processCommand);
         });
 
-    const registerCustomCoinProgram = new Command()
-        .name('register-custom-coin')
-        .command('register-custom-coin <symbol> <name> <decimals>')
-        .description(`Register a custom coin in ITS using token name, symbol and decimals. Salt is automatically created.`)
-        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
-        .action((symbol, name, decimals, options) => {
-            mainProcessor(registerCustomCoin, options, [symbol, name, decimals], processCommand);
-        });
-
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <symbol>')
         .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1`)
         .action((symbol, options) => {
             mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
-        });
-
-    const linkCoinProgram = new Command()
-        .name('link-coin')
-        .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
-        .description(
-            `Deploy a source coin on SUI and register it in ITS using custom registration, then link it with the destination using the destination chain name and address.`,
-        )
-        .addOption(new Option('--channel <channel>', 'Existing channel ID to initiate a cross-chain message over'))
-        .action((symbol, name, decimals, destinationChain, destinationAddress, options) => {
-            mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
     // v0
@@ -441,9 +303,7 @@ if (require.main === module) {
     // v1
     program.addCommand(registerCoinFromInfoProgram);
     program.addCommand(registerCoinFromMetadataProgram);
-    program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
-    program.addCommand(linkCoinProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });

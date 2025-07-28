@@ -50,7 +50,6 @@ async function saveTokenDeployment(
     TokenId, // ITS token id
     TreasuryCap, // sui::coin::TreasuryCap
     Metadata, // sui::coin::CoinMetadata
-    linkedTokens = [], // [{chain, address, linkParams}]
 ) {
     contracts[symbol.toUpperCase()] = {
         address,
@@ -62,7 +61,6 @@ async function saveTokenDeployment(
             Metadata,
         },
     };
-    if (linkedTokens.length) contracts[symbol.toUpperCase()].linkedTokens = linkedTokens;
 }
 
 module.exports = {
