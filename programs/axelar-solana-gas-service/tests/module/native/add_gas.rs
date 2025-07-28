@@ -36,9 +36,7 @@ async fn test_add_native_gas() {
     let tx_hash = [42; 64];
     let log_index = 1232;
     let ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
-        &axelar_solana_gas_service::ID,
         &payer.pubkey(),
-        &gas_utils.config_pda,
         tx_hash,
         log_index,
         gas_amount,
@@ -119,9 +117,7 @@ async fn fails_if_payer_not_signer() {
     let tx_hash = [42; 64];
     let log_index = 1232;
     let mut ix = axelar_solana_gas_service::instructions::add_native_gas_instruction(
-        &axelar_solana_gas_service::ID,
         &payer.pubkey(),
-        &gas_utils.config_pda,
         tx_hash,
         log_index,
         gas_amount,

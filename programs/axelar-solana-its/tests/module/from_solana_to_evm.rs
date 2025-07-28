@@ -62,8 +62,6 @@ async fn custom_token(
         custom_solana_token,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     let tx = ctx
@@ -113,8 +111,6 @@ async fn custom_token(
         token_manager_type,
         vec![],
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     let tx = ctx.send_solana_tx(&[link_token_ix]).await.unwrap();
@@ -232,8 +228,6 @@ async fn canonical_token(
             canonical_solana_token,
             ctx.evm_chain_name.clone(),
             0,
-            axelar_solana_gas_service::id(),
-            ctx.solana_gas_utils.config_pda,
         )?;
 
     let tx = ctx
@@ -514,7 +508,7 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
 
     ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
     let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
-    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+    let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account,
         token_id,
@@ -523,18 +517,17 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
         initial_balance,
         solana_token,
         spl_token_2022::id(),
-        1000,                 // gas_value needs to be greater than 0 for pay_gas to be called
-        Pubkey::new_unique(), // Invalid gas service id
-        ctx.solana_gas_utils.config_pda,
+        1000, // gas_value needs to be greater than 0 for pay_gas to be called
         clock_sysvar.unix_timestamp,
     )
     .unwrap();
+    transfer_ix.accounts[10].pubkey = Pubkey::new_unique(); // invalid gas service
 
     assert!(ctx
         .send_solana_tx(&[transfer_ix])
         .await
         .unwrap_err()
-        .find_log("Invalid gas service account")
+        .find_log("An account required by the instruction is missing")
         .is_some());
 
     Ok(())
@@ -596,8 +589,6 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
         solana_token,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )
     .unwrap();
@@ -653,8 +644,6 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         solana_token,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     let _tx = ctx
@@ -693,8 +682,6 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         TokenManagerType::MintBurnFrom,
         vec![],
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     let tx = ctx.send_solana_tx(&[link_token_ix]).await.unwrap();
@@ -798,8 +785,6 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         solana_token,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )?;
 

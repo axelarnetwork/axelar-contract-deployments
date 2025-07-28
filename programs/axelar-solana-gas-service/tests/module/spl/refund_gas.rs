@@ -51,12 +51,9 @@ async fn test_refund_spl_fees(#[case] token_program_id: Pubkey) {
     let tx_hash = [132; 64];
     let log_index = 42;
     let ix = axelar_solana_gas_service::instructions::refund_spl_fees_instruction(
-        &axelar_solana_gas_service::ID,
         &gas_utils.operator.pubkey(),
         &token_program_id,
         &mint,
-        &gas_utils.config_pda,
-        &config_pda_ata,
         &receiver_ata,
         tx_hash,
         log_index,

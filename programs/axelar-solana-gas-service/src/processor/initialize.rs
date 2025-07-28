@@ -14,7 +14,6 @@ use crate::{assert_valid_config_pda, get_config_pda, seed_prefixes};
 pub(crate) fn process_initialize_config(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
-    salt: [u8; 32],
 ) -> ProgramResult {
     let accounts = &mut accounts.iter();
     let payer = next_account_info(accounts)?;
@@ -31,10 +30,10 @@ pub(crate) fn process_initialize_config(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (_, bump) = get_config_pda(program_id, &salt);
+    let (_, bump) = get_config_pda();
 
     // Check: Gateway Config account uses the canonical bump.
-    assert_valid_config_pda(bump, &salt, config_pda.key)?;
+    assert_valid_config_pda(bump, config_pda.key)?;
 
     // Initialize the account
     program_utils::pda::init_pda_raw(
@@ -43,7 +42,7 @@ pub(crate) fn process_initialize_config(
         program_id,
         system_account,
         size_of::<Config>().try_into().expect("must be valid u64"),
-        &[seed_prefixes::CONFIG_SEED, &salt, &[bump]],
+        &[seed_prefixes::CONFIG_SEED, &[bump]],
     )?;
     let mut data = config_pda.try_borrow_mut_data()?;
     let gateway_config = Config::read_mut(&mut data).ok_or(ProgramError::InvalidAccountData)?;
@@ -51,7 +50,6 @@ pub(crate) fn process_initialize_config(
     *gateway_config = Config {
         bump,
         operator: *operator.key,
-        salt,
     };
 
     Ok(())

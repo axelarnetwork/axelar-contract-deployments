@@ -66,8 +66,6 @@ async fn test_deploy_remote_interchain_token_with_valid_metadata(
             "ethereum".to_string(),
             vec![1, 2, 3, 4],
             0,
-            axelar_solana_gas_service::id(),
-            ctx.solana_gas_utils.config_pda,
         )?;
 
     let tx = ctx.send_solana_tx(&[deploy_remote_ix]).await;
@@ -183,8 +181,6 @@ async fn test_deploy_remote_interchain_token_with_mismatched_metadata(
             "ethereum".to_string(),
             vec![5, 6, 7, 8],
             0,
-            axelar_solana_gas_service::id(),
-            ctx.solana_gas_utils.config_pda,
         )?;
 
     // Get the accounts from the instruction
@@ -310,8 +306,6 @@ async fn test_deploy_remote_canonical_token_with_mismatched_metadata(
             canonical_mint,
             "ethereum".to_string(),
             0,
-            axelar_solana_gas_service::id(),
-            ctx.solana_gas_utils.config_pda,
         )?;
 
     // Get the accounts from the instruction
@@ -417,8 +411,6 @@ async fn test_deploy_remote_without_minter_with_mismatched_metadata(
         salt,
         "ethereum".to_string(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     // Get the accounts from the instruction

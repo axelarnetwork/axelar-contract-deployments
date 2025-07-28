@@ -26,9 +26,7 @@ async fn test_receive_funds() {
     // Action
     let sol_amount = 1_000_000;
     let ix = axelar_solana_gas_service::instructions::collect_native_fees_instruction(
-        &axelar_solana_gas_service::ID,
         &gas_utils.operator.pubkey(),
-        &gas_utils.config_pda,
         &receiver.pubkey(),
         sol_amount,
     )
@@ -83,9 +81,7 @@ async fn test_refund_native_fails_if_not_signed_by_authority() {
     let receiver = Keypair::new();
     let sol_amount = 1_000_000;
     let mut ix = axelar_solana_gas_service::instructions::collect_native_fees_instruction(
-        &axelar_solana_gas_service::ID,
         &gas_utils.operator.pubkey(),
-        &gas_utils.config_pda,
         &receiver.pubkey(),
         sol_amount,
     )

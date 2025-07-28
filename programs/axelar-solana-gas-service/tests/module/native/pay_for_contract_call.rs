@@ -42,9 +42,7 @@ async fn test_pay_native_for_contract_call() {
         .to_string()
         .into_bytes();
     let ix = axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
-        &axelar_solana_gas_service::ID,
         &payer.pubkey(),
-        &gas_utils.config_pda,
         destination_chain.clone(),
         destination_addr.clone(),
         payload_hash,
@@ -134,9 +132,7 @@ async fn fails_if_payer_not_signer() {
         .to_string()
         .into_bytes();
     let mut ix = axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
-        &axelar_solana_gas_service::ID,
         &payer.pubkey(),
-        &gas_utils.config_pda,
         destination_chain.clone(),
         destination_addr.clone(),
         payload_hash,

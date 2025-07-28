@@ -35,7 +35,7 @@ fn ensure_valid_config_pda(config_pda: &AccountInfo<'_>, program_id: &Pubkey) ->
     config_pda.check_initialized_pda_without_deserialization(program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    assert_valid_config_pda(config.bump, &config.salt, config_pda.key)?;
+    assert_valid_config_pda(config.bump, config_pda.key)?;
     Ok(())
 }
 
@@ -270,7 +270,7 @@ pub(crate) fn collect_fees_spl(
             receiver_account.clone(),
             token_program.clone(),
         ],
-        &[&[seed_prefixes::CONFIG_SEED, &config.salt, &[config.bump]]],
+        &[&[seed_prefixes::CONFIG_SEED, &[config.bump]]],
     )?;
 
     Ok(())
@@ -337,7 +337,7 @@ pub(crate) fn refund_spl(
             receiver_account.clone(),
             token_program.clone(),
         ],
-        &[&[seed_prefixes::CONFIG_SEED, &config.salt, &[config.bump]]],
+        &[&[seed_prefixes::CONFIG_SEED, &[config.bump]]],
     )?;
 
     // Emit an event

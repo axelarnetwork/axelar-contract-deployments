@@ -54,11 +54,8 @@ async fn test_add_spl_gas(#[case] token_program_id: Pubkey) {
 
     // Create the instruction for paying gas fees with SPL tokens
     let ix = axelar_solana_gas_service::instructions::add_spl_gas_instruction(
-        &axelar_solana_gas_service::ID,
         &payer.pubkey(),
         &payer_ata,
-        &gas_utils.config_pda,
-        &config_pda_ata,
         &mint,
         &token_program_id,
         &[],

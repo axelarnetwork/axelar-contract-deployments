@@ -80,8 +80,6 @@ async fn custom_token(
         custom_solana_token,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
     )?;
 
     let tx = ctx.send_solana_tx(&[register_metadata]).await.unwrap();

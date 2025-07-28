@@ -232,8 +232,6 @@ async fn test_outgoing_interchain_transfer_within_limit(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )?;
 
@@ -319,8 +317,6 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )
     .unwrap();
@@ -539,8 +535,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )?;
 
@@ -580,8 +574,6 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         interchain_token_pda,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )?;
 

@@ -34,9 +34,7 @@ pub fn process_instruction(
     check_program_account(*program_id)?;
 
     match instruction {
-        GasServiceInstruction::Initialize { salt } => {
-            process_initialize_config(program_id, accounts, salt)
-        }
+        GasServiceInstruction::Initialize => process_initialize_config(program_id, accounts),
         GasServiceInstruction::SplToken(ix) => match ix {
             PayWithSplToken::ForContractCall {
                 destination_chain,

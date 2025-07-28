@@ -109,7 +109,7 @@ pub(crate) struct GmpAccounts<'a> {
     pub(crate) gateway_root_account: &'a AccountInfo<'a>,
     pub(crate) _gateway_program_id: &'a AccountInfo<'a>,
     pub(crate) gas_service_config_account: &'a AccountInfo<'a>,
-    pub(crate) gas_service: &'a AccountInfo<'a>,
+    pub(crate) _gas_service: &'a AccountInfo<'a>,
     pub(crate) system_program: &'a AccountInfo<'a>,
     pub(crate) its_root_account: &'a AccountInfo<'a>,
     pub(crate) call_contract_signing_account: &'a AccountInfo<'a>,
@@ -139,7 +139,7 @@ impl<'a> FromAccountInfoSlice<'a> for GmpAccounts<'a> {
             gateway_root_account: next_account_info(accounts_iter)?,
             _gateway_program_id: next_account_info(accounts_iter)?,
             gas_service_config_account: next_account_info(accounts_iter)?,
-            gas_service: next_account_info(accounts_iter)?,
+            _gas_service: next_account_info(accounts_iter)?,
             system_program: next_account_info(accounts_iter)?,
             its_root_account: next_account_info(accounts_iter)?,
             call_contract_signing_account: next_account_info(accounts_iter)?,
@@ -219,7 +219,6 @@ pub(crate) fn process_outbound<'a>(
     if gas_value > 0 {
         pay_gas(
             payer,
-            accounts.gas_service,
             accounts.gas_service_config_account,
             accounts.system_program,
             payload_hash,
@@ -246,23 +245,15 @@ pub(crate) fn process_outbound<'a>(
 
 fn pay_gas<'a>(
     payer: &'a AccountInfo<'a>,
-    gas_service: &'a AccountInfo<'a>,
     gas_service_config: &'a AccountInfo<'a>,
     system_program: &'a AccountInfo<'a>,
     payload_hash: [u8; 32],
     its_hub_address: String,
     gas_value: u64,
 ) -> ProgramResult {
-    if gas_service.key != &axelar_solana_gas_service::id() {
-        msg!("Invalid gas service account");
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
     let gas_payment_ix =
         axelar_solana_gas_service::instructions::pay_native_for_contract_call_instruction(
-            gas_service.key,
             payer.key,
-            gas_service_config.key,
             crate::ITS_HUB_CHAIN_NAME.to_owned(),
             its_hub_address,
             payload_hash,

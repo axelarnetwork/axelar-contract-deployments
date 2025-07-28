@@ -1018,14 +1018,13 @@ pub fn deploy_remote_canonical_interchain_token(
     mint: Pubkey,
     destination_chain: String,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1034,7 +1033,7 @@ pub fn deploy_remote_canonical_interchain_token(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1136,8 +1135,6 @@ pub fn deploy_remote_interchain_token(
     salt: [u8; 32],
     destination_chain: String,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1146,6 +1143,7 @@ pub fn deploy_remote_interchain_token(
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1154,7 +1152,7 @@ pub fn deploy_remote_interchain_token(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1190,8 +1188,6 @@ pub fn deploy_remote_interchain_token_with_minter(
     destination_chain: String,
     destination_minter: Vec<u8>,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1205,6 +1201,7 @@ pub fn deploy_remote_interchain_token_with_minter(
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
     let (minter_roles_pda, _) =
         role_management::find_user_roles_pda(&crate::ID, &token_manager_pda, &minter);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1217,7 +1214,7 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1251,13 +1248,12 @@ pub fn register_token_metadata(
     mint: Pubkey,
     token_program: Pubkey,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1266,7 +1262,7 @@ pub fn register_token_metadata(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1355,8 +1351,6 @@ pub fn link_token(
     token_manager_type: state::token_manager::Type,
     link_params: Vec<u8>,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1364,6 +1358,7 @@ pub fn link_token(
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let token_id = crate::linked_token_id(&payer, &salt);
     let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -1371,7 +1366,7 @@ pub fn link_token(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1411,8 +1406,6 @@ pub fn interchain_transfer(
     mint: Pubkey,
     token_program: Pubkey,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
@@ -1424,6 +1417,7 @@ pub fn interchain_transfer(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1436,7 +1430,7 @@ pub fn interchain_transfer(
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1476,8 +1470,6 @@ pub fn call_contract_with_interchain_token(
     data: Vec<u8>,
     token_program: Pubkey,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<Instruction, ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1488,6 +1480,7 @@ pub fn call_contract_with_interchain_token(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1499,7 +1492,7 @@ pub fn call_contract_with_interchain_token(
         AccountMeta::new(flow_slot_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),
@@ -1542,8 +1535,6 @@ pub fn call_contract_with_interchain_token_offchain_data(
     data: Vec<u8>,
     token_program: Pubkey,
     gas_value: u64,
-    gas_service: Pubkey,
-    gas_config_pda: Pubkey,
     timestamp: i64,
 ) -> Result<(Instruction, Vec<u8>), ProgramError> {
     let (its_root_pda, _) = crate::find_its_root_pda();
@@ -1554,6 +1545,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
         get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
     let (call_contract_signing_pda, signing_pda_bump) =
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
+    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
 
     let accounts = vec![
         AccountMeta::new_readonly(payer, true),
@@ -1565,7 +1557,7 @@ pub fn call_contract_with_interchain_token_offchain_data(
         AccountMeta::new(flow_slot_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(gas_service, false),
+        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(call_contract_signing_pda, false),

@@ -67,7 +67,7 @@ fn try_load_config(
     config_pda.check_initialized_pda_without_deserialization(program_id)?;
     let data = config_pda.try_borrow_data()?;
     let config = Config::read(&data).ok_or(ProgramError::InvalidAccountData)?;
-    assert_valid_config_pda(config.bump, &config.salt, config_pda.key)?;
+    assert_valid_config_pda(config.bump, config_pda.key)?;
     Ok(*config)
 }
 

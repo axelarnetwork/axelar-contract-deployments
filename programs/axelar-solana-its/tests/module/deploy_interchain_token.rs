@@ -389,8 +389,6 @@ async fn test_prevent_deploy_approval_bypass(ctx: &mut ItsTestContext) -> anyhow
             destination_chain.to_string(),
             destination_minter.clone(),
             0, // gas value
-            axelar_solana_gas_service::id(),
-            ctx.solana_gas_utils.config_pda,
         )?;
 
     let (token_b_approval_pda, _) = axelar_solana_its::find_deployment_approval_pda(

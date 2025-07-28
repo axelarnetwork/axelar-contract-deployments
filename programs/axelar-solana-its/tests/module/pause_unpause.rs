@@ -132,8 +132,6 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         token_address,
         spl_token_2022::id(),
         0,
-        axelar_solana_gas_service::id(),
-        ctx.solana_gas_utils.config_pda,
         clock_sysvar.unix_timestamp,
     )
     .unwrap();

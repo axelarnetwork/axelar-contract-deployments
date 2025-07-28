@@ -315,8 +315,6 @@ impl ItsTestContext {
                 self.evm_chain_name.clone(),
                 self.evm_signer.wallet.address().as_bytes().to_vec(),
                 0,
-                axelar_solana_gas_service::id(),
-                self.solana_gas_utils.config_pda,
             )
             .unwrap();
 
@@ -359,8 +357,6 @@ impl ItsTestContext {
             solana_token,
             spl_token_2022::id(),
             0,
-            axelar_solana_gas_service::id(),
-            self.solana_gas_utils.config_pda,
             clock_sysvar.unix_timestamp,
         )
         .unwrap();
