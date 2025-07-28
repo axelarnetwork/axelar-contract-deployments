@@ -11,7 +11,7 @@ const {
     Cl,
     makeContractCall,
 } = require('@stacks/transactions');
-const { addOptionsToCommands } = require('../sui/utils');
+const { addOptionsToCommands } = require('./utils');
 const { getDomainSeparator, validateParameters } = require('../common');
 
 const GAS_SERVICE_CMD_OPTIONS = [

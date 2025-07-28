@@ -15,6 +15,7 @@ const {
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
+const bs58 = require('bs58');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
@@ -24,6 +25,7 @@ const kebabToPascal = (str) => str.replace(/-./g, (match) => match.charAt(1).toU
 
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
+const SVM_BASE58_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 function loadConfig(env) {
     return require(`${__dirname}/../axelar-chains-config/info/${env}.json`);
@@ -331,6 +333,19 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/**
+ * Basic validatation to check if the provided string *might* be a valid SVM
+ * address. One needs to ensure that it's 32 bytes long after decoding.
+ *
+ * See https://solana.com/developers/guides/advanced/exchange#basic-verification.
+ *
+ * @param {string} address - The base58 encoded Solana address to validate
+ * @returns {boolean} - True if the address is valid, false otherwise
+ */
+function isValidSvmAddressFormat(address) {
+    return SVM_BASE58_ADDRESS_REGEX.test(address);
+}
+
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
@@ -344,6 +359,7 @@ const validationFunctions = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isValidSvmAddressFormat,
 };
 
 function validateParameters(parameters) {
@@ -612,10 +628,19 @@ function asciiToBytes(string) {
     return hexlify(Buffer.from(string, 'ascii'));
 }
 
+function solanaAddressBytesFromBase58(string) {
+    const decoded = bs58.default.decode(string);
+    if (decoded.length !== 32) {
+        throw new Error(`Invalid Solana address: ${string}`);
+    }
+    return hexlify(decoded);
+}
+
 /**
  * Encodes the destination address for Interchain Token Service (ITS) transfers.
  * This function ensures proper encoding of the destination address based on the destination chain type.
  * Note: - Stellar and XRPL addresses are converted to ASCII byte arrays.
+ *       - Solana (svm) addresses are decoded from base58 and hexlified.
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
@@ -630,6 +655,10 @@ function encodeITSDestination(config, destinationChain, destinationAddress) {
         case 'stellar':
             validateParameters({ isValidStellarAddress: { destinationAddress } });
             return asciiToBytes(destinationAddress);
+
+        case 'svm':
+            validateParameters({ isValidSvmAddressFormat: { destinationAddress } });
+            return solanaAddressBytesFromBase58(destinationAddress);
 
         case 'xrpl':
             // TODO: validate XRPL address format
@@ -707,6 +736,7 @@ module.exports = {
     isValidStellarAddress,
     isValidStellarAccount,
     isValidStellarContract,
+    isValidSvmAddressFormat,
     getCurrentVerifierSet,
     asciiToBytes,
     encodeITSDestination,
