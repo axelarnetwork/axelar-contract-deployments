@@ -131,12 +131,12 @@ PRIVATE_KEY=0x.. # Owner of gmpManager contract
 THRESHOLD_VALUE=2 # Unconfirmed
 ```
 
-| `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS` |
-|-------------|----------|---------------------|---------------------|-----------------------|
-| **Testnet** | Ethereum |                     | `ethereum-sepolia`  |                       |
-|             | Monad    |                     | `monad`             |                       |
-| **Mainnet** | Ethereum |                     | `ethereum`          |                       |
-|             | Monad    |                     | `monad`             |                       |
+| `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS`                        |
+|-------------|----------|---------------------|---------------------|----------------------------------------------|
+| **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
+|             | Monad    |                     | `monad`             | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
+| **Mainnet** | Ethereum |                     | `ethereum`          |                                              |
+|             | Monad    |                     | `monad`             |                                              |
 
 2. Set Axelar Chain ID
 
