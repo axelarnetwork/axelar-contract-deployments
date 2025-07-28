@@ -17,11 +17,12 @@ const encodeAmplifierVerifiersForStacks = (verifierSet, signers) => {
             weight: signer.weight,
         }));
 
-    const clarityWeightedSigners = weightedSigners
-        .map((signer) => Cl.tuple({
+    const clarityWeightedSigners = weightedSigners.map((signer) =>
+        Cl.tuple({
             signer: Cl.bufferFromHex(signer.signer),
             weight: Cl.uint(signer.weight),
-        }));
+        }),
+    );
 
     const nonce = ethers.utils.hexZeroPad(BigNumber.from(verifierSet.created_at).toHexString(), 32);
 

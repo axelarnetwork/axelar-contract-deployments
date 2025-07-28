@@ -1,17 +1,7 @@
 const { Command } = require('commander');
 const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common/utils');
-const {
-    addBaseOptions,
-    addOptionsToCommands,
-    getWallet,
-} = require('./utils');
-const {
-    makeContractCall,
-    PostConditionMode,
-    AnchorMode,
-    broadcastTransaction,
-    Cl,
-} = require('@stacks/transactions');
+const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
+const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
 
 async function collectFees(stacksAddress, privateKey, networkType, chain, args, options) {
     const contracts = chain.contracts;
@@ -32,11 +22,7 @@ async function collectFees(stacksAddress, privateKey, networkType, chain, args, 
         contractAddress: gasServiceAddress[0],
         contractName: gasServiceAddress[1],
         functionName: 'collect-fees',
-        functionArgs: [
-            Cl.address(contracts.GasImpl.address),
-            Cl.address(receiver),
-            Cl.uint(unitAmount),
-        ],
+        functionArgs: [Cl.address(contracts.GasImpl.address), Cl.address(receiver), Cl.uint(unitAmount)],
         senderKey: privateKey,
         network: networkType,
         postConditionMode: PostConditionMode.Allow,

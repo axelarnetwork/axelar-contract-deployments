@@ -16,7 +16,7 @@ async function getWallet(chain, options) {
 
     let privateKey;
     if (options.mnemonic) {
-        const mnemonic = options.mnemonic
+        const mnemonic = options.mnemonic;
 
         const wallet = await generateWallet({
             secretKey: mnemonic,

@@ -1,17 +1,7 @@
 const { Command } = require('commander');
 const { loadConfig, saveConfig, getChainConfig, printInfo, parseTrustedChains } = require('../common/utils');
-const {
-    addBaseOptions,
-    addOptionsToCommands,
-    getWallet,
-} = require('./utils');
-const {
-    makeContractCall,
-    PostConditionMode,
-    AnchorMode,
-    broadcastTransaction,
-    Cl,
-} = require('@stacks/transactions');
+const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
+const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
 
 const AXELAR_HUB_IDENTIFIER = 'hub';
 
@@ -76,10 +66,7 @@ async function removeTrustedAddress(privateKey, networkType, config, chain, args
             contractAddress: itsAddress[0],
             contractName: itsAddress[1],
             functionName: 'remove-trusted-address',
-            functionArgs: [
-                Cl.address(contracts.InterchainTokenServiceImpl.address),
-                Cl.stringAscii(trustedChain),
-            ],
+            functionArgs: [Cl.address(contracts.InterchainTokenServiceImpl.address), Cl.stringAscii(trustedChain)],
             senderKey: privateKey,
             network: networkType,
             postConditionMode: PostConditionMode.Allow,

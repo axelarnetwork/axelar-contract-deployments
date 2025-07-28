@@ -85,10 +85,7 @@ if (require.main === module) {
     program
         .name('prepare-contracts')
         .description('Prepare the contracts')
-        .addOption(
-            new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts')
-                .makeOptionMandatory(true)
-        )
+        .addOption(new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts').makeOptionMandatory(true))
         .action((options) => {
             mainProcessor(options, processCommand);
         });

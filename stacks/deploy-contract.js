@@ -10,7 +10,8 @@ const {
     PostConditionMode,
     AnchorMode,
     ClarityVersion,
-    broadcastTransaction, fetchCallReadOnlyFunction,
+    broadcastTransaction,
+    fetchCallReadOnlyFunction,
 } = require('@stacks/transactions');
 
 async function getContractSource(chain, options, networkType) {
@@ -97,10 +98,7 @@ if (require.main === module) {
         .addOption(new Option('-c, --contract <contract>', 'The contract to deploy').makeOptionMandatory(true))
         .addOption(new Option('-n, --name <name>', 'The name of the contract'))
         .addOption(new Option('-v, --version <version>', 'The version of the contract'))
-        .addOption(
-            new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts')
-                .makeOptionMandatory(true)
-        )
+        .addOption(new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts').makeOptionMandatory(true))
         .action((options) => {
             mainProcessor(options, processCommand);
         });

@@ -3,20 +3,11 @@
 const { saveConfig, loadConfig, printInfo, getChainConfig, getCurrentVerifierSet } = require('../common/utils');
 const { getWallet, addBaseOptions, encodeAmplifierVerifiersForStacks } = require('./utils');
 const { Command, Option } = require('commander');
-const {
-    PostConditionMode,
-    AnchorMode,
-    broadcastTransaction,
-    standardPrincipalCV,
-    Cl,
-    makeContractCall,
-} = require('@stacks/transactions');
+const { PostConditionMode, AnchorMode, broadcastTransaction, standardPrincipalCV, Cl, makeContractCall } = require('@stacks/transactions');
 const { addOptionsToCommands } = require('./utils');
 const { getDomainSeparator, validateParameters } = require('../common');
 
-const GAS_SERVICE_CMD_OPTIONS = [
-    new Option('--gasCollector <gasCollector>', 'the gas collector address'),
-];
+const GAS_SERVICE_CMD_OPTIONS = [new Option('--gasCollector <gasCollector>', 'the gas collector address')];
 
 const GATEWAY_CMD_OPTIONS = [
     new Option('--owner <owner>', 'owner for the gateway'),
@@ -43,9 +34,7 @@ const GOVERNANCE_CMD_OPTIONS = [
     new Option('--governanceAddress <governanceAddress>', 'the address of the governance contract on the respective chain'),
 ];
 
-const TOKEN_MANAGER_CMD_OPTIONS = [
-    new Option('--token <token>', 'the token'),
-];
+const TOKEN_MANAGER_CMD_OPTIONS = [new Option('--token <token>', 'the token')];
 
 function getGasServiceFunctionArgs(config, chain, options) {
     validateParameters({
@@ -53,9 +42,7 @@ function getGasServiceFunctionArgs(config, chain, options) {
     });
 
     return {
-        functionArgs: [
-            standardPrincipalCV(options.gasCollector),
-        ],
+        functionArgs: [standardPrincipalCV(options.gasCollector)],
         updateConfigArgs: {
             gasCollector: options.gasCollector,
         },
@@ -74,12 +61,7 @@ async function getGatewayFunctionArgs(config, chain, options) {
     const { verifierSet, signers } = await getCurrentVerifierSet(config, chain.axelarId, 'StacksMultisigProver');
     const domainSeparator = await getDomainSeparator(config, chain, options, 'StacksMultisigProver');
 
-    const {
-        claritySigners,
-        weightedSigners,
-        threshold,
-        nonce,
-    } = encodeAmplifierVerifiersForStacks(verifierSet, signers);
+    const { claritySigners, weightedSigners, threshold, nonce } = encodeAmplifierVerifiersForStacks(verifierSet, signers);
 
     return {
         functionArgs: [
@@ -113,10 +95,12 @@ async function getItsFunctionArgs(config, chain, options) {
 
     const trustedChains = options.trustedChains.split(',');
 
-    const trustedChainsClarity = trustedChains.map((trustedChain) => Cl.tuple({
-        'chain-name': Cl.stringAscii(trustedChain),
-        'address': Cl.stringAscii('hub'),
-    }));
+    const trustedChainsClarity = trustedChains.map((trustedChain) =>
+        Cl.tuple({
+            'chain-name': Cl.stringAscii(trustedChain),
+            address: Cl.stringAscii('hub'),
+        }),
+    );
 
     const {
         axelar: {
@@ -128,10 +112,12 @@ async function getItsFunctionArgs(config, chain, options) {
     } = config;
 
     // Add its hub address
-    trustedChainsClarity.push(Cl.tuple({
-        'chain-name': Cl.stringAscii(itsHubChainName),
-        'address': Cl.stringAscii(itsHubAddress),
-    }));
+    trustedChainsClarity.push(
+        Cl.tuple({
+            'chain-name': Cl.stringAscii(itsHubChainName),
+            address: Cl.stringAscii(itsHubAddress),
+        }),
+    );
 
     const itsContractAddressName = chain.contracts.InterchainTokenService.address;
     const gasServiceAddress = chain.contracts.GasService.address;
@@ -161,10 +147,7 @@ function getGovernanceFunctionArgs(config, chain, options) {
     });
 
     return {
-        functionArgs: [
-            Cl.stringAscii(options.governanceChain),
-            Cl.stringAscii(options.governanceAddress),
-        ],
+        functionArgs: [Cl.stringAscii(options.governanceChain), Cl.stringAscii(options.governanceAddress)],
         updateConfigArgs: {
             governanceChain: options.governanceChain,
             governanceAddress: options.governanceAddress,
@@ -231,10 +214,7 @@ async function processCommand(commandContractName, config, chain, options) {
 
     printInfo(`Setting up contract ${contractName}`);
 
-    const {
-        functionArgs,
-        updateConfigArgs,
-    } = await CONTRACT_CONFIGS.preDeployFunctionArgs[commandContractName](config, chain, options);
+    const { functionArgs, updateConfigArgs } = await CONTRACT_CONFIGS.preDeployFunctionArgs[commandContractName](config, chain, options);
 
     const address = chain.contracts[contractName].address.split('.');
     const setupTx = await makeContractCall({
@@ -272,12 +252,11 @@ async function mainProcessor(contractName, options, processor) {
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('setup-contract')
-        .description('Setup a contract');
+    program.name('setup-contract').description('Setup a contract');
 
     const deployContractCmds = Object.keys(CONTRACT_CONFIGS.preDeployFunctionArgs).map((supportedContract) => {
-        const command = new Command(supportedContract).description(`Deploy ${supportedContract} contract`)
+        const command = new Command(supportedContract)
+            .description(`Deploy ${supportedContract} contract`)
             .addOption(new Option('--name <name>', 'the name of the contract in config'));
 
         return addDeployOptions(command).action((options) => {

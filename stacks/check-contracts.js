@@ -22,7 +22,7 @@ const CONTRACTS_TO_CHECK = [
     'verify-onchain',
     'interchain-token-service-impl',
     'native-interchain-token',
-]
+];
 
 async function processCommand(config, chain) {
     printInfo(`Checking contracts...`);

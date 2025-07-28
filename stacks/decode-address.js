@@ -6,7 +6,7 @@ const { cvToHex, principalCV } = require('@stacks/transactions');
 
 function processCommand(stacksAddress) {
     printInfo('Stacks address is:', stacksAddress);
-    printInfo('Decoded as hex:', cvToHex(principalCV((stacksAddress))));
+    printInfo('Decoded as hex:', cvToHex(principalCV(stacksAddress)));
 }
 
 if (require.main === module) {

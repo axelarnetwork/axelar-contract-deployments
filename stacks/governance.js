@@ -1,17 +1,7 @@
 const { Command } = require('commander');
 const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common/utils');
-const {
-    addBaseOptions,
-    addOptionsToCommands,
-    getWallet,
-} = require('./utils');
-const {
-    makeContractCall,
-    PostConditionMode,
-    AnchorMode,
-    broadcastTransaction,
-    Cl,
-} = require('@stacks/transactions');
+const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
+const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
 
 async function setOwner(stacksAddress, privateKey, networkType, chain, args) {
     const [contract, governanceAddress] = args;
@@ -30,9 +20,7 @@ async function setOwner(stacksAddress, privateKey, networkType, chain, args) {
         contractAddress: contractAddressSplit[0],
         contractName: contractAddressSplit[1],
         functionName: 'set-owner',
-        functionArgs: [
-            Cl.address(governanceAddress),
-        ],
+        functionArgs: [Cl.address(governanceAddress)],
         senderKey: privateKey,
         network: networkType,
         postConditionMode: PostConditionMode.Allow,

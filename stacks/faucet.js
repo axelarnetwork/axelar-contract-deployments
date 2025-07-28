@@ -10,19 +10,19 @@ async function processCommand(config, chain, options) {
     printInfo('Calling faucet for Stacks Address', stacksAddress);
 
     const response = await fetch(`https://api.testnet.hiro.so/extended/v1/faucets/stx?address=${stacksAddress}`, {
-        method: "POST",
+        method: 'POST',
     });
     try {
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!data.success) {
-        printWarn('Funds could not be requested...');
-      } else {
-        printInfo('Funds requested', stacksAddress);
-        printInfo('Tx id', data.txId);
-      }
+        if (!data.success) {
+            printWarn('Funds could not be requested...');
+        } else {
+            printInfo('Funds requested', stacksAddress);
+            printInfo('Tx id', data.txId);
+        }
     } catch (e) {
-      printWarn('Funds could not be requested...');
+        printWarn('Funds could not be requested...');
     }
 }
 

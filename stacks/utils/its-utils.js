@@ -1,14 +1,14 @@
 const { Cl, BytesReader, deserializeTransaction, serializeCVBytes } = require('@stacks/transactions');
 const { intToHex } = require('@stacks/common');
-const { bytesToHex, hexToBytes } = require("@noble/hashes/utils");
-const { sha512_256 } = require("@noble/hashes/sha512");
+const { bytesToHex, hexToBytes } = require('@noble/hashes/utils');
+const { sha512_256 } = require('@noble/hashes/sha512');
 const { keccak256 } = require('@ethersproject/keccak256');
 
 const STACKS_NULL_ADDRESS = 'ST000000000000000000002AMW42H';
 
-const STACKS_CHAIN_NAME = "stacks";
-const ITS_SALT_CANONICAL = "canonical-token-salt";
-const ITS_PREFIX_INTERCHAIN = "its-interchain-token-id";
+const STACKS_CHAIN_NAME = 'stacks';
+const ITS_SALT_CANONICAL = 'canonical-token-salt';
+const ITS_PREFIX_INTERCHAIN = 'its-interchain-token-id';
 
 /**
  * Utils for constructing verification proof for Stacks
@@ -37,9 +37,7 @@ class MerkleTree {
             return new MerkleTree();
         }
 
-        let leaf_hashes = data.map((buf) =>
-            MerkleTree.get_leaf_hash(buf),
-        );
+        let leaf_hashes = data.map((buf) => MerkleTree.get_leaf_hash(buf));
 
         // force even number
         if (leaf_hashes.length % 2 !== 0) {
@@ -55,9 +53,7 @@ class MerkleTree {
 
             for (let i = 0; i < current_level.length; i += 2) {
                 if (i + 1 < current_level.length) {
-                    next_level.push(
-                        MerkleTree.get_node_hash(current_level[i], current_level[i + 1]),
-                    );
+                    next_level.push(MerkleTree.get_node_hash(current_level[i], current_level[i + 1]));
                 } else {
                     next_level.push(current_level[i]);
                 }
@@ -86,10 +82,7 @@ class MerkleTree {
     }
 
     static get_node_hash(left, right) {
-        return tagged_sha512_256(
-            MerkleTree.MERKLE_PATH_NODE_TAG,
-            new Uint8Array([...left, ...right]),
-        );
+        return tagged_sha512_256(MerkleTree.MERKLE_PATH_NODE_TAG, new Uint8Array([...left, ...right]));
     }
 
     proof(index) {
@@ -97,7 +90,7 @@ class MerkleTree {
             return [];
         }
         if (index > this.nodes[0].length - 1) {
-            throw new Error("Index out of bounds");
+            throw new Error('Index out of bounds');
         }
         const depth = this.nodes.length - 1;
         const path = Math.pow(2, depth) + index;
@@ -121,29 +114,23 @@ class MerkleTree {
     }
 
     pretty_print() {
-        let str = "";
+        let str = '';
         for (let level = this.nodes.length - 1; level >= 0; --level) {
-            const whitespace = " ".repeat((this.nodes.length - level - 1) * 2);
-            str += this.nodes[level]
-                .map((node) => whitespace + bytesToHex(node) + "\n")
-                .join("");
+            const whitespace = ' '.repeat((this.nodes.length - level - 1) * 2);
+            str += this.nodes[level].map((node) => whitespace + bytesToHex(node) + '\n').join('');
         }
         return str;
     }
 }
 
 async function getRawTx({ txId }, rpc) {
-    const txRawRes = await fetch(
-        `${rpc}/extended/v1/tx/${txId}/raw`,
-    );
+    const txRawRes = await fetch(`${rpc}/extended/v1/tx/${txId}/raw`);
     const txRawData = await txRawRes.json();
     return txRawData.raw_tx;
 }
 
 async function getTxInfo({ txId }, rpc) {
-    const txInfoRes = await fetch(
-        `${rpc}/extended/v1/tx/${txId}`,
-    );
+    const txInfoRes = await fetch(`${rpc}/extended/v1/tx/${txId}`);
 
     return await txInfoRes.json();
 }
@@ -154,9 +141,7 @@ function deserializeTransactionCustom(bytesReader) {
 }
 
 function deserializeRawBlockTxs(txs, processedTxs = []) {
-    const { transaction, reader } = deserializeTransactionCustom(
-        txs instanceof BytesReader ? txs : new BytesReader(txs),
-    );
+    const { transaction, reader } = deserializeTransactionCustom(txs instanceof BytesReader ? txs : new BytesReader(txs));
 
     processedTxs = processedTxs.concat(transaction.txid());
 
@@ -166,15 +151,11 @@ function deserializeRawBlockTxs(txs, processedTxs = []) {
     return deserializeRawBlockTxs(reader, processedTxs);
 }
 
-function proof_path_to_cv(
-    tx_index,
-    hashes,
-    tree_depth,
-) {
+function proof_path_to_cv(tx_index, hashes, tree_depth) {
     return Cl.tuple({
-        "tx-index": Cl.uint(tx_index),
+        'tx-index': Cl.uint(tx_index),
         hashes: Cl.list(hashes.map(Cl.buffer)),
-        "tree-depth": Cl.uint(tree_depth),
+        'tree-depth': Cl.uint(tree_depth),
     });
 }
 
@@ -184,11 +165,7 @@ async function getVerificationParams(txId, rpc) {
 
     const txIndex = txInfoData.tx_index;
     const blockHeight = txInfoData.block_height;
-    const block = new Uint8Array(
-        await (
-            await fetch(`${rpc}/v3/blocks/height/${blockHeight}`)
-        ).arrayBuffer(),
-    );
+    const block = new Uint8Array(await (await fetch(`${rpc}/v3/blocks/height/${blockHeight}`)).arrayBuffer());
 
     const block_version = block.slice(0, 1);
     const chain_length = block.slice(1, 9);
@@ -199,16 +176,11 @@ async function getVerificationParams(txId, rpc) {
     const state_root = block.slice(101, 133);
     const timestamp = block.slice(133, 141);
     const miner_signature = block.slice(141, 206);
-    const signatureCount = Number("0x" + bytesToHex(block.slice(206, 210)));
+    const signatureCount = Number('0x' + bytesToHex(block.slice(206, 210)));
     const pastSignatures = 210 + signatureCount * 65;
     // const signerBitVecLen = Number("0x" + bytesToHex(block.slice(pastSignatures, pastSignatures + 2)))
-    const signerBitVecByteLen = Number(
-        "0x" + bytesToHex(block.slice(pastSignatures + 2, pastSignatures + 6)),
-    );
-    const signer_bitvec = block.slice(
-        pastSignatures,
-        pastSignatures + 6 + signerBitVecByteLen,
-    );
+    const signerBitVecByteLen = Number('0x' + bytesToHex(block.slice(pastSignatures + 2, pastSignatures + 6)));
+    const signer_bitvec = block.slice(pastSignatures, pastSignatures + 6 + signerBitVecByteLen);
 
     const txs = block.slice(pastSignatures + 10 + signerBitVecByteLen);
     const txids = deserializeRawBlockTxs(txs);
@@ -233,20 +205,16 @@ async function getVerificationParams(txId, rpc) {
 
     return Cl.tuple({
         nonce: Cl.bufferFromHex(intToHex(txInfoData.nonce, 8)),
-        "fee-rate": Cl.bufferFromHex(intToHex(txInfoData.fee_rate, 8)),
-        signature: Cl.bufferFromHex(
-            tx.auth.spendingCondition.signature.data,
-        ),
+        'fee-rate': Cl.bufferFromHex(intToHex(txInfoData.fee_rate, 8)),
+        signature: Cl.bufferFromHex(tx.auth.spendingCondition.signature.data),
         proof: proof_path_to_cv(txIndex, proof, proof.length),
-        "tx-block-height": Cl.uint(txInfoData.block_height),
-        "block-header-without-signer-signatures": Cl.buffer(blockHeader),
+        'tx-block-height': Cl.uint(txInfoData.block_height),
+        'block-header-without-signer-signatures': Cl.buffer(blockHeader),
     });
 }
 
 async function getTokenTxId(contract, rpc) {
-    const res = await fetch(
-        `${rpc}/extended/v1/contract/${contract}`,
-    );
+    const res = await fetch(`${rpc}/extended/v1/contract/${contract}`);
 
     const json = await res.json();
 
@@ -254,9 +222,7 @@ async function getTokenTxId(contract, rpc) {
 }
 
 function getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress) {
-    const prefixCanonicalTokenSalt = keccak256(
-        serializeCVBytes(Cl.stringAscii(ITS_SALT_CANONICAL)),
-    );
+    const prefixCanonicalTokenSalt = keccak256(serializeCVBytes(Cl.stringAscii(ITS_SALT_CANONICAL)));
     // `stacks` is a const in ITS Factory
     const chainNameHash = keccak256(serializeCVBytes(Cl.stringAscii(STACKS_CHAIN_NAME)));
 
@@ -272,9 +238,7 @@ function getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress) {
 function getCanonicalInterchainTokenId(tokenAddress) {
     const factorySalt = getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress);
 
-    const interchainTokenIdPrefix = keccak256(
-        serializeCVBytes(Cl.stringAscii(ITS_PREFIX_INTERCHAIN)),
-    );
+    const interchainTokenIdPrefix = keccak256(serializeCVBytes(Cl.stringAscii(ITS_PREFIX_INTERCHAIN)));
 
     return keccak256(
         Buffer.concat([
