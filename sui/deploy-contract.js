@@ -446,17 +446,16 @@ async function upgrade(keypair, client, supportedPackage, policy, config, chain,
 async function migrate(keypair, client, supportedPackage, config, chain, options) {
     const { packageName } = supportedPackage;
 
-    // Contract
-    const contractErr = `Cannot find specified contract: ${packageName}`;
-    if (!chain.contracts[packageName]) throw new Error(contractErr);
-    else if (!chain.contracts[packageName].address) throw new Error(contractErr);
+    validateParameters({
+        // Contract
+        isNonArrayObject: { contractEntry: chain.contracts[packageName] },
+        isNonEmptyString: { contractAddress: chain.contracts[packageName].address },
+        // OwnerCap
+        isNonArrayObject: { contractEntry: chain.contracts[packageName].objects },
+        isNonEmptyString: { contractAddress: chain.contracts[packageName].objects.OwnerCap },
+    });
     const contractConfig = chain.contracts[packageName];
-
-    // OwnerCap
-    const ownerErr = `Cannot find owner of specified contract: ${packageName}`;
-    if (!contractConfig.objects) throw new Error(ownerErr);
     const ownerCap = contractConfig.objects.OwnerCap;
-    if (!ownerCap) throw new Error(ownerErr);
 
     const builder = new TxBuilder(client);
 

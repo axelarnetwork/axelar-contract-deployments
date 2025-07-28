@@ -1,6 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -240,8 +240,10 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments history`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+    });
 
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
@@ -335,8 +337,10 @@ async function removeUnlinkedCoin(keypair, client, config, contracts, args, opti
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+    });
 
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
@@ -466,8 +470,10 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+    });
 
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
@@ -499,8 +505,10 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] }
+    });
 
     const coin = contracts[symbol.toUpperCase()];
     const tcErrorMsg = `no TreasuryCap was found for token with symbol ${symbol}`;
