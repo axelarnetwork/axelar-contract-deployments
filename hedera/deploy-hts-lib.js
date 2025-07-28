@@ -5,6 +5,9 @@ const { ContractCreateFlow } = require('@hashgraph/sdk');
 const { getContractJSON } = require('../evm/utils.js');
 const { getClient } = require('./client.js');
 const { addBaseOptions } = require('./cli-utils');
+const { HTS_LIBRARY_NAME } = require('./utils.js');
+
+const DEFAULT_GAS_LIMIT = 4_000_000;
 
 function contractIdToEvmAddress(shard, realm, num) {
     const buf = Buffer.alloc(20);
@@ -15,14 +18,10 @@ function contractIdToEvmAddress(shard, realm, num) {
 }
 
 async function deployHtsLib(_config, options) {
-    const client = await getClient(
-	    options.accountId,
-	    options.privateKey,
-			options.hederaNetwork,
-    );
+    const client = await getClient(options.accountId, options.privateKey, options.hederaNetwork);
 
     const contractName = HTS_LIBRARY_NAME;
-    const gasLimit = options.gas || 300_000;
+    const gasLimit = options.gas || DEFAULT_GAS_LIMIT;
 
     const json = getContractJSON(contractName);
     const bytecode = json.bytecode;
@@ -31,9 +30,7 @@ async function deployHtsLib(_config, options) {
     console.log(`Using gas limit: ${gasLimit}`);
 
     // Create the transaction
-    const contractCreate = new ContractCreateFlow()
-        .setGas(gasLimit)
-        .setBytecode(bytecode);
+    const contractCreate = new ContractCreateFlow().setGas(gasLimit).setBytecode(bytecode);
 
     try {
         // Sign the transaction with the client operator key and submit to a Hedera network
@@ -58,12 +55,11 @@ async function deployHtsLib(_config, options) {
                 evmAddress,
                 contractName,
                 sourceName: json.sourceName,
-                deployedAt: new Date().toISOString()
+                deployedAt: new Date().toISOString(),
             };
             fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
             console.log(`Deployment info saved to ${options.output}`);
         }
-
     } catch (error) {
         console.error('Deployment failed:', error.message);
         process.exit(1);
@@ -79,23 +75,19 @@ if (require.main === module) {
         .name('deploy-hts-lib')
         .description('Deploy HTS library contract to Hedera')
         .addOption(
-            new Option('--gas <gas>', 'gas limit for deployment')
-                .default(300_000)
-                .argParser((value) => parseInt(value, 10))
+            new Option('--gas <gas>', 'gas limit for deployment').default(DEFAULT_GAS_LIMIT).argParser((value) => parseInt(value, 10)),
         )
-        .addOption(
-            new Option('--output <output>', 'output file path to save deployment info')
-        )
+        .addOption(new Option('--output <output>', 'output file path to save deployment info'))
         .action((options) => {
             deployHtsLib(null, options);
         });
 
-	addBaseOptions(program);
+    addBaseOptions(program);
 
-  program.parse();
+    program.parse();
 }
 
 module.exports = {
     deployHtsLib,
-    contractIdToEvmAddress
+    contractIdToEvmAddress,
 };

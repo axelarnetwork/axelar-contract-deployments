@@ -23,9 +23,9 @@ node hedera/deploy-hts-lib.js [options]
 - `--privateKey <key>` - Private key for the account
 - `--hederaNetwork <network>` - Hedera network (testnet/mainnet)
 
-**Example:**
+**Example with default options and .env:**
 ```bash
-node hedera/deploy-hts-lib.js --contract HTS --gas 400000 --output deployment.json
+node hedera/deploy-hts-lib.js
 ```
 
 ### Associate Token

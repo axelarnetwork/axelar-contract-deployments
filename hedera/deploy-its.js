@@ -26,11 +26,12 @@ const {
 } = require('../evm/utils');
 
 const { getContractJSONWithHTS } = require('./utils.js');
+const { printHederaNetwork, addBaseOptions } = require('./cli-utils.js');
 
-const { addEvmOptions, printHederaNetwork } = require('../evm/cli-utils');
+const { addEvmOptions } = require('../evm/cli-utils');
 const { Command, Option } = require('commander');
 const { WHBAR_ABI, fundWithWHBAR } = require('./fund-whbar.js');
-const { DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS, TINY_PARTS_PER_WHOLE } = require('./token-creation-price.js')
+const { DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS, TINY_PARTS_PER_WHOLE } = require('./token-creation-price.js');
 
 /**
  * Function that handles the ITS deployment.
@@ -286,7 +287,9 @@ async function deployAll(config, wallet, chain, options) {
                 );
                 contractConfig.predeployCodehash = predeployCodehash;
 
-                console.log(`Setting ITS token creation price to ${tokenCreationPrice} tinycents ($${tokenCreationPrice / TINY_PARTS_PER_WHOLE})`);
+                console.log(
+                    `Setting ITS token creation price to ${tokenCreationPrice} tinycents ($${tokenCreationPrice / TINY_PARTS_PER_WHOLE})`,
+                );
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
                 printInfo('ITS Proxy args', args);
@@ -376,19 +379,18 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         if (deployment.contractName === 'InterchainProxy') {
-        		if (options.whbarAddress && options.whbarAmount) {
+            if (options.whbarAddress && options.whbarAmount) {
+                console.log(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
 
-            console.log(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
+                const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
 
-            const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
+                const amount = ethers.utils.parseUnits(options.whbarAmount.toString(), 8); // WHBAR has 8 decimals
 
-            const amount = ethers.utils.parseUnits(options.whbarAmount.toString(), 8); // WHBAR has 8 decimals
-
-            await fundWithWHBAR(whbar, contract.address, amount, wallet);
-            console.log(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
-          } else {
-							console.warn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
-          }
+                await fundWithWHBAR(whbar, contract.address, amount, wallet);
+                console.log(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
+            } else {
+                console.warn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
+            }
         }
     }
 }
@@ -515,9 +517,9 @@ async function processCommand(config, chain, options) {
 }
 
 async function main(options) {
-	printHederaNetwork(options);
+    printHederaNetwork(options);
 
-  await mainProcessor(options, processCommand);
+    await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
@@ -526,7 +528,9 @@ if (require.main === module) {
     program.name('deploy-its').description('Deploy interchain token service and interchain token factory');
 
     program.addOption(
-        new Option('-hts, --htsLibraryAddress <htsEvmAddress>', 'EVM address of the HTS library').env('HTS_LIB_ADDRESS').makeOptionMandatory(true)
+        new Option('-hts, --htsLibraryAddress <htsEvmAddress>', 'EVM address of the HTS library')
+            .env('HTS_LIB_ADDRESS')
+            .makeOptionMandatory(true),
     );
 
     program.addOption(
@@ -542,6 +546,8 @@ if (require.main === module) {
     );
 
     addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
+
+    addBaseOptions(program);
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
@@ -559,7 +565,9 @@ if (require.main === module) {
     );
 
     program.addOption(
-        new Option('--tokenCreationPrice <priceInTinycents>', 'price of token creation in tinycents').default(DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS),
+        new Option('--tokenCreationPrice <priceInTinycents>', 'price of token creation in tinycents').default(
+            DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS,
+        ),
     );
 
     // WHBAR funding options
