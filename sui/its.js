@@ -8,7 +8,7 @@ const {
     deployTokenFromInfo,
     getObjectIdsByObjectTypes,
     getWallet,
-    newCoinManagementLocked,
+    createLockedCoinManagement,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
@@ -139,7 +139,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from info)
     await txBuilder.moveCall({
@@ -177,7 +177,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from metadata)
     await txBuilder.moveCall({

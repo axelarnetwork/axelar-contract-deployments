@@ -30,7 +30,7 @@ async function deployTokenFromInfo(config, symbol, name, decimals) {
     return [metadata, packageId, tokenType, treasuryCap];
 }
 
-async function newCoinManagementLocked(config, itsConfig, tokenType) {
+async function createLockedCoinManagement(config, itsConfig, tokenType) {
     const txBuilder = new TxBuilder(config.client);
 
     const coinManagement = await txBuilder.moveCall({
@@ -69,6 +69,6 @@ async function saveTokenDeployment(
 
 module.exports = {
     deployTokenFromInfo,
-    newCoinManagementLocked,
+    createLockedCoinManagement,
     saveTokenDeployment,
 };
