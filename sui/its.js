@@ -1,6 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -8,7 +8,7 @@ const {
     deployTokenFromInfo,
     getObjectIdsByObjectTypes,
     getWallet,
-    newCoinManagementLocked,
+    createLockedCoinManagement,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
@@ -139,7 +139,7 @@ async function registerCoinFromInfo(keypair, client, config, contracts, args, op
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from info)
     await txBuilder.moveCall({
@@ -177,7 +177,7 @@ async function registerCoinFromMetadata(keypair, client, config, contracts, args
     const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
 
     // New CoinManagement<T>
-    const [txBuilder, coinManagement] = await newCoinManagementLocked(deployConfig, itsConfig, tokenType);
+    const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
 
     // Register deployed token (from metadata)
     await txBuilder.moveCall({
@@ -240,8 +240,10 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments history`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
 
     const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
     const tokenType = contracts[symbol.toUpperCase()].typeArgument;
@@ -325,6 +327,40 @@ async function giveUnlinkedCoin(keypair, client, config, contracts, args, option
         const [treasuryCapReclaimerId] = getObjectIdsByObjectTypes(result, [`TreasuryCapReclaimer<${tokenType}>`]);
         contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
     }
+}
+
+// remove_unlinked_coin
+async function removeUnlinkedCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { InterchainTokenService } = itsConfig.objects;
+    const walletAddress = keypair.toSuiAddress();
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
+
+    const coin = contracts[symbol.toUpperCase()];
+    const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
+    if (!coin.objects) throw new Error(tcrErrorMsg);
+    else if (!coin.objects.TreasuryCapReclaimer) throw new Error(tcrErrorMsg);
+
+    // Receive TreasuryCap
+    const treasuryCap = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::remove_unlinked_coin`,
+        arguments: [InterchainTokenService, coin.objects.TreasuryCapReclaimer],
+        typeArguments: [coin.typeArgument],
+    });
+
+    // Return TreasuryCap to coin deployer (TreasuryCapReclaimer owner)
+    txBuilder.tx.transferObjects([treasuryCap], walletAddress);
+
+    await broadcastFromTxBuilder(txBuilder, keypair, `Remove Unlinked Coin (${symbol})`, options);
+
+    // Remove TreasuryCapReclaimer as it's been deleted
+    contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = null;
 }
 
 // link_coin
@@ -434,8 +470,10 @@ async function removeTreasuryCap(keypair, client, config, contracts, args, optio
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
 
     const coin = contracts[symbol.toUpperCase()];
     const tcrErrorMsg = `no TreasuryCapReclaimer was found for token with symbol ${symbol}`;
@@ -467,8 +505,10 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     const txBuilder = new TxBuilder(client);
 
     const symbol = args;
-    if (!symbol) throw new Error('token symbol is required');
-    if (!contracts[symbol.toUpperCase()]) throw new Error(`token with symbol ${symbol} not found in deployments config`);
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
 
     const coin = contracts[symbol.toUpperCase()];
     const tcErrorMsg = `no TreasuryCap was found for token with symbol ${symbol}`;
@@ -592,6 +632,14 @@ if (require.main === module) {
             mainProcessor(giveUnlinkedCoin, options, [symbol, name, decimals], processCommand);
         });
 
+    const removeUnlinkedCoinProgram = new Command()
+        .name('remove-unlinked-coin')
+        .command('remove-unlinked-coin <symbol>')
+        .description(`Remove a coin from ITS and return its TreasuryCap to its deployer.`)
+        .action((symbol, options) => {
+            mainProcessor(removeUnlinkedCoin, options, symbol, processCommand);
+        });
+
     const linkCoinProgram = new Command()
         .name('link-coin')
         .command('link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>')
@@ -630,6 +678,7 @@ if (require.main === module) {
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
     program.addCommand(giveUnlinkedCoinProgram);
+    program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
