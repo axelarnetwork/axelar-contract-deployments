@@ -9,7 +9,7 @@ runs:
 
     - name: Install Stellar CLI
       shell: bash
-      run: cargo install --locked stellar-cli --version 23.0.0
+      run: cargo install --locked stellar-cli --version 22.2.0 --features opt
 
     - name: Set environment variables
       id: env
@@ -24,7 +24,15 @@ runs:
     - name: Start Stellar local network
       shell: bash
       run: |
-        stellar container start local --protocol-version 23 --limits unlimited
+        docker run -d --rm -p 8000:8000 \
+          --name stellar-local \
+          stellar/quickstart \
+          --local \
+          --enable-soroban-rpc \
+          --protocol-version 23 \
+          --friendbot \
+          --limits unlimited \
+          --standalone
 
     - name: Wait for Stellar network
       shell: bash
