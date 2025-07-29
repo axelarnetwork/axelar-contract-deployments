@@ -81,15 +81,6 @@ const addAmplifierOptions = (program, options) => {
     if (options.runAs) {
         program.addOption(new Option('-r, --runAs <runAs>', 'the address that will execute the message. Defaults to governance address'));
     }
-
-    if (options.itsTranslatorAddress) {
-        program.addOption(
-            new Option(
-                '--its-translator-address <itsTranslatorAddress>',
-                'address for the message translation contract associated with the chain being registered on ITS Hub',
-            ),
-        );
-    }
 };
 
 const addAmplifierQueryOptions = (program) => {

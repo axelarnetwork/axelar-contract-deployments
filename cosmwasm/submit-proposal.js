@@ -334,11 +334,17 @@ const programHandler = () => {
         .command('its-hub-register-chains')
         .description('Submit an execute wasm contract proposal to register an InterchainTokenService chain')
         .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
+        .addOption(
+            new Option(
+                '--its-translator-address <itsTranslatorAddress>',
+                'address for the message translation contract associated with the chain being registered on ITS Hub',
+            ),
+        )
         .action((chains, options) => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
         });
-    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true, itsTranslatorAddress: true });
+    addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
