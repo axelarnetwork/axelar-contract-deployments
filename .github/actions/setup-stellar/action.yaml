@@ -9,7 +9,7 @@ runs:
 
     - name: Install Stellar CLI
       shell: bash
-      run: cargo install --locked stellar-cli --version 23.0.0 --features opt
+      run: cargo install --locked stellar-cli --version 23.0.0
 
     - name: Set environment variables
       id: env
