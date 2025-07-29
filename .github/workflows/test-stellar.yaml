@@ -119,8 +119,8 @@ jobs:
       - name: Deploy AxelarGasService
         run: ts-node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
 
-      #- name: Deploy AxelarGateway
-      #  run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
+      - name: Deploy AxelarGateway
+        run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
 
       #- name: Deploy InterchainTokenService
       #  run: ts-node stellar/deploy-contract deploy InterchainTokenService --version ${{ steps.commit_hash.outputs.hash }}
