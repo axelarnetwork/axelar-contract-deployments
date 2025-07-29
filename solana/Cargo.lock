@@ -719,6 +719,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "axelar-solana-memo-program"
+version = "0.1.0"
+source = "git+https://github.com/eigerco/solana-axelar.git?rev=3896176#38961762ed0dba80875697203548f5d744976eaf"
+dependencies = [
+ "axelar-executable",
+ "axelar-solana-encoding",
+ "axelar-solana-gateway",
+ "axelar-solana-its",
+ "borsh 1.5.7",
+ "mpl-token-metadata",
+ "program-utils",
+ "solana-program",
+]
+
+[[package]]
 name = "axelar-wasm-std"
 version = "1.0.0"
 source = "git+https://github.com/axelarnetwork/axelar-amplifier.git?rev=voting-verifier-v1.1.0#17792515ed9953ce6bd6ceabe59d2febe5eab2e7"
@@ -5345,6 +5360,7 @@ dependencies = [
  "axelar-solana-gateway",
  "axelar-solana-governance",
  "axelar-solana-its",
+ "axelar-solana-memo-program",
  "axelar-wasm-std",
  "base64 0.22.1",
  "bincode 2.0.1",
