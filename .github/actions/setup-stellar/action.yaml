@@ -24,14 +24,7 @@ runs:
     - name: Start Stellar local network
       shell: bash
       run: |
-        docker run -d \
-            -p "8000:8000" \
-            --name stellar \
-            stellar/quickstart:testing \
-            --local \
-            --enable-soroban-rpc \
-            --protocol-version 23 \
-            --limits unlimited
+        stellar container start local --protocol-version 22 --limits unlimited
 
     - name: Wait for Stellar network
       shell: bash
