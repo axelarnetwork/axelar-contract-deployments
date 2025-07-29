@@ -7,6 +7,9 @@ edition = "2024"
 axelar-solana-gateway = { git = "https://github.com/eigerco/solana-axelar.git", rev = "3896176", features = [
     "no-entrypoint",
 ], default-features = false }
+axelar-solana-memo-program = { git = "https://github.com/eigerco/solana-axelar.git", rev = "3896176", features = [
+    "no-entrypoint",
+], default-features = false }
 axelar-solana-gas-service = { git = "https://github.com/eigerco/solana-axelar.git", rev = "3896176", features = [
     "no-entrypoint",
 ], default-features = false }
@@ -145,6 +148,7 @@ devnet-amplifier = [
     "axelar-solana-gateway/devnet-amplifier",
     "axelar-solana-governance/devnet-amplifier",
     "axelar-solana-its/devnet-amplifier",
+    "axelar-solana-memo-program/devnet-amplifier",
     "gateway-event-stack/devnet-amplifier",
     "its-instruction-builder/devnet-amplifier",
 ]
@@ -154,6 +158,7 @@ stagenet = [
     "axelar-solana-gateway/stagenet",
     "axelar-solana-governance/stagenet",
     "axelar-solana-its/stagenet",
+    "axelar-solana-memo-program/stagenet",
     "gateway-event-stack/stagenet",
     "its-instruction-builder/stagenet",
 ]
@@ -163,6 +168,7 @@ testnet = [
     "axelar-solana-gateway/testnet",
     "axelar-solana-governance/testnet",
     "axelar-solana-its/testnet",
+    "axelar-solana-memo-program/testnet",
     "gateway-event-stack/testnet",
     "its-instruction-builder/testnet",
 ]
@@ -172,6 +178,7 @@ mainnet = [
     "axelar-solana-gateway/mainnet",
     "axelar-solana-governance/mainnet",
     "axelar-solana-its/mainnet",
+    "axelar-solana-memo-program/mainnet",
     "gateway-event-stack/mainnet",
     "its-instruction-builder/mainnet",
 ]
