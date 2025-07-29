@@ -180,8 +180,8 @@ const execute = async (client, wallet, config, options) => {
 const registerItsChain = async (client, wallet, config, options) => {
     const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
 
-    if (!itsAbiTranslator) {
-        throw new Error('ItsAbiTranslator address is required for registerItsChain');
+    if (!itsMsgTranslator) {
+        throw new Error('ItsMsgTranslator address is required for registerItsChain');
     }
 
     const chains = options.chains.map((chain) => {
