@@ -1,5 +1,7 @@
 name: Test Stellar
 
+# on: pull_request
+
 jobs:
   check-relevant-changes:
     name: Check for Relevant Changes
