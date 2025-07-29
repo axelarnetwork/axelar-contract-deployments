@@ -191,7 +191,7 @@ const registerItsChain = async (client, wallet, config, options) => {
         return {
             chain: chainConfig.axelarId,
             its_edge_contract: itsEdgeContract(chainConfig),
-            msg_translator: itsAbiTranslator,
+            msg_translator: itsMsgTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
