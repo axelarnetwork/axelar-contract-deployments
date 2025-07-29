@@ -336,7 +336,7 @@ const programHandler = () => {
         .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
         .addOption(
             new Option(
-                '--its-translator-address <itsTranslatorAddress>',
+                '--its-msg-translator <itsMsgTranslator>',
                 'address for the message translation contract associated with the chain being registered on ITS Hub',
             ),
         )
