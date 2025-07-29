@@ -65,11 +65,6 @@ async function updateBlockSize(wallet, chain, args) {
     });
 
     const useBig = blockSize === 'big';
-    const network = chain.networkType;
-
-    printInfo('Block size', blockSize);
-    printInfo('Network', network);
-
     const action = { type: 'evmUserModify', usingBigBlocks: useBig };
     const nonce = Date.now();
     const signature = await signL1Action(wallet, action, null, nonce, chain);
@@ -81,7 +76,6 @@ async function updateBlockSize(wallet, chain, args) {
         throw new Error(`Failed to update block size: ${result}`);
     }
 
-    printInfo('Result', result);
     return result;
 }
 
@@ -175,7 +169,12 @@ async function switchHyperliquidBlockSize(options, useBigBlocks, chain) {
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
     const wallet = new Wallet(options.privateKey, provider);
-    await updateBlockSize(wallet, chain, [blockType]);
+
+    printInfo('Block size', blockType);
+
+    const result = await updateBlockSize(wallet, chain, [blockType]);
+
+    printInfo('Block size updated', result);
 }
 
 if (require.main === module) {
