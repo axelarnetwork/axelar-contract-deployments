@@ -82,7 +82,7 @@ async function initializeTransceiver(
     try {
         await printWalletInfo(wallet);
 
-        const transceiverJson = getContractJSON('MonadAxelarTransceiver', artifactPath);
+        const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
 
         const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
 
@@ -174,7 +174,7 @@ async function transferPauserCapability(
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
     }
     try {
-        const transceiverJson = getContractJSON('MonadAxelarTransceiver', artifactPath);
+        const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
         const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
         printInfo(`Transferring pauser capability to ${pauserAddress}...`);
 
@@ -226,7 +226,7 @@ async function setAxelarChainId(
     }
 
     try {
-        const transceiverJson = getContractJSON('MonadAxelarTransceiver', artifactPath);
+        const transceiverJson = getContractJSON('AxelarTransceiver', artifactPath);
         const transceiverContract = new Contract(proxyAddress, transceiverJson.abi, wallet) as TransceiverContract;
 
         printInfo(`Setting Axelar chain ID mapping:`);
