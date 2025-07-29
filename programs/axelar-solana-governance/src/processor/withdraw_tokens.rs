@@ -3,11 +3,10 @@
 //! Only this program can call this instruction via a previous scheduled GMP
 //! proposal, coming from the Axelar governance infrastructure.
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/InterchainGovernance.sol#L118).
-use program_utils::{pda::ValidPDA, validate_system_account_key};
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{account_array_structs, pda::ValidPDA, validate_system_account_key};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
 
@@ -15,21 +14,29 @@ use crate::state::GovernanceConfig;
 
 use super::ensure_valid_governance_root_pda;
 
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    WithDrawTokensInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    WithdrawTokensMeta,
+    // Attributes
+    system_account,
+    config_pda,
+    receiver
+}
+
 /// Withdraws all tokens from the Governance account to a receiver account.
 /// Only the contract itself can call this instruction.
 ///
 /// # Errors
 ///
 /// This function will return a [`ProgramError`] if any of the subcmds fail.
-pub(crate) fn process(
-    _program_id: &Pubkey,
-    accounts: &[AccountInfo<'_>],
-    amount: u64,
-) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let config_pda = next_account_info(accounts_iter)?;
-    let receiver = next_account_info(accounts_iter)?;
+pub(crate) fn process(accounts: &[AccountInfo<'_>], amount: u64) -> Result<(), ProgramError> {
+    let WithDrawTokensInfo {
+        system_account,
+        config_pda,
+        receiver,
+    } = WithDrawTokensInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

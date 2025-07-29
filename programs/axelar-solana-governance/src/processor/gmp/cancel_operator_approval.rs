@@ -2,13 +2,27 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L17).
 
-use program_utils::validate_system_account_key;
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{account_array_structs, validate_system_account_key};
+use solana_program::account_info::AccountInfo;
 use solana_program::program_error::ProgramError;
 
 use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
 use crate::state::operator;
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    CancelOperatorApprovalInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    CancelOperatorApprovalMeta,
+    // Attributes
+    // Mandatory for every GMP instruction in the Governance program.
+    system_account,
+    // Mandatory for every GMP instruction in the Governance program.
+    root_pda,
+    proposal_pda,
+    operator_proposal_pda
+}
 
 /// Processes a Governance GMP `CancelOperatorApproval` command.
 ///
@@ -19,12 +33,12 @@ pub(crate) fn process(
     ctx: ProcessGMPContext,
     accounts: &[AccountInfo<'_>],
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let _payer = next_account_info(accounts_iter)?;
-    let root_pda = next_account_info(accounts_iter)?;
-    let proposal_pda = next_account_info(accounts_iter)?;
-    let operator_proposal_pda = next_account_info(accounts_iter)?;
+    let CancelOperatorApprovalInfo {
+        system_account,
+        root_pda,
+        proposal_pda,
+        operator_proposal_pda,
+    } = CancelOperatorApprovalInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

@@ -1,9 +1,9 @@
 //! Initialize Governance Config Account with the provided Governance Config
 //! data.
 
-use program_utils::pda::ValidPDA;
+use program_utils::{account_array_structs, pda::ValidPDA};
 use role_management::processor::ensure_upgrade_authority;
-use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -11,6 +11,18 @@ use solana_program::system_program;
 
 use crate::seed_prefixes;
 use crate::state::{GovernanceConfig, VALID_PROPOSAL_DELAY_RANGE};
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    GovernanceConfigInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    GovernanceConfigMeta,
+    // Attributes
+    payer,
+    program_data,
+    root_pda,
+    system_account
+}
 
 /// Initializes the Governance Config Account with the provided Governance
 /// Config.
@@ -23,11 +35,12 @@ pub(crate) fn process(
     accounts: &[AccountInfo<'_>],
     mut governance_config: GovernanceConfig,
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let payer = next_account_info(accounts_iter)?;
-    let program_data = next_account_info(accounts_iter)?;
-    let root_pda = next_account_info(accounts_iter)?;
-    let system_account = next_account_info(accounts_iter)?;
+    let GovernanceConfigInfo {
+        payer,
+        program_data,
+        root_pda,
+        system_account,
+    } = GovernanceConfigInfo::from_account_iter(&mut accounts.iter())?;
 
     ensure_upgrade_authority(program_id, payer, program_data)?;
 

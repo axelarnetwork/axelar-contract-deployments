@@ -357,3 +357,56 @@ pub trait BytemuckedPda: Sized + NoUninit + AnyBitPattern {
         Some(())
     }
 }
+
+/// Defines "Info" and "Meta" structs for easier account array handling.
+/// These help ensuring consistency between the client and the program.
+#[macro_export]
+macro_rules! account_array_structs {
+    (
+        $info_struct_name:ident,
+        $meta_struct_name:ident,
+        $(
+            $(#[$attr:meta])*
+            $field_name:ident
+        ),*
+    ) => {
+        struct $info_struct_name <'a, 'b> {
+            $(
+                $(#[$attr])*
+                pub $field_name : &'b solana_program::account_info::AccountInfo<'a>,
+            )*
+        }
+
+        impl<'a, 'b> $info_struct_name <'a, 'b> {
+            fn from_account_iter<I>(iter: &mut I) -> Result<Self, solana_program::program_error::ProgramError>
+            where
+                I: Iterator<Item = &'b solana_program::account_info::AccountInfo<'a>>,
+            {
+                let result = Self {
+                    $(
+                        $field_name: solana_program::account_info::next_account_info(iter)?,
+                    )*
+                };
+
+                Ok(result)
+            }
+        }
+
+        pub struct $meta_struct_name {
+            $(
+                $(#[$attr])*
+                pub $field_name : solana_program::instruction::AccountMeta,
+            )*
+        }
+
+        impl $meta_struct_name {
+            pub fn to_account_vec(self) -> Vec<solana_program::instruction::AccountMeta> {
+                vec![
+                    $(
+                        self.$field_name,
+                    )*
+                ]
+            }
+        }
+    };
+}

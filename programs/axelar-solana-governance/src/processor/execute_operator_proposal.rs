@@ -2,8 +2,8 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L75).
 use borsh::to_vec;
-use program_utils::{pda::ValidPDA, validate_system_account_key};
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{account_array_structs, pda::ValidPDA, validate_system_account_key};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -11,6 +11,19 @@ use solana_program::pubkey::Pubkey;
 use crate::events::GovernanceEvent;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
 use crate::state::{operator, GovernanceConfig};
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    ExecuteOperatorProposalInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    ExecuteOperatorProposalMeta,
+    // Attributes
+    system_account,
+    config_pda,
+    proposal_account,
+    operator_account,
+    operator_pda_marker_account
+}
 
 /// Executes a previously proposal whitelisted for execution by the operator.
 ///
@@ -22,13 +35,13 @@ pub(crate) fn process(
     accounts: &[AccountInfo<'_>],
     execute_proposal_data: &ExecuteProposalData,
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let _payer = next_account_info(accounts_iter)?;
-    let config_pda = next_account_info(accounts_iter)?;
-    let proposal_account = next_account_info(accounts_iter)?;
-    let operator_account = next_account_info(accounts_iter)?;
-    let operator_pda_marker_account = next_account_info(accounts_iter)?;
+    let ExecuteOperatorProposalInfo {
+        system_account,
+        config_pda,
+        proposal_account,
+        operator_account,
+        operator_pda_marker_account,
+    } = ExecuteOperatorProposalInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

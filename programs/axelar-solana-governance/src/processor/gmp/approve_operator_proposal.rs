@@ -4,8 +4,8 @@
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L17).
 
 use program_utils::pda::ValidPDA;
-use program_utils::validate_system_account_key;
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{account_array_structs, validate_system_account_key};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
@@ -14,6 +14,22 @@ use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
 use crate::seed_prefixes;
 use crate::state::operator;
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    ApproveOperatorProposalInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    ApproveOperatorProposalMeta,
+    // Attributes
+    // Mandatory for every GMP instruction in the Governance program.
+    system_account,
+    // Mandatory for every GMP instruction in the Governance program.
+    #[allow(dead_code)]
+    root_pda,
+    payer,
+    proposal_pda,
+    operator_proposal_pda
+}
 
 /// Processes a Governance GMP `ApproveOperatorProposal` command.
 /// After the operator proposal management is approved by the governance, the
@@ -28,12 +44,14 @@ pub(crate) fn process(
     program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
-    let _root_pda = next_account_info(accounts_iter)?;
-    let proposal_pda = next_account_info(accounts_iter)?;
-    let operator_proposal_pda = next_account_info(accounts_iter)?;
+    let ApproveOperatorProposalInfo {
+        system_account,
+        payer,
+        // Validated by the `ProcessGMPContext`, not needed here.
+        root_pda: _,
+        proposal_pda,
+        operator_proposal_pda,
+    } = ApproveOperatorProposalInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

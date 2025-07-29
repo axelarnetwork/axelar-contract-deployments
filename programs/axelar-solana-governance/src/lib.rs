@@ -1,5 +1,7 @@
 //! # Governance program
 
+#![allow(clippy::unneeded_field_pattern)]
+
 use program_utils::ensure_single_feature;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
