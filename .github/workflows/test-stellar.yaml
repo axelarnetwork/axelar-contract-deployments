@@ -119,6 +119,9 @@ jobs:
       - name: Deploy AxelarGasService
         run: ts-node stellar/deploy-contract deploy AxelarGasService --version ${{ steps.commit_hash.outputs.hash }}
 
+      # Note: Deploying AxelarGateway is currently failing due to a scecExceededLimit error.
+      # Uncomment this section and below once the issue is resolved.
+
       #- name: Deploy AxelarGateway
       #  run: ts-node stellar/deploy-contract deploy AxelarGateway --version ${{ steps.commit_hash.outputs.hash }}
 
