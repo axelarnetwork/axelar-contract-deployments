@@ -78,6 +78,8 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ## MonadAxelarTransceiver and ERC1967 Proxy Deployment
 
+Note: The `MonadAxelarTransceiver` is a tag used to distinguish the Monad-specific `AxelarTransceiver` contract from other `AxelarTransceiver` contracts in the config. For deployment purpose we use same `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git).
+
 ### Prerequisites
 
 MonadAxelarTransceiver and ERC1967Proxy are compiled from the example-wormhole-axelar-wsteth repo. Generate build using the following commands:
