@@ -58,14 +58,8 @@ async function signL1Action(wallet, action, activePool, nonce, chain) {
     return { r: sig.r, s: sig.s, v: sig.v };
 }
 
-async function updateBlockSize(wallet, chain, args) {
-    const [blockSize] = args;
-    validateParameters({
-        isNonEmptyString: { blockSize },
-    });
-
-    const useBig = blockSize === 'big';
-    const action = { type: 'evmUserModify', usingBigBlocks: useBig };
+async function updateBlockSize(wallet, chain, useBigBlocks) {
+    const action = { type: 'evmUserModify', usingBigBlocks: useBigBlocks };
     const nonce = Date.now();
     const signature = await signL1Action(wallet, action, null, nonce, chain);
     const payload = { action, signature, nonce };
@@ -164,15 +158,13 @@ async function main(processor, args, options) {
     });
 }
 
-async function switchHyperliquidBlockSize(options, useBigBlocks, chain) {
-    const blockType = useBigBlocks ? 'big' : 'small';
-    const rpc = chain.rpc;
-    const provider = getDefaultProvider(rpc);
-    const wallet = new Wallet(options.privateKey, provider);
+async function switchHyperliquidBlockSize(wallet, chain, args, options) {
+    const [blockType] = args;
+    const useBigBlocks = blockType === 'big';
 
     printInfo('Block size', blockType);
 
-    const result = await updateBlockSize(wallet, chain, [blockType]);
+    const result = await updateBlockSize(wallet, chain, useBigBlocks);
 
     printInfo('Block size updated', result);
 }
@@ -187,7 +179,7 @@ if (require.main === module) {
         .addArgument(new Argument('<block-size>', 'block size to use').choices(['big', 'small']))
         .description('Update Hyperliquid block size')
         .action((blockSize, options) => {
-            main(updateBlockSize, [blockSize], options);
+            main(switchHyperliquidBlockSize, [blockSize], options);
         });
 
     program
@@ -209,4 +201,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { switchHyperliquidBlockSize };
+module.exports = { updateBlockSize };
