@@ -451,8 +451,8 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         isNonArrayObject: { contractEntry: chain.contracts[packageName] },
         isNonEmptyString: { contractAddress: chain.contracts[packageName].address },
         // OwnerCap
-        isNonArrayObject: { contractEntry: chain.contracts[packageName].objects },
-        isNonEmptyString: { contractAddress: chain.contracts[packageName].objects.OwnerCap },
+        isNonArrayObject: { ownerEntry: chain.contracts[packageName].objects },
+        isNonEmptyString: { ownerAddress: chain.contracts[packageName].objects.OwnerCap },
     });
     const contractConfig = chain.contracts[packageName];
     const ownerCap = contractConfig.objects.OwnerCap;
