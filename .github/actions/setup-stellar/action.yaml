@@ -36,7 +36,7 @@ runs:
     - name: Wait for Stellar network
       shell: bash
       run: |
-        MAX_WAIT=120
+        MAX_WAIT=600
         ELAPSED=0
 
         echo "Waiting for Stellar network to become ready..."
