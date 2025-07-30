@@ -178,6 +178,12 @@ const execute = async (client, wallet, config, options) => {
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
+    if (options.itsEdgeContract && options.chains.length > 1) {
+        throw new Error(
+            'Cannot use --its-edge-contract option with multiple chains.'
+        );
+    }
+
     const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
 
     if (!itsMsgTranslator) {
