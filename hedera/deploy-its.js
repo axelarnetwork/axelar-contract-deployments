@@ -378,7 +378,7 @@ async function deployAll(config, wallet, chain, options) {
             throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
         }
 
-        if (deployment.contractName === 'InterchainProxy') {
+        if (deployment.name === 'Interchain Token Service Proxy') {
             if (options.whbarAddress && options.whbarAmount) {
                 printInfo(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
 
@@ -545,8 +545,7 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
-
+    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true, ignoreChainNames: true });
     addBaseOptions(program);
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
@@ -580,7 +579,13 @@ if (require.main === module) {
             .env('WHBAR_AMOUNT'),
     );
 
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain to run the script over').makeOptionMandatory(true).env('CHAIN'));
+
     program.action(async (options) => {
+        // Making an alias because inherited evm code depends on `chainNames` (plural)
+        if (options.chainName) {
+            options.chainNames = options.chainName;
+        }
         await main(options);
     });
 

@@ -1,28 +1,28 @@
-# &lt; ChainName &gt; ITS vX.X.X
+# Hedera ITS v2.1.0
 
 |                | **Owner**                                 |
 | -------------- | ----------------------------------------- |
-| **Created By** | @yourGithubUsername <user@interoplabs.io> |
-| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
+| **Created By** | @rista404 <ristic@commonprefix.com> |
+| **Deployment** | @rista404 <ristic@commonprefix.com> |
 
-| **Network**          | **Deployment Status** | **Date** |
-| -------------------- | --------------------- | -------- |
-| **Devnet Amplifier** | -                     | TBD      |
-| **Stagenet**         | -                     | TBD      |
-| **Testnet**          | -                     | TBD      |
-| **Mainnet**          | -                     | TBD      |
+| **Network**          | **Deployment Status** | **Date**    |
+| -------------------- | --------------------- | ----------- |
+| **Devnet Amplifier** | -                     | TBD         |
+| **Stagenet**         | Deployed              | 2025-07-30  |
+| **Testnet**          | -                     | TBD         |
+| **Mainnet**          | -                     | TBD         |
 
-- [Release] add link to Github release here
+- [Release](https://github.com/commonprefix/interchain-token-service/tree/2198e2720444aec9bd85c0f3ae9ded26403bb1c1)
 
 ## Background
 
-Describe release content here
+Deployment of the Hedera-fork of Interchain Token Service.
 
 ## Deployment
 
 Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first.
 
-Follow `hedera/README.md` for Hedera account setup and .env configuration.
+Follow `hedera/README.md` for Hedera account setup and in-depth `.env` configuration.
 
 Create an `.env` config
 
@@ -76,7 +76,7 @@ The `--amount` is a value in HBAR. You can optionally skip the `--whbarAddress` 
 
 ### Verify Upgraded ITS Contracts
 
-Please follow this [instruction](https://github.com/axelarnetwork/axelar-contract-deployments/tree/main/evm#contract-verification) to verify ITS contracts on EVM chains.
+> TODO: Needs instructions for Hedera, missing in GMP Release.
 
 ## Set &lt;ChainName&gt; as trusted chain on remote ITS contracts
 

@@ -17,7 +17,7 @@ const WHBAR_ABI = [
 ];
 
 async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
-    printInfo(`Funding ${targetAddress} with ${amount} HBAR worth of WHBAR...`);
+    printInfo(`Funding ${targetAddress} with ${amount.toFixed(8)} WHBAR...`);
 
     // Deposit HBAR to get WHBAR
     const depositTx = await whbar.connect(wallet).deposit({ value: amount });
@@ -29,15 +29,17 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
 
     // Transfer WHBAR if target is different from wallet
     if (targetAddress.toLowerCase() !== wallet.address.toLowerCase()) {
+        printInfo(`Transfering to: ${targetAddress}`);
+
         // See https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar
         // as to why we need to scale down the amount
         const scale = 10 ** 10;
         const transferTx = await whbar.connect(wallet).transfer(targetAddress, amount / scale);
         await transferTx.wait();
-    }
 
-    const balance = await whbar.balanceOf(targetAddress);
-    printInfo(`${targetAddress} WHBAR balance`, `${ethers.utils.formatUnits(balance, 8)} WHBAR`);
+        const balance = await whbar.balanceOf(targetAddress);
+        printInfo(`${targetAddress} WHBAR balance`, `${ethers.utils.formatUnits(balance, 8)} WHBAR`);
+    }
 }
 
 async function fundWhbar(_config, receiverAddress, options) {
