@@ -441,3 +441,17 @@ Here's an example:
 ```bash
 ts-node xrpl/register-local-token.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
 ```
+
+### Create a Trust Line via the Multisig
+
+Create a trust line between the multisig account and a token issuer (via a TrustSet transaction).
+
+```bash
+ts-node xrpl/trust-set-multisig.js -e <env> -n <chain-name> --tokenId <token-id>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/trust-set-multisig.js -e devnet-amplifier -n xrpl-dev --tokenId a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc249
+```
