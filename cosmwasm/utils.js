@@ -39,7 +39,7 @@ const {
 } = require('../common/utils');
 const { normalizeBech32 } = require('@cosmjs/encoding');
 
-const { XRPLClient } = require('../xrpl/utils');
+const XRPLClient = require('../xrpl/xrpl-client');
 
 const DEFAULT_MAX_UINT_BITS_EVM = 256;
 const DEFAULT_MAX_DECIMALS_WHEN_TRUNCATING_EVM = 255;
