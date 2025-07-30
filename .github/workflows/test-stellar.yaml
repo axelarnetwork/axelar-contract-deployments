@@ -1,7 +1,6 @@
 name: Test Stellar
 
-# https://axelarnetwork.atlassian.net/browse/AXE-9846
-# on: pull_request
+on: pull_request
 
 jobs:
   check-relevant-changes:

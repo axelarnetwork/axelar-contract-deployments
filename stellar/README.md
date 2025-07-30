@@ -440,3 +440,5 @@ ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issue
 ```bash
 ts-node stellar/token-utils.js deploy-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
 ```
+
+##TEST
