@@ -1,61 +1,52 @@
 'use strict';
 
 const { Command, Option } = require('commander');
-const {
-    AccountId,
-    PrivateKey,
-    TokenAssociateTransaction,
-    TokenId,
-} = require("@hashgraph/sdk");
+const { AccountId, PrivateKey, TokenAssociateTransaction, TokenId } = require('@hashgraph/sdk');
 const { addBaseOptions, printHederaNetwork } = require('./cli-utils');
 const { getClient } = require('./client.js');
+const { printInfo } = require('../common/utils');
 
 function evmAddressToTokenId(evmAddress) {
     return TokenId.fromSolidityAddress(evmAddress);
 }
 
 function tokenIdToEvmAddress(tokenId) {
-	return TokenId.fromString(tokenId).toSolidityAddress();
+    return TokenId.fromString(tokenId).toSolidityAddress();
 }
 
 async function associateToken(_config, tokenId, options) {
-    const client = await getClient(
-        options.accountId,
-        options.privateKey,
-        options.hederaNetwork,
-    );
+    const client = await getClient(options.accountId, options.privateKey, options.hederaNetwork);
 
     printHederaNetwork(options);
 
     const accountId = AccountId.fromString(options.accountId);
     const privateKey = PrivateKey.fromStringECDSA(options.privateKey);
 
-    console.log("Account EVM Address: ", accountId.toSolidityAddress());
+    printInfo('Account EVM Address', accountId.toSolidityAddress());
 
     if (tokenId.length >= 40) {
-    	tokenId = evmAddressToTokenId(tokenId);
+        tokenId = evmAddressToTokenId(tokenId);
     }
 
-    console.log("Token ID: ", tokenId.toString());
-    console.log("Token EVM Address: ", tokenIdToEvmAddress(tokenId));
+    printInfo('Token ID', tokenId.toString());
+    printInfo('Token EVM Address', tokenIdToEvmAddress(tokenId));
+
+    if (prompt(`Proceed with associating?`, options.yes)) {
+        return;
+    }
 
     try {
-        const associateTx = new TokenAssociateTransaction()
-            .setAccountId(accountId)
-            .setTokenIds([tokenId])
-            .freezeWith(client);
+        const associateTx = new TokenAssociateTransaction().setAccountId(accountId).setTokenIds([tokenId]).freezeWith(client);
 
         const signTx = await associateTx.sign(privateKey);
         const submitTx = await signTx.execute(client);
         const receipt = await submitTx.getReceipt(client);
 
-        console.log("Token associated with account successfully");
-        console.log("Transaction ID:", submitTx.transactionId.toString());
-        console.log("Receipt status:", receipt.status.toString());
-
+        printInfo('Token associated with account successfully');
+        printInfo('Transaction ID', submitTx.transactionId.toString());
+        printInfo('Receipt status', receipt.status.toString());
     } catch (error) {
-        console.error('Token association failed:', error.message);
-        process.exit(1);
+        throw new Error(`Token association failed: ${error.messsage}`);
     }
 }
 
@@ -76,5 +67,5 @@ if (require.main === module) {
 }
 
 module.exports = {
-    associateToken
+    associateToken,
 };

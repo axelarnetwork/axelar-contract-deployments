@@ -6,6 +6,7 @@ const { getContractJSON } = require('../evm/utils.js');
 const { getClient } = require('./client.js');
 const { addBaseOptions } = require('./cli-utils');
 const { HTS_LIBRARY_NAME } = require('./utils.js');
+const { printInfo } = require('../common/utils');
 
 const DEFAULT_GAS_LIMIT = 3_000_000;
 
@@ -26,8 +27,8 @@ async function deployHtsLib(_config, options) {
     const json = getContractJSON(contractName);
     const bytecode = json.bytecode;
 
-    console.log(`Deploying ${contractName} library (${json.sourceName})`);
-    console.log(`Using gas limit: ${gasLimit}`);
+    printInfo(`Deploying ${contractName} library`, json.sourceName);
+    printInfo(`Using gas limit`, gasLimit);
 
     // Create the transaction
     const contractCreate = new ContractCreateFlow().setGas(gasLimit).setBytecode(bytecode);
@@ -35,18 +36,18 @@ async function deployHtsLib(_config, options) {
     try {
         // Sign the transaction with the client operator key and submit to a Hedera network
         const txResponse = await contractCreate.execute(client);
-        console.log(`Txid: ${txResponse.transactionId}`);
+        printInfo(`Txid`, txResponse.transactionId);
 
         // Get the receipt of the transaction
         const receipt = await txResponse.getReceipt(client);
 
         // Get the new contract ID
         const newContractId = receipt.contractId;
-        console.log('The new contract ID is ' + newContractId);
+        printInfo('The new contract ID', newContractId);
 
         const evmAddress = contractIdToEvmAddress(newContractId.shard, newContractId.realm, newContractId.num);
 
-        console.log(`EVM address of the new contract is ${evmAddress}`);
+        printInfo(`EVM address of the new contract`, evmAddress);
 
         if (options.output) {
             const fs = require('fs');
@@ -58,11 +59,10 @@ async function deployHtsLib(_config, options) {
                 deployedAt: new Date().toISOString(),
             };
             fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
-            console.log(`Deployment info saved to ${options.output}`);
+            printInfo(`Deployment info saved to`, options.output);
         }
     } catch (error) {
-        console.error('Deployment failed:', error.message);
-        process.exit(1);
+        throw new Error(`Deployment failed: ${error.message}`);
     } finally {
         process.exit(0);
     }

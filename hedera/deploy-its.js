@@ -287,7 +287,7 @@ async function deployAll(config, wallet, chain, options) {
                 );
                 contractConfig.predeployCodehash = predeployCodehash;
 
-                console.log(
+                printInfo(
                     `Setting ITS token creation price to ${tokenCreationPrice} tinycents ($${tokenCreationPrice / TINY_PARTS_PER_WHOLE})`,
                 );
 
@@ -380,16 +380,16 @@ async function deployAll(config, wallet, chain, options) {
 
         if (deployment.contractName === 'InterchainProxy') {
             if (options.whbarAddress && options.whbarAmount) {
-                console.log(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
+                printInfo(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
 
                 const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
 
                 const amount = ethers.utils.parseUnits(options.whbarAmount.toString(), 8); // WHBAR has 8 decimals
 
                 await fundWithWHBAR(whbar, contract.address, amount, wallet);
-                console.log(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
+                printInfo(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
             } else {
-                console.warn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
+                printWarn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
             }
         }
     }

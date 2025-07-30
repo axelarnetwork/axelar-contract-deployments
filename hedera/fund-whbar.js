@@ -5,7 +5,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { addBaseOptions, printHederaNetwork } = require('./cli-utils.js');
-const { prompt } = require('../common/utils.js');
+const { prompt, printInfo, printError } = require('../common/utils.js');
 const { getRpcUrl } = require('./client.js');
 
 // Basic WHBAR ABI for deposit, transfer, and balanceOf functions
@@ -17,15 +17,15 @@ const WHBAR_ABI = [
 ];
 
 async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
-    console.log(`Funding ${targetAddress} with ${amount} HBAR worth of WHBAR...`);
+    printInfo(`Funding ${targetAddress} with ${amount} HBAR worth of WHBAR...`);
 
     // Deposit HBAR to get WHBAR
     const depositTx = await whbar.connect(wallet).deposit({ value: amount });
     await depositTx.wait();
 
-    console.log('Deposited funds.');
+    printInfo('Deposited funds.');
     const ownBalance = await whbar.balanceOf(wallet.address);
-    console.log(`${wallet.address} WHBAR balance: ${ethers.utils.formatUnits(ownBalance, 8)} WHBAR`);
+    printInfo(`${wallet.address} WHBAR balance`, `${ethers.utils.formatUnits(ownBalance, 8)} WHBAR`);
 
     // Transfer WHBAR if target is different from wallet
     if (targetAddress.toLowerCase() !== wallet.address.toLowerCase()) {
@@ -37,7 +37,7 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
     }
 
     const balance = await whbar.balanceOf(targetAddress);
-    console.log(`${targetAddress} WHBAR balance: ${ethers.utils.formatUnits(balance, 8)} WHBAR`);
+    printInfo(`${targetAddress} WHBAR balance`, `${ethers.utils.formatUnits(balance, 8)} WHBAR`);
 }
 
 async function fundWhbar(_config, receiverAddress, options) {
@@ -49,20 +49,20 @@ async function fundWhbar(_config, receiverAddress, options) {
 
         // Create wallet from private key
         const wallet = new Wallet(options.privateKey, provider);
-        console.log(`Using wallet address: ${wallet.address}`);
+        printInfo(`Using wallet address`, wallet.address);
 
         const accountBalance = await wallet.getBalance();
-        console.log(`Account balance: ${ethers.utils.formatEther(accountBalance)} HBAR`);
+        printInfo(`Account balance`, `${ethers.utils.formatEther(accountBalance)} HBAR`);
 
         // Create WHBAR contract instance
         const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
-        console.log(`Using WHBAR contract at: ${options.whbarAddress}`);
+        printInfo(`Using WHBAR contract at`, options.whbarAddress);
 
         // Parse amount
         const amount = ethers.utils.parseEther(options.amount.toString());
 
         if (accountBalance.lt(amount)) {
-            console.error(
+            printError(
                 `Insufficient balance. Your account has ${ethers.utils.formatEther(accountBalance)} HBAR, but you need ${ethers.utils.formatEther(amount)} HBAR to fund ${receiverAddress}.`,
             );
             process.exit(1);
@@ -75,9 +75,9 @@ async function fundWhbar(_config, receiverAddress, options) {
         // Call the funding function
         await fundWithWHBAR(whbar, receiverAddress, amount, wallet);
 
-        console.log('Funding completed successfully!');
+        printInfo('Funding completed successfully!');
     } catch (error) {
-        console.error('Funding failed:', error.message);
+        printError('Funding failed', error.message);
         process.exit(1);
     }
 }
