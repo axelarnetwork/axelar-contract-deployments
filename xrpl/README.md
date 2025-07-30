@@ -412,3 +412,18 @@ To submit proofs constructed on Amplifier to the XRPL multisig, use the followin
 ```bash
 ts-node xrpl/submit-proof.js -e <env> -n <chain-name> [session id]
 ```
+
+### Query XRPL Token ID
+
+Query an XRPL token ID from the `XRPLGateway` contract.
+
+```bash
+ts-node xrpl/xrpl-token-id.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/xrpl-token-id.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
+# Token ID for XYZ.r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1: a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc249
+```
