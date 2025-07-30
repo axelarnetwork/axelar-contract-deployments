@@ -404,3 +404,11 @@ Here's an example:
 ```bash
 ts-node xrpl/account-set.js -e testnet -n xrpl --multisign --account rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg --transferRate 0 --tickSize 6 --domain axelar.foundation --flag 14
 ```
+
+### Submit Amplifier Proofs
+
+To submit proofs constructed on Amplifier to the XRPL multisig, use the following command:
+
+```bash
+ts-node xrpl/submit-proof.js -e <env> -n <chain-name> [session id]
+```
