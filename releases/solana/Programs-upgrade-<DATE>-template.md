@@ -31,6 +31,7 @@ Where `Env` can be:
    ```bash
    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+   export CHAIN_ID=solana-2
    ```
 
 2. **Build the updated binaries**
@@ -75,9 +76,10 @@ COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
 
 3. **Upgrade Programs**
 
+There is a special CLI command that will get the program_id for you:
 
 ```bash
-solana program deploy --program-id $PROGRAM_ID --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $PROGRAM_PATH
+./solana/solana-axelar-cli --chain-id $CHAIN_ID deploy --program <gateway|gas-service|governance|its> --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $PROGRAM_PATH
 ```
 
 ## Verify

@@ -1,0 +1,74 @@
+use clap::{Args, Subcommand};
+use serde_json::Value;
+use std::process::Command;
+
+use crate::utils::{
+    GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, read_json_file_from_path,
+    try_infer_program_id_from_env,
+};
+
+#[derive(Subcommand, Debug)]
+pub(crate) enum Commands {
+    /// Deploy a Solana program using solana program deploy
+    Deploy(DeployArgs),
+}
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub(crate) enum Programs {
+    Gateway,
+    GasService,
+    Governance,
+    Its,
+}
+
+#[derive(Args, Debug)]
+pub(crate) struct DeployArgs {
+    /// Name of the program to deploy
+    #[clap(long, value_enum)]
+    program: Programs,
+
+    /// Path to the upgrade authority keypair
+    #[clap(long)]
+    upgrade_authority: String,
+
+    /// Path to the program bytecode (.so file)
+    #[clap(long)]
+    program_path: String,
+}
+
+pub(crate) fn deploy_program(args: DeployArgs, config: crate::Config) -> eyre::Result<()> {
+    // Read the environment JSON file
+    let env: Value = read_json_file_from_path(&config.chains_info_file)?;
+    let chain_id = &config.chain_id;
+
+    let program_key = match args.program {
+        Programs::Gateway => GATEWAY_KEY,
+        Programs::GasService => GAS_SERVICE_KEY,
+        Programs::Governance => GOVERNANCE_KEY,
+        Programs::Its => ITS_KEY,
+    };
+
+    let program_id = try_infer_program_id_from_env(&env, chain_id, program_key)?;
+
+    println!(
+        "Deploying program {:?} with ID {} using authority {}",
+        args.program, program_id, args.upgrade_authority
+    );
+
+    // Build the solana program deploy command
+    let status = Command::new("solana")
+        .arg("program")
+        .arg("deploy")
+        .arg("--program-id")
+        .arg(program_id.to_string())
+        .arg("--upgrade-authority")
+        .arg(&args.upgrade_authority)
+        .arg(&args.program_path)
+        .status()?;
+
+    if !status.success() {
+        return Err(eyre::eyre!("solana program deploy failed"));
+    }
+    println!("Program {:?} deployed successfully.", args.program);
+    Ok(())
+}
