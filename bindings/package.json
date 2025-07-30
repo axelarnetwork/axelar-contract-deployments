@@ -1,6 +1,6 @@
 {
-  "name": "@eiger/solana-axelar",
-  "description": "Bindings for solana-axelar programs",
+  "name": "@eigerco/axelar-amplifier-solana-js",
+  "description": "Bindings for axelar-amplifier-solana programs",
   "version": "0.1.0",
   "author": "",
   "license": "Apache-2.0",

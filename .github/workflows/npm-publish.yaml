@@ -1,0 +1,52 @@
+name: Publish NPM Package
+permissions:
+  contents: read
+
+on:
+  push:
+    tags:
+      - 'axelar-amplifier-solana-js-v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/axelar-amplifier-solana-js-v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check package.json version matches tag
+        working-directory: ./bindings
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION=${{ steps.version.outputs.VERSION }}
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+            echo "Please update the version in bindings/package.json before creating the tag"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        working-directory: ./bindings
+        run: npm ci
+
+      - name: Build package
+        working-directory: ./bindings
+        run: npm run build-ts
+
+      - name: Publish to NPM
+        working-directory: ./bindings
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
