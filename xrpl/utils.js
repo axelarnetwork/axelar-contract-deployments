@@ -5,6 +5,7 @@ const { decodeAccountID } = require('ripple-address-codec');
 const { decode: decodeTxBlob } = require('ripple-binary-codec');
 const chalk = require('chalk');
 const { loadConfig, saveConfig, printInfo, printWarn, printError, prompt, getChainConfig } = require('../common');
+const { prepareClient, prepareWallet } = require('../cosmwasm/utils');
 const XRPLClient = require('./xrpl-client');
 
 function hex(str) {
@@ -142,12 +143,26 @@ async function mainProcessor(processor, options, args, save = true, catchErr = f
     }
 }
 
+async function mainCosmosProcessor(processCmd, options) {
+    const config = loadConfig(options.env);
+    const wallet = await prepareWallet(options);
+    const client = await prepareClient(config, wallet);
+    const {
+        axelar: { gasPrice, gasLimit },
+    } = config;
+
+    const fee = gasLimit === 'auto' ? 'auto' : calculateFee(gasLimit, GasPrice.fromString(gasPrice));
+
+    await processCmd(config, options, wallet, client, fee);
+}
+
 module.exports = {
     ...require('../common/utils'),
     generateWallet,
     getWallet,
     printWalletInfo,
     mainProcessor,
+    mainCosmosProcessor,
     hex,
     roundUpToNearestXRP,
     deriveAddress,
