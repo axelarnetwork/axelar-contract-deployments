@@ -82,6 +82,8 @@ solana program deploy --program-id $PROGRAM_ID --upgrade-authority $UPGRADE_AUTH
 
 ## Verify
 
+Verification is **only possible in mainnet**. If deploying for test environments you can skip this step.
+
 ```bash
 solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
   --commit-hash $COMMIT_HASH \
