@@ -4,7 +4,13 @@
 
 Clone [Hedera fork of ITS](http://github.com/commonprefix/interchain-token-service/tree/hedera-its) and checkout the `hedera-its` branch. Make sure the ITS directory is called `interchain-token-service` and lives alongside this repo's directory — otherwise change the path in `package.json` and reinstall dependencies via npm.
 
-Populate the `.env` with `PRIVATE_KEY` and `HEDERA_ID` you can get on [Hedera Portal](http://portal.hedera.com).
+Populate the `.env` with `PRIVATE_KEY` and `HEDERA_ID` you can get on [Hedera Portal](http://portal.hedera.com). Additionally set the `HEDERA_NETWORK` variable to `mainnet`/`testnet`/`previewnet`/`local`.
+
+```sh
+PRIVATE_KEY = '0x..'
+HEDERA_ID = '0.0.xxxxxxx'
+HEDERA_NETWORK = 'testnet'
+```
 
 ## Scripts
 
@@ -17,15 +23,15 @@ node hedera/deploy-hts-lib.js [options]
 ```
 
 **Options:**
-- `--gas <amount>` - Gas limit for deployment (default: 300,000)
+- `--gas <amount>` - Gas limit for deployment (default: 3,000,000)
 - `--output <file>` - Output file path to save deployment info
-- `--accountId <id>` - Hedera account ID
-- `--privateKey <key>` - Private key for the account
-- `--hederaNetwork <network>` - Hedera network (testnet/mainnet)
+- `--accountId <id>` - Hedera account ID (optional)
+- `--privateKey <key>` - Private key for the account (optional)
+- `--hederaNetwork <network>` - Hedera network (optional)
 
 **Example with default options and .env:**
 ```bash
-node hedera/deploy-hts-lib.js
+node hedera/deploy-hts-lib.js --gas <amount> --output <file>
 ```
 
 ### Associate Token
@@ -33,35 +39,38 @@ node hedera/deploy-hts-lib.js
 Associate a token with a Hedera account. This is required before an account can receive or interact with an HTS token.
 
 ```bash
-node hedera/associate-token.js <tokenId> [options]
+node hedera/associate-token.js <tokenId>
 ```
 
 **Arguments:**
 - `<tokenId>` - Token ID in Hedera format (0.0.xxxxx) or EVM address format
 
 **Options:**
-- `--accountId <id>` - Hedera account ID
-- `--privateKey <key>` - Private key for the account
-- `--hederaNetwork <network>` - Hedera network (testnet/mainnet)
+- `--accountId <id>` - Hedera account ID (optional)
+- `--privateKey <key>` - Private key for the account (optional)
+- `--hederaNetwork <network>` - Hedera network (optional)
 
 **Example:**
 ```bash
-node hedera/associate-token.js 0.0.123456 --accountId 0.0.789 --privateKey your_private_key
+node hedera/associate-token.js 0.0.123456
 ```
 
 ### Fund with WHBAR
 
 Fund an address with WHBAR (Wrapped HBAR) by depositing HBAR. WHBAR is the ERC-20 compatible version of HBAR used in smart contracts. See more about WHBAR [here](https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar).
+Addresses of `WHBAR` contracts can be found [here](https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar#contract-deployments).
 
 ```bash
-node hedera/fund-whbar.js [options]
+node hedera/fund-whbar.js <receiverAddress> --amount <amount> --whbarAddress <address>
 ```
 
+**Arguments:**
+- `<receiverAddress>` - Address to fund with WHBAR (required)
+
 **Options:**
-- `--to <address>` - Address to fund with WHBAR (required)
-- `--whbarAddress <address>` - Address of the WHBAR contract (required, can use WHBAR_ADDRESS env var)
-- `--amount <amount>` - Amount of HBAR to deposit and convert to WHBAR (required, can use WHBAR_AMOUNT env var)
-- `--privateKey <key>` - Private key for funding account
+- `--whbarAddress <address>` - Address of the WHBAR contract (optional, defaults to `WHBAR_ADDRESS` env var)
+- `--amount <amount>` - Amount of HBAR to deposit and convert to WHBAR (optional, defaults to WHBAR_AMOUNT env var)
+- `--privateKey <key>` - Private key for funding account (optional)
 - `--yes` - Skip confirmation prompt
 
 **Example:**

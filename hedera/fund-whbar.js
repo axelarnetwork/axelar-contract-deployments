@@ -1,9 +1,10 @@
 'use strict';
 
+require('dotenv').config();
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
-const { addBaseOptions, printHederaNetwork } = require('./cli-utils');
+const { addBaseOptions, printHederaNetwork } = require('./cli-utils.js');
 const { prompt } = require('../common/utils.js');
 const { getRpcUrl } = require('./client.js');
 
@@ -12,7 +13,7 @@ const WHBAR_ABI = [
     'function deposit() payable',
     'function transfer(address to, uint256 amount) returns (bool)',
     'function balanceOf(address account) view returns (uint256)',
-    'function withdraw(uint256 amount)'
+    'function withdraw(uint256 amount)',
 ];
 
 async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
@@ -39,8 +40,8 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
     console.log(`${targetAddress} WHBAR balance: ${ethers.utils.formatUnits(balance, 8)} WHBAR`);
 }
 
-async function fundWhbar(_config, options) {
-		printHederaNetwork(options);
+async function fundWhbar(_config, receiverAddress, options) {
+    printHederaNetwork(options);
 
     try {
         // Get RPC URL from environment
@@ -61,19 +62,20 @@ async function fundWhbar(_config, options) {
         const amount = ethers.utils.parseEther(options.amount.toString());
 
         if (accountBalance.lt(amount)) {
-        		console.error(`Insufficient balance. Your account has ${ethers.utils.formatEther(accountBalance)} HBAR, but you need ${ethers.utils.formatEther(amount)} HBAR to fund ${options.to}.`);
-						process.exit(1);
-				}
+            console.error(
+                `Insufficient balance. Your account has ${ethers.utils.formatEther(accountBalance)} HBAR, but you need ${ethers.utils.formatEther(amount)} HBAR to fund ${receiverAddress}.`,
+            );
+            process.exit(1);
+        }
 
-       	if (prompt(`Proceed with funding ${options.to} with ${options.amount.toFixed(8)} WHBAR?`, options.yes)) {
-          return;
+        if (prompt(`Proceed with funding ${receiverAddress} with ${options.amount.toFixed(8)} WHBAR?`, options.yes)) {
+            return;
         }
 
         // Call the funding function
-        await fundWithWHBAR(whbar, options.to, amount, wallet);
+        await fundWithWHBAR(whbar, receiverAddress, amount, wallet);
 
         console.log('Funding completed successfully!');
-
     } catch (error) {
         console.error('Funding failed:', error.message);
         process.exit(1);
@@ -83,34 +85,27 @@ async function fundWhbar(_config, options) {
 if (require.main === module) {
     const program = new Command();
 
+    addBaseOptions(program);
+
     program
         .name('fund-whbar')
         .description('Fund an address with WHBAR by depositing HBAR')
+        .argument('<receiverAddress>', 'Address to fund with WHBAR')
+        .addOption(new Option('--whbarAddress <address>', 'Address of the WHBAR contract').env('WHBAR_ADDRESS').makeOptionMandatory(true))
         .addOption(
-            new Option('--to <address>', 'address to fund with WHBAR')
-                .makeOptionMandatory(true)
-        )
-        .addOption(
-            new Option('--whbarAddress <address>', 'address of the WHBAR contract')
-            		.env('WHBAR_ADDRESS')
-                .makeOptionMandatory(true)
-        )
-        .addOption(
-            new Option('--amount <amount>', 'amount of HBAR to deposit (will be converted to WHBAR)')
+            new Option('--amount <amount>', 'Amount of HBAR to deposit (will be converted to WHBAR)')
                 .makeOptionMandatory(true)
                 .env('WHBAR_AMOUNT')
-                .argParser((value) => parseFloat(value))
+                .argParser((value) => parseFloat(value)),
         )
-        .action((options) => {
-            fundWhbar(null, options);
+        .action((receiverAddress, options) => {
+            fundWhbar(null, receiverAddress, options);
         });
-
-    addBaseOptions(program);
 
     program.parse();
 }
 
 module.exports = {
-	WHBAR_ABI,
-  fundWithWHBAR,
+    WHBAR_ABI,
+    fundWithWHBAR,
 };

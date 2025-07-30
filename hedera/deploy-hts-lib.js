@@ -7,7 +7,7 @@ const { getClient } = require('./client.js');
 const { addBaseOptions } = require('./cli-utils');
 const { HTS_LIBRARY_NAME } = require('./utils.js');
 
-const DEFAULT_GAS_LIMIT = 4_000_000;
+const DEFAULT_GAS_LIMIT = 3_000_000;
 
 function contractIdToEvmAddress(shard, realm, num) {
     const buf = Buffer.alloc(20);
