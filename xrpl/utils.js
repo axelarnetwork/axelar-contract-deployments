@@ -52,6 +52,17 @@ function parseTokenAmount(token, amount) {
     return parsedAmount;
 }
 
+async function broadcastTxBlob(client, txBlob, options) {
+    const tx = decodeTxBlob(txBlob);
+    printInfo('Preparing to broadcast transaction', tx);
+
+    if (prompt(`Submit ${tx.TransactionType} transaction?`, options.yes)) {
+        process.exit(0);
+    }
+
+    await client.submitTx(txBlob);
+}
+
 class XRPLClient {
     constructor(rpcUrl) {
         this.client = new xrpl.Client(rpcUrl);
@@ -387,4 +398,5 @@ module.exports = {
     parseTokenAmount,
     decodeAccountIDToHex,
     decodeTxBlob,
+    broadcastTxBlob,
 };
