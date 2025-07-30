@@ -188,9 +188,11 @@ const registerItsChain = async (client, wallet, config, options) => {
         const chainConfig = getChainConfig(config, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
+        const itsEdgeContract = options.itsEdgeContract || itsEdgeContract(chainConfig);
+
         return {
             chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContract(chainConfig),
+            its_edge_contract: itsEdgeContract,
             msg_translator: itsMsgTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
@@ -338,6 +340,12 @@ const programHandler = () => {
             new Option(
                 '--its-msg-translator <itsMsgTranslator>',
                 'address for the message translation contract associated with the chain being registered on ITS Hub',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--its-edge-contract <itsEdgeContract>',
+                'address for the ITS edge contract associated with the chain being registered on ITS Hub',
             ),
         )
         .action((chains, options) => {
