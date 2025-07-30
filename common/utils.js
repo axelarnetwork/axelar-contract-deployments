@@ -548,7 +548,7 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
 const getMultisigProof = async (axelar, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
