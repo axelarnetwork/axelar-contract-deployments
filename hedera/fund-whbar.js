@@ -4,7 +4,7 @@ require('dotenv').config();
 const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
-const { addBaseOptions, printHederaNetwork } = require('./cli-utils.js');
+const { addBaseOptions, printHederaNetwork, addSkipPromptOption } = require('./cli-utils.js');
 const { prompt, printInfo, printError } = require('../common/utils.js');
 const { getRpcUrl } = require('./client.js');
 
@@ -86,6 +86,7 @@ if (require.main === module) {
     const program = new Command();
 
     addBaseOptions(program);
+    addSkipPromptOption(program);
 
     program
         .name('fund-whbar')

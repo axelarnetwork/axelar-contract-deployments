@@ -2,9 +2,9 @@
 
 const { Command, Option } = require('commander');
 const { AccountId, PrivateKey, TokenAssociateTransaction, TokenId } = require('@hashgraph/sdk');
-const { addBaseOptions, printHederaNetwork } = require('./cli-utils');
+const { addBaseOptions, printHederaNetwork, addSkipPromptOption } = require('./cli-utils');
 const { getClient } = require('./client.js');
-const { printInfo } = require('../common/utils');
+const { prompt, printInfo } = require('../common/utils');
 
 function evmAddressToTokenId(evmAddress) {
     return TokenId.fromSolidityAddress(evmAddress);
@@ -46,7 +46,7 @@ async function associateToken(_config, tokenId, options) {
         printInfo('Transaction ID', submitTx.transactionId.toString());
         printInfo('Receipt status', receipt.status.toString());
     } catch (error) {
-        throw new Error(`Token association failed: ${error.messsage}`);
+        throw new Error(`Token association failed: ${error.message}`);
     }
 }
 
@@ -62,6 +62,7 @@ if (require.main === module) {
         });
 
     addBaseOptions(program);
+    addSkipPromptOption(program);
 
     program.parse();
 }

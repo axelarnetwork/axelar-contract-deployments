@@ -6,8 +6,6 @@ const { Option } = require('commander');
 const { printInfo } = require('../common/utils');
 
 const addBaseOptions = (program, options = {}) => {
-    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
-
     program.addOption(
         new Option('-hn, --hederaNetwork <hederaNetworkName>', 'hedera network')
             .makeOptionMandatory(true)
@@ -20,11 +18,17 @@ const addBaseOptions = (program, options = {}) => {
     return program;
 };
 
+const addSkipPromptOption = (program, _options = {}) => {
+    program.addOption(new Option('-y, --yes', 'skip prompt confirmation').env('YES'));
+    return program;
+};
+
 const printHederaNetwork = ({ hederaNetwork, accountId }) => {
     printInfo(`Using Hedera ${hederaNetwork}, Account ID ${accountId}`);
 };
 
 module.exports = {
     addBaseOptions,
+    addSkipPromptOption,
     printHederaNetwork,
 };
