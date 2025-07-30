@@ -1,6 +1,6 @@
 # Solana Program upgrade tracking doc <Date> (this is template)
 
-This guide is for **upgrading previously deployed Solana programs** as part of the GMP/ITS v1.0.0 initial release ([1](./2025-07-GMP-v1.0.0.md), [2](./2025-07-ITS-v1.0.0.md) respectively). It assumes that:
+This guide is for **upgrading Solana programs** as part of the GMP/ITS v1.0.0 initial release ([1](./2025-07-GMP-v1.0.0.md), [2](./2025-07-ITS-v1.0.0.md) respectively). It assumes that:
 
 - Programs are already deployed with known program IDs.
 - The upgrade authority keypair is available.
@@ -63,18 +63,15 @@ UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
 COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
    ```
 
-   **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going tobe deployed.
+   **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going to be deployed.
 
-2. **Set seolana CLI on the covenient cluster**
+2. **Set seolana CLI on the convenient cluster**
 
    ```bash
-   solana config set --url <moniker>
+   solana config set --url <mainnet|devnet>
    ```
-
-   Where `moniker` can be:
-
-   * devnet (We deploy all Axelar test envs in devnet)
-   * mainnet
+   note: We deploy all Axelar test environments in devnet
+   
 
 3. **Upgrade Programs**
 
