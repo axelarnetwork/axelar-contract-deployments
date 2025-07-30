@@ -138,6 +138,11 @@ const getCodeId = async (client, config, options) => {
     throw new Error('Code Id is not defined');
 };
 
+const executeTransaction = async (client, account, contractAddress, message, fee) => {
+    const tx = await client.execute(account.address, contractAddress, message, fee, '');
+    return tx;
+};
+
 const uploadContract = async (client, wallet, config, options) => {
     const {
         axelar: { gasPrice, gasLimit },
@@ -1198,6 +1203,7 @@ module.exports = {
     getAmplifierBaseContractConfig,
     getAmplifierContractConfig,
     getCodeId,
+    executeTransaction,
     uploadContract,
     instantiateContract,
     migrateContract,

@@ -7,12 +7,7 @@ const { addAmplifierOptions } = require('./cli-utils');
 const { GasPrice, calculateFee } = require('@cosmjs/stargate');
 
 const { loadConfig, getCurrentVerifierSet, printInfo, sleep, printError } = require('../common');
-const { prepareWallet, prepareClient } = require('./utils');
-
-const executeTransaction = async (client, account, contractAddress, message, fee) => {
-    const tx = await client.execute(account.address, contractAddress, message, fee, '');
-    return tx;
-};
+const { prepareWallet, prepareClient, executeTransaction } = require('./utils');
 
 const getNextVerifierSet = async (config, chain, client) => {
     return client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, 'next_verifier_set');
