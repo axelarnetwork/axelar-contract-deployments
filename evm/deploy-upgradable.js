@@ -46,7 +46,7 @@ function getProxy(wallet, proxyAddress) {
 /**
  * Generates implementation constructor arguments for a given contract based on its configuration and options.
  */
-async function getImplementationArgs(contractName, contracts, options) {
+async function getImplementationArgs(contractConfig, contractName, gatewayAddress, options) {
     let args;
 
     try {
@@ -55,7 +55,6 @@ async function getImplementationArgs(contractName, contracts, options) {
         console.error('Error parsing args:\n', error.message);
     }
 
-    const contractConfig = contracts[contractName];
     Object.assign(contractConfig, args);
 
     switch (contractName) {
@@ -75,7 +74,6 @@ async function getImplementationArgs(contractName, contracts, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                // Note: chain name is not available in this context, so we'll use a generic message
                 console.log(`AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
@@ -85,13 +83,11 @@ async function getImplementationArgs(contractName, contracts, options) {
                 throw new Error(`Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = contracts.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
+            if (!isAddress(gatewayAddress)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            return [gateway, symbol, refundIssuer];
+            return [gatewayAddress, symbol, refundIssuer];
         }
     }
 
@@ -167,7 +163,7 @@ async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractName, contracts, options);
+    const implArgs = await getImplementationArgs(contractConfig, contractName, contracts.AxelarGateway?.address, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
@@ -199,7 +195,7 @@ async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
             wallet.connect(provider),
             implementationJson,
             implArgs,
-            getUpgradeArgs(contractName, chain),
+            getUpgradeArgs(contractName),
             {
                 deployerContract,
                 salt: `${salt} Implementation`,
@@ -215,7 +211,7 @@ async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
         console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
         console.log(`${chain.name} | Upgraded.`);
     } else {
-        const setupArgs = getInitArgs(contractName, contracts);
+        const setupArgs = getInitArgs(contractName);
         printInfo('Proxy setup args', setupArgs);
 
         const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
