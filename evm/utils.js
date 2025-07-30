@@ -644,31 +644,20 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  * This function processes chain selection based on various input parameters and returns
  * a filtered list of chain names that meet the specified criteria. It supports
  * case-insensitive chain name matching and validates that all chains are EVM-compatible.
- *
- * @returns {Array<string>} Array of lowercase chain names that meet the filtering criteria
- * @throws {Error} If no chain names are provided
- * @throws {Error} If a specified chain is not defined in the config file
- * @throws {Error} If a specified chain is not an EVM chain
- * @throws {Error} If no valid chains are found after filtering
- * @throws {Error} If startFromChain is specified but not found in the selected chain list
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    // Helper function to find chain key case-insensitively
     const findChainKey = (chainName) => {
         return Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
     };
 
     let chains;
 
-    // Initialize chains based on input
     if (chainNames === 'all') {
-        // Get all EVM chains and filter out deactive ones
         chains = Object.keys(config.chains).filter((chainKey) => {
             const chain = config.chains[chainKey];
             return (!chain.chainType || chain.chainType === 'evm') && chain.status !== 'deactive';
         });
     } else if (chainNames) {
-        // Parse and validate specified chains
         const chainNamesList = chainNames.split(',').map((name) => name.trim());
         chains = [];
 
@@ -690,7 +679,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
                 continue;
             }
 
-            chains.push(chainKey); // Use the actual config key to preserve case
+            chains.push(chainKey);
         }
     } else {
         throw new Error('Chain names were not provided');
@@ -700,7 +689,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         throw new Error('No valid chains found');
     }
 
-    // Apply startFromChain filter
     if (startFromChain) {
         const startChainKey = findChainKey(startFromChain);
         if (!startChainKey) {
@@ -715,7 +703,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         chains = chains.slice(startIndex);
     }
 
-    // Apply skip chains filter
     if (skipChains) {
         const chainsToSkip = skipChains.split(',').map((str) => str.trim().toLowerCase());
         chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
@@ -732,10 +719,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
  * function supports both parallel and sequential execution modes based on the
  * options.parallel flag.
  *
- * @returns {Promise<Array>} Array of results from processing each chain
- * @throws {Error} If environment is not provided
- * @throws {Error} If chain configuration is invalid
- * @throws {Error} If processCommand fails and ignoreError is false
  */
 const mainProcessor = async (options, processCommand, save = true) => {
     if (!options.env) {
@@ -769,7 +752,9 @@ const mainProcessor = async (options, processCommand, save = true) => {
             promisedChainsResults.push(chainTask);
         } else {
             const { result, loggerError, chainName } = await chainTask;
-            results.push(result);
+            if (result !== undefined) {
+                results.push(result);
+            }
             if (loggerError) {
                 failedChains[chainName] = loggerError;
             }
@@ -777,23 +762,27 @@ const mainProcessor = async (options, processCommand, save = true) => {
     }
 
     if (options.parallel) {
-        const resultsWithErrLogs = await Promise.all(promisedChainsResults);
-        results = resultsWithErrLogs.map((chainResult) => chainResult.result).filter((chainResult) => chainResult !== undefined);
-        failedChains = resultsWithErrLogs.reduce((acc, result) => {
-            if (result.loggerError) {
-                acc[result.chainName] = result.loggerError;
+        const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults);
+        results = resultsWithErrLogs
+            .filter((promiseResult) => promiseResult.status === 'fulfilled')
+            .map((promiseResult) => promiseResult.value.result)
+            .filter((chainResult) => chainResult !== undefined);
+        failedChains = resultsWithErrLogs.reduce((acc, promiseResult) => {
+            if (promiseResult.status === 'rejected') {
+                acc[promiseResult.reason.chainName || 'unknown'] = promiseResult.reason.message;
+            } else if (promiseResult.value.loggerError) {
+                acc[promiseResult.value.chainName] = promiseResult.value.loggerError;
             }
             return acc;
         }, {});
     }
 
-    console.log(
-        'Succeeded chains:',
+    printInfo(
+        'Succeeded chains',
         chains
             .filter((chain) => !Object.keys(failedChains).includes(chain.name))
             .map((chain) => chain.name)
             .join(', '),
-        '\n',
     );
 
     for (const [chainName, loggerError] of Object.entries(failedChains)) {
@@ -831,10 +820,16 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
             if (!options.ignoreError) {
+                if (loggerOutput) {
+                    process.stdout.write(`Chain ${chain.name} logs: ${loggerOutput}\n`);
+                }
+                error.chainName = chain.name;
                 throw error;
             }
         }
-        console.log(loggerOutput);
+        if (loggerOutput) {
+            process.stdout.write(`Chain ${chain.name} logs: ${loggerOutput}\n`);
+        }
         return { result, loggerError, chainName: chain.name };
     });
 };
