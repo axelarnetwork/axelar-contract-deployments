@@ -108,6 +108,19 @@
           "wstETH token": "0xB82381A3fBD3FaFA77B3a7bE693342618240067b",
           "NttManager": "0x8B715EAf61A7DdF61C67d5D46687c796D1f47146",
           "wormholeChainId": 10002
+        },
+        "MonadAxelarTransceiver": {
+          "gmpManager": "0xDaeE3A6B4196E3e46015b364F1DAe54CEAE74A91",
+          "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
+          "implementation": "0xaEd2ff6B22fD2207Fb5D640e7ea5d1552F5D28CF",
+          "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "deploymentMethod": "create",
+          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
+          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059",
+          "pauser": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "owner": "0x3d6CB9D16FD5ff33511d630FC1E98a8F5f93dD85"
         }
       },
       "explorer": {
@@ -3082,6 +3095,19 @@
           "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "MonadAxelarTransceiver": {
+          "gmpManager": "0x641a6608e2959c0D7Fe2a5F267DFDA519ED43d98",
+          "TransceiverStructs": "0x19aA201504dAF1FFBFd7ae6959225996fe84fdc6",
+          "implementation": "0xaEd2ff6B22fD2207Fb5D640e7ea5d1552F5D28CF",
+          "gateway": "0xe432150cce91c13a887f7D836923d5597adD8E31",
+          "gasService": "0xbE406F0189A0B4cf3A05C286473D23791Dd44Cc6",
+          "deployer": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "deploymentMethod": "create",
+          "codehash": "0x540fea7fc27ea1dbd203c60045d9db59173f14696cf6781b26db1005f42344a9",
+          "address": "0x9B94e0Ef74a2d026c28039bCe22338a8A3637059",
+          "pauser": "0x377F94Ebd3255FfF32511E5C1C471232024189fb",
+          "owner": "0xD54096E46E8438d753A749639d11397EF3BA28f5"
         }
       }
     },
