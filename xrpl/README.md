@@ -427,3 +427,17 @@ Here's an example:
 ts-node xrpl/xrpl-token-id.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
 # Token ID for XYZ.r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1: a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc249
 ```
+
+### Register Local XRPL Token
+
+Add support for an XRPL IOU token.
+
+```bash
+ts-node xrpl/register-local-token.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/register-local-token.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
+```
