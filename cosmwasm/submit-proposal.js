@@ -188,11 +188,11 @@ const registerItsChain = async (client, wallet, config, options) => {
         const chainConfig = getChainConfig(config, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
-        const itsEdgeContract = options.itsEdgeContract || itsEdgeContract(chainConfig);
+        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
 
         return {
             chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContract,
+            its_edge_contract: itsEdgeContractAddress,
             msg_translator: itsMsgTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
