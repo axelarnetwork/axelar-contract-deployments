@@ -57,11 +57,11 @@ solana-verify build --base-image $BASE_IMAGE --library-name <library_name> -- --
 
 
    ```bash
-PROGRAM_BYTECODE_PATH="solana-axelar/target/deploy/<program_name>.so"
-PROGRAM_ID=<PROGRAM_ID>
+export PROGRAM_BYTECODE_PATH="solana-axelar/target/deploy/<program_name>.so"
+export PROGRAM_ID=<PROGRAM_ID>
 
-UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
-COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
+export UPGRADE_AUTHORITY_KEYPAIR_PATH=<path/to/upgrade_authority_keypair.json>
+export COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
    ```
 
    **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going to be deployed.
