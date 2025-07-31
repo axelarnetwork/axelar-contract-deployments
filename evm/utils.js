@@ -708,9 +708,9 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
     }
 
-    const chainNames = chains.map((chain) => chain.name.toLowerCase());
+    const chainNamesLowerCase = chains.map((chain) => chain.toLowerCase());
 
-    const result = chainNames.map((chainName) => {
+    const result = chainNamesLowerCase.map((chainName) => {
         const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
         if (!chainKey) {
             throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
@@ -722,7 +722,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         return chain;
     });
 
-    return result
+    return result;
 };
 
 /**
@@ -747,7 +747,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     let failedChains = {};
     let promisedChainsResults = [];
-    let results = [];
+    let results = {};
     for (const chain of chains) {
         const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
 
@@ -756,7 +756,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
         } else {
             const { result, loggerError, chainId } = await chainTask;
             if (result !== undefined) {
-                results.push(result);
+                results[chainId] = result;
             }
             if (loggerError) {
                 failedChains[chainId] = loggerError;
@@ -766,10 +766,14 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     if (options.parallel) {
         const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults);
-        results = resultsWithErrLogs
-            .filter((promiseResult) => promiseResult.status === 'fulfilled')
-            .map((promiseResult) => promiseResult.value.result)
-            .filter((chainResult) => chainResult !== undefined);
+        results = resultsWithErrLogs.reduce((acc, promiseResult) => {
+            if (promiseResult.status === 'fulfilled') {
+                acc[promiseResult.value.chainId] = promiseResult.value.result;
+            } else if (promiseResult.value.loggerError) {
+                acc[promiseResult.value.chainId] = promiseResult.value.loggerError;
+            }
+            return acc;
+        }, {});
 
         failedChains = resultsWithErrLogs.reduce((acc, promiseResult) => {
             if (promiseResult.status === 'rejected') {
@@ -823,16 +827,15 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
+
             if (!options.ignoreError) {
-                if (loggerOutput) {
-                    process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
-                }
                 error.chainId = chain.axelarId;
                 throw error;
             }
-        }
-        if (loggerOutput) {
-            process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
+        } finally {
+            if (loggerOutput) {
+                process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
+            }
         }
         return { result, loggerError, chainId: chain.axelarId };
     });
