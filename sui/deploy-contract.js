@@ -463,7 +463,7 @@ async function syncPackages(keypair, client, config, chain, options) {
 
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
-    const sui = getChainConfig(config, options.chainName);
+    const sui = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(sui, options);
 
     printInfo('Environment', options.env);

@@ -21,7 +21,7 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
-    isValidChain,
+    validateChain,
     encodeITSDestination,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
@@ -108,14 +108,6 @@ function compareToConfig(contractConfig, contractName, toCheck) {
             printWarn(`Warning: The key '${key}' is not found in the contract config for ${contractName}.`);
         }
     }
-}
-
-function isValidDestinationChain(config, destinationChain) {
-    if (destinationChain === '') {
-        return;
-    }
-
-    isValidChain(config, destinationChain);
 }
 
 async function processCommand(config, chain, action, options) {
@@ -587,7 +579,7 @@ async function processCommand(config, chain, action, options) {
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
-            isValidDestinationChain(config, destinationChain);
+            validateChain(config.chains, destinationChain);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
@@ -838,4 +830,4 @@ if (require.main === module) {
     program.parse();
 }
 
-module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains, isValidDestinationChain };
+module.exports = { its: main, getDeploymentSalt, handleTx, getTrustedChains };

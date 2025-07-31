@@ -185,7 +185,7 @@ const registerItsChain = async (client, wallet, config, options) => {
     }
 
     const chains = options.chains.map((chain) => {
-        const chainConfig = getChainConfig(config, chain);
+        const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
         return {

@@ -938,9 +938,7 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
-    const chains = config.chains;
-
+function validateChain(chains, chainName) {
     const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
@@ -1113,7 +1111,7 @@ module.exports = {
     getGasOptions,
     getSaltFromKey,
     getDeployOptions,
-    isValidChain,
+    validateChain,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,
