@@ -181,19 +181,19 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenServicev0 } = itsConfig.objects;
 
     printInfo('Action', 'Generate Legacy Coins List');
-    
+
     const itsObject = await client.getObject({
-        id: InterchainTokenServicev0, 
-        options:{ showContent: true }
+        id: InterchainTokenServicev0,
+        options: { showContent: true },
     });
-    
-    const registeredCoinsId = (itsObject.data) 
-        ? itsObject.data.content.fields.value.fields.registered_coins.fields.id.id 
-        : null;
+
+    const registeredCoinsId = itsObject.data ? itsObject.data.content.fields.value.fields.registered_coins.fields.id.id : null;
 
     if (!registeredCoinsId) throw new Error(`Unable to query ITS object at id ${InterchainTokenServicev0}`);
 
-    let hasNextPage = true, cursor, legacyCoins = [];
+    let hasNextPage = true,
+        cursor,
+        legacyCoins = [];
     while (hasNextPage) {
         try {
             // Paging (batches of 50)
@@ -201,30 +201,33 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
             if (cursor) params.cursor = cursor;
 
             // Fetch token data
-            const fields =  await client.getDynamicFields(params);
-            const coinIds = (fields.data) ? fields.data.map(coin => coin.objectId) : [];
+            const fields = await client.getDynamicFields(params);
+            const coinIds = fields.data ? fields.data.map((coin) => coin.objectId) : [];
             const coinData = await client.multiGetObjects({
                 ids: coinIds,
-                options: { showContent: true }
+                options: { showContent: true },
             });
 
             // Target effected tokens by selecting only items with metadata !== null
-            legacyCoins = [...legacyCoins, ...coinData.filter((coin) => {
-                const coinMetadata = (coin.data) 
-                    ? coin.data.content.fields.value.fields.coin_info.fields.metadata
-                    : null;
-                return (coinMetadata) ? true : false;
-            }).map((coin) => {
-                return { 
-                    TokenId: coin.data.content.fields.name.fields.id,
-                    TokenType: coin.data.content.fields.value.fields.coin_info.fields.metadata.type,
-                    symbol: coin.data.content.fields.value.fields.coin_info.fields.metadata.fields.symbol
-                };
-            })];
+            legacyCoins = [
+                ...legacyCoins,
+                ...coinData
+                    .filter((coin) => {
+                        const coinMetadata = coin.data ? coin.data.content.fields.value.fields.coin_info.fields.metadata : null;
+                        return coinMetadata ? true : false;
+                    })
+                    .map((coin) => {
+                        return {
+                            TokenId: coin.data.content.fields.name.fields.id,
+                            TokenType: coin.data.content.fields.value.fields.coin_info.fields.metadata.type,
+                            symbol: coin.data.content.fields.value.fields.coin_info.fields.metadata.fields.symbol,
+                        };
+                    }),
+            ];
 
             hasNextPage = fields.hasNextPage;
-            cursor = (fields.nextCursor) ? fields.nextCursor : null;
-        } catch(e) {
+            cursor = fields.nextCursor ? fields.nextCursor : null;
+        } catch (e) {
             throw new Error(e);
         }
     }
@@ -249,7 +252,9 @@ if (require.main === module) {
         'Split coins into a new object. If no coin type is specified, SUI coins will be used by default.',
     );
     const listProgram = new Command('list').description('List all coins and balances');
-    const legacyCoinsProgram = new Command('legacy-coins').description('Save a list of legacy coins to be migrated to public coin metadata');
+    const legacyCoinsProgram = new Command('legacy-coins').description(
+        'Save a list of legacy coins to be migrated to public coin metadata',
+    );
 
     // Define options, arguments, and actions for each sub-program
     mergeProgram.option('--coin-type <coinType>', 'Coin type to merge').action((options) => {
@@ -270,7 +275,7 @@ if (require.main === module) {
 
     legacyCoinsProgram.action((options) => {
         mainProcessor(options, legacyCoinsCommand);
-    })
+    });
 
     // Add sub-programs to the main program
     program.addCommand(mergeProgram);
