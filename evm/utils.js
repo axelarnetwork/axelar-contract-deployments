@@ -708,7 +708,21 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         chains = chains.filter((chain) => !chainsToSkip.includes(chain.toLowerCase()));
     }
 
-    return chains.map((chain) => chain.toLowerCase());
+    const chainNames = chains.map((chain) => chain.name.toLowerCase());
+
+    const result = chainNames.map((chainName) => {
+        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
+        if (!chainKey) {
+            throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
+        }
+        const chain = config.chains[chainKey];
+        if (!chain) {
+            throw new Error(`Chain data for "${chainName}" is undefined`);
+        }
+        return chain;
+    });
+
+    return result
 };
 
 /**
@@ -727,27 +741,16 @@ const mainProcessor = async (options, processCommand, save = true) => {
     printInfo('Environment', options.env);
 
     const config = loadConfig(options.env);
-    const chainNames = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
     const axelar = config.axelar;
     const chainsDeepCopy = deepCopy(config.chains);
-
-    const chains = chainNames.map((chainName) => {
-        const chainKey = Object.keys(config.chains).find((configChain) => configChain.toLowerCase() === chainName.toLowerCase());
-        if (!chainKey) {
-            throw new Error(`Chain "${chainName}" not found in config (case-insensitive lookup failed)`);
-        }
-        const chain = config.chains[chainKey];
-        if (!chain) {
-            throw new Error(`Chain data for "${chainName}" is undefined`);
-        }
-        return chain;
-    });
 
     let failedChains = {};
     let promisedChainsResults = [];
     let results = [];
     for (const chain of chains) {
         const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
+
         if (options.parallel) {
             promisedChainsResults.push(chainTask);
         } else {
@@ -767,9 +770,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
             .filter((promiseResult) => promiseResult.status === 'fulfilled')
             .map((promiseResult) => promiseResult.value.result)
             .filter((chainResult) => chainResult !== undefined);
+
         failedChains = resultsWithErrLogs.reduce((acc, promiseResult) => {
             if (promiseResult.status === 'rejected') {
-                acc[promiseResult.reason.chainId || 'unknown'] = promiseResult.reason.message;
+                acc[promiseResult.reason.chainId] = promiseResult.reason.message;
             } else if (promiseResult.value.loggerError) {
                 acc[promiseResult.value.chainId] = promiseResult.value.loggerError;
             }
