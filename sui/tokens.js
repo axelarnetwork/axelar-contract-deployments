@@ -231,7 +231,7 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
             throw new Error(e);
         }
     }
-    contracts.InterchainTokenService.legacyCoins = legacyCoins;
+    if (legacyCoins.length) contracts.InterchainTokenService.legacyCoins = legacyCoins;
 }
 
 async function mainProcessor(options, processor, args = {}) {
