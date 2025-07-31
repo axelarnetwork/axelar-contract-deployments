@@ -34,7 +34,7 @@ async function processCommand(axelar, chain, chains, options) {
         privateKey,
         args,
 
-        chains,
+        chains: destinationChains,
 
         yes,
     } = options;

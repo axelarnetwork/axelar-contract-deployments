@@ -71,13 +71,13 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
 }
 
 async function getTrustedChains(chains, interchainTokenService) {
-    const chains = Object.values(chains)
+    const chainIds = Object.values(chains)
         .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
         .map((chain) => chain.axelarId);
 
     const trustedChains = [];
 
-    for (const chain of chains) {
+    for (const chain of chainIds) {
         if (await interchainTokenService.isTrustedChain(chain)) {
             trustedChains.push(chain);
         }
@@ -622,9 +622,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (axelar, chain, chains, options) =>
-        processCommand(axelar, chain, chains, action, options),
-    );
+    return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
 }
 
 if (require.main === module) {

@@ -210,7 +210,18 @@ async function getGasUpdates(axelar, chain, chains, destinationChains) {
 }
 
 async function processCommand(axelar, chain, chains, options) {
-    const { env, contractName, address, action, privateKey, chains, destinationChain, destinationAddress, isExpress, yes } = options;
+    const {
+        env,
+        contractName,
+        address,
+        action,
+        privateKey,
+        chains: destinationChains,
+        destinationChain,
+        destinationAddress,
+        isExpress,
+        yes,
+    } = options;
     const executionGasLimit = parseInt(options.executionGasLimit);
 
     const contracts = chain.contracts;
@@ -287,10 +298,10 @@ async function processCommand(axelar, chain, chains, options) {
 
         case 'updateGasInfo': {
             validateParameters({
-                isNonEmptyStringArray: { chains },
+                isNonEmptyStringArray: { destinationChains },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelar, chain, chains, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelar, chain, chains, destinationChains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');
