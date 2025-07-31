@@ -23,7 +23,7 @@ pub(crate) struct UpgradeArgs {
     program: Programs,
 
     /// Path to the upgrade authority keypair
-    #[clap(long)]
+    #[clap(long, env = "UPGRADE_AUTHORITY_KEYPAIR_PATH")]
     upgrade_authority: String,
 
     /// Path to the program bytecode (.so file)

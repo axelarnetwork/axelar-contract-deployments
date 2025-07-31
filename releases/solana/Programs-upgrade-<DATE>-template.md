@@ -79,7 +79,7 @@ COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
 There is a special CLI command that will get the program_id for you:
 
 ```bash
-./solana/solana-axelar-cli --chain-id $CHAIN_ID upgrade --program <gateway|gas-service|governance|its> --upgrade-authority $UPGRADE_AUTHORITY_KEYPAIR_PATH $PROGRAM_PATH
+./solana/solana-axelar-cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_PATH
 ```
 
 ## Verify
