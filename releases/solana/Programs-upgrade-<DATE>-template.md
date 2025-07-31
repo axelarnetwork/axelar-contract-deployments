@@ -94,7 +94,7 @@ solana-verify verify-from-repo --remote --base-image $BASE_IMAGE \
   -- --no-default-features --features $ENV
 ```
 
-## **Post-Upgrade Checklist**
+## Post-Upgrade Checklist
 
 - [ ] Re-run `GMP` test transaction (see final section in original deployment docs ([1](./2025-07-GMP-v1.0.0.md), [2](./2025-07-ITS-v1.0.0.md)).
 - [ ] Run the [e2e repository](https://github.com/eigerco/axelar-solana-e2e) pipeline.
