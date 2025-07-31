@@ -766,23 +766,26 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     if (options.parallel) {
         const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults);
-        results = resultsWithErrLogs.reduce((acc, promiseResult) => {
-            if (promiseResult.status === 'fulfilled') {
-                acc[promiseResult.value.chainId] = promiseResult.value.result;
-            } else if (promiseResult.value.loggerError) {
-                acc[promiseResult.value.chainId] = promiseResult.value.loggerError;
-            }
-            return acc;
-        }, {});
 
-        failedChains = resultsWithErrLogs.reduce((acc, promiseResult) => {
-            if (promiseResult.status === 'rejected') {
-                acc[promiseResult.reason.chainId] = promiseResult.reason.message;
-            } else if (promiseResult.value.loggerError) {
-                acc[promiseResult.value.chainId] = promiseResult.value.loggerError;
-            }
-            return acc;
-        }, {});
+        const successfulResults = resultsWithErrLogs
+            .filter((promiseResult) => promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError)
+            .map((promiseResult) => [promiseResult.value.chainId, promiseResult.value.result]);
+
+        const failedResults = resultsWithErrLogs
+            .filter(
+                (promiseResult) =>
+                    promiseResult.status === 'rejected' || (promiseResult.status === 'fulfilled' && promiseResult.value.loggerError),
+            )
+            .map((promiseResult) => {
+                if (promiseResult.status === 'rejected') {
+                    return [promiseResult.reason.chainId, promiseResult.reason.message];
+                } else {
+                    return [promiseResult.value.chainId, promiseResult.value.loggerError];
+                }
+            });
+
+        results = Object.fromEntries(successfulResults);
+        failedChains = Object.fromEntries(failedResults);
     }
 
     printInfo(
