@@ -80,7 +80,7 @@ async function execute(keypair, client, chains, chain, args, options) {
 }
 
 async function processCommand(command, config, args, options) {
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(chain, options);
 
     await printWalletInfo(keypair, client, chain, options);
