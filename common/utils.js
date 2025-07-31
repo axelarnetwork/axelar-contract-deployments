@@ -46,19 +46,19 @@ let asyncLocalLoggerStorage = new AsyncLocalStorage();
 const printMsg = (msg) => {
     const streams = asyncLocalLoggerStorage?.getStore();
     if (streams?.stdStream) {
-        streams.stdStream.write(`${msg}\n`);
+        streams.stdStream.write(`${msg}\n\n`);
     } else {
-        console.log(`${msg}`);
+        console.log(`${msg}\n`);
     }
 };
 
 const printErrorMsg = (msg) => {
     const streams = asyncLocalLoggerStorage?.getStore();
     if (streams?.errorStream && streams?.stdStream) {
-        streams.errorStream.write(`${msg}\n`);
-        streams.stdStream.write(`${msg}\n`);
+        streams.errorStream.write(`${msg}\n\n`);
+        streams.stdStream.write(`${msg}\n\n`);
     } else {
-        console.log(`${msg}`);
+        console.log(`${msg}\n`);
     }
 };
 

@@ -821,14 +821,14 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
             if (!options.ignoreError) {
                 if (loggerOutput) {
-                    process.stdout.write(`Chain ${chain.name} logs: ${loggerOutput}\n`);
+                    process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
                 }
                 error.chainName = chain.name;
                 throw error;
             }
         }
         if (loggerOutput) {
-            process.stdout.write(`Chain ${chain.name} logs: ${loggerOutput}\n`);
+            process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
         }
         return { result, loggerError, chainName: chain.name };
     });

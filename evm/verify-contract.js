@@ -329,8 +329,6 @@ async function processCommand(axelar, chain, chains, options) {
 }
 
 async function main(options) {
-    // Set ignoreError to true to maintain the original resilient behavior
-    // where verification failures on one chain don't stop verification on other chains
     await mainProcessor({ ...options, ignoreError: true }, processCommand, false);
 }
 
