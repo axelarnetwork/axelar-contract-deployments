@@ -521,12 +521,12 @@ async function getDomainSeparator(config, chain, options, contract = 'MultisigPr
     return expectedDomainSeparator;
 }
 
-const getChainConfig = (config, chainName, options = {}) => {
+const getChainConfig = (chains, chainName, options = {}) => {
     if (!chainName) {
         return undefined;
     }
 
-    const chainConfig = config.chains[chainName] || config[chainName];
+    const chainConfig = chains[chainName];
 
     if (!options.skipCheck && !chainConfig) {
         throw new Error(`Chain ${chainName} not found in config`);
@@ -645,7 +645,7 @@ function solanaAddressBytesFromBase58(string) {
  *       - Additional encoding logic can be added for new chain types.
  */
 function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const chainType = getChainConfig(config, destinationChain, { skipCheck: true })?.chainType;
+    const chainType = getChainConfig(config.chains, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
         case undefined:
