@@ -48,7 +48,7 @@ const {
 } = require('cosmjs-types/cosmwasm/wasm/v1/proposal');
 const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/params');
 
-const { Command } = require('commander');
+const { Command, Option } = require('commander');
 const { addAmplifierOptions } = require('./cli-utils');
 
 const predictAddress = async (client, contractConfig, options) => {
@@ -178,6 +178,12 @@ const execute = async (client, wallet, config, options) => {
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
+    const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
+
+    if (!itsMsgTranslator) {
+        throw new Error('ItsMsgTranslator address is required for registerItsChain');
+    }
+
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
@@ -185,6 +191,7 @@ const registerItsChain = async (client, wallet, config, options) => {
         return {
             chain: chainConfig.axelarId,
             its_edge_contract: itsEdgeContract(chainConfig),
+            msg_translator: itsMsgTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
                 max_decimals_when_truncating: maxDecimalsWhenTruncating,
@@ -327,6 +334,12 @@ const programHandler = () => {
         .command('its-hub-register-chains')
         .description('Submit an execute wasm contract proposal to register an InterchainTokenService chain')
         .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
+        .addOption(
+            new Option(
+                '--its-msg-translator <itsMsgTranslator>',
+                'address for the message translation contract associated with the chain being registered on ITS Hub',
+            ),
+        )
         .action((chains, options) => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);

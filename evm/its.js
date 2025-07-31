@@ -21,7 +21,7 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
-    isValidChain,
+    validateChain,
     encodeITSDestination,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
@@ -110,7 +110,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(axelarConfig, chain, chainsSnapshot, action, options) {
+async function processCommand(_axelarConfig, chain, chainsSnapshot, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -579,7 +579,7 @@ async function processCommand(axelarConfig, chain, chainsSnapshot, action, optio
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue, tokenManagerType },
             });
-            isValidChain(chainsSnapshot, destinationChain);
+            validateChain(chainsSnapshot, destinationChain);
 
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);

@@ -29,7 +29,7 @@ const {
 const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
-const { switchHyperliquidBlockSize } = require('./hyperliquid');
+const { updateBlockSize } = require('./hyperliquid');
 
 /**
  * Function that handles the ITS deployment with chain-specific token support.
@@ -348,7 +348,7 @@ async function deployAll(axelarConfig, wallet, chain, chainsSnapshot, options) {
         }
 
         if (deployment.useHyperliquidBigBlocks) {
-            await switchHyperliquidBlockSize(options, true, chain);
+            await updateBlockSize(wallet, chain, true);
         }
 
         printInfo(`Deploying ${deployment.name}`);
@@ -358,7 +358,7 @@ async function deployAll(axelarConfig, wallet, chain, chainsSnapshot, options) {
             contract = await deployment.deploy();
         } finally {
             if (deployment.useHyperliquidBigBlocks) {
-                await switchHyperliquidBlockSize(options, false, chain);
+                await updateBlockSize(wallet, chain, false);
             }
         }
 
