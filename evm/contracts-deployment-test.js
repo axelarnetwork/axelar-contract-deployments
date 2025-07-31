@@ -11,7 +11,7 @@ const { Command, Option } = require('commander');
 const { mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(config, chain, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const wallet = new Wallet(options.privateKey, new JsonRpcProvider(chain.rpc));
     const deploymentMethod = options.env === 'testnet' ? 'create' : 'create2';
     const collector = wallet.address;
