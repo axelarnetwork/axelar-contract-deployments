@@ -31,7 +31,7 @@ Where `Env` can be:
    ```bash
    export BASE_IMAGE="solanafoundation/solana-verifiable-build@sha256:979b09eef544de4502a92e28a724a8498a08e2fe506e8905b642e613760403d3"
    export ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-   export CHAIN_ID=solana-2
+   export CHAIN_ID=<chain-id>
    ```
 
 2. **Build the updated binaries**
