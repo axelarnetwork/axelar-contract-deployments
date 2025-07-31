@@ -751,12 +751,12 @@ const mainProcessor = async (options, processCommand, save = true) => {
         if (options.parallel) {
             promisedChainsResults.push(chainTask);
         } else {
-            const { result, loggerError, chainName } = await chainTask;
+            const { result, loggerError, chainId } = await chainTask;
             if (result !== undefined) {
                 results.push(result);
             }
             if (loggerError) {
-                failedChains[chainName] = loggerError;
+                failedChains[chainId] = loggerError;
             }
         }
     }
@@ -769,9 +769,9 @@ const mainProcessor = async (options, processCommand, save = true) => {
             .filter((chainResult) => chainResult !== undefined);
         failedChains = resultsWithErrLogs.reduce((acc, promiseResult) => {
             if (promiseResult.status === 'rejected') {
-                acc[promiseResult.reason.chainName || 'unknown'] = promiseResult.reason.message;
+                acc[promiseResult.reason.chainId || 'unknown'] = promiseResult.reason.message;
             } else if (promiseResult.value.loggerError) {
-                acc[promiseResult.value.chainName] = promiseResult.value.loggerError;
+                acc[promiseResult.value.chainId] = promiseResult.value.loggerError;
             }
             return acc;
         }, {});
@@ -780,13 +780,13 @@ const mainProcessor = async (options, processCommand, save = true) => {
     printInfo(
         'Succeeded chains',
         chains
-            .filter((chain) => !Object.keys(failedChains).includes(chain.name))
+            .filter((chain) => !failedChains[chain.axelarId])
             .map((chain) => chain.name)
             .join(', '),
     );
 
-    for (const [chainName, loggerError] of Object.entries(failedChains)) {
-        printError(`Failed with error on ${chainName}: ${loggerError}`);
+    for (const [chainId, loggerError] of Object.entries(failedChains)) {
+        printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
 
     if (save) {
@@ -823,14 +823,14 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
                 if (loggerOutput) {
                     process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
                 }
-                error.chainName = chain.name;
+                error.chainId = chain.axelarId;
                 throw error;
             }
         }
         if (loggerOutput) {
             process.stdout.write(`Chain ${chain.name}\n\n logs: ${loggerOutput}\n`);
         }
-        return { result, loggerError, chainName: chain.name };
+        return { result, loggerError, chainId: chain.axelarId };
     });
 };
 
