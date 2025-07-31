@@ -58,6 +58,6 @@ pub(crate) fn deploy_program(args: UpgradeArgs, config: crate::Config) -> eyre::
     if !status.success() {
         return Err(eyre::eyre!("solana program deploy failed"));
     }
-    println!("Program {:?} deployed successfully.", args.program);
+    println!("Program {:?} upgraded successfully.", args.program);
     Ok(())
 }
