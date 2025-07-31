@@ -46,6 +46,7 @@
     "xrpl": "4.2.5"
   },
   "devDependencies": {
+    "@hashgraph/sdk": "^2.67.0",
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
