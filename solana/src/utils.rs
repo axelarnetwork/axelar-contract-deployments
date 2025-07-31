@@ -51,6 +51,7 @@ pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
 pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
 pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
 pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
+pub(crate) const MULTICALL_KEY: &str = "Multicall";
 pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";

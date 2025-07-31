@@ -5,8 +5,8 @@ use std::process::Command;
 use crate::{
     types::Programs,
     utils::{
-        GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, read_json_file_from_path,
-        try_infer_program_id_from_env,
+        GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, MULTICALL_KEY,
+        read_json_file_from_path, try_infer_program_id_from_env,
     },
 };
 
@@ -35,6 +35,7 @@ pub(crate) fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> eyre:
         Programs::GasService => GAS_SERVICE_KEY,
         Programs::Governance => GOVERNANCE_KEY,
         Programs::Its => ITS_KEY,
+        Programs::Multicall => MULTICALL_KEY,
     };
 
     let program_id = try_infer_program_id_from_env(&env, chain_id, program_key)?;
