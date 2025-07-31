@@ -5,8 +5,8 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 authors = []
-repository = "https://github.com/eigerco/solana-axelar"
-homepage = "https://github.com/eigerco/solana-axelar"
+repository = "https://github.com/eigerco/axelar-amplifier-solana"
+homepage = "https://github.com/eigerco/axelar-amplifier-solana"
 license = "MIT/Apache-2.0"
 edition = "2021"
 
