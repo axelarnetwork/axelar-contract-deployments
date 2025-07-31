@@ -66,7 +66,7 @@ export COMMIT_HASH=$(git -C solana-axelar rev-parse HEAD)
 
    **Note**: `PROGRAM_BYTECODE_PATH` and `PROGRAM_ID` needs to be updated for each program that is going to be deployed.
 
-2. **Set seolana CLI on the convenient cluster**
+2. **Set solana CLI on the convenient cluster**
 
    ```bash
    solana config set --url <mainnet|devnet>
