@@ -753,7 +753,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
-    chains = deepCopy(config.chains);
+    const chainsDeepCopy = deepCopy(config.chains);
 
     let results = [];
     for (const chainName of chains) {
@@ -768,7 +768,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config.axelar, chain, chains, options);
+            const result = await processCommand(config.axelar, chain, chainsDeepCopy, options);
 
             if (result) {
                 results.push(result);
