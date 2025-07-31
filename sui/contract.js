@@ -118,12 +118,12 @@ async function pause(keypair, client, chain, args, options) {
 
             let allowedFunctions = allowedFunctionsArray[version];
 
-            // Do not dissalow `allow_function` because that locks the gateway forever.
-            if (Number(version) === allowedFunctionsArray.length - 1) {
-                allowedFunctions = allowedFunctions.filter(
-                    (allowedFunction) => allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function',
-                );
-            }
+            // Do not disable `allow_function` because that locks the contract forever.
+            allowedFunctions = allowedFunctions.filter(
+                (allowedFunction) => {
+                    return allowedFunction !== 'allow_function' && allowedFunction !== 'disallow_function';
+                }
+            );
 
             printInfo(`Functions that will be disallowed for version ${version}`, allowedFunctions);
 
@@ -202,7 +202,7 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }

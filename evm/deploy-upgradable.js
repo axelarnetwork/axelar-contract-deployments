@@ -46,7 +46,7 @@ function getProxy(wallet, proxyAddress) {
 /**
  * Generates implementation constructor arguments for a given contract based on its configuration and options.
  */
-async function getImplementationArgs(contractName, config, options) {
+async function getImplementationArgs(contractConfig, contractName, gatewayAddress, options) {
     let args;
 
     try {
@@ -55,7 +55,6 @@ async function getImplementationArgs(contractName, config, options) {
         console.error('Error parsing args:\n', error.message);
     }
 
-    const contractConfig = config[contractName];
     Object.assign(contractConfig, args);
 
     switch (contractName) {
@@ -75,22 +74,20 @@ async function getImplementationArgs(contractName, config, options) {
             if (symbol === undefined) {
                 throw new Error(`Missing AxelarDepositService.wrappedSymbol in the chain info.`);
             } else if (symbol === '') {
-                console.log(`${config.name} | AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
+                console.log(`AxelarDepositService.wrappedSymbol: wrapped token is disabled`);
             }
 
             const refundIssuer = contractConfig.refundIssuer;
 
             if (!isAddress(refundIssuer)) {
-                throw new Error(`${config.name} | Missing AxelarDepositService.refundIssuer in the chain info.`);
+                throw new Error(`Missing AxelarDepositService.refundIssuer in the chain info.`);
             }
 
-            const gateway = config.AxelarGateway?.address;
-
-            if (!isAddress(gateway)) {
+            if (!isAddress(gatewayAddress)) {
                 throw new Error(`Missing AxelarGateway address in the chain info.`);
             }
 
-            return [gateway, symbol, refundIssuer];
+            return [gatewayAddress, symbol, refundIssuer];
         }
     }
 
@@ -135,7 +132,7 @@ function getUpgradeArgs(contractName) {
  * Deploy or upgrade an upgradable contract that's based on the init proxy pattern.
  * This function handles both initial deployment and upgrades of upgradable contracts.
  */
-async function processCommand(_, chain, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, deployMethod, privateKey, upgrade, verifyEnv, yes, predictOnly } = options;
     const verifyOptions = verifyEnv ? { env: verifyEnv, chain: chain.axelarId } : null;
 
@@ -166,7 +163,7 @@ async function processCommand(_, chain, options) {
     }
 
     const contractConfig = contracts[contractName];
-    const implArgs = await getImplementationArgs(contractName, contracts, options);
+    const implArgs = await getImplementationArgs(contractConfig, contractName, contracts.AxelarGateway?.address, options);
     const gasOptions = await getGasOptions(chain, options, contractName);
     printInfo(`Implementation args for chain ${chain.name}`, implArgs);
     const { deployerContract, salt } = getDeployOptions(deployMethod, options.salt || contractName, chain);
@@ -198,7 +195,7 @@ async function processCommand(_, chain, options) {
             wallet.connect(provider),
             implementationJson,
             implArgs,
-            getUpgradeArgs(contractName, chain),
+            getUpgradeArgs(contractName),
             {
                 deployerContract,
                 salt: `${salt} Implementation`,
@@ -214,7 +211,7 @@ async function processCommand(_, chain, options) {
         console.log(`${chain.name} | New Implementation for ${contractName} is at ${contractConfig.implementation}`);
         console.log(`${chain.name} | Upgraded.`);
     } else {
-        const setupArgs = getInitArgs(contractName, contracts);
+        const setupArgs = getInitArgs(contractName);
         printInfo('Proxy setup args', setupArgs);
 
         const predictedAddress = await getDeployedAddress(wallet.address, deployMethod, {
