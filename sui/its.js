@@ -259,7 +259,6 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
     } else {
         // Migrate all the coins. This might take a while.
         const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
-        console.log(legacyCoins);
         legacyCoins.forEach(async (coin) => {
             await txBuilder.moveCall({
                 target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
