@@ -1666,7 +1666,7 @@
       "name": "Sui",
       "axelarId": "sui",
       "networkType": "testnet",
-      "rpc": "https://sui-testnet-rpc.publicnode.com",
+      "rpc": "https://sui-testnet.public.blastapi.io",
       "tokenSymbol": "SUI",
       "decimals": 9,
       "chainType": "sui",
@@ -2692,9 +2692,9 @@
           "domainSeparator": "0x500160c7def19100fa590da323c3c796b53dd4a4bd68b5f971c516545f3f7051",
           "address": "axelar1zwg52tslcf5vq5ge4yc2lqslc9v6z0ynxu59jnwdw7spy00je0dsn2g93z"
         },
-        "storeCodeProposalId": "69",
-        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
-        "lastUploadedCodeId": 21
+        "storeCodeProposalId": "225",
+        "storeCodeProposalCodeHash": "3a114cd8960d5fe529e1b0a4b47da0786419dbd1cbf4ffd33c7de7832725ba53",
+        "lastUploadedCodeId": 59
       },
       "Gateway": {
         "flow": {
@@ -2717,9 +2717,9 @@
           "codeId": 22,
           "address": "axelar1mnu5s858ptnwqt9dkr2u7v3u4pa5z27arwzxlp9smf64n3xp4u3qyhvgj5"
         },
-        "storeCodeProposalId": "70",
-        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
-        "lastUploadedCodeId": 22,
+        "storeCodeProposalId": "224",
+        "storeCodeProposalCodeHash": "769b6695060da742c2ba578cdfe728c6e4438b90bf0df02477defc0b2641798c",
+        "lastUploadedCodeId": 58,
         "hyperliquid": {
           "codeId": 22,
           "address": "axelar1um4eyzmkpxhkpv3ytzaawqjzjxfddv2cjlep936glj87jg24zccqw86q2w"
@@ -2873,16 +2873,16 @@
           "codeId": 24,
           "address": "axelar18xzlzgjcypassfs3sglfn7u8re3kuafxf233c2e8fyu7muxe8xmskeyg92"
         },
-        "storeCodeProposalId": "72",
-        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
-        "lastUploadedCodeId": 24
+        "storeCodeProposalId": "223",
+        "storeCodeProposalCodeHash": "23063bd7064298e07e78fa208b521ea3d42bfa4036127e38c02ef1434ee84f91",
+        "lastUploadedCodeId": 57
       },
       "InterchainTokenService": {
-        "storeCodeProposalId": "150",
-        "storeCodeProposalCodeHash": "36c758c8e36951369ff2b5f9590485edab6c302e7c1b385415ecc6e08185d738",
+        "storeCodeProposalId": "239",
+        "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
         "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
         "adminAddress": "axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky",
-        "codeId": 37,
+        "codeId": 61,
         "address": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk",
         "sui": {
           "maxUintBits": 64,
@@ -2892,7 +2892,7 @@
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
         },
-        "lastUploadedCodeId": 37
+        "lastUploadedCodeId": 61
       },
       "AxelarnetGateway": {
         "storeCodeProposalId": "68",
@@ -2948,6 +2948,14 @@
         "storeCodeProposalId": "231",
         "storeCodeProposalCodeHash": "94d8bbf002b97cc586b584f7cfc12caa812bc5ee47581df209dbd8298b6b9ec5",
         "lastUploadedCodeId": 60
+      },
+      "ItsAbiTranslator": {
+        "storeCodeProposalId": "240",
+        "storeCodeProposalCodeHash": "7d34c8ce53c21d8e461a556264311903981c8a350964bd532791db8d4ebbd758",
+        "lastUploadedCodeId": 62,
+        "codeId": 62,
+        "instantiateProposalId": "241",
+        "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
       }
     },
     "axelarId": "axelar",
