@@ -201,8 +201,8 @@ const callAxelarscanApi = async (config, method, data, time = 10000) => {
     );
 };
 
-const itsHubContractAddress = (config) => {
-    return config?.axelar?.contracts?.InterchainTokenService?.address;
+const itsHubContractAddress = (axelar) => {
+    return axelar?.contracts?.InterchainTokenService?.address;
 };
 
 /**
@@ -463,14 +463,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getAmplifierContractOnchainConfig = async (config, chain, contract = 'MultisigProver') => {
+const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractRaw(config.axelar.contracts[contract][chain].address, key);
+    const client = await CosmWasmClient.connect(axelar.rpc);
+    const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(config, chain, options, contract = 'MultisigProver') {
+async function getDomainSeparator(axelar, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -485,9 +485,7 @@ async function getDomainSeparator(config, chain, options, contract = 'MultisigPr
         return options.domainSeparator;
     }
 
-    const {
-        axelar: { contracts, chainId },
-    } = config;
+    const { contracts, chainId } = axelar;
     const {
         Router: { address: routerAddress },
     } = contracts;
@@ -512,7 +510,7 @@ async function getDomainSeparator(config, chain, options, contract = 'MultisigPr
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(config, chain.axelarId, contract)).domain_separator);
+    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(axelar, chain.axelarId, contract)).domain_separator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -549,17 +547,17 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (config, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId) => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
-    const value = await client.queryContractSmart(config.axelar.contracts.MultisigProver[chain].address, query);
+    const client = await CosmWasmClient.connect(axelar.rpc);
+    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
     return value;
 };
 
-const getCurrentVerifierSet = async (config, chain, contract = 'MultisigProver') => {
-    const client = await CosmWasmClient.connect(config.axelar.rpc);
+const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
+    const client = await CosmWasmClient.connect(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        config.axelar.contracts[contract][chain].address,
+        axelar.contracts[contract][chain].address,
         'current_verifier_set',
     );
 
@@ -611,13 +609,13 @@ const itsEdgeContract = (chainConfig) => {
     return itsEdgeContract;
 };
 
-const itsEdgeChains = (config) =>
-    Object.values(config.chains)
+const itsEdgeChains = (chains) =>
+    Object.values(chains)
         .filter(tryItsEdgeContract)
         .map((chain) => chain.axelarId);
 
-const parseTrustedChains = (config, trustedChains) => {
-    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(config) : trustedChains;
+const parseTrustedChains = (chains, trustedChains) => {
+    return trustedChains.length === 1 && trustedChains[0] === 'all' ? itsEdgeChains(chains) : trustedChains;
 };
 
 const readContractCode = (options) => {
@@ -644,8 +642,8 @@ function solanaAddressBytesFromBase58(string) {
  *       - EVM and Sui addresses are returned as-is (default behavior).
  *       - Additional encoding logic can be added for new chain types.
  */
-function encodeITSDestination(config, destinationChain, destinationAddress) {
-    const chainType = getChainConfig(config.chains, destinationChain, { skipCheck: true })?.chainType;
+function encodeITSDestination(chains, destinationChain, destinationAddress) {
+    const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
 
     switch (chainType) {
         case undefined:

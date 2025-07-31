@@ -11,7 +11,7 @@ const { printInfo, printError, printWalletInfo, isAddressArray, mainProcessor, i
 const { addBaseOptions } = require('./cli-utils');
 const { storeSignedTx, getWallet, signTransaction } = require('./sign-utils.js');
 
-async function processCommand(_, chain, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { privateKey, offline, env } = options;
     let { amount: amountStr, recipients, nonceOffset } = options;
 

@@ -8,7 +8,7 @@ const { Command, Option } = require('commander');
 const { printInfo, mainProcessor, isKeccak256Hash, sleep } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 
-async function processCommand(_config, chain, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const txHash = options.txHash;
 
     if (!isKeccak256Hash(txHash)) {
