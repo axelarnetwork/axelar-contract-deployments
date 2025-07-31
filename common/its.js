@@ -6,7 +6,7 @@ const { addBaseOptions, addOptionsToCommands, encodeITSDestination, loadConfig, 
 async function encodeRecipient(config, args, _) {
     const [destinationChain, destinationAddress] = args;
 
-    const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+    const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
 
     printInfo('Human-readable destination address', destinationAddress);
     printInfo('Encoded ITS destination address', itsDestinationAddress);
