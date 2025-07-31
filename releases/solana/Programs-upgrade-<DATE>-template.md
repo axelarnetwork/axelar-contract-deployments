@@ -9,13 +9,13 @@ This guide is for **upgrading Solana programs** as part of the GMP/ITS v1.0.0 in
 
 ## Program Upgrade Tracking
 
-| Program     | Program ID                                    | Env                | From version | To version | From hash | To hash | ✅ Done |
-| ----------- | --------------------------------------------- | ------------------ | ------------ | ---------- | --------- | ------- | ------ |
-| Gateway     | `gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp` | `devnet-amplifier` |              |            |           |         |        |
-| ITS         | `itsqybuNsChBo3LgVhCWWnTJVJdoVTUJaodmqQcG6z7` | `devnet-amplifier` |              |            |           |         |        |
-| Gas Service | `gasd4em72NAm7faq5dvjN5GkXE59dUkTThWmYDX95bK` | `devnet-amplifier` |              |            |           |         |        |
-| Governance  | `govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9` | `devnet-amplifier` |              |            |           |         |        |
-| Multicall   | `mce2hozrGNRHP5qxScDvYyZ1TzhiH8tLLKxwo8DDNQT` | `devnet-amplifier` |              |            |           |         |        |
+| Program     | Env                | From version | To version | From hash | To hash | ✅ Done |
+| ----------- | ------------------ | ------------ | ---------- | --------- | ------- | ------ |
+| Gateway     | `devnet-amplifier` |              |            |           |         |        |
+| ITS         | `devnet-amplifier` |              |            |           |         |        |
+| Gas Service | `devnet-amplifier` |              |            |           |         |        |
+| Governance  | `devnet-amplifier` |              |            |           |         |        |
+| Multicall   | `devnet-amplifier` |              |            |           |         |        |
 
 Where `Env` can be:
 
