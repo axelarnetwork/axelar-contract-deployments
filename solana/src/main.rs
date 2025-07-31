@@ -274,7 +274,7 @@ async fn run() -> eyre::Result<()> {
 
     match cli.command {
         Command::Upgrade(deploy_args) => {
-            deploy::deploy_program(deploy_args, config)?;
+            deploy::upgrade_program(deploy_args, config)?;
         }
 
         Command::Send(args) => {

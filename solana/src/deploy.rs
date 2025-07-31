@@ -25,7 +25,7 @@ pub(crate) struct UpgradeArgs {
     program_path: String,
 }
 
-pub(crate) fn deploy_program(args: UpgradeArgs, config: crate::Config) -> eyre::Result<()> {
+pub(crate) fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> eyre::Result<()> {
     // Read the environment JSON file
     let env: Value = read_json_file_from_path(&config.chains_info_file)?;
     let chain_id = &config.chain_id;
