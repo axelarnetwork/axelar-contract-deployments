@@ -308,6 +308,7 @@ ts-node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121f
 ```
 
 #### Remove Flow Limit
+
 ```bash
 ts-node stellar/its.js remove-flow-limit [token-id]
 
@@ -377,7 +378,6 @@ ts-node stellar/contract.js [action] [contract-name]
 #### Options
 
 - `[action]` can be one of the following:
-
     - `pause`: Pause the contract
     - `paused`: Check if the contract is paused
     - `unpause`: Unpause the contract
