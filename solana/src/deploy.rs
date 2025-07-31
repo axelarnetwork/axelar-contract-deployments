@@ -2,23 +2,18 @@ use clap::{Args, Subcommand};
 use serde_json::Value;
 use std::process::Command;
 
-use crate::utils::{
-    GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, read_json_file_from_path,
-    try_infer_program_id_from_env,
+use crate::{
+    types::Programs,
+    utils::{
+        GAS_SERVICE_KEY, GATEWAY_KEY, GOVERNANCE_KEY, ITS_KEY, read_json_file_from_path,
+        try_infer_program_id_from_env,
+    },
 };
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
     /// Deploy a Solana program using solana program deploy
     Deploy(UpgradeArgs),
-}
-
-#[derive(Debug, Clone, clap::ValueEnum)]
-pub(crate) enum Programs {
-    Gateway,
-    GasService,
-    Governance,
-    Its,
 }
 
 #[derive(Args, Debug)]

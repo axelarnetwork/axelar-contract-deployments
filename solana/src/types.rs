@@ -319,3 +319,11 @@ pub(crate) struct LocalSigner {
     /// associated weight
     pub(crate) weight: u128,
 }
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub(crate) enum Programs {
+    Gateway,
+    GasService,
+    Governance,
+    Its,
+}
