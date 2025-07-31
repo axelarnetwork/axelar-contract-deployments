@@ -255,7 +255,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
             typeArguments: [tokenType],
         });
 
-        await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
+        await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${symbol})`, options);
     } else {
         // Migrate all the coins. This might take a while.
         const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
@@ -267,7 +267,7 @@ async function migrateCoinMetadata(keypair, client, config, contracts, args, opt
                 typeArguments: [coin.TokenType],
             });
 
-            await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata ${coin.symbol}`, options);
+            await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
         });
         contracts.legacyCoins = [];
     }
