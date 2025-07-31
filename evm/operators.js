@@ -25,7 +25,7 @@ const { addBaseOptions } = require('./cli-utils');
 const { getGasUpdates, printFailedChainUpdates, addFailedChainUpdate, relayTransaction } = require('./gas-service');
 const { getWallet } = require('./sign-utils');
 
-async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
+async function processCommand(axelar, chain, chains, options) {
     const {
         env,
         contractName,
@@ -226,7 +226,7 @@ async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
                 isAddress: { target },
             });
 
-            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelarConfig, chain, chainsSnapshot, chains);
+            const { chainsToUpdate, gasInfoUpdates } = await getGasUpdates(axelar, chain, chains, chains);
 
             if (chainsToUpdate.length === 0) {
                 printWarn('No gas info updates found.');

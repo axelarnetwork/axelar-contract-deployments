@@ -255,7 +255,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
+async function processCommand(_axelar, chain, chains, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy } = options;
 
     let { deployMethod } = options;
@@ -381,7 +381,7 @@ async function processCommand(axelarConfig, chain, chainsSnapshot, options) {
 
     let existingAddress, existingCodeHash;
 
-    for (const chainConfig of Object.values(chainsSnapshot)) {
+    for (const chainConfig of Object.values(chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
         existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
 

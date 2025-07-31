@@ -484,18 +484,18 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
     }
 };
 
-const getProxy = async (axelarConfig, chain) => {
-    const address = (await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
+const getProxy = async (axelar, chain) => {
+    const address = (await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
 };
 
-const getEVMBatch = async (axelarConfig, chain, batchID = '') => {
-    const batch = await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (axelar, chain, batchID = '') => {
+    const batch = await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (axelarConfig, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelarConfig, chain);
+const getAmplifierVerifiers = async (axelar, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelar, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -507,7 +507,7 @@ const getAmplifierVerifiers = async (axelarConfig, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (axelarConfig, chain, options = {}) => {
+const getEVMAddresses = async (axelar, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -515,8 +515,8 @@ const getEVMAddresses = async (axelarConfig, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(axelarConfig, chain)
-        : await httpGet(`${axelarConfig.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(axelar, chain)
+        : await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -642,6 +642,8 @@ function wasEventEmitted(receipt, contract, eventName) {
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
 
+const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
+
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
         throw new Error('Environment was not provided');
@@ -751,7 +753,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
-    const chainsSnapshot = JSON.parse(JSON.stringify(config.chains));
+    chains = deepCopy(config.chains);
 
     let results = [];
     for (const chainName of chains) {
@@ -766,7 +768,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config.axelar, chain, chainsSnapshot, options);
+            const result = await processCommand(config.axelar, chain, chains, options);
 
             if (result) {
                 results.push(result);
@@ -1000,7 +1002,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(axelarConfig, chain, options) {
+async function getWeightedSigners(axelar, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1017,7 +1019,7 @@ async function getWeightedSigners(axelarConfig, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(axelarConfig, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(axelar, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {

@@ -62,7 +62,7 @@ const getSignedWeightedExecuteInput = async (data, operators, weights, threshold
     );
 };
 
-async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
+async function processCommand(axelar, chain, _chains, options) {
     const { privateKey, address, action, yes } = options;
 
     const contracts = chain.contracts;
@@ -132,7 +132,7 @@ async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
         }
 
         case 'operators': {
-            const { addresses, weights, threshold, keyID } = await getEVMAddresses(axelarConfig, chain.axelarId, options);
+            const { addresses, weights, threshold, keyID } = await getEVMAddresses(axelar, chain.axelarId, options);
             printInfo('Axelar validator key id', keyID);
 
             const auth = new Contract(await gateway.authModule(), IAuth.abi, wallet);
@@ -153,7 +153,7 @@ async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
         }
 
         case 'submitBatch': {
-            const batch = await getEVMBatch(axelarConfig, chain.axelarId, options.batchID);
+            const batch = await getEVMBatch(axelar, chain.axelarId, options.batchID);
 
             printInfo(`Submitting batch: ${options.batchID || 'latest'}`);
 
@@ -203,7 +203,7 @@ async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
             }
 
             const batchId = batchID.startsWith('0x') ? batchID.substring(2) : batchID;
-            const apiUrl = `${axelarConfig.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
+            const apiUrl = `${axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain.axelarId}/${batchId}`;
 
             let executeData, response;
 
@@ -487,7 +487,7 @@ async function processCommand(axelarConfig, chain, _chainsSnapshot, options) {
                 throw new Error('Missing multisig session ID');
             }
 
-            const { status } = await getMultisigProof(axelarConfig, chain.axelarId, multisigSessionId);
+            const { status } = await getMultisigProof(axelar, chain.axelarId, multisigSessionId);
 
             if (!status.completed) {
                 throw new Error('Multisig session not completed');

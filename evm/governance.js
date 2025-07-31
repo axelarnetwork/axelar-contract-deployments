@@ -195,7 +195,7 @@ function getGovernanceProposal(commandType, target, calldata, nativeValue, eta) 
     return defaultAbiCoder.encode(types, values);
 }
 
-async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { contractName, address, action, proposalAction, date, privateKey, yes } = options;
 
     const contracts = chain.contracts;

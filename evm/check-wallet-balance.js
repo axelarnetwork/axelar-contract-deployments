@@ -8,7 +8,7 @@ const { printError, mainProcessor } = require('./utils');
 const { addBaseOptions } = require('./cli-utils');
 const { getNonceFileData } = require('./sign-utils');
 
-async function processCommand(_axelarConfig, chain, _chainsSnapshot, options) {
+async function processCommand(_axelar, chain, _chains, options) {
     const { rpc } = options;
     let { addresses } = options;
 
