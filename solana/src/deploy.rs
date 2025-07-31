@@ -40,7 +40,7 @@ pub(crate) fn upgrade_program(args: UpgradeArgs, config: crate::Config) -> eyre:
     let program_id = try_infer_program_id_from_env(&env, chain_id, program_key)?;
 
     println!(
-        "Deploying program {:?} with ID {} using authority {}",
+        "Upgrading program {:?} with ID {} using authority {}",
         args.program, program_id, args.upgrade_authority
     );
 
