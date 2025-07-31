@@ -1,4 +1,4 @@
-use clap::{Args, Subcommand};
+use clap::Args;
 use serde_json::Value;
 use std::process::Command;
 
@@ -9,12 +9,6 @@ use crate::{
         try_infer_program_id_from_env,
     },
 };
-
-#[derive(Subcommand, Debug)]
-pub(crate) enum Commands {
-    /// Deploy a Solana program using solana program deploy
-    Deploy(UpgradeArgs),
-}
 
 #[derive(Args, Debug)]
 pub(crate) struct UpgradeArgs {
