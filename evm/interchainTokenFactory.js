@@ -17,7 +17,7 @@ const {
     getGasOptions,
     printWalletInfo,
     printTokenInfo,
-    isValidChain,
+    validateChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
@@ -215,7 +215,7 @@ async function processCommand(config, chain, options) {
                 isValidNumber: { gasValue },
             });
 
-            isValidChain(config.chains, destinationChain);
+            validateChain(config.chains, destinationChain);
 
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
