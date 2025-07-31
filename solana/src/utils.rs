@@ -9,6 +9,7 @@ use k256::pkcs8::DecodePrivateKey;
 use k256::{Secp256k1, SecretKey};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::account_utils::StateMut;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -50,6 +51,7 @@ pub(crate) const GATEWAY_KEY: &str = "AxelarGateway";
 pub(crate) const GOVERNANCE_ADDRESS_KEY: &str = "governanceAddress";
 pub(crate) const GOVERNANCE_CHAIN_KEY: &str = "governanceChain";
 pub(crate) const GOVERNANCE_KEY: &str = "InterchainGovernance";
+pub(crate) const MULTICALL_KEY: &str = "Multicall";
 pub(crate) const GRPC_KEY: &str = "grpc";
 pub(crate) const ITS_KEY: &str = "InterchainTokenService";
 pub(crate) const MINIMUM_PROPOSAL_ETA_DELAY_KEY: &str = "minimumTimeDelay";
@@ -316,4 +318,21 @@ pub(crate) fn serialized_transactions_filename_from_arg_matches(matches: &ArgMat
     }
 
     chain.into_iter().skip(1).collect::<Vec<_>>().join("-")
+}
+
+pub(crate) fn try_infer_program_id_from_env(
+    env: &Value,
+    chain_id: &str,
+    program_key: &str,
+) -> eyre::Result<Pubkey> {
+    let id = Pubkey::from_str(&String::deserialize(
+        &env[CHAINS_KEY][chain_id][CONTRACTS_KEY][program_key][ADDRESS_KEY],
+    )?)
+    .map_err(|_| {
+        eyre!(
+            "Could not get the program id ({}) from the chains info JSON file. Is it already deployed?", program_key
+        )
+    })?;
+
+    Ok(id)
 }
