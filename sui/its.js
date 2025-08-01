@@ -238,9 +238,9 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
 
-    let logSize = (options.logging) ? parseInt(options.logging) : 0;
+    let logSize = options.logging ? parseInt(options.logging) : 0;
     if (isNaN(logSize)) logSize = 0;
-    
+
     // Migrate all the coins. This might take a while.
     const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
 
@@ -257,7 +257,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
 
         // Command status debugging
-        if (logSize > 0 && (i+1)%logSize === 0) printInfo(`Migrated metadata for ${i+1} tokens. Last migrated token`, coin.symbol);
+        if (logSize > 0 && (i + 1) % logSize === 0) printInfo(`Migrated metadata for ${i + 1} tokens. Last migrated token`, coin.symbol);
     }
 
     printInfo('Total coins migrated', legacyCoins.length);
@@ -658,7 +658,12 @@ if (require.main === module) {
         .name('migrate-coin-metadata-all')
         .command('migrate-coin-metadata-all')
         .description(`Release metadata for all legacy coins saved to the chain config by command its/tokens legacy-coins.`)
-        .addOption(new Option('--logging <size>', 'Print a status update every <size> of migrated tokens, or use <size> 0 to disable logging. Defaults to 0.'))
+        .addOption(
+            new Option(
+                '--logging <size>',
+                'Print a status update every <size> of migrated tokens, or use <size> 0 to disable logging. Defaults to 0.',
+            ),
+        )
         .action((options) => {
             mainProcessor(migrateAllCoinMetadata, options, null, processCommand);
         });
