@@ -260,8 +260,10 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         if (logSize > 0 && (i + 1) % logSize === 0) printInfo(`Migrated metadata for ${i + 1} tokens. Last migrated token`, coin.symbol);
     }
 
-    printInfo('Total coins migrated', legacyCoins.length);
-    contracts.InterchainTokenService.legacyCoins = [];
+    if (legacyCoins.length) {
+        printInfo('Total coins migrated', legacyCoins.length);
+        contracts.InterchainTokenService.legacyCoins = [];
+    } else printInfo('No coins were migrated');
 }
 
 // migrate_coin_metadata (single)
