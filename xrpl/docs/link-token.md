@@ -9,8 +9,9 @@ This release provides a generic template for performing custom token linking fro
 Create an `.env` config. Use `all` for `CHAINS` to run the command for every EVM chain, or set a specific chain.
 
 ```yaml
-PRIVATE_KEY=xyz
+PRIVATE_KEY=xyz # set to EVM private key or XRPL seed, depending on command
 ENV=xyz
+CHAIN= # XRPL chain name
 CHAINS=xyz
 ```
 
@@ -77,7 +78,14 @@ ARGS=(--from XRPL_PROVER_ADMIN --keyring-backend $KEYRING_NAME --chain-id $AXELA
 ### 1. Token Metadata Registration on XRPL Gateway
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token": {"issued": {"currency": "'$XRPL_CURRENCY_CODE'", "issuer": "'$XRPL_MULTISIG'"}}}}' -o text "${ARGS[@]}"
+ts-node xrpl/register-token-metadata.js --issuer $XRPL_MULTISIG --currency $XRPL_CURRENCY_CODE
+# Initiated token metadata registration: 69C696A56200BDFB25D7CCB44537239801D69D8B67D8077E2D1012404378A4A0
+#
+# Message ID: 0x8b49b5ccfb893269a5c263693805874cdeb3c932633ba0301094403c77dad839
+#
+# Payload: 00000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000004b373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32000000000000000000000000000000000000000000
+#
+# Token address: 373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32
 ```
 
 **Extract Values from Command Output:**
@@ -85,12 +93,7 @@ axelard tx wasm execute $XRPL_GATEWAY '{"register_token_metadata": {"xrpl_token"
 ```bash
 MESSAGE_ID= # message_id
 PAYLOAD= # payload
-XRPL_TOKEN_ADDRESS='0x' +  # token_address
-
-**Extracted Values Example:**
-- **Message ID**: `0x8b49b5ccfb893269a5c263693805874cdeb3c932633ba0301094403c77dad839`
-- **Token Address**: `373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32`
-- **Payload**: `00000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000004b373336663663373634393533343933393030303030303030303030303030303030303030303030302e724e726a68314b475a6b326a42523377506641516e6f696474464659514b62516e32000000000000000000000000000000000000000000`
+XRPL_TOKEN_ADDRESS='0x' # token_address
 ```
 
 ### 2. Execute Message on the Axelarnet Gateway
@@ -134,19 +137,20 @@ ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain xrpl
 
 ### 6. XRPL Token Instance Registration
 
-`CHAIN` is the case sensitive value from the `axelardId` field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed. E.g., `Ethereum` and `xrpl` on mainnet.
+`SOURCE_CHAIN` is the case sensitive value from the `axelardId` field in the `axelar-chains-config/info/<env>.json` for the source chain where token is originally deployed. E.g., `Ethereum` and `xrpl` on mainnet.
 
 **_NOTE:_**
 The decimal precision of `15` is hardcoded to avoid double scaling between the XRPL contracts and ITS Hub. Future release of XRPL contracts will use the ITS Hub instance directly.
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_token_instance": {"token_id": "'$TOKEN_ID'", "chain": "'$CHAIN'", "decimals": 15}}' "${ARGS[@]}"
+SOURCE_CHAIN=
+ts-node xrpl/register-token-instance.js --tokenId $TOKEN_ID --sourceChain $SOURCE_CHAIN --decimals 15
 ```
 
 ### 7. XRPL Remote Token Registration
 
 ```bash
-axelard tx wasm execute $XRPL_GATEWAY '{"register_remote_token": {"token_id": "'$TOKEN_ID'", "xrpl_currency": "'$XRPL_CURRENCY_CODE'"}}' "${ARGS[@]}"
+ts-node xrpl/register-remote-token.js --tokenId $TOKEN_ID --currency $XRPL_CURRENCY_CODE
 ```
 
 ## 8. Grant Mint Role to Token Manager
@@ -163,7 +167,8 @@ ts-node evm/its.js token-manager-address "0x$TOKEN_ID"
 Extract the token manager address from the command output.
 
 ```bash
-ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS [token manager address]
+TOKEN_MANAGER_ADDRESS=
+ts-node evm/its.js transfer-mintership $TOKEN_ADDRESS $TOKEN_MANAGER_ADDRESS
 ```
 
 ## Cross-Chain Transfer Testing
