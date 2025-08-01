@@ -655,7 +655,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
 
     let chains = Object.entries(config.chains)
         .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
-        .map(([_key, chain]) => [normalizeChainName(chain.name), chain]);
+        .map(([key, chain]) => [normalizeChainName(key), chain]);
 
     let validChainNames = new Set(chains.map(([name, _chain]) => name));
 
