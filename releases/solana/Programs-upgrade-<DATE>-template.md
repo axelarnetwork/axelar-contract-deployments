@@ -24,6 +24,27 @@ Where `Env` can be:
 * Testnet
 * Mainnet
 
+Note: Current deployed contract hashes can be obtained with the following sequence of commands. In example,
+getting the current Solana devnet governance address:
+
+1. We first calculate the buffer account address from the program address
+```bash
+❯ solana program show govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9
+
+Program Id: govmXi41LqLpRpKUd79wvAh9MmpoMzXk7gG4Sqmucx9
+Owner: BPFLoaderUpgradeab1e11111111111111111111111
+ProgramData Address: Dx7fpgZQWpSi6RD1p1wXcrdm5a7dRVEWL6YSHNMtN2ZT
+Authority: upaFrJck9TeFUXW62r2dDJtBxcMa4ArVjQ49sJeGDVw
+Last Deployed In Slot: 395770157
+Data Length: 289256 (0x469e8) bytes
+Balance: 2.01442584 SOL
+```
+2. We calculate the hash of the bytecode with the obtained buffer account address from `1`
+```bash
+❯ solana-verify get-buffer-hash Dx7fpgZQWpSi6RD1p1wXcrdm5a7dRVEWL6YSHNMtN2ZT
+ae907491891a48851a4e347d4a23a41ad73e8b2fec8664951ed76011b31ee9e1
+```
+
 ## Prerequisites
 
 1. **Build environment**
