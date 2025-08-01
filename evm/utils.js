@@ -722,38 +722,39 @@ const mainProcessor = async (options, processCommand, save = true) => {
         const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
 
         if (options.parallel) {
-            promisedChainsResults.push(chainTask);
+            promisedChainsResults.push({ promise: chainTask, chainId: chain.axelarId });
         } else {
-            const { result, loggerError, chainId } = await chainTask;
+            const { result, loggerError } = await chainTask;
             if (result !== undefined) {
-                results[chainId] = result;
+                results[chain.axelarId] = result;
             }
             if (loggerError) {
-                failedChains[chainId] = loggerError;
+                failedChains[chain.axelarId] = loggerError;
             }
         }
     }
 
     if (options.parallel) {
-        const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults);
+        const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults.map((item) => item.promise));
 
         const successfulResults = resultsWithErrLogs
             .filter(
-                (promiseResult) =>
+                (promiseResult, _index) =>
                     promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError && promiseResult.value.result !== undefined,
             )
-            .map((promiseResult) => [promiseResult.value.chainId, promiseResult.value.result]);
+            .map((promiseResult, index) => [promisedChainsResults[index].chainId, promiseResult.value.result]);
 
         const failedResults = resultsWithErrLogs
             .filter(
-                (promiseResult) =>
+                (promiseResult, _index) =>
                     promiseResult.status === 'rejected' || (promiseResult.status === 'fulfilled' && promiseResult.value.loggerError),
             )
-            .map((promiseResult) => {
+            .map((promiseResult, index) => {
+                const chainId = promisedChainsResults[index].chainId;
                 if (promiseResult.status === 'rejected') {
-                    return [promiseResult.reason.chainId, promiseResult.reason.message];
+                    return [chainId, promiseResult.reason.message];
                 } else {
-                    return [promiseResult.value.chainId, promiseResult.value.loggerError];
+                    return [chainId, promiseResult.value.loggerError];
                 }
             });
 
@@ -819,7 +820,7 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
         } finally {
             process.stdout.write(`${loggerOutput}\n`);
         }
-        return { result, loggerError, chainId: chain.axelarId };
+        return { result, loggerError };
     });
 };
 
