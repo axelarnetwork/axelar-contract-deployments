@@ -1,0 +1,81 @@
+{
+  "chains": {
+    "avalanche": {
+      "name": "Avalanche",
+      "id": "avalanche",
+      "axelarId": "avalanche",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {}
+    }
+  },
+  "axelar": {
+    "contracts": {
+      "ServiceRegistry": {
+        "governanceAccount": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "lastUploadedCodeId": 4,
+        "address": "axelar15etce9cunca0arzldvt8j4fav2qkxlvk5g6fvnrqznzrtrcn3c7snky5hw",
+        "codeId": 4
+      },
+      "Router": {
+        "adminAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "governanceAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "lastUploadedCodeId": 2,
+        "address": "axelar1ag908ry7nddvagznkv487rs4mw609k046hhewklcn4d08h3hm84qldvgnl",
+        "codeId": 2
+      },
+      "Multisig": {
+        "adminAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "governanceAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "blockExpiry": 10,
+        "lastUploadedCodeId": 6,
+        "address": "axelar1kprs9yzr2fd0gf5q6arc005nahnvh95tn8u8436p4f6pxpz9rjtsnyurqs",
+        "codeId": 6
+      },
+      "Coordinator": {
+        "governanceAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "lastUploadedCodeId": 1,
+        "address": "axelar17h3gtjjzw0yaaufsqk3gs57rr8yhtpfznjfvx9sqvcyc5xnzu70sj8meut",
+        "codeId": 1
+      },
+      "Rewards": {
+        "governanceAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "rewardsDenom": "utkulik",
+        "lastUploadedCodeId": 5,
+        "address": "axelar1nv3hugs3lpg6dr7nnkwk8cfpzycm5ccve98nexv3dm887esdgz7snvuscn",
+        "codeId": 5
+      },
+      "AxelarnetGateway": {
+        "nexus": "axelar17h8uk4ct0mdv9mgkuxszt4gp2htpfr08mge20r",
+        "lastUploadedCodeId": 3,
+        "address": "axelar160nqecctqf0d0mhxkk7ay8znz72jmlex308heg7dqtw4lx46t5zsae5ymd",
+        "codeId": 3
+      },
+      "InterchainTokenService": {
+        "operatorAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "adminAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "governanceAddress": "axelar18g6s82ll6cfv2v5ssm7x3dwcr9n9dgumcnphmm",
+        "lastUploadedCodeId": 7,
+        "address": "axelar1u2gfpx3qljckx266j5fgrlmv5f9kfz6m8tq3g4uesh8jsygqt30qj8g98r",
+        "codeId": 7
+      },
+      "VotingVerifier": {},
+      "Gateway": {},
+      "MultisigProver": {}
+    },
+    "id": "axelar",
+    "axelarId": "axelar",
+    "chainId": "devnet-tkulik",
+    "rpc": "http://k8s-devnettk-coresent-c671a62ea3-c6d0fb85be5f0637.elb.us-east-2.amazonaws.com:26657",
+    "lcd": "http://k8s-devnettk-coresent-c671a62ea3-c6d0fb85be5f0637.elb.us-east-2.amazonaws.com:1317",
+    "grpc": "k8s-devnettk-coresent-c671a62ea3-c6d0fb85be5f0637.elb.us-east-2.amazonaws.com:9090",
+    "tokenSymbol": "TKULIK",
+    "gasPrice": "0.00005utkulik",
+    "gasLimit": "auto"
+  }
+}
