@@ -1,5 +1,19 @@
 {
-  "chains": {},
+  "chains": {
+    "avalanche": {
+      "name": "Avalanche",
+      "id": "avalanche",
+      "axelarId": "avalanche",
+      "chainId": 43113,
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+      "tokenSymbol": "AVAX",
+      "confirmations": 1,
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
+      "contracts": {}
+    }
+  },
   "axelar": {
     "contracts": {
       "ServiceRegistry": {
