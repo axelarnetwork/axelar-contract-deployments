@@ -93,6 +93,7 @@ interface CoordinatorOptions {
     governanceAddress?: string;
     serviceName?: string;
     rewardsAddress?: string;
+    sourceGatewayAddress?: string;
     votingThreshold?: [string, string];
     signingThreshold?: [string, string];
     blockExpiry?: string;
@@ -314,6 +315,27 @@ export class CoordinatorScript {
         return contract.address;
     }
 
+    private getMultisigAddressFromAxelarConfig(): string {
+        printInfo('Getting multisig address from axelar config...');
+
+        const axelarContracts = this.fullConfig.axelar?.contracts;
+        if (!axelarContracts) {
+            throw new Error('Axelar contracts not found in config');
+        }
+
+        const multisigContract = axelarContracts['Multisig'];
+        if (!multisigContract) {
+            throw new Error('Multisig contract not found in axelar config');
+        }
+
+        if (!multisigContract.address) {
+            throw new Error('Multisig address not found in axelar config. Please ensure the contract has been deployed.');
+        }
+
+        printInfo(`Found multisig address in axelar config: ${multisigContract.address}`);
+        return multisigContract.address;
+    }
+
     private getDefaultValue<T>(value: T | undefined, defaultValue: T): T {
         return value !== undefined ? value : defaultValue;
     }
@@ -342,13 +364,18 @@ export class CoordinatorScript {
         const serviceName = this.getDefaultValue(options.serviceName, CoordinatorScript.DEFAULTS.serviceName);
         const rewardsAddress = this.getDefaultValue(options.rewardsAddress, governanceAddress);
 
+        // Get contract addresses
+        // TODO tkulik: remove this once we have a gateway address for the chain
+        // const gatewayAddress = this.getContractAddress('AxelarGateway', chainName);
+        const multisigAddress = this.getMultisigAddressFromAxelarConfig();
+        
+        // Use provided source gateway address or fall back to the gateway address
+        const sourceGatewayAddress = options.sourceGatewayAddress;
+
         printInfo(`Using governance address: ${governanceAddress}`);
         printInfo(`Using service name: ${serviceName}`);
         printInfo(`Using rewards address: ${rewardsAddress}`);
-
-        // Get contract addresses
-        const gatewayAddress = this.getContractAddress('AxelarGateway', chainName);
-        const multisigAddress = this.getContractAddress('Multisig', chainName);
+        printInfo(`Using source gateway address: ${sourceGatewayAddress}`);
 
         // Get code IDs - these may need to be fetched from chain
         printInfo('Fetching code IDs for contracts...');
@@ -376,7 +403,7 @@ export class CoordinatorScript {
                         msg: {
                             governance_address: governanceAddress,
                             service_name: serviceName,
-                            source_gateway_address: gatewayAddress,
+                            source_gateway_address: sourceGatewayAddress,
                             voting_threshold: {
                                 numerator: parseInt(options.votingThreshold?.[0] || '51'),
                                 denominator: parseInt(options.votingThreshold?.[1] || '100'),
@@ -490,6 +517,7 @@ program
     .option('--governance-address <address>', 'Governance address')
     .option('--service-name <name>', 'Service name')
     .option('--rewards-address <address>', 'Rewards address')
+    .option('--source-gateway-address <address>', 'Source gateway address (optional, defaults to AxelarGateway address)')
     .option('--voting-threshold <threshold>', 'Voting threshold (e.g., "51,100")')
     .option('--block-expiry <expiry>', 'Block expiry', '10')
     .option(
