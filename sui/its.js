@@ -1,6 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
+const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -233,48 +233,59 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     }
 }
 
-// migrate_coin_metadata
-async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
+// migrate_coin_metadata (all)
+async function migrateAllCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
-    const symbol = args;
 
-    if (!options.all) {
+    let logSize = (options.logging) ? parseInt(options.logging) : 0;
+    if (isNaN(logSize)) logSize = 0;
+    
+    // Migrate all the coins. This might take a while.
+    const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
+
+    for (let i = 0; i < legacyCoins.length; i++) {
+        const coin = legacyCoins[i];
         const txBuilder = new TxBuilder(client);
-
-        validateParameters({
-            isNonEmptyString: { symbol },
-            isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
-        });
-
-        const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
-        const tokenType = contracts[symbol.toUpperCase()].typeArgument;
 
         await txBuilder.moveCall({
             target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
-            arguments: [InterchainTokenService, OperatorCap, tokenId],
-            typeArguments: [tokenType],
+            arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
+            typeArguments: [coin.TokenType],
         });
 
-        await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${symbol})`, options);
-    } else {
-        // Migrate all the coins. This might take a while.
-        const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
+        await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
 
-        for (let i = 0; i < legacyCoins.length; i++) {
-            const coin = legacyCoins[i];
-            const txBuilder = new TxBuilder(client);
-            await txBuilder.moveCall({
-                target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
-                arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
-                typeArguments: [coin.TokenType],
-            });
-
-            await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
-        }
-
-        contracts.InterchainTokenService.legacyCoins = [];
+        // Command status debugging
+        if (logSize > 0 && (i+1)%logSize === 0) printInfo(`Migrated metadata for ${i+1} tokens. Last migrated token`, coin.symbol);
     }
+
+    printInfo('Total coins migrated', legacyCoins.length);
+    contracts.InterchainTokenService.legacyCoins = [];
+}
+
+// migrate_coin_metadata (single)
+async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { OperatorCap, InterchainTokenService } = itsConfig.objects;
+    const txBuilder = new TxBuilder(client);
+
+    const symbol = args;
+    validateParameters({
+        isNonEmptyString: { symbol },
+        isNonArrayObject: { tokenEntry: contracts[symbol.toUpperCase()] },
+    });
+
+    const tokenId = contracts[symbol.toUpperCase()].objects.TokenId;
+    const tokenType = contracts[symbol.toUpperCase()].typeArgument;
+
+    await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
+        arguments: [InterchainTokenService, OperatorCap, tokenId],
+        typeArguments: [tokenType],
+    });
+
+    await broadcastFromTxBuilder(txBuilder, keypair, 'Migrate Coin Metadata', options);
 }
 
 // give_unlinked_coin
@@ -638,10 +649,18 @@ if (require.main === module) {
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <symbol>')
-        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1.`)
-        .addOption(new Option('--all', 'Migrate metadata of saved legacy tokens (see command: its/tokens legacy-coins)'))
+        .description(`Release metadata for a single token saved in the chain config and migrate it to a publicly shared object.`)
         .action((symbol, options) => {
             mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
+        });
+
+    const migrateAllCoinMetadataProgram = new Command()
+        .name('migrate-coin-metadata-all')
+        .command('migrate-coin-metadata-all')
+        .description(`Release metadata for all legacy coins saved to the chain config by command its/tokens legacy-coins.`)
+        .addOption(new Option('--logging <size>', 'Print a status update every <size> of migrated tokens, or use <size> 0 to disable logging. Defaults to 0.'))
+        .action((options) => {
+            mainProcessor(migrateAllCoinMetadata, options, null, processCommand);
         });
 
     const giveUnlinkedCoinProgram = new Command()
@@ -698,6 +717,7 @@ if (require.main === module) {
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
+    program.addCommand(migrateAllCoinMetadataProgram);
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
