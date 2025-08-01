@@ -738,7 +738,10 @@ const mainProcessor = async (options, processCommand, save = true) => {
         const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults);
 
         const successfulResults = resultsWithErrLogs
-            .filter((promiseResult) => promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError)
+            .filter(
+                (promiseResult) =>
+                    promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError && promiseResult.value.result !== undefined,
+            )
             .map((promiseResult) => [promiseResult.value.chainId, promiseResult.value.result]);
 
         const failedResults = resultsWithErrLogs
