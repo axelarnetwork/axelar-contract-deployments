@@ -654,7 +654,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     }
 
     let chains = Object.entries(config.chains)
-        .filter(([_key, chain]) => chain.chainType === 'evm')
+        .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
         .map(([_key, chain]) => [normalizeChainName(chain.name), chain]);
 
     let validChainNames = new Set(chains.map(([name, _chain]) => name));
@@ -668,7 +668,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     }
 
     const normChainNames = new Set(chainNames?.split(',').map(normalizeChainName));
-    const chainsToSkip = new Set(skipChains?.split(',').map(normalizeChainName));
+    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean).map(normalizeChainName));
 
     if (skipChains) {
         chainsToSkip.forEach((name) => {
