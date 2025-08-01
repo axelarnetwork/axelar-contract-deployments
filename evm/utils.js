@@ -653,8 +653,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         throw new Error('Chain names were not provided');
     }
 
-    // TODO: Double check if the order is preserved
-    // TODO: Remove the startFromChain logic - use failed chains list to rerun failed chains
     let chains = Object.entries(config.chains)
         .filter(([_key, chain]) => chain.chainType === 'evm')
         .map(([_key, chain]) => [normalizeChainName(chain.name), chain]);
@@ -760,17 +758,25 @@ const mainProcessor = async (options, processCommand, save = true) => {
         failedChains = Object.fromEntries(failedResults);
     }
 
-    printInfo(
-        'Succeeded chains',
-        chains
-            .filter((chain) => !failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', '),
-    );
-
     for (const [chainId, loggerError] of Object.entries(failedChains)) {
         printError(`Failed with error on ${chainId}: ${loggerError}`);
     }
+
+    printInfo(
+        'Succeeded chains',
+        `[ ${chains
+            .filter((chain) => !failedChains[chain.axelarId])
+            .map((chain) => chain.name)
+            .join(', ')} ]`,
+    );
+
+    printInfo(
+        'Failed chains',
+        `[ ${chains
+            .filter((chain) => failedChains[chain.axelarId])
+            .map((chain) => chain.name)
+            .join(', ')} ]`,
+    );
 
     if (save) {
         saveConfig(config, options.env);
