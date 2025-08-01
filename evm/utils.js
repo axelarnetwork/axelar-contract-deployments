@@ -21,6 +21,7 @@ const {
     BigNumber,
     Wallet,
 } = ethers;
+const { Writable } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
@@ -47,6 +48,8 @@ const {
     timeout,
     getSaltFromKey,
     getCurrentVerifierSet,
+    asyncLocalLoggerStorage,
+    printMsg,
 } = require('../common');
 const {
     create3DeployContract,
@@ -57,7 +60,6 @@ const {
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
-const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
@@ -72,7 +74,7 @@ const deployCreate = async (wallet, contractJson, args = [], options = {}, verif
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log('FAILED VERIFICATION!!');
+            printError('FAILED VERIFICATION!!');
         }
     }
 
@@ -111,7 +113,7 @@ const deployCreate2 = async (
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log(`FAILED VERIFICATION!! ${e}`);
+            printError(`FAILED VERIFICATION!! ${e}`);
         }
     }
 
@@ -142,7 +144,7 @@ const deployCreate3 = async (
         try {
             await verifyContract(verifyOptions.env, verifyOptions.chain, contract.address, args, verifyOptions);
         } catch (e) {
-            console.log(`FAILED VERIFICATION!! ${e}`);
+            printError(`FAILED VERIFICATION!! ${e}`);
         }
     }
 
@@ -527,14 +529,6 @@ const getEVMAddresses = async (axelar, chain, options = {}) => {
     return { addresses, weights, threshold, keyID: evmAddresses.key_id };
 };
 
-function loadParallelExecutionConfig(env, chain) {
-    return require(`${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
-function saveParallelExecutionConfig(config, env, chain) {
-    writeJSON(config, `${__dirname}/../chains-info/${env}-${chain}.json`);
-}
-
 async function printWalletInfo(wallet, options = {}, chain = {}) {
     let balance = 0;
     const address = await wallet.getAddress();
@@ -644,153 +638,190 @@ function wasEventEmitted(receipt, contract, eventName) {
 
 const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
-const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
-    if (!options.env) {
-        throw new Error('Environment was not provided');
-    }
+/**
+ * Retrieves and filters a list of EVM chains based on specified criteria.
+ *
+ * This function processes chain selection based on various input parameters and returns
+ * a filtered list of chain objects that meet the specified criteria. It supports
+ * case-insensitive chain name matching and validates that all chains are EVM-compatible.
+ *
+ */
+const getChains = (config, chainNames, skipChains, startFromChain) => {
+    const normalizeChainName = (name) => name.trim().toLowerCase();
 
-    printInfo('Environment', options.env);
-
-    const config = loadConfig(options.env);
-    const chainsToSkip = (options.skipChains || '').split(',').map((str) => str.trim().toLowerCase());
-
-    let chains = [];
-
-    if (options.chainNames === 'all') {
-        chains = Object.keys(config.chains);
-        chains = chains.filter((chain) => !config.chains[chain].chainType || config.chains[chain].chainType === 'evm');
-    } else if (options.chainNames) {
-        chains = options.chainNames.split(',');
-        chains.forEach((chain) => {
-            if (config.chains[chain].chainType && config.chains[chain].chainType !== 'evm') {
-                throw new Error(`Cannot run script for a non EVM chain: ${chain}`);
-            }
-        });
-    }
-
-    if (chains.length === 0) {
+    if (!chainNames) {
         throw new Error('Chain names were not provided');
     }
 
-    chains = chains.map((chain) => chain.trim().toLowerCase());
+    let chains = Object.entries(config.chains)
+        .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
+        .map(([key, chain]) => [normalizeChainName(key), chain]);
 
-    if (options.startFromChain) {
-        const startIndex = chains.findIndex((chain) => chain === options.startFromChain.toLowerCase());
+    let validChainNames = new Set(chains.map(([name, _chain]) => name));
 
+    if (startFromChain) {
+        const startIndex = chains.findIndex(([name, _chain]) => name === normalizeChainName(startFromChain));
         if (startIndex === -1) {
-            throw new Error(`Chain ${options.startFromChain} is not defined in the info file`);
+            throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
         }
-
         chains = chains.slice(startIndex);
     }
 
-    for (const chainName of chains) {
-        if (config.chains[chainName.toLowerCase()] === undefined) {
-            throw new Error(`Chain ${chainName} is not defined in the info file`);
-        }
+    const normChainNames = new Set(chainNames?.split(',').map(normalizeChainName));
+    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean).map(normalizeChainName));
+
+    if (skipChains) {
+        chainsToSkip.forEach((name) => {
+            if (!validChainNames.has(name)) {
+                printError(`Chain "${name}" specified in skipChains is not defined in the config file`);
+            }
+        });
+        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
     }
 
-    if (options.parallel && chains.length > 1) {
-        const cmds = process.argv.filter((command) => command);
-        let chainCommandIndex = -1;
-        let skipPrompt = false;
-
-        for (let commandIndex = 0; commandIndex < cmds.length; commandIndex++) {
-            const cmd = cmds[commandIndex];
-
-            if (cmd === '-n' || cmd === '--chainName' || cmd === '--chainNames') {
-                chainCommandIndex = commandIndex;
-            } else if (cmd === '--parallel') {
-                cmds[commandIndex] = '--saveChainSeparately';
-            } else if (cmd === '-y' || cmd === '--yes') {
-                skipPrompt = true;
+    if (chainNames !== 'all') {
+        normChainNames.forEach((name) => {
+            if (!validChainNames.has(name)) {
+                printError(`Chain "${name}" is not defined in the config file`);
             }
-        }
-
-        if (!skipPrompt) {
-            cmds.push('-y');
-        }
-
-        const successfullChains = [];
-
-        const executeChain = (chainName) => {
-            const chain = config.chains[chainName.toLowerCase()];
-
-            if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-                printWarn('Skipping chain', chain.name);
-                return Promise.resolve();
-            }
-
-            return new Promise((resolve) => {
-                cmds[chainCommandIndex + 1] = chainName;
-
-                exec(cmds.join(' '), { stdio: 'inherit' }, (error, stdout) => {
-                    printInfo('-------------------------------------------------------');
-                    printInfo(`Logs for ${chainName}`, stdout);
-
-                    if (error) {
-                        printError(`Error while running script for ${chainName}`, error);
-                    } else {
-                        successfullChains.push(chainName);
-                        printInfo(`Finished running script for chain`, chainName);
-                    }
-
-                    resolve();
-                });
-            });
-        };
-
-        await Promise.all(chains.map(executeChain));
-
-        if (save) {
-            for (const chainName of successfullChains) {
-                config.chains[chainName.toLowerCase()] = loadParallelExecutionConfig(options.env, chainName);
-            }
-
-            saveConfig(config, options.env);
-        }
-
-        return;
+        });
+        chains = chains.filter(([name, _chain]) => normChainNames.has(name));
     }
 
+    if (chains.length === 0) {
+        throw new Error('No valid chains found');
+    }
+
+    return chains.map(([_, chain]) => chain);
+};
+
+/**
+ * Processes chains concurrently (in parallel) or sequentially using the provided command function.
+ *
+ * This function executes the processCommand for multiple chains either simultaneously
+ * (parallel mode) or sequentially (sequential mode), which can significantly improve
+ * performance when processing many chains. The function supports both execution modes
+ * based on the options.parallel flag.
+ *
+ */
+const mainProcessor = async (options, processCommand, save = true) => {
+    if (!options.env) {
+        throw new Error('Environment was not provided');
+    }
+    printInfo('Environment', options.env);
+
+    const config = loadConfig(options.env);
+    const chains = getChains(config, options.chainNames, options.skipChains, options.startFromChain);
+    const axelar = config.axelar;
     const chainsDeepCopy = deepCopy(config.chains);
 
-    let results = [];
-    for (const chainName of chains) {
-        const chain = config.chains[chainName.toLowerCase()];
+    let failedChains = {};
+    let promisedChainsResults = [];
+    let results = {};
+    for (const chain of chains) {
+        const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
 
-        if (chainsToSkip.includes(chain.name.toLowerCase()) || chain.status === 'deactive') {
-            printWarn('Skipping chain', chain.name);
-            continue;
-        }
-
-        console.log('');
-        printInfo('Chain', chain.name, chalk.cyan);
-
-        try {
-            const result = await processCommand(config.axelar, chain, chainsDeepCopy, options);
-
-            if (result) {
-                results.push(result);
+        if (options.parallel) {
+            promisedChainsResults.push({ promise: chainTask, chainId: chain.axelarId });
+        } else {
+            const { result, loggerError } = await chainTask;
+            if (result !== undefined) {
+                results[chain.axelarId] = result;
             }
-        } catch (error) {
-            printError(`Failed with error on ${chain.name}`, error.message);
-
-            if (!catchErr && !options.ignoreError) {
-                throw error;
+            if (loggerError) {
+                failedChains[chain.axelarId] = loggerError;
             }
         }
+    }
 
-        if (save) {
-            if (options.saveChainSeparately) {
-                saveParallelExecutionConfig(config.chains[chainName.toLowerCase()], options.env, chainName);
-            } else {
-                saveConfig(config, options.env);
-            }
-        }
+    if (options.parallel) {
+        const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults.map((item) => item.promise));
+
+        const successfulResults = resultsWithErrLogs
+            .filter(
+                (promiseResult, _index) =>
+                    promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError && promiseResult.value.result !== undefined,
+            )
+            .map((promiseResult, index) => [promisedChainsResults[index].chainId, promiseResult.value.result]);
+
+        const failedResults = resultsWithErrLogs
+            .filter(
+                (promiseResult, _index) =>
+                    promiseResult.status === 'rejected' || (promiseResult.status === 'fulfilled' && promiseResult.value.loggerError),
+            )
+            .map((promiseResult, index) => {
+                const chainId = promisedChainsResults[index].chainId;
+                if (promiseResult.status === 'rejected') {
+                    return [chainId, promiseResult.reason.message];
+                } else {
+                    return [chainId, promiseResult.value.loggerError];
+                }
+            });
+
+        results = Object.fromEntries(successfulResults);
+        failedChains = Object.fromEntries(failedResults);
+    }
+
+    for (const [chainId, loggerError] of Object.entries(failedChains)) {
+        printError(`Failed with error on ${chainId}: ${loggerError}`);
+    }
+
+    printInfo(
+        'Succeeded chains',
+        `[ ${chains
+            .filter((chain) => !failedChains[chain.axelarId])
+            .map((chain) => chain.name)
+            .join(', ')} ]`,
+    );
+
+    printInfo(
+        'Failed chains',
+        `[ ${chains
+            .filter((chain) => failedChains[chain.axelarId])
+            .map((chain) => chain.name)
+            .join(', ')} ]`,
+    );
+
+    if (save) {
+        saveConfig(config, options.env);
     }
 
     return results;
+};
+
+const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
+    let loggerOutput = '';
+    let loggerError = '';
+    let result;
+
+    const stdStream = new Writable({
+        write(chunk, _encoding, callback) {
+            loggerOutput += chunk.toString();
+            callback();
+        },
+    });
+    const errorStream = new Writable({
+        write(chunk, _encoding, callback) {
+            loggerError += chunk.toString();
+            callback();
+        },
+    });
+    return asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
+        try {
+            printInfo('Chain', chain.name, chalk.cyan);
+            result = await processCommand(axelar, chain, chains, options);
+        } catch (error) {
+            printError(`Error processing chain ${chain.name}: ${error.message}`);
+
+            if (!options.ignoreError) {
+                process.stdout.write(`${loggerOutput}\n`);
+                process.exit(1);
+            }
+        } finally {
+            process.stdout.write(`${loggerOutput}\n`);
+        }
+        return { result, loggerError };
+    });
 };
 
 function getConfigByChainId(chainId, config) {
