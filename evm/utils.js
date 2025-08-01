@@ -810,8 +810,8 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
 
             if (!options.ignoreError) {
-                error.chainId = chain.axelarId;
-                throw error;
+                process.stdout.write(`${loggerOutput}\n`);
+                process.exit(1);
             }
         } finally {
             process.stdout.write(`${loggerOutput}\n`);
