@@ -51,6 +51,10 @@ Here's an example signer set rotation:
 ts-node xrpl/rotate-signers.js -e testnet -n xrpl --signerPublicKeys 028E425D6F75EC61C8568B7E1C29D3085E210A90A0CE6491E7A249747D34431F6C 02D904B083B855A5AE1DAB39ACE60227E110E0490AAA74DE18F5806121369DBB48 02F77F629E38433F6D2CE5EE46B7E8E1724444163FB08B99CF2C1B117A0E8578F1 0285737FE8BA5D8E8F2A10CB39E814D5E72DADF8FF05BDFABCCF1EF20C51279EC8 --signerWeights 1 1 1 1 --quorum 3
 ```
 
+### Token Deployments
+
+Refer to the XRPL ITS [Local Token Deployment](./docs/deploy-local-token.md), [Remote Token Deployment](./docs/deploy-remote-token.md),  and [Link Token](./docs/link-token.md) guides to enable transferring new tokens between XRPL and remote chains.
+
 ## Contract Interactions
 
 Since there's no smart contracts on XRPL, all interactions happen as `Payment` transactions towards the XRPL multisig account.
