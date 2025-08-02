@@ -465,7 +465,7 @@ ts-node xrpl/trust-set-multisig.js -e devnet-amplifier -n xrpl-dev --tokenId a7e
 Add support for a remote token.
 
 ```bash
-ts-node xrpl/register-local-token.js -e <env> -n <chain-name> --tokenId <token-id> --currency <token-currency>
+ts-node xrpl/register-remote-token.js -e <env> -n <chain-name> --tokenId <token-id> --currency <token-currency>
 ```
 
 Here's an example:
