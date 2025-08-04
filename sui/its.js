@@ -306,7 +306,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     else printInfo('No coins were migrated');
 
     // Clean up chain config
-    if (failedMigrations.length) { 
+    if (failedMigrations.length) {
         contracts.InterchainTokenService.legacyCoins = failedMigrations;
         printInfo('Number of failed migrations', failedMigrations.length, chalk.yellow);
     } else delete contracts.InterchainTokenService.legacyCoins;
