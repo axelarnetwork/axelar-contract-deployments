@@ -62,7 +62,7 @@ Extract the multisig session ID from the command output.
 
 ```bash
 MULTISIG_SESSION_ID=
-ts-node xrpl/trust-set-multisig.js $MULTISIG_SESSION_ID
+ts-node xrpl/submit-proof.js $MULTISIG_SESSION_ID
 ```
 
 ### 4. Remote Token Deployment
