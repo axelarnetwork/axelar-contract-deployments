@@ -267,7 +267,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
                 typeArguments: [coin.TokenType],
             });
             // Process tx as batch or indidivual migration (depending on options.batch)
-            if (!batchSize || i == legacyCoins.length - 1 || (i+1) % batchSize === 0) {
+            if (!batchSize || i == legacyCoins.length - 1 || (i + 1) % batchSize === 0) {
                 // Broadcast batch / individual tx, and reset builder
                 const txType = !batchSize ? coin.symbol : 'batched';
                 await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${txType})`, options);
