@@ -255,28 +255,28 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     let migratedCoins = [],
         failedMigrations = [],
         currentBatch = [],
-        proccessedBatches = 0,
+        processedBatches = 0,
         txBuilder = new TxBuilder(client);
     for (let i = 0; i < legacyCoins.length; i++) {
         const coin = legacyCoins[i];
 
-        await txBuilder.moveCall({
-            target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
-            arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
-            typeArguments: [coin.TokenType],
-        });
-
-        // Process tx as batch or indidivual migration (depending on options.batch)
         try {
-            if (!batchSize || i == legacyCoins.length - 1 || i % batchSize === 0) {
+            await txBuilder.moveCall({
+                target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
+                arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
+                typeArguments: [coin.TokenType],
+            });
+            // Process tx as batch or indidivual migration (depending on options.batch)
+            if (!batchSize || i == legacyCoins.length - 1 || (i+1) % batchSize === 0) {
                 // Broadcast batch / individual tx, and reset builder
                 const txType = !batchSize ? coin.symbol : 'batched';
                 await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${txType})`, options);
                 txBuilder = new TxBuilder(client);
                 if (!batchSize) migratedCoins.push(coin);
                 else {
+                    currentBatch.push(coin);
                     migratedCoins = [...migratedCoins, ...currentBatch];
-                    ++proccessedBatches;
+                    ++processedBatches;
                     currentBatch = [];
                 }
             } else currentBatch.push(coin);
@@ -285,8 +285,9 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
                 printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
                 failedMigrations.push(coin);
             } else {
-                ++proccessedBatches;
-                printInfo(`Migrate metadata failed for batch ${proccessedBatches}`, e, chalk.red);
+                ++processedBatches;
+                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e, chalk.red);
+                currentBatch.push(coin);
                 failedMigrations = [...failedMigrations, ...currentBatch];
             }
         }
@@ -295,7 +296,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         if (logSize > 0 && (i + 1) % logSize === 0 && !batchSize)
             printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Last migrated token`, coin.symbol);
         else if (logSize > 0 && (i + 1) % logSize === 0 && batchSize)
-            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Processed batches`, proccessedBatches);
+            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Processed batches`, processedBatches);
     }
 
     // Final status report
