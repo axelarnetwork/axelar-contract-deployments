@@ -224,6 +224,7 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
     } = config;
     const {
         Rewards: { address: rewardsAddress },
+        Coordinator: { address: coordinatorAddress },
     } = contracts;
     const { adminAddress, governanceAddress, blockExpiry } = contractConfig;
 
@@ -243,11 +244,16 @@ const makeMultisigInstantiateMsg = (config, _options, contractConfig) => {
         throw new Error(`Missing or invalid Multisig.blockExpiry in axelar info`);
     }
 
+    if (!validateAddress(coordinatorAddress)) {
+        throw new Error('Missing or invalid Coordinator.address in axelar info');
+    }
+
     return {
         admin_address: adminAddress,
         governance_address: governanceAddress,
         rewards_address: rewardsAddress,
         block_expiry: toBigNumberString(blockExpiry),
+        coordinator_address: coordinatorAddress,
     };
 };
 
@@ -952,7 +958,7 @@ const getExecuteContractParams = (config, options, chainName) => {
             contracts: { [contractName]: contractConfig },
         },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),
@@ -974,7 +980,7 @@ const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),

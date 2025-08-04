@@ -175,12 +175,6 @@ const isBytes32Array = (arr) => {
     return true;
 };
 
-/**
- * Determines if a given input is a valid keccak256 hash.
- *
- * @param {string} input - The string to validate.
- * @returns {boolean} - Returns true if the input is a valid keccak256 hash, false otherwise.
- */
 function isKeccak256Hash(input) {
     // Ensure it's a string of 66 characters length and starts with '0x'
     if (typeof input !== 'string' || input.length !== 66 || input.slice(0, 2) !== '0x') {
@@ -193,12 +187,6 @@ function isKeccak256Hash(input) {
     return hexPattern.test(input.slice(2));
 }
 
-/**
- * Determines if a given input is a valid calldata for Solidity.
- *
- * @param {string} input - The string to validate.
- * @returns {boolean} - Returns true if the input is a valid calldata, false otherwise.
- */
 function isValidCalldata(input) {
     if (input === '0x') {
         return true;
@@ -305,6 +293,9 @@ function validateParameters(parameters) {
 
         for (const paramKey of Object.keys(paramsObj)) {
             const paramValue = paramsObj[paramKey];
+            if (paramValue === undefined) {
+                throw new Error(`${paramKey} is not defined. Missing in the chain config.`);
+            }
             const isValid = validatorFunction(paramValue);
 
             if (!isValid) {
@@ -314,32 +305,59 @@ function validateParameters(parameters) {
     }
 }
 
-/**
- * Compute bytecode hash for a deployed contract or contract factory as it would appear on-chain.
- * Some chains don't use keccak256 for their state representation, which is taken into account by this function.
- * @param {Object} contractObject - An instance of the contract or a contract factory (ethers.js Contract or ContractFactory object)
- * @param {string} chain - The chain name
- * @param {Object} provider - The provider to use for online deployment
- * @returns {Promise<string>} - The keccak256 hash of the contract bytecode
- */
+async function getBytecodeFromAddress(address, provider) {
+    if (!provider) {
+        throw new Error('Provider must be provided for address');
+    }
+    return await provider.getCode(address);
+}
+
+async function getBytecodeFromContractInstance(contractObject) {
+    if (!contractObject.provider) {
+        throw new Error('Contract instance must have a provider');
+    }
+    return await getBytecodeFromAddress(contractObject.address, contractObject.provider);
+}
+
+function getBytecodeFromDeployedBytecode(contractObject) {
+    const deployedBytecode = contractObject.deployedBytecode;
+
+    if (typeof deployedBytecode === 'string') {
+        return deployedBytecode;
+    } else if (typeof deployedBytecode === 'object' && deployedBytecode.object) {
+        return deployedBytecode.object;
+    } else {
+        throw new Error('Invalid deployedBytecode format in contract JSON.');
+    }
+}
+
+function getBytecodeFromBytecode(contractObject) {
+    const bytecode = contractObject.bytecode;
+
+    if (typeof bytecode === 'string') {
+        return bytecode;
+    } else if (typeof bytecode === 'object' && bytecode.object) {
+        return bytecode.object;
+    } else {
+        throw new Error('Invalid bytecode format in contract JSON.');
+    }
+}
+
 async function getBytecodeHash(contractObject, chain = '', provider = null) {
     let bytecode;
 
     if (isNonEmptyString(contractObject)) {
-        if (provider === null) {
-            throw new Error('Provider must be provided for chain');
-        }
-
-        bytecode = await provider.getCode(contractObject);
+        bytecode = await getBytecodeFromAddress(contractObject, provider);
     } else if (contractObject.address) {
         // Contract instance
-        provider = contractObject.provider;
-        bytecode = await provider.getCode(contractObject.address);
+        bytecode = await getBytecodeFromContractInstance(contractObject);
     } else if (contractObject.deployedBytecode) {
-        // Contract factory
-        bytecode = contractObject.deployedBytecode;
+        // Foundry outputs bytecode as an object with metadata, extract the actual bytecode
+        bytecode = getBytecodeFromDeployedBytecode(contractObject);
+    } else if (contractObject.bytecode) {
+        bytecode = getBytecodeFromBytecode(contractObject);
     } else {
-        throw new Error('Invalid contract object. Expected ethers.js Contract or ContractFactory.');
+        throw new Error('Invalid contract object. Expected ethers.js Contract, ContractFactory, or contract JSON with bytecode.');
     }
 
     if (bytecode === '0x') {
@@ -349,7 +367,6 @@ async function getBytecodeHash(contractObject, chain = '', provider = null) {
     if (chain.toLowerCase() === 'polygon-zkevm') {
         throw new Error('polygon-zkevm uses a custom bytecode hash derivation and is not supported');
     }
-
     return keccak256(bytecode);
 }
 
@@ -389,20 +406,6 @@ const getDeployOptions = (deployMethod, salt, chain) => {
     };
 };
 
-/**
- * Get the predicted address of a contract deployment using one of create/create2/create3 deployment method.
- * @param {string} deployer - Sender address that's triggering the contract deployment
- * @param {string} deployMethod - 'create', 'create2', 'create3'
- * @param {Object} options - Options for the deployment
- * @param {string} options.deployerContract - Address of the contract that will deploy the contract
- * @param {string} options.contractJson - Compiled contract to be deployed
- * @param {any[]} options.constructorArgs - Arguments for the contract constructor
- * @param {string} options.salt - Salt for the deployment
- * @param {number} options.nonce - Nonce for the deployment
- * @param {boolean} options.offline - Whether to compute address offline or use an online provider to get the nonce/deployed address
- * @param {Object} options.provider - Provider to use for online deployment
- * @returns {Promise<string>} - The predicted contract address
- */
 const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
     switch (deployMethod) {
         case 'create': {
@@ -481,18 +484,18 @@ const getDeployedAddress = async (deployer, deployMethod, options = {}) => {
     }
 };
 
-const getProxy = async (config, chain) => {
-    const address = (await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
+const getProxy = async (axelar, chain) => {
+    const address = (await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/gateway_address/${chain}`)).address;
     return address;
 };
 
-const getEVMBatch = async (config, chain, batchID = '') => {
-    const batch = await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
+const getEVMBatch = async (axelar, chain, batchID = '') => {
+    const batch = await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/batched_commands/${chain}/${batchID}`);
     return batch;
 };
 
-const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+const getAmplifierVerifiers = async (axelar, chain) => {
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(axelar, chain);
 
     const weightedAddresses = signers
         .map((signer) => ({
@@ -504,7 +507,7 @@ const getAmplifierVerifiers = async (config, chain) => {
     return { addresses: weightedAddresses, threshold: verifierSet.threshold, created_at: verifierSet.created_at, verifierSetId };
 };
 
-const getEVMAddresses = async (config, chain, options = {}) => {
+const getEVMAddresses = async (axelar, chain, options = {}) => {
     const keyID = options.keyID || '';
 
     if (isAddress(keyID)) {
@@ -512,8 +515,8 @@ const getEVMAddresses = async (config, chain, options = {}) => {
     }
 
     const evmAddresses = options.amplifier
-        ? await getAmplifierVerifiers(config, chain)
-        : await httpGet(`${config.axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
+        ? await getAmplifierVerifiers(axelar, chain)
+        : await httpGet(`${axelar.lcd}/axelar/evm/v1beta1/key_address/${chain}?key_id=${keyID}`);
 
     const sortedAddresses = evmAddresses.addresses.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
 
@@ -633,19 +636,13 @@ const deployContract = async (
     }
 };
 
-/**
- * Check if a specific event was emitted in a transaction receipt.
- *
- * @param {object} receipt - The transaction receipt object.
- * @param {object} contract - The ethers.js contract instance.
- * @param {string} eventName - The name of the event.
- * @return {boolean} - Returns true if the event was emitted, false otherwise.
- */
 function wasEventEmitted(receipt, contract, eventName) {
     const event = contract.filters[eventName]();
 
     return receipt.logs.some((log) => log.topics[0] === event.topics[0]);
 }
+
+const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 const mainProcessor = async (options, processCommand, save = true, catchErr = false) => {
     if (!options.env) {
@@ -756,6 +753,8 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         return;
     }
 
+    const chainsDeepCopy = deepCopy(config.chains);
+
     let results = [];
     for (const chainName of chains) {
         const chain = config.chains[chainName.toLowerCase()];
@@ -769,7 +768,7 @@ const mainProcessor = async (options, processCommand, save = true, catchErr = fa
         printInfo('Chain', chain.name, chalk.cyan);
 
         try {
-            const result = await processCommand(config, chain, options);
+            const result = await processCommand(config.axelar, chain, chainsDeepCopy, options);
 
             if (result) {
                 results.push(result);
@@ -823,17 +822,12 @@ function findContractPath(dir, contractName) {
     }
 }
 
-function getContractPath(contractName, projectRoot = '') {
-    if (projectRoot === '') {
-        projectRoot = path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network');
-    }
-
-    projectRoot = path.resolve(projectRoot);
-
+function getContractPath(contractName) {
     const searchDirs = [
-        path.join(projectRoot, 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'axelar-cgp-solidity', 'artifacts', 'contracts'),
-        path.join(projectRoot, 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-gmp-sdk-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'axelar-cgp-solidity', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'node_modules', '@axelar-network', 'interchain-token-service', 'artifacts', 'contracts'),
+        path.join(findProjectRoot(__dirname), 'evm', 'legacy'),
     ];
 
     for (const dir of searchDirs) {
@@ -849,6 +843,24 @@ function getContractPath(contractName, projectRoot = '') {
     throw new Error(`Contract path for ${contractName} must be entered manually.`);
 }
 
+function normalizeContractJSON(contractJson, contractName) {
+    // Handle Foundry JSON format which doesn't have contractName and sourceName
+    if (!contractJson.contractName && contractJson.abi) {
+        contractJson.contractName = contractName;
+        contractJson.sourceName = `${contractName}.sol`;
+    }
+
+    if (contractJson.bytecode && typeof contractJson.bytecode === 'object' && contractJson.bytecode.object) {
+        contractJson.bytecode = contractJson.bytecode.object;
+    }
+
+    if (contractJson.deployedBytecode && typeof contractJson.deployedBytecode === 'object' && contractJson.deployedBytecode.object) {
+        contractJson.deployedBytecode = contractJson.deployedBytecode.object;
+    }
+
+    return contractJson;
+}
+
 function getContractJSON(contractName, artifactPath) {
     let contractPath;
 
@@ -860,7 +872,7 @@ function getContractJSON(contractName, artifactPath) {
 
     try {
         const contractJson = require(contractPath);
-        return contractJson;
+        return normalizeContractJSON(contractJson, contractName);
     } catch (err) {
         throw new Error(`Failed to load contract JSON for ${contractName} at path ${contractPath} with error: ${err}`);
     }
@@ -871,27 +883,6 @@ function getQualifiedContractName(contractName) {
     return `${contractJSON.sourceName}:${contractJSON.contractName}`;
 }
 
-/**
- * Retrieves gas options for contract interactions.
- *
- * This function determines the appropriate gas options for a given transaction.
- * It supports offline scenarios and applies gas price adjustments if specified.
- *
- * @param {Object} chain - The chain config object.
- * @param {Object} options - Script options, including the 'offline' flag.
- * @param {String} contractName - The name of the contract to deploy/interact with.
- * @param {Object} defaultGasOptions - Optional default gas options if none are provided in the chain or contract configs.
- *
- * @returns {Object} An object containing gas options for the transaction.
- *
- * @throws {Error} Throws an error if gas options are invalid and/or fetching the gas price fails when gasPriceAdjustment is present.
- *
- * Note:
- * - If 'options.gasOptions' is present, cli gas options override any config values.
- * - If 'options.offline' is true, static gas options from the contract or chain config are used.
- * - If 'gasPriceAdjustment' is set in gas options and 'gasPrice' is not pre-defined, the gas price
- *   is fetched from the provider and adjusted according to 'gasPriceAdjustment'.
- */
 async function getGasOptions(chain, options, contractName, defaultGasOptions = {}) {
     const { offline, gasOptions: gasOptionsCli } = options;
     const contractConfig = contractName ? chain?.contracts[contractName] : null;
@@ -951,9 +942,7 @@ function validateGasOptions(gasOptions) {
     }
 }
 
-function isValidChain(config, chainName) {
-    const chains = config.chains;
-
+function validateChain(chains, chainName) {
     const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
@@ -1013,7 +1002,7 @@ async function getDeploymentTx(apiUrl, apiKey, tokenAddress) {
     throw new Error('Deployment transaction not found.');
 }
 
-async function getWeightedSigners(config, chain, options) {
+async function getWeightedSigners(axelar, chain, options) {
     let signers;
     let verifierSetId;
 
@@ -1030,7 +1019,7 @@ async function getWeightedSigners(config, chain, options) {
             nonce: HashZero,
         };
     } else {
-        const addresses = await getAmplifierVerifiers(config, chain.axelarId);
+        const addresses = await getAmplifierVerifiers(axelar, chain.axelarId);
         const nonce = hexZeroPad(BigNumber.from(addresses.created_at).toHexString(), 32);
 
         signers = {
@@ -1121,11 +1110,12 @@ module.exports = {
     mainProcessor,
     getContractPath,
     getContractJSON,
+    normalizeContractJSON,
     isBytes32Array,
     getGasOptions,
     getSaltFromKey,
     getDeployOptions,
-    isValidChain,
+    validateChain,
     relayTransaction,
     getDeploymentTx,
     getWeightedSigners,

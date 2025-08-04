@@ -8,6 +8,7 @@ jobs:
     if: github.event.pull_request.merged == true
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - network: mainnet

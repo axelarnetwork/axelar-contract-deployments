@@ -82,7 +82,7 @@ async function restoreInstance(_wallet, chain, contractName, _contract, _args, _
 async function mainProcessor(processor, contractName, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {

@@ -9,7 +9,6 @@ const {
 const {
     deployContract,
     printWalletInfo,
-    saveConfig,
     printInfo,
     printWarn,
     printError,
@@ -30,7 +29,7 @@ const {
 const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
-const { switchHyperliquidBlockSize } = require('./hyperliquid');
+const { updateBlockSize } = require('./hyperliquid');
 
 /**
  * Function that handles the ITS deployment with chain-specific token support.
@@ -42,7 +41,7 @@ const { switchHyperliquidBlockSize } = require('./hyperliquid');
  * @param {*} verifyOptions
  */
 
-async function deployAll(config, wallet, chain, options) {
+async function deployAll(axelar, wallet, chain, chains, options) {
     const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
@@ -130,26 +129,26 @@ async function deployAll(config, wallet, chain, options) {
     contracts[contractName] = contractConfig;
     contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = itsHubContractAddress(config);
+    const trustedChains = parseTrustedChains(chains, ['all']);
+    const itsHubAddress = itsHubContractAddress(axelar);
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
     }
 
-    const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
+    const existingAddress = chains.ethereum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
         printWarn(
-            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${config.chains.ethereum.name}`,
+            `Predicted address ${interchainTokenService} does not match existing deployment ${existingAddress} on chain ${chains.ethereum.name}`,
         );
 
-        const existingCodeHash = config.chains.ethereum.contracts[contractName].predeployCodehash;
+        const existingCodeHash = chains.ethereum.contracts[contractName].predeployCodehash;
 
         if (predeployCodehash !== existingCodeHash) {
             printWarn(
-                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${config.chains.ethereum.name}`,
+                `Pre-deploy bytecode hash ${predeployCodehash} does not match existing deployment's predeployCodehash ${existingCodeHash} on chain ${chains.ethereum.name}`,
             );
         }
 
@@ -349,7 +348,7 @@ async function deployAll(config, wallet, chain, options) {
         }
 
         if (deployment.useHyperliquidBigBlocks) {
-            await switchHyperliquidBlockSize(options, true, chain);
+            await updateBlockSize(wallet, chain, true);
         }
 
         printInfo(`Deploying ${deployment.name}`);
@@ -359,7 +358,7 @@ async function deployAll(config, wallet, chain, options) {
             contract = await deployment.deploy();
         } finally {
             if (deployment.useHyperliquidBigBlocks) {
-                await switchHyperliquidBlockSize(options, false, chain);
+                await updateBlockSize(wallet, chain, false);
             }
         }
 
@@ -373,8 +372,6 @@ async function deployAll(config, wallet, chain, options) {
 
         printInfo(`Deployed ${deployment.name} at ${contract.address}`);
 
-        saveConfig(config, options.env);
-
         if (chain.chainId !== 31337) {
             await sleep(5000);
         }
@@ -385,7 +382,7 @@ async function deployAll(config, wallet, chain, options) {
     }
 }
 
-async function deploy(config, chain, options) {
+async function deploy(axelar, chain, chains, options) {
     const { privateKey, salt } = options;
 
     const rpc = chain.rpc;
@@ -401,10 +398,10 @@ async function deploy(config, chain, options) {
         throw new Error(`Invalid operator address: ${operatorAddress}`);
     }
 
-    await deployAll(config, wallet, chain, options);
+    await deployAll(axelar, wallet, chain, chains, options);
 }
 
-async function upgrade(_, chain, options) {
+async function upgrade(_axelar, chain, _chains, options) {
     const { artifactPath, privateKey, predictOnly } = options;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -494,11 +491,11 @@ async function upgrade(_, chain, options) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(axelar, chain, chains, options) {
     if (options.upgrade) {
-        await upgrade(config, chain, options);
+        await upgrade(axelar, chain, chains, options);
     } else {
-        await deploy(config, chain, options);
+        await deploy(axelar, chain, chains, options);
     }
 }
 
