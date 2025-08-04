@@ -264,7 +264,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
             migratedCoins.push(coin);
         } catch (e) {
             printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
-            failedMigrations.push();
+            failedMigrations.push(coin);
         }
 
         // Command status debugging
@@ -272,7 +272,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     }
 
     // Final status
-    if (legacyCoins.length) printInfo('Total coins migrated', legacyCoins.length);
+    if (migratedCoins.length) printInfo('Total coins migrated', migratedCoins.length);
     else printInfo('No coins were migrated');
 
     // Clean up saved coins to be migrated
