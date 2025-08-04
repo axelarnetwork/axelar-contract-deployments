@@ -252,8 +252,8 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
 
     if (!legacyCoins.length) printInfo('Warning: no migratable tokens were found in chain config for env:', options.env, chalk.yellow);
 
-    let migratedCoins = [], 
-        failedMigrations = [], 
+    let migratedCoins = [],
+        failedMigrations = [],
         currentBatch = [],
         proccessedBatches = 0,
         txBuilder = new TxBuilder(client);
@@ -272,7 +272,7 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
                 // Broadcast batch / individual tx, and reset builder
                 await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
                 txBuilder = new TxBuilder(client);
-                if (!batchSize) migratedCoins.push(coin)
+                if (!batchSize) migratedCoins.push(coin);
                 else {
                     migratedCoins = [...migratedCoins, ...currentBatch];
                     ++proccessedBatches;
