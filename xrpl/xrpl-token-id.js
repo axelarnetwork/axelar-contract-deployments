@@ -56,8 +56,6 @@ const programHandler = () => {
     });
 
     program.parse();
-
-    program.parse();
 };
 
 if (require.main === module) {
