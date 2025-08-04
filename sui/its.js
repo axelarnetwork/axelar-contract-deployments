@@ -245,10 +245,10 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     // Migrate all the coins. This might take a while.
     const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
 
-    if (!legacyCoins.length)
-        printInfo("Warning: no migratable tokens were found in chain config for env:", options.env, chalk.yellow);
+    if (!legacyCoins.length) printInfo('Warning: no migratable tokens were found in chain config for env:', options.env, chalk.yellow);
 
-    const migratedCoins = [], failedMigrations = [];
+    const migratedCoins = [],
+        failedMigrations = [];
     for (let i = 0; i < legacyCoins.length; i++) {
         const coin = legacyCoins[i];
         const txBuilder = new TxBuilder(client);
