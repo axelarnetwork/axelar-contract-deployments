@@ -239,19 +239,26 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
 
+    // Show or disable logging output (0 = logging disabled)
     let logSize = options.logging ? parseInt(options.logging) : 0;
     if (isNaN(logSize)) logSize = 0;
+
+    // Batch or process txs 1-by-1 (0 = batching disabled)
+    let batchSize = options.batch ? parseInt(options.batch) : 0;
+    if (isNaN(batchSize)) batchSize = 0;
 
     // Migrate all the coins. This might take a while.
     const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
 
     if (!legacyCoins.length) printInfo('Warning: no migratable tokens were found in chain config for env:', options.env, chalk.yellow);
 
-    const migratedCoins = [],
-        failedMigrations = [];
+    let migratedCoins = [], 
+        failedMigrations = [], 
+        currentBatch = [],
+        proccessedBatches = 0,
+        txBuilder = new TxBuilder(client);
     for (let i = 0; i < legacyCoins.length; i++) {
         const coin = legacyCoins[i];
-        const txBuilder = new TxBuilder(client);
 
         await txBuilder.moveCall({
             target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
@@ -259,23 +266,42 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
             typeArguments: [coin.TokenType],
         });
 
+        // Process tx as batch or indidivual migration (depending on options.batch)
         try {
-            await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
-            migratedCoins.push(coin);
+            if (!batchSize || i == legacyCoins.length - 1 || i % batchSize === 0) {
+                // Broadcast batch / individual tx, and reset builder
+                await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
+                txBuilder = new TxBuilder(client);
+                if (!batchSize) migratedCoins.push(coin)
+                else {
+                    migratedCoins = [...migratedCoins, ...currentBatch];
+                    ++proccessedBatches;
+                    currentBatch = [];
+                }
+            } else currentBatch.push(coin);
         } catch (e) {
-            printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
-            failedMigrations.push(coin);
+            if (!batchSize) {
+                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
+                failedMigrations.push(coin);
+            } else {
+                ++proccessedBatches;
+                printInfo(`Migrate metadata failed for batch ${proccessedBatches}`, e, chalk.red);
+                failedMigrations = [...failedMigrations, ...currentBatch];
+            }
         }
 
-        // Command status debugging
-        if (logSize > 0 && (i + 1) % logSize === 0) printInfo(`Migrated metadata for ${i + 1} tokens. Last migrated token`, coin.symbol);
+        // Intermediate status debugging report (e.g. if options.logging enabled)
+        if (logSize > 0 && (i + 1) % logSize === 0 && !batchSize)
+            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Last migrated token`, coin.symbol);
+        else if (logSize > 0 && (i + 1) % logSize === 0 && batchSize)
+            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Processed batches`, proccessedBatches);
     }
 
-    // Final status
+    // Final status report
     if (migratedCoins.length) printInfo('Total coins migrated', migratedCoins.length);
     else printInfo('No coins were migrated');
 
-    // Clean up saved coins to be migrated
+    // Clean up chain config
     if (failedMigrations.length) contracts.InterchainTokenService.legacyCoins = failedMigrations;
     else delete contracts.InterchainTokenService.legacyCoins;
 }
@@ -678,6 +704,12 @@ if (require.main === module) {
             new Option(
                 '--logging <size>',
                 'Print a status update every <size> of migrated tokens, or use <size> 0 to disable logging. Defaults to 0.',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--batch <size>',
+                'Process migrations in a batch of <size> transactions, or use <size> 0 for no batching. Defaults to 0.',
             ),
         )
         .action((options) => {
