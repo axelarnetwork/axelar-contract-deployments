@@ -1,0 +1,53 @@
+[workspace]
+allow_dirty = false
+changelog_update = true
+dependencies_update = false
+git_release_enable = true
+pr_branch_prefix = "release-"
+pr_labels = ["release"]
+publish_allow_dirty = false
+semver_check = true
+publish_timeout = "10m"
+
+[[package]]
+name = "axelar-solana-gas-service"
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+publish_all_features = true
+git_release_enable = true
+publish = false
+
+[[package]]
+name = "axelar-solana-gateway"
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+publish_all_features = true
+git_release_enable = true
+publish = false
+
+[[package]]
+name = "axelar-solana-governance"
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+publish_all_features = true
+git_release_enable = true
+publish = false
+
+[[package]]
+name = "axelar-solana-its"
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+publish_all_features = true
+git_release_enable = true
+publish = false
+
+[[package]]
+name = "axelar-solana-multicall"
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+publish_all_features = true
+git_release_enable = true
+publish = false
+
+[changelog]
+protect_breaking_commits =
