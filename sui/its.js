@@ -15,6 +15,7 @@ const {
     saveTokenDeployment,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
+const chalk = require('chalk');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -244,6 +245,10 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
     // Migrate all the coins. This might take a while.
     const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
 
+    if (!legacyCoins.length)
+        printInfo("Warning: no migratable tokens were found in chain config for env:", options.env, chalk.yellow);
+
+    const migratedCoins = [], failedMigrations = [];
     for (let i = 0; i < legacyCoins.length; i++) {
         const coin = legacyCoins[i];
         const txBuilder = new TxBuilder(client);
@@ -254,16 +259,25 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
             typeArguments: [coin.TokenType],
         });
 
-        await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
+        try {
+            await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${coin.symbol})`, options);
+            migratedCoins.push(coin);
+        } catch (e) {
+            printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
+            failedMigrations.push();
+        }
 
         // Command status debugging
         if (logSize > 0 && (i + 1) % logSize === 0) printInfo(`Migrated metadata for ${i + 1} tokens. Last migrated token`, coin.symbol);
     }
 
-    if (legacyCoins.length) {
-        printInfo('Total coins migrated', legacyCoins.length);
-        contracts.InterchainTokenService.legacyCoins = [];
-    } else printInfo('No coins were migrated');
+    // Final status
+    if (legacyCoins.length) printInfo('Total coins migrated', legacyCoins.length);
+    else printInfo('No coins were migrated');
+
+    // Clean up saved coins to be migrated
+    if (failedMigrations.length) contracts.InterchainTokenService.legacyCoins = failedMigrations;
+    else delete contracts.InterchainTokenService.legacyCoins;
 }
 
 // migrate_coin_metadata (single)
@@ -659,7 +673,7 @@ if (require.main === module) {
     const migrateAllCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata-all')
         .command('migrate-coin-metadata-all')
-        .description(`Release metadata for all legacy coins saved to the chain config by command its/tokens legacy-coins.`)
+        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins)`)
         .addOption(
             new Option(
                 '--logging <size>',
