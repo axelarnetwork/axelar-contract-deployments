@@ -160,8 +160,8 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                 isNonEmptyString: { transceiverPrefix },
             });
 
-            const trasnceiverContract = `${transceiverPrefix}AxelarTransceiver`;
-            const gmpManager = options.gmpManager ? options.gmpManager : contracts[trasnceiverContract]?.gmpManager;
+            const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
+            const gmpManager = options.gmpManager ? options.gmpManager : contracts[transceiverContract]?.gmpManager;
 
             if (!options.gmpManager) {
                 printWarn(`--gmpManager is not provided. Using gmpManager from chain config`);
@@ -243,7 +243,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
             const gmpManager = await contract.nttManager();
-            const trasnceiverContract = `${options.transceiverPrefix}AxelarTransceiver`;
+            const transceiverContract = `${options.transceiverPrefix}AxelarTransceiver`;
 
             if (gateway !== contractConfig.gateway) {
                 printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
@@ -257,7 +257,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
                 printError(`Expected gmpManager ${contractConfig.gmpManager} but got ${gmpManager}.`);
             }
 
-            printInfo(`${trasnceiverContract} contract verification passed`);
+            printInfo(`${transceiverContract} contract verification passed`);
             break;
         }
     }
@@ -312,7 +312,7 @@ async function processCommand(_axelar, chain, chains, options) {
             }
 
             const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
-            
+
             if (!contracts[transceiverContract]) {
                 contracts[transceiverContract] = {};
             }

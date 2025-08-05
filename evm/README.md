@@ -78,7 +78,7 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ## AxelarTransceiver and ERC1967 Proxy Deployment
 
-Note: You can deploy transceiver for any tokens/chains by providing the appropriate  i.e `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment scitpt save the config under fullname of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc) 
+Note: You can deploy transceiver for any tokens/chains by providing the appropriate  i.e `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script save the config under fullname of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc) 
 
 ### Prerequisites
 
@@ -117,7 +117,7 @@ ts-node evm/deploy-contract.js \
 - **Use `create`** method to deploy, as deployer of transceiver will be used to initialize the contract, avoid using `create2` or `create3`
 - **`--artifactPath` is required** for transceiver deployment
 - **`--transceiverPrefix` is required** to differentiate multiple transceivers in config
-- The GMP Manager address is automatically read from the chain config (`$[PREFIX]AxelarTransceiver.gmpManager`)
+- The GMP Manager address is automatically read from the chain config (`${PREFIX}AxelarTransceiver.gmpManager`)
 - **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
 
 The deployment script will:

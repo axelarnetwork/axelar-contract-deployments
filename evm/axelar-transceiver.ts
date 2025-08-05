@@ -89,12 +89,12 @@ async function initializeTransceiver(
             throw new Error('initialize function not found in contract ABI');
         }
 
-        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
-        const gasOptions = await getGasOptions(chain, options, transceiverContractName);
+        const contractName = `${options.transceiverPrefix}AxelarTransceiver`;
+        const gasOptions = await getGasOptions(chain, options, contractName);
 
-        printInfo(`Initializing ${transceiverContract}...`);
+        printInfo(`Initializing ${contractName}...`);
 
-        if (promptUser(`Proceed with ${transceiverContractName} initialization on ${chain.name}?`, options.yes)) {
+        if (promptUser(`Proceed with ${contractName} initialization on ${chain.name}?`, options.yes)) {
             return;
         }
 
@@ -144,7 +144,7 @@ async function readInitializationState(
         if (!chain.contracts) {
             chain.contracts = {};
         }
-        
+
         const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
         if (!chain.contracts[transceiverContractName]) {
             chain.contracts[transceiverContractName] = {};
@@ -335,7 +335,11 @@ if (require.main === module) {
     program
         .command('initialize')
         .description('Initialize the AxelarTransceiver contract')
-        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
+        .addOption(
+            new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(
+                true,
+            ),
+        )
         .action((options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [], options);
         });
@@ -344,7 +348,11 @@ if (require.main === module) {
         .command('transfer-pauser')
         .description('Transfer pauser capability to a new address')
         .argument('<pauser-address>', 'Address to transfer pauser capability to')
-        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
+        .addOption(
+            new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(
+                true,
+            ),
+        )
         .action((pauserAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [pauserAddress], options);
         });
@@ -355,7 +363,11 @@ if (require.main === module) {
         .argument('<chain-id>', 'Wormhole chain ID for the target chain')
         .argument('<chain-name>', 'Axelar chain name for the target chain')
         .argument('<transceiver-address>', 'Address of the transceiver on the target chain')
-        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
+        .addOption(
+            new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(
+                true,
+            ),
+        )
         .action((chainId: string, chainName: string, transceiverAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [chainId, chainName, transceiverAddress], options);
         });
