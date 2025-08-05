@@ -6,11 +6,11 @@ const { Command, Option } = require('commander');
 const fs = require('fs');
 const path = require('path');
 
-const PLACEHOLDER_TEXT = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
 const CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES = {
     'native-interchain-token.clar': 3,
     'token-manager.clar': 3,
     'verify-onchain.clar': 6,
+    'hello-world.clar': 9,
 };
 
 function processClarityStacksContract(contractBasePath, config, chain) {
@@ -44,6 +44,7 @@ async function processCommand(config, chain, options) {
     printInfo('Preparing contracts using address', stacksAddress);
 
     const contractBasePath = path.resolve(options.basePath);
+    const placeholderAddress = options.placeholderAddress;
 
     for (const filename in CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES) {
         const times = CONTRACTS_TO_STACKS_ADDRESS_WITH_TIMES[filename];
@@ -57,11 +58,11 @@ async function processCommand(config, chain, options) {
         printInfo(`Reading file: ${filePath}`);
         const originalContent = fs.readFileSync(filePath, 'utf8');
 
-        if ([...originalContent.matchAll(new RegExp(PLACEHOLDER_TEXT, 'g'))].length !== times) {
+        if ([...originalContent.matchAll(new RegExp(placeholderAddress, 'g'))].length !== times) {
             throw new Error(`Error finding correct placeholders in contract ${filename}. Re-download the contracts and try again`);
         }
 
-        const newContent = originalContent.replaceAll(PLACEHOLDER_TEXT, stacksAddress);
+        const newContent = originalContent.replaceAll(placeholderAddress, stacksAddress);
 
         printInfo(`Replacing placeholder in and saving file: ${filePath}`);
         fs.writeFileSync(filePath, newContent, 'utf8');
@@ -74,7 +75,7 @@ async function processCommand(config, chain, options) {
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(config, chain, options);
     saveConfig(config, options.env);
 }
@@ -86,6 +87,9 @@ if (require.main === module) {
         .name('prepare-contracts')
         .description('Prepare the contracts')
         .addOption(new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts').makeOptionMandatory(true))
+        .addOption(
+            new Option('-pt, --placeholderAddress <placeholderAddress>', 'The placeholder address to replace').makeOptionMandatory(true),
+        )
         .action((options) => {
             mainProcessor(options, processCommand);
         });

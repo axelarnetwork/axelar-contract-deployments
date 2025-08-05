@@ -2,17 +2,17 @@
 
 const { saveConfig, loadConfig, printInfo, printWarn, getChainConfig } = require('../common/utils');
 const { getWallet, addBaseOptions } = require('./utils');
-const { Command, Option } = require('commander');
+const { Command } = require('commander');
 
 async function processCommand(config, chain, options) {
     const { stacksAddress } = await getWallet(chain, options);
 
     printInfo('Calling faucet for Stacks Address', stacksAddress);
 
-    const response = await fetch(`https://api.testnet.hiro.so/extended/v1/faucets/stx?address=${stacksAddress}`, {
-        method: 'POST',
-    });
     try {
+        const response = await fetch(`https://api.testnet.hiro.so/extended/v1/faucets/stx?address=${stacksAddress}`, {
+            method: 'POST',
+        });
         const data = await response.json();
 
         if (!data.success) {
@@ -22,13 +22,13 @@ async function processCommand(config, chain, options) {
             printInfo('Tx id', data.txId);
         }
     } catch (e) {
-        printWarn('Funds could not be requested...');
+        printWarn('Funds could not be requested from Stacks faucet...');
     }
 }
 
 async function mainProcessor(options, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(config, chain, options);
     saveConfig(config, options.env);
 }

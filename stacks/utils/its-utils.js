@@ -3,6 +3,7 @@ const { intToHex } = require('@stacks/common');
 const { bytesToHex, hexToBytes } = require('@noble/hashes/utils');
 const { sha512_256 } = require('@noble/hashes/sha512');
 const { keccak256 } = require('@ethersproject/keccak256');
+const { printError } = require('../../common/utils');
 
 const STACKS_NULL_ADDRESS = 'ST000000000000000000002AMW42H';
 
@@ -124,15 +125,25 @@ class MerkleTree {
 }
 
 async function getRawTx({ txId }, rpc) {
-    const txRawRes = await fetch(`${rpc}/extended/v1/tx/${txId}/raw`);
-    const txRawData = await txRawRes.json();
-    return txRawData.raw_tx;
+    try {
+        const txRawRes = await fetch(`${rpc}/extended/v1/tx/${txId}/raw`);
+        const txRawData = await txRawRes.json();
+        return txRawData.raw_tx;
+    } catch (error) {
+        printError(`Error getting raw tx for ${txId} from Stacks chain`);
+        throw error;
+    }
 }
 
 async function getTxInfo({ txId }, rpc) {
-    const txInfoRes = await fetch(`${rpc}/extended/v1/tx/${txId}`);
+    try {
+        const txInfoRes = await fetch(`${rpc}/extended/v1/tx/${txId}`);
 
-    return await txInfoRes.json();
+        return await txInfoRes.json();
+    } catch (error) {
+        printError(`Error getting tx info for ${txId} from Stacks chain`);
+        throw error;
+    }
 }
 
 function deserializeTransactionCustom(bytesReader) {
@@ -165,7 +176,16 @@ async function getVerificationParams(txId, rpc) {
 
     const txIndex = txInfoData.tx_index;
     const blockHeight = txInfoData.block_height;
-    const block = new Uint8Array(await (await fetch(`${rpc}/v3/blocks/height/${blockHeight}`)).arrayBuffer());
+
+    let blockHeightData;
+    try {
+        blockHeightData = await fetch(`${rpc}/v3/blocks/height/${blockHeight}`);
+    } catch (error) {
+        printError(`Error getting block height data for ${blockHeight} from Stacks chain`);
+        throw error;
+    }
+
+    const block = new Uint8Array(await blockHeightData.arrayBuffer());
 
     const block_version = block.slice(0, 1);
     const chain_length = block.slice(1, 9);
@@ -214,11 +234,15 @@ async function getVerificationParams(txId, rpc) {
 }
 
 async function getTokenTxId(contract, rpc) {
-    const res = await fetch(`${rpc}/extended/v1/contract/${contract}`);
+    try {
+        const res = await fetch(`${rpc}/extended/v1/contract/${contract}`);
+        const json = await res.json();
 
-    const json = await res.json();
-
-    return json.tx_id;
+        return json.tx_id;
+    } catch (error) {
+        printError(`Error getting token tx id for ${contract} from Stacks chain`);
+        throw error;
+    }
 }
 
 function getFactoryCanonicalInterchainTokenDeploySalt(tokenAddress) {
