@@ -77,6 +77,10 @@ async fn test_time_lock_default_is_enforced() {
     // Set an ETA with not enough delay, as default is
     // fixtures::MINIMUM_PROPOSAL_ETA
     ix_builder.prop_eta = Some(u64::from(now) + u64::from(MINIMUM_PROPOSAL_DELAY) - 5);
+    let expected_eta = (now + MINIMUM_PROPOSAL_DELAY) as u64;
+    // For the test to be valid, the expected ETA must be different from the provided one.
+    assert_ne!(expected_eta, ix_builder.prop_eta.unwrap());
+
     let meta = gmp_sample_metadata();
     let mut gmp_call_data = ix_builder
         .clone()
@@ -98,8 +102,26 @@ async fn test_time_lock_default_is_enforced() {
 
     // Assert proposal ETA was overwritten by the default ETA in config
     // MINIMUM_PROPOSAL_DELAY.
-    let expected = (now + MINIMUM_PROPOSAL_DELAY) as u64;
-    assert_eq!(expected, got_proposal.eta());
+    assert_eq!(expected_eta, got_proposal.eta());
+
+    // Assert event was emitted
+    let mut emitted_events = events(&res.unwrap());
+    assert_eq!(emitted_events.len(), 1);
+    #[allow(clippy::panic)] // This is a test, so we can panic here.
+    let expected_event = {
+        let mut event = proposal_scheduled_event(&ix_builder);
+        if let GovernanceEvent::ProposalScheduled { eta, .. } = &mut event {
+            *eta = program_utils::from_u64_to_u256_le_bytes(expected_eta);
+        } else {
+            panic!(
+                "If we got here then this test is broken, as we expect a ProposalScheduled event"
+            )
+        };
+        event
+    };
+
+    let got_event: GovernanceEvent = emitted_events.pop().unwrap().parse().unwrap();
+    assert_eq!(expected_event, got_event);
 }
 
 #[tokio::test]
