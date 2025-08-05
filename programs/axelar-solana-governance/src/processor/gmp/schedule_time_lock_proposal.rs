@@ -2,7 +2,10 @@
 //!
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L15).
 
-use program_utils::{checked_from_u256_le_bytes_to_u64, current_time, validate_system_account_key};
+use program_utils::{
+    checked_from_u256_le_bytes_to_u64, current_time, from_u64_to_u256_le_bytes,
+    validate_system_account_key,
+};
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -65,7 +68,7 @@ pub(crate) fn process(
         target_address: ctx.target.to_bytes(),
         call_data: ctx.cmd_payload.call_data.into(),
         native_value: ctx.cmd_payload.native_value.to_le_bytes(),
-        eta: ctx.cmd_payload.eta.to_le_bytes(),
+        eta: from_u64_to_u256_le_bytes(proposal_time),
     };
 
     event.emit()
