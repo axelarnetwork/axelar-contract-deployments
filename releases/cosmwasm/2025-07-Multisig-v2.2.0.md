@@ -1,4 +1,4 @@
-# Cosmwasm Router v1.3.0
+# Cosmwasm Multisig v2.2.0
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -6,17 +6,20 @@
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
-| ...| ...             | ... |
+| **Devnet Amplifier** | -                     | TBD        |
+| **Stagenet**         | -                     | TBD        |
+| **Testnet**          | -                     | TBD        |
+| **Mainnet**          | -                     | TBD        |
 
 
 
-<!-- [Release]() -->
+[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/multisig-v2.2.0)
 
 ## Background
 
 Changes in this release:
 
-1. Multisig stores coordinator's address. This address is given when the multisig contract is instantiated. This allows the multisig to give the coordinator permission to execute messages (such as when authorizing callers).
+1. Multisig stores the coordinator address. This address is given when the multisig contract is instantiated. This allows the multisig to give the coordinator permission to execute messages (such as when authorizing callers).
 
 ## Deployment
 
@@ -24,6 +27,13 @@ Changes in this release:
 - State migration is required. The multisig must be supplied with the coordinator's address
 
 1. Upload new Multisig contract
+
+| Network          | `INIT_ADDRESSES`                                                                                                                            | `RUN_AS_ACCOUNT`                                | `DEPOSIT_VALUE` |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+| devnet-amplifier | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/> `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9`                                               | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+| stagenet         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `100000000`     |
+| testnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
+| mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
 ```bash
 ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.2.0" -d "Upload Multisig contract v2.2.0" --version 2.2.0
@@ -38,7 +48,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
   -c Multisig \
   -t "Migrate Multisig to v2.2.0" \
   -d "Multisig to v2.2.0" \
-  --msg '{\"coordinator\": \"$COORDINATOR_ADDRESS\"}' \
+  --msg '"{\"coordinator\": \"$COORDINATOR_ADDRESS\"}"' \
   --fetchCodeId \
   --deposit $DEPOSIT_VALUE
 ```
@@ -66,4 +76,10 @@ Expected output
 
 ```bash
 $COORDINATOR_ADDRESS
+```
+
+Ensure coordinator address match predicted one.
+
+```bash
+cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Coordinator.address" | tr -d '"' | grep $COORDINATOR_ADDRESS
 ```
