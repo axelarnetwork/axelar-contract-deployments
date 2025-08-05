@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
 import { addOptionsToCommands, prompt as promptUser } from '../common';
@@ -12,7 +12,7 @@ interface ChainConfig {
     name: string;
     rpc: string;
     contracts?: {
-        MonadAxelarTransceiver?: {
+        [key: string]: {
             address?: string;
             pauser?: string;
             owner?: string;
@@ -40,6 +40,7 @@ interface Options {
     skipExisting?: boolean;
     upgrade?: boolean;
     predictOnly?: boolean;
+    transceiverPrefix?: string;
 }
 
 interface GasOptions {
@@ -88,11 +89,12 @@ async function initializeTransceiver(
             throw new Error('initialize function not found in contract ABI');
         }
 
-        printInfo('Initializing MonadAxelarTransceiver...');
+        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
+        const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
-        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
+        printInfo(`Initializing ${transceiverContract}...`);
 
-        if (promptUser(`Proceed with MonadAxelarTransceiver initialization on ${chain.name}?`, options.yes)) {
+        if (promptUser(`Proceed with ${transceiverContractName} initialization on ${chain.name}?`, options.yes)) {
             return;
         }
 
@@ -105,7 +107,7 @@ async function initializeTransceiver(
 
         const receipt = (await initTx.wait()) as TransactionReceipt;
         printInfo('Transaction confirmed in block', receipt.blockNumber.toString());
-        printInfo('MonadAxelarTransceiver initialized successfully');
+        printInfo('AxelarTransceiver initialized successfully');
 
         // Read addresses from contract state after initialization
         await readInitializationState(transceiverContract, receipt, wallet, chain, options);
@@ -117,7 +119,8 @@ async function initializeTransceiver(
             errorMessage.includes('InvalidInitialization') ||
             errorMessage.includes('execution reverted')
         ) {
-            printInfo('MonadAxelarTransceiver is already initialized');
+            const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
+            printInfo(`${transceiverContractName} is already initialized`);
         } else {
             printError('Failed to initialize transceiver', errorMessage);
         }
@@ -141,12 +144,14 @@ async function readInitializationState(
         if (!chain.contracts) {
             chain.contracts = {};
         }
-        if (!chain.contracts.MonadAxelarTransceiver) {
-            chain.contracts.MonadAxelarTransceiver = {};
+        
+        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
+        if (!chain.contracts[transceiverContractName]) {
+            chain.contracts[transceiverContractName] = {};
         }
 
-        chain.contracts.MonadAxelarTransceiver.pauser = pauser;
-        chain.contracts.MonadAxelarTransceiver.owner = owner;
+        chain.contracts[transceiverContractName].pauser = pauser;
+        chain.contracts[transceiverContractName].owner = owner;
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         printError('Failed to read initialization state:', errorMessage);
@@ -174,7 +179,8 @@ async function transferPauserCapability(
             return;
         }
 
-        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
+        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
+        const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
         const transferTx = await transceiverContract.transferPauserCapability(pauserAddress, {
             ...gasOptions,
@@ -230,7 +236,8 @@ async function setAxelarChainId(
             return;
         }
 
-        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
+        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
+        const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
         const setChainIdTx = await transceiverContract.setAxelarChainId(chainId, chainName, transceiverAddress, {
             ...gasOptions,
@@ -258,24 +265,30 @@ async function setAxelarChainId(
 }
 
 async function processCommand(_axelar, chain: ChainConfig, action: string, options: Options): Promise<void> {
-    const { env, artifactPath, privateKey, args } = options;
+    const { env, artifactPath, privateKey, args, transceiverPrefix } = options;
 
     if (!artifactPath) {
         throw new Error('--artifactPath is required. Please provide the path to the compiled artifacts.');
     }
 
-    if (!chain.contracts?.MonadAxelarTransceiver?.address) {
-        printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
-        throw new Error('MonadAxelarTransceiver address not found in configuration');
+    if (!transceiverPrefix) {
+        throw new Error('--transceiverPrefix is required. Please provide the prefix for the transceiver contract.');
     }
 
-    const transceiverAddress = chain.contracts.MonadAxelarTransceiver.address;
+    const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
+
+    if (!chain.contracts?.[transceiverContract]?.address) {
+        printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
+        throw new Error(`${transceiverContract} address not found in configuration`);
+    }
+
+    const transceiverAddress = chain.contracts[transceiverContract].address;
     printInfo('Found transceiver address:', transceiverAddress);
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
 
-    printInfo(`Processing MonadAxelarTransceiver operation: ${action} for chain: ${chain.name}`);
+    printInfo(`Processing ${transceiverContract} operation: ${action} for chain: ${chain.name}`);
     printInfo(`Transceiver address: ${transceiverAddress}`);
 
     switch (action) {
@@ -317,11 +330,12 @@ async function main(action: string, args: string[], options: Options): Promise<v
 
 if (require.main === module) {
     const program = new Command();
-    program.name('axelar-transceiver').description('Manage MonadAxelarTransceiver operations');
+    program.name('axelar-transceiver').description('Manage AxelarTransceiver operations');
 
     program
         .command('initialize')
-        .description('Initialize the MonadAxelarTransceiver contract')
+        .description('Initialize the AxelarTransceiver contract')
+        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
         .action((options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [], options);
         });
@@ -330,6 +344,7 @@ if (require.main === module) {
         .command('transfer-pauser')
         .description('Transfer pauser capability to a new address')
         .argument('<pauser-address>', 'Address to transfer pauser capability to')
+        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
         .action((pauserAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [pauserAddress], options);
         });
@@ -340,6 +355,7 @@ if (require.main === module) {
         .argument('<chain-id>', 'Wormhole chain ID for the target chain')
         .argument('<chain-name>', 'Axelar chain name for the target chain')
         .argument('<transceiver-address>', 'Address of the transceiver on the target chain')
+        .addOption(new Option('--transceiverPrefix <prefix>', 'Prefix for transceiver contract name (e.g., "Lido", "Monad")').makeOptionMandatory(true))
         .action((chainId: string, chainName: string, transceiverAddress: string, options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [chainId, chainName, transceiverAddress], options);
         });
