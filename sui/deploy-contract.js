@@ -482,8 +482,7 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         }
     }
 
-    if (packageName !== 'AxelarGateway') 
-        await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
+    if (packageName !== 'AxelarGateway') await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
 }
 
 async function syncPackages(keypair, client, config, chain, options) {
