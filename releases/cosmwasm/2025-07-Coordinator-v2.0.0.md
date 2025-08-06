@@ -37,7 +37,7 @@ Changes in this release:
 | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
 ```bash
-ts-node cosmwasm/submit-proposal.js store -c Coordinator -t "Upload Coordinator contract v2.0.0" -d "Upload Coordinator contract v2.0.0" --version 2.0.0
+ts-node cosmwasm/submit-proposal.js store -c Coordinator -t "Upload Coordinator contract v2.0.0" -d "Upload Coordinator contract v2.0.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.0.0
 ```
 
 2. Get the **Multisig Prover**, **Gateway** and **Voting Verifier** for each Chain
