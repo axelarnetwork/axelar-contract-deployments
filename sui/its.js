@@ -18,6 +18,7 @@ const {
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
+const { equal } = require('assert');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -621,7 +622,6 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
-//here
 async function checkVersionControl(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const version = args;
@@ -637,8 +637,22 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
 
     const versionedId = itsConfig.objects.InterchainTokenServicev0;
     const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
+    const allowedFunctions = allowedFunctionsArray[parseInt(version)];
+    const equality = JSON.stringify(allowedFunctions) == JSON.stringify(supportedFunctions);
 
-    console.log(allowedFunctionsArray);
+    if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
+    else {
+        const disabled = [];
+        const enabled = [];
+        supportedFunctions.forEach((fnName) => {
+            if (allowedFunctions.indexOf(fnName) > -1) enabled.push(fnName);
+            else disabled.push(fnName);
+        });
+
+        printInfo(`${enabled.length} functions are allowed in version ${version}`);
+        printInfo(`${disabled.length} functions are not allowed in version ${version}`);
+        printInfo('Enabled functions', allowedFunctions);
+    }
 }
 
 async function processCommand(command, config, chain, args, options) {
