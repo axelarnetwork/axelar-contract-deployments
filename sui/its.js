@@ -1,6 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
+const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -15,6 +15,7 @@ const {
     saveTokenDeployment,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
+const chalk = require('chalk');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -233,7 +234,86 @@ async function registerCustomCoin(keypair, client, config, contracts, args, opti
     }
 }
 
-// migrate_coin_metadata
+// migrate_coin_metadata (all)
+async function migrateAllCoinMetadata(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const { OperatorCap, InterchainTokenService } = itsConfig.objects;
+
+    // Show or disable logging output (0 = logging disabled)
+    let logSize = options.logging ? parseInt(options.logging) : 0;
+    if (isNaN(logSize)) logSize = 0;
+
+    // Batch or process txs 1-by-1 (0 = batching disabled)
+    let batchSize = options.batch ? parseInt(options.batch) : 0;
+    if (isNaN(batchSize)) batchSize = 0;
+
+    // Migrate all the coins. This might take a while.
+    const legacyCoins = contracts.InterchainTokenService.legacyCoins ? contracts.InterchainTokenService.legacyCoins : [];
+
+    if (!legacyCoins.length) printInfo('Warning: no migratable tokens were found in chain config for env', options.env, chalk.yellow);
+
+    let migratedCoins = [],
+        failedMigrations = [],
+        currentBatch = [],
+        processedBatches = 0,
+        txBuilder = new TxBuilder(client);
+    for (let i = 0; i < legacyCoins.length; i++) {
+        const coin = legacyCoins[i];
+
+        if (batchSize) currentBatch.push(coin);
+
+        try {
+            await txBuilder.moveCall({
+                target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
+                arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
+                typeArguments: [coin.TokenType],
+            });
+            // Process tx as batch or indidivual migration (depending on options.batch)
+            if (!batchSize || i == legacyCoins.length - 1 || (i + 1) % batchSize === 0) {
+                // Broadcast batch / individual tx, and reset builder
+                const txType = !batchSize ? coin.symbol : 'batched';
+                await broadcastFromTxBuilder(txBuilder, keypair, `Migrate Coin Metadata (${txType})`, options);
+                txBuilder = new TxBuilder(client);
+                if (!batchSize) migratedCoins.push(coin);
+                else {
+                    migratedCoins = [...migratedCoins, ...currentBatch];
+                    ++processedBatches;
+                    currentBatch = [];
+                }
+            }
+        } catch (e) {
+            txBuilder = new TxBuilder(client);
+            if (!batchSize) {
+                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
+                failedMigrations.push(coin);
+            } else {
+                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e, chalk.red);
+                currentBatch.push(coin);
+                failedMigrations = [...failedMigrations, ...currentBatch];
+                ++processedBatches;
+                currentBatch = [];
+            }
+        }
+
+        // Intermediate status debugging report (e.g. if options.logging enabled)
+        if (logSize > 0 && (i + 1) % logSize === 0 && !batchSize)
+            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Last migrated token`, coin.symbol);
+        else if (logSize > 0 && (i + 1) % logSize === 0 && batchSize)
+            printInfo(`Migrated metadata for ${migratedCoins.length} tokens. Processed batches`, processedBatches);
+    }
+
+    // Final status report
+    if (migratedCoins.length) printInfo('Total coins migrated', migratedCoins.length);
+    else printInfo('No coins were migrated');
+
+    // Clean up chain config
+    if (failedMigrations.length) {
+        contracts.InterchainTokenService.legacyCoins = failedMigrations;
+        printInfo('Number of failed migrations', failedMigrations.length, chalk.yellow);
+    } else delete contracts.InterchainTokenService.legacyCoins;
+}
+
+// migrate_coin_metadata (single)
 async function migrateCoinMetadata(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { OperatorCap, InterchainTokenService } = itsConfig.objects;
@@ -618,9 +698,29 @@ if (require.main === module) {
     const migrateCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata')
         .command('migrate-coin-metadata <symbol>')
-        .description(`Release metadata for a given token id, can migrate tokens with metadata saved in ITS to v1.`)
+        .description(`Release metadata for a single token saved in the chain config and migrate it to a publicly shared object.`)
         .action((symbol, options) => {
             mainProcessor(migrateCoinMetadata, options, symbol, processCommand);
+        });
+
+    const migrateAllCoinMetadataProgram = new Command()
+        .name('migrate-coin-metadata-all')
+        .command('migrate-coin-metadata-all')
+        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins)`)
+        .addOption(
+            new Option(
+                '--logging <size>',
+                'Print a status update every <size> of migrated tokens, or use <size> 0 to disable logging. Defaults to 0.',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--batch <size>',
+                'Process migrations in a batch of <size> transactions, or use <size> 0 for no batching. Defaults to 0.',
+            ),
+        )
+        .action((options) => {
+            mainProcessor(migrateAllCoinMetadata, options, null, processCommand);
         });
 
     const giveUnlinkedCoinProgram = new Command()
@@ -677,6 +777,7 @@ if (require.main === module) {
     program.addCommand(registerCoinFromMetadataProgram);
     program.addCommand(registerCustomCoinProgram);
     program.addCommand(migrateCoinMetadataProgram);
+    program.addCommand(migrateAllCoinMetadataProgram);
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
