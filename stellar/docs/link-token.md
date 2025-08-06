@@ -118,7 +118,7 @@ ts-node evm/interchainTokenFactory.js \
 
 #### For Stellar Classic Assets
 
-If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Soroban contract to make them accessible within Soroban-based contracts:
+If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Stellar contract to make them accessible within Stellar-based contracts:
 
 **Stellar Classic Asset Types:**
 
