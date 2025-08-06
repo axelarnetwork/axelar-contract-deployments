@@ -642,16 +642,17 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
 
     if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
     else {
-        const disabled = [];
-        const enabled = [];
+        const disabledFunctions = [];
+        const enabledFunctions = [];
         supportedFunctions.forEach((fnName) => {
-            if (allowedFunctions.indexOf(fnName) > -1) enabled.push(fnName);
-            else disabled.push(fnName);
+            if (allowedFunctions.indexOf(fnName) > -1) enabledFunctions.push(fnName);
+            else disabledFunctions.push(fnName);
         });
 
-        printInfo(`${enabled.length} functions are allowed in version ${version}`);
-        printInfo(`${disabled.length} functions are not allowed in version ${version}`);
-        printInfo('Enabled functions', allowedFunctions);
+        printInfo(`${enabledFunctions.length} functions are allowed in version`, version);
+        printInfo(`${disabledFunctions.length} functions are not allowed in version`, version);
+        printInfo('Allowed functions', allowedFunctions);
+        printInfo('Disallowed functions', disabledFunctions);
     }
 }
 
