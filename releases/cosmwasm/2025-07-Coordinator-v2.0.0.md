@@ -143,12 +143,12 @@ The migration endpoint enforces that a prover, gateway and verifier address is p
 Verify coordinator contract version
 
 ```bash
-axelard query wasm contract-state raw $COORDINATOR_ADDRESS 636F6E74726163745F696E666F -o json | jq -r '.data' | base64 -d
+ts-node cosmwasm/contract.ts info $COORDINATOR_ADDRESS -e $ENV
 ```
 Expected output
 
 ```bash
-{"contract":"coordinator","version":"2.0.0"}
+{contract: 'coordinator', version: '2.0.0'}
 ```
 
 Verify multisig prover, gateway and voting verifier addresses stored on coordinator. For every chain name $CHAIN_NAME, do the following:

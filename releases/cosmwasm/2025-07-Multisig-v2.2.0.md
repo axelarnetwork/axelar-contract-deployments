@@ -58,12 +58,12 @@ ts-node cosmwasm/submit-proposal.js migrate \
 Verify multisig contract version
 
 ```bash
-axelard query wasm contract-state raw $MULTISIG_ADDRESS 636F6E74726163745F696E666F -o json | jq -r '.data' | base64 -d
+ts-node cosmwasm/contract.ts info $MULTISIG_ADDRESS -e $ENV
 ```
 Expected output
 
 ```bash
-{"contract":"multisig","version":"2.2.0"}
+{contract: 'multisig', version: '2.2.0'}
 ```
 
 Verify coordinator address stored on multisig
