@@ -77,7 +77,7 @@ The `--operator` parameter specifies an address that controls the token manager 
 
 **Security:** The operator cannot steal tokens directly, but can modify settings that affect interchain token service. Use trusted addresses only.
 
-**Note:** The deployer account (caller of linkToken) must also be secure, as it has the authority to initiate token linking operations.
+**Note:** The deployer account (caller of `linkToken`) must also be secure, as it has the authority to initiate token linking operations.
 
 ## Step-by-Step Process
 
