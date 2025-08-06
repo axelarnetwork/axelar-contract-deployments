@@ -40,7 +40,7 @@ Changes in this release:
 ts-node cosmwasm/submit-proposal.js store -c Coordinator -t "Upload Coordinator contract v2.0.0" -d "Upload Coordinator contract v2.0.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.0.0
 ```
 
-2. Get the **Multisig Prover**, **Gateway** and **Voting Verifier** for each Chain
+2. Get the **Multisig Prover**, **Gateway** and **Voting Verifier** for each chain
 
 First, you'll need to retrieve all chain/prover combinations tracked by the coordinator using the following command:
 
@@ -87,21 +87,19 @@ $MULTISIG_PROVER_ADDRESS
 The **gateway** address for $CHAIN_NAME can be found by querying the router
 
 ```bash
-./axelard q wasm contract-state smart $ROUTER_ADDRESS "'{\"chain_info\" : \"$CHAIN_NAME\"}'" -o json | jq -r '.data.gateway'
+./axelard q wasm contract-state smart $ROUTER_ADDRESS "{\"chain_info\" : \"$CHAIN_NAME\"}" -o json | jq -r '.data.gateway.address'
 ```
 
 Expected output
 
 ```bash
-{
-  "address": "$GATEWAY_ADDRESS"
-}
+$GATEWAY_ADDRESS
 ```
 
-Finally, you can query the $MULTISIG_PROVER_ADDRESS to find the corresponding **voting verifier** address. Run the following command:
+Finally, you can query $GATEWAY_ADDRESS to find the corresponding **voting verifier** address. Run the following command:
 
 ```bash
-./axelard q wasm contract-state raw --ascii $MULTISIG_PROVER_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.voting_verifier'
+./axelard q wasm contract-state raw --ascii $GATEWAY_ADDRESS 'config' -o json | jq -r '.data' | base64 -d | jq -r '.verifier'
 ```
 
 Expected output
@@ -119,7 +117,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
   -c Coordinator \
   -t "Migrate Coordinator to v2.0.0" \
   -d "Migrate Coordinator to v2.0.0" \
-  --msg "'{\"router\": \"$ROUTER_ADDRESS\", \"multisig\": \"$MULTISIG_ADDRESS\", \"chain_contracts\": [ \
+  --msg "{\"router\": \"$ROUTER_ADDRESS\", \"multisig\": \"$MULTISIG_ADDRESS\", \"chain_contracts\": [ \
     { \
         \"chain_name\": \"$CHAIN_NAME_1\", \
         \"prover_address\": \"$PROVER_ADDRESS_1\", \
@@ -133,7 +131,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
         \"verifier_address\": \"$VERIFIER_ADDRESS_2\", \
     }, \
     ...
-  ]}'" \
+  ]}" \
   --fetchCodeId \
   --deposit $DEPOSIT_VALUE
 ```
@@ -156,7 +154,7 @@ Expected output
 Verify multisig prover, gateway and voting verifier addresses stored on coordinator. For every chain name $CHAIN_NAME, do the following:
 
 ```bash
-axelard q wasm contract-state smart $COORDINATOR_ADDRESS "'{\"chain_contracts_info\" : {\"chain_name\" : \"$CHAIN_NAME\"}}'" -o json | jq -r '.data'
+axelard q wasm contract-state smart $COORDINATOR_ADDRESS "{\"chain_contracts_info\" : {\"chain_name\" : \"$CHAIN_NAME\"}}" -o json | jq -r '.data'
 ```
 
 Expected output

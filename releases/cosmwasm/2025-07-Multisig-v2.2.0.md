@@ -48,7 +48,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
   -c Multisig \
   -t "Migrate Multisig to v2.2.0" \
   -d "Multisig to v2.2.0" \
-  --msg '"{\"coordinator\": \"$COORDINATOR_ADDRESS\"}"' \
+  --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
   --fetchCodeId \
   --deposit $DEPOSIT_VALUE
 ```
