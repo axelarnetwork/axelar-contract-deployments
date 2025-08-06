@@ -90,20 +90,20 @@ Deploy Test Tokens on both chains:
 **Chain A (Stellar):**
 
 ```bash
-ts-node stellar/its.js deploy-interchain-token <name> <symbol> <decimal> <salt> <initialSupply>
+ts-node stellar/its deploy-interchain-token <name> <symbol> <decimal> <salt> <initialSupply>
 ```
 
 **Alternative - Create a Stellar classic asset:**
 
 ```bash
 # Optional trust limit (defaults to 1000000000 if not specified)
-ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
+ts-node stellar/token-utils change-trust [asset-code] [issuer] [limit]
 ```
 
 **Chain B (EVM):**
 
 ```bash
-ts-node evm/interchainTokenFactory.js \
+ts-node evm/interchainTokenFactory \
   --action deployInterchainToken \
   --minter <minterAddress> \
   --name <name> \
@@ -125,14 +125,14 @@ If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't
 - Classic assets follow the {Symbol-Issuer} format
 
 ```bash
-ts-node stellar/token-utils.js create-stellar-asset-contract <assetCode> <issuer>
+ts-node stellar/token-utils create-stellar-asset-contract <assetCode> <issuer>
 ```
 
 Example:
 
 ```bash
 # For USDC Classic asset (USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN)
-ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 
 # Result: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 ```
@@ -140,13 +140,13 @@ ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC
 **Chain A (Stellar):**
 
 ```bash
-ts-node stellar/its.js register-token-metadata <tokenAddress> --gas-amount <gasAmount>
+ts-node stellar/its register-token-metadata <tokenAddress> --gas-amount <gasAmount>
 ```
 
 **Chain B (EVM):**
 
 ```bash
-ts-node evm/its.js --action registerTokenMetadata \
+ts-node evm/its --action registerTokenMetadata \
   --tokenAddress <tokenAddress>
   -n <network>
 ```
@@ -156,7 +156,7 @@ ts-node evm/its.js --action registerTokenMetadata \
 Register the token on the source chain (Stellar):
 
 ```bash
-ts-node stellar/its.js register-custom-token <salt> <tokenAddress> <tokenManagerType>
+ts-node stellar/its register-custom-token <salt> <tokenAddress> <tokenManagerType>
 ```
 
 ### Step 4: Verify Token Metadata Registration
@@ -165,10 +165,10 @@ Before linking tokens, verify that token metadata is registered on ITS Hub for b
 
 ```bash
 # Verify source token metadata (Stellar)
-ts-node cosmwasm/query.js custom-tokens <sourceChain> <tokenAddress>
+ts-node cosmwasm/query custom-tokens <sourceChain> <tokenAddress>
 
 # Verify destination token metadata (EVM)
-ts-node cosmwasm/query.js custom-tokens <destinationChain> <destinationTokenAddress>
+ts-node cosmwasm/query custom-tokens <destinationChain> <destinationTokenAddress>
 ```
 
 If either query fails or returns null, ensure you complete Step 2 (Register Token Metadata) before proceeding.
@@ -180,7 +180,7 @@ Link the token to the destination chain:
 - `--operator`: Operator address for the token manager on the destination chain
 
 ```bash
-ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAddress> <tokenManagerType> \
+ts-node stellar/its link-token <salt> <destinationChain> <destinationTokenAddress> <tokenManagerType> \
    --gas-amount <amount> \
    --operator <operatorAddress>
 ```
@@ -189,13 +189,19 @@ ts-node stellar/its.js link-token <salt> <destinationChain> <destinationTokenAdd
 
 **Note: This step is only required if you're using the MINT_BURN token manager type. Skip this step for LOCK_UNLOCK type.**
 
-For MINT_BURN token managers, minter permissions must be granted to the token manager:
-
 **On Stellar:**
 
-No additional minter setup is required due to Stellar's account abstraction, which eliminates the need for manual minter management. The system automatically handles minter permissions for token managers.
+For lock/unlock token managers, no additional setup is required due to Stellar's account abstraction, which eliminates the need for ERC20-like approvals used on EVM chains. The token manager can directly transfer tokens as needed.
 
-However, users must establish a trustline to hold and transact the interchain token. A trustline is an explicit permission that allows your Stellar account to hold and transact a specific non-XLM asset issued by another account. You must opt-in via a trustline before you can receive or send that asset.
+For mint/burn token managers, the user needs to grant minting permission to the token manager. Stellar Classic Assets require setting the token manager as the admin to allow minting. While Stellar Custom Tokens can add the token manager as an additional minter, this requires implementing support to allow the token manager to call `mint`.
+
+```bash
+# Get token manager address
+ts-node stellar/its deployed-token-manager <tokenId>
+
+# Transfer admin to the token manager
+ts-node stellar/token-utils transfer-token-admin <tokenId> <newAdmin>
+```
 
 **On EVM:**
 
@@ -203,10 +209,10 @@ Update the private key in `.env` to EVM wallet
 
 ```bash
 # Get token manager address on the destination chain
-ts-node evm/its.js --action tokenManagerAddress --tokenId <tokenId> -n <destinationChain>
+ts-node evm/its --action tokenManagerAddress --tokenId <tokenId> -n <destinationChain>
 
 # Transfer mintership to the token manager
-ts-node evm/its.js --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManagerAddress> -n <destinationChain>
+ts-node evm/its --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManagerAddress> -n <destinationChain>
 ```
 
 ## Examples
@@ -217,30 +223,30 @@ Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stel
 
 ```bash
 # Register USDC metadata on EVM (18 decimals)
-ts-node evm/its.js --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
+ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
 
 # If you want to create a new Stellar classic asset
-ts-node stellar/token-utils.js create-stellar-classic-asset ABC GAGPN3HFDMPFHMHNZA2WYHB4EM24VIE7QYI4PD7JBY73B6IVYLBSL6SY
+ts-node stellar/token-utils create-stellar-classic-asset ABC GAGPN3HFDMPFHMHNZA2WYHB4EM24VIE7QYI4PD7JBY73B6IVYLBSL6SY
 
 # If using a classic Stellar asset, Soroban contract should be created
-ts-node stellar/token-utils.js create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 # Result: CB64D3G...USDC (use this address below)
 
 # Register USDC metadata on Stellar (7 decimals)
-ts-node stellar/its.js register-token-metadata CB64D3G...USDC --gas-amount 10000000
+ts-node stellar/its register-token-metadata CB64D3G...USDC --gas-amount 10000000
 
 # Verify token metadata is registered on ITS Hub
-ts-node cosmwasm/query.js custom-tokens stellar CB64D3G...USDC
-ts-node cosmwasm/query.js custom-tokens evm_chain 0xa0b86a33...USDC
+ts-node cosmwasm/query custom-tokens stellar CB64D3G...USDC
+ts-node cosmwasm/query custom-tokens evm_chain 0xa0b86a33...USDC
 
 # Register custom token on Stellar (MINT_BURN type since you control this token)
-ts-node stellar/its.js register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
+ts-node stellar/its register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
 
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
-ts-node stellar/its.js link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
+ts-node stellar/its link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
 
 # Interchain Token Transfer
-ts-node stellar/its.js interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
+ts-node stellar/its interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
 ```
 
 ## Troubleshooting & Error Handling
