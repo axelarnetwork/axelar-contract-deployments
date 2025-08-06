@@ -2,7 +2,7 @@
 
 const { Address, nativeToScVal, scValToNative, Operation, Contract } = require('@stellar/stellar-sdk');
 const { loadConfig, printInfo, saveConfig } = require('../../evm/utils');
-const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal, getUploadContractCodePath } = require('../utils');
+const { getWallet, broadcast, serializeValue, getContractCodePath, BytesToScVal } = require('../utils');
 const { getDomainSeparator, getChainConfig } = require('../../common');
 const { prompt, validateParameters } = require('../../common/utils');
 const { weightedSignersToScVal } = require('../type-utils');
@@ -58,8 +58,8 @@ const deploy = async (options, config, chain, contractName) => {
 const upgrade = async (options, _, chain, contractName) => {
     const { yes } = options;
 
-    if (!options.version && !options.artifactPath) {
-        throw new Error('--version or --artifact-path required to upgrade');
+    if (!options.version && !options.artifactDir) {
+        throw new Error('--version or --artifact-dir required to upgrade');
     }
 
     let contractAddress = chain.contracts[contractName]?.address;
@@ -96,8 +96,7 @@ const upgrade = async (options, _, chain, contractName) => {
 
 const upload = async (options, _, chain, contractName) => {
     const wallet = await getWallet(chain, options);
-    const contractCodePath = await getUploadContractCodePath(options, contractName);
-    const newWasmHash = await uploadWasm(wallet, chain, contractCodePath, contractName);
+    const newWasmHash = await uploadContract(contractName, options, wallet, chain);
     printInfo('Contract uploaded successfully', { contractName, wasmHash: serializeValue(newWasmHash) });
 };
 
