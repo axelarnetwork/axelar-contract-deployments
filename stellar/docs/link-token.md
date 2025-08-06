@@ -4,9 +4,7 @@
 
 This document explains how to link custom tokens on Stellar to other chains using the Interchain Token Service (ITS).
 
-For detailed design specifications and architecture, see **[ARC-1: ITS Hub Multi-Chain Token Linking](https://github.com/axelarnetwork/arcs/blob/031ec16a700efe166a727d5ae8909a39f7c6ae13/ARCs/ARC-1.md)**. # skip-check
-
-# skip-check
+For detailed design specifications and architecture, see **[ARC-1: ITS Hub Multi-Chain Token Linking](https://github.com/axelarnetwork/arcs/blob/031ec16a700efe166a727d5ae8909a39f7c6ae13/ARCs/ARC-1.md)**. <!-- skip-check -->
 
 The token linking feature enables:
 
