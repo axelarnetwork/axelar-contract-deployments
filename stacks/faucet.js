@@ -13,6 +13,12 @@ async function processCommand(config, chain, options) {
         const response = await fetch(`https://api.testnet.hiro.so/extended/v1/faucets/stx?address=${stacksAddress}`, {
             method: 'POST',
         });
+
+        if (!response.ok) {
+            printWarn('Funds could not be requested...');
+            return;
+        }
+
         const data = await response.json();
 
         if (!data.success) {

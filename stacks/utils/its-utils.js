@@ -127,6 +127,11 @@ class MerkleTree {
 async function getRawTx({ txId }, rpc) {
     try {
         const txRawRes = await fetch(`${rpc}/extended/v1/tx/${txId}/raw`);
+
+        if (!txRawRes.ok) {
+            throw new Error(`HTTP ${txRawRes.status}: Error getRawTx: ${txId}`);
+        }
+
         const txRawData = await txRawRes.json();
         return txRawData.raw_tx;
     } catch (error) {
@@ -138,6 +143,10 @@ async function getRawTx({ txId }, rpc) {
 async function getTxInfo({ txId }, rpc) {
     try {
         const txInfoRes = await fetch(`${rpc}/extended/v1/tx/${txId}`);
+
+        if (!txInfoRes.ok) {
+            throw new Error(`HTTP ${txInfoRes.status}: Error getting tx info: ${txId}`);
+        }
 
         return await txInfoRes.json();
     } catch (error) {
@@ -179,13 +188,19 @@ async function getVerificationParams(txId, rpc) {
 
     let blockHeightData;
     try {
-        blockHeightData = await fetch(`${rpc}/v3/blocks/height/${blockHeight}`);
+        const response = await fetch(`${rpc}/v3/blocks/height/${blockHeight}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Error getting block height data for ${blockHeight}`);
+        }
+
+        blockHeightData = await response.arrayBuffer()
     } catch (error) {
         printError(`Error getting block height data for ${blockHeight} from Stacks chain`);
         throw error;
     }
 
-    const block = new Uint8Array(await blockHeightData.arrayBuffer());
+    const block = new Uint8Array(blockHeightData);
 
     const block_version = block.slice(0, 1);
     const chain_length = block.slice(1, 9);
@@ -236,8 +251,12 @@ async function getVerificationParams(txId, rpc) {
 async function getTokenTxId(contract, rpc) {
     try {
         const res = await fetch(`${rpc}/extended/v1/contract/${contract}`);
-        const json = await res.json();
 
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: Error getting token tx id for ${contract}`);
+        }
+
+        const json = await res.json();
         return json.tx_id;
     } catch (error) {
         printError(`Error getting token tx id for ${contract} from Stacks chain`);
