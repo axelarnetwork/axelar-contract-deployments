@@ -1,4 +1,4 @@
-
+'use strict';
 
 import { Command } from 'commander';
 import { loadConfig } from '../common';
@@ -7,6 +7,7 @@ import { addAmplifierQueryOptions } from './cli-utils';
 
 // cosmwasm-stargate imports protobufjs which does not have a default export
 // Consequently, import CosmWasmClient using CommonJS to avoid error TS1192
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
 interface ContractInfo {
