@@ -1,6 +1,15 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters, isNonArrayObject, isNonEmptyString } = require('../common/utils');
+const {
+    loadConfig,
+    printInfo,
+    saveConfig,
+    getChainConfig,
+    parseTrustedChains,
+    validateParameters,
+    isNonArrayObject,
+    isNonEmptyString,
+} = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
