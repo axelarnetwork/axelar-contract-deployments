@@ -62,7 +62,7 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
-    const itsVersion = detectITSVersion(options);
+    const itsVersion = detectITSVersion();
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
     let proxySalt, factorySalt;
@@ -91,6 +91,7 @@ async function deployAll(axelar, wallet, chain, chains, options) {
 
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
+    itsFactoryContractConfig.version = itsVersion;
 
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
@@ -424,11 +425,12 @@ async function upgrade(_axelar, chain, _chains, options) {
         return;
     }
 
-    const itsVersion = detectITSVersion(options);
+    const itsVersion = detectITSVersion();
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name} to version ${itsVersion}.`);
 
     contractConfig.version = itsVersion;
+    itsFactoryContractConfig.version = itsVersion;
 
     const InterchainTokenService = getContractJSON(
         isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
@@ -546,7 +548,6 @@ if (require.main === module) {
     program.addOption(
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
-    program.addOption(new Option('--itsVersion <itsVersion>', 'ITS version being deployed (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION'));
 
     program.action(async (options) => {
         await main(options);

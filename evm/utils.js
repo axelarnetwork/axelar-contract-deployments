@@ -1090,16 +1090,8 @@ async function isTrustedChain(destinationChain, interchainTokenService, itsVersi
     }
 }
 
-function detectITSVersion(options) {
-    let itsVersion;
-
-    if (options.itsVersion) {
-        itsVersion = options.itsVersion;
-    } else {
-        itsVersion = ITSPackage.version;
-    }
-
-    return itsVersion;
+function detectITSVersion() {
+    return ITSPackage.version;
 }
 
 module.exports = {
