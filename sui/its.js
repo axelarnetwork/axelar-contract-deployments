@@ -660,7 +660,7 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     // For testing single calls:
     // const test = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, 'migrate_coin_metadata', version);
     // console.log({result: test});
-    printInfo('Validating contract functions...');
+    if (enabledFunctions.length) printInfo('Validating contract functions...');
     const successes = [],
         failures = [];
     for (let i = 0; i < enabledFunctions.length; i++) {
