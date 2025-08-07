@@ -311,7 +311,7 @@ async function estimateCost(tx, server) {
 }
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
