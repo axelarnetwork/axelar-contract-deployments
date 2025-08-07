@@ -546,9 +546,7 @@ if (require.main === module) {
     program.addOption(
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
-    program.addOption(
-        new Option('--itsVersion <itsVersion>', 'ITS version being deployed (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION'),
-    );
+    program.addOption(new Option('--itsVersion <itsVersion>', 'ITS version being deployed (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION'));
 
     program.action(async (options) => {
         await main(options);
