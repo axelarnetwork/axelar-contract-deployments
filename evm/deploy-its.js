@@ -25,6 +25,7 @@ const {
     wasEventEmitted,
     isHyperliquidChain,
     parseTrustedChains,
+    detectITSVersion,
 } = require('./utils');
 const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -42,7 +43,7 @@ const { updateBlockSize } = require('./hyperliquid');
  */
 
 async function deployAll(axelar, wallet, chain, chains, options) {
-    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly, itsVersion } = options;
+    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -60,6 +61,8 @@ async function deployAll(axelar, wallet, chain, chains, options) {
 
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
+
+    const itsVersion = detectITSVersion(options);
 
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
     let proxySalt, factorySalt;
@@ -403,7 +406,7 @@ async function deploy(axelar, chain, chains, options) {
 }
 
 async function upgrade(_axelar, chain, _chains, options) {
-    const { artifactPath, privateKey, predictOnly, itsVersion } = options;
+    const { artifactPath, privateKey, predictOnly } = options;
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
@@ -420,6 +423,8 @@ async function upgrade(_axelar, chain, _chains, options) {
         printError('No ITS contract found for chain', chain.name);
         return;
     }
+
+    const itsVersion = detectITSVersion(options);
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name} to version ${itsVersion}.`);
 
@@ -542,7 +547,7 @@ if (require.main === module) {
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
     program.addOption(
-        new Option('--itsVersion <itsVersion>', 'ITS version to deploy (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION').makeOptionMandatory(),
+        new Option('--itsVersion <itsVersion>', 'ITS version being deployed (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION'),
     );
 
     program.action(async (options) => {

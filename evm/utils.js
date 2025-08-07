@@ -57,6 +57,7 @@ const {
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const ITSPackage = require('@axelar-network/interchain-token-service/package.json');
 const { exec } = require('child_process');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
@@ -1089,6 +1090,18 @@ async function isTrustedChain(destinationChain, interchainTokenService, itsVersi
     }
 }
 
+function detectITSVersion(options) {
+    let itsVersion;
+    
+    if (options.itsVersion) {
+        itsVersion = options.itsVersion;
+    } else {
+        itsVersion = ITSPackage.version;
+    }
+    
+    return itsVersion;
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1136,4 +1149,5 @@ module.exports = {
     deriveAccounts,
     printTokenInfo,
     isTrustedChain,
+    detectITSVersion,
 };
