@@ -483,7 +483,9 @@ async function getDomainSeparator(axelar, chain, options) {
         return options.domainSeparator;
     }
 
-    const { contracts, chainId } = axelar;
+    const {
+        axelar: { contracts, chainId },
+    } = config;
     const {
         Router: { address: routerAddress },
     } = contracts;
