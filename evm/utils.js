@@ -1081,6 +1081,14 @@ async function printTokenInfo(tokenAddress, provider) {
     }
 }
 
+async function isTrustedChain(destinationChain, interchainTokenService, version) {
+    if (version === '2.1.1') {
+        return ((await interchainTokenService.trustedAddress(destinationChain)) !== '');
+    } else {
+        return ((await interchainTokenService.isTrustedChain(destinationChain)));
+    }
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1127,4 +1135,5 @@ module.exports = {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
     printTokenInfo,
+    isTrustedChain,
 };

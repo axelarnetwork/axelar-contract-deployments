@@ -91,7 +91,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -197,7 +198,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x9fF60122CBB3754347b06D2Dc44E77c433ec26B6",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -317,7 +319,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x623a07c1e297d6378ee175e840029b899d486e10",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -474,7 +477,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0xf8d3513F9d785774414f3EBe50202a5Fc542AAF1",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -594,7 +598,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x5A5F8D6aBF243b126B23aEF553eeF356d5Ee56c5",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -680,7 +685,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -835,7 +841,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0xbC5e9a29826858B1cA654e9a3BaA9d46EB6F7517",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -947,7 +954,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x07FB6bC318db3bba751654280b3d773C31F7DEC3",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -1062,7 +1070,8 @@
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "proxySalt": "ITS v1.0.0",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "salt": "ITS Factory v1.0.0",
@@ -1180,7 +1189,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1294,7 +1304,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0xa3fE6438fF8d4FDD4c21eD73435Aa3Bf18a0f7ea",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1504,7 +1515,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1626,7 +1638,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x2b4356FECB841Ef05C980C36c45d1D1fD9Cc5AC6",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1743,7 +1756,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1860,7 +1874,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -1974,7 +1989,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0xAFd70B8fA594aF1b0527c8612D36A603E26482a0",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2078,7 +2094,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2189,7 +2206,8 @@
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2284,7 +2302,8 @@
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2728,7 +2747,8 @@
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+          "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -2931,7 +2951,8 @@
           "gatewayCaller": "0x2b4356FECB841Ef05C980C36c45d1D1fD9Cc5AC6",
           "implementation": "0xD5A13a2C8787C44065F2102802036854402F1785",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3020,7 +3041,8 @@
           "gatewayCaller": "0x6B54F07d97998813081E36D69c8b42E051f8bc8a",
           "implementation": "0x1B13a9BaF8d3116C56CCDF3aa9049ad532a9C03d",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C"
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.1"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
@@ -3198,7 +3220,8 @@
           "tokenManager": "0x2be6F57fb0E69D26F8c8FbbebD8403d88fbAc09c",
           "tokenHandler": "0x79aE65Ea16E88D3a7303A7FF019353140B06F39B",
           "implementation": "0x4Aca663c242D31F85b77bf27d5D7dA4cF69fa7bd",
-          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "version": "2.2.0"
         },
         "InterchainTokenFactory": {
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",

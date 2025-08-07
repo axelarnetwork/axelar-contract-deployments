@@ -25,11 +25,13 @@ const {
     encodeITSDestination,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
+    isTrustedChain,
+    loadConfig,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
-const IMinter = getContractJSON('IMinter');
 const InterchainTokenService = getContractJSON('InterchainTokenService');
+const IMinter = getContractJSON('IMinter');
 const InterchainTokenFactory = getContractJSON('InterchainTokenFactory');
 const IInterchainTokenDeployer = getContractJSON('IInterchainTokenDeployer');
 const ITokenManager = getContractJSON('ITokenManager');
@@ -43,6 +45,8 @@ const tokenManagerImplementations = {
     LOCK_UNLOCK_FEE: 3,
     MINT_BURN: 4,
 };
+
+const IInterchainTokenServiceV211 = require('@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
 
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
@@ -70,7 +74,7 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function getTrustedChains(chains, interchainTokenService) {
+async function getTrustedChains(chains, interchainTokenService, version) {
     const chainIds = Object.values(chains)
         .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
         .map((chain) => chain.axelarId);
@@ -78,7 +82,7 @@ async function getTrustedChains(chains, interchainTokenService) {
     const trustedChains = [];
 
     for (const chain of chainIds) {
-        if (await interchainTokenService.isTrustedChain(chain)) {
+        if (await isTrustedChain(chain, interchainTokenService, version)) {
             trustedChains.push(chain);
         }
     }
@@ -117,6 +121,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
     const contractName = 'InterchainTokenService';
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
+    
+    const version = contracts.InterchainTokenService?.version;
 
     if (!interchainTokenServiceAddress) {
         printWarn(`No InterchainTokenService address found for chain ${chain.name}`);
@@ -134,7 +140,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', interchainTokenServiceAddress);
 
-    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+    let interchainTokenService;
+    if (version === '2.1.1') {
+        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenServiceV211.abi, wallet);
+    } else {
+        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+    }
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -261,7 +272,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [sourceChain, sourceAddress, payload] = args;
             validateParameters({ isNonEmptyString: { sourceChain, sourceAddress } });
 
-            if (!(await interchainTokenService.isTrustedChain(sourceChain))) {
+            if (!(await isTrustedChain(sourceChain, interchainTokenService, version))) {
                 throw new Error(`Invalid remote service: ${sourceChain} is not a trusted chain.`);
             }
 
@@ -398,7 +409,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateParameters({ isNonEmptyString: { itsChain } });
 
-            if (await interchainTokenService.isTrustedChain(itsChain)) {
+            if (await isTrustedChain(itsChain, interchainTokenService, version)) {
                 printInfo(`${itsChain} is a trusted chain`);
             } else {
                 printInfo(`${itsChain} is not a trusted chain`);
@@ -419,15 +430,37 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 return;
             }
 
-            const data = [];
+            if (version === '2.1.1') {
+                // Load config to get all chains
+                const config = loadConfig(options.env);
+                
+                // Loop over chains object and fetch InterchainTokenService addresses
+                const trustedAddresses = [];
+                for (const trustedChain of trustedChains) {
+                    const chainConfig = config.chains[trustedChain];
+                    if (chainConfig?.contracts?.InterchainTokenService?.address) {
+                        trustedAddresses.push(chainConfig.contracts.InterchainTokenService.address);
+                    } else {
+                        throw new Error(`No InterchainTokenService address found for chain ${trustedChain}`);
+                    }
+                }
+                
+                // Set trusted addresses for each chain
+                for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
+                    const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+                }
+            } else {
+                const data = [];
 
-            for (const trustedChain of trustedChains) {
-                const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
-                data.push(tx.data);
+                for (const trustedChain of trustedChains) {
+                    const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
+                    data.push(tx.data);
+                }
+
+                const multicall = await interchainTokenService.multicall(data);
+                await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainSet');
             }
-
-            const multicall = await interchainTokenService.multicall(data);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainSet');
 
             break;
         }
@@ -444,15 +477,24 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 return;
             }
 
-            const data = [];
+            if (version === '2.1.1') {
+                // For version 2.1.1, use removeTrustedAddress
+                for (const trustedChain of trustedChains) {
+                    const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
+                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
+                }
+            } else {
+                // For version 2.2.0 and later, use removeTrustedChain
+                const data = [];
 
-            for (const trustedChain of trustedChains) {
-                const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
-                data.push(tx.data);
+                for (const trustedChain of trustedChains) {
+                    const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
+                    data.push(tx.data);
+                }
+
+                const multicall = await interchainTokenService.multicall(data);
+                await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
             }
-
-            const multicall = await interchainTokenService.multicall(data);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
 
             break;
         }
@@ -480,7 +522,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 isValidCalldata: { payload },
             });
 
-            if (!(await interchainTokenService.isTrustedChain(sourceChain))) {
+            if (!(await isTrustedChain(sourceChain, interchainTokenService, version))) {
                 throw new Error(`Invalid remote service: ${sourceChain} is not a trusted chain.`);
             }
 
@@ -494,17 +536,14 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'checks': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
             const contractConfig = chain.contracts[contractName];
-
             const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
             const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
-
             const interchainTokenFactoryContract = new Contract(interchainTokenFactory, InterchainTokenFactory.abi, wallet);
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
-
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
-            const trustedChains = await getTrustedChains(chains, interchainTokenService);
+            const trustedChains = await getTrustedChains(chains, interchainTokenService, version);
             printInfo('Trusted chains', trustedChains);
 
             const gateway = await interchainTokenService.gateway();
