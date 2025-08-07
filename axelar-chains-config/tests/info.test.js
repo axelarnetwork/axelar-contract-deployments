@@ -54,8 +54,6 @@ describe('Verify `info/*.json` files', () => {
                 Object.keys(json.data.chains).forEach((chainKey) => {
                     expect(chainKey).toBe(chainKey.toLowerCase());
                     expect(chainKey).toMatch(/^[a-z][a-z0-9-]*$/);
-                    expect(chainKey).toBe(chainKey.toLowerCase());
-                    expect(chainKey).toMatch(/^[a-z][a-z0-9-]*$/);
                 });
             }
         });
