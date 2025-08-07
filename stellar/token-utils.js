@@ -1,9 +1,28 @@
 'use strict';
 
-const { Asset, Contract, Operation, nativeToScVal, StrKey } = require('@stellar/stellar-sdk');
+const { Asset, Contract, Operation, Address, nativeToScVal, authorizeInvocation, xdr } = require('@stellar/stellar-sdk');
 const { Command } = require('commander');
-const { loadConfig, addOptionsToCommands, getChainConfig, printInfo, printError, validateParameters, prompt } = require('../common');
-const { addBaseOptions, broadcast, broadcastHorizon, getWallet, serializeValue, assetToScVal } = require('./utils');
+const {
+    loadConfig,
+    addOptionsToCommands,
+    getChainConfig,
+    printInfo,
+    printError,
+    validateParameters,
+    prompt,
+    isNonEmptyString,
+} = require('../common');
+const {
+    addBaseOptions,
+    broadcast,
+    broadcastHorizon,
+    getWallet,
+    serializeValue,
+    assetToScVal,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
+    getAuthValidUntilLedger,
+} = require('./utils');
 
 async function createStellarAssetContract(wallet, _config, chain, contract, args, options) {
     const [assetCode, issuer] = args;
@@ -62,6 +81,25 @@ async function admin(wallet, _config, chain, _contract, args, options) {
     return adminAddress;
 }
 
+async function owner(wallet, _config, chain, _contract, args, options) {
+    const [tokenAddress] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress },
+    });
+
+    const tokenContract = new Contract(tokenAddress);
+    const operation = tokenContract.call('owner');
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get Owner', options);
+    const ownerAddress = serializeValue(returnValue.value());
+
+    printInfo('Token address', tokenAddress);
+    printInfo('Owner address', ownerAddress);
+
+    return ownerAddress;
+}
+
 async function balance(wallet, _config, chain, _contract, args, options) {
     const [tokenAddress, accountAddress] = args;
 
@@ -117,15 +155,62 @@ async function isMinter(wallet, _config, chain, _contract, args, options) {
     return isMinterResult;
 }
 
+async function createMintFromAuths(tokenAddress, recipientScVal, amountScVal, wallet, chain) {
+    const publicKey = wallet.publicKey();
+    const networkPassphrase = getNetworkPassphrase(chain.networkType);
+
+    const validUntil = await getAuthValidUntilLedger(chain);
+
+    const minterScVal = nativeToScVal(wallet.publicKey(), { type: 'address' });
+    const mintAuth = createAuthorizedFunc(Address.fromString(tokenAddress), 'mint_from', [minterScVal, recipientScVal, amountScVal]);
+    const [mintInvocation] = [new xdr.SorobanAuthorizedInvocation({ function: mintAuth, subInvocations: [] })];
+
+    return Promise.all([authorizeInvocation(wallet, validUntil, mintInvocation, publicKey, networkPassphrase)]);
+}
+
+async function mintFrom(wallet, _config, chain, _contract, args, options) {
+    const [tokenAddress, recipient, amount] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, recipient },
+        isValidNumber: { amount },
+    });
+
+    const minterScVal = nativeToScVal(wallet.publicKey(), { type: 'address' });
+    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
+    const amountScVal = nativeToScVal(amount, { type: 'i128' });
+
+    const tokenContract = new Contract(tokenAddress);
+
+    let operation = Operation.invokeContractFunction({
+        contract: tokenContract.contractId(),
+        function: 'mint_from',
+        args: [minterScVal, recipientScVal, amountScVal],
+        auth: await createMintFromAuths(tokenAddress, recipientScVal, amountScVal, wallet, chain),
+    });
+
+    await broadcast(operation, wallet, chain, 'Mint From', options);
+    printInfo('Successfully minted tokens from', wallet.publicKey());
+    printInfo('To recipient', recipient);
+    printInfo('Token address', tokenAddress);
+    printInfo('Amount minted', amount);
+}
+
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
     const chain = getChainConfig(config, options.chainName);
     const wallet = await getWallet(chain, options);
 
+    if (!chain.contracts?.TokenUtils) {
+        throw new Error('Token Utils package not found.');
+    }
+
     if (prompt(`Proceed with action ${processor.name}`, yes)) {
         return;
     }
+
+    const contract = new Contract(chain.contracts.TokenUtils.address);
 
     await processor(wallet, config, chain, contract, args, options);
 }
@@ -156,6 +241,13 @@ if (require.main === module) {
         });
 
     program
+        .command('owner <tokenAddress>')
+        .description('Get the owner address for a token contract')
+        .action((tokenAddress, options) => {
+            mainProcessor(owner, [tokenAddress], options);
+        });
+
+    program
         .command('balance <tokenAddress> <accountAddress>')
         .description('Get the balance of an account for a token contract')
         .action((tokenAddress, accountAddress, options) => {
@@ -174,6 +266,13 @@ if (require.main === module) {
         .description('Check if an address is a minter for a token contract')
         .action((tokenAddress, minter, options) => {
             mainProcessor(isMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('mint-from <tokenAddress> <recipient> <amount>')
+        .description('Mint tokens from the minter to a recipient address')
+        .action((tokenAddress, recipient, amount, options) => {
+            mainProcessor(mintFrom, [tokenAddress, recipient, amount], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);

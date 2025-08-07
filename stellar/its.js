@@ -252,7 +252,6 @@ async function interchainTokenAddress(wallet, _config, chain, contract, args, op
     });
 
     const tokenIdBytes = hexToScVal(tokenId);
-
     const operation = contract.call('interchain_token_address', tokenIdBytes);
 
     const returnValue = await broadcast(operation, wallet, chain, 'Get interchain token address', options);
@@ -261,6 +260,42 @@ async function interchainTokenAddress(wallet, _config, chain, contract, args, op
     printInfo(`Interchain Token Address`, tokenAddress);
 
     return tokenAddress;
+}
+
+async function registeredTokenAddress(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const operation = contract.call('registered_token_address', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get registered token address', options);
+    const tokenAddress = serializeValue(returnValue.value());
+
+    printInfo(`Registered Token Address`, tokenAddress);
+
+    return tokenAddress;
+}
+
+async function tokenAdmin(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const operation = contract.call('token_admin', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get token admin', options);
+    const adminAddress = serializeValue(returnValue.value());
+
+    printInfo(`Token Admin Address`, adminAddress);
+
+    return adminAddress;
 }
 
 async function deployedTokenManager(wallet, _config, chain, contract, args, options) {
@@ -410,24 +445,31 @@ async function testExecute(wallet, _config, chain, contract, args, options) {
     const tokenManagerScVal = nativeToScVal(tokenManager, { type: 'address' });
     const amountScVal = nativeToScVal(amount, { type: 'i128' });
 
-    let operation;
+    let operation = Operation.invokeContractFunction({
+        contract: contract.contractId(),
+        function: 'test_execute',
+        args: [recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal],
+        auth: await createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain),
+    });
 
-    try {
-        const tokenContract = new Contract(tokenAddress);
-        const isMinterOperation = tokenContract.call('is_minter', nativeToScVal(tokenManager, { type: 'address' }));
-        await broadcast(isMinterOperation, wallet, chain, 'Check Is Minter', { ...options, simulate: true });
+    await broadcast(operation, wallet, chain, 'Test Execute', options);
+    printInfo('Successfully executed test for recipient', recipient);
+}
 
-        printInfo('Token manager is minter, calling without auth');
-        operation = contract.call('test_execute', recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal);
-    } catch (error) {
-        printInfo('Cannot check minter status, calling with auth');
-        operation = Operation.invokeContractFunction({
-            contract: contract.contractId(),
-            function: 'test_execute',
-            args: [recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal],
-            auth: await createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain),
-        });
-    }
+async function testExecute22(wallet, _config, chain, contract, args, options) {
+    const [recipient, tokenAddress, tokenManager, amount] = args;
+
+    validateParameters({
+        isValidStellarAddress: { recipient, tokenAddress, tokenManager },
+        isValidNumber: { amount },
+    });
+
+    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
+    const tokenAddressScVal = nativeToScVal(tokenAddress, { type: 'address' });
+    const tokenManagerScVal = nativeToScVal(tokenManager, { type: 'address' });
+    const amountScVal = nativeToScVal(amount, { type: 'i128' });
+
+    const operation = contract.call('test_execute', recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal);
 
     await broadcast(operation, wallet, chain, 'Test Execute', options);
     printInfo('Successfully executed test for recipient', recipient);
@@ -449,6 +491,42 @@ async function addMinter(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Add Minter', options);
     printInfo('Successfully added minter for token', tokenAddress);
     printInfo('Minter address', minter);
+}
+
+async function transferTokenAdmin(wallet, _config, chain, contract, args, options) {
+    const [tokenId, newAdmin] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidStellarAddress: { newAdmin },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const deployed_token_manager_operation = contract.call('deployed_token_manager', tokenIdBytes);
+
+    const returnValue1 = await broadcast(deployed_token_manager_operation, wallet, chain, 'Get deployed token manager', options);
+    const tokenManagerAddress = serializeValue(returnValue1.value());
+
+    printInfo(`Deployed Token Manager Address`, tokenManagerAddress);
+
+    const registered_token_address_operation = contract.call('registered_token_address', tokenIdBytes);
+
+    const returnValue2 = await broadcast(registered_token_address_operation, wallet, chain, 'Get registered token address', options);
+    const registeredTokenAddress = serializeValue(returnValue2.value());
+
+    printInfo(`Registered Token Address`, registeredTokenAddress);
+
+    const tokenManagerContract = new Contract(tokenManagerAddress);
+    const operation = tokenManagerContract.call(
+        'transfer_admin',
+        nativeToScVal(wallet.publicKey(), { type: 'address' }),
+        nativeToScVal(registeredTokenAddress, { type: 'address' }),
+        nativeToScVal(newAdmin, { type: 'address' }),
+    );
+
+    await broadcast(operation, wallet, chain, 'Transfer Token Admin', options);
+    printInfo('Successfully transferred admin for token', registeredTokenAddress);
+    printInfo('New admin address', newAdmin);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -603,6 +681,20 @@ if (require.main === module) {
         });
 
     program
+        .command('registered-token-address <tokenId>')
+        .description('Get the registered token address with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(registeredTokenAddress, [tokenId], options);
+        });
+
+    program
+        .command('token-admin <tokenId>')
+        .description('Get the admin address for a token with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(tokenAdmin, [tokenId], options);
+        });
+
+    program
         .command('deployed-token-manager <tokenId>')
         .description('Get the deployed token manager address with the given token id')
         .action((tokenId, options) => {
@@ -621,6 +713,13 @@ if (require.main === module) {
         .description('Add a minter to a token contract via ITS (only operator)')
         .action((tokenAddress, minter, options) => {
             mainProcessor(addMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('transfer-token-admin <tokenId> <newAdmin>')
+        .description('Transfer admin of a token contract from token id')
+        .action((tokenId, newAdmin, options) => {
+            mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
