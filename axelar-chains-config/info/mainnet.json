@@ -2844,7 +2844,8 @@
             "nativeTokenAddress": "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
             "interchainTokenWasmHash": "85693704d656eb99af464d553a0a8d99b62d039223e72e86b98655def0d345ca",
             "tokenManagerWasmHash": "4164f47872741793bc682f6fb124623c6c1eb64e342b73319c11d05c2e0e39b0"
-          }
+          },
+          "version": "1.2.0"
         },
         "Multicall": {
           "address": "CC5LVKQA73ZVVUBAOCV5INV4TXPMELBFJ6XTQUBJTP4O2LSUKAA7VHLZ",

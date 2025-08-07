@@ -536,10 +536,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'checks': {
             const interchainTokenService = new Contract(interchainTokenServiceAddress, InterchainTokenService.abi, wallet);
             const contractConfig = chain.contracts[contractName];
+
             const interchainTokenDeployer = await interchainTokenService.interchainTokenDeployer();
             const interchainTokenFactory = await interchainTokenService.interchainTokenFactory();
+
             const interchainTokenFactoryContract = new Contract(interchainTokenFactory, InterchainTokenFactory.abi, wallet);
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
+            
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
