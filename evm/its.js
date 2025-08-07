@@ -431,13 +431,9 @@ async function processCommand(_axelar, chain, chains, action, options) {
             }
 
             if (version === '2.1.1') {
-                // Load config to get all chains
-                const config = loadConfig(options.env);
-                
-                // Loop over chains object and fetch InterchainTokenService addresses
                 const trustedAddresses = [];
                 for (const trustedChain of trustedChains) {
-                    const chainConfig = config.chains[trustedChain];
+                    const chainConfig = chains[trustedChain];
                     if (chainConfig?.contracts?.InterchainTokenService?.address) {
                         trustedAddresses.push(chainConfig.contracts.InterchainTokenService.address);
                     } else {
@@ -445,7 +441,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
                     }
                 }
                 
-                // Set trusted addresses for each chain
                 for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
                     const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
                     await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
@@ -478,13 +473,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             }
 
             if (version === '2.1.1') {
-                // For version 2.1.1, use removeTrustedAddress
                 for (const trustedChain of trustedChains) {
                     const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
                     await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
                 }
             } else {
-                // For version 2.2.0 and later, use removeTrustedChain
                 const data = [];
 
                 for (const trustedChain of trustedChains) {
@@ -542,7 +535,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const interchainTokenFactoryContract = new Contract(interchainTokenFactory, InterchainTokenFactory.abi, wallet);
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
-            
+
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
             const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 

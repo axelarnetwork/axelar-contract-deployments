@@ -278,7 +278,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            if (!(await isTrustedChain(destinationChain, interchainTokenService, options.env))) {
+            if (!(await isTrustedChain(destinationChain, interchainTokenService, version))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
