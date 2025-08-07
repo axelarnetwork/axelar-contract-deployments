@@ -542,9 +542,7 @@ if (require.main === module) {
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
     program.addOption(
-        new Option('--itsVersion <itsVersion>', 'ITS version to deploy (e.g., 2.1.1, 2.2.0)')
-            .env('ITS_VERSION')
-            .makeOptionMandatory(),
+        new Option('--itsVersion <itsVersion>', 'ITS version to deploy (e.g., 2.1.1, 2.2.0)').env('ITS_VERSION').makeOptionMandatory(),
     );
 
     program.action(async (options) => {
