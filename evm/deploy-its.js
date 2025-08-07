@@ -42,7 +42,7 @@ const { updateBlockSize } = require('./hyperliquid');
  */
 
 async function deployAll(axelar, wallet, chain, chains, options) {
-    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
+    const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly, itsVersion } = options;
     const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
 
     const provider = getDefaultProvider(chain.rpc);
@@ -84,6 +84,7 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     contractConfig.salt = salt;
     contractConfig.proxySalt = proxySalt;
     contractConfig.deployer = wallet.address;
+    contractConfig.version = itsVersion;
 
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
@@ -402,7 +403,7 @@ async function deploy(axelar, chain, chains, options) {
 }
 
 async function upgrade(_axelar, chain, _chains, options) {
-    const { artifactPath, privateKey, predictOnly } = options;
+    const { artifactPath, privateKey, predictOnly, itsVersion } = options;
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
@@ -420,7 +421,9 @@ async function upgrade(_axelar, chain, _chains, options) {
         return;
     }
 
-    printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
+    printInfo(`Upgrading Interchain Token Service on ${chain.name} to version ${itsVersion}.`);
+
+    contractConfig.version = itsVersion;
 
     const InterchainTokenService = getContractJSON(
         isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
@@ -537,6 +540,11 @@ if (require.main === module) {
     );
     program.addOption(
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
+    );
+    program.addOption(
+        new Option('--itsVersion <itsVersion>', 'ITS version to deploy (e.g., 2.1.1, 2.2.0)')
+            .env('ITS_VERSION')
+            .makeOptionMandatory(),
     );
 
     program.action(async (options) => {
