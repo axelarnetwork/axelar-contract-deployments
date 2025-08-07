@@ -42,6 +42,13 @@ export class DeploymentManager {
             const title = options.title || `Store Code for ${contractName}`;
             const description = options.description || `Store ${contractName} contract code on Axelar`;
 
+            const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
+            const accounts = await wallet.getAccounts();
+            const senderAddress = accounts[0].address;
+            const instantiateAddresses = [coordinatorAddress, senderAddress];
+
+            printInfo(`Setting instantiate permissions for ${contractName} with addresses: ${instantiateAddresses.join(', ')}`);
+
             const proposalId = await RetryManager.withRetry(() =>
                 submitProposal(
                     client,
@@ -54,6 +61,7 @@ export class DeploymentManager {
                         contractCodePath,
                         title,
                         description,
+                        instantiateAddresses,
                     }),
                 ),
             );

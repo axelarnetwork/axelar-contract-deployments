@@ -24,9 +24,9 @@ export class InstantiationManager {
             printInfo(`Instantiating chain contracts for ${chainName}...`);
             printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-            await this.fetchAndUpdateCodeIdsFromProposals();
-
             const { wallet, client } = await this.prepareWalletAndClient(options);
+
+            await this.codeIdUtils.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
 
             let deploymentName: string;
             let proposalId: string | undefined;
@@ -409,12 +409,5 @@ export class InstantiationManager {
         const wallet = await prepareWallet(options as { mnemonic: string });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };
-    }
-
-    private async fetchAndUpdateCodeIdsFromProposals(): Promise<void> {
-        const wallet = await prepareDummyWallet();
-        const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
-        await this.codeIdUtils.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
-        printInfo('Code IDs updated successfully.');
     }
 }

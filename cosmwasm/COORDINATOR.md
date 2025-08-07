@@ -53,13 +53,14 @@ npx ts-node cosmwasm/coordinator.ts deploy \
     --run-as "$RUN_AS_ADDRESS" \
     --artifact-dir "./artifacts/"
 
-# Step 3: Allow Coordinator contract to instantiate Gateway, MultisigProver and VotingVerifier
+# Step 2a: Allow Coordinator contract to instantiate Gateway, MultisigProver and VotingVerifier
+# NOTE: This is needed only when using `deploy` command with `--direct` flag enabled.
 npx ts-node cosmwasm/coordinator.ts update-instantiate-config \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
     --run-as "$RUN_AS_ADDRESS"
 
-# Step 4: Instantiate contracts with custom parameters
+# Step 3: Instantiate contracts with custom parameters
 npx ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
     -e "$ENVIRONMENT" \
@@ -73,7 +74,7 @@ npx ts-node cosmwasm/coordinator.ts instantiate \
     --governance-address "$RUN_AS_ADDRESS" \
     --run-as "$RUN_AS_ADDRESS"
 
-# Step 5: Register deployment
+# Step 4: Register deployment
 npx ts-node cosmwasm/coordinator.ts register-deployment \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
