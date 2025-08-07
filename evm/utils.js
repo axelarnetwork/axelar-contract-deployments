@@ -647,28 +647,24 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  *
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    const normalizeChainName = (name) => name.trim().toLowerCase();
-
     if (!chainNames) {
         throw new Error('Chain names were not provided');
     }
 
-    let chains = Object.entries(config.chains)
-        .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
-        .map(([key, chain]) => [normalizeChainName(key), chain]);
+    let chains = Object.entries(config.chains).filter(([_key, chain]) => chain.chainType === 'evm');
 
     let validChainNames = new Set(chains.map(([name, _chain]) => name));
 
     if (startFromChain) {
-        const startIndex = chains.findIndex(([name, _chain]) => name === normalizeChainName(startFromChain));
+        const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
         if (startIndex === -1) {
             throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
         }
         chains = chains.slice(startIndex);
     }
 
-    const normChainNames = new Set(chainNames?.split(',').map(normalizeChainName));
-    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean).map(normalizeChainName));
+    const normChainNames = new Set(chainNames?.split(','));
+    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean));
 
     if (skipChains) {
         chainsToSkip.forEach((name) => {
@@ -719,7 +715,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     let promisedChainsResults = [];
     let results = {};
     for (const chain of chains) {
-        const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
+        const chainTask = asyncChainTask(processCommand, deepCopy(axelar), chain, deepCopy(chainsDeepCopy), options);
 
         if (options.parallel) {
             promisedChainsResults.push({ promise: chainTask, chainId: chain.axelarId });
@@ -812,14 +808,8 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
-
-            if (!options.ignoreError) {
-                process.stdout.write(`${loggerOutput}\n`);
-                process.exit(1);
-            }
-        } finally {
-            process.stdout.write(`${loggerOutput}\n`);
         }
+        process.stdout.write(`${loggerOutput}\n`);
         return { result, loggerError };
     });
 };
