@@ -7,8 +7,6 @@ const {
     getChainConfig,
     parseTrustedChains,
     validateParameters,
-    isNonArrayObject,
-    isNonEmptyString,
 } = require('../common/utils');
 const {
     addBaseOptions,
@@ -20,6 +18,7 @@ const {
     getObjectIdsByObjectTypes,
     getWallet,
     itsFunctions,
+    mockItsFunction,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
@@ -27,7 +26,6 @@ const {
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
-const { equal } = require('assert');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -647,12 +645,14 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     const versionedId = itsConfig.objects.InterchainTokenServicev0;
     const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
     const allowedFunctions = allowedFunctionsArray[parseInt(version)];
+    if (!Array.isArray(allowedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
+    
     const equality = JSON.stringify(allowedFunctions) == JSON.stringify(supportedFunctions);
+    const disabledFunctions = [];
+    const enabledFunctions = equality ? allowedFunctions : [];
 
     if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
     else {
-        const disabledFunctions = [];
-        const enabledFunctions = [];
         supportedFunctions.forEach((fnName) => {
             if (allowedFunctions.indexOf(fnName) > -1) enabledFunctions.push(fnName);
             else disabledFunctions.push(fnName);
@@ -662,6 +662,26 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
         printInfo(`${disabledFunctions.length} functions are not allowed in version`, version);
         printInfo('Allowed functions', allowedFunctions);
         printInfo('Disallowed functions', disabledFunctions);
+    }
+
+    // For testing single calls:
+    // const test = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, 'migrate_coin_metadata', version);
+    // console.log({result: test});
+    printInfo('Validating contract functions...');
+    const successes = [], failures = [];
+    for (let i = 0; i < enabledFunctions.length; i++) {
+        const fnName = enabledFunctions[i];
+        const validatedFunction = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, fnName, version);
+        if (validatedFunction) successes.push(fnName);
+        else failures.push(fnName);
+        if (i === enabledFunctions.length - 1) {
+            if (!failures.length)
+                printInfo(`All ${successes.length} allowed functions were successfully validated`);
+            else {
+                printInfo(`Successfully validated ${successes.length} functions`, successes);
+                printInfo(`${failures.length} could not be validated`, failures, chalk.red);   
+            }
+        }
     }
 }
 
