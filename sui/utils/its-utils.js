@@ -158,7 +158,7 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
     if (!itsFunctions[String(version)]) throw new Error(`Invalid version: ${String(version)}`);
     else if (itsFunctions[version].indexOf(String(fnName)) < 0) throw new Error(`Unsupported function name: ${String(fnName)}`);
 
-    switch(fnName) {
+    switch (fnName) {
         case 'register_coin': {
             console.warn(`'register_coin' has been deprecated`);
             return false;
@@ -177,7 +177,7 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                         tx.pure.string(''),
                         tx.pure.string(''),
                         tx.pure.string(''),
-                        coinManagement
+                        coinManagement,
                     ],
                     typeArguments: [coinType],
                 });
@@ -193,11 +193,7 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
 
                 tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::register_coin_from_metadata`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tx.object(coinMetadata),
-                        coinManagement
-                    ],
+                    arguments: [tx.object(InterchainTokenService), tx.object(coinMetadata), coinManagement],
                     typeArguments: [coinType],
                 });
             };
@@ -222,13 +218,7 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
 
                 const [_tokenId, treasuryCapReclaimerOption] = tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::register_custom_coin`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        channel,
-                        salt,
-                        tx.object(coinMetadata),
-                        coinManagement,
-                    ],
+                    arguments: [tx.object(InterchainTokenService), channel, salt, tx.object(coinMetadata), coinManagement],
                     typeArguments: [coinType],
                 });
 
@@ -275,10 +265,7 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
             const register_coin_metadata = (tx) => {
                 tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::register_coin_metadata`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tx.object(coinMetadata),
-                    ],
+                    arguments: [tx.object(InterchainTokenService), tx.object(coinMetadata)],
                     typeArguments: [coinType],
                 });
             };
@@ -298,18 +285,14 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                         tx.pure.string(''),
                         tx.pure.string(''),
                         tx.pure.string(''),
-                        coinManagement
+                        coinManagement,
                     ],
                     typeArguments: [coinType],
                 });
 
                 tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::deploy_remote_interchain_token`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tokenId,
-                        tx.pure.string(''),
-                    ],
+                    arguments: [tx.object(InterchainTokenService), tokenId, tx.pure.string('')],
                     typeArguments: [coinType],
                 });
             };
@@ -341,20 +324,15 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                     arguments: [tx.pure.address('0x0')],
                 });
 
-                const treasuryCapOption = tx.moveCall({ 
-                    target: `${STD_PACKAGE_ID}::option::none`, 
+                const treasuryCapOption = tx.moveCall({
+                    target: `${STD_PACKAGE_ID}::option::none`,
                     arguments: [],
-                    typeArguments: [`${SUI_PACKAGE_ID}::coin::TreasuryCap<${coinType}>`]
+                    typeArguments: [`${SUI_PACKAGE_ID}::coin::TreasuryCap<${coinType}>`],
                 });
 
                 const treasuryCapReclaimerOption = tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::give_unlinked_coin`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tokenIdObject,
-                        tx.object(coinMetadata),
-                        treasuryCapOption
-                    ],
+                    arguments: [tx.object(InterchainTokenService), tokenIdObject, tx.object(coinMetadata), treasuryCapOption],
                     typeArguments: [coinType],
                 });
 
@@ -440,16 +418,11 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
             const migrate_coin_metadata = (tx) => {
                 tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tx.object(itsConfig.objects.OperatorCap),
-                        tx.pure.address('0x0'),
-                    ],
+                    arguments: [tx.object(InterchainTokenService), tx.object(itsConfig.objects.OperatorCap), tx.pure.address('0x0')],
                     typeArguments: [coinType],
                 });
             };
             return await isAllowed(client, keypair, chain, migrate_coin_metadata, options);
-            
         }
         default: {
             return false;

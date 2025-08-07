@@ -1,13 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const {
-    loadConfig,
-    printInfo,
-    saveConfig,
-    getChainConfig,
-    parseTrustedChains,
-    validateParameters,
-} = require('../common/utils');
+const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -646,7 +639,7 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
     const allowedFunctions = allowedFunctionsArray[parseInt(version)];
     if (!Array.isArray(allowedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
-    
+
     const equality = JSON.stringify(allowedFunctions) == JSON.stringify(supportedFunctions);
     const disabledFunctions = [];
     const enabledFunctions = equality ? allowedFunctions : [];
@@ -668,18 +661,18 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     // const test = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, 'migrate_coin_metadata', version);
     // console.log({result: test});
     printInfo('Validating contract functions...');
-    const successes = [], failures = [];
+    const successes = [],
+        failures = [];
     for (let i = 0; i < enabledFunctions.length; i++) {
         const fnName = enabledFunctions[i];
         const validatedFunction = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, fnName, version);
         if (validatedFunction) successes.push(fnName);
         else failures.push(fnName);
         if (i === enabledFunctions.length - 1) {
-            if (!failures.length)
-                printInfo(`All ${successes.length} allowed functions were successfully validated`);
+            if (!failures.length) printInfo(`All ${successes.length} allowed functions were successfully validated`);
             else {
                 printInfo(`Successfully validated ${successes.length} functions`, successes);
-                printInfo(`${failures.length} could not be validated`, failures, chalk.red);   
+                printInfo(`${failures.length} could not be validated`, failures, chalk.red);
             }
         }
     }
