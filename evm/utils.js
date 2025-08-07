@@ -657,7 +657,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
 
     if (chainNames !== 'all') {
         parsedChainNames.forEach((name) => {
-            if (!chains[name]) {
+            if (!chains.find(([chainName, _]) => chainName === name)) {
                 printError(`Chain "${name}" is not defined in the config file`);
             }
         });
