@@ -652,8 +652,26 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     }
 
     let chains = Object.entries(config.chains).filter(([_key, chain]) => chain.chainType === 'evm');
+    const parsedChainNames = new Set(chainNames?.split(','));
+    const chainsToSkip = new Set(skipChains?.split(','));
 
-    let validChainNames = new Set(chains.map(([name, _chain]) => name));
+    if (chainNames !== 'all') {
+        parsedChainNames.forEach((name) => {
+            if (!chains[name]) {
+                printError(`Chain "${name}" is not defined in the config file`);
+            }
+        });
+        chains = chains.filter(([name, _chain]) => parsedChainNames.has(name));
+    }
+
+    if (skipChains) {
+        chainsToSkip.forEach((name) => {
+            if (!chains[name]) {
+                printError(`Chain "${name}" specified in skipChains is not defined in the provided chains list`);
+            }
+        });
+        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
+    }
 
     if (startFromChain) {
         const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
@@ -661,27 +679,6 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
             throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
         }
         chains = chains.slice(startIndex);
-    }
-
-    const normChainNames = new Set(chainNames?.split(','));
-    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean));
-
-    if (skipChains) {
-        chainsToSkip.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" specified in skipChains is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
-    }
-
-    if (chainNames !== 'all') {
-        normChainNames.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => normChainNames.has(name));
     }
 
     if (chains.length === 0) {
