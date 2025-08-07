@@ -37,7 +37,7 @@ async function processCommand(_axelar, chain, chains, options) {
     const contractName = 'InterchainTokenFactory';
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
-    const version = contracts.InterchainTokenService?.version;
+    const itsVersion = contracts.InterchainTokenService?.version;
 
     validateParameters({ isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress } });
 
@@ -53,7 +53,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
     let interchainTokenFactory;
     let interchainTokenService;
-    if (version === '2.1.1') {
+    if (itsVersion === '2.1.1') {
         interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactoryV211.abi, wallet);
         interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenServiceV211.abi, wallet);
     } else {
@@ -182,7 +182,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 isValidNumber: { gasValue },
             });
 
-            if (!(await isTrustedChain(destinationChain, interchainTokenService, version))) {
+            if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
@@ -278,7 +278,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            if (!(await isTrustedChain(destinationChain, interchainTokenService, version))) {
+            if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
