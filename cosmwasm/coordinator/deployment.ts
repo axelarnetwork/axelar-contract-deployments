@@ -80,7 +80,6 @@ export class DeploymentManager {
             }
 
             printInfo('Deployment information has been stored in the config file.');
-            printInfo('You can now use the "update-instantiate-config" command to allow Coordinator to instantiate the contracts.');
         } catch (error) {
             printError('Error in DeploymentManager:', (error as Error).message);
             throw error;

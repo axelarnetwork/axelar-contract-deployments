@@ -3,12 +3,12 @@ import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import * as crypto from 'crypto';
 
 import { printError, printInfo, printWarn, prompt } from '../../common';
-import { encodeExecuteContractProposal, prepareClient, prepareDummyWallet, prepareWallet, submitProposal } from '../utils';
+import { encodeExecuteContractProposal, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { CodeIdUtils } from './code-id-utils';
 import { ConfigManager } from './config';
 import { CONTRACTS_TO_HANDLE, DEFAULTS } from './constants';
 import { RetryManager } from './retry';
-import type { ContractInfo, CoordinatorOptions, InstantiateChainContractsMsg, WalletAndClient } from './types';
+import type { CoordinatorOptions, InstantiateChainContractsMsg, WalletAndClient } from './types';
 
 export class InstantiationManager {
     public configManager: ConfigManager;
@@ -28,17 +28,9 @@ export class InstantiationManager {
 
             await this.codeIdUtils.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
 
-            let deploymentName: string;
-            let proposalId: string | undefined;
-
-            if (options.direct) {
-                const result = await this.executeMessageDirect(chainName, options, client, wallet);
-                deploymentName = result.deploymentName;
-            } else {
-                const result = await this.executeMessageViaGovernance(chainName, options, client, wallet);
-                deploymentName = result.deploymentName;
-                proposalId = result.proposalId;
-            }
+            const result = await this.executeMessageViaGovernance(chainName, options, client, wallet);
+            const deploymentName = result.deploymentName;
+            const proposalId = result.proposalId;
 
             printInfo(`Chain contracts instantiation for ${chainName} completed successfully!`);
             printInfo(`Deployment name: ${deploymentName}`);
@@ -169,46 +161,6 @@ export class InstantiationManager {
         };
     }
 
-    private async executeMessageDirect(
-        chainName: string,
-        options: CoordinatorOptions,
-        client: SigningCosmWasmClient,
-        wallet: DirectSecp256k1HdWallet,
-    ): Promise<{ deploymentName: string }> {
-        printInfo('Executing message directly (no governance proposal)...');
-
-        const deploymentName = this.generateDeploymentName(chainName);
-        const message = this.constructExecuteMessage(chainName, options, deploymentName);
-        const messageJson = JSON.stringify(message, null, 2);
-
-        printInfo(`Generated execute message (length: ${messageJson.length})`);
-
-        if (prompt('Proceed with direct execution?', options.yes)) {
-            printInfo('Direct execution cancelled');
-            throw new Error('Direct execution cancelled');
-        }
-
-        const accounts = await wallet.getAccounts();
-        const account = accounts[0];
-        const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
-
-        printInfo('Executing message on coordinator contract...');
-
-        const { transactionHash, events } = await RetryManager.withRetry(() =>
-            client.execute(account.address, coordinatorAddress, message, 'auto', ''),
-        );
-
-        printInfo('Message executed successfully!');
-        printInfo(`Transaction hash: ${transactionHash}`);
-
-        const contractInfo = this.extractContractInfoFromEvents(events);
-
-        this.storeChainSpecificParams(chainName, options, contractInfo, deploymentName, undefined);
-        this.configManager.saveConfig();
-
-        return { deploymentName };
-    }
-
     private async executeMessageViaGovernance(
         chainName: string,
         options: CoordinatorOptions,
@@ -252,53 +204,13 @@ export class InstantiationManager {
         );
         printInfo(`Proposal submitted successfully with ID: ${proposalId}`);
 
-        this.storeChainSpecificParams(chainName, options, undefined, deploymentName, proposalId);
+        this.storeChainSpecificParams(chainName, options, deploymentName, proposalId);
         this.configManager.saveConfig();
 
         return { deploymentName, proposalId };
     }
 
-    private extractContractInfoFromEvents(events: readonly unknown[]): ContractInfo {
-        const contractInfo: ContractInfo = {};
-
-        const instantiateEvents = events.filter((e) => (e as { type: string }).type === 'wasm-instantiate');
-
-        for (const event of instantiateEvents) {
-            const eventObj = event as { attributes?: Array<{ key: string; value: string }> };
-            if (eventObj.attributes) {
-                const contractAddrAttr = eventObj.attributes.find((a: { key: string; value: string }) => a.key === '_contract_address');
-                const codeIdAttr = eventObj.attributes.find((a: { key: string; value: string }) => a.key === 'code_id');
-                const labelAttr = eventObj.attributes.find((a: { key: string; value: string }) => a.key === 'label');
-
-                if (contractAddrAttr && codeIdAttr && labelAttr) {
-                    const address = contractAddrAttr.value;
-                    const codeId = parseInt(codeIdAttr.value);
-                    const label = labelAttr.value;
-
-                    if (label.includes('Gateway')) {
-                        contractInfo.gateway = { address, codeId };
-                        printInfo(`Found Gateway - Address: ${address}, Code ID: ${codeId}`);
-                    } else if (label.includes('Verifier')) {
-                        contractInfo.verifier = { address, codeId };
-                        printInfo(`Found VotingVerifier - Address: ${address}, Code ID: ${codeId}`);
-                    } else if (label.includes('Prover')) {
-                        contractInfo.prover = { address, codeId };
-                        printInfo(`Found MultisigProver - Address: ${address}, Code ID: ${codeId}`);
-                    }
-                }
-            }
-        }
-
-        return contractInfo;
-    }
-
-    private storeChainSpecificParams(
-        chainName: string,
-        options: CoordinatorOptions,
-        contractInfo?: ContractInfo,
-        deploymentName?: string,
-        proposalId?: string,
-    ): void {
+    private storeChainSpecificParams(chainName: string, options: CoordinatorOptions, deploymentName?: string, proposalId?: string): void {
         printInfo(`Storing chain-specific parameters for ${chainName}...`);
 
         const chainConfig = this.configManager.getChainConfig(chainName);
@@ -338,8 +250,6 @@ export class InstantiationManager {
             rewardsAddress,
             msgIdFormat: options.msgIdFormat || DEFAULTS.msgIdFormat,
             addressFormat: options.addressFormat || DEFAULTS.addressFormat,
-            address: contractInfo?.verifier?.address,
-            codeId: contractInfo?.verifier?.codeId,
             deploymentName,
             proposalId,
         };
@@ -362,15 +272,11 @@ export class InstantiationManager {
             encoder: options.encoder || DEFAULTS.encoder,
             keyType: options.keyType || DEFAULTS.keyType,
             domainSeparator: (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', ''),
-            address: contractInfo?.prover?.address,
-            codeId: contractInfo?.prover?.codeId,
             deploymentName,
             proposalId,
         };
 
         const gatewayParams = {
-            address: contractInfo?.gateway?.address,
-            codeId: contractInfo?.gateway?.codeId,
             deploymentName,
             proposalId,
         };

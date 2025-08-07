@@ -83,7 +83,7 @@ program
 
 program
     .command('instantiate')
-    .description('Submit governance proposal to instantiate chain contracts using Coordinator (use --direct to execute without proposal)')
+    .description('Submit governance proposal to instantiate chain contracts using Coordinator')
     .requiredOption('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)')
     .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
@@ -111,7 +111,6 @@ program
     .option('--domain-separator <separator>', 'Domain separator')
     .option('--title <title>', 'Proposal title')
     .option('--description <description>', 'Proposal description')
-    .option('--direct', 'Execute the message directly without a governance proposal')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);

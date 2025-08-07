@@ -91,11 +91,20 @@ The script uses the following default values:
 - **Key Type**: "ecdsa"
 - **Proposal Deposit**: "1000000000"
 
+## Design Discussion
+
+The procedure of the direct deployment without governance proposal is not supported. The reasoning:
+1. We have to add instantiate permissions for `Gateway`, `VotingVerifier` and `Multisig` to allow `Coordinator` to instantiate them.
+2. We can do that when deploying the contracts using gov proposals - the `deploy` command does that.
+3. We can't add the permissions when uploading contract directly (without gov proposals) - it's unauthorized operation even for the gov address as a sender.
+
+Since we have to vote for the proposals anyway, there's no point in maintaining a flow where we first deploy contracts directly and then send a gov proposal to update the instantiate permissions lists.
+
 ## Security Considerations
 
 1. **Mnemonic Security**: Never hardcode mnemonics in scripts. Use environment variables or secure input methods.
 2. **Environment Variables**: Set the `MNEMONIC` environment variable for automated deployments.
-3. **Direct Execution**: Use the `--direct` flag carefully as it bypasses governance proposals.
+3. **Governance Proposals**: All deployments require governance approval, ensuring proper oversight.
 4. **Confirmation Prompts**: Use `-y` flag to skip confirmation prompts in automated environments.
 
 ## Error Handling
@@ -113,5 +122,4 @@ The script includes comprehensive error handling:
 2. **Network Issues**: Check RPC endpoint connectivity.
 3. **Insufficient Funds**: Ensure the signing address has enough tokens for gas and deposits.
 4. **Contract Artifacts**: Verify that contract WASM files are available in the specified directory.
-5. **Proposals not accepted**: When `--direct` flag is not set, the proposals are submitted.
-   Each proposal needs to be voted and the voting period needs to be finished before going to the next step.
+5. **Proposals not accepted**: All proposals need to be voted on and the voting period needs to be finished before proceeding to the next step.

@@ -199,24 +199,6 @@ export class ConfigManager {
         return createHash('sha256').update(wasm).digest('hex');
     }
 
-    public storeDirectDeploymentInfo(contractName: string, codeId: number, checksum: string): void {
-        const configContractName = CONTRACT_NAME_MAP[contractName];
-        if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
-            throw new Error(`Contract ${configContractName} not found in config`);
-        }
-
-        this.fullConfig.axelar.contracts[configContractName].codeId = codeId;
-        this.fullConfig.axelar.contracts[configContractName].lastUploadedCodeId = codeId;
-
-        delete this.fullConfig.axelar.contracts[configContractName].storeCodeProposalId;
-        delete this.fullConfig.axelar.contracts[configContractName].storeCodeProposalCodeHash;
-
-        printInfo(`Stored direct deployment info for ${contractName}:`);
-        printInfo(`  Code ID: ${codeId}`);
-        printInfo(`  Checksum: ${checksum}`);
-        printInfo(`  Removed governance proposal fields (storeCodeProposalId, storeCodeProposalCodeHash)`);
-    }
-
     public saveConfig(): void {
         saveConfig(this.fullConfig, this.environment);
     }

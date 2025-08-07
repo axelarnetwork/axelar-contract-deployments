@@ -93,7 +93,6 @@ export interface DeploymentOptions {
     artifactDir?: string;
     version?: string;
     salt?: string;
-    direct?: boolean;
     deploymentName?: string;
 }
 
