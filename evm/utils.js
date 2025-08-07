@@ -666,7 +666,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
 
     if (skipChains) {
         chainsToSkip.forEach((name) => {
-            if (!chains[name]) {
+            if (!chains.find(([chainName, _]) => chainName === name)) {
                 printError(`Chain "${name}" specified in skipChains is not defined in the provided chains list`);
             }
         });
