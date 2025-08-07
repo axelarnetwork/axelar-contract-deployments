@@ -65,6 +65,8 @@ const printErrorMsg = (msg) => {
 const printInfo = (msg, info = '', colour = chalk.green) => {
     if (typeof info === 'boolean') {
         info = String(info);
+    } else if (Array.isArray(info)) {
+        info = `[ ${info.join(', ')} ]`;
     } else if (typeof info === 'object') {
         info = JSON.stringify(info, null, 2);
     }

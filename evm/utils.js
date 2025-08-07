@@ -764,18 +764,12 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     printInfo(
         'Succeeded chains',
-        `[ ${chains
-            .filter((chain) => !failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     printInfo(
         'Failed chains',
-        `[ ${chains
-            .filter((chain) => failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     if (save) {
