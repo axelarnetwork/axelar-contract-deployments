@@ -1,13 +1,5 @@
 import { printError, printInfo, prompt } from '../../common';
-import {
-    encodeStoreCodeProposal,
-    getContractCodePath as getContractCodePathUtil,
-    initContractConfig,
-    prepareClient,
-    prepareWallet,
-    submitProposal,
-    uploadContract,
-} from '../utils';
+import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
 import { CONTRACTS_TO_HANDLE } from './constants';
 import { RetryManager } from './retry';
@@ -28,7 +20,7 @@ export class DeploymentManager {
 
             const processedOptions = this.configManager.processOptions(options);
             const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
-            const contractCodePath = await this.getContractCodePath(processedOptions, contractName);
+            const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
             printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
 
@@ -76,44 +68,6 @@ export class DeploymentManager {
         }
     }
 
-    public async deployContractDirect(contractName: string, options: CoordinatorOptions): Promise<void> {
-        try {
-            printInfo(`Deploying ${contractName} contract directly (no governance proposal)...`);
-
-            const processedOptions = this.configManager.processOptions(options);
-
-            initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
-
-            const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
-
-            const contractCodePath = await this.getContractCodePath(processedOptions, contractName);
-
-            printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
-
-            if (prompt(`Proceed with ${contractName} direct deployment?`, options.yes)) {
-                printInfo(`${contractName} deployment cancelled`);
-                return;
-            }
-
-            printInfo(`Uploading ${contractName} contract...`);
-            const { checksum, codeId } = await RetryManager.withRetry(() =>
-                uploadContract(client, wallet, this.configManager.getFullConfig(), {
-                    ...processedOptions,
-                    contractName,
-                    contractCodePath,
-                }),
-            );
-
-            printInfo(`Uploaded ${contractName} contract with codeId: ${codeId}, checksum: ${checksum}`);
-
-            this.configManager.storeDirectDeploymentInfo(contractName, codeId, checksum);
-            this.configManager.saveConfig();
-        } catch (error) {
-            printError('Error in DeploymentManager:', (error as Error).message);
-            throw error;
-        }
-    }
-
     public async deployContracts(options: CoordinatorOptions): Promise<void> {
         try {
             printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
@@ -133,33 +87,10 @@ export class DeploymentManager {
         }
     }
 
-    public async deployContractsDirect(options: CoordinatorOptions): Promise<void> {
-        try {
-            printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts directly (no governance proposals)...');
-            printInfo(`Environment: ${this.configManager.getEnvironment()}`);
-
-            for (const contractName of CONTRACTS_TO_HANDLE) {
-                printInfo(`\n--- Deploying ${contractName} directly ---`);
-                await this.deployContractDirect(contractName, options);
-                printInfo(`--- ${contractName} direct deployment completed ---\n`);
-            }
-
-            printInfo('Deployment information has been stored in the config file.');
-            printInfo('You can now use the "update-instantiate-config" command to allow Coordinator to instantiate the contracts.');
-        } catch (error) {
-            printError('Error in DeploymentManager:', (error as Error).message);
-            throw error;
-        }
-    }
-
     private async prepareWalletAndClient(options: CoordinatorOptions): Promise<WalletAndClient> {
         printInfo('Preparing wallet and client...');
         const wallet = await prepareWallet(options as { mnemonic: string });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };
-    }
-
-    private async getContractCodePath(options: CoordinatorOptions, contractName: string): Promise<string> {
-        return getContractCodePathUtil(options, contractName);
     }
 }

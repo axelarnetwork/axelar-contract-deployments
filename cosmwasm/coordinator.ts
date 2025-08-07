@@ -24,17 +24,12 @@ program
     .option('--version <version>', 'Contract version for artifact downloading (e.g., v1.0.0 or commit hash)')
     .option('--title <title>', 'Proposal title')
     .option('--description <description>', 'Proposal description')
-    .option('--direct', 'Execute the message directly without a governance proposal')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(options.env);
             const deploymentManager = new DeploymentManager(configManager);
-            if (options.direct) {
-                await deploymentManager.deployContractsDirect(processedOptions);
-            } else {
-                await deploymentManager.deployContracts(processedOptions);
-            }
+            await deploymentManager.deployContracts(processedOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -123,31 +118,6 @@ program
             const configManager = new ConfigManager(options.env);
             const instantiationManager = new InstantiationManager(configManager);
             await instantiationManager.instantiateChainContracts(options.chain, processedOptions);
-        } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
-            throw error;
-        }
-    });
-
-program
-    .command('update-instantiate-config')
-    .description(
-        'Submit governance proposal to update instantiate config for VotingVerifier, MultisigProver, and Gateway contracts (automatically reads code IDs from config and uses governance address)',
-    )
-    .requiredOption('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
-    .option('-y, --yes', 'Skip confirmation prompts')
-    .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
-    .option('--run-as <address>', 'Address to run the contract as')
-    .option('--governance-address <address>', 'Governance address (will use config default if not provided)')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
-    .action(async (options) => {
-        try {
-            const processedOptions = OptionProcessor.processOptions(options);
-            const configManager = new ConfigManager(options.env);
-            const governanceManager = new GovernanceManager(configManager);
-            await governanceManager.updateInstantiateConfig(processedOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
