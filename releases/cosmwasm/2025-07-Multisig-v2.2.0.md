@@ -58,7 +58,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
 Verify multisig contract version
 
 ```bash
-ts-node cosmwasm/contract.ts info $MULTISIG_ADDRESS -e $ENV
+ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
 ```
 Expected output
 

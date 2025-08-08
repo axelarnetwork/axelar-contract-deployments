@@ -143,7 +143,7 @@ The migration endpoint enforces that a prover, gateway and verifier address is p
 Verify coordinator contract version
 
 ```bash
-ts-node cosmwasm/contract.ts info $COORDINATOR_ADDRESS -e $ENV
+ts-node cosmwasm/contract.ts info --contract Coordinator -e $ENV
 ```
 Expected output
 
