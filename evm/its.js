@@ -46,7 +46,39 @@ const tokenManagerImplementations = {
     MINT_BURN: 4,
 };
 
-const IInterchainTokenServiceV211 = require('@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
+const IInterchainTokenServiceV211 = getContractJSON('IInterchainTokenService', '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
+
+function createInterchainTokenServiceContract(address, wallet, version) {
+    if (version === '2.1.1') {
+        return new Contract(address, IInterchainTokenServiceV211.abi, wallet);
+    } else {
+        return new Contract(address, IInterchainTokenService.abi, wallet);
+    }
+}
+
+async function validateOwner(contract, walletAddress, action) {
+    const owner = await contract.owner();
+    if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+        throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+    }
+}
+
+async function removeTrustedChainsLegacy(interchainTokenService, trustedChains, gasOptions, chain, action) {
+    for (const trustedChain of trustedChains) {
+        const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
+        await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
+    }
+}
+
+async function removeTrustedChains(interchainTokenService, trustedChains, gasOptions, chain, action) {
+    const data = [];
+    for (const trustedChain of trustedChains) {
+        const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
+        data.push(tx.data);
+    }
+    const multicall = await interchainTokenService.multicall(data);
+    await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
+}
 
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
@@ -140,12 +172,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', interchainTokenServiceAddress);
 
-    let interchainTokenService;
-    if (itsVersion === '2.1.1') {
-        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenServiceV211.abi, wallet);
-    } else {
-        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
-    }
+    const interchainTokenService = createInterchainTokenServiceContract(interchainTokenServiceAddress, wallet, itsVersion);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -421,40 +448,20 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-trusted-chains': {
             const trustedChains = args;
 
-            const owner = await interchainTokenService.owner();
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
-            }
+            await validateOwner(interchainTokenService, walletAddress, action);
 
             if (prompt(`Proceed with setting trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
-            if (itsVersion === '2.1.1') {
-                const trustedAddresses = [];
-                for (const trustedChain of trustedChains) {
-                    const chainConfig = chains[trustedChain];
-                    if (chainConfig?.contracts?.InterchainTokenService?.address) {
-                        trustedAddresses.push(chainConfig.contracts.InterchainTokenService.address);
-                    } else {
-                        throw new Error(`No InterchainTokenService address found for chain ${trustedChain}`);
-                    }
-                }
-
-                for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
-                    const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
+            for (const trustedChain of trustedChains) {
+                if (itsVersion === '2.1.1') {
+                    const tx = await interchainTokenService.setTrustedAddress(trustedChain, 'hub', gasOptions);
                     await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+                } else {
+                    const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
+                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
                 }
-            } else {
-                const data = [];
-
-                for (const trustedChain of trustedChains) {
-                    const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
-                    data.push(tx.data);
-                }
-
-                const multicall = await interchainTokenService.multicall(data);
-                await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainSet');
             }
 
             break;
@@ -463,30 +470,20 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'remove-trusted-chains': {
             const trustedChains = args;
 
-            const owner = await interchainTokenService.owner();
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
-            }
+            await validateOwner(interchainTokenService, walletAddress, action);
 
             if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
-            if (itsVersion === '2.1.1') {
-                for (const trustedChain of trustedChains) {
+            for (const trustedChain of trustedChains) {
+                if (itsVersion === '2.1.1') {
                     const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
                     await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
+                } else {
+                    const tx = await interchainTokenService.removeTrustedChain(trustedChain, gasOptions);
+                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainRemoved');
                 }
-            } else {
-                const data = [];
-
-                for (const trustedChain of trustedChains) {
-                    const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
-                    data.push(tx.data);
-                }
-
-                const multicall = await interchainTokenService.multicall(data);
-                await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
             }
 
             break;
@@ -495,10 +492,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-pause-status': {
             const [pauseStatus] = args;
 
-            const owner = await interchainTokenService.owner();
-            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
-            }
+            await validateOwner(interchainTokenService, walletAddress, action);
 
             const tx = await interchainTokenService.setPauseStatus(pauseStatus === 'true', gasOptions);
 
