@@ -66,23 +66,6 @@ async function validateOwner(contract, walletAddress, action) {
     }
 }
 
-async function removeTrustedChainsLegacy(interchainTokenService, trustedChains, gasOptions, chain, action) {
-    for (const trustedChain of trustedChains) {
-        const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
-        await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
-    }
-}
-
-async function removeTrustedChains(interchainTokenService, trustedChains, gasOptions, chain, action) {
-    const data = [];
-    for (const trustedChain of trustedChains) {
-        const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
-        data.push(tx.data);
-    }
-    const multicall = await interchainTokenService.multicall(data);
-    await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
-}
-
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
 
