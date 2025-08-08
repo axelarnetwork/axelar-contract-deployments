@@ -642,57 +642,46 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  * Retrieves and filters a list of EVM chains based on specified criteria.
  *
  * This function processes chain selection based on various input parameters and returns
- * a filtered list of chain objects that meet the specified criteria. It supports
- * case-insensitive chain name matching and validates that all chains are EVM-compatible.
+ * a filtered list of chain objects that meet the specified criteria.
  *
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    const normalizeChainName = (name) => name.trim().toLowerCase();
-
     if (!chainNames) {
         throw new Error('Chain names were not provided');
     }
 
-    let chains = Object.entries(config.chains)
-        .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
-        .map(([key, chain]) => [normalizeChainName(key), chain]);
+    const allChains = new Set(Object.keys(config.chains));
+    const parsedChainNames = chainNames === 'all' ? allChains : new Set(chainNames?.split(','));
+    const chainsToSkip = new Set(skipChains?.split(','));
 
-    let validChainNames = new Set(chains.map(([name, _chain]) => name));
-
-    if (startFromChain) {
-        const startIndex = chains.findIndex(([name, _chain]) => name === normalizeChainName(startFromChain));
-        if (startIndex === -1) {
-            throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
+    parsedChainNames.forEach((name) => {
+        if (!allChains.has(name)) {
+            printError(`Chain to pick "${name}" is not defined in the config file`);
         }
-        chains = chains.slice(startIndex);
+    });
+
+    chainsToSkip.forEach((name) => {
+        if (!allChains.has(name)) {
+            printError(`Chain to skip "${name}" is not defined in the config file`);
+        }
+    });
+
+    if (startFromChain && !allChains.has(startFromChain)) {
+        printError(`Chain to start from "${startFromChain}" is not defined in the config file`);
     }
 
-    const normChainNames = new Set(chainNames?.split(',').map(normalizeChainName));
-    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean).map(normalizeChainName));
+    const chains = Object.entries(config.chains);
+    const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
+    const scliedChains = startIndex === -1 ? chains : chains.slice(startIndex);
+    const evmChains = scliedChains.filter(([_key, chain]) => chain.chainType === 'evm');
+    const pickedEvmChains = evmChains.filter(([key, _chain]) => parsedChainNames.has(key));
+    const pickedChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
 
-    if (skipChains) {
-        chainsToSkip.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" specified in skipChains is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
-    }
-
-    if (chainNames !== 'all') {
-        normChainNames.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => normChainNames.has(name));
-    }
-
-    if (chains.length === 0) {
+    if (pickedChainsWithoutSkipped.length === 0) {
         throw new Error('No valid chains found');
     }
 
-    return chains.map(([_, chain]) => chain);
+    return pickedChainsWithoutSkipped.map(([_, chain]) => chain);
 };
 
 /**
@@ -719,7 +708,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     let promisedChainsResults = [];
     let results = {};
     for (const chain of chains) {
-        const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
+        const chainTask = asyncChainTask(processCommand, deepCopy(axelar), chain, deepCopy(chainsDeepCopy), options);
 
         if (options.parallel) {
             promisedChainsResults.push({ promise: chainTask, chainId: chain.axelarId });
@@ -768,18 +757,12 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     printInfo(
         'Succeeded chains',
-        `[ ${chains
-            .filter((chain) => !failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     printInfo(
         'Failed chains',
-        `[ ${chains
-            .filter((chain) => failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     if (save) {
@@ -806,22 +789,17 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             callback();
         },
     });
-    return asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
+    const processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
-
-            if (!options.ignoreError) {
-                process.stdout.write(`${loggerOutput}\n`);
-                process.exit(1);
-            }
-        } finally {
-            process.stdout.write(`${loggerOutput}\n`);
         }
+        process.stdout.write(`${loggerOutput}\n`);
         return { result, loggerError };
     });
+    return processCommandAsyncTask;
 };
 
 function getConfigByChainId(chainId, config) {
