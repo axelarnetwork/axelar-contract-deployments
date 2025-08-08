@@ -104,7 +104,7 @@ PAYLOAD= # payload
 ### 5. Execute Message on the Axelarnet Gateway
 
 ```bash
-axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "'$DESTINATION_CHAIN'", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' "${ARGS[@]}"
+axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "'$CHAIN'", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' "${ARGS[@]}"
 ```
 
 ### 6. Token Instance Registration
