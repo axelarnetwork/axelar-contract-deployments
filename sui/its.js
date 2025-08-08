@@ -5,10 +5,13 @@ const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
+    createLockedCoinManagement,
     deployTokenFromInfo,
+    getAllowedFunctions,
     getObjectIdsByObjectTypes,
     getWallet,
-    createLockedCoinManagement,
+    itsFunctions,
+    mockItsFunction,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
@@ -619,6 +622,68 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
+async function checkVersionControl(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const version = args;
+
+    validateParameters({
+        isNonEmptyString: { version },
+        isNonEmptyString: { versionEntry: itsConfig.versions[version] },
+        isNonEmptyString: { itsObject: itsConfig.objects.InterchainTokenServicev0 },
+    });
+
+    const supportedFunctions = itsFunctions[version];
+    if (!Array.isArray(supportedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
+
+    const versionedId = itsConfig.objects.InterchainTokenServicev0;
+    const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
+    const allowedFunctions = allowedFunctionsArray[parseInt(version)];
+    if (!Array.isArray(allowedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
+
+    const equality = JSON.stringify(allowedFunctions) === JSON.stringify(supportedFunctions);
+    const disabledFunctions = [];
+    const enabledFunctions = equality ? allowedFunctions : [];
+
+    if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
+    else {
+        supportedFunctions.forEach((fnName) => {
+            if (allowedFunctions.indexOf(fnName) > -1) enabledFunctions.push(fnName);
+            else disabledFunctions.push(fnName);
+        });
+
+        printInfo(`${enabledFunctions.length} functions are allowed in version`, version);
+        printInfo(`${disabledFunctions.length} functions are not allowed in version`, version);
+        printInfo('Allowed functions', allowedFunctions);
+        printInfo('Disallowed functions', disabledFunctions);
+    }
+
+    if (enabledFunctions.length) printInfo('Validating contract functions...');
+    const successes = [],
+        failures = [],
+        skipped = [];
+    for (let i = 0; i < enabledFunctions.length; i++) {
+        const fnName = enabledFunctions[i];
+        const validatedFunction = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, fnName, version);
+        if (validatedFunction === true) successes.push(fnName);
+        else if (validatedFunction.hasOwnProperty('skipped')) skipped.push(fnName);
+        else failures.push(fnName);
+        if (i === enabledFunctions.length - 1) {
+            if (successes.length === enabledFunctions.length)
+                printInfo(`All ${successes.length} allowed functions were successfully validated`);
+            else {
+                printInfo(`Successfully validated ${successes.length} functions`, successes);
+                if (skipped.length)
+                    printInfo(
+                        `Validation was skipped for ${skipped.length} functions that would have required using gas`,
+                        skipped,
+                        chalk.yellow,
+                    );
+                if (failures.length) printInfo(`${failures.length} functions could not be validated`, failures, chalk.red);
+            }
+        }
+    }
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -646,7 +711,7 @@ if (require.main === module) {
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chains...>')
         .description(
-            `Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains.`,
         )
         .action((trustedChains, options) => {
             mainProcessor(addTrustedChains, options, trustedChains, processCommand);
@@ -654,7 +719,7 @@ if (require.main === module) {
 
     const removeTrustedChainsProgram = new Command()
         .name('remove-trusted-chains')
-        .description('Remove trusted chains')
+        .description('Remove trusted chains.')
         .command('remove-trusted-chains <trusted-chains...>')
         .action((trustedChains, options) => {
             mainProcessor(removeTrustedChains, options, trustedChains, processCommand);
@@ -663,7 +728,7 @@ if (require.main === module) {
     const setFlowLimitsProgram = new Command()
         .name('set-flow-limits')
         .command('set-flow-limits <token-ids> <flow-limits>')
-        .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists`)
+        .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists.`)
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
@@ -706,7 +771,7 @@ if (require.main === module) {
     const migrateAllCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata-all')
         .command('migrate-coin-metadata-all')
-        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins)`)
+        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins).`)
         .addOption(
             new Option(
                 '--logging <size>',
@@ -767,6 +832,14 @@ if (require.main === module) {
             mainProcessor(restoreTreasuryCap, options, symbol, processCommand);
         });
 
+    const checkVersionControlProgram = new Command()
+        .name('check-version-control')
+        .command('check-version-control <version>')
+        .description('Check if version control works on a certain version.')
+        .action((version, options) => {
+            mainProcessor(checkVersionControl, options, version, processCommand);
+        });
+
     // v0
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
@@ -783,6 +856,7 @@ if (require.main === module) {
     program.addCommand(linkCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
+    program.addCommand(checkVersionControlProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
