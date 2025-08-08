@@ -25,6 +25,8 @@ Once metadata is registered, you can link tokens by specifying which tokens on d
 
 ## Link Token Flow
 
+- Source Chain: Stellar → Destination Chain: EVM
+
 ```
 1. User controls Token A (Stellar) and Token B (EVM)
 2. User → ITS Stellar: registerTokenMetadata(Token A)
@@ -40,26 +42,24 @@ Once metadata is registered, you can link tokens by specifying which tokens on d
 
 Before linking tokens, ensure you have:
 
-1. **Token Control**: Token permissions depend on the manager type:
-    - **MINT_BURN**: You must have minter permissions for the token on that chain
+- **Token Control**: Token permissions depend on the manager type:
+    - **MINT_BURN**: You must have permission to transfer or add mintership for the token on that chain
     - **LOCK_UNLOCK**: No token control or minter permissions required for that token
-
-    **Note:** Since you cannot link two LOCK_UNLOCK tokens, one token must be MINT_BURN (requiring minter permissions) and the other can be LOCK_UNLOCK (no permissions required).
 
 ## Token Manager Types
 
 The following token manager types are supported:
 
-- `LOCK_UNLOCK` (2): For tokens that are locked on the source chain and unlocked on the destination chain
-- `MINT_BURN` (4): For tokens that are burned on the source chain and minted on the destination chain
+- `LOCK_UNLOCK` (2): For tokens that are locked/unlocked on the chain
+- `MINT_BURN` (4): For tokens that are burned/minted on the chain
 
-**Important:** You cannot have two LOCK_UNLOCK tokens linked together. At most one token can be LOCK_UNLOCK type. The other token must be MINT_BURN type and owned by the issuer with mint rights given to the token manager.
+**Important:** Linking two LOCK_UNLOCK tokens is highly not recommended. One token should be MINT_BURN (requiring minter permissions) and the other can be LOCK_UNLOCK (no permissions required).
 
 ## Parameters
 
 **Required:**
 
-- `salt`: Unique identifier for the token linking operation
+- `salt`: Unique identifier for the token linking operation. Used to generate a unique `tokenId`
 - `tokenAddress`: Address of the token to be linked
 - `destinationChain`: Name of the destination chain
 - `destinationTokenAddress`: Address of the token on the destination chain
@@ -92,7 +92,9 @@ Deploy Test Tokens on both chains:
 ts-node stellar/its deploy-interchain-token <name> <symbol> <decimal> <salt> <initialSupply>
 ```
 
-**Alternative - Create a Stellar classic asset:**
+**Alternative - Create a Stellar classic asset by setting trustline:**
+
+> Stellar Classic Asset Trustline: https://developers.stellar.org/docs/tokens/stellar-asset-contract#interacting-with-classic-stellar-assets
 
 ```bash
 # Optional trust limit (defaults to 1000000000 if not specified)
@@ -100,6 +102,8 @@ ts-node stellar/token-utils change-trust [asset-code] [issuer] [limit]
 ```
 
 **Chain B (EVM):**
+
+Update the private key in `.env` to EVM wallet
 
 ```bash
 ts-node evm/interchainTokenFactory \
@@ -132,7 +136,6 @@ Example:
 ```bash
 # For USDC Classic asset (USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN)
 ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
-
 # Result: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 ```
 
@@ -190,9 +193,9 @@ ts-node stellar/its link-token <salt> <destinationChain> <destinationTokenAddres
 
 **On Stellar:**
 
-For lock/unlock token managers, no additional setup is required due to Stellar's account abstraction, which eliminates the need for ERC20-like approvals used on EVM chains. The token manager can directly transfer tokens as needed.
-
 For mint/burn token managers, the user needs to grant minting permission to the token manager. Stellar Classic Assets require setting the token manager as the admin to allow minting. While Stellar Custom Tokens can add the token manager as an additional minter, this requires implementing support to allow the token manager to call `mint`.
+
+For lock/unlock token managers, no additional setup is required due to Stellar's account abstraction, which eliminates the need for ERC20-like approvals used on EVM chains. The token manager can directly transfer tokens as needed.
 
 ```bash
 # Get token manager address
@@ -203,8 +206,6 @@ ts-node stellar/token-utils transfer-token-admin <tokenId> <newAdmin>
 ```
 
 **On EVM:**
-
-Update the private key in `.env` to EVM wallet
 
 ```bash
 # Get token manager address on the destination chain
@@ -224,8 +225,8 @@ Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stel
 # Register USDC metadata on EVM (18 decimals)
 ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
 
-# If you want to create a new Stellar classic asset
-ts-node stellar/token-utils create-stellar-classic-asset ABC GAGPN3HFDMPFHMHNZA2WYHB4EM24VIE7QYI4PD7JBY73B6IVYLBSL6SY
+# If you want to change trust limit for a Stellar classic asset
+ts-node stellar/token-utils change-trust USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN 10000000
 
 # If using a classic Stellar asset, Soroban contract should be created
 ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
@@ -243,9 +244,17 @@ ts-node stellar/its register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
 
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
 ts-node stellar/its link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
+# Result: 89a0c5...abcd (token id)
+
+# Get token manager address
+ts-node stellar/its deployed-token-manager 0x89a0c5...abcd
+# Result: CATERX...ABCD (token manager address)
+
+# Transfer admin to the token manager
+ts-node stellar/token-utils transfer-token-admin 0x89a0c5...abcd CATERX...ABCD
 
 # Interchain Token Transfer
-ts-node stellar/its interchain-transfer <tokenId> evm_chain <destinationAddress> <amount> --gas-amount 10000000
+ts-node stellar/its interchain-transfer 0x89a0c5...abcd evm_chain 0xba76...dest 1 --gas-amount 10000000
 ```
 
 ## Troubleshooting & Error Handling
@@ -287,4 +296,4 @@ Solution: Use a different salt value for the linking operation.
 1. **Salt Management**: Use unique salts for each token linking operation. Salt can be any string, it must to be unique per token ID being linked
 2. **Token Control**: Ensure you have proper control over both tokens
 3. **Operator Security**: Use secure operator addresses with appropriate permissions
-4. **Transaction Verification**: If transactions fail, ensure mint permissions are transferred to the ITS token manager for MINT_BURN type tokens
+4. **Mint Permission**: If interchain transfer fails, ensure mint permissions are transferred to the ITS token manager for MINT_BURN type tokens
