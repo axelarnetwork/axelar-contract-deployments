@@ -50,4 +50,4 @@ git_release_enable = true
 publish = false
 
 [changelog]
-protect_breaking_commits =
+protect_breaking_commits = true
