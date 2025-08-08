@@ -103,7 +103,7 @@ Set address of deployed `gmpManager` to the transceiver section in your chain co
 }
 ```
 
-To deploy a AxelarTransceiver contract, run:
+To deploy an AxelarTransceiver contract, run:
 
 ```bash
 ts-node evm/deploy-contract.js \
