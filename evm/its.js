@@ -440,15 +440,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 return;
             }
 
+            const data = [];
             for (const trustedChain of trustedChains) {
                 if (itsVersion === '2.1.1') {
-                    const tx = await interchainTokenService.setTrustedAddress(trustedChain, 'hub', gasOptions);
-                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');
+                    const tx = await interchainTokenService.populateTransaction.setTrustedAddress(trustedChain, 'hub', gasOptions);
+                    data.push(tx.data);
                 } else {
-                    const tx = await interchainTokenService.setTrustedChain(trustedChain, gasOptions);
-                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainSet');
+                    const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
+                    data.push(tx.data);
                 }
             }
+            
+            const multicall = await interchainTokenService.multicall(data);
+            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressSet', 'TrustedChainSet');
 
             break;
         }
@@ -462,15 +466,19 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 return;
             }
 
+            const data = [];
             for (const trustedChain of trustedChains) {
                 if (itsVersion === '2.1.1') {
-                    const tx = await interchainTokenService.removeTrustedAddress(trustedChain, gasOptions);
-                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressRemoved');
+                    const tx = await interchainTokenService.populateTransaction.removeTrustedAddress(trustedChain, gasOptions);
+                    data.push(tx.data);
                 } else {
-                    const tx = await interchainTokenService.removeTrustedChain(trustedChain, gasOptions);
-                    await handleTx(tx, chain, interchainTokenService, action, 'TrustedChainRemoved');
+                    const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
+                    data.push(tx.data);
                 }
             }
+            
+            const multicall = await interchainTokenService.multicall(data);
+            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressRemoved', 'TrustedChainRemoved');
 
             break;
         }
