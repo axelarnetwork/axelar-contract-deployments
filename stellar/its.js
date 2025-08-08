@@ -384,13 +384,13 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
 
-    const itsDestinationTokenAddress = encodeITSDestination(config, destinationChain, destinationTokenAddress);
+    const itsDestinationTokenAddress = encodeITSDestination(config.chains, destinationChain, destinationTokenAddress);
     printInfo('Human-readable destination token address', destinationTokenAddress);
 
     let operatorBytes = nativeToScVal(null, { type: 'void' });
     if (options.operator) {
         printInfo('Destination Operator address', options.operator);
-        operatorBytes = hexToScVal(encodeITSDestination(config, destinationChain, options.operator));
+        operatorBytes = hexToScVal(encodeITSDestination(config.chains, destinationChain, options.operator));
     }
 
     const operation = contract.call(
