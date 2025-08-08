@@ -104,7 +104,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(_axelar, chain, chains, action, options) {
+async function processCommand(config, chain, chains, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -569,7 +569,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 isValidNumber: { gasValue },
                 isNonEmptyString: { type },
             });
-          
+
             validateChain(chains, destinationChain);
             const tokenManagerType = validateLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, type);
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
