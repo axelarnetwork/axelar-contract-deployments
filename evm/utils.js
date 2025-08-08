@@ -789,7 +789,7 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             callback();
         },
     });
-    return (processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
+    const processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
@@ -798,7 +798,8 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
         }
         process.stdout.write(`${loggerOutput}\n`);
         return { result, loggerError };
-    }));
+    });
+    return processCommandAsyncTask;
 };
 
 function getConfigByChainId(chainId, config) {
