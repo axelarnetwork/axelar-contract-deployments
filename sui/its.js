@@ -657,22 +657,22 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
         printInfo('Disallowed functions', disabledFunctions);
     }
 
-    // For testing single calls:
-    // const test = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, 'migrate_coin_metadata', version);
-    // console.log({result: test});
     if (enabledFunctions.length) printInfo('Validating contract functions...');
     const successes = [],
-        failures = [];
+        failures = [],
+        skipped = [];
     for (let i = 0; i < enabledFunctions.length; i++) {
         const fnName = enabledFunctions[i];
         const validatedFunction = await mockItsFunction(keypair, client, options, config.chains.sui, itsConfig, fnName, version);
-        if (validatedFunction) successes.push(fnName);
+        if (validatedFunction === true) successes.push(fnName);
+        else if (validatedFunction.hasOwnProperty('skipped')) skipped.push(fnName);
         else failures.push(fnName);
         if (i === enabledFunctions.length - 1) {
-            if (!failures.length) printInfo(`All ${successes.length} allowed functions were successfully validated`);
+            if (successes.length === enabledFunctions.length) printInfo(`All ${successes.length} allowed functions were successfully validated`);
             else {
                 printInfo(`Successfully validated ${successes.length} functions`, successes);
-                printInfo(`${failures.length} could not be validated`, failures, chalk.red);
+                if (skipped.length) printInfo(`Validation was skipped for ${skipped.length} functions for validations that would have required using gas`, skipped, chalk.yellow);
+                if (failures.length) printInfo(`${failures.length} functions could not be validated`, failures, chalk.red);
             }
         }
     }
