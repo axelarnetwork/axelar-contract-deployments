@@ -736,7 +736,7 @@ const getProposalConfig = (config, env, key) => {
  * @param {string} chainName - The chain name to validate
  * @throws {Error} If the chain is not valid
  */
-function validateChain(config, chainName) {
+function validateChainName(config, chainName) {
     const validChain = Object.values(config.chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
@@ -755,7 +755,7 @@ function validateDestinationChain(config, destinationChain) {
         return;
     }
 
-    validateChain(config, destinationChain);
+    validateChainName(config, destinationChain);
 }
 
 module.exports = {
@@ -820,7 +820,7 @@ module.exports = {
     getProposalConfig,
     tokenManagerTypes,
     validateLinkType,
-    validateChain,
+    validateChainName,
     validateDestinationChain,
     itsHubContractAddress,
 };
