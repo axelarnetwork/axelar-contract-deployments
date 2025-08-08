@@ -2,16 +2,18 @@
 
 ## Background
 
-This release provides a generic template for deploying tokens from XRPL chain to remote chains, using the Axelar Interchain Token Service (ITS).
+This release provides a generic template for deploying tokens from XRPL chain to remote EVM chains, using the Axelar Interchain Token Service (ITS).
 
 ## Pre-Deployment Setup
 
 Create an `.env` config.
 
 ```bash
-MNEMONIC= # Axelar Prover Admin account mnemonic
-CHAIN=    # XRPL chain name
-ENV=xyz   # Amplifier environment name, e.g., mainnet
+EVM_PRIVATE_KEY=  # EVM destination chain account private key
+XRPL_PRIVATE_KEY= # XRPL account seed
+MNEMONIC=         # Axelar Prover Admin account mnemonic
+CHAIN=            # XRPL chain name
+ENV=xyz           # Amplifier environment name, e.g., mainnet
 ```
 
 ### 1. Environment Variables Setup
@@ -20,14 +22,15 @@ Set the following environment variables before running the deployment commands. 
 `axelar-chains-config/info/<env>.json` file.
 
 ```bash
-# Contract addresses
-AXELARNET_GATEWAY= # axelar/contracts/AxelarnetGateway/address
-
 TOKEN_ISSUER=      # token issuer of local XRPL token, e.g., rMPrLNZt4Zv4eRyN4ew9TRn5iumRG8Htpw
 TOKEN_CURRENCY=    # token currency of local XRPL token, e.g., 524C555344000000000000000000000000000000
 DESTINATION_CHAIN= # case-sensitive destination chain name, e.g., Ethereum
 TOKEN_NAME=        # token name of deployed token on destination chain, e.g., RLUSD
 TOKEN_SYMBOL=      # token symbol of deployed token on destination chain, e.g., RLUSD
+
+# Contract addresses
+AXELARNET_GATEWAY= # axelar/contracts/AxelarnetGateway/address
+DESTINATION_MULTISIG_PROVER= # axelar/contracts/MultisigProver/{DESTINATION_CHAIN}/address
 ```
 
 **_NOTE:_**
@@ -78,7 +81,7 @@ Extract the multisig session ID from the command output.
 
 ```bash
 MULTISIG_SESSION_ID=
-ts-node xrpl/submit-proof.js $MULTISIG_SESSION_ID
+ts-node xrpl/submit-proof.js -p $XRPL_PRIVATE_KEY $MULTISIG_SESSION_ID
 ```
 
 ### 4. Remote Token Deployment
@@ -97,7 +100,7 @@ ts-node xrpl/deploy-remote-token.js --issuer $TOKEN_ISSUER --currency $TOKEN_CUR
 **Extract Values from Command Output:**
 
 ```bash
-MESSAGE_ID= # message_id
+MESSAGE_ID= # message ID (with 0x prefix), e.g., 0xf7e18e9d76a901ec34313ea60f5e82cf93af25d447ff50d072389b3952b3328f
 PAYLOAD= # payload
 ```
 
@@ -107,7 +110,35 @@ PAYLOAD= # payload
 axelard tx wasm execute $AXELARNET_GATEWAY '{"execute": {"cc_id": {"source_chain": "'$CHAIN'", "message_id": "'$MESSAGE_ID'"}, "payload": "'$PAYLOAD'"}}' "${ARGS[@]}"
 ```
 
-### 6. Token Instance Registration
+**Extract Values from Command Output:**
+
+```bash
+MESSAGE_ID= # message ID (axelar -> destination chain, with 0x prefix), e.g., 0x3aadfef6d8e9cfcca7bd8e3e6afd363e26077819e31ce0fda79c56160a2624e7-560430
+```
+
+Note that there are multiple message IDs in the events emitted.
+This ID pertains to the message from axelar to the destination chain,
+with format similar to `0x3aadfef6d8e9cfcca7bd8e3e6afd363e26077819e31ce0fda79c56160a2624e7-560430`.
+
+### 6. Construct Proof on the Destination Chain Multisig Prover
+
+```bash
+axelard tx wasm execute $DESTINATION_MULTISIG_PROVER '{"construct_proof":[{"source_chain":"axelar","message_id":"'$MESSAGE_ID'"}]}' "${ARGS[@]}"
+```
+
+**Extract Values from Command Output:**
+
+```bash
+SESSION_ID= # multisig session ID, e.g., 22306
+```
+
+### 7. Submit Proof to Destination Chain
+
+```bash
+ts-node evm/gateway.js -p $EVM_PRIVATE_KEY -n $DESTINATION_CHAIN --action submitProof --multisigSessionId $SESSION_ID
+```
+
+### 8. Token Instance Registration
 
 Once both legs of the remote token deployment have succeeded, register the token instance
 to enable bridging this newly-deployed token between XRPL and the remote destination chain.
@@ -117,7 +148,7 @@ Note that XRPL tokens are always deployed to remote chains with `15` decimals of
 ts-node xrpl/register-token-instance.js --tokenId $TOKEN_ID --sourceChain $DESTINATION_CHAIN --decimals 15
 ```
 
-Repeat steps 4-6 for every `DESTINATION_CHAIN` that you want the XRPL token to be deployed to.
+Repeat steps 4-8 for every `DESTINATION_CHAIN` that you want the XRPL token to be deployed to.
 
 ## Cross-Chain Transfer Testing
 
