@@ -151,8 +151,12 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
     const { InterchainTokenService } = itsConfig.objects;
 
     // Mock Coin settings
-    const coinType = '0xef0980a9ecbc2dabbe865d95124929cbda72238def9e8242a702459f49818f5b::COIN::COIN';
-    const coinMetadata = '0x46928f514ba43818062f3e05b2c42d4331a6c3e0fa88fb939f49d232b34b6091';
+    const coinType = options.env === 'mainnet' 
+        ? '0x4f72b86067e14066628d2ab53b31d1b96725daf44b9ae3f3686d783fdab232b3::tst::TST'
+        : '0xef0980a9ecbc2dabbe865d95124929cbda72238def9e8242a702459f49818f5b::COIN::COIN';
+    const coinMetadata = options.env === 'mainnet' 
+        ? '0xd8386847249c6fd543221287b39727a9869d05376dd5df1c7349bda576ec9e4b'
+        : '0x46928f514ba43818062f3e05b2c42d4331a6c3e0fa88fb939f49d232b34b6091';
     const treasuryCapReclaimerType = [itsConfig.structs.TreasuryCapReclaimer, '<', coinType, '>'].join('');
 
     if (!itsFunctions[String(version)]) throw new Error(`Invalid version: ${String(version)}`);
@@ -160,8 +164,34 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
 
     switch (fnName) {
         case 'register_coin': {
-            console.warn(`'register_coin' has been deprecated`);
-            return false;
+            const register_coin = (tx) => {
+                const coinManagement = tx.moveCall({
+                    target: `${itsConfig.address}::coin_management::new_locked`,
+                    typeArguments: [coinType],
+                });
+
+                const coinInfo = tx.moveCall({
+                    target: `${itsConfig.address}::coin_info::from_info`,
+                    arguments: [
+                        tx.pure.string(''),
+                        tx.pure.string(''),
+                        tx.pure.string(''),
+                    ],
+                    typeArguments: [coinType],
+                });
+
+                const tokenId = tx.moveCall({
+                    target: `${itsConfig.address}::interchain_token_service::register_coin`,
+                    arguments: [
+                        tx.object(InterchainTokenService),
+                        coinInfo,
+                        coinManagement,
+                    ],
+                    typeArguments: [coinType],
+                });
+            };
+            return await isAllowed(client, keypair, chain, register_coin, options);
+            
         }
         case 'register_coin_from_info': {
             const register_coin_from_info = (tx) => {
@@ -278,17 +308,40 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                     typeArguments: [coinType],
                 });
 
-                const tokenId = tx.moveCall({
-                    target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
-                    arguments: [
-                        tx.object(InterchainTokenService),
-                        tx.pure.string(''),
-                        tx.pure.string(''),
-                        tx.pure.string(''),
-                        coinManagement,
-                    ],
-                    typeArguments: [coinType],
-                });
+                let tokenId;
+                if (version == 0) {
+                    const coinInfo = tx.moveCall({
+                        target: `${itsConfig.address}::coin_info::from_info`,
+                        arguments: [
+                            tx.pure.string(''),
+                            tx.pure.string(''),
+                            tx.pure.string(''),
+                        ],
+                        typeArguments: [coinType],
+                    });
+
+                    tokenId = tx.moveCall({
+                        target: `${itsConfig.address}::interchain_token_service::register_coin`,
+                        arguments: [
+                            tx.object(InterchainTokenService),
+                            coinInfo,
+                            coinManagement,
+                        ],
+                        typeArguments: [coinType],
+                    });
+                } else {
+                    tokenId = tx.moveCall({
+                        target: `${itsConfig.address}::interchain_token_service::register_coin_from_info`,
+                        arguments: [
+                            tx.object(InterchainTokenService),
+                            tx.pure.string(''),
+                            tx.pure.string(''),
+                            tx.pure.string(''),
+                            coinManagement,
+                        ],
+                        typeArguments: [coinType],
+                    });
+                }
 
                 tx.moveCall({
                     target: `${itsConfig.address}::interchain_token_service::deploy_remote_interchain_token`,
@@ -299,9 +352,11 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
             return await isAllowed(client, keypair, chain, deploy_remote_interchain_token, options);
         }
         case 'send_interchain_transfer': {
+            // XXX requires an account with owned Coin<T>
             return true;
         }
         case 'receive_interchain_transfer': {
+            // XXX requires an account with owned Coin<T>
             return true;
         }
         case 'receive_interchain_transfer_with_data': {
