@@ -61,48 +61,19 @@ Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad65
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
 ```
 
-- Add config in `$ENV.json` to deploy Amplifier contracts.
-
-| Network              | `governanceAddress`                             | `adminAddress`                                  |
+| Network              | `GOVERNANCE_ADDRESS`                            | `adminAddress`                                  |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
-| Network              | `serviceName` | `votingThreshold` | `signingThreshold` | `confirmationHeight` |
-| -------------------- | ------------- | ----------------- | ------------------ | -------------------- |
-| **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      | `1`                  |
-| **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    | `1`                  |
-| **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       | `1`                  |
-
-```bash
-# Add under `config.axelar.contracts.VotingVerifier` based on Network
-"$CHAIN" : {
-  "governanceAddress": "[governance address]",
-  "serviceName": "[service name]",
-  "sourceGatewayAddress": "[external gateway address]",
-  "votingThreshold": "[voting threshold]",
-  "blockExpiry": 10,
-  "confirmationHeight": 1000000, # if $CHAIN uses a custom finality mechanism such as the "finalized" tag, set this value very high (i.e. 1000000) to prevent accidental use
-  "msgIdFormat": "hex_tx_hash_and_event_index",
-  "addressFormat": "eip55"
-}
-
-# Add under `config.axelar.contracts.MultisigProver` based on Network
-"$CHAIN" : {
-  "governanceAddress": "[governance address]",
-  "adminAddress": "[admin address]",
-  "signingThreshold": "[signing threshold]",
-  "serviceName": "[service name]",
-  "verifierSetDiffThreshold": 0,
-  "encoder": "abi",
-  "keyType": "ecdsa"
-}
-```
-
-### Instantiate Amplifier contracts
+| Network              | `SERVICE_NAME` | `VOTING_THRESHOLD` | `SIGNING_THRESHOLD` | `CONFIRMATION_HEIGHT` |
+| -------------------- | -------------- | ------------------ | ------------------- | --------------------- |
+| **Devnet-amplifier** | `validators`   | `["6", "10"]`      | `["6", "10"]`       | `1`                   |
+| **Stagenet**         | `amplifier`    | `["51", "100"]`    | `["51", "100"]`     | `1`                   |
+| **Testnet**          | `amplifier`    | `["51", "100"]`    | `["51", "100"]`     | `1`                   |
+| **Mainnet**          | `amplifier`    | `["2", "3"]`       | `["2", "3"]`        | `1`                   |
 
 | Network              | `CONTRACT_ADMIN`                                |
 | -------------------- | ----------------------------------------------- |
@@ -114,59 +85,20 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
 
-1. Instantiate **Gateway**, **Verifier** and **Prover** contracts useing **Coordinator**
-
-TODO: This should be covered by a new script:
+1. Instantiate **Gateway**, **Verifier** and **Prover** contracts using **Coordinator**
 
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Coordinator \
-  -t "Instantiate Gateway, Verifier and Prover for $CHAIN using Coordinator" \
-  -d "Instantiate Gateway, Verifier and Prover for $CHAIN using Coordinator" \
-  --msg "{
-    \"instantiate_chain_contracts\": {
-      \"chain\": \"$CHAIN\",
-        \"deployment_name\": [unique deployment name],
-        \"salt\": [some random salt],
-        \"params\": {
-          \"gateway\": {
-            \"code_id\": u64,
-            \"label\": String,
-          },
-          \"verifier\": {
-            \"code_id\": u64,
-            \"label\": String,
-            \"msg\": {
-              \"governance_address\": nonempty::String,
-              \"service_name\": nonempty::String,
-              \"source_gateway_address\": nonempty::String,
-              \"voting_threshold\": MajorityThreshold,
-              \"block_expiry\": nonempty::Uint64,
-              \"confirmation_height\": u64,
-              \"source_chain\": ChainName,
-              \"rewards_address\": nonempty::String,
-              \"msg_id_format\": MessageIdFormat,
-              \"address_format\": AddressFormat,
-            }
-          },
-          \"prover\": {
-            \"code_id\": u64,
-            \"label\": String,
-            \"msg\": {
-              \"governance_address\": String,
-              \"multisig_address\": String,
-              \"signing_threshold\": MajorityThreshold,
-              \"service_name\": String,
-              \"chain_name\": ChainName,
-              \"verifier_set_diff_threshold\": u32,
-              \"encoder\": Encoder,
-              \"key_type\": KeyType,
-              \"domain_separator\": Hash,
-            }
-          }
-        }
-      }
-    }"
+ts-node cosmwasm/coordinator.ts instantiate \
+    -n "$CHAIN_NAME" \
+    -e "$ENVIRONMENT" \
+    -m "$MNEMONIC" \
+    --service-name $SERVICE_NAME \
+    --voting-threshold $VOTING_THRESHOLD \
+    --signing-threshold $SIGNING_THRESHOLD \
+    --confirmation-height $CONFIRMATION_HEIGHT \
+    --source-gateway-address $SOURCE_GATEWAY_ADDRESS \
+    --governance-address $GOVERNANCE_ADDRESS \
+    --run-as $CONTRACT_ADMIN
 ```
 
 2. Set environment variables
@@ -198,8 +130,7 @@ EPOCH_DURATION=[epoch duration according to the environment]
 ```
 
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
-
-- Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
+- Note: [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
 
 3. Register a new deployment in the **Coordinator** contract:
@@ -214,24 +145,14 @@ ts-node cosmwasm/submit-proposal.js execute \
     }"
 ```
 
-
-TODO: Authorize `$CHAIN` Multisig Prover on Multisig covered by Register deployments: https://github.com/axelarnetwork/axelar-amplifier/pull/953
-
 4. Register the new chain in the **Coordinator** contract:
 ```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Coordinator \
-  -t "Register a new deployment for $CHAIN at Coordinator contract" \
-  -d "Register a new deployment for $CHAIN at Coordinator contract" \
-  --msg "{
-    \"register_deployment\": {
-        \"chain_name\": $CHAIN,
-        \"prover_address\": String,
-        \"gateway_address\": String,
-        \"voting_verifier_address\": String,
-    }"
+ts-node cosmwasm/coordinator.ts register-deployment \
+    -e "$ENVIRONMENT" \
+    -m "$MNEMONIC" \
+    --run-as "axelar1q80xckjnzyh8psyz93fy0n0hjum7puzyz5q4pf" \
+    -n "$CHAIN_NAME"
 ```
-
 
 5. Create reward pool for voting verifier
 
