@@ -61,7 +61,7 @@ Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad65
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
 ```
 
-| Network              | `GOVERNANCE_ADDRESS`                            | `adminAddress`                                  |
+| Network              | `GOVERNANCE_ADDRESS`                            | `MULTISIG_ADMIN_ADDRESS`                                  |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
@@ -87,6 +87,10 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Instantiate **Gateway**, **Verifier** and **Prover** contracts using **Coordinator**
 
+TODO: Once the protocol team updates the instantiate message, we should pass two additional values:
+ - $MULTISIG_ADMIN to the multisigProver instantiate message
+ - $CONTRACT_ADMIN as a separate field to be used as instantiate2 admin for the 3 contracts.
+ 
 ```bash
 ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
