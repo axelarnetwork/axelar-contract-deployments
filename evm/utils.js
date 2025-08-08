@@ -666,8 +666,8 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         }
     });
 
-    if (!allChains.has(startFromChain)) {
-        printError(`Chain ${startFromChain} is not defined in the config file`);
+    if (startFromChain && !allChains.has(startFromChain)) {
+        printError(`Chain to start from "${startFromChain}" is not defined in the config file`);
     }
 
     const chains = Object.entries(config.chains);
