@@ -668,10 +668,16 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
         else if (validatedFunction.hasOwnProperty('skipped')) skipped.push(fnName);
         else failures.push(fnName);
         if (i === enabledFunctions.length - 1) {
-            if (successes.length === enabledFunctions.length) printInfo(`All ${successes.length} allowed functions were successfully validated`);
+            if (successes.length === enabledFunctions.length)
+                printInfo(`All ${successes.length} allowed functions were successfully validated`);
             else {
                 printInfo(`Successfully validated ${successes.length} functions`, successes);
-                if (skipped.length) printInfo(`Validation was skipped for ${skipped.length} functions for validations that would have required using gas`, skipped, chalk.yellow);
+                if (skipped.length)
+                    printInfo(
+                        `Validation was skipped for ${skipped.length} functions for validations that would have required using gas`,
+                        skipped,
+                        chalk.yellow,
+                    );
                 if (failures.length) printInfo(`${failures.length} functions could not be validated`, failures, chalk.red);
             }
         }
