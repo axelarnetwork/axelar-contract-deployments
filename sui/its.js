@@ -640,7 +640,7 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     const allowedFunctions = allowedFunctionsArray[parseInt(version)];
     if (!Array.isArray(allowedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
 
-    const equality = JSON.stringify(allowedFunctions) == JSON.stringify(supportedFunctions);
+    const equality = JSON.stringify(allowedFunctions) === JSON.stringify(supportedFunctions);
     const disabledFunctions = [];
     const enabledFunctions = equality ? allowedFunctions : [];
 
