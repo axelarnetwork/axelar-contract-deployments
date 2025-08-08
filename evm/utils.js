@@ -677,11 +677,11 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     const pickedEvmChains = evmChains.filter(([key, _chain]) => parsedChainNames.has(key));
     const pickedChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
 
-    if (pickecChainsWithoutSkipped.length === 0) {
+    if (pickedChainsWithoutSkipped.length === 0) {
         throw new Error('No valid chains found');
     }
 
-    return pickecChainsWithoutSkipped.map(([_, chain]) => chain);
+    return pickedChainsWithoutSkipped.map(([_, chain]) => chain);
 };
 
 /**
