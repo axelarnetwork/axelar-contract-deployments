@@ -17,7 +17,6 @@ bnum.workspace = true
 borsh.workspace = true
 bytemuck.workspace = true
 hex.workspace = true
-rkyv = { workspace = true, features = ["validation"] }
 solana-program.workspace = true
 thiserror.workspace = true
 
