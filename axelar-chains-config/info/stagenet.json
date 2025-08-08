@@ -102,7 +102,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -214,7 +215,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -326,7 +328,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -476,7 +479,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x0D76aD83e777A47B58EC31A94f5F52287fBE51d4",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -581,7 +585,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -693,7 +698,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -797,7 +803,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -908,7 +915,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1030,7 +1038,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "finality": "finalized",
@@ -1144,7 +1153,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "finality": "finalized",
@@ -1252,7 +1262,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -1363,7 +1374,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "finality": "finalized",
@@ -1481,7 +1493,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x0D76aD83e777A47B58EC31A94f5F52287fBE51d4",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "finality": "finalized",
@@ -1567,7 +1580,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x0D76aD83e777A47B58EC31A94f5F52287fBE51d4",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       },
       "explorer": {
@@ -2017,7 +2031,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x0D76aD83e777A47B58EC31A94f5F52287fBE51d4",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       }
     },
@@ -2220,7 +2235,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x0D76aD83e777A47B58EC31A94f5F52287fBE51d4",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       }
     },
@@ -2309,7 +2325,8 @@
           "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x27Dae89620Ed5f3111d85D44ceFc6EdB7fe74551",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       }
     },
@@ -2467,7 +2484,8 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
           "salt": "ITS Factory v1.0.0",
           "implementation": "0x3fcbe9de65BD553C9451E7Ae635AF15fD91e7680",
-          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3",
+          "version": "2.1.1"
         }
       }
     }

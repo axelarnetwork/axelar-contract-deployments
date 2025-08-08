@@ -27,8 +27,14 @@ const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 
 // For version 2.1.1, use the contracts from the specific package
-const IInterchainTokenFactoryV211 = getContractJSON('IInterchainTokenFactory', '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenFactory.sol/IInterchainTokenFactory.json');
-const IInterchainTokenServiceV211 = getContractJSON('IInterchainTokenService', '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
+const IInterchainTokenFactoryV211 = getContractJSON(
+    'IInterchainTokenFactory',
+    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenFactory.sol/IInterchainTokenFactory.json',
+);
+const IInterchainTokenServiceV211 = getContractJSON(
+    'IInterchainTokenService',
+    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json',
+);
 
 async function processCommand(_axelar, chain, chains, options) {
     const { privateKey, address, action, yes } = options;

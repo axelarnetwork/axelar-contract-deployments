@@ -46,7 +46,10 @@ const tokenManagerImplementations = {
     MINT_BURN: 4,
 };
 
-const IInterchainTokenServiceV211 = getContractJSON('IInterchainTokenService', '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json');
+const IInterchainTokenServiceV211 = getContractJSON(
+    'IInterchainTokenService',
+    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json',
+);
 
 function createInterchainTokenServiceContract(address, wallet, version) {
     if (version === '2.1.1') {
