@@ -642,8 +642,7 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  * Retrieves and filters a list of EVM chains based on specified criteria.
  *
  * This function processes chain selection based on various input parameters and returns
- * a filtered list of chain objects that meet the specified criteria. It supports
- * case-insensitive chain name matching and validates that all chains are EVM-compatible.
+ * a filtered list of chain objects that meet the specified criteria.
  *
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
@@ -651,41 +650,38 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
         throw new Error('Chain names were not provided');
     }
 
-    let chains = Object.entries(config.chains).filter(([_key, chain]) => chain.chainType === 'evm');
-    const parsedChainNames = new Set(chainNames?.split(','));
+    const allChains = new Set(Object.keys(config.chains));
+    const parsedChainNames = chainNames === 'all' ? allChains : new Set(chainNames?.split(','));
     const chainsToSkip = new Set(skipChains?.split(','));
 
-    if (chainNames !== 'all') {
-        parsedChainNames.forEach((name) => {
-            if (!chains.find(([chainName, _]) => chainName === name)) {
-                printError(`Chain "${name}" is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => parsedChainNames.has(name));
-    }
-
-    if (skipChains) {
-        chainsToSkip.forEach((name) => {
-            if (!chains.find(([chainName, _]) => chainName === name)) {
-                printError(`Chain "${name}" specified in skipChains is not defined in the provided chains list`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
-    }
-
-    if (startFromChain) {
-        const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
-        if (startIndex === -1) {
-            throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
+    parsedChainNames.forEach((name) => {
+        if (!allChains.has(name)) {
+            printError(`Chain to pick "${name}" is not defined in the config file`);
         }
-        chains = chains.slice(startIndex);
+    });
+
+    chainsToSkip.forEach((name) => {
+        if (!allChains.has(name)) {
+            printError(`Chain to skip "${name}" is not defined in the config file`);
+        }
+    });
+
+    if (!allChains.has(startFromChain)) {
+        printError(`Chain ${startFromChain} is not defined in the config file`);
     }
 
-    if (chains.length === 0) {
+    const chains = Object.entries(config.chains);
+    const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
+    const scliedChains = startIndex === -1 ? chains : chains.slice(startIndex);
+    const evmChains = scliedChains.filter(([_key, chain]) => chain.chainType === 'evm');
+    const pickedEvmChains = evmChains.filter(([key, _chain]) => parsedChainNames.has(key));
+    const pickecChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
+
+    if (pickecChainsWithoutSkipped.length === 0) {
         throw new Error('No valid chains found');
     }
 
-    return chains.map(([_, chain]) => chain);
+    return pickecChainsWithoutSkipped.map(([_, chain]) => chain);
 };
 
 /**
