@@ -50,7 +50,8 @@ export class InstantiationManager {
         const serviceName = options.serviceName || DEFAULTS.serviceName;
         const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
         const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
-        const sourceGatewayAddress = options.sourceGatewayAddress || '';
+        const sourceGatewayAddress =
+            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
 
         printInfo(`Governance address: ${governanceAddress}`);
         printInfo(`Service name: ${serviceName}`);

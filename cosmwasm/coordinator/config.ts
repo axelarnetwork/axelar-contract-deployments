@@ -76,6 +76,26 @@ export class ConfigManager {
         return contract.address;
     }
 
+    public getContractAddressFromChainConfig(chainName: string, contractName: string): string {
+        printInfo(`Getting ${contractName} address from chain config...`);
+
+        const chainConfig = this.getChainConfig(chainName);
+        if (!chainConfig) {
+            throw new Error(`Chain ${chainName} not found in config`);
+        }
+
+        const contract = chainConfig.contracts[contractName];
+        if (!contract) {
+            throw new Error(`${contractName} contract not found in ${chainName} config`);
+        }
+
+        if (!contract.address) {
+            throw new Error(`${contractName} address not found in ${chainName} config. Please ensure the contract has been deployed.`);
+        }
+
+        return contract.address;
+    }
+
     public getDefaultAddress(addressType: 'runAs' | 'governance'): string {
         const axelarConfig = this.fullConfig.axelar;
         if (!axelarConfig) {
