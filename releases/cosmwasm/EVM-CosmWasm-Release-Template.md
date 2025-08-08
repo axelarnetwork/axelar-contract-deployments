@@ -61,7 +61,7 @@ Gateway (v1.1.1) -> "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad65
 MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a"
 ```
 
-| Network              | `GOVERNANCE_ADDRESS`                            | `MULTISIG_ADMIN_ADDRESS`                                  |
+| Network              | `GOVERNANCE_ADDRESS`                            | `MULTISIG_ADMIN_ADDRESS`                        |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv` |
@@ -127,11 +127,6 @@ ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router
 | **Testnet**          | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` | `1000000uaxl`       |
 | **Mainnet**          | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` | `1000000uaxl`       |
 
-```bash
-PROVER_ADMIN=[prover admin who is responsible for the contract's operations]
-REWARD_AMOUNT=[reward amount]
-EPOCH_DURATION=[epoch duration according to the environment]
-```
 
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 - Note: [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
@@ -162,7 +157,7 @@ ts-node cosmwasm/coordinator.ts register-deployment \
 
 #### Rewards
 
-| Network              | `epoch_duration` | `participation_threshold` | `rewards_per_epoch` |
+| Network              | `EPOCH_DURATION` | `PARTICIPATION_THRESHOLD` | `REWARDS_PER_EPOCH` |
 | -------------------- | ---------------- | ------------------------- | ------------------- |
 | **Devnet-amplifier** | `100`            | `[\"7\", \"10\"]`         | `100`               |
 | **Stagenet**         | `600`            | `[\"7\", \"10\"]`         | `100`               |
@@ -178,8 +173,8 @@ ts-node cosmwasm/submit-proposal.js execute \
     \"create_pool\": {
       \"params\": {
         \"epoch_duration\": \"$EPOCH_DURATION\",
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": \"[rewards per epoch]\"
+        \"participation_threshold\": \"$PARTICIPATION_THRESHOLD\",
+        \"rewards_per_epoch\": \"$REWARDS_PER_EPOCH\"
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -201,8 +196,8 @@ ts-node cosmwasm/submit-proposal.js execute \
     \"create_pool\": {
       \"params\": {
         \"epoch_duration\": \"$EPOCH_DURATION\",
-        \"participation_threshold\": [participation threshold],
-        \"rewards_per_epoch\": \"[rewards per epoch]\"
+        \"participation_threshold\": \"$PARTICIPATION_THRESHOLD\",
+        \"rewards_per_epoch\": \"$REWARDS_PER_EPOCH\"
       },
       \"pool_id\": {
         \"chain_name\": \"$CHAIN\",
@@ -322,7 +317,7 @@ type="EvmVerifierSetVerifier"
 11. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
-ampd register-chain-support "[service name]" $CHAIN
+ampd register-chain-support "$SERVICE_NAME" $CHAIN
 ```
 
 12. Create genesis verifier set
