@@ -1,6 +1,7 @@
 const { Command } = require('commander');
 const { mainProcessor, getMultisigProof, broadcastTxBlob } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
+const { printError } = require('../common');
 
 async function broadcast(config, _wallet, client, chain, options, args) {
     const { status } = await getMultisigProof(config.axelar, chain.axelarId, args.multisigSessionId, 'XrplMultisigProver');
