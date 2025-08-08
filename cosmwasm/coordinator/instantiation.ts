@@ -2,9 +2,8 @@ import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import * as crypto from 'crypto';
 
-import { printError, printInfo, printWarn, prompt } from '../../common';
-import { encodeExecuteContractProposal, prepareClient, prepareWallet, submitProposal } from '../utils';
-import { CodeIdUtils } from './code-id-utils';
+import { printInfo, prompt } from '../../common';
+import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
 import { CONTRACTS_TO_HANDLE, DEFAULTS } from './constants';
 import { RetryManager } from './retry';
@@ -12,40 +11,27 @@ import type { CoordinatorOptions, InstantiateChainContractsMsg, WalletAndClient 
 
 export class InstantiationManager {
     public configManager: ConfigManager;
-    public codeIdUtils: CodeIdUtils;
 
     constructor(configManager: ConfigManager) {
         this.configManager = configManager;
-        this.codeIdUtils = new CodeIdUtils(configManager);
     }
 
     public async instantiateChainContracts(chainName: string, options: CoordinatorOptions): Promise<void> {
-        try {
-            printInfo(`Instantiating chain contracts for ${chainName}...`);
-            printInfo(`Environment: ${this.configManager.getEnvironment()}`);
+        printInfo(`Instantiating chain contracts for ${chainName}...`);
+        printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-            const { wallet, client } = await this.prepareWalletAndClient(options);
+        const { wallet, client } = await this.prepareWalletAndClient(options);
 
-            await this.codeIdUtils.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
-
-            const result = await this.executeMessageViaGovernance(chainName, options, client, wallet);
-            const deploymentName = result.deploymentName;
-            const proposalId = result.proposalId;
-
-            printInfo(`Chain contracts instantiation for ${chainName} completed successfully!`);
-            printInfo(`Deployment name: ${deploymentName}`);
-            if (proposalId) {
-                printInfo(`Proposal ID: ${proposalId}`);
-            }
-        } catch (error) {
-            printError('Error in InstantiationManager:', (error as Error).message);
-            throw error;
+        if (prompt('Are the deployment proposals executed?', options.yes)) {
+            printInfo('Deployment proposals are not finished yet, please wait for them to be executed');
+            return;
         }
+
+        await this.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
+        await this.executeMessageViaGovernance(chainName, options, client, wallet);
     }
 
     private constructExecuteMessage(chainName: string, options: CoordinatorOptions, deploymentName: string): InstantiateChainContractsMsg {
-        printInfo(`Constructing execute message for chain: ${chainName}`);
-
         const chainConfig = this.configManager.getChainConfig(chainName);
 
         let salt: string;
@@ -62,28 +48,14 @@ export class InstantiationManager {
 
         const governanceAddress = options.governanceAddress || null;
         const serviceName = options.serviceName || DEFAULTS.serviceName;
-
-        // Fix: Add error handling for Rewards contract address lookup
-        let rewardsAddress: string | null = null;
-        if (options.rewardsAddress) {
-            rewardsAddress = options.rewardsAddress;
-        } else {
-            try {
-                rewardsAddress = this.configManager.getContractAddressFromConfig('Rewards');
-                printInfo(`Using rewards address from config: ${rewardsAddress}`);
-            } catch (error) {
-                printWarn(`Could not get rewards address from config: ${(error as Error).message}`);
-                rewardsAddress = null;
-            }
-        }
-
+        const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
         const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
         const sourceGatewayAddress = options.sourceGatewayAddress || '';
 
-        printInfo(`Using governance address: ${governanceAddress}`);
-        printInfo(`Using service name: ${serviceName}`);
-        printInfo(`Using rewards address: ${rewardsAddress || 'not configured'}`);
-        printInfo(`Using source gateway address: ${sourceGatewayAddress}`);
+        printInfo(`Governance address: ${governanceAddress}`);
+        printInfo(`Service name: ${serviceName}`);
+        printInfo(`Rewards address: ${rewardsAddress}`);
+        printInfo(`Source gateway address: ${sourceGatewayAddress}`);
 
         const gatewayCodeId: number = this.configManager.getContractConfig('Gateway').codeId;
         const verifierCodeId: number = this.configManager.getContractConfig('VotingVerifier').codeId;
@@ -166,13 +138,14 @@ export class InstantiationManager {
         options: CoordinatorOptions,
         client: SigningCosmWasmClient,
         wallet: DirectSecp256k1HdWallet,
-    ): Promise<{ deploymentName: string; proposalId: string }> {
+    ): Promise<void> {
         printInfo('Executing message via governance proposal...');
 
         const deploymentName = this.generateDeploymentName(chainName);
         const message = this.constructExecuteMessage(chainName, options, deploymentName);
         const messageJson = JSON.stringify(message, null, 2);
 
+        printInfo(`Message: ${messageJson}`);
         printInfo(`Deployment name: ${deploymentName}`);
 
         const title = options.title || `Instantiate Chain Contracts for ${chainName}`;
@@ -194,7 +167,7 @@ export class InstantiationManager {
 
         if (prompt('Proceed with proposal submission?', options.yes)) {
             printInfo('Proposal submission cancelled');
-            throw new Error('Proposal submission cancelled');
+            return;
         }
 
         printInfo('Submitting proposal...');
@@ -207,7 +180,9 @@ export class InstantiationManager {
         this.storeChainSpecificParams(chainName, options, deploymentName, proposalId);
         this.configManager.saveConfig();
 
-        return { deploymentName, proposalId };
+        printInfo(`Chain contracts instantiation for ${chainName} completed successfully!`);
+        printInfo(`Deployment name: ${deploymentName}`);
+        printInfo(`Proposal ID: ${proposalId}`);
     }
 
     private storeChainSpecificParams(chainName: string, options: CoordinatorOptions, deploymentName?: string, proposalId?: string): void {
@@ -216,18 +191,7 @@ export class InstantiationManager {
         const chainConfig = this.configManager.getChainConfig(chainName);
         const governanceAddress = options.governanceAddress || this.configManager.getDefaultGovernanceAddress();
         const serviceName = options.serviceName || DEFAULTS.serviceName;
-
-        let rewardsAddress: string | null = null;
-        if (options.rewardsAddress) {
-            rewardsAddress = options.rewardsAddress;
-        } else {
-            try {
-                rewardsAddress = this.configManager.getContractAddressFromConfig('Rewards');
-            } catch (error) {
-                printWarn(`Could not get rewards address from config: ${(error as Error).message}`);
-                rewardsAddress = null;
-            }
-        }
+        const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
 
         const sourceGatewayAddress = options.sourceGatewayAddress || '';
 
@@ -309,6 +273,39 @@ export class InstantiationManager {
 
     private generateSalt(): string {
         return crypto.randomBytes(32).toString('hex');
+    }
+
+    /**
+     * Fetches and updates code IDs from proposals for all contracts that need them
+     */
+    public async fetchAndUpdateCodeIdsFromProposals(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
+        printInfo('Fetching and updating code IDs from proposals...');
+
+        for (const contractName of contractsToUpdate) {
+            const contractConfig = this.configManager.getContractConfig(contractName);
+
+            if (contractConfig.storeCodeProposalId && contractConfig.storeCodeProposalCodeHash) {
+                printInfo(`Found proposal data for ${contractName}, fetching latest code ID from chain...`);
+
+                const contractBaseConfig = {
+                    storeCodeProposalCodeHash: contractConfig.storeCodeProposalCodeHash,
+                };
+
+                try {
+                    const codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
+                    printInfo(`Successfully fetched code ID ${codeId} for ${contractName} from chain`);
+
+                    this.configManager.updateContractCodeId(contractName, codeId);
+                    printInfo(`Updated ${contractName} code ID in config: ${codeId}`);
+                } catch (error) {
+                    printInfo(`Failed to fetch code ID for ${contractName} from chain: ${(error as Error).message}`);
+                    if (contractConfig.codeId) {
+                        printInfo(`Using existing code ID from config as fallback: ${contractConfig.codeId}`);
+                        this.configManager.updateContractCodeId(contractName, contractConfig.codeId);
+                    }
+                }
+            }
+        }
     }
 
     private async prepareWalletAndClient(options: CoordinatorOptions): Promise<WalletAndClient> {

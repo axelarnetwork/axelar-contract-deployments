@@ -1,4 +1,4 @@
-import { printError, printInfo, prompt } from '../../common';
+import { printInfo, prompt } from '../../common';
 import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
 import { CONTRACTS_TO_HANDLE } from './constants';
@@ -13,76 +13,63 @@ export class DeploymentManager {
     }
 
     public async deployContract(contractName: string, options: CoordinatorOptions): Promise<void> {
-        try {
-            printInfo(`Deploying ${contractName} contract...`);
+        printInfo(`Deploying ${contractName} contract...`);
 
-            initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
+        initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-            const processedOptions = this.configManager.processOptions(options);
-            const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
-            const contractCodePath = await getContractCodePath(processedOptions, contractName);
+        const processedOptions = this.configManager.processOptions(options);
+        const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
+        const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
-            printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
+        printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
 
-            if (prompt(`Proceed with ${contractName} deployment?`, options.yes)) {
-                printInfo(`${contractName} deployment cancelled`);
-                return;
-            }
-
-            printInfo(`Submitting governance proposal for ${contractName}...`);
-
-            const title = options.title || `Store Code for ${contractName}`;
-            const description = options.description || `Store ${contractName} contract code on Axelar`;
-
-            const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
-            const accounts = await wallet.getAccounts();
-            const senderAddress = accounts[0].address;
-            const instantiateAddresses = [coordinatorAddress, senderAddress];
-
-            printInfo(`Setting instantiate permissions for ${contractName} with addresses: ${instantiateAddresses.join(', ')}`);
-
-            const proposalId = await RetryManager.withRetry(() =>
-                submitProposal(
-                    client,
-                    wallet,
-                    this.configManager.getFullConfig(),
-                    processedOptions,
-                    encodeStoreCodeProposal({
-                        ...processedOptions,
-                        contractName,
-                        contractCodePath,
-                        title,
-                        description,
-                        instantiateAddresses,
-                    }),
-                ),
-            );
-
-            printInfo(`Submitted governance proposal for ${contractName} with proposalId: ${proposalId}`);
-
-            this.configManager.storeDeploymentInfo(contractName, proposalId, contractCodePath);
-            this.configManager.saveConfig();
-        } catch (error) {
-            printError('Error in DeploymentManager:', (error as Error).message);
-            throw error;
+        if (prompt(`Proceed with ${contractName} deployment?`, options.yes)) {
+            printInfo(`${contractName} deployment cancelled`);
+            return;
         }
+
+        printInfo(`Submitting governance proposal for ${contractName}...`);
+
+        const title = options.title || `Store Code for ${contractName}`;
+        const description = options.description || `Store ${contractName} contract code on Axelar`;
+
+        const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
+        const accounts = await wallet.getAccounts();
+        const senderAddress = accounts[0].address;
+        const instantiateAddresses = [coordinatorAddress, senderAddress];
+
+        printInfo(`Setting instantiate permissions for ${contractName} with addresses: ${instantiateAddresses.join(', ')}`);
+
+        const proposalId = await RetryManager.withRetry(() =>
+            submitProposal(
+                client,
+                wallet,
+                this.configManager.getFullConfig(),
+                processedOptions,
+                encodeStoreCodeProposal({
+                    ...processedOptions,
+                    contractName,
+                    contractCodePath,
+                    title,
+                    description,
+                    instantiateAddresses,
+                }),
+            ),
+        );
+
+        printInfo(`Submitted governance proposal for ${contractName} with proposalId: ${proposalId}`);
+
+        this.configManager.storeDeploymentInfo(contractName, proposalId, contractCodePath);
+        this.configManager.saveConfig();
     }
 
     public async deployContracts(options: CoordinatorOptions): Promise<void> {
-        try {
-            printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
-            printInfo(`Environment: ${this.configManager.getEnvironment()}`);
+        printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
+        printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-            for (const contractName of CONTRACTS_TO_HANDLE) {
-                printInfo(`\n--- Deploying ${contractName} ---`);
-                await this.deployContract(contractName, options);
-                printInfo(`--- ${contractName} deployment completed ---\n`);
-            }
-
-            printInfo('Deployment information has been stored in the config file.');
-        } catch (error) {
-            printError('Error in DeploymentManager:', (error as Error).message);
-            throw error;
+        for (const contractName of CONTRACTS_TO_HANDLE) {
+            printInfo(`\n--- Deploying ${contractName} ---`);
+            await this.deployContract(contractName, options);
         }
     }
 
