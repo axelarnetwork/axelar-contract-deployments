@@ -675,7 +675,7 @@ const getChains = (config, chainNames, skipChains, startFromChain) => {
     const scliedChains = startIndex === -1 ? chains : chains.slice(startIndex);
     const evmChains = scliedChains.filter(([_key, chain]) => chain.chainType === 'evm');
     const pickedEvmChains = evmChains.filter(([key, _chain]) => parsedChainNames.has(key));
-    const pickecChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
+    const pickedChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
 
     if (pickecChainsWithoutSkipped.length === 0) {
         throw new Error('No valid chains found');
@@ -789,7 +789,7 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             callback();
         },
     });
-    const processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
+    return processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
@@ -799,7 +799,6 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
         process.stdout.write(`${loggerOutput}\n`);
         return { result, loggerError };
     });
-    return processCommandAsyncTask;
 };
 
 function getConfigByChainId(chainId, config) {
