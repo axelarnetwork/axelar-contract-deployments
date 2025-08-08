@@ -337,24 +337,6 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                 };
                 return await isAllowed(client, keypair, chain, deploy_remote_interchain_token, options);
             }
-            case 'send_interchain_transfer': {
-                return { skipped: true, reason: 'requires an account with owned Coin<T>' };
-            }
-            case 'receive_interchain_transfer': {
-                return { skipped: true, reason: 'requires an account with owned Coin<T>' };
-            }
-            case 'receive_interchain_transfer_with_data': {
-                return { skipped: true, reason: 'requires an account with owned Coin<T>' };
-            }
-            case 'receive_deploy_interchain_token': {
-                return { skipped: true, reason: 'requires an axelar_gateway::channel::ApprovedMessage' };
-            }
-            case 'receive_link_coin': {
-                return { skipped: true, reason: 'requires an axelar_gateway::channel::ApprovedMessage' };
-            }
-            case 'give_unregistered_coin': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
             case 'give_unlinked_coin': {
                 const give_unlinked_coin = (tx) => {
                     const tokenIdObject = tx.moveCall({
@@ -382,18 +364,6 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                 };
                 return await isAllowed(client, keypair, chain, give_unlinked_coin, options);
             }
-            case 'remove_unlinked_coin': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
-            case 'mint_as_distributor': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
-            case 'mint_to_as_distributor': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
-            case 'burn_as_distributor': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
             case 'add_trusted_chains': {
                 const add_trusted_chains = (tx) => {
                     tx.moveCall({
@@ -411,9 +381,6 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                     });
                 };
                 return await isAllowed(client, keypair, chain, remove_trusted_chains, options);
-            }
-            case 'register_transaction': {
-                return { skipped: true, reason: 'requires a valid relayer_discovery::transaction::Transaction' };
             }
             case 'set_flow_limit': {
                 const set_flow_limit = (tx) => {
@@ -516,9 +483,6 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                 };
                 return await isAllowed(client, keypair, chain, set_flow_limit_as_token_operator, options);
             }
-            case 'transfer_distributorship': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
             case 'transfer_operatorship': {
                 const transfer_operatorship = (tx) => {
                     const coinManagement = tx.moveCall({
@@ -562,12 +526,6 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                 };
                 return await isAllowed(client, keypair, chain, transfer_operatorship, options);
             }
-            case 'remove_treasury_cap': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
-            case 'restore_treasury_cap': {
-                return { skipped: true, reason: 'requires a valid TreasuryCap' };
-            }
             case 'allow_function': {
                 const allow_function = (tx) => {
                     tx.moveCall({
@@ -605,6 +563,29 @@ async function mockItsFunction(keypair, client, options, chain, itsConfig, fnNam
                     });
                 };
                 return await isAllowed(client, keypair, chain, migrate_coin_metadata, options);
+            }
+            // Validation is skipped for the following fns that would require gas
+            case 'send_interchain_transfer':
+            case 'receive_interchain_transfer':
+            case 'receive_interchain_transfer_with_data': {
+                return { skipped: true, reason: 'requires an account with owned Coin<T>' };
+            }
+            case 'receive_deploy_interchain_token':
+            case 'receive_link_coin': {
+                return { skipped: true, reason: 'requires an axelar_gateway::channel::ApprovedMessage' };
+            }
+            case 'register_transaction': {
+                return { skipped: true, reason: 'requires a valid relayer_discovery::transaction::Transaction' };
+            }
+            case 'remove_unlinked_coin':
+            case 'mint_as_distributor':
+            case 'mint_to_as_distributor':
+            case 'burn_as_distributor':
+            case 'give_unregistered_coin':
+            case 'transfer_distributorship':
+            case 'remove_treasury_cap':
+            case 'restore_treasury_cap': {
+                return { skipped: true, reason: 'requires a valid TreasuryCap' };
             }
             default: {
                 return false;

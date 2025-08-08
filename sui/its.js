@@ -674,7 +674,7 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
                 printInfo(`Successfully validated ${successes.length} functions`, successes);
                 if (skipped.length)
                     printInfo(
-                        `Validation was skipped for ${skipped.length} functions for validations that would have required using gas`,
+                        `Validation was skipped for ${skipped.length} functions that would have required using gas`,
                         skipped,
                         chalk.yellow,
                     );
