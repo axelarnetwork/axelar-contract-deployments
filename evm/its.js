@@ -613,7 +613,7 @@ async function processCommand(config, chain, chains, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
+    return mainProcessor(options, (config, chain, chains, options) => processCommand(config, chain, chains, action, options));
 }
 
 if (require.main === module) {
