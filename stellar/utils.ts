@@ -249,7 +249,7 @@ async function broadcast(operation, wallet, chain, action, options: Options, sim
 }
 
 async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
-    const server = new Horizon.Server(chain.horizonRpc);
+    const server = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
 
     try {
         const account = await server.loadAccount(wallet.publicKey());
