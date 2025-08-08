@@ -334,7 +334,7 @@ async function processCommand(command, chain, args, options) {
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     await processor(command, chain, args, options);
     saveConfig(config, options.env);
 }
@@ -411,7 +411,7 @@ if (require.main === module) {
         .addOption(new Option('--tokenId <tokenId>', 'Token ID').default(hexlify(randomBytes(32))))
         .action((sourceChain, name, symbol, decimals, options) => {
             const config = loadConfig(options.env);
-            const chain = getChainConfig(config, options.chainName);
+            const chain = getChainConfig(config.chains, options.chainName);
             printReceiveDeploymentInfo(chain.contracts, [sourceChain, name, symbol, decimals], options);
         });
 
@@ -422,7 +422,7 @@ if (require.main === module) {
         .addOption(new Option('--itsBytes <itsBytes>', 'InterchainTokenService Bytes').default(ethers.constants.HashZero))
         .action((sourceChain, symbol, sourceAddress, amount, options) => {
             const config = loadConfig(options.env);
-            const chain = getChainConfig(config, options.chainName);
+            const chain = getChainConfig(config.chains, options.chainName);
             printReceiveTransferInfo(chain.contracts, [sourceChain, symbol, sourceAddress, amount], options);
         });
 

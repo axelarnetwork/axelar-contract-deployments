@@ -1,11 +1,13 @@
 mod broadcast;
 mod combine;
 mod config;
+mod deploy;
 mod gas_service;
 mod gateway;
 mod generate;
 mod governance;
 mod its;
+mod memo;
 mod misc;
 mod multisig_prover_types;
 mod send;
@@ -22,7 +24,7 @@ use combine::CombineArgs;
 use dotenvy::dotenv;
 use eyre::eyre;
 use generate::GenerateArgs;
-use send::{sign_and_send_transactions, SendArgs};
+use send::{SendArgs, sign_and_send_transactions};
 use sign::SignArgs;
 use solana_clap_v3_utils::input_parsers::parse_url_or_moniker;
 use solana_clap_v3_utils::keypair::signer_from_path;
@@ -32,6 +34,7 @@ use types::{AxelarNetwork, SerializableSolanaTransaction};
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
+use crate::deploy::UpgradeArgs;
 use crate::generate::generate_from_transactions;
 use crate::misc::do_misc;
 use crate::sign::sign_solana_transaction;
@@ -75,6 +78,9 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Deploys a Solana program that is present in the environment JSON file
+    Upgrade(UpgradeArgs),
+
     /// Build and send a transaction to the Solana network.
     Send(SendCommandArgs),
 
@@ -102,10 +108,11 @@ enum Command {
 struct SendCommandArgs {
     /// Signing key identifier (path for keypair file or usb ledger). Defaults to the keypair
     /// set in the Solana CLI config.
-    #[clap(long, env = "PRIVATE_KEY")]
+    #[clap(long, env = "SOLANA_PRIVATE_KEY")]
     fee_payer: Option<String>,
 
     /// List of signing key identifiers (path for keypair file or usb ledger)
+    #[clap(long, short)]
     signer_keys: Vec<String>,
 
     #[clap(subcommand)]
@@ -151,6 +158,10 @@ enum InstructionSubcommand {
     /// Commands to interface with the InterchainGovernance program on Solana
     #[clap(subcommand)]
     Governance(governance::Commands),
+
+    /// Commands to interface with the AxelarMemo program on Solana
+    #[clap(subcommand)]
+    Memo(memo::Commands),
 }
 
 #[derive(Parser, Debug)]
@@ -213,6 +224,10 @@ enum QueryInstructionSubcommand {
     /// Commands to query data from the AxelarGateway program on Solana
     #[clap(subcommand)]
     Gateway(gateway::QueryCommands),
+
+    // Commands to query data from InterchainTokenService program on Solana
+    #[clap(subcommand)]
+    Its(its::QueryCommands),
 }
 
 #[tokio::main]
@@ -258,6 +273,10 @@ async fn run() -> eyre::Result<()> {
     )?;
 
     match cli.command {
+        Command::Upgrade(deploy_args) => {
+            deploy::upgrade_program(deploy_args, config)?;
+        }
+
         Command::Send(args) => {
             let key_path = args
                 .fee_payer
@@ -320,6 +339,9 @@ async fn run() -> eyre::Result<()> {
             QueryInstructionSubcommand::Gateway(command) => {
                 gateway::query(command, &config)?;
             }
+            QueryInstructionSubcommand::Its(command) => {
+                its::query(command, &config)?;
+            }
         },
     }
     Ok(())
@@ -341,5 +363,6 @@ async fn build_transaction(
         InstructionSubcommand::Governance(command) => {
             governance::build_transaction(fee_payer, command, config)
         }
+        InstructionSubcommand::Memo(command) => memo::build_transaction(fee_payer, command, config),
     }
 }

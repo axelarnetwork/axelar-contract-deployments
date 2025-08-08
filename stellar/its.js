@@ -31,7 +31,7 @@ const {
 const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
-    const trustedChains = parseTrustedChains(config, args);
+    const trustedChains = parseTrustedChains(config.chains, args);
 
     for (const trustedChain of trustedChains) {
         printInfo(action, trustedChain);
@@ -167,7 +167,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
         isValidNumber: { gasAmount },
     });
 
-    const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
+    const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
 
     const operation = contract.call(
@@ -532,7 +532,7 @@ async function transferTokenAdmin(wallet, _config, chain, contract, args, option
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {

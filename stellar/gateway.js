@@ -121,7 +121,7 @@ async function rotate(wallet, config, chain, contractConfig, args, options) {
 async function submitProof(wallet, config, chain, contractConfig, args, options) {
     const contract = new Contract(contractConfig.address);
     const [multisigSessionId] = args;
-    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+    const { payload, status } = await getMultisigProof(config.axelar, chain.axelarId, multisigSessionId);
 
     if (!status.completed) {
         throw new Error('Multisig session not completed');
@@ -185,7 +185,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
 
 async function mainProcessor(processor, args, options) {
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
 
     const wallet = await getWallet(chain, options);
 

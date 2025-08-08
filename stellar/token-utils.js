@@ -199,7 +199,7 @@ async function mintFrom(wallet, _config, chain, _contract, args, options) {
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     if (!chain.contracts?.TokenUtils) {

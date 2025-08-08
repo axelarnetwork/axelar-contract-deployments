@@ -365,7 +365,7 @@ async function estimateCost(tx, server) {
 }
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
@@ -504,38 +504,23 @@ const getContractR2Url = (contractName, version) => {
     throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
 };
 
-function getContractArtifactPath(artifactPath, contractName) {
-    const basePath = artifactPath.slice(0, artifactPath.lastIndexOf('/') + 1);
+const getContractArtifactPath = (artifactDir, contractName) => {
+    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
     const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.optimized.wasm`;
     return basePath + fileName;
-}
-
-const getContractCodePath = async (options, contractName) => {
-    if (options && options.artifactPath) {
-        if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
-            return getContractArtifactPath(options.artifactPath, contractName);
-        }
-
-        return options.artifactPath;
-    }
-
-    if (options && options.version) {
-        const url = getContractR2Url(contractName, options.version);
-        return downloadContractCode(url, contractName, options.version);
-    }
-
-    throw new Error('Either --artifact-path or --version must be provided');
 };
 
-const getUploadContractCodePath = async (options, contractName) => {
-    if (options && options.artifactPath) return options.artifactPath;
+const getContractCodePath = async (options, contractName) => {
+    if (options && options.artifactDir) {
+        return getContractArtifactPath(options.artifactDir, contractName);
+    }
 
     if (options && options.version) {
         const url = getContractR2Url(contractName, options.version);
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-path or --version must be provided');
+    throw new Error('Either --artifact-dir or --version must be provided');
 };
 
 function isValidAddress(address) {
@@ -682,7 +667,6 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     getContractCodePath,
-    getUploadContractCodePath,
     isValidAddress,
     SUPPORTED_CONTRACTS,
     BytesToScVal,

@@ -958,7 +958,7 @@ const getExecuteContractParams = (config, options, chainName) => {
             contracts: { [contractName]: contractConfig },
         },
     } = config;
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),
@@ -980,7 +980,7 @@ const getMigrateContractParams = (config, options) => {
     const { msg, chainName } = options;
 
     const { contractConfig } = getAmplifierContractConfig(config, options);
-    const chainConfig = getChainConfig(config, chainName);
+    const chainConfig = getChainConfig(config.chains, chainName);
 
     return {
         ...getSubmitProposalParams(options),
@@ -1107,9 +1107,15 @@ const getContractR2Url = (contractName, contractVersion) => {
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
+const getContractArtifactPath = (artifactDir, contractName) => {
+    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
+    const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
+    return basePath + fileName;
+};
+
 const getContractCodePath = async (options, contractName) => {
-    if (options.artifactPath) {
-        return options.artifactPath;
+    if (options.artifactDir) {
+        return getContractArtifactPath(options.artifactDir, contractName);
     }
 
     if (options.version) {
@@ -1117,7 +1123,7 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-path or --version must be provided');
+    throw new Error('Either --artifact-dir or --version must be provided');
 };
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
