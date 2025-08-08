@@ -121,7 +121,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
     const contractName = 'InterchainTokenService';
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
-    
+
     const itsVersion = contracts.InterchainTokenService?.version;
 
     if (!interchainTokenServiceAddress) {
@@ -440,7 +440,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                         throw new Error(`No InterchainTokenService address found for chain ${trustedChain}`);
                     }
                 }
-                
+
                 for (const [trustedChain, trustedAddress] of trustedChains.map((chain, index) => [chain, trustedAddresses[index]])) {
                     const tx = await interchainTokenService.setTrustedAddress(trustedChain, trustedAddress, gasOptions);
                     await handleTx(tx, chain, interchainTokenService, action, 'TrustedAddressSet');

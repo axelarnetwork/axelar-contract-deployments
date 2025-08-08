@@ -25,6 +25,7 @@ const {
     wasEventEmitted,
     isHyperliquidChain,
     parseTrustedChains,
+    detectITSVersion,
 } = require('./utils');
 const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -61,6 +62,8 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
+    const itsVersion = detectITSVersion();
+
     const salt = options.salt ? `ITS ${options.salt}` : 'ITS';
     let proxySalt, factorySalt;
 
@@ -84,9 +87,11 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     contractConfig.salt = salt;
     contractConfig.proxySalt = proxySalt;
     contractConfig.deployer = wallet.address;
+    contractConfig.version = itsVersion;
 
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
+    itsFactoryContractConfig.version = itsVersion;
 
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
@@ -420,7 +425,12 @@ async function upgrade(_axelar, chain, _chains, options) {
         return;
     }
 
-    printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
+    const itsVersion = detectITSVersion();
+
+    printInfo(`Upgrading Interchain Token Service on ${chain.name} to version ${itsVersion}.`);
+
+    contractConfig.version = itsVersion;
+    itsFactoryContractConfig.version = itsVersion;
 
     const InterchainTokenService = getContractJSON(
         isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
