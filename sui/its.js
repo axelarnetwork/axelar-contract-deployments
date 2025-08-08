@@ -647,7 +647,7 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     const versionedId = itsConfig.objects.InterchainTokenServicev0;
     const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
     const allowedFunctions = allowedFunctionsArray[parseInt(version)];
-    const equality = JSON.stringify(allowedFunctions) == JSON.stringify(supportedFunctions);
+    const equality = JSON.stringify(allowedFunctions) === JSON.stringify(supportedFunctions);
 
     if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
     else {
