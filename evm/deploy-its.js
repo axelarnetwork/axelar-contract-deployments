@@ -429,9 +429,6 @@ async function upgrade(_axelar, chain, _chains, options) {
 
     printInfo(`Upgrading Interchain Token Service on ${chain.name} to version ${itsVersion}.`);
 
-    contractConfig.version = itsVersion;
-    itsFactoryContractConfig.version = itsVersion;
-
     const InterchainTokenService = getContractJSON(
         isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
@@ -465,6 +462,9 @@ async function upgrade(_axelar, chain, _chains, options) {
         printInfo(`Upgraded Interchain Token Service`);
     }
 
+    contractConfig.version = itsVersion;
+    itsFactoryContractConfig.version = itsVersion;
+    
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
     const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
