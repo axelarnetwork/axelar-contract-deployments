@@ -87,11 +87,9 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     contractConfig.salt = salt;
     contractConfig.proxySalt = proxySalt;
     contractConfig.deployer = wallet.address;
-    contractConfig.version = itsVersion;
 
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
-    itsFactoryContractConfig.version = itsVersion;
 
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
@@ -163,6 +161,9 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     if (predictOnly || prompt(`Proceed with deployment on ${chain.name}?`, yes)) {
         return;
     }
+
+    contractConfig.version = itsVersion;
+    itsFactoryContractConfig.version = itsVersion;
 
     const deployments = {
         tokenManagerDeployer: {
@@ -464,7 +465,7 @@ async function upgrade(_axelar, chain, _chains, options) {
 
     contractConfig.version = itsVersion;
     itsFactoryContractConfig.version = itsVersion;
-    
+
     const InterchainTokenFactory = getContractJSON('InterchainTokenFactory', artifactPath);
     const itsFactory = new Contract(itsFactoryContractConfig.address, InterchainTokenFactory.abi, wallet);
     const factoryCodehash = await getBytecodeHash(itsFactoryContractConfig.implementation, chain.axelarId, provider);
