@@ -177,7 +177,7 @@ const execute = async (client, wallet, config, options) => {
     await callSubmitProposal(client, wallet, config, options, proposal);
 };
 
-const registerItsChain = async (client, wallet, config, options) => {
+const processItsChainOperation = async (client, wallet, config, options, operation) => {
     if (options.itsEdgeContract && options.chains.length > 1) {
         throw new Error('Cannot use --its-edge-contract option with multiple chains.');
     }
@@ -185,7 +185,7 @@ const registerItsChain = async (client, wallet, config, options) => {
     const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
 
     if (!itsMsgTranslator) {
-        throw new Error('ItsMsgTranslator address is required for registerItsChain');
+        throw new Error(`ItsMsgTranslator address is required for ${operation}`);
     }
 
     const chains = options.chains.map((chain) => {
@@ -208,8 +208,16 @@ const registerItsChain = async (client, wallet, config, options) => {
     await execute(client, wallet, config, {
         ...options,
         contractName: 'InterchainTokenService',
-        msg: `{ "register_chains": { "chains": ${JSON.stringify(chains)} } }`,
+        msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
     });
+};
+
+const registerItsChain = async (client, wallet, config, options) => {
+    await processItsChainOperation(client, wallet, config, options, 'register');
+};
+
+const updateItsChain = async (client, wallet, config, options) => {
+    await processItsChainOperation(client, wallet, config, options, 'update');
 };
 
 const registerProtocol = async (client, wallet, config, options) => {
@@ -357,6 +365,28 @@ const programHandler = () => {
             return mainProcessor(registerItsChain, options);
         });
     addAmplifierOptions(registerItsChainCmd, { proposalOptions: true, runAs: true });
+
+    const updateItsChainCmd = program
+        .command('its-hub-update-chains')
+        .description('Submit an execute wasm contract proposal to update an InterchainTokenService chain')
+        .argument('<chains...>', 'list of chains to update on InterchainTokenService hub')
+        .addOption(
+            new Option(
+                '--its-msg-translator <itsMsgTranslator>',
+                'address for the message translation contract associated with the chain being updated on ITS Hub',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--its-edge-contract <itsEdgeContract>',
+                'address for the ITS edge contract associated with the chain being updated on ITS Hub',
+            ),
+        )
+        .action((chains, options) => {
+            options.chains = chains;
+            return mainProcessor(updateItsChain, options);
+        });
+    addAmplifierOptions(updateItsChainCmd, { proposalOptions: true, runAs: true });
 
     const registerProtocolCmd = program
         .command('register-protocol-contracts')
