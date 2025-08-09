@@ -10,7 +10,7 @@ const readlineSync = require('readline-sync');
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 const { ethers } = require('hardhat');
 const {
-    utils: { keccak256, hexlify, defaultAbiCoder },
+    utils: { keccak256, hexlify, defaultAbiCoder, isHexString },
 } = ethers;
 const { normalizeBech32 } = require('@cosmjs/encoding');
 const fetch = require('node-fetch');
@@ -331,6 +331,55 @@ function isValidStellarContract(address) {
     return StellarSdk.StrKey.isValidContract(address);
 }
 
+/// Token Manager Types supported by ITS
+/// These are the standardized token manager implementations across all chains
+const tokenManagerTypes = {
+    INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
+
+/**
+ * Validates if a token manager type is supported for link token operations on a specific chain.
+ * Different chains may have different supported token manager types for linking tokens.
+ *
+ * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
+ * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN')
+ * @returns {number} The validated token manager type value
+ * @throws {Error} If the token manager type is not valid for the specified chain type
+ */
+const validateLinkType = (chainType, type) => {
+    const tokenManagerType = tokenManagerTypes[type];
+
+    if (tokenManagerType === undefined) {
+        throw new Error(`Invalid token manager type: ${type}. Must be one of: ${Object.keys(tokenManagerTypes).join(', ')}`);
+    }
+
+    const chainRules = {
+        evm: {
+            validate: (type) => ![tokenManagerTypes.INTERCHAIN_TOKEN].includes(type),
+            errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
+        },
+        stellar: {
+            validate: (type) => [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN].includes(type),
+            errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
+        },
+    };
+
+    const rules = chainRules[chainType];
+    if (!rules) {
+        throw new Error(`Unsupported chain type: ${chainType}. Supported types: ${Object.keys(chainRules).join(', ')}`);
+    }
+
+    if (!rules.validate(tokenManagerType)) {
+        throw new Error(`Invalid token manager type ${type} for chain type ${chainType}: ${rules.errorMsg}`);
+    }
+
+    return tokenManagerType;
+};
+
 /**
  * Basic validatation to check if the provided string *might* be a valid SVM
  * address. One needs to ensure that it's 32 bytes long after decoding.
@@ -358,6 +407,7 @@ const validationFunctions = {
     isValidStellarAccount,
     isValidStellarContract,
     isValidSvmAddressFormat,
+    isHexString,
 };
 
 function validateParameters(parameters) {
@@ -677,6 +727,35 @@ const getProposalConfig = (config, env, key) => {
     }
 };
 
+/**
+ * Validates if a chain name is valid in the config.
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} chainName - The chain name to validate
+ * @throws {Error} If the chain is not valid
+ */
+function validateChainName(config, chainName) {
+    const validChain = Object.values(config.chains).some((chainObject) => chainObject.axelarId === chainName);
+
+    if (!validChain) {
+        throw new Error(`Invalid destination chain: ${chainName}`);
+    }
+}
+
+/**
+ * Validates if a destination chain is valid (allows empty string).
+ *
+ * @param {Object} config - The configuration object
+ * @param {string} destinationChain - The destination chain to validate
+ */
+function validateDestinationChain(config, destinationChain) {
+    if (destinationChain === '') {
+        return;
+    }
+
+    validateChainName(config, destinationChain);
+}
+
 module.exports = {
     loadConfig,
     saveConfig,
@@ -698,6 +777,7 @@ module.exports = {
     isNumberArray,
     isNonEmptyStringArray,
     isValidTimeFormat,
+    isHexString,
     copyObject,
     httpGet,
     httpPost,
@@ -736,5 +816,9 @@ module.exports = {
     asciiToBytes,
     encodeITSDestination,
     getProposalConfig,
+    tokenManagerTypes,
+    validateLinkType,
+    validateChainName,
+    validateDestinationChain,
     itsHubContractAddress,
 };
