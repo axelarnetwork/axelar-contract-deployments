@@ -229,6 +229,15 @@ policy should be one of the following:
 
 Provide `--txFilePath` with `--offline` to generate tx data file for offline signing.
 
+### Migrating Post-Upgrade
+
+After upgrading a package, state migrations (e.g. for [versioned](https://docs.sui.io/references/framework/sui/versioned) packages) can be called using the `migrate` command.
+
+
+```bash
+ts-node sui/deploy-contract.js migrate AxelarGateway
+```
+
 ### Multisig Operations
 
 To create a Multisig, follow the documentation [here](https://docs.sui.io/guides/developer/cryptography/multisig).
@@ -430,6 +439,84 @@ Remove trusted chains
 
 ```bash
 ts-node sui/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
+```
+
+## Registering Coins
+
+### Register Coin from Info (symbol, name and decimals)
+
+```bash
+ts-node sui/its.js register-coin-from-info <symbol> <name> <decimals>
+```
+
+### Register Coin from Metadata 
+
+(see: [sui::coin::CoinMetadata](https://docs.sui.io/references/sui-api/sui-graphql/reference/types/objects/coin-metadata))
+
+```bash
+ts-node sui/its.js register-coin-from-metadata <symbol> <name> <decimals>
+```
+
+### Register Custom Coin
+
+If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the registration transaction will automatically be created.
+
+```bash
+ts-node sui/its.js register-custom-coin <symbol> <name> <decimals>
+```
+
+## Migrating Legacy Coin Registrations
+
+### Migrate Coin Metadata
+
+_Added in v1 to fix coins that were not displaying correctly in wallet softwares. Only callable for coins with metadata owned by ITS. Will [publicly freeze](https://docs.sui.io/references/framework/sui/transfer#sui_transfer_public_freeze_object) a coin's metadata, making it a publicly shared object._
+
+```bash
+ts-node sui/its.js migrate-coin-metadata <symbol>
+```
+
+## Coin Linking
+
+### Give Unlinked Coin
+
+Deploys a coin on Sui, registers it as custom coin and gives its treasury capability to ITS. Treasury capability will be reclaimable if the `--treasuryCapReclaimer` flag is passed to the command options.
+
+```bash
+ts-node sui/its give-unlinked-coin [options] <symbol> <name> <decimals>
+```
+
+### Remove Unlinked Coin
+
+Removes a coin from ITS and returns its TreasuryCap to the caller. Caller must own the coin's TreasuryCapReclaimer.
+
+```bash
+ts-node sui/its remove-unlinked-coin [options] <symbol>
+```
+
+### Link Coin
+
+Deploys a source coin and links it with a destination chain coin. If a `channel` id is present in the `options` array (e.g. `--channel <channel>`) it will be used, otherwise a new `channel` will be created and transferred to the sender. A `salt` for the coin registration and linking transactions will automatically be created.
+
+```bash
+ts-node sui/its link-coin <symbol> <name> <decimals> <destinationChain> <destinationAddress>
+```
+
+## Treasury Management
+
+### Remove Treasury Cap
+
+Transfers the coin's `TreasuryCap` to the coin deployer and reclaims mint/burn permission from ITS.
+
+```bash
+ts-node sui/its remove-treasury-cap [options] <symbol>
+```
+
+### Restore Treasury Cap
+
+Restore a coin's TreasuryCap to ITS after calling remove-treasury-cap, giving mint/burn permission back to ITS.
+
+```bash
+ts-node sui/its restore-treasury-cap [options] <symbol>
 ```
 
 ## Sui Contract Verification
