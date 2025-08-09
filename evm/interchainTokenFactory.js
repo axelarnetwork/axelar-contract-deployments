@@ -18,12 +18,23 @@ const {
     printWalletInfo,
     printTokenInfo,
     validateChain,
+    isTrustedChain,
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 const { getDeploymentSalt, handleTx } = require('./its');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenFactory = getContractJSON('IInterchainTokenFactory');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
+
+// For version 2.1.1, use the contracts from the specific package
+const IInterchainTokenFactoryV211 = getContractJSON(
+    'IInterchainTokenFactory',
+    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenFactory.sol/IInterchainTokenFactory.json',
+);
+const IInterchainTokenServiceV211 = getContractJSON(
+    'IInterchainTokenService',
+    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json',
+);
 
 async function processCommand(_axelar, chain, chains, options) {
     const { privateKey, address, action, yes } = options;
@@ -32,6 +43,7 @@ async function processCommand(_axelar, chain, chains, options) {
     const contractName = 'InterchainTokenFactory';
     const interchainTokenFactoryAddress = address || contracts.InterchainTokenFactory?.address;
     const interchainTokenServiceAddress = contracts.InterchainTokenService?.address;
+    const itsVersion = contracts.InterchainTokenService?.version;
 
     validateParameters({ isValidAddress: { interchainTokenFactoryAddress, interchainTokenServiceAddress } });
 
@@ -45,8 +57,15 @@ async function processCommand(_axelar, chain, chains, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', interchainTokenFactoryAddress);
 
-    const interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactory.abi, wallet);
-    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+    let interchainTokenFactory;
+    let interchainTokenService;
+    if (itsVersion === '2.1.1') {
+        interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactoryV211.abi, wallet);
+        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenServiceV211.abi, wallet);
+    } else {
+        interchainTokenFactory = new Contract(interchainTokenFactoryAddress, IInterchainTokenFactory.abi, wallet);
+        interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
+    }
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -169,7 +188,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 isValidNumber: { gasValue },
             });
 
-            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
+            if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
@@ -265,7 +284,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            if (!(await interchainTokenService.isTrustedChain(destinationChain))) {
+            if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
