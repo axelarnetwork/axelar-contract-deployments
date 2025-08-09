@@ -524,11 +524,13 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
+    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                VotingVerifier: {
+                [verifierContract]: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -671,6 +673,8 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
+    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+
     const {
         axelar: { contracts, chainId: axelarChainId },
     } = config;
@@ -679,7 +683,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        VotingVerifier: {
+        [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
         Gateway: {
@@ -1159,6 +1163,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
+    StacksVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1175,6 +1183,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
+    StacksMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeAxelarnetGatewayInstantiateMsg,
@@ -1186,6 +1198,10 @@ const CONTRACTS = {
     ItsAbiTranslator: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
+    },
+    ItsStacksTranslator: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: () => ({}),
     },
 };
 

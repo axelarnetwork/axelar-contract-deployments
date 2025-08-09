@@ -2488,6 +2488,92 @@
           "version": "2.1.1"
         }
       }
+    },
+    "stacks": {
+      "name": "Stacks",
+      "axelarId": "stacks",
+      "rpc": "https://api.testnet.hiro.so",
+      "tokenSymbol": "STX",
+      "networkType": "testnet",
+      "chainType": "stacks",
+      "finality": "6",
+      "decimals": 6,
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Stacks Explorer",
+        "url": "https://explorer.hiro.so/?chain=testnet"
+      },
+      "contracts": {
+        "ClarityStacks": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.clarity-stacks",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "GasStorage": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gas-storage",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "Traits": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.traits",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "GasImpl": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gas-impl",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH",
+          "version": "1.2.0"
+        },
+        "GatewayStorage": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gateway-storage",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "GasService": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gas-service",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "GatewayImpl": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gateway-impl",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH",
+          "version": "1.2.0"
+        },
+        "Gateway": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gateway",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "Governance": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.governance",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "InterchainTokenServiceStorage": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.interchain-token-service-storage",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "InterchainTokenFactory": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.interchain-token-factory",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "InterchainTokenService": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.interchain-token-service",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "InterchainTokenFactoryImpl": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.interchain-token-factory-impl",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH",
+          "version": "1.2.0"
+        },
+        "VerifyOnchain": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.verify-onchain",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        },
+        "InterchainTokenServiceImpl": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.interchain-token-service-impl",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH",
+          "version": "1.2.0"
+        },
+        "NativeInterchainToken": {
+          "address": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.native-interchain-token",
+          "deployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
+        }
+      },
+      "initialContractsDeployer": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH"
     }
   },
   "axelar": {
@@ -2974,6 +3060,38 @@
         "codeId": 62,
         "instantiateProposalId": "241",
         "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
+      },
+      "ItsStacksTranslator": {
+        "stacks": {}
+      },
+      "StacksVotingVerifier": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gateway-storage",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 6,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stacks"
+        }
+      },
+      "StacksMultisigProver": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 1,
+          "encoder": "stacks",
+          "keyType": "ecdsa"
+        }
       }
     },
     "axelarId": "axelar",
