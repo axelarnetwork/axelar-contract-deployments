@@ -642,57 +642,45 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  * Retrieves and filters a list of EVM chains based on specified criteria.
  *
  * This function processes chain selection based on various input parameters and returns
- * a filtered list of chain objects that meet the specified criteria. It supports
- * case-insensitive chain name matching and validates that all chains are EVM-compatible.
+ * a filtered list of chain objects that meet the specified criteria.
  *
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    const normalizeChainName = (name) => name.trim().toLowerCase();
+    const allEVMChains = Object.keys(config.chains).filter((name) => config.chains[name].chainType === 'evm');
+    const chainsToSkip = new Set(skipChains ? skipChains.split(',') : []);
+    let chains = chainNames === 'all' ? allEVMChains : chainNames.split(',') || [];
 
-    if (!chainNames) {
-        throw new Error('Chain names were not provided');
-    }
-
-    let chains = Object.entries(config.chains)
-        .filter(([_key, chain]) => !chain.chainType || chain.chainType === 'evm')
-        .map(([key, chain]) => [normalizeChainName(key), chain]);
-
-    let validChainNames = new Set(chains.map(([name, _chain]) => name));
-
+    const startFromIndex = chains.findIndex((chainName) => chainName === startFromChain);
     if (startFromChain) {
-        const startIndex = chains.findIndex(([name, _chain]) => name === normalizeChainName(startFromChain));
-        if (startIndex === -1) {
-            throw new Error(`Chain ${startFromChain} is not in the selected chain list`);
+        if (startFromIndex === -1) {
+            throw new Error(`Chain to start from "${startFromChain}" not found in the list of chains to process`);
         }
-        chains = chains.slice(startIndex);
+        chains = chains.slice(startFromIndex);
     }
 
-    const normChainNames = new Set(chainNames?.split(',').map(normalizeChainName));
-    const chainsToSkip = new Set(skipChains?.split(',').filter(Boolean).map(normalizeChainName));
+    chains = chains.filter((chainName) => {
+        if (!config.chains[chainName]) {
+            throw new Error(`Chain "${chainName}" is not defined in the config file`);
+        }
 
-    if (skipChains) {
-        chainsToSkip.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" specified in skipChains is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => !chainsToSkip.has(name));
-    }
+        if (config.chains[chainName].chainType !== 'evm') {
+            throw new Error(`Chain "${chainName}" is not an EVM chain`);
+        }
 
-    if (chainNames !== 'all') {
-        normChainNames.forEach((name) => {
-            if (!validChainNames.has(name)) {
-                printError(`Chain "${name}" is not defined in the config file`);
-            }
-        });
-        chains = chains.filter(([name, _chain]) => normChainNames.has(name));
+        const wasRemoved = chainsToSkip.delete(chainName);
+
+        return !wasRemoved;
+    });
+
+    if (chainsToSkip.size > 0) {
+        throw new Error(`Chains to skip "${Array.from(chainsToSkip).join(',')}" not found in the list of chains to process`);
     }
 
     if (chains.length === 0) {
         throw new Error('No valid chains found');
     }
 
-    return chains.map(([_, chain]) => chain);
+    return chains.map((chainName) => config.chains[chainName]);
 };
 
 /**
@@ -719,7 +707,7 @@ const mainProcessor = async (options, processCommand, save = true) => {
     let promisedChainsResults = [];
     let results = {};
     for (const chain of chains) {
-        const chainTask = asyncChainTask(processCommand, axelar, chain, chainsDeepCopy, options);
+        const chainTask = asyncChainTask(processCommand, deepCopy(axelar), chain, deepCopy(chainsDeepCopy), options);
 
         if (options.parallel) {
             promisedChainsResults.push({ promise: chainTask, chainId: chain.axelarId });
@@ -768,18 +756,12 @@ const mainProcessor = async (options, processCommand, save = true) => {
 
     printInfo(
         'Succeeded chains',
-        `[ ${chains
-            .filter((chain) => !failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => !failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     printInfo(
         'Failed chains',
-        `[ ${chains
-            .filter((chain) => failedChains[chain.axelarId])
-            .map((chain) => chain.name)
-            .join(', ')} ]`,
+        chains.filter((chain) => failedChains[chain.axelarId]).map((chain) => chain.name),
     );
 
     if (save) {
@@ -806,22 +788,17 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
             callback();
         },
     });
-    return asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
+    const processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
             result = await processCommand(axelar, chain, chains, options);
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
-
-            if (!options.ignoreError) {
-                process.stdout.write(`${loggerOutput}\n`);
-                process.exit(1);
-            }
-        } finally {
-            process.stdout.write(`${loggerOutput}\n`);
         }
+        process.stdout.write(`${loggerOutput}\n`);
         return { result, loggerError };
     });
+    return processCommandAsyncTask;
 };
 
 function getConfigByChainId(chainId, config) {
@@ -935,7 +912,7 @@ async function getGasOptions(chain, options, contractName, defaultGasOptions = {
     validateGasOptions(gasOptions);
     gasOptions = await handleGasPriceAdjustment(chain, gasOptions);
 
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    printInfo('Gas options', gasOptions);
 
     return gasOptions;
 }
