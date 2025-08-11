@@ -288,7 +288,6 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
                 failedMigrations.push(coin);
             } else {
                 printInfo(`Migrate metadata failed for batch ${processedBatches}`, e, chalk.red);
-                currentBatch.push(coin);
                 failedMigrations = [...failedMigrations, ...currentBatch];
                 ++processedBatches;
                 currentBatch = [];
