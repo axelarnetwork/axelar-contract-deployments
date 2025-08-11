@@ -646,42 +646,41 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
  *
  */
 const getChains = (config, chainNames, skipChains, startFromChain) => {
-    if (!chainNames) {
-        throw new Error('Chain names were not provided');
+    const allEVMChains = Object.keys(config.chains).filter((name) => config.chains[name].chainType === 'evm');
+    const chainsToSkip = new Set(skipChains ? skipChains.split(',') : []);
+    let chains = chainNames === 'all' ? allEVMChains : chainNames.split(',') || [];
+
+    const startFromIndex = chains.findIndex((chainName) => chainName === startFromChain);
+    if (startFromChain) {
+        if (startFromIndex === -1) {
+            throw new Error(`Chain to start from "${startFromChain}" not found in the list of chains to process`);
+        }
+        chains = chains.slice(startFromIndex);
     }
 
-    const allChains = new Set(Object.keys(config.chains));
-    const parsedChainNames = chainNames === 'all' ? allChains : new Set(chainNames?.split(','));
-    const chainsToSkip = new Set(skipChains?.split(','));
-
-    parsedChainNames.forEach((name) => {
-        if (!allChains.has(name)) {
-            printError(`Chain to pick "${name}" is not defined in the config file`);
+    chains = chains.filter((chainName) => {
+        if (!config.chains[chainName]) {
+            throw new Error(`Chain "${chainName}" is not defined in the config file`);
         }
+
+        if (config.chains[chainName].chainType !== 'evm') {
+            throw new Error(`Chain "${chainName}" is not an EVM chain`);
+        }
+
+        const wasRemoved = chainsToSkip.delete(chainName);
+
+        return !wasRemoved;
     });
 
-    chainsToSkip.forEach((name) => {
-        if (!allChains.has(name)) {
-            printError(`Chain to skip "${name}" is not defined in the config file`);
-        }
-    });
-
-    if (startFromChain && !allChains.has(startFromChain)) {
-        printError(`Chain to start from "${startFromChain}" is not defined in the config file`);
+    if (chainsToSkip.size > 0) {
+        throw new Error(`Chains to skip "${Array.from(chainsToSkip).join(',')}" not found in the list of chains to process`);
     }
 
-    const chains = Object.entries(config.chains);
-    const startIndex = chains.findIndex(([name, _chain]) => name === startFromChain);
-    const scliedChains = startIndex === -1 ? chains : chains.slice(startIndex);
-    const evmChains = scliedChains.filter(([_key, chain]) => chain.chainType === 'evm');
-    const pickedEvmChains = evmChains.filter(([key, _chain]) => parsedChainNames.has(key));
-    const pickedChainsWithoutSkipped = pickedEvmChains.filter(([key, _chain]) => !chainsToSkip.has(key));
-
-    if (pickedChainsWithoutSkipped.length === 0) {
+    if (chains.length === 0) {
         throw new Error('No valid chains found');
     }
 
-    return pickedChainsWithoutSkipped.map(([_, chain]) => chain);
+    return chains.map((chainName) => config.chains[chainName]);
 };
 
 /**
@@ -913,7 +912,7 @@ async function getGasOptions(chain, options, contractName, defaultGasOptions = {
     validateGasOptions(gasOptions);
     gasOptions = await handleGasPriceAdjustment(chain, gasOptions);
 
-    printInfo('Gas options', JSON.stringify(gasOptions, null, 2));
+    printInfo('Gas options', gasOptions);
 
     return gasOptions;
 }
