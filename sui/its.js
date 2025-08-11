@@ -18,7 +18,6 @@ const {
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
-const { equal } = require('assert');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
