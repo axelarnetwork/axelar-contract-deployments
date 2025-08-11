@@ -60,6 +60,7 @@ const {
 } = require('@axelar-network/axelar-gmp-sdk-solidity');
 const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/deploy/CreateDeploy.sol/CreateDeploy.json');
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
+const ITSPackage = require('@axelar-network/interchain-token-service/package.json');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
@@ -1089,6 +1090,18 @@ async function printTokenInfo(tokenAddress, provider) {
     }
 }
 
+async function isTrustedChain(destinationChain, interchainTokenService, itsVersion) {
+    if (itsVersion === '2.1.1') {
+        return (await interchainTokenService.trustedAddress(destinationChain)) !== '';
+    } else {
+        return await interchainTokenService.isTrustedChain(destinationChain);
+    }
+}
+
+function detectITSVersion() {
+    return ITSPackage.version;
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1135,4 +1148,6 @@ module.exports = {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
     printTokenInfo,
+    isTrustedChain,
+    detectITSVersion,
 };

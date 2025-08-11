@@ -178,6 +178,10 @@ const execute = async (client, wallet, config, options) => {
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
+    if (options.itsEdgeContract && options.chains.length > 1) {
+        throw new Error('Cannot use --its-edge-contract option with multiple chains.');
+    }
+
     const itsMsgTranslator = options.itsMsgTranslator || config.axelar?.contracts?.ItsAbiTranslator?.address;
 
     if (!itsMsgTranslator) {
@@ -188,9 +192,11 @@ const registerItsChain = async (client, wallet, config, options) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
 
+        const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
+
         return {
             chain: chainConfig.axelarId,
-            its_edge_contract: itsEdgeContract(chainConfig),
+            its_edge_contract: itsEdgeContractAddress,
             msg_translator: itsMsgTranslator,
             truncation: {
                 max_uint_bits: maxUintBits,
@@ -338,6 +344,12 @@ const programHandler = () => {
             new Option(
                 '--its-msg-translator <itsMsgTranslator>',
                 'address for the message translation contract associated with the chain being registered on ITS Hub',
+            ),
+        )
+        .addOption(
+            new Option(
+                '--its-edge-contract <itsEdgeContract>',
+                'address for the ITS edge contract associated with the chain being registered on ITS Hub',
             ),
         )
         .action((chains, options) => {
