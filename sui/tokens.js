@@ -175,7 +175,6 @@ async function processListCommand(keypair, client, args, options) {
     await CoinManager.printCoins(client, coinTypeToCoins);
 }
 
-//here
 async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenServicev0 } = itsConfig.objects;

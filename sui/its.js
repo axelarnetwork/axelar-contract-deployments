@@ -1,14 +1,25 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
+const {
+    loadConfig,
+    printInfo,
+    saveConfig,
+    getChainConfig,
+    parseTrustedChains,
+    validateParameters,
+    isNonArrayObject,
+    isNonEmptyString,
+} = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
     broadcastFromTxBuilder,
+    createLockedCoinManagement,
     deployTokenFromInfo,
+    getAllowedFunctions,
     getObjectIdsByObjectTypes,
     getWallet,
-    createLockedCoinManagement,
+    itsFunctions,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
@@ -16,6 +27,7 @@ const {
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
+const { equal } = require('assert');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -618,6 +630,40 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
+async function checkVersionControl(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const version = args;
+
+    validateParameters({
+        isNonEmptyString: { version },
+        isNonEmptyString: { versionEntry: itsConfig.versions[version] },
+        isNonEmptyString: { itsObject: itsConfig.objects.InterchainTokenServicev0 },
+    });
+
+    const supportedFunctions = itsFunctions[version];
+    if (!Array.isArray(supportedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
+
+    const versionedId = itsConfig.objects.InterchainTokenServicev0;
+    const allowedFunctionsArray = await getAllowedFunctions(client, versionedId);
+    const allowedFunctions = allowedFunctionsArray[parseInt(version)];
+    const equality = JSON.stringify(allowedFunctions) === JSON.stringify(supportedFunctions);
+
+    if (equality) printInfo(`All functions are allowed in version ${version}`, allowedFunctions);
+    else {
+        const disabledFunctions = [];
+        const enabledFunctions = [];
+        supportedFunctions.forEach((fnName) => {
+            if (allowedFunctions.indexOf(fnName) > -1) enabledFunctions.push(fnName);
+            else disabledFunctions.push(fnName);
+        });
+
+        printInfo(`${enabledFunctions.length} functions are allowed in version`, version);
+        printInfo(`${disabledFunctions.length} functions are not allowed in version`, version);
+        printInfo('Allowed functions', allowedFunctions);
+        printInfo('Disallowed functions', disabledFunctions);
+    }
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -645,7 +691,7 @@ if (require.main === module) {
         .name('add-trusted-chains')
         .command('add-trusted-chains <trusted-chains...>')
         .description(
-            `Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
+            `Add trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains.`,
         )
         .action((trustedChains, options) => {
             mainProcessor(addTrustedChains, options, trustedChains, processCommand);
@@ -653,7 +699,7 @@ if (require.main === module) {
 
     const removeTrustedChainsProgram = new Command()
         .name('remove-trusted-chains')
-        .description('Remove trusted chains')
+        .description('Remove trusted chains.')
         .command('remove-trusted-chains <trusted-chains...>')
         .action((trustedChains, options) => {
             mainProcessor(removeTrustedChains, options, trustedChains, processCommand);
@@ -662,7 +708,7 @@ if (require.main === module) {
     const setFlowLimitsProgram = new Command()
         .name('set-flow-limits')
         .command('set-flow-limits <token-ids> <flow-limits>')
-        .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists`)
+        .description(`Set flow limits for multiple tokens. <token-ids> and <flow-limits> can both be comma separated lists.`)
         .action((tokenIds, flowLimits, options) => {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
@@ -705,7 +751,7 @@ if (require.main === module) {
     const migrateAllCoinMetadataProgram = new Command()
         .name('migrate-coin-metadata-all')
         .command('migrate-coin-metadata-all')
-        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins)`)
+        .description(`Release metadata for all legacy coins saved to the chain config (see command: its/tokens legacy-coins).`)
         .addOption(
             new Option(
                 '--logging <size>',
@@ -766,6 +812,14 @@ if (require.main === module) {
             mainProcessor(restoreTreasuryCap, options, symbol, processCommand);
         });
 
+    const checkVersionControlProgram = new Command()
+        .name('check-version-control')
+        .command('check-version-control <version>')
+        .description('Check if version control works on a certain version.')
+        .action((version, options) => {
+            mainProcessor(checkVersionControl, options, version, processCommand);
+        });
+
     // v0
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
@@ -782,6 +836,7 @@ if (require.main === module) {
     program.addCommand(linkCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
+    program.addCommand(checkVersionControlProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
