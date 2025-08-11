@@ -186,7 +186,7 @@ async function approve(keypair, client, config, chain, contractConfig, args, opt
     };
 }
 
-export async function migrate(keypair, client, config, chain, contractConfig, args, options) {
+async function migrate(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const data = new Uint8Array(arrayify(options.migrateData || '0x'));
     const tx = new Transaction();
@@ -540,3 +540,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { migrate };
