@@ -6,14 +6,11 @@ const { getVerificationParams, getTokenTxId, getCanonicalInterchainTokenId } = r
 const { validateParameters } = require('../common');
 
 async function registerTokenManager(privateKey, networkType, chain, args, options) {
-    const [contractName] = args;
+    const [contractName, token] = args;
 
     const contracts = chain.contracts;
     if (!contracts[contractName]?.address) {
         throw new Error(`Contract ${contractName} not yet deployed`);
-    }
-    if (!contracts[contractName]?.token) {
-        throw new Error(`Contract ${contractName} does not have a token registered yet`);
     }
     if (!contracts.InterchainTokenFactory?.address) {
         throw new Error(`Contract InterchainTokenFactory not yet deployed`);
@@ -31,9 +28,9 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
         throw new Error(`Contract InterchainTokenServiceImpl not yet deployed`);
     }
 
-    const interchainTokenId = getCanonicalInterchainTokenId(contracts[contractName].token);
+    const interchainTokenId = getCanonicalInterchainTokenId(token);
 
-    printInfo(`Registering token manager ${contractName} for token ${contracts[contractName].token} on Stacks ITS`);
+    printInfo(`Registering token manager ${contractName} for token ${token} on Stacks ITS`);
 
     const tmTxHash = await getTokenTxId(contracts[contractName].address, chain.rpc);
     const verificationParams = await getVerificationParams(tmTxHash, chain.rpc);
@@ -48,7 +45,7 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
             Cl.address(contracts.GatewayImpl.address),
             Cl.address(contracts.GasImpl.address),
             Cl.address(contracts.InterchainTokenServiceImpl.address),
-            Cl.address(contracts[contractName].token),
+            Cl.address(token),
             Cl.address(contracts[contractName].address),
             verificationParams,
         ],
@@ -63,8 +60,14 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
         network: networkType,
     });
 
+    // Save token to token manager configuration
+    chain.contracts[contractName] = {
+        ...chain.contracts[contractName],
+        token,
+    };
+
     printInfo(
-        `Finished registering canonical token with tokenId ${interchainTokenId} for token ${contracts[contractName].token}`,
+        `Finished registering canonical token with tokenId ${interchainTokenId} for token ${token}`,
         result.txid,
     );
 }
@@ -279,7 +282,7 @@ if (require.main === module) {
     const registerTokenManagerCmd = new Command()
         .name('register-token-manager')
         .description('Register a token manager for a token on the Stacks ITS')
-        .command('register-token-manager <contractName>')
+        .command('register-token-manager <contractName> <token>')
         .action((contractName, options) => {
             mainProcessor(registerTokenManager, options, [contractName], processCommand);
         });

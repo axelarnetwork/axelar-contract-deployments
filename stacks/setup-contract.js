@@ -34,8 +34,6 @@ const GOVERNANCE_CMD_OPTIONS = [
     new Option('--governanceAddress <governanceAddress>', 'the address of the governance contract on the respective chain'),
 ];
 
-const TOKEN_MANAGER_CMD_OPTIONS = [new Option('--token <token>', 'the token')];
-
 function getGasServiceFunctionArgs(config, chain, options) {
     validateParameters({
         isNonEmptyString: { gasCollector: options.gasCollector },
@@ -155,37 +153,18 @@ function getGovernanceFunctionArgs(config, chain, options) {
     };
 }
 
-function getTokenManagerFunctionArgs(config, chain, options) {
-    validateParameters({
-        isNonEmptyString: { token: options.token },
-    });
-
-    return {
-        functionArgs: [
-            Cl.address(options.token),
-            Cl.uint(2), // lock/unlock manager type
-            Cl.none(), // no operator
-        ],
-        updateConfigArgs: {
-            token: options.token,
-        },
-    };
-}
-
 const CONTRACT_CONFIGS = {
     cmdOptions: {
         GasService: GAS_SERVICE_CMD_OPTIONS,
         Gateway: GATEWAY_CMD_OPTIONS,
         InterchainTokenService: ITS_CMD_OPTIONS,
         Governance: GOVERNANCE_CMD_OPTIONS,
-        TokenManager: TOKEN_MANAGER_CMD_OPTIONS,
     },
     preDeployFunctionArgs: {
         GasService: getGasServiceFunctionArgs,
         Gateway: getGatewayFunctionArgs,
         InterchainTokenService: getItsFunctionArgs,
         Governance: getGovernanceFunctionArgs,
-        TokenManager: getTokenManagerFunctionArgs,
     },
 };
 
