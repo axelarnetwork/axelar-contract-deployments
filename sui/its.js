@@ -265,10 +265,12 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         if (batchSize) currentBatch.push(coin);
 
         try {
+            const splitCoinType = coin.TokenType.split('<');
+            const typeArg = splitCoinType[splitCoinType.length - 1].replace('>', '');
             await txBuilder.moveCall({
                 target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
                 arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
-                typeArguments: [coin.TokenType],
+                typeArguments: [typeArg],
             });
             // Process tx as batch or indidivual migration (depending on options.batch)
             if (!batchSize || i == legacyCoins.length - 1 || (i + 1) % batchSize === 0) {
@@ -286,10 +288,10 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         } catch (e) {
             txBuilder = new TxBuilder(client);
             if (!batchSize) {
-                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
+                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e.message, chalk.red);
                 failedMigrations.push(coin);
             } else {
-                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e, chalk.red);
+                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e.message, chalk.red);
                 failedMigrations = [...failedMigrations, ...currentBatch];
                 ++processedBatches;
                 currentBatch = [];
