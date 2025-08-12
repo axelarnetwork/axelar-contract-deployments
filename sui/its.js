@@ -265,8 +265,8 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         if (batchSize) currentBatch.push(coin);
 
         try {
-            const splitCoinType = coin.TokenType.split("<");
-            const typeArguments = splitCoinType[splitCoinType.length - 1].replace(">","")
+            const splitCoinType = coin.TokenType.split('<');
+            const typeArguments = splitCoinType[splitCoinType.length - 1].replace('>', '');
             await txBuilder.moveCall({
                 target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
                 arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
