@@ -74,6 +74,7 @@ async function initializeTransceiver(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
+    transceiverContractName: string,
 ): Promise<void> {
     try {
         await printWalletInfo(wallet);
@@ -89,12 +90,11 @@ async function initializeTransceiver(
             throw new Error('initialize function not found in contract ABI');
         }
 
-        const contractName = `${options.transceiverPrefix}AxelarTransceiver`;
-        const gasOptions = await getGasOptions(chain, options, contractName);
+        const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
-        printInfo(`Initializing ${contractName}...`);
+        printInfo(`Initializing ${transceiverContractName}...`);
 
-        if (promptUser(`Proceed with ${contractName} initialization on ${chain.name}?`, options.yes)) {
+        if (promptUser(`Proceed with ${transceiverContractName} initialization on ${chain.name}?`, options.yes)) {
             return;
         }
 
@@ -110,7 +110,7 @@ async function initializeTransceiver(
         printInfo('AxelarTransceiver initialized successfully');
 
         // Read addresses from contract state after initialization
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options, transceiverContractName);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -119,7 +119,6 @@ async function initializeTransceiver(
             errorMessage.includes('InvalidInitialization') ||
             errorMessage.includes('execution reverted')
         ) {
-            const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
             printInfo(`${transceiverContractName} is already initialized`);
         } else {
             printError('Failed to initialize transceiver', errorMessage);
@@ -133,6 +132,7 @@ async function readInitializationState(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
+    transceiverContractName: string,
 ): Promise<void> {
     try {
         const pauser = await transceiverContract.pauser();
@@ -145,7 +145,6 @@ async function readInitializationState(
             chain.contracts = {};
         }
 
-        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
         if (!chain.contracts[transceiverContractName]) {
             chain.contracts[transceiverContractName] = {};
         }
@@ -166,6 +165,7 @@ async function transferPauserCapability(
     pauserAddress: string,
     chain: ChainConfig,
     options: Options,
+    transceiverContractName: string,
 ): Promise<void> {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
@@ -179,7 +179,6 @@ async function transferPauserCapability(
             return;
         }
 
-        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
         const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
         const transferTx = await transceiverContract.transferPauserCapability(pauserAddress, {
@@ -191,7 +190,7 @@ async function transferPauserCapability(
         const receipt = (await transferTx.wait()) as TransactionReceipt;
         printInfo('Pauser capability transferred successfully');
 
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options, transceiverContractName);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('OwnableUnauthorizedAccount') || errorMessage.includes('CallerNotNttManager')) {
@@ -212,6 +211,7 @@ async function setAxelarChainId(
     transceiverAddress: string,
     chain: ChainConfig,
     options: Options,
+    transceiverContractName: string,
 ): Promise<void> {
     if (!chainId || chainId <= 0) {
         throw new Error(`Invalid chain ID: ${chainId}`);
@@ -236,7 +236,6 @@ async function setAxelarChainId(
             return;
         }
 
-        const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
         const gasOptions = await getGasOptions(chain, options, transceiverContractName);
 
         const setChainIdTx = await transceiverContract.setAxelarChainId(chainId, chainName, transceiverAddress, {
@@ -293,7 +292,7 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
 
     switch (action) {
         case 'initialize': {
-            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, transceiverContract);
             break;
         }
 
@@ -302,7 +301,7 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, transceiverContract);
             break;
         }
 
@@ -312,7 +311,7 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
                 throw new Error('chainId, chainName, and targetTransceiverAddress are required for set-axelar-chain-id command');
             }
             const chainId = parseInt(chainIdStr, 10);
-            await setAxelarChainId(transceiverAddress, artifactPath, wallet, chainId, chainName, targetTransceiverAddress, chain, options);
+            await setAxelarChainId(transceiverAddress, artifactPath, wallet, chainId, chainName, targetTransceiverAddress, chain, options, transceiverContract);
             break;
         }
 

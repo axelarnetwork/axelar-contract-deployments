@@ -189,11 +189,6 @@ ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/e
 ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress> --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $PREFIX
 ```
 
-**Available Operations:**
-- **Initialization**: Calls the `initialize()` function on the AxelarTransceiver contract. The script uses regex patterns to find the correct contract in the configuration.
-- **Pauser Transfer**: Transfers the pauser capability to a specified address using `transferPauserCapability()`. Requires appropriate permissions.
-- **Chain ID Mapping**: Sets the Axelar chain ID mapping for cross-chain communication.
-
 ## Hyperliquid
 
 The Hyperliquid chain uses a dual architecture block model with fast blocks (2 seconds, 2M gas limit) and slow blocks (1 minute, 30M gas limit). The `hyperliquid.js` script provides utilities to set an account to used a specific block size, to query the deployer address of an interchain token, and to update the deployer address of an interchain token. The supported commands are:
