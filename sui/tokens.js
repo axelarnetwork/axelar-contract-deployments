@@ -186,11 +186,9 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService, InterchainTokenServicev0 } = itsConfig.objects;
 
     if (options.createCoin) {
-        validateParameters({
-            isNonEmptyString: { symbol: options.createCoin },
-            isNonEmptyString: { decimals: options.decimals },
-            isNonEmptyString: { name: options.name },
-        });
+        validateParameters({ isNonEmptyString: { symbol: options.createCoin } });
+        validateParameters({ isNonEmptyString: { decimals: options.decimals } });
+        validateParameters({ isNonEmptyString: { name: options.name } });
 
         const config = loadConfig(options.env);
         const chain = getChainConfig(config.chains, options.chainName);
