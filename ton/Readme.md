@@ -163,3 +163,13 @@ Execute an operator proposal
 ```bash
 node ton/governance.js execute-operator-proposal <target-address> <native-ton-amount> <proposal-hash> <proposal-hex-data> <gas-amount>
 ```
+
+## Interchain Token Service
+
+```bash
+node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <token-decimals> <initial-supply>
+```
+
+```bash
+node ton/its.js add-trusted-chain <chain-name> <chain-address>
+```

@@ -2,15 +2,15 @@
 const { Command } = require('commander');
 const { toNano, Address, beginCell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
+const crypto = require('crypto');
+const ITS_DICT_KEY_LENGTH = 256;
 
-// ITS contract address from environment
 const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
 
 if (!ITS_ADDRESS) {
     throw new Error('Please set TON_ITS_ADDRESS in your .env file');
 }
 
-// Operation codes for ITS
 const ITS_OPS = {
     DEPLOY_INTERCHAIN_TOKEN: 0x0000006b,
     DEPLOY_REMOTE_INTERCHAIN_TOKEN: 0x00000069,
@@ -89,7 +89,21 @@ function buildDeployInterchainTokenMessage(salt, name, symbol, decimals, initial
     return message;
 }
 
-// Deploy Interchain Token command
+function buildAddTrustedChainMessage(chainName, chainAddress) {
+    const chainNameHash = crypto.createHash('sha256').update(chainName).digest();
+    const chainNameBigInt = BigInt('0x' + chainNameHash.toString('hex'));
+
+    const chainAddressCell = beginCell().storeStringTail(chainAddress).endCell();
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.ADD_TRUSTED_CHAIN, 32)
+        .storeUint(chainNameBigInt, ITS_DICT_KEY_LENGTH)
+        .storeRef(chainAddressCell)
+        .endCell();
+
+    return message;
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -102,7 +116,6 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
     .action(async (salt, name, symbol, decimals, initialSupply, minter, options) => {
         try {
-            // Validate and parse inputs
             const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
 
             const decimalsParsed = parseInt(decimals, 10);
@@ -131,15 +144,27 @@ program
         }
     });
 
-// TODO: Add more commands here as needed
-// Examples:
-// - deploy-remote-interchain-token
-// - register-canonical-token
-// - transfer-interchain-token
-// - add-trusted-chain
-// - remove-trusted-chain
-// - change-operator
-// etc.
+program
+    .command('add-trusted-chain')
+    .description('Add a trusted chain to the ITS')
+    .argument('<chain-name>', 'Name of the chain to add (e.g., "ethereum", "polygon")')
+    .argument('<chain-address>', 'ITS address on the remote chain')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (chainName, chainAddress, options) => {
+        try {
+            console.log('Adding Trusted Chain with parameters:');
+            console.log('  Chain Name:', chainName);
+            console.log('  Chain Address:', chainAddress);
+            console.log('  Gas:', options.gas, 'TON');
 
-// Parse command line arguments
+            const messageBody = buildAddTrustedChainMessage(chainName, chainAddress);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Add Trusted Chain', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error adding trusted chain:', error.message);
+            process.exit(1);
+        }
+    });
+
 program.parse();
