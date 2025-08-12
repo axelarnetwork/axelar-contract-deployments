@@ -103,6 +103,14 @@ There is a special CLI command that will get the program_id for you:
 ./solana/solana-axelar-cli upgrade --program <gateway|gas-service|governance|its> $PROGRAM_BYTECODE_PATH
 ```
 
+4. Initialize ITS:
+
+Due to recent changes, we must re-initialise the gas service.
+
+```sh
+solana/solana-axelar-cli send its init --operator <ITS_OPERATOR_BASE58_PUBKEY>
+```
+
 ## Verify
 
 Verification is **only possible in mainnet**. If deploying for test environments you can skip this step.
