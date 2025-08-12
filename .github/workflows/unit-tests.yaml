@@ -1,0 +1,41 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    paths:
+      - 'evm/test/**'
+      - 'evm/utils.js'
+      - 'common/**'
+      - 'package.json'
+      - '.github/workflows/unit-tests.yaml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'evm/test/**'
+      - 'evm/utils.js'
+      - 'common/**'
+      - 'package.json'
+      - '.github/workflows/unit-tests.yaml'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: blacksmith-2vcpu-ubuntu-2204
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Unit Tests
+        run: npm test
