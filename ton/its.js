@@ -117,6 +117,27 @@ function buildRegisterTokenMetadataMessage(adminAddress, contentHex) {
     return message;
 }
 
+function buildDeployRemoteInterchainTokenMessage(salt, chainName, remoteMinter) {
+    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
+
+    let minterCell;
+    if (remoteMinter) {
+        const minterAddress = Address.parse(remoteMinter);
+        minterCell = beginCell().storeAddress(minterAddress).endCell();
+    } else {
+        minterCell = beginCell().endCell();
+    }
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.DEPLOY_REMOTE_INTERCHAIN_TOKEN, 32)
+        .storeUint(BigInt(salt), 256)
+        .storeRef(chainNameCell)
+        .storeRef(minterCell)
+        .endCell();
+
+    return message;
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -206,4 +227,30 @@ program
         }
     });
 
+program
+    .command('deploy-remote-interchain-token')
+    .description('Deploy an interchain token on a remote chain')
+    .argument('<salt>', 'Salt value for token deployment (256-bit number or hex string)')
+    .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
+    .argument('[remote-minter]', 'Optional minter address on the remote chain')
+    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
+    .action(async (salt, chainName, remoteMinter, options) => {
+        try {
+            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+
+            console.log('Deploying Remote Interchain Token with parameters:');
+            console.log('  Salt:', saltBigInt);
+            console.log('  Chain Name:', chainName);
+            console.log('  Remote Minter:', remoteMinter || 'None');
+            console.log('  Transaction Gas:', options.gas, 'TON');
+
+            const messageBody = buildDeployRemoteInterchainTokenMessage(saltBigInt, chainName, remoteMinter);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Deploy Remote Interchain Token', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error deploying remote interchain token:', error.message);
+            process.exit(1);
+        }
+    });
 program.parse();
