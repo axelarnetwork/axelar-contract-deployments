@@ -311,7 +311,7 @@ if (require.main === module) {
     );
     const listProgram = new Command('list').description('List all coins and balances');
     const legacyCoinsProgram = new Command('legacy-coins').description(
-        'Save a list of legacy coins to be migrated to public coin metadata',
+        'Save a list of legacy coins to be migrated to public coin metadata; and / or, create a legacy coin using the createCoin flag.',
     );
 
     // Define options, arguments, and actions for each sub-program
@@ -332,10 +332,10 @@ if (require.main === module) {
     });
 
     legacyCoinsProgram
-        .option('--createOnly')
-        .option('--createCoin <symbol>')
-        .option('--decimals <decimals>')
-        .option('--name <name>')
+        .option('--createCoin <symbol>', 'Create a legacy coin with the given symbol')
+        .option('--createOnly', 'Create a legacy coin without generating a list of all legacy coins')
+        .option('--decimals <decimals>', 'Decimal precision for creating a coin')
+        .option('--name <name>', 'A human readable coin name')
         .action((options) => {
             mainProcessor(options, legacyCoinsCommand);
         });
