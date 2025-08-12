@@ -266,11 +266,11 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
 
         try {
             const splitCoinType = coin.TokenType.split('<');
-            const typeArguments = splitCoinType[splitCoinType.length - 1].replace('>', '');
+            const typeArg = splitCoinType[splitCoinType.length - 1].replace('>', '');
             await txBuilder.moveCall({
                 target: `${itsConfig.address}::interchain_token_service::migrate_coin_metadata`,
                 arguments: [InterchainTokenService, OperatorCap, coin.TokenId],
-                typeArguments,
+                typeArguments: [typeArg],
             });
             // Process tx as batch or indidivual migration (depending on options.batch)
             if (!batchSize || i == legacyCoins.length - 1 || (i + 1) % batchSize === 0) {
