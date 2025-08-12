@@ -1,5 +1,4 @@
 const { Transaction } = require('@mysten/sui/transactions');
-const { SUI_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const { Command } = require('commander');
 const { loadConfig, saveConfig, printInfo, printError, getChainConfig, validateParameters } = require('../common/');
 
