@@ -3,7 +3,7 @@
 |                | **Owner** |
 | -------------- | --------- |
 | **Created By** | @eigerco  |
-| **Deployment** | @eigerco  |
+| **Deployment** | @eigerco @kulikthebird  |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -13,7 +13,7 @@
 | **Mainnet**          | -                     | TBD        |
 
 - [Release](https://github.com/eigerco/axelar-amplifier/releases/tag/solana-multisig-prover-v0.2.0)
-- SolanaMultisigProver checksum: `f6c983a2d6d9de92a5ecafe02ed76f414af104cd9734c40c25506b83a80ac34b`
+- SolanaMultisigProver checksum: `09a749a0bcd854fb64a2a5533cc6b0d5624bbd746c94e66e1f1ddbe32d495fb6`
 
 
 ## Background
@@ -76,10 +76,10 @@ That would create the `artifacts` folder with all the compiled contracts, plus t
 
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
-  -c SolanaMultisigProver \
+  -c MultisigProver \
   -t "Upload SolanaMultisigProver contract v0.2.0" \
   -d "Upload SolanaMultisigProver contract v0.2.0" \
-  -a "$ARTIFACT_PATH/solana_multisig_prover.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -88,7 +88,7 @@ ts-node cosmwasm/submit-proposal.js store \
 
 ```bash
 ts-node cosmwasm/submit-proposal.js migrate \
-  -c SolanaMultisigProver \
+  -c MultisigProver \
   -t "Migrate SolanaMultisigProver to v0.2.0" \
   -d "Migrate SolanaMultisigProver to v0.2.0" \
   --msg '{}' \
