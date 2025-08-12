@@ -186,7 +186,6 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService: itsConfig } = contracts;
     const { InterchainTokenService, InterchainTokenServicev0 } = itsConfig.objects;
 
-    const createdLegacyCoins = [];
     if (options.createCoin) {
         validateParameters({
             isNonEmptyString: { symbol: options.createCoin },
@@ -240,7 +239,6 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
         saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
 
         if (options.createOnly) return;
-        else createdLegacyCoins.push({ TokenId: tokenId, TokenType: tokenType, symbol });
     }
 
     printInfo('Action', 'Generate Legacy Coins List');
@@ -294,7 +292,7 @@ async function legacyCoinsCommand(keypair, client, args, options, contracts) {
             throw new Error(e);
         }
     }
-    if (legacyCoins.length) contracts.InterchainTokenService.legacyCoins = [...legacyCoins, ...createdLegacyCoins];
+    if (legacyCoins.length) contracts.InterchainTokenService.legacyCoins = legacyCoins;
 }
 
 async function mainProcessor(options, processor, args = {}) {
