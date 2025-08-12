@@ -12,7 +12,7 @@
 | **Testnet**          | -                     | TBD        |
 | **Mainnet**          | -                     | TBD        |
 
-- [Release](https://github.com/commonprefix/axelar-amplifier/releases/tag/solana-multisig-prover-v0.2.0)
+- [Release](https://github.com/eigerco/axelar-amplifier/releases/tag/solana-multisig-prover-v0.2.0)
 - SolanaMultisigProver checksum: `f6c983a2d6d9de92a5ecafe02ed76f414af104cd9734c40c25506b83a80ac34b`
 
 
@@ -23,7 +23,7 @@ No changes in the Solana cosmwasm side. This is an upgrade mainly for testing pu
 ## Deployment
 
 - This rollout upgrades SolanaMultisigProver from `v0.1.0` to `v0.2.0`
-- There is no migration involved, i.e., the migrate step will just update the code
+- The migrate step will just update the code. No state will be modified.
 
 1. Create `.env`.
 
@@ -49,7 +49,6 @@ ARTIFACT_PATH=
 INIT_ADDRESSES=
 RUN_AS_ACCOUNT=
 DEPOSIT_VALUE=
-ARTIFACT_PATH=
 MULTISIG_PROVER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
 ```
 
