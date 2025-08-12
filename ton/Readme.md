@@ -173,3 +173,7 @@ node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <toke
 ```bash
 node ton/its.js add-trusted-chain <chain-name> <chain-address>
 ```
+
+```bash
+node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex>
+```

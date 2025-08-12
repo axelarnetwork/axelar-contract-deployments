@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
-const { toNano, Address, beginCell } = require('@ton/ton');
+const { toNano, Address, beginCell, Cell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
 const crypto = require('crypto');
 const ITS_DICT_KEY_LENGTH = 256;
@@ -104,6 +104,19 @@ function buildAddTrustedChainMessage(chainName, chainAddress) {
     return message;
 }
 
+function buildRegisterTokenMetadataMessage(adminAddress, contentHex) {
+    const admin = Address.parse(adminAddress);
+    const content = Cell.fromHex(contentHex);
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.REGISTER_TOKEN_METADATA, 32)
+        .storeAddress(admin)
+        .storeRef(content) // content cell (indirectly gives token address)
+        .endCell();
+
+    return message;
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -163,6 +176,32 @@ program
             await executeITSOperation('Add Trusted Chain', messageBody, cost);
         } catch (error) {
             console.error('❌ Error adding trusted chain:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('register-token-metadata')
+    .description('Register token metadata for a token (TEP-64 standard)')
+    .argument('<admin-address>', 'Admin address for the token (TON address format)')
+    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .action(async (adminAddress, contentHex, options) => {
+        try {
+            // Remove 0x prefix if present
+            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
+
+            console.log('Registering Token Metadata with parameters:');
+            console.log('  Admin Address:', adminAddress);
+            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildRegisterTokenMetadataMessage(adminAddress, cleanContentHex);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Register Token Metadata', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error registering token metadata:', error.message);
             process.exit(1);
         }
     });
