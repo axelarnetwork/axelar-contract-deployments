@@ -311,7 +311,17 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
                 throw new Error('chainId, chainName, and targetTransceiverAddress are required for set-axelar-chain-id command');
             }
             const chainId = parseInt(chainIdStr, 10);
-            await setAxelarChainId(transceiverAddress, artifactPath, wallet, chainId, chainName, targetTransceiverAddress, chain, options, transceiverContract);
+            await setAxelarChainId(
+                transceiverAddress,
+                artifactPath,
+                wallet,
+                chainId,
+                chainName,
+                targetTransceiverAddress,
+                chain,
+                options,
+                transceiverContract,
+            );
             break;
         }
 
