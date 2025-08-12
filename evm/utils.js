@@ -727,19 +727,21 @@ const mainProcessor = async (options, processCommand, save = true) => {
         const resultsWithErrLogs = await Promise.allSettled(promisedChainsResults.map((item) => item.promise));
 
         const successfulResults = resultsWithErrLogs
+            .map((promiseResult, originalIndex) => ({ promiseResult, originalIndex }))
             .filter(
-                (promiseResult, _index) =>
+                ({ promiseResult }) =>
                     promiseResult.status === 'fulfilled' && !promiseResult.value.loggerError && promiseResult.value.result !== undefined,
             )
-            .map((promiseResult, index) => [promisedChainsResults[index].chainId, promiseResult.value.result]);
+            .map(({ promiseResult, originalIndex }) => [promisedChainsResults[originalIndex].chainId, promiseResult.value.result]);
 
         const failedResults = resultsWithErrLogs
+            .map((promiseResult, originalIndex) => ({ promiseResult, originalIndex }))
             .filter(
-                (promiseResult, _index) =>
+                ({ promiseResult }) =>
                     promiseResult.status === 'rejected' || (promiseResult.status === 'fulfilled' && promiseResult.value.loggerError),
             )
-            .map((promiseResult, index) => {
-                const chainId = promisedChainsResults[index].chainId;
+            .map(({ promiseResult, originalIndex }) => {
+                const chainId = promisedChainsResults[originalIndex].chainId;
                 if (promiseResult.status === 'rejected') {
                     return [chainId, promiseResult.reason.message];
                 } else {
