@@ -288,10 +288,10 @@ async function migrateAllCoinMetadata(keypair, client, config, contracts, args, 
         } catch (e) {
             txBuilder = new TxBuilder(client);
             if (!batchSize) {
-                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e, chalk.red);
+                printInfo(`Migrate metadata failed for coin ${coin.symbol}`, e.message, chalk.red);
                 failedMigrations.push(coin);
             } else {
-                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e, chalk.red);
+                printInfo(`Migrate metadata failed for batch ${processedBatches}`, e.message, chalk.red);
                 failedMigrations = [...failedMigrations, ...currentBatch];
                 ++processedBatches;
                 currentBatch = [];
