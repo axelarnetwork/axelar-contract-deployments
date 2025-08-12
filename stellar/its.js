@@ -432,49 +432,6 @@ async function createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, re
     ]);
 }
 
-async function testExecute(wallet, _config, chain, contract, args, options) {
-    const [recipient, tokenAddress, tokenManager, amount] = args;
-
-    validateParameters({
-        isValidStellarAddress: { recipient, tokenAddress, tokenManager },
-        isValidNumber: { amount },
-    });
-
-    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
-    const tokenAddressScVal = nativeToScVal(tokenAddress, { type: 'address' });
-    const tokenManagerScVal = nativeToScVal(tokenManager, { type: 'address' });
-    const amountScVal = nativeToScVal(amount, { type: 'i128' });
-
-    let operation = Operation.invokeContractFunction({
-        contract: contract.contractId(),
-        function: 'test_execute',
-        args: [recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal],
-        auth: await createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain),
-    });
-
-    await broadcast(operation, wallet, chain, 'Test Execute', options);
-    printInfo('Successfully executed test for recipient', recipient);
-}
-
-async function testExecute22(wallet, _config, chain, contract, args, options) {
-    const [recipient, tokenAddress, tokenManager, amount] = args;
-
-    validateParameters({
-        isValidStellarAddress: { recipient, tokenAddress, tokenManager },
-        isValidNumber: { amount },
-    });
-
-    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
-    const tokenAddressScVal = nativeToScVal(tokenAddress, { type: 'address' });
-    const tokenManagerScVal = nativeToScVal(tokenManager, { type: 'address' });
-    const amountScVal = nativeToScVal(amount, { type: 'i128' });
-
-    const operation = contract.call('test_execute', recipientScVal, tokenAddressScVal, tokenManagerScVal, amountScVal);
-
-    await broadcast(operation, wallet, chain, 'Test Execute', options);
-    printInfo('Successfully executed test for recipient', recipient);
-}
-
 async function addMinter(wallet, _, chain, contract, args, options) {
     const [tokenAddress, minter] = args;
 
@@ -501,31 +458,9 @@ async function transferTokenAdmin(wallet, _config, chain, contract, args, option
         isValidStellarAddress: { newAdmin },
     });
 
-    const tokenIdBytes = hexToScVal(tokenId);
-    const deployed_token_manager_operation = contract.call('deployed_token_manager', tokenIdBytes);
-
-    const returnValue1 = await broadcast(deployed_token_manager_operation, wallet, chain, 'Get deployed token manager', options);
-    const tokenManagerAddress = serializeValue(returnValue1.value());
-
-    printInfo(`Deployed Token Manager Address`, tokenManagerAddress);
-
-    const registered_token_address_operation = contract.call('registered_token_address', tokenIdBytes);
-
-    const returnValue2 = await broadcast(registered_token_address_operation, wallet, chain, 'Get registered token address', options);
-    const registeredTokenAddress = serializeValue(returnValue2.value());
-
-    printInfo(`Registered Token Address`, registeredTokenAddress);
-
-    const tokenManagerContract = new Contract(tokenManagerAddress);
-    const operation = tokenManagerContract.call(
-        'transfer_admin',
-        nativeToScVal(wallet.publicKey(), { type: 'address' }),
-        nativeToScVal(registeredTokenAddress, { type: 'address' }),
-        nativeToScVal(newAdmin, { type: 'address' }),
-    );
+    const operation = contract.call('transfer_token_admin', hexToScVal(tokenId), nativeToScVal(newAdmin, { type: 'address' }));
 
     await broadcast(operation, wallet, chain, 'Transfer Token Admin', options);
-    printInfo('Successfully transferred admin for token', registeredTokenAddress);
     printInfo('New admin address', newAdmin);
 }
 
@@ -699,13 +634,6 @@ if (require.main === module) {
         .description('Get the deployed token manager address with the given token id')
         .action((tokenId, options) => {
             mainProcessor(deployedTokenManager, [tokenId], options);
-        });
-
-    program
-        .command('test-execute <recipient> <tokenAddress> <tokenManager> <amount>')
-        .description('test execute')
-        .action((recipient, tokenAddress, tokenManager, amount, options) => {
-            mainProcessor(testExecute, [recipient, tokenAddress, tokenManager, amount], options);
         });
 
     program
