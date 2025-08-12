@@ -342,7 +342,7 @@ ts-node sui/gateway.js submitProof <multisig-session-id>
 ts-node evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
 ```
 
-4. Confirm verifier rotation
+5. Confirm verifier rotation
 ```bash
 ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
 ```
