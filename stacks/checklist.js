@@ -283,8 +283,8 @@ if (require.main === module) {
         .name('register-token-manager')
         .description('Register a token manager for a token on the Stacks ITS')
         .command('register-token-manager <contractName> <token>')
-        .action((contractName, options) => {
-            mainProcessor(registerTokenManager, options, [contractName], processCommand);
+        .action((contractName, token, options) => {
+            mainProcessor(registerTokenManager, options, [contractName, token], processCommand);
         });
 
     const deployRemoteCanonicalInterchainTokenCmd = new Command()

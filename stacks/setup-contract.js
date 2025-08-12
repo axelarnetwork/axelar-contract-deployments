@@ -56,8 +56,8 @@ async function getGatewayFunctionArgs(config, chain, options) {
         },
     });
 
-    const { verifierSet, signers } = await getCurrentVerifierSet(config, chain.axelarId, 'StacksMultisigProver');
-    const domainSeparator = await getDomainSeparator(config, chain, options, 'StacksMultisigProver');
+    const { verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain.axelarId, 'StacksMultisigProver');
+    const domainSeparator = await getDomainSeparator(config.axelar, chain, options, 'StacksMultisigProver');
 
     const { claritySigners, weightedSigners, threshold, nonce } = encodeAmplifierVerifiersForStacks(verifierSet, signers);
 

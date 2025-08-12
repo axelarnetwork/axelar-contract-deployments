@@ -14,7 +14,7 @@ async function setTrustedAddress(privateKey, networkType, config, chain, args) {
         throw new Error(`Contract InterchainTokenServiceImpl not yet deployed`);
     }
 
-    const trustedChains = parseTrustedChains(config, args);
+    const trustedChains = parseTrustedChains(config.chains, args);
 
     for (const trustedChain of trustedChains) {
         printInfo(`Setting trusted address for ${trustedChain}`);
@@ -56,7 +56,7 @@ async function removeTrustedAddress(privateKey, networkType, config, chain, args
         throw new Error(`Contract InterchainTokenServiceImpl not yet deployed`);
     }
 
-    const trustedChains = parseTrustedChains(config, args);
+    const trustedChains = parseTrustedChains(config.chains, args);
 
     for (const trustedChain of trustedChains) {
         printInfo(`Removing trusted address for ${trustedChain}`);
