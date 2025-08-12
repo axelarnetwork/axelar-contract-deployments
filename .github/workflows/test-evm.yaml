@@ -26,28 +26,6 @@ jobs:
           echo "Changes in common: ${{ steps.filter.outputs.common }}"
           echo "Changes in github: ${{ steps.filter.outputs.github }}"
 
-  unit-tests:
-    name: Unit Tests
-    runs-on: blacksmith-2vcpu-ubuntu-2204
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: useblacksmith/setup-node@v5
-        with:
-          node-version: 18.x
-          cache: 'npm'
-
-      - name: Install
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Run Unit Tests
-        run: npm test
-
   test-evm:
     name: Test Evm
     needs: check-relevant-changes
@@ -235,6 +213,3 @@ jobs:
 
       - name: InterchainTokenService remove trusted chain
         run: node evm/its.js remove-trusted-chains all -y
-
-      - name: Run Unit Tests
-        run: npm test

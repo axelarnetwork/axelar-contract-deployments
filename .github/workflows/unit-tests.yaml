@@ -1,20 +1,26 @@
 name: Unit Tests
 
+# This workflow runs unit tests independently of integration tests
+# It triggers on changes to test files, source code, or configuration
 on:
   pull_request:
     paths:
       - 'evm/test/**'
       - 'evm/utils.js'
+      - 'evm/**/*.js'
       - 'common/**'
       - 'package.json'
+      - 'tsconfig.json'
       - '.github/workflows/unit-tests.yaml'
   push:
     branches: [main, develop]
     paths:
       - 'evm/test/**'
       - 'evm/utils.js'
+      - 'evm/**/*.js'
       - 'common/**'
       - 'package.json'
+      - 'tsconfig.json'
       - '.github/workflows/unit-tests.yaml'
 
 jobs:
