@@ -1152,4 +1152,5 @@ module.exports = {
     printTokenInfo,
     isTrustedChain,
     detectITSVersion,
+    getChains,
 };
