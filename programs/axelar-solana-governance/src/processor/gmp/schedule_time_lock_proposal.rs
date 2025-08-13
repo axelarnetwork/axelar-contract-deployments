@@ -3,10 +3,10 @@
 //! See [original implementation](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L15).
 
 use program_utils::{
-    checked_from_u256_le_bytes_to_u64, current_time, from_u64_to_u256_le_bytes,
-    validate_system_account_key,
+    account_array_structs, checked_from_u256_le_bytes_to_u64, current_time,
+    from_u64_to_u256_le_bytes, validate_system_account_key,
 };
-use solana_program::account_info::{next_account_info, AccountInfo};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
@@ -14,6 +14,21 @@ use super::ProcessGMPContext;
 use crate::events::GovernanceEvent;
 use crate::state::operator;
 use crate::state::proposal::ExecutableProposal;
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    ScheduleTimeLockProposalInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    ScheduleTimeLockProposalMeta,
+    // Attributes
+    // Mandatory for every GMP instruction in the Governance program.
+    system_account,
+    // Mandatory for every GMP instruction in the Governance program.
+    #[allow(dead_code)]
+    root_pda,
+    payer,
+    proposal_pda
+}
 
 /// Processes a Governance GMP `ScheduleTimeLockProposal` command.
 ///
@@ -24,11 +39,13 @@ pub(crate) fn process(
     ctx: ProcessGMPContext,
     accounts: &[AccountInfo<'_>],
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let payer = next_account_info(accounts_iter)?;
-    let _root_pda = next_account_info(accounts_iter)?;
-    let proposal_pda = next_account_info(accounts_iter)?;
+    let ScheduleTimeLockProposalInfo {
+        system_account,
+        payer,
+        // Validated by the `ProcessGMPContext`, not needed here.
+        root_pda: _,
+        proposal_pda,
+    } = ScheduleTimeLockProposalInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

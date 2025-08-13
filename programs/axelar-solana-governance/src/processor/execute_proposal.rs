@@ -6,10 +6,23 @@ use crate::events::GovernanceEvent;
 use crate::state::proposal::{ExecutableProposal, ExecuteProposalData};
 use crate::state::GovernanceConfig;
 use borsh::to_vec;
-use program_utils::{from_u64_to_u256_le_bytes, pda::ValidPDA, validate_system_account_key};
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{
+    account_array_structs, from_u64_to_u256_le_bytes, pda::ValidPDA, validate_system_account_key,
+};
+use solana_program::account_info::AccountInfo;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    ExecuteProposalInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    ExecuteProposalMeta,
+    // Attributes
+    system_account,
+    config_pda,
+    proposal_account
+}
 
 /// Executes a previously GMP received proposal if the proposal has reached its
 /// ETA.
@@ -22,10 +35,11 @@ pub(crate) fn process(
     accounts: &[AccountInfo<'_>],
     execute_proposal_data: &ExecuteProposalData,
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let config_pda = next_account_info(accounts_iter)?;
-    let proposal_account = next_account_info(accounts_iter)?;
+    let ExecuteProposalInfo {
+        system_account,
+        config_pda,
+        proposal_account,
+    } = ExecuteProposalInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

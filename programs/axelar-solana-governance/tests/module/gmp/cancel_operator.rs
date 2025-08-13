@@ -59,7 +59,7 @@ async fn test_successfully_process_gmp_cancel_operator_proposal() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_operator_proposal(&config_pda)
         .build();
 
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
@@ -130,7 +130,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_operator_proposal(&config_pda)
         .build();
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
@@ -184,9 +184,9 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_operator_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_operator_proposal(&config_pda)
         .build();
-    gmp_call_data.ix.accounts[4] = AccountMeta::new_readonly(Pubkey::new_unique(), false); // Wrong PDA account
+    gmp_call_data.ix.accounts[3] = AccountMeta::new_readonly(Pubkey::new_unique(), false); // Wrong PDA account
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
     assert!(res.is_err());

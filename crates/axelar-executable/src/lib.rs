@@ -105,8 +105,8 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
     )
 }
 
-/// Perform CPI call to the Axelar Gateway to ensure that the given command
-/// (containing a GMP message) is approved
+/// Perform CPI (Cross-Program Invocation) call to the Axelar Gateway to
+/// ensure that the given command (containing a GMP message) is approved
 ///
 /// This is useful for contracts that have custom legacy implementations by
 /// Axelar on other chains, and therefore they cannot provide the accounts in

@@ -31,12 +31,7 @@ async fn test_operator_transfer_can_happen_being_operator_signer() {
     let new_operator = Pubkey::new_unique();
 
     let ix = IxBuilder::new()
-        .transfer_operatorship(
-            &fixture.payer.pubkey(),
-            &operator.pubkey(),
-            &config_pda,
-            &new_operator,
-        )
+        .transfer_operatorship(&operator.pubkey(), &config_pda, &new_operator)
         .build();
 
     let res = fixture
@@ -88,12 +83,7 @@ async fn test_error_is_emitted_when_no_required_signers() {
             .unwrap();
 
     let ix = IxBuilder::new()
-        .transfer_operatorship(
-            &fixture.payer.pubkey(),
-            &operator.pubkey(),
-            &config_pda,
-            &Pubkey::new_unique(),
-        )
+        .transfer_operatorship(&operator.pubkey(), &config_pda, &Pubkey::new_unique())
         .build();
 
     let res = fixture
@@ -116,7 +106,6 @@ async fn test_can_change_operator_via_gmp_proposal() {
     let new_operator = Pubkey::new_unique();
 
     let ix_builder = IxBuilder::new().builder_for_operatorship_transfership(
-        &sol_integration.fixture.payer.pubkey(),
         &config_pda,
         &operator_keypair().pubkey(),
         &new_operator,

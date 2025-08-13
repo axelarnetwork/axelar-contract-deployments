@@ -25,6 +25,16 @@ mod init_config;
 mod transfer_operatorship;
 mod withdraw_tokens;
 
+pub use execute_operator_proposal::ExecuteOperatorProposalMeta;
+pub use execute_proposal::ExecuteProposalMeta;
+pub use gmp::{
+    ApproveOperatorProposalMeta, CancelOperatorApprovalMeta, CancelTimeLockProposalMeta,
+    ScheduleTimeLockProposalMeta,
+};
+pub use init_config::GovernanceConfigMeta;
+pub use transfer_operatorship::TransferOperatorshipMeta;
+pub use withdraw_tokens::WithdrawTokensMeta;
+
 /// Program state handler.
 pub struct Processor;
 
@@ -35,9 +45,9 @@ impl Processor {
     ///
     /// A `ProgramError` containing the error that occurred is returned. Log
     /// messages are also generated with more detailed information.
-    pub fn process_instruction(
+    pub fn process_instruction<'a, 'b: 'a>(
         program_id: &Pubkey,
-        accounts: &[AccountInfo<'_>],
+        accounts: &'b [AccountInfo<'a>],
         instruction_data: &[u8],
     ) -> ProgramResult {
         check_program_account(*program_id)?;
@@ -53,10 +63,10 @@ impl Processor {
             }
             // GMP instructions
             GovernanceInstruction::ProcessGmp { message } => {
-                let accounts_iter = &mut accounts.iter();
-
-                let (gateway_accounts, gmp_accounts) =
-                    accounts_iter.as_slice().split_at(PROGRAM_ACCOUNTS_SPLIT_AT);
+                let (gateway_accounts, gmp_accounts) = accounts
+                    .iter()
+                    .as_slice()
+                    .split_at(PROGRAM_ACCOUNTS_SPLIT_AT);
 
                 validate_with_gmp_metadata(gateway_accounts, &message)?;
 
@@ -77,10 +87,10 @@ impl Processor {
             }
 
             GovernanceInstruction::WithdrawTokens { amount } => {
-                withdraw_tokens::process(program_id, accounts, amount)
+                withdraw_tokens::process(accounts, amount)
             }
             GovernanceInstruction::TransferOperatorship { new_operator } => {
-                transfer_operatorship::process(program_id, accounts, new_operator)
+                transfer_operatorship::process(accounts, new_operator)
             }
         }
     }

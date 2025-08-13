@@ -3,16 +3,26 @@
 //!
 //! It can be executed only by the current operator or the program root PDA. See original implementation [here](https://github.com/axelarnetwork/axelar-gmp-sdk-solidity/blob/main/contracts/governance/AxelarServiceGovernance.sol#L96).
 
-use program_utils::{pda::ValidPDA, validate_system_account_key};
-use solana_program::account_info::{next_account_info, AccountInfo};
+use program_utils::{account_array_structs, pda::ValidPDA, validate_system_account_key};
+use solana_program::account_info::AccountInfo;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack;
-use solana_program::pubkey::Pubkey;
 
 use super::ensure_valid_governance_root_pda;
 use crate::events::GovernanceEvent;
 use crate::state::GovernanceConfig;
+
+account_array_structs! {
+    // Struct whose attributes are of type `AccountInfo`
+    TransferOperatorshipInfo,
+    // Struct whose attributes are of type `AccountMeta`
+    TransferOperatorshipMeta,
+    // Attributes
+    system_account,
+    operator_account,
+    config_pda
+}
 
 /// Transfer the operatorship of the Governance from the current operator to a
 /// new operator by altering the operator field in the [`GovernanceConfig`]
@@ -25,15 +35,14 @@ use crate::state::GovernanceConfig;
 ///
 /// This function will return a [`ProgramError`] if any of the subcmds fail.
 pub(crate) fn process(
-    _program_id: &Pubkey,
     accounts: &[AccountInfo<'_>],
     new_operator: [u8; 32],
 ) -> Result<(), ProgramError> {
-    let accounts_iter = &mut accounts.iter();
-    let system_account = next_account_info(accounts_iter)?;
-    let _payer = next_account_info(accounts_iter)?;
-    let operator_account = next_account_info(accounts_iter)?;
-    let config_pda = next_account_info(accounts_iter)?;
+    let TransferOperatorshipInfo {
+        system_account,
+        operator_account,
+        config_pda,
+    } = TransferOperatorshipInfo::from_account_iter(&mut accounts.iter())?;
 
     validate_system_account_key(system_account.key)?;
 

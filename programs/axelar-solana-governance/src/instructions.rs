@@ -29,30 +29,28 @@ pub enum GovernanceInstruction {
     /// --> GMP Schedule time lock proposal
     ///
     /// 0. [] System program account
-    /// 1. [WRITE, SIGNER] Payer account
-    /// 2. [WRITE] Config PDA account
+    /// 1. [WRITE] Config PDA account
+    /// 2. [WRITE, SIGNER] Payer account
     /// 3. [WRITE] Prop PDA account
     ///
     /// --> GMP Cancel time lock proposal
     ///
     /// 0. [] System program account
-    /// 1. [WRITE, SIGNER] Payer account
-    /// 2. [WRITE] Config PDA account
-    /// 3. [WRITE] Prop PDA account
+    /// 1. [WRITE] Config PDA account
+    /// 2. [WRITE] Prop PDA account
     ///
     /// --> GMP Approve operator proposal
     ///
     /// 0. [] System program account
-    /// 1. [WRITE, SIGNER] Payer account
-    /// 2. [] Config PDA account
+    /// 1. [] Config PDA account
+    /// 2. [WRITE, SIGNER] Payer account
     /// 3. [WRITE] Prop operator account
     ///
     /// --> GMP Cancel operator proposal
     ///
     /// 0. [] System program account
-    /// 1. [WRITE, SIGNER] Payer account
-    /// 2. [] Config PDA account
-    /// 3. [WRITE] Prop operator account
+    /// 1. [] Config PDA account
+    /// 2. [WRITE] Prop operator account
     ProcessGmp {
         /// The GMP message metadata. The payload is retrieved later from
         ///  its dedicated account.
@@ -64,9 +62,8 @@ pub enum GovernanceInstruction {
     ///
     ///
     /// 0. [] System program account
-    /// 1. [] Payer account
-    /// 2. [WRITE] Config PDA account
-    /// 3. [WRITE] Prop PDA account
+    /// 1. [WRITE] Config PDA account
+    /// 2. [WRITE] Prop PDA account
     ExecuteProposal(ExecuteProposalData),
 
     /// Execute a given proposal as operator. Only the designed operator can
@@ -74,11 +71,10 @@ pub enum GovernanceInstruction {
     ///
     ///
     /// 0. [] System program account
-    /// 1. [] Payer account
-    /// 2. [WRITE] Config PDA account
-    /// 3. [WRITE] Prop PDA account
-    /// 4. [] Operator PDA account
-    /// 5. [WRITE] Prop operator account
+    /// 1. [WRITE] Config PDA account
+    /// 2. [WRITE] Prop PDA account
+    /// 3. [] Operator PDA account
+    /// 4. [WRITE] Prop operator account
     ExecuteOperatorProposal(ExecuteProposalData),
 
     /// Withdraw governing tokens from this program config account.
@@ -86,7 +82,6 @@ pub enum GovernanceInstruction {
     /// 0. [] System program account
     /// 1. [WRITE, SIGNER] Config PDA account
     /// 2. [WRITE] Funds receiver account
-    /// 3. [] Program ID account
     WithdrawTokens {
         /// The amount to withdraw.
         amount: u64,
@@ -96,9 +91,8 @@ pub enum GovernanceInstruction {
     /// operator or this contract via a CPI call can transfer the operatorship.
     ///
     /// 0. [] System program account
-    /// 1. [SIGNER] Payer account
-    /// 2. [SIGNER] Operator PDA account
-    /// 3. [WRITE] Config PDA account
+    /// 1. [SIGNER] Operator PDA account
+    /// 2. [WRITE] Config PDA account
     TransferOperatorship {
         /// The new operator pubkey bytes. See [`Pubkey::to_bytes`].
         new_operator: [u8; 32],
@@ -157,7 +151,12 @@ pub mod builder {
     use solana_program::{bpf_loader_upgradeable, msg, system_program};
 
     use super::GovernanceInstruction;
-    use crate::processor::gmp;
+    use crate::processor::GovernanceConfigMeta;
+    use crate::processor::{
+        gmp, ApproveOperatorProposalMeta, CancelOperatorApprovalMeta, CancelTimeLockProposalMeta,
+        ExecuteOperatorProposalMeta, ExecuteProposalMeta, ScheduleTimeLockProposalMeta,
+        TransferOperatorshipMeta, WithdrawTokensMeta,
+    };
     use crate::state::operator::derive_managed_proposal_pda;
     use crate::state::proposal::{
         ExecutableProposal, ExecuteProposalCallData, ExecuteProposalData,
@@ -337,12 +336,13 @@ pub mod builder {
             config: GovernanceConfig,
         ) -> IxBuilder<ConfigBuild> {
             let program_data_pda = bpf_loader_upgradeable::get_program_data_address(&crate::ID);
-            let accounts = vec![
-                AccountMeta::new(*payer, true),
-                AccountMeta::new_readonly(program_data_pda, false),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new_readonly(system_program::ID, false),
-            ];
+            let accounts = GovernanceConfigMeta {
+                payer: AccountMeta::new(*payer, true),
+                program_data: AccountMeta::new(program_data_pda, false),
+                root_pda: AccountMeta::new(*config_pda, false),
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+            }
+            .to_account_vec();
 
             IxBuilder {
                 accounts: Some(accounts),
@@ -365,17 +365,16 @@ pub mod builder {
         /// [`TransferOperatorshipBuild`].
         pub fn transfer_operatorship(
             self,
-            payer: &Pubkey,
             operator_pda: &Pubkey,
             config_pda: &Pubkey,
             new_operator: &Pubkey,
         ) -> IxBuilder<TransferOperatorshipBuild> {
-            let accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new_readonly(*payer, true),
-                AccountMeta::new_readonly(*operator_pda, true),
-                AccountMeta::new(*config_pda, false),
-            ];
+            let accounts = TransferOperatorshipMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                operator_account: AccountMeta::new_readonly(*operator_pda, true),
+                config_pda: AccountMeta::new(*config_pda, false),
+            }
+            .to_account_vec();
 
             IxBuilder {
                 accounts: Some(accounts),
@@ -433,26 +432,26 @@ pub mod builder {
         /// can be built (among others).
         pub fn builder_for_operatorship_transfership(
             self,
-            payer: &Pubkey,
             config_pda: &Pubkey,
             operator_pda: &Pubkey,
             new_operator_pda: &Pubkey,
             eta: u64,
         ) -> IxBuilder<ProposalRelated> {
-            let gmp_prop_target_accounts = &[
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new_readonly(*payer, true),
-                AccountMeta::new_readonly(*operator_pda, false),
-                AccountMeta::new(*config_pda, true),
-                AccountMeta::new_readonly(crate::ID, false),
-            ];
+            let mut accounts = TransferOperatorshipMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                operator_account: AccountMeta::new_readonly(*operator_pda, false),
+                config_pda: AccountMeta::new(*config_pda, true),
+            }
+            .to_account_vec();
+
+            accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
             let data = to_vec(&GovernanceInstruction::TransferOperatorship {
                 new_operator: new_operator_pda.to_bytes(),
             })
             .unwrap();
 
-            Self::new().with_proposal_data(crate::ID, 0, eta, None, gmp_prop_target_accounts, data)
+            Self::new().with_proposal_data(crate::ID, 0, eta, None, &accounts, data)
         }
 
         /// This is a builder of a builder. It loads into the builder a proposal
@@ -468,19 +467,21 @@ pub mod builder {
             amount: u64,
             eta: u64,
         ) -> IxBuilder<ProposalRelated> {
-            let target_accounts = &[
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*config_pda, true),
-                AccountMeta::new(*funds_receiver, false),
-                AccountMeta::new_readonly(crate::ID, false),
-            ];
+            let mut target_accounts = WithdrawTokensMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                config_pda: AccountMeta::new(*config_pda, true),
+                receiver: AccountMeta::new(*funds_receiver, false),
+            }
+            .to_account_vec();
+
+            target_accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
             Self::new().with_proposal_data(
                 crate::ID,
                 0,
                 eta,
                 None,
-                target_accounts,
+                &target_accounts,
                 to_vec(&GovernanceInstruction::WithdrawTokens { amount }).unwrap(),
             )
         }
@@ -511,11 +512,12 @@ pub mod builder {
         /// Creates an instruction for executing the previously provided
         /// proposal.
         pub fn execute_proposal(self, config_pda: &Pubkey) -> IxBuilder<ExecuteProposalBuild> {
-            let mut accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new(self.prop_pda.unwrap(), false),
-            ];
+            let mut accounts = ExecuteProposalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                config_pda: AccountMeta::new(*config_pda, false),
+                proposal_account: AccountMeta::new(self.prop_pda.unwrap(), false),
+            }
+            .to_account_vec();
 
             // Accounts needed for the target contract. Read them from the proposal data.
             let call_data = self.prop_call_data.clone().unwrap();
@@ -565,18 +567,20 @@ pub mod builder {
         /// [`ExecuteOperatorProposalBuild`].
         pub fn execute_operator_proposal(
             self,
-            payer: &Pubkey,
             config_pda: &Pubkey,
             operator_pda: &Pubkey,
         ) -> IxBuilder<ExecuteOperatorProposalBuild> {
-            let mut accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new_readonly(*payer, true),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new(self.prop_pda.unwrap(), false),
-                AccountMeta::new_readonly(*operator_pda, true),
-                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
-            ];
+            let mut accounts = ExecuteOperatorProposalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                config_pda: AccountMeta::new(*config_pda, false),
+                proposal_account: AccountMeta::new(self.prop_pda.unwrap(), false),
+                operator_account: AccountMeta::new_readonly(*operator_pda, true),
+                operator_pda_marker_account: AccountMeta::new(
+                    self.prop_operator_pda.unwrap(),
+                    false,
+                ),
+            }
+            .to_account_vec();
 
             // Accounts needed for the target contract. Read them from the proposal data.
             let call_data = self.prop_call_data.clone().unwrap();
@@ -681,12 +685,14 @@ pub mod builder {
             payer: &Pubkey,
             config_pda: &Pubkey,
         ) -> IxBuilder<GmpBuild> {
-            let accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*payer, true),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new(self.prop_pda.unwrap(), false),
-            ];
+            let accounts = ScheduleTimeLockProposalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                payer: AccountMeta::new(*payer, true),
+                root_pda: AccountMeta::new(*config_pda, false),
+                proposal_pda: AccountMeta::new(self.prop_pda.unwrap(), false),
+            }
+            .to_account_vec();
+
             IxBuilder {
                 accounts: Some(accounts),
                 config: self.config,
@@ -712,17 +718,13 @@ pub mod builder {
         /// # Panics
         ///
         /// If the builder data is not set. But this should never happen.
-        pub fn cancel_time_lock_proposal(
-            self,
-            payer: &Pubkey,
-            config_pda: &Pubkey,
-        ) -> IxBuilder<GmpBuild> {
-            let accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*payer, true),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new(self.prop_pda.unwrap(), false),
-            ];
+        pub fn cancel_time_lock_proposal(self, config_pda: &Pubkey) -> IxBuilder<GmpBuild> {
+            let accounts = CancelTimeLockProposalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                root_pda: AccountMeta::new(*config_pda, false),
+                proposal_pda: AccountMeta::new(self.prop_pda.unwrap(), false),
+            }
+            .to_account_vec();
 
             IxBuilder {
                 accounts: Some(accounts),
@@ -750,13 +752,14 @@ pub mod builder {
             payer: &Pubkey,
             config_pda: &Pubkey,
         ) -> IxBuilder<GmpBuild> {
-            let accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*payer, true),
-                AccountMeta::new_readonly(*config_pda, false),
-                AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
-                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
-            ];
+            let accounts = ApproveOperatorProposalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                payer: AccountMeta::new(*payer, true),
+                root_pda: AccountMeta::new_readonly(*config_pda, false),
+                proposal_pda: AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
+                operator_proposal_pda: AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+            }
+            .to_account_vec();
 
             IxBuilder {
                 accounts: Some(accounts),
@@ -779,18 +782,14 @@ pub mod builder {
         /// proposal data from previous stages of the builder.
         ///
         /// It provides access to the next builder stage [`GmpBuild`].
-        pub fn cancel_operator_proposal(
-            self,
-            payer: &Pubkey,
-            config_pda: &Pubkey,
-        ) -> IxBuilder<GmpBuild> {
-            let accounts = vec![
-                AccountMeta::new_readonly(system_program::ID, false),
-                AccountMeta::new(*payer, true),
-                AccountMeta::new(*config_pda, false),
-                AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
-                AccountMeta::new(self.prop_operator_pda.unwrap(), false),
-            ];
+        pub fn cancel_operator_proposal(self, config_pda: &Pubkey) -> IxBuilder<GmpBuild> {
+            let accounts = CancelOperatorApprovalMeta {
+                system_account: AccountMeta::new_readonly(system_program::ID, false),
+                root_pda: AccountMeta::new(*config_pda, false),
+                proposal_pda: AccountMeta::new_readonly(self.prop_pda.unwrap(), false),
+                operator_proposal_pda: AccountMeta::new(self.prop_operator_pda.unwrap(), false),
+            }
+            .to_account_vec();
 
             IxBuilder {
                 accounts: Some(accounts),
@@ -1009,13 +1008,13 @@ pub mod builder {
                 ix_builder.schedule_time_lock_proposal(&payer, &config_pda)
             }
             GovernanceCommand::CancelTimeLockProposal => {
-                ix_builder.cancel_time_lock_proposal(&payer, &config_pda)
+                ix_builder.cancel_time_lock_proposal(&config_pda)
             }
             GovernanceCommand::ApproveOperatorProposal => {
                 ix_builder.approve_operator_proposal(&payer, &config_pda)
             }
             GovernanceCommand::CancelOperatorApproval => {
-                ix_builder.cancel_operator_proposal(&payer, &config_pda)
+                ix_builder.cancel_operator_proposal(&config_pda)
             }
             _ => {
                 msg!("Governance command is not implemented, wrong payload");

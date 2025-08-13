@@ -41,12 +41,17 @@ mod cancel_operator_approval;
 mod cancel_time_lock_proposal;
 mod schedule_time_lock_proposal;
 
+pub use approve_operator_proposal::ApproveOperatorProposalMeta;
+pub use cancel_operator_approval::CancelOperatorApprovalMeta;
+pub use cancel_time_lock_proposal::CancelTimeLockProposalMeta;
+pub use schedule_time_lock_proposal::ScheduleTimeLockProposalMeta;
+
 /// The index of the first account that is expected to be passed to the
 /// destination program.
 pub const PROGRAM_ACCOUNTS_SPLIT_AT: usize = 4;
 
 /// The index of the root PDA account in the accounts slice.
-const ROOT_PDA_ACCOUNT_INDEX: usize = 2;
+const ROOT_PDA_ACCOUNT_INDEX: usize = 1;
 
 pub(crate) fn process(
     program_id: &Pubkey,
@@ -92,9 +97,9 @@ impl ProcessGMPContext {
     /// # Errors
     ///
     /// Returns a `ProgramError` if any validation or decoding fails.
-    pub fn new_from_processor_context(
+    pub fn new_from_processor_context<'a>(
         _program_id: &Pubkey,
-        gw_accounts: &[AccountInfo<'_>],
+        gw_accounts: &'a [AccountInfo<'a>],
         gmp_accounts: &[AccountInfo<'_>],
         message: &Message,
     ) -> Result<Self, ProgramError> {

@@ -71,11 +71,7 @@ async fn test_full_flow_operator_proposal_execution() {
     // Send the operator execute proposal instruction
     let ix = ix_builder
         .clone()
-        .execute_operator_proposal(
-            &sol_integration.fixture.payer.pubkey(),
-            &config_pda,
-            &operator.pubkey(),
-        )
+        .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
     let res = sol_integration
@@ -147,11 +143,7 @@ async fn test_non_previously_approved_operator_proposal_execution_fails() {
     // Send the operator execute proposal instruction
     let ix = ix_builder
         .clone()
-        .execute_operator_proposal(
-            &sol_integration.fixture.payer.pubkey(),
-            &config_pda,
-            &operator.pubkey(),
-        )
+        .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
     let res = sol_integration
@@ -186,7 +178,7 @@ async fn test_only_operator_can_execute_ix() {
 
     let ix = ix_builder
         .clone()
-        .execute_operator_proposal(&fixture.payer.pubkey(), &config_pda, &operator.pubkey())
+        .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
     let res = fixture
@@ -231,11 +223,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
 
     let operator = operator_keypair();
     let ix = ix_builder
-        .execute_operator_proposal(
-            &sol_integration.fixture.payer.pubkey(),
-            &config_pda,
-            &operator.pubkey(),
-        )
+        .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
     let res = sol_integration
@@ -289,11 +277,7 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
 
     let operator = operator_keypair();
     let ix = ix_builder
-        .execute_operator_proposal(
-            &sol_integration.fixture.payer.pubkey(),
-            &config_pda,
-            &operator.pubkey(),
-        )
+        .execute_operator_proposal(&config_pda, &operator.pubkey())
         .build();
 
     let res = sol_integration

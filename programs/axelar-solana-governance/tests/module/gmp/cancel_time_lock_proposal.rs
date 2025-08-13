@@ -32,7 +32,7 @@ async fn test_an_scheduled_proposal_can_be_cancelled() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_time_lock_proposal(&config_pda)
         .build();
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
@@ -73,7 +73,7 @@ async fn test_a_non_existent_scheduled_proposal_cannot_be_cancelled() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_time_lock_proposal(&config_pda)
         .build();
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
     let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
@@ -108,7 +108,7 @@ async fn test_program_checks_proposal_pda_is_correctly_derived() {
         .clone()
         .gmp_ix()
         .with_msg_metadata(meta.clone())
-        .cancel_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .cancel_time_lock_proposal(&config_pda)
         .build();
 
     approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
