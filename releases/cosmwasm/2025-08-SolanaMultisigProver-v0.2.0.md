@@ -43,7 +43,7 @@ MULTISIG_PROVER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.co
 source .env
 ```
 
-1. Clone and checkout the correct branch:
+2. Clone and checkout the correct branch:
 ```bash
 git clone --recurse-submodules https://github.com/eigerco/axelar-amplifier.git
 cd axelar-amplifier
