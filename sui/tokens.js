@@ -1,15 +1,21 @@
 const { Transaction } = require('@mysten/sui/transactions');
 const { Command } = require('commander');
-const { loadConfig, saveConfig, printInfo, printError, getChainConfig } = require('../common/');
+const { loadConfig, saveConfig, printInfo, printError, getChainConfig, validateParameters } = require('../common/');
+
 const {
     addBaseOptions,
-    parseSuiUnitAmount,
     addOptionsToCommands,
     broadcast,
+    broadcastFromTxBuilder,
+    createLockedCoinManagement,
+    deployTokenFromInfo,
     getWallet,
-    suiCoinId,
     isGasToken,
     paginateAll,
+    parseSuiUnitAmount,
+    printWalletInfo,
+    saveTokenDeployment,
+    suiCoinId,
 } = require('./utils');
 const {
     utils: { formatUnits },
@@ -175,10 +181,62 @@ async function processListCommand(keypair, client, args, options) {
     await CoinManager.printCoins(client, coinTypeToCoins);
 }
 
-//here
 async function legacyCoinsCommand(keypair, client, args, options, contracts) {
     const { InterchainTokenService: itsConfig } = contracts;
-    const { InterchainTokenServicev0 } = itsConfig.objects;
+    const { InterchainTokenService, InterchainTokenServicev0 } = itsConfig.objects;
+
+    if (options.createCoin) {
+        validateParameters({ isNonEmptyString: { symbol: options.createCoin } });
+        validateParameters({ isNonEmptyString: { decimals: options.decimals } });
+        validateParameters({ isNonEmptyString: { name: options.name } });
+
+        const config = loadConfig(options.env);
+        const chain = getChainConfig(config.chains, options.chainName);
+        await printWalletInfo(keypair, client, chain, options);
+
+        const symbol = options.createCoin;
+        const name = options.name;
+        const decimals = options.decimals;
+        const walletAddress = keypair.toSuiAddress();
+        const deployConfig = { client, keypair, options, walletAddress };
+
+        // Deploy token on Sui
+        const [metadata, packageId, tokenType, treasuryCap] = await deployTokenFromInfo(deployConfig, symbol, name, decimals);
+
+        // New CoinManagement<T>
+        const [txBuilder, coinManagement] = await createLockedCoinManagement(deployConfig, itsConfig, tokenType);
+
+        // New CoinInfo<T>
+        const coinInfo = await txBuilder.moveCall({
+            target: `${itsConfig.address}::coin_info::from_metadata`,
+            arguments: [metadata],
+            typeArguments: [tokenType],
+        });
+
+        // Register legacy coin
+        await txBuilder.moveCall({
+            target: `${itsConfig.address}::interchain_token_service::register_coin`,
+            arguments: [InterchainTokenService, coinInfo, coinManagement],
+            typeArguments: [tokenType],
+        });
+
+        const result = await broadcastFromTxBuilder(
+            txBuilder,
+            keypair,
+            `Register legacy coin (${symbol}) in InterchainTokenService`,
+            options,
+            {
+                showEvents: true,
+            },
+        );
+
+        const tokenId = result.events[0].parsedJson.token_id.id;
+
+        // Save the deployed token
+        saveTokenDeployment(packageId, tokenType, contracts, symbol, decimals, tokenId, treasuryCap, metadata);
+
+        if (options.createOnly) return;
+    }
 
     printInfo('Action', 'Generate Legacy Coins List');
 
@@ -253,7 +311,7 @@ if (require.main === module) {
     );
     const listProgram = new Command('list').description('List all coins and balances');
     const legacyCoinsProgram = new Command('legacy-coins').description(
-        'Save a list of legacy coins to be migrated to public coin metadata',
+        'Save a list of legacy coins to be migrated to public coin metadata; and / or, create a legacy coin using the createCoin flag.',
     );
 
     // Define options, arguments, and actions for each sub-program
@@ -273,9 +331,14 @@ if (require.main === module) {
         mainProcessor(options, processListCommand);
     });
 
-    legacyCoinsProgram.action((options) => {
-        mainProcessor(options, legacyCoinsCommand);
-    });
+    legacyCoinsProgram
+        .option('--createCoin <symbol>', 'Create a legacy coin with the given symbol')
+        .option('--createOnly', 'Create a legacy coin without generating a list of all legacy coins')
+        .option('--decimals <decimals>', 'Decimal precision for creating a coin')
+        .option('--name <name>', 'A human readable coin name')
+        .action((options) => {
+            mainProcessor(options, legacyCoinsCommand);
+        });
 
     // Add sub-programs to the main program
     program.addCommand(mergeProgram);

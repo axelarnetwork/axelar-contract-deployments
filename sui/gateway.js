@@ -209,7 +209,7 @@ async function migrate(keypair, client, config, chain, contractConfig, args, opt
 async function submitProof(keypair, client, config, chain, contractConfig, args, options) {
     const packageId = contractConfig.address;
     const [multisigSessionId] = args;
-    const { payload, status } = await getMultisigProof(config, chain.axelarId, multisigSessionId);
+    const { payload, status } = await getMultisigProof(config.axelar, chain.axelarId, multisigSessionId);
 
     if (!status.completed) {
         throw new Error('Multisig session not completed');
@@ -540,3 +540,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { migrate };

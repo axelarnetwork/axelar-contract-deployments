@@ -27,6 +27,7 @@ const {
     broadcastRestrictedUpgradePolicy,
     broadcastFromTxBuilder,
 } = require('./utils');
+const GatewayCli = require('./gateway');
 
 /**
  * Move Package Directories
@@ -238,7 +239,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
     const signers = await getSigners(keypair, config, chain, options);
-    const domainSeparator = await getDomainSeparator(config, chain, options);
+    const domainSeparator = await getDomainSeparator(config.axelar, chain, options);
 
     validateParameters({
         isNonEmptyString: { previousSigners },
@@ -460,6 +461,10 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
     const builder = new TxBuilder(client);
 
     switch (packageName) {
+        case 'AxelarGateway': {
+            const result = await GatewayCli.migrate(keypair, client, config, chain, contractConfig, null, options);
+            return await broadcast(client, keypair, result.tx, result.message, options);
+        }
         case 'InterchainTokenService': {
             const InterchainTokenService = contractConfig.objects.InterchainTokenService;
 
@@ -477,7 +482,7 @@ async function migrate(keypair, client, supportedPackage, config, chain, options
         }
     }
 
-    await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
+    if (packageName !== 'AxelarGateway') await broadcastFromTxBuilder(builder, keypair, `Migrate Package ${packageName}`, options);
 }
 
 async function syncPackages(keypair, client, config, chain, options) {
@@ -602,6 +607,7 @@ if (require.main === module) {
         return new Command(packageName)
             .description(`Migrate ${packageName} contract after upgrade`)
             .command(`${packageName}`)
+            .addOption(new Option('--migrate-data <migrateData>', 'bcs encoded data to pass to the migrate function'))
             .addOption(new Option('--sender <sender>', 'transaction sender'))
             .addOption(new Option('--digest <digest>', 'digest hash for upgrade'))
             .addOption(new Option('--offline', 'store tx block for sign'))
