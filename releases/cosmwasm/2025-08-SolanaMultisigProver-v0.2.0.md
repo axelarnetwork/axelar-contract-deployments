@@ -79,8 +79,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
   -t "Migrate SolanaMultisigProver to v0.2.0" \
   -d "Migrate SolanaMultisigProver to v0.2.0" \
   --msg '{}' \
-  --fetchCodeId \
-  --deposit $DEPOSIT_VALUE
+  --fetchCodeId
 ```
 
 ## Checklist
