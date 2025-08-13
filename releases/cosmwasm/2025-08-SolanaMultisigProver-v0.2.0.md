@@ -59,7 +59,7 @@ docker run --rm -v "$(pwd)":/code \
 ```
 That would create the `artifacts` folder with all the compiled contracts, plus the checksums.
 
-3. Store `SolanaMultisigProver` contract.
+4. Store `SolanaMultisigProver` contract.
 
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
