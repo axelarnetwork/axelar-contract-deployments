@@ -3,6 +3,7 @@ const { Command } = require('commander');
 const { toNano, Address, beginCell, Cell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
 const crypto = require('crypto');
+const { JettonWallet, JettonMinter } = require('axelar-cgp-ton');
 const ITS_DICT_KEY_LENGTH = 256;
 
 const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
@@ -10,6 +11,8 @@ const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
 if (!ITS_ADDRESS) {
     throw new Error('Please set TON_ITS_ADDRESS in your .env file');
 }
+
+const OP_PAYMENT = 0x00000200;
 
 const ITS_OPS = {
     DEPLOY_INTERCHAIN_TOKEN: 0x0000006b,
@@ -42,6 +45,10 @@ const ITS_OPS = {
 
 const program = new Command();
 program.name('its').description('Axelar TON Interchain Token Service CLI').version('1.0.0');
+
+function sleep(seconds) {
+    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
 
 async function executeITSOperation(operationName, messageBody, cost) {
     try {
@@ -133,6 +140,22 @@ function buildDeployRemoteInterchainTokenMessage(salt, chainName, remoteMinter) 
         .storeUint(BigInt(salt), 256)
         .storeRef(chainNameCell)
         .storeRef(minterCell)
+        .endCell();
+
+    return message;
+}
+
+function buildInterchainTokenTransferMessage(tokenId, chainName, destinationAddress, amount) {
+    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
+
+    const destinationAddressCell = beginCell().storeStringTail(destinationAddress).endCell();
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.INTERCHAIN_TOKEN_TRANSFER, 32)
+        .storeUint(BigInt(tokenId), 256)
+        .storeRef(chainNameCell)
+        .storeRef(destinationAddressCell)
+        .storeUint(BigInt(amount), 256)
         .endCell();
 
     return message;
@@ -253,4 +276,81 @@ program
             process.exit(1);
         }
     });
+
+program
+    .command('transfer-interchain-token')
+    .description('Transfer interchain tokens to another chain')
+    .argument('<token-id>', 'Token ID (256-bit number or hex string)')
+    .argument('<chain-name>', 'Destination chain name (e.g., "ethereum", "polygon")')
+    .argument('<destination-address>', 'Recipient address on the destination chain')
+    .argument('<amount>', 'Amount of tokens to transfer')
+    .argument('<jetton-minter>', 'Jetton minter address for gas payment')
+    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
+    .action(async (tokenId, chainName, destinationAddress, amount, jettonMinter, options) => {
+        try {
+            const tokenIdBigInt = tokenId.startsWith('0x') ? tokenId.slice(2) : tokenId;
+
+            console.log('Transferring Interchain Token with parameters:');
+            console.log('  Token ID:', tokenIdBigInt);
+            console.log('  Destination Chain:', chainName);
+            console.log('  Destination Address:', destinationAddress);
+            console.log('  Amount:', amount);
+            console.log('  Jetton Minter:', jettonMinter);
+            console.log('  Transaction Gas:', options.gas, 'TON');
+
+            // Payment step
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+
+            const itsAddress = Address.parse(process.env.TON_ITS_ADDRESS);
+            const jettonMinterAddress = Address.parse(jettonMinter);
+            const myWalletAddress = contract.address;
+
+            const minter = JettonMinter.createFromAddress(jettonMinterAddress);
+            const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), myWalletAddress);
+
+            const jettonToSend = amount;
+            const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
+
+            console.log(`Sending ${jettonToSend.toString()} Jettons for ITS payment`);
+
+            try {
+                const res = await userJettonWallet.sendTransfer(
+                    client.provider(userJettonWallet.address),
+                    contract.sender(key.secretKey),
+                    toNano('0.1'),
+                    jettonToSend,
+                    itsAddress,
+                    itsAddress,
+                    beginCell().endCell(),
+                    toNano('0.05'),
+                    beginCell().storeUint(OP_PAYMENT, 32).storeAddress(jettonMinterAddress).endCell(),
+                );
+
+                console.log('Jetton payment transaction result:', res);
+                console.log('✅ Jetton payment transaction sent successfully!');
+
+                // Wait for gas payment confirmation
+                const seqno = await contract.getSeqno();
+                await waitForTransaction(contract, seqno);
+            } catch (error) {
+                console.error('❌ Error in jetton payment:', error);
+                console.error('Error details:', error.message);
+                throw error;
+            }
+
+            console.log('Waiting for payment to be registered...');
+            await sleep(60);
+
+            // Main ITS operation
+            const messageBody = buildInterchainTokenTransferMessage(tokenIdBigInt, chainName, destinationAddress, amount);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Interchain Token Transfer', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error transferring interchain token:', error.message);
+            process.exit(1);
+        }
+    });
+
 program.parse();

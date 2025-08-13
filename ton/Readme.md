@@ -164,6 +164,12 @@ Execute an operator proposal
 node ton/governance.js execute-operator-proposal <target-address> <native-ton-amount> <proposal-hash> <proposal-hex-data> <gas-amount>
 ```
 
+## Upgrade
+
+```bash
+node ton/upgrade.js <contract-address> <new-code-box-hex>
+```
+
 ## Interchain Token Service
 
 ```bash
@@ -176,4 +182,12 @@ node ton/its.js add-trusted-chain <chain-name> <chain-address>
 
 ```bash
 node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex>
+```
+
+```bash
+node ton/its.js deploy-remote-interchain-token <salt> <chain-name>
+```
+
+```bash
+node ton/its.js transfer-interchain-token <token-id> <chain-name> <destination-address> <amount> <jetton-minter>
 ```
