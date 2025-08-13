@@ -95,14 +95,6 @@ forge build --out out --libraries "lib/example-native-token-transfers/evm/src/li
 
 Please ensure you have generated pre-linked artifacts.
 
-Set address of deployed `gmpManager` to the transceiver section in your chain config:
-
-```json
-"${PREFIX}AxelarTransceiver": {
-  "gmpManager": "0x..."
-}
-```
-
 To deploy an AxelarTransceiver contract, run:
 
 ```bash
@@ -110,6 +102,7 @@ ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --gmpManager $GMP_MANAGER_ADDRESS \
   --transceiverPrefix $PREFIX
 ```
 
@@ -117,7 +110,7 @@ ts-node evm/deploy-contract.js \
 - **Use `create`** method to deploy, as deployer of transceiver will be used to initialize the contract, avoid using `create2` or `create3`
 - **`--artifactPath` is required** for transceiver deployment
 - **`--transceiverPrefix` is required** to differentiate multiple transceivers in config
-- The GMP Manager address is automatically read from the chain config (`${PREFIX}AxelarTransceiver.gmpManager`)
+- The GMP Manager address is automatically read from the chain config (`${PREFIX}AxelarTransceiver.gmpManager`) or can be manually provied via `--gmpManager` flag
 - **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
 
 The deployment script will:
@@ -147,6 +140,7 @@ ts-node evm/deploy-contract.js \
 ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --gmpManager $GMP_MANAGER_ADDRESS \
   --transceiverPrefix $PREFIX \
   --upgrade
 ```
