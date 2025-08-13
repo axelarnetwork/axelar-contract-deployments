@@ -1,0 +1,71 @@
+name: zip-dyn-libs
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release-dyn-libs:
+    runs-on: self-hosted
+    name: Build and Release Dynamic Libraries
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Setup repo
+        uses: ./.github/actions/setup-repo
+
+      - name: Build dynamic libraries
+        run: cargo xtask build
+
+      - name: Get short commit hash
+        id: commit
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Create release archive
+        run: |
+          cd target/deploy
+          zip -r ../../solana-dynamic-libraries-${{ steps.commit.outputs.short_sha }}.zip *.so
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: solana-dynamic-libraries-${{ steps.commit.outputs.short_sha }}.zip
+          tag_name: dyn-libs-${{ steps.commit.outputs.short_sha }}
+          name: Dynamic Libraries Release ${{ steps.commit.outputs.short_sha }}
+          body: |
+            Dynamic libraries built from commit ${{ github.sha }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger relayer workflow
+        run: |
+          # Fine-grained PAT permissions:
+          #  - Actions: write
+          #  - Metadata: read
+          curl -f -X POST \
+            -H "Authorization: token ${{ secrets.RELAYER_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/eigerco/axelar-solana-relayer/actions/workflows/so-libs-update.yml/dispatches \
+            -d '{
+              "ref": "main",
+              "inputs": {
+                "repository": "${{ github.repository }}",
+                "release_tag": "dyn-libs-${{ steps.commit.outputs.short_sha }}",
+                "commit_sha": "${{ github.sha }}",
+                "short_sha": "${{ steps.commit.outputs.short_sha }}",
+                "download_url": "https://github.com/${{ github.repository }}/releases/download/dyn-libs-${{ steps.commit.outputs.short_sha }}/solana-dynamic-libraries-${{ steps.commit.outputs.short_sha }}.zip"
+              }
+            }'
+          
+          echo "✅ Successfully triggered relayer workflow!"
+          echo "View workflow runs at: https://github.com/eigerco/axelar-solana-relayer/actions/workflows/so-libs-update.yml"
