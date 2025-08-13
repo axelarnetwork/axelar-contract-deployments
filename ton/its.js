@@ -161,6 +161,27 @@ function buildInterchainTokenTransferMessage(tokenId, chainName, destinationAddr
     return message;
 }
 
+function buildLinkTokenMessage(salt, chainName, destinationAddress, tokenManagerType, linkParams) {
+    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
+    const destinationAddressCell = beginCell().storeStringTail(destinationAddress).endCell();
+
+    // Handle linkParams - if given put it as cell, else empty cell
+    const linkParamsCell =
+        linkParams && linkParams !== '0x' && linkParams !== ''
+            ? Cell.fromHex(linkParams.startsWith('0x') ? linkParams.slice(2) : linkParams)
+            : beginCell().endCell();
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.LINK_TOKEN, 32)
+        .storeUint(BigInt('0x' + salt), 256)
+        .storeRef(chainNameCell)
+        .storeRef(destinationAddressCell)
+        .storeUint(tokenManagerType, 8)
+        .storeRef(linkParamsCell)
+        .endCell();
+
+    return message;
+}
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -349,6 +370,42 @@ program
             await executeITSOperation('Interchain Token Transfer', messageBody, cost);
         } catch (error) {
             console.error('❌ Error transferring interchain token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('link-token')
+    .description('Link a token to a remote chain token')
+    .argument('<salt>', 'Salt value for token linking (256-bit hex string)')
+    .argument('<chain-name>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
+    .argument('<destination-address>', 'Token address on the destination chain')
+    .argument(
+        '[token-manager-type]',
+        'Token manager type (0=INTERCHAIN_TOKEN, 1=MINT_BURN_FROM, 2=LOCK_UNLOCK, 3=LOCK_UNLOCK_FEE, 4=MINT_BURN)',
+        '2',
+    )
+    .argument('[link-params]', 'Link parameters as hex string (optional)', '0x')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
+        try {
+            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const tmType = parseInt(tokenManagerType, 10);
+
+            console.log('Linking Token with parameters:');
+            console.log('  Salt:', saltBigInt);
+            console.log('  Chain Name:', chainName);
+            console.log('  Destination Address:', destinationAddress);
+            console.log('  Token Manager Type:', tmType);
+            console.log('  Link Params:', linkParams);
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildLinkTokenMessage(saltBigInt, chainName, destinationAddress, tmType, linkParams);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Link Token', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error linking token:', error.message);
             process.exit(1);
         }
     });
