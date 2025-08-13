@@ -66,9 +66,7 @@ ts-node cosmwasm/submit-proposal.js store \
   -c MultisigProver \
   -t "Upload SolanaMultisigProver contract v0.2.0" \
   -d "Upload SolanaMultisigProver contract v0.2.0" \
-  -a "$ARTIFACT_PATH" \
-  --deposit $DEPOSIT_VALUE \
-  --instantiateAddresses $INIT_ADDRESSES
+  -a "$ARTIFACT_PATH"
 ```
 
 6. Migrate `SolanaMultisigProver` contract.
