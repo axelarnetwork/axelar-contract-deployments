@@ -93,6 +93,7 @@ unseparated_literal_suffix = "allow"
 unused_trait_names = "allow"
 unwrap_used = "allow"
 use_self = "allow"
+unneeded_field_pattern = "allow"
 
 [workspace.lints.rust]
 rust_2018_idioms = { level = "allow", priority = 0 }
