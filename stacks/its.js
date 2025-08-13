@@ -1,11 +1,12 @@
 const { Command } = require('commander');
-const { loadConfig, saveConfig, getChainConfig, printInfo, parseTrustedChains } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, printInfo, parseTrustedChains, sleep } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
-const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
+const { Cl } = require('@stacks/transactions');
+const { sendContractCallTransaction } = require('./utils/sign-utils');
 
 const AXELAR_HUB_IDENTIFIER = 'hub';
 
-async function setTrustedAddress(privateKey, networkType, config, chain, args) {
+async function setTrustedChain(wallet, config, chain, args) {
     const contracts = chain.contracts;
     if (!contracts.InterchainTokenService?.address) {
         throw new Error(`Contract InterchainTokenService not yet deployed`);
@@ -19,35 +20,21 @@ async function setTrustedAddress(privateKey, networkType, config, chain, args) {
     for (const trustedChain of trustedChains) {
         printInfo(`Setting trusted address for ${trustedChain}`);
 
-        const itsAddress = contracts.InterchainTokenService.address.split('.');
-        const registerTransaction = await makeContractCall({
-            contractAddress: itsAddress[0],
-            contractName: itsAddress[1],
-            functionName: 'set-trusted-address',
-            functionArgs: [
-                Cl.address(contracts.InterchainTokenServiceImpl.address),
-                Cl.stringAscii(trustedChain),
-                Cl.stringAscii(AXELAR_HUB_IDENTIFIER),
-            ],
-            senderKey: privateKey,
-            network: networkType,
-            postConditionMode: PostConditionMode.Allow,
-            anchorMode: AnchorMode.Any,
-            fee: 10_000,
-        });
-        const result = await broadcastTransaction({
-            transaction: registerTransaction,
-            network: networkType,
-        });
+        const result = await sendContractCallTransaction(
+            contracts.InterchainTokenService.address,
+            'set-trusted-address',
+            [Cl.address(contracts.InterchainTokenServiceImpl.address), Cl.stringAscii(trustedChain), Cl.stringAscii(AXELAR_HUB_IDENTIFIER)],
+            wallet,
+        );
 
         printInfo(`Finished setting ${trustedChain} as trusted`, result.txid);
 
         // Wait a bit before executing next transaction
-        await new Promise((resolve) => setTimeout(resolve, 5_000));
+        await sleep(5_000);
     }
 }
 
-async function removeTrustedAddress(privateKey, networkType, config, chain, args) {
+async function removeTrustedChain(wallet, config, chain, args) {
     const contracts = chain.contracts;
     if (!contracts.InterchainTokenService?.address) {
         throw new Error(`Contract InterchainTokenService not yet deployed`);
@@ -61,34 +48,24 @@ async function removeTrustedAddress(privateKey, networkType, config, chain, args
     for (const trustedChain of trustedChains) {
         printInfo(`Removing trusted address for ${trustedChain}`);
 
-        const itsAddress = contracts.InterchainTokenService.address.split('.');
-        const registerTransaction = await makeContractCall({
-            contractAddress: itsAddress[0],
-            contractName: itsAddress[1],
-            functionName: 'remove-trusted-address',
-            functionArgs: [Cl.address(contracts.InterchainTokenServiceImpl.address), Cl.stringAscii(trustedChain)],
-            senderKey: privateKey,
-            network: networkType,
-            postConditionMode: PostConditionMode.Allow,
-            anchorMode: AnchorMode.Any,
-            fee: 10_000,
-        });
-        const result = await broadcastTransaction({
-            transaction: registerTransaction,
-            network: networkType,
-        });
+        const result = await sendContractCallTransaction(
+            contracts.InterchainTokenService.address,
+            'remove-trusted-address',
+            [Cl.address(contracts.InterchainTokenServiceImpl.address), Cl.stringAscii(trustedChain)],
+            wallet,
+        );
 
         printInfo(`Finished removing ${trustedChain} from trusted`, result.txid);
 
         // Wait a bit before executing next transaction
-        await new Promise((resolve) => setTimeout(resolve, 5_000));
+        await sleep(5_000);
     }
 }
 
 async function processCommand(command, config, chain, args, options) {
-    const { privateKey, networkType } = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
 
-    await command(privateKey, networkType, config, chain, args, options);
+    await command(wallet, config, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {
@@ -103,21 +80,21 @@ if (require.main === module) {
     program.name('Gas Service Commands').description('Stacks GasService scripts');
 
     const setTrustedAddressCmd = new Command()
-        .name('set-trusted-address')
-        .command('set-trusted-address <trusted-chains...>')
+        .name('set-trusted-chain')
+        .command('set-trusted-chain <trusted-chains...>')
         .description(
-            `Set trusted address for chains. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
+            `Set a trusted chain. The <trusted-chains> can be a list of chains separated by whitespaces. It can also be a special tag to indicate a specific set of chains e.g. 'all' to target all InterchainTokenService-deployed chains`,
         )
         .action((trustedChains, options) => {
-            mainProcessor(setTrustedAddress, options, trustedChains, processCommand);
+            mainProcessor(setTrustedChain, options, trustedChains, processCommand);
         });
 
     const removeTrustedAddressCmd = new Command()
-        .name('remove-trusted-address')
-        .description('Remove trusted address')
-        .command('remove-trusted-address <trusted-chains...>')
+        .name('remove-trusted-chain')
+        .description('Remove a trusted chain')
+        .command('remove-trusted-chain <trusted-chains...>')
         .action((trustedChains, options) => {
-            mainProcessor(removeTrustedAddress, options, trustedChains, processCommand);
+            mainProcessor(removeTrustedChain, options, trustedChains, processCommand);
         });
 
     program.addCommand(setTrustedAddressCmd);

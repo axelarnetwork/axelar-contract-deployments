@@ -35,24 +35,24 @@ In order to deploy all the contracts required by the Stacks integration, please 
 node stacks/gas-service.js collect-fees --amount 1000000 --receiver <optional stacks receiver address>
 ```
 
-### Setup Trusted Address
+### Setup Trusted Chain
 
-Set trusted address
+Set trusted chian
 
 ```bash
-node stacks/its.js set-trusted-address <sourceChain> <sourceChain2> ...
+node stacks/its.js set-trusted-chain <sourceChain> <sourceChain2> ...
 ```
 
 or Add all chains that have ITS contract deployed
 
 ```bash
-node stacks/its.js set-trusted-address all
+node stacks/its.js set-trusted-chain all
 ```
 
-Remove trusted addresses
+Remove trusted chain
 
 ```bash
-node stacks/its.js remove-trusted-address <sourceChain> <sourceChain2> ...
+node stacks/its.js remove-trusted-chain <sourceChain> <sourceChain2> ...
 ```
 
 ### Setup Governance
@@ -64,5 +64,5 @@ ts-node stacks/setup-contract.js Governance --governanceChain "[governance chain
 ### Set owner
 
 ```bash
-ts-node stacks/governance.js set-owner <Gateway|InterchainTokenFactory|InterchainTokenService> "[governance address]"
+ts-node stacks/commands.js set-owner <Gateway> "[governance address]"
 ```

@@ -194,7 +194,7 @@ async function getVerificationParams(txId, rpc) {
             throw new Error(`HTTP ${response.status}: Error getting block height data for ${blockHeight}`);
         }
 
-        blockHeightData = await response.arrayBuffer()
+        blockHeightData = await response.arrayBuffer();
     } catch (error) {
         printError(`Error getting block height data for ${blockHeight} from Stacks chain`);
         throw error;

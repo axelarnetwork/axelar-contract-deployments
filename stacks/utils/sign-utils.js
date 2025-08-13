@@ -1,7 +1,7 @@
 'use strict';
 
 const { generateSecretKey, generateWallet } = require('@stacks/wallet-sdk');
-const { privateKeyToAddress } = require('@stacks/transactions');
+const { privateKeyToAddress, makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction } = require('@stacks/transactions');
 
 async function getWallet(chain, options) {
     if (!options.mnemonic && !options.privateKey) {
@@ -54,7 +54,29 @@ async function createStacksWallet(chain) {
     };
 }
 
+async function sendContractCallTransaction(contractAddress, functionName, functionArgs, wallet) {
+    const { privateKey, networkType } = wallet;
+
+    const splitAddress = contractAddress.split('.');
+    const transaction = await makeContractCall({
+        contractAddress: splitAddress[0],
+        contractName: splitAddress[1],
+        functionName,
+        functionArgs,
+        senderKey: privateKey,
+        network: networkType,
+        postConditionMode: PostConditionMode.Allow,
+        anchorMode: AnchorMode.Any,
+    });
+
+    return await broadcastTransaction({
+        transaction,
+        network: networkType,
+    });
+}
+
 module.exports = {
     getWallet,
     createStacksWallet,
+    sendContractCallTransaction,
 };

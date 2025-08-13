@@ -3,9 +3,10 @@
 const { saveConfig, loadConfig, printInfo, getChainConfig, getCurrentVerifierSet } = require('../common/utils');
 const { getWallet, addBaseOptions, encodeAmplifierVerifiersForStacks } = require('./utils');
 const { Command, Option } = require('commander');
-const { PostConditionMode, AnchorMode, broadcastTransaction, standardPrincipalCV, Cl, makeContractCall } = require('@stacks/transactions');
+const { standardPrincipalCV, Cl } = require('@stacks/transactions');
 const { addOptionsToCommands } = require('./utils');
 const { getDomainSeparator, validateParameters } = require('../common');
+const { sendContractCallTransaction } = require('./utils/sign-utils');
 
 const GAS_SERVICE_CMD_OPTIONS = [new Option('--gasCollector <gasCollector>', 'the gas collector address')];
 
@@ -118,7 +119,7 @@ async function getItsFunctionArgs(config, chain, options) {
     );
 
     const itsContractAddressName = chain.contracts.InterchainTokenService.address;
-    const gasServiceAddress = chain.contracts.GasService.address;
+    const gasServiceAddress = chain.contracts.AxelarGasService.address;
 
     return {
         functionArgs: [
@@ -183,7 +184,7 @@ const addDeployOptions = (program) => {
 };
 
 async function processCommand(commandContractName, config, chain, options) {
-    const { privateKey, networkType } = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
 
     const contractName = options.name || commandContractName;
 
@@ -195,22 +196,7 @@ async function processCommand(commandContractName, config, chain, options) {
 
     const { functionArgs, updateConfigArgs } = await CONTRACT_CONFIGS.preDeployFunctionArgs[commandContractName](config, chain, options);
 
-    const address = chain.contracts[contractName].address.split('.');
-    const setupTx = await makeContractCall({
-        contractAddress: address[0],
-        contractName: address[1],
-        functionName: 'setup',
-        functionArgs,
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: setupTx,
-        network: networkType,
-    });
+    const result = await sendContractCallTransaction(chain.contracts[contractName].address, 'setup', functionArgs, wallet);
 
     // Update chain configuration
     chain.contracts[contractName] = {

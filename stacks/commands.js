@@ -1,9 +1,10 @@
 const { Command } = require('commander');
 const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
-const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
+const { Cl } = require('@stacks/transactions');
+const { sendContractCallTransaction } = require('./utils/sign-utils');
 
-async function setOwner(stacksAddress, privateKey, networkType, chain, args) {
+async function setOwner(wallet, chain, args) {
     const [contract, governanceAddress] = args;
 
     const contracts = chain.contracts;
@@ -15,27 +16,12 @@ async function setOwner(stacksAddress, privateKey, networkType, chain, args) {
 
     printInfo(`Setting owner for contract ${contract}, address ${contractAddress}`);
 
-    const contractAddressSplit = contractAddress.split('.');
-    const setOwnerTransaction = await makeContractCall({
-        contractAddress: contractAddressSplit[0],
-        contractName: contractAddressSplit[1],
-        functionName: 'set-owner',
-        functionArgs: [Cl.address(governanceAddress)],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: setOwnerTransaction,
-        network: networkType,
-    });
+    const result = await sendContractCallTransaction(contractAddress, 'set-owner', [Cl.address(governanceAddress)], wallet);
 
     printInfo(`Finished setting owner`, result.txid);
 }
 
-async function transferOwnership(stacksAddress, privateKey, networkType, chain, args) {
+async function transferOwnership(wallet, chain, args) {
     const [contract, ownerAddress] = args;
 
     const contracts = chain.contracts;
@@ -47,30 +33,15 @@ async function transferOwnership(stacksAddress, privateKey, networkType, chain, 
 
     printInfo(`Transferring ownership for contract ${contract}, address ${contractAddress}`);
 
-    const contractAddressSplit = contractAddress.split('.');
-    const transferOwnershipTransaction = await makeContractCall({
-        contractAddress: contractAddressSplit[0],
-        contractName: contractAddressSplit[1],
-        functionName: 'transfer-ownership',
-        functionArgs: [Cl.address(ownerAddress)],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: transferOwnershipTransaction,
-        network: networkType,
-    });
+    const result = await sendContractCallTransaction(contractAddress, 'transfer-ownership', [Cl.address(ownerAddress)], wallet);
 
     printInfo(`Finished transferring ownership`, result.txid);
 }
 
 async function processCommand(command, chain, args, options) {
-    const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
 
-    await command(stacksAddress, privateKey, networkType, chain, args, options);
+    await command(wallet, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {

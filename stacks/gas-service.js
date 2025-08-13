@@ -1,11 +1,12 @@
 const { Command } = require('commander');
 const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
-const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
+const { Cl } = require('@stacks/transactions');
+const { sendContractCallTransaction } = require('./utils/sign-utils');
 
-async function collectFees(stacksAddress, privateKey, networkType, chain, args, options) {
+async function collectFees(wallet, chain, args, options) {
     const contracts = chain.contracts;
-    if (!contracts.GasService?.address) {
+    if (!contracts.AxelarGasService?.address) {
         throw new Error(`Contract GasService not yet deployed`);
     }
     if (!contracts.GasImpl?.address) {
@@ -15,32 +16,22 @@ async function collectFees(stacksAddress, privateKey, networkType, chain, args, 
     printInfo('Collecting gas fees');
 
     const unitAmount = options.amount;
-    const receiver = options.receiver || stacksAddress;
+    const receiver = options.receiver || wallet.stacksAddress;
 
-    const gasServiceAddress = contracts.GasService.address.split('.');
-    const collectFeesTransaction = await makeContractCall({
-        contractAddress: gasServiceAddress[0],
-        contractName: gasServiceAddress[1],
-        functionName: 'collect-fees',
-        functionArgs: [Cl.address(contracts.GasImpl.address), Cl.address(receiver), Cl.uint(unitAmount)],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: collectFeesTransaction,
-        network: networkType,
-    });
+    const result = await sendContractCallTransaction(
+        contracts.AxelarGasService.address,
+        'collect-fees',
+        [Cl.address(contracts.GasImpl.address), Cl.address(receiver), Cl.uint(unitAmount)],
+        wallet,
+    );
 
     printInfo(`Finished collecting fees`, result.txid);
 }
 
 async function processCommand(command, chain, args, options) {
-    const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
+    const wallet = await getWallet(chain, options);
 
-    await command(stacksAddress, privateKey, networkType, chain, args, options);
+    await command(wallet, chain, args, options);
 }
 
 async function mainProcessor(command, options, args, processor) {

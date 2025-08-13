@@ -48,8 +48,9 @@ async function processCommand(config, chain, options) {
     const { privateKey, stacksAddress, networkType } = await getWallet(chain, options);
 
     const contractName = options.name || options.contract;
+    const configName = options.configName || kebabToPascal(contractName);
 
-    if (chain.contracts[kebabToPascal(contractName)]?.address) {
+    if (chain.contracts[configName]?.address) {
         throw new Error(`Contract ${contractName} already exists`);
     }
 
@@ -70,9 +71,10 @@ async function processCommand(config, chain, options) {
         network: networkType,
     });
 
-    chain.contracts[kebabToPascal(contractName)] = {
+    chain.contracts[configName] = {
         address: `${stacksAddress}.${contractName}`,
         deployer: stacksAddress,
+        ...(configName === 'AxelarGateway' ? { connectionType: 'amplifier' } : {}),
     };
 
     if (options.version) {
@@ -97,6 +99,7 @@ if (require.main === module) {
         .description('Deploy a contract')
         .addOption(new Option('-c, --contract <contract>', 'The contract to deploy').makeOptionMandatory(true))
         .addOption(new Option('-n, --name <name>', 'The name of the contract'))
+        .addOption(new Option('-cn, --configName <configName>', 'The config name of the contract'))
         .addOption(new Option('-v, --version <version>', 'The version of the contract'))
         .addOption(new Option('-bp, --basePath <basePath>', 'The base path from where to get the contracts').makeOptionMandatory(true))
         .action((options) => {

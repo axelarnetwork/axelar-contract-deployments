@@ -1,11 +1,12 @@
 const { Command, Option } = require('commander');
-const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common/utils');
+const { loadConfig, saveConfig, getChainConfig, printInfo, encodeITSDestination } = require('../common/utils');
 const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
-const { makeContractCall, PostConditionMode, AnchorMode, broadcastTransaction, Cl } = require('@stacks/transactions');
+const { Cl } = require('@stacks/transactions');
 const { getVerificationParams, getTokenTxId, getCanonicalInterchainTokenId } = require('./utils/its-utils');
 const { validateParameters } = require('../common');
+const { sendContractCallTransaction } = require('./utils/sign-utils');
 
-async function registerTokenManager(privateKey, networkType, chain, args, options) {
+async function registerTokenManager(wallet, chain, args, options) {
     const [contractName, token] = args;
 
     const contracts = chain.contracts;
@@ -35,12 +36,10 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
     const tmTxHash = await getTokenTxId(contracts[contractName].address, chain.rpc);
     const verificationParams = await getVerificationParams(tmTxHash, chain.rpc);
 
-    const itsFactoryAddress = contracts.InterchainTokenFactory.address.split('.');
-    const registerTransaction = await makeContractCall({
-        contractAddress: itsFactoryAddress[0],
-        contractName: itsFactoryAddress[1],
-        functionName: 'register-canonical-interchain-token',
-        functionArgs: [
+    const result = await sendContractCallTransaction(
+        contracts.InterchainTokenFactory.address,
+        'register-canonical-interchain-token',
+        [
             Cl.address(contracts.InterchainTokenFactoryImpl.address),
             Cl.address(contracts.GatewayImpl.address),
             Cl.address(contracts.GasImpl.address),
@@ -49,16 +48,8 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
             Cl.address(contracts[contractName].address),
             verificationParams,
         ],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: registerTransaction,
-        network: networkType,
-    });
+        wallet,
+    );
 
     // Save token to token manager configuration
     chain.contracts[contractName] = {
@@ -66,13 +57,10 @@ async function registerTokenManager(privateKey, networkType, chain, args, option
         token,
     };
 
-    printInfo(
-        `Finished registering canonical token with tokenId ${interchainTokenId} for token ${token}`,
-        result.txid,
-    );
+    printInfo(`Finished registering canonical token with tokenId ${interchainTokenId} for token ${token}`, result.txid);
 }
 
-async function deployRemoteCanonicalInterchainToken(privateKey, networkType, chain, args, options) {
+async function deployRemoteCanonicalInterchainToken(wallet, chain, args, options) {
     validateParameters({
         isNonEmptyString: { destinationChain: options.destinationChain },
         isValidNumber: { gasValue: options.gasValue },
@@ -107,12 +95,10 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
         `Deploying remote canonical interchain token ${contracts[contractName].token} on destination chain ${options.destinationChain}`,
     );
 
-    const itsFactoryAddress = contracts.InterchainTokenFactory.address.split('.');
-    const registerTransaction = await makeContractCall({
-        contractAddress: itsFactoryAddress[0],
-        contractName: itsFactoryAddress[1],
-        functionName: 'deploy-remote-canonical-interchain-token',
-        functionArgs: [
+    const result = await sendContractCallTransaction(
+        contracts.InterchainTokenFactory.address,
+        'deploy-remote-canonical-interchain-token',
+        [
             Cl.address(contracts.InterchainTokenFactoryImpl.address),
             Cl.address(contracts.GatewayImpl.address),
             Cl.address(contracts.GasImpl.address),
@@ -121,16 +107,8 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
             Cl.stringAscii(options.destinationChain),
             Cl.uint(options.gasValue),
         ],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: registerTransaction,
-        network: networkType,
-    });
+        wallet,
+    );
 
     printInfo(
         `Finished deploying remote canonical interchain token ${contracts[contractName].token} on destination chain ${options.destinationChain}`,
@@ -138,7 +116,7 @@ async function deployRemoteCanonicalInterchainToken(privateKey, networkType, cha
     );
 }
 
-async function interchainTransfer(privateKey, networkType, chain, args, options) {
+async function interchainTransfer(wallet, chain, args, options, config) {
     validateParameters({
         isNonEmptyString: {
             destinationChain: options.destinationChain,
@@ -175,12 +153,14 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
         `Transferring ${options.value} of token ${contracts[contractName].token} with interchain token id ${interchainTokenId} to destination chain ${options.destinationChain} and destination address ${options.destinationAddress}`,
     );
 
-    const itsAddress = contracts.InterchainTokenService.address.split('.');
-    const registerTransaction = await makeContractCall({
-        contractAddress: itsAddress[0],
-        contractName: itsAddress[1],
-        functionName: 'interchain-transfer',
-        functionArgs: [
+    const itsDestinationAddress = encodeITSDestination(config.chains, options.destinationChain, options.destinationAddress);
+    printInfo('Human-readable destination address', options.destinationAddress);
+    printInfo('Encoded ITS destination address', itsDestinationAddress);
+
+    const result = await sendContractCallTransaction(
+        contracts.InterchainTokenService.address,
+        'interchain-transfer',
+        [
             Cl.address(contracts.GatewayImpl.address),
             Cl.address(contracts.GasImpl.address),
             Cl.address(contracts.InterchainTokenServiceImpl.address),
@@ -188,21 +168,13 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
             Cl.address(contracts[contractName].token),
             Cl.bufferFromHex(interchainTokenId),
             Cl.stringAscii(options.destinationChain),
-            Cl.bufferFromHex(options.destinationAddress),
+            Cl.bufferFromHex(itsDestinationAddress),
             Cl.uint(options.value),
             Cl.tuple({ data: Cl.bufferFromHex(''), version: Cl.uint(0) }),
             Cl.uint(options.gasValue),
         ],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: registerTransaction,
-        network: networkType,
-    });
+        wallet,
+    );
 
     printInfo(
         `Finished transferring interchain token ${contracts[contractName].token} to destination chain ${options.destinationChain}`,
@@ -210,7 +182,7 @@ async function interchainTransfer(privateKey, networkType, chain, args, options)
     );
 }
 
-async function helloWorld(privateKey, networkType, chain, args) {
+async function helloWorld(wallet, chain, args) {
     const [destinationChain, destinationContract, payload, gasValue] = args;
 
     validateParameters({
@@ -235,12 +207,10 @@ async function helloWorld(privateKey, networkType, chain, args) {
         `Calling ${helloWorldContract} set-remote-value, destination chain ${destinationChain}, destination contract ${destinationContract}, payload hex ${payload}, gas amount ${gasValue}`,
     );
 
-    const helloWorldContractAddress = contracts[helloWorldContract].address.split('.');
-    const registerTransaction = await makeContractCall({
-        contractAddress: helloWorldContractAddress[0],
-        contractName: helloWorldContractAddress[1],
-        functionName: 'set-remote-value',
-        functionArgs: [
+    const result = await sendContractCallTransaction(
+        contracts[helloWorldContract].address,
+        'set-remote-value',
+        [
             Cl.stringAscii(destinationChain),
             Cl.stringAscii(destinationContract),
             Cl.bufferFromHex(payload),
@@ -248,30 +218,22 @@ async function helloWorld(privateKey, networkType, chain, args) {
             Cl.address(contracts.GatewayImpl.address),
             Cl.address(contracts.GasImpl.address),
         ],
-        senderKey: privateKey,
-        network: networkType,
-        postConditionMode: PostConditionMode.Allow,
-        anchorMode: AnchorMode.Any,
-        fee: 10_000,
-    });
-    const result = await broadcastTransaction({
-        transaction: registerTransaction,
-        network: networkType,
-    });
+        wallet,
+    );
 
     printInfo(`Successfully called set-remote-value`, result.txid);
 }
 
-async function processCommand(command, chain, args, options) {
-    const { privateKey, networkType } = await getWallet(chain, options);
+async function processCommand(command, chain, args, options, config) {
+    const wallet = await getWallet(chain, options);
 
-    await command(privateKey, networkType, chain, args, options);
+    await command(wallet, chain, args, options, config);
 }
 
 async function mainProcessor(command, options, args, processor) {
     const config = loadConfig(options.env);
     const chain = getChainConfig(config.chains, options.chainName);
-    await processor(command, chain, args, options);
+    await processor(command, chain, args, options, config);
     saveConfig(config, options.env);
 }
 
