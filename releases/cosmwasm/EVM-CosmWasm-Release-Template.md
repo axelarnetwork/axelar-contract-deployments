@@ -99,10 +99,20 @@ ts-node cosmwasm/coordinator.ts instantiate \
     --source-gateway-address "$SOURCE_GATEWAY_ADDRESS" \
     --governance-address "$GOVERNANCE_ADDRESS" \
     --contract-admin "$CONTRACT_ADMIN" \
+    --multisig-admin "$MULTISIG_ADMIN_ADDRESS" \
     --run-as "$GOVERNANCE_ADDRESS"
 ```
 
-2. Set environment variables
+2. Register the new chain in the **Coordinator** contract:
+```bash
+ts-node cosmwasm/coordinator.ts register-deployment \
+    -e "$ENVIRONMENT" \
+    -m "$MNEMONIC" \
+    --run-as "$GOVERNANCE_ADDRESS" \
+    -n "$CHAIN_NAME"
+```
+
+3. Set environment variables
 
 - These variables are network-specific
 
@@ -127,15 +137,6 @@ ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router
 
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 - Note: [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
-
-3. Register the new chain in the **Coordinator** contract:
-```bash
-ts-node cosmwasm/coordinator.ts register-deployment \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
-    --run-as "$GOVERNANCE_ADDRESS" \
-    -n "$CHAIN_NAME"
-```
 
 4. Create reward pool for voting verifier
 
