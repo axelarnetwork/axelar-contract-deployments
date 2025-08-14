@@ -329,7 +329,7 @@ async function processCommand(axelar, chain, chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false, true);
+    await mainProcessor(options, processCommand, false);
 }
 
 if (require.main === module) {
