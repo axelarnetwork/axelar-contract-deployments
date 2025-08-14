@@ -168,7 +168,7 @@ ts-node evm/axelar-transceiver.ts transfer-pauser $ITS_OWNER --artifactPath path
 
 ### Verify Contracts
 
-Manually verify both contracts i.e. MonadAxelarTransceiver & ERC1967Proxy, foundry artifacts can be found on example-wormhole-axelar-wsteth repo.
+Manually verify both contracts i.e. MonadAxelarTransceiver & ERC1967Proxy, foundry artifacts can be found on example-wormhole-axelar-ntt-transceiver repo.
 
 ## Checklist
 
