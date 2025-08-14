@@ -626,9 +626,11 @@ async function checkVersionControl(keypair, client, config, contracts, args, opt
     const { InterchainTokenService: itsConfig } = contracts;
     const version = args;
 
-    validateParameters({ isNonEmptyString: { version } });
-    validateParameters({ isNonEmptyString: { versionEntry: itsConfig.versions[version] } });
-    validateParameters({ isNonEmptyString: { itsObject: itsConfig.objects.InterchainTokenServicev0 } });
+    validateParameters({ isNonEmptyString: { 
+        version,
+        versionEntry: itsConfig.versions[version],
+        itsObject: itsConfig.objects.InterchainTokenServicev0
+    } });
 
     const supportedFunctions = itsFunctions[version];
     if (!Array.isArray(supportedFunctions)) throw new Error(`No deployable versions found with id ${version}`);
