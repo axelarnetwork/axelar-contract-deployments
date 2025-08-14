@@ -196,6 +196,24 @@ function buildRegisterCanonicalTokenMessage(adminAddress, contentHex) {
     return beginCell().storeUint(ITS_OPS.REGISTER_CANONICAL_INTERCHAIN_TOKEN, 32).storeAddress(admin).storeRef(content).endCell();
 }
 
+function buildRegisterCustomTokenMessage(salt, tokenManagerType, operatorAddress, adminAddress, contentHex) {
+    const saltBigInt = BigInt('0x' + salt);
+    const operator = Address.parse(operatorAddress);
+    const admin = Address.parse(adminAddress);
+    const content = Cell.fromHex(contentHex);
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.REGISTER_CUSTOM_TOKEN, 32)
+        .storeUint(saltBigInt, 256)
+        .storeUint(tokenManagerType, 8)
+        .storeAddress(operator)
+        .storeAddress(admin)
+        .storeRef(content)
+        .endCell();
+
+    return message;
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -467,6 +485,49 @@ program
             await executeITSOperation('Register Canonical Token', messageBody, cost);
         } catch (error) {
             console.error('❌ Error registering canonical token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('register-custom-token')
+    .description('Register a custom interchain token with specific token manager type')
+    .argument('<salt>', 'Salt value for token registration (256-bit number or hex string)')
+    .argument(
+        '<token-manager-type>',
+        'Token manager type (0=INTERCHAIN_TOKEN, 1=MINT_BURN_FROM, 2=LOCK_UNLOCK, 3=LOCK_UNLOCK_FEE, 4=MINT_BURN)',
+    )
+    .argument('<operator-address>', 'Operator address for the token (TON address format)')
+    .argument('<admin-address>', 'Admin address for the token (TON address format)')
+    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
+    .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, options) => {
+        try {
+            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const tmType = parseInt(tokenManagerType, 10);
+
+            // Validate token manager type
+            if (isNaN(tmType) || tmType < 0 || tmType > 4) {
+                throw new Error('Token manager type must be a number between 0 and 4');
+            }
+
+            // Remove 0x prefix if present
+            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
+
+            console.log('Registering Custom Token with parameters:');
+            console.log('  Salt:', saltBigInt);
+            console.log('  Token Manager Type:', tmType);
+            console.log('  Operator Address:', operatorAddress);
+            console.log('  Admin Address:', adminAddress);
+            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildRegisterCustomTokenMessage(saltBigInt, tmType, operatorAddress, adminAddress, cleanContentHex);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Register Custom Token', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error registering custom token:', error.message);
             process.exit(1);
         }
     });
