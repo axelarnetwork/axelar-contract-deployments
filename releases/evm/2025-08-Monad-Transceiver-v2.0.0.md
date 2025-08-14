@@ -16,7 +16,7 @@
 
 - This is the Monad Axelar/Wormhole Transceiver release. Wormhole uses their own fork of OpenZeppelin contract, thus we are using external repo to deploy contracts.
 
-- This release deploys `AxelarTransceiver` used as name `MonadAxelarTransceiver` & `ERC1967Proxy` contracts from the example-wormhole-axelar-ntt-transceiver [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-ntt-transceiver).
+- This release deploys `AxelarTransceiver` used as name `MonadAxelarTransceiver` & `ERC1967Proxy` contracts from the example-wormhole-axelar-ntt-transceiver [repo](https://github.com/wormholelabs-xyz/example-wormhole-axelar-ntt-transceiver).
 
 ## Deployment
 
