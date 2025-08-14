@@ -1,12 +1,11 @@
 import { printInfo, printWarn } from '../../common';
-import { SECURITY } from './constants';
 
 export class RetryManager {
     public static async withRetry<T>(operation: () => Promise<T>): Promise<T> {
         let lastError: Error;
 
-        const maxRetries = SECURITY.maxRetries;
-        const retryDelay = SECURITY.retryDelayMs;
+        const maxRetries = 3;
+        const retryDelay = 1000;
 
         printInfo(`Retry configuration: max ${maxRetries} attempts, ${retryDelay}ms delay`);
 

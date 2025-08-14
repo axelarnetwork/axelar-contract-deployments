@@ -1,5 +1,9 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { printInfo } from '../../common/utils';
 import { isValidCosmosAddress } from '../utils';
-import { DEFAULTS, SECURITY } from './constants';
+import { DEFAULTS } from './constants';
 import type { CoordinatorOptions } from './types';
 
 function isValidHexString(hexString: string): boolean {
@@ -14,6 +18,43 @@ function isValidHexString(hexString: string): boolean {
 }
 
 export class OptionProcessor {
+    private static envCache: Map<string, string> | null = null;
+
+    private static loadEnvFile(): Map<string, string> {
+        if (this.envCache) {
+            return this.envCache;
+        }
+
+        this.envCache = new Map();
+        const envPath = path.join(process.cwd(), '.env');
+
+        if (fs.existsSync(envPath)) {
+            try {
+                const envContent = fs.readFileSync(envPath, 'utf8');
+                const envLines = envContent.split('\n');
+
+                for (const line of envLines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine && !trimmedLine.startsWith('#')) {
+                        const [key, ...valueParts] = trimmedLine.split('=');
+                        if (key && valueParts.length > 0) {
+                            const value = valueParts.join('=');
+                            this.envCache.set(key, value);
+                        }
+                    }
+                }
+            } catch (error) {
+                printInfo('Failed to load .env file:', error);
+            }
+        }
+
+        return this.envCache;
+    }
+
+    private static getEnvValue(key: string): string | undefined {
+        return this.loadEnvFile().get(key);
+    }
+
     private static parseThreshold(value: string | [string, string] | undefined, defaultThreshold: [string, string]): [string, string] {
         if (!value) return defaultThreshold;
         if (typeof value === 'string') {
@@ -30,11 +71,27 @@ export class OptionProcessor {
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
 
-        // Check for mnemonic in environment variable if not provided via command line
+        // Check for mnemonic in environment variable or .env file if not provided via command line
         if (!processedOptions.mnemonic) {
-            const envMnemonic = process.env[SECURITY.mnemonicEnvVar];
+            const envMnemonic = process.env.MNEMONIC || this.getEnvValue('MNEMONIC');
             if (envMnemonic) {
                 processedOptions.mnemonic = envMnemonic;
+            }
+        }
+
+        // Check for environment in environment variable or .env file if not provided via command line
+        if (!processedOptions.env) {
+            const envEnvironment = process.env.ENVIRONMENT || this.getEnvValue('ENVIRONMENT');
+            if (envEnvironment) {
+                processedOptions.env = envEnvironment;
+            }
+        }
+
+        // Check for chain name in environment variable or .env file if not provided via command line
+        if (!processedOptions.chain && !processedOptions.chainName) {
+            const envChainName = process.env.CHAIN_NAME || this.getEnvValue('CHAIN_NAME');
+            if (envChainName) {
+                processedOptions.chain = envChainName;
             }
         }
 
@@ -71,7 +128,7 @@ export class OptionProcessor {
         return processedOptions;
     }
 
-    public static validateThreshold(threshold: [string, string], name: string): void {
+    private static validateThreshold(threshold: [string, string], name: string): void {
         const [numerator, denominator] = threshold;
 
         if (isNaN(parseInt(numerator, 10)) || isNaN(parseInt(denominator, 10))) {
@@ -87,7 +144,7 @@ export class OptionProcessor {
         }
     }
 
-    public static validateOptions(options: CoordinatorOptions): void {
+    private static validateOptions(options: CoordinatorOptions): void {
         if (options.votingThreshold) {
             if (typeof options.votingThreshold === 'string') {
                 const parts = options.votingThreshold.split(',').map((s) => s.trim());

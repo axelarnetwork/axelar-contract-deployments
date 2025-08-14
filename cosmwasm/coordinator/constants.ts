@@ -17,10 +17,4 @@ export const DEFAULTS = {
     defaultSaltLength: 32,
 };
 
-export const SECURITY = {
-    mnemonicEnvVar: 'MNEMONIC',
-    maxRetries: 3,
-    retryDelayMs: 1000,
-};
-
 export const CONTRACTS_TO_HANDLE = ['VotingVerifier', 'MultisigProver', 'Gateway'];
