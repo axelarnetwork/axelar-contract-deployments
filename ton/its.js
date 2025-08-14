@@ -214,6 +214,19 @@ function buildRegisterCustomTokenMessage(salt, tokenManagerType, operatorAddress
     return message;
 }
 
+function buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, chainName) {
+    const jettonMinter = Address.parse(jettonMinterAddress);
+    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
+
+    const message = beginCell()
+        .storeUint(ITS_OPS.DEPLOY_REMOTE_CANONICAL_INTERCHAIN_TOKEN, 32)
+        .storeAddress(jettonMinter)
+        .storeRef(chainNameCell)
+        .endCell();
+
+    return message;
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -528,6 +541,29 @@ program
             await executeITSOperation('Register Custom Token', messageBody, cost);
         } catch (error) {
             console.error('❌ Error registering custom token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('deploy-remote-canonical-token')
+    .description('Deploy a canonical interchain token on a remote chain')
+    .argument('<jetton-minter-address>', 'Jetton minter address for the canonical token (TON address format)')
+    .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .action(async (jettonMinterAddress, chainName, options) => {
+        try {
+            console.log('Deploying Remote Canonical Token with parameters:');
+            console.log('  Jetton Minter Address:', jettonMinterAddress);
+            console.log('  Chain Name:', chainName);
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, chainName);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Deploy Remote Canonical Token', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error deploying remote canonical token:', error.message);
             process.exit(1);
         }
     });

@@ -203,3 +203,7 @@ node ton/its.js register-canonical-token <token-admin-address> <tep-64-content-b
 ```bash
 node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <token-admin-address> <tep-64-content-boc-hex>
 ```
+
+```bash
+node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name>
+```
