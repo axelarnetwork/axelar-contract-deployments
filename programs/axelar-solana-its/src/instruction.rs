@@ -1892,7 +1892,7 @@ fn derive_specific_its_accounts(
             // No initial supply is ever set through GMP, so no payer ATA required.
             specific_accounts.push(AccountMeta::new_readonly(crate::ID, false));
 
-            if minter.len() == axelar_solana_encoding::types::pubkey::ED25519_PUBKEY_LEN {
+            if !minter.is_empty() {
                 let minter_key = Pubkey::new_from_array(
                     (*minter)
                         .try_into()
@@ -2052,5 +2052,126 @@ impl<'a> TryFrom<&'a GMPPayload> for ItsMessageRef<'a> {
             | GMPPayload::SendToHub(_)
             | GMPPayload::ReceiveFromHub(_) => return Err(ProgramError::InvalidArgument),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::borrow::Cow;
+
+    use solana_program::{program_error::ProgramError, pubkey::Pubkey};
+
+    use super::{derive_specific_its_accounts, ItsMessageRef};
+
+    #[test]
+    fn test_deploy_interchain_token_with_invalid_minter_pubkey() {
+        let token_id = [0u8; 32];
+        let name = "Test Token";
+        let symbol = "TST";
+        let decimals = 6;
+
+        // Test with invalid minter (not 32 bytes)
+        let invalid_minter = vec![1, 2, 3, 4, 5]; // Only 5 bytes, should be 32
+
+        let message = ItsMessageRef::DeployInterchainToken {
+            token_id: Cow::Borrowed(&token_id),
+            name,
+            symbol,
+            decimals,
+            minter: &invalid_minter,
+        };
+
+        let mint_account = Pubkey::new_unique();
+        let token_manager_pda = Pubkey::new_unique();
+        let token_program = spl_token_2022::ID;
+
+        // This should fail with InvalidInstructionData because minter is not empty but also not 32 bytes
+        let result = derive_specific_its_accounts(
+            &message,
+            mint_account,
+            token_manager_pda,
+            token_program,
+            None,
+        );
+
+        assert_eq!(result.unwrap_err(), ProgramError::InvalidInstructionData);
+    }
+
+    #[test]
+    fn test_deploy_interchain_token_with_empty_minter() {
+        let token_id = [0u8; 32];
+        let name = "Test Token";
+        let symbol = "TST";
+        let decimals = 6;
+
+        // Test with empty minter
+        let empty_minter = vec![];
+
+        let message = ItsMessageRef::DeployInterchainToken {
+            token_id: Cow::Borrowed(&token_id),
+            name,
+            symbol,
+            decimals,
+            minter: &empty_minter,
+        };
+
+        let mint_account = Pubkey::new_unique();
+        let token_manager_pda = Pubkey::new_unique();
+        let token_program = spl_token_2022::ID;
+
+        // This should succeed because empty minter is allowed
+        let result = derive_specific_its_accounts(
+            &message,
+            mint_account,
+            token_manager_pda,
+            token_program,
+            None,
+        );
+
+        assert!(result.is_ok());
+        let accounts = result.unwrap();
+
+        // Should have 4 accounts (sysvar::instructions, mpl_token_metadata, metadata_account, crate::ID)
+        // but no minter-related accounts
+        assert_eq!(accounts.len(), 4);
+    }
+
+    #[test]
+    fn test_deploy_interchain_token_with_valid_minter() {
+        let token_id = [0u8; 32];
+        let name = "Test Token";
+        let symbol = "TST";
+        let decimals = 6;
+
+        // Test with valid minter (32 bytes)
+        let valid_minter_pubkey = Pubkey::new_unique();
+        let valid_minter = valid_minter_pubkey.to_bytes().to_vec();
+
+        let message = ItsMessageRef::DeployInterchainToken {
+            token_id: Cow::Borrowed(&token_id),
+            name,
+            symbol,
+            decimals,
+            minter: &valid_minter,
+        };
+
+        let mint_account = Pubkey::new_unique();
+        let token_manager_pda = Pubkey::new_unique();
+        let token_program = spl_token_2022::ID;
+
+        // This should succeed because minter is exactly 32 bytes
+        let result = derive_specific_its_accounts(
+            &message,
+            mint_account,
+            token_manager_pda,
+            token_program,
+            None,
+        );
+
+        assert!(result.is_ok());
+        let accounts = result.unwrap();
+
+        // Should have 6 accounts (4 base accounts + minter_key + minter_roles_pda)
+        assert_eq!(accounts.len(), 6);
     }
 }
