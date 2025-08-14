@@ -347,11 +347,12 @@ pub fn create_call_contract_signing_pda(
 /// using [`create_message_payload_pda`] instead.
 #[inline]
 #[must_use]
-pub fn find_message_payload_pda(incoming_message_pda: Pubkey) -> (Pubkey, u8) {
+pub fn find_message_payload_pda(incoming_message_pda: Pubkey, payer: Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
             seed_prefixes::MESSAGE_PAYLOAD_SEED,
             incoming_message_pda.as_ref(),
+            payer.as_ref(),
         ],
         &crate::ID,
     )
@@ -367,12 +368,14 @@ pub fn find_message_payload_pda(incoming_message_pda: Pubkey) -> (Pubkey, u8) {
 #[inline]
 pub fn create_message_payload_pda(
     incoming_message_pda: Pubkey,
+    payer: Pubkey,
     bump: u8,
 ) -> Result<Pubkey, PubkeyError> {
     Pubkey::create_program_address(
         &[
             seed_prefixes::MESSAGE_PAYLOAD_SEED,
             incoming_message_pda.as_ref(),
+            payer.as_ref(),
             &[bump],
         ],
         &crate::ID,
@@ -399,8 +402,9 @@ mod tests {
     #[test]
     fn test_find_and_create_message_payload_pda_bump_reuse() {
         let incoming_message_pda = Pubkey::new_unique();
-        let (found_pda, bump) = find_message_payload_pda(incoming_message_pda);
-        let created_pda = create_message_payload_pda(incoming_message_pda, bump).unwrap();
+        let payer = Pubkey::new_unique();
+        let (found_pda, bump) = find_message_payload_pda(incoming_message_pda, payer);
+        let created_pda = create_message_payload_pda(incoming_message_pda, payer, bump).unwrap();
         assert_eq!(found_pda, created_pda);
     }
 

@@ -398,8 +398,10 @@ impl SolanaAxelarIntegrationMetadata {
         self.commit_message_payload(msg_command_id).await?;
 
         let (incoming_message_pda, _) = get_incoming_message_pda(&msg_command_id);
-        let (message_payload_account, _bump) =
-            axelar_solana_gateway::find_message_payload_pda(incoming_message_pda);
+        let (message_payload_account, _bump) = axelar_solana_gateway::find_message_payload_pda(
+            incoming_message_pda,
+            self.fixture.payer.pubkey(),
+        );
 
         Ok(message_payload_account)
     }

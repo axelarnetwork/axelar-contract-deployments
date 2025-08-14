@@ -92,7 +92,7 @@ impl Processor {
         // Check: Buffer PDA can be derived from provided seeds.
         let incoming_message_pda = *incoming_message_account.key;
         let (message_payload_pda, bump_seed) =
-            crate::find_message_payload_pda(incoming_message_pda);
+            crate::find_message_payload_pda(incoming_message_pda, *payer.key);
         if message_payload_account.key != &message_payload_pda {
             solana_program::msg!("Error: failed to derive message payload account address");
             return Err(ProgramError::InvalidArgument);
@@ -111,6 +111,7 @@ impl Processor {
         let signers_seeds = &[
             crate::seed_prefixes::MESSAGE_PAYLOAD_SEED,
             incoming_message_pda.as_ref(),
+            payer.key.as_ref(),
             &[bump_seed],
         ];
 

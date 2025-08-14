@@ -544,7 +544,7 @@ pub fn initialize_message_payload(
     buffer_size: u64,
 ) -> Result<Instruction, ProgramError> {
     let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
-    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda, payer);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
@@ -573,15 +573,15 @@ pub fn initialize_message_payload(
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.t
 pub fn write_message_payload(
     gateway_root_pda: Pubkey,
-    authority: Pubkey,
+    payer: Pubkey,
     command_id: [u8; 32],
     bytes: &[u8],
     offset: u64,
 ) -> Result<Instruction, ProgramError> {
     let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
-    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda, payer);
     let accounts = vec![
-        AccountMeta::new(authority, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
@@ -605,14 +605,14 @@ pub fn write_message_payload(
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn commit_message_payload(
     gateway_root_pda: Pubkey,
-    authority: Pubkey,
+    payer: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
     let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
-    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda, payer);
 
     let accounts = vec![
-        AccountMeta::new(authority, true),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
@@ -633,13 +633,13 @@ pub fn commit_message_payload(
 /// Returns a [`ProgramError::BorshIoError`] if the instruction serialization fails.
 pub fn close_message_payload(
     gateway_root_pda: Pubkey,
-    authority: Pubkey,
+    payer: Pubkey,
     command_id: [u8; 32],
 ) -> Result<Instruction, ProgramError> {
     let (incoming_message_pda, _) = crate::get_incoming_message_pda(&command_id);
-    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda);
+    let (message_payload_pda, _) = crate::find_message_payload_pda(incoming_message_pda, payer);
     let accounts = vec![
-        AccountMeta::new(authority, false),
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(incoming_message_pda, false),
         AccountMeta::new(message_payload_pda, false),
