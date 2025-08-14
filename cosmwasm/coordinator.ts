@@ -15,7 +15,7 @@ program.name('coordinator').description('Submit governance proposal to instantia
 program
     .command('deploy')
     .description('Deploy VotingVerifier, MultisigProver, and Gateway contracts without instantiating them')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
+    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
@@ -27,7 +27,7 @@ program
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
-            const configManager = new ConfigManager(options.env);
+            const configManager = new ConfigManager(processedOptions.env);
             const deploymentManager = new DeploymentManager(configManager);
             await deploymentManager.deployContracts(processedOptions);
         } catch (error) {
@@ -39,7 +39,7 @@ program
 program
     .command('register-protocol')
     .description('Submit governance proposal to register protocol contracts with Coordinator')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
+    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
@@ -49,7 +49,7 @@ program
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
-            const configManager = new ConfigManager(options.env);
+            const configManager = new ConfigManager(processedOptions.env);
             const governanceManager = new GovernanceManager(configManager);
             await governanceManager.registerProtocol(processedOptions);
         } catch (error) {
@@ -61,8 +61,8 @@ program
 program
     .command('register-deployment')
     .description('Submit governance proposal to register a new deployment with Coordinator')
-    .requiredOption('-n, --chain <chain>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
+    .option('-n, --chain <chain>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
+    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
@@ -72,9 +72,9 @@ program
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
-            const configManager = new ConfigManager(options.env);
+            const configManager = new ConfigManager(processedOptions.env);
             const governanceManager = new GovernanceManager(configManager);
-            await governanceManager.registerDeployment(processedOptions, options.chain);
+            await governanceManager.registerDeployment(processedOptions, processedOptions.chain);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -84,10 +84,10 @@ program
 program
     .command('instantiate')
     .description('Submit governance proposal to instantiate chain contracts using Coordinator')
-    .requiredOption('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)')
     .requiredOption('--contract-admin <address>', 'Admin address')
     .requiredOption('--multisig-admin <address>', 'Multisig admin address passed to the multisigProver contract')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
+    .option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)')
+    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
@@ -116,9 +116,9 @@ program
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
-            const configManager = new ConfigManager(options.env);
+            const configManager = new ConfigManager(processedOptions.env);
             const instantiationManager = new InstantiationManager(configManager);
-            await instantiationManager.instantiateChainContracts(options.chain, processedOptions);
+            await instantiationManager.instantiateChainContracts(processedOptions.chain, processedOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;

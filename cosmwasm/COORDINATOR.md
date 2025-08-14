@@ -30,13 +30,19 @@ npm install -g ts-node
 
 Here's a complete example workflow for deploying and configuring contracts for a new chain:
 
+Create `.env` file with:
+```bash
+CHAIN_NAME="some-network"
+ENVIRONMENT="devnet-custom"
+MNEMONIC="your twelve word mnemonic phrase goes here"
+```
+
+Then you can run the commands:
+
 ```bash
 #!/bin/bash
 
 # Configuration
-CHAIN_NAME="some-network"
-ENVIRONMENT="devnet-custom"
-MNEMONIC="your twelve word mnemonic phrase goes here"
 GOVERNANCE_ADDRESS="<axelar governance address>"
 SRC_GATEWAY_ADDRESS="<external chain gateway address>"
 CONTRACT_ADMIN_ADDRESS="<axelar contracts' admin address>"
@@ -44,22 +50,15 @@ MULTISIG_ADMIN="<multisig admin address>"
 
 # Step 1: Register protocol (if not already done)
 npx ts-node cosmwasm/coordinator.ts register-protocol \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
     --run-as "$GOVERNANCE_ADDRESS"
 
 # Step 2: Deploy contracts
 npx ts-node cosmwasm/coordinator.ts deploy \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
     --run-as "$GOVERNANCE_ADDRESS" \
     --artifact-dir "./artifacts/"
 
 # Step 3: Instantiate contracts with custom parameters
 npx ts-node cosmwasm/coordinator.ts instantiate \
-    -n "$CHAIN_NAME" \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
     --contract-admin "$CONTRACT_ADMIN_ADDRESS" \
     --multisig-admin "$MULTISIG_ADMIN" \
     --service-name "validators" \
@@ -73,10 +72,7 @@ npx ts-node cosmwasm/coordinator.ts instantiate \
 
 # Step 4: Register deployment
 npx ts-node cosmwasm/coordinator.ts register-deployment \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
     --run-as "$GOVERNANCE_ADDRESS" \
-    -n "$CHAIN_NAME"
 ```
 
 ## Default Values

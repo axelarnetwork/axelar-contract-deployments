@@ -130,6 +130,8 @@ export interface CLIOptions {
     runAs?: string;
     mnemonic?: string;
     chainName?: string;
+    env?: string;
+    chain?: string;
 }
 
 export interface CoordinatorOptions extends DeploymentOptions, GovernanceOptions, ContractConfigOptions, CLIOptions {}

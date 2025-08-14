@@ -1,10 +1,3 @@
-export const CONTRACT_NAME_MAP: { [key: string]: string } = {
-    Gateway: 'Gateway',
-    VotingVerifier: 'VotingVerifier',
-    MultisigProver: 'MultisigProver',
-    Coordinator: 'Coordinator',
-};
-
 export const DEFAULTS = {
     serviceName: 'amplifier',
     votingThreshold: ['51', '100'] as [string, string],
@@ -22,12 +15,6 @@ export const DEFAULTS = {
     maxAddressLength: 100,
     hexStringLength: 64,
     defaultSaltLength: 32,
-};
-
-export const SECURITY = {
-    mnemonicEnvVar: 'MNEMONIC',
-    maxRetries: 3,
-    retryDelayMs: 1000,
 };
 
 export const CONTRACTS_TO_HANDLE = ['VotingVerifier', 'MultisigProver', 'Gateway'];
