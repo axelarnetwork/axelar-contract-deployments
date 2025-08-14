@@ -1,6 +1,6 @@
 //! Instruction module for the Axelar Memo program.
 
-use axelar_executable::AxelarMessagePayload;
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
 pub use solana_program;
 use solana_program::instruction::{AccountMeta, Instruction};
@@ -157,7 +157,7 @@ pub fn call_gateway_with_offchain_memo(
 
 /// Helper function to build a memo payload instruction
 pub mod from_axelar_to_solana {
-    use axelar_executable::EncodingScheme;
+    use axelar_solana_gateway::executable::EncodingScheme;
 
     use super::*;
 
@@ -182,7 +182,7 @@ pub mod from_axelar_to_solana {
 
 #[cfg(test)]
 mod tests {
-    use axelar_executable::EncodingScheme;
+    use axelar_solana_gateway::executable::EncodingScheme;
 
     use super::*;
 

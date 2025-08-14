@@ -1,4 +1,4 @@
-use axelar_executable::EncodingScheme;
+use axelar_solana_gateway::executable::EncodingScheme;
 use axelar_solana_gateway::get_incoming_message_pda;
 use axelar_solana_gateway::processor::MessageEvent;
 use axelar_solana_gateway::state::incoming_message::command_id;

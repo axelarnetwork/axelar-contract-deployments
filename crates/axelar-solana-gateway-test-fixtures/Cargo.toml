@@ -11,7 +11,6 @@ solana-program.workspace = true
 solana-program-test.workspace = true
 bincode.workspace = true
 axelar-solana-gateway = { workspace = true, features = ["no-entrypoint"] }
-axelar-executable = { workspace = true, default-features = false }
 typed-builder.workspace = true
 solana-sdk.workspace = true
 ed25519-dalek = { workspace = true, features = ["rand_core", "digest"] }
@@ -33,25 +32,21 @@ workspace = true
 
 [features]
 devnet-amplifier = [
-    "axelar-executable/devnet-amplifier",
     "axelar-solana-gas-service/devnet-amplifier",
     "axelar-solana-gateway/devnet-amplifier",
     "gateway-event-stack/devnet-amplifier"
 ]
 stagenet = [
-    "axelar-executable/stagenet",
     "axelar-solana-gas-service/stagenet",
     "axelar-solana-gateway/stagenet",
     "gateway-event-stack/stagenet"
 ]
 testnet = [
-    "axelar-executable/testnet",
     "axelar-solana-gas-service/testnet",
     "axelar-solana-gateway/testnet",
     "gateway-event-stack/testnet"
 ]
 mainnet = [
-    "axelar-executable/mainnet",
     "axelar-solana-gas-service/mainnet",
     "axelar-solana-gateway/mainnet",
     "gateway-event-stack/mainnet"

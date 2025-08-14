@@ -180,7 +180,6 @@ dummy-axelar-solana-gateway = { path = "programs/dummy-axelar-solana-gateway", d
 axelar-solana-governance = { path = "programs/axelar-solana-governance", default-features = false }
 
 # helper crates
-axelar-executable = { path = "crates/axelar-executable", default-features = false }
 axelar-message-primitives = { path = "helpers/axelar-message-primitives" }
 axelar-solana-encoding = { path = "crates/axelar-solana-encoding" }
 axelar-solana-gas-service-events = { path = "crates/axelar-solana-gas-service-events" }

@@ -714,27 +714,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axelar-executable"
-version = "0.1.0"
-dependencies = [
- "alloy-sol-types",
- "axelar-solana-encoding",
- "axelar-solana-gateway",
- "axelar-solana-gateway-test-fixtures",
- "borsh 1.5.7",
- "evm-contracts-rs",
- "evm-contracts-test-suite",
- "num-derive 0.4.2",
- "num-traits",
- "rand 0.8.5",
- "rstest",
- "solana-program",
- "test-log",
- "thiserror 1.0.69",
- "tokio",
-]
-
-[[package]]
 name = "axelar-message-primitives"
 version = "0.1.0"
 dependencies = [
@@ -800,6 +779,7 @@ dependencies = [
 name = "axelar-solana-gateway"
 version = "0.1.0"
 dependencies = [
+ "alloy-sol-types",
  "axelar-message-primitives",
  "axelar-solana-encoding",
  "axelar-solana-gateway-test-fixtures",
@@ -809,6 +789,8 @@ dependencies = [
  "bytemuck",
  "ed25519-dalek 2.1.1",
  "event-utils",
+ "evm-contracts-rs",
+ "evm-contracts-test-suite",
  "hex",
  "itertools 0.12.1",
  "lazy_static",
@@ -826,7 +808,9 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "test-log",
  "thiserror 1.0.69",
+ "tokio",
  "typed-builder",
 ]
 
@@ -834,7 +818,6 @@ dependencies = [
 name = "axelar-solana-gateway-test-fixtures"
 version = "0.1.0"
 dependencies = [
- "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
  "axelar-solana-gas-service-events",
@@ -862,7 +845,6 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
@@ -889,7 +871,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "anyhow",
- "axelar-executable",
  "axelar-message-primitives",
  "axelar-solana-encoding",
  "axelar-solana-gas-service",
@@ -920,7 +901,6 @@ name = "axelar-solana-memo-program"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axelar-executable",
  "axelar-solana-encoding",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
@@ -945,7 +925,6 @@ name = "axelar-solana-multicall"
 version = "0.1.0"
 dependencies = [
  "alloy-sol-types",
- "axelar-executable",
  "axelar-solana-gateway",
  "axelar-solana-gateway-test-fixtures",
  "axelar-solana-memo-program",
@@ -4077,8 +4056,8 @@ name = "its-instruction-builder"
 version = "0.1.0"
 dependencies = [
  "async-recursion",
- "axelar-executable",
  "axelar-solana-encoding",
+ "axelar-solana-gateway",
  "axelar-solana-its",
  "bincode",
  "borsh 1.5.7",

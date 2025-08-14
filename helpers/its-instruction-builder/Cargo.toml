@@ -10,8 +10,8 @@ crate-type = ["cdylib", "lib"]
 workspace = true
 
 [dependencies]
+axelar-solana-gateway.workspace = true
 async-recursion.workspace = true
-axelar-executable = { workspace = true, default-features = false }
 axelar-solana-encoding.workspace = true
 axelar-solana-its = { workspace = true, features = ["no-entrypoint"] }
 bincode.workspace = true
@@ -23,19 +23,19 @@ spl-token-2022 = { workspace = true, features = ["no-entrypoint", "serde-traits"
 
 [features]
 devnet-amplifier = [
-    "axelar-executable/devnet-amplifier",
+    "axelar-solana-gateway/devnet-amplifier",
     "axelar-solana-its/devnet-amplifier"
 ]
 stagenet = [
-    "axelar-executable/stagenet",
+    "axelar-solana-gateway/stagenet",
     "axelar-solana-its/stagenet"
 ]
 testnet = [
-    "axelar-executable/testnet",
+    "axelar-solana-gateway/testnet",
     "axelar-solana-its/testnet"
 ]
 mainnet = [
-    "axelar-executable/mainnet",
+    "axelar-solana-gateway/mainnet",
     "axelar-solana-its/mainnet"
 ]
 default = ["devnet-amplifier"]

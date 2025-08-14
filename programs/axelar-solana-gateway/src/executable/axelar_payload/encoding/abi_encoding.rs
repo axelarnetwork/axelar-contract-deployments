@@ -6,7 +6,7 @@ use alloy_sol_types::{
     sol, SolValue,
 };
 
-use crate::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
+use crate::executable::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
 
 sol! {
     #[repr(C)]
@@ -123,7 +123,7 @@ mod tests {
     use solana_program::instruction::AccountMeta;
 
     use super::*;
-    use crate::axelar_payload::encoding::tests::{account_fixture, account_fixture_2};
+    use crate::executable::axelar_payload::encoding::tests::{account_fixture, account_fixture_2};
 
     #[test]
     fn solana_account_repr_round_trip_abi() {
@@ -152,7 +152,7 @@ mod tests {
         let canonical_payload = AxelarMessagePayload::new(
             payload_without_accounts.as_slice(),
             &accounts,
-            crate::EncodingScheme::AbiEncoding,
+            crate::executable::EncodingScheme::AbiEncoding,
         );
         let canonical_payload_encoded = canonical_payload.encode().unwrap();
         let (contract, _evm_chain) = utils::chain_setup().await;
@@ -207,7 +207,7 @@ mod tests {
         let canonical_payload = AxelarMessagePayload::new(
             payload_without_accounts.as_slice(),
             &accounts,
-            crate::EncodingScheme::AbiEncoding,
+            crate::executable::EncodingScheme::AbiEncoding,
         );
         let canonical_payload_encoded = canonical_payload.encode().unwrap();
         let (contract, _evm_chain) = utils::chain_setup().await;

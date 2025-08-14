@@ -1,7 +1,7 @@
 use crate::{axelar_evm_setup, axelar_solana_setup, MemoProgramWrapper};
 use anyhow::{bail, Context, Result};
-use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::{CrossChainId, Message};
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_memo_program::state::Counter;
 use borsh::BorshDeserialize;
 use ethers_core::utils::hex::ToHexExt;

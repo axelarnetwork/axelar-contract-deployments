@@ -7,7 +7,7 @@
 //! 2. Native program instructions: These are the instructions that are executed
 //!    by other Solana addresses.
 
-use axelar_executable::validate_with_gmp_metadata;
+use axelar_solana_gateway::executable::validate_with_gmp_metadata;
 use gmp::{ProcessGMPContext, PROGRAM_ACCOUNTS_SPLIT_AT};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;

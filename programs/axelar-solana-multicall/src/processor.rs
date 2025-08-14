@@ -1,6 +1,8 @@
 //! Program instructions processor.
 
-use axelar_executable::{validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX};
+use axelar_solana_gateway::executable::{
+    validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
+};
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::BorshDeserialize;
 use solana_program::account_info::AccountInfo;
@@ -33,7 +35,7 @@ impl Processor {
         check_program_account(*program_id)?;
 
         if let Some(message) =
-            axelar_executable::parse_axelar_message(instruction_data).transpose()?
+            axelar_solana_gateway::executable::parse_axelar_message(instruction_data).transpose()?
         {
             msg!("Instruction: AxelarExecute");
             validate_message(accounts, &message)?;

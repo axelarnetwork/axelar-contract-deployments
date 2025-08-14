@@ -6,7 +6,7 @@ use core::mem::size_of;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use crate::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
+use crate::executable::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
 impl<'payload> AxelarMessagePayload<'payload> {
     /// Encode the payload
     ///
