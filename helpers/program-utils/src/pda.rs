@@ -50,9 +50,7 @@ fn prepare_account_structure<'a, 'b>(
     signer_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
     // Calculate the minimum rent required for the account
-    let rent = Rent::get()?
-        .minimum_balance(space.try_into().expect("u64 fits into sbf word size"))
-        .max(1);
+    let rent = Rent::get()?.minimum_balance(space.try_into().expect("u64 fits into sbf word size"));
 
     // Check if the account already has enough lamports to cover rent
     let required_funds_for_rent = if to_create.lamports() >= rent {
