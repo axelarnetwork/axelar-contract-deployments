@@ -96,13 +96,14 @@ ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
-    --service-name $SERVICE_NAME \
-    --voting-threshold $VOTING_THRESHOLD \
-    --signing-threshold $SIGNING_THRESHOLD \
-    --confirmation-height $CONFIRMATION_HEIGHT \
-    --source-gateway-address $SOURCE_GATEWAY_ADDRESS \
-    --governance-address $GOVERNANCE_ADDRESS \
-    --run-as $CONTRACT_ADMIN
+    --service-name "$SERVICE_NAME" \
+    --voting-threshold "$VOTING_THRESHOLD" \
+    --signing-threshold "$SIGNING_THRESHOLD" \
+    --confirmation-height "$CONFIRMATION_HEIGHT" \
+    --source-gateway-address "$SOURCE_GATEWAY_ADDRESS" \
+    --governance-address "$GOVERNANCE_ADDRESS" \
+    --contract-admin "$CONTRACT_ADMIN" \
+    --run-as "$GOVERNANCE_ADDRESS"
 ```
 
 2. Set environment variables
