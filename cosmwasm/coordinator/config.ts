@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import { CONTRACTS_TO_HANDLE, CONTRACT_NAME_MAP } from './constants';
+import { CONTRACTS_TO_HANDLE } from './constants';
 import type { ChainConfig, ConfigFile, ContractConfig, CoordinatorOptions, FullConfig } from './types';
 
 export class ConfigManager {
@@ -36,12 +36,7 @@ export class ConfigManager {
         return chainConfig;
     }
 
-    public getContractConfig(contractName: string): ContractConfig {
-        const configContractName = CONTRACT_NAME_MAP[contractName];
-        if (!configContractName) {
-            throw new Error(`Unknown contract name: ${contractName}. Supported contracts: ${Object.keys(CONTRACT_NAME_MAP).join(', ')}`);
-        }
-
+    public getContractConfig(configContractName: string): ContractConfig {
         const axelarContracts = this.fullConfig.axelar?.contracts;
         if (!axelarContracts) {
             throw new Error(`Axelar contracts section not found in config for environment ${this.environment}`);
@@ -166,8 +161,7 @@ export class ConfigManager {
         return processedOptions;
     }
 
-    public updateContractCodeId(contractName: string, codeId: number): void {
-        const configContractName = CONTRACT_NAME_MAP[contractName];
+    public updateContractCodeId(configContractName: string, codeId: number): void {
         if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
             throw new Error(`Contract ${configContractName} not found in config`);
         }
@@ -175,11 +169,10 @@ export class ConfigManager {
         this.fullConfig.axelar.contracts[configContractName].codeId = codeId;
         this.fullConfig.axelar.contracts[configContractName].lastUploadedCodeId = codeId;
 
-        printInfo(`Updated code ID for ${contractName} in config: ${codeId}`);
+        printInfo(`Updated code ID for ${configContractName} in config: ${codeId}`);
     }
 
-    public storeDeploymentInfo(contractName: string, proposalId: string, contractCodePath: string): void {
-        const configContractName = CONTRACT_NAME_MAP[contractName];
+    public storeDeploymentInfo(configContractName: string, proposalId: string, contractCodePath: string): void {
         if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
             throw new Error(`Contract ${configContractName} not found in config`);
         }
@@ -187,16 +180,16 @@ export class ConfigManager {
         let codeHash: string | undefined;
         try {
             const options = {
-                contractName,
+                contractName: configContractName,
                 contractCodePath,
                 artifactPath: contractCodePath,
                 version: undefined,
             };
 
             codeHash = this.getContractCodeHash(options);
-            printInfo(`Successfully extracted code hash for ${contractName}: ${codeHash}`);
+            printInfo(`Successfully extracted code hash for ${configContractName}: ${codeHash}`);
         } catch (error) {
-            printWarn(`Failed to extract code hash for ${contractName}: ${(error as Error).message}`);
+            printWarn(`Failed to extract code hash for ${configContractName}: ${(error as Error).message}`);
             printWarn(`Code hash will be extracted when fetching code ID from the chain`);
             codeHash = undefined;
         }
@@ -204,7 +197,7 @@ export class ConfigManager {
         this.fullConfig.axelar.contracts[configContractName].storeCodeProposalId = proposalId;
         this.fullConfig.axelar.contracts[configContractName].storeCodeProposalCodeHash = codeHash;
 
-        printInfo(`Stored deployment info for ${contractName}:`);
+        printInfo(`Stored deployment info for ${configContractName}:`);
         printInfo(`  Proposal ID: ${proposalId}`);
         printInfo(`  Code Hash: ${codeHash || 'Will be extracted when fetching code ID'}`);
     }

@@ -1,10 +1,3 @@
-export const CONTRACT_NAME_MAP: { [key: string]: string } = {
-    Gateway: 'Gateway',
-    VotingVerifier: 'VotingVerifier',
-    MultisigProver: 'MultisigProver',
-    Coordinator: 'Coordinator',
-};
-
 export const DEFAULTS = {
     serviceName: 'amplifier',
     votingThreshold: ['51', '100'] as [string, string],
