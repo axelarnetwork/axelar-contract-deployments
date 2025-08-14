@@ -111,6 +111,12 @@ function buildAddTrustedChainMessage(chainName, chainAddress) {
     return message;
 }
 
+function buildRemoveTrustedChainMessage(chainName) {
+    const chainNameHash = crypto.createHash('sha256').update(chainName).digest();
+    const chainNameBigInt = BigInt('0x' + chainNameHash.toString('hex'));
+    return beginCell().storeUint(ITS_OPS.REMOVE_TRUSTED_CHAIN, 32).storeUint(chainNameBigInt, ITS_DICT_KEY_LENGTH).endCell();
+}
+
 function buildRegisterTokenMetadataMessage(adminAddress, contentHex) {
     const admin = Address.parse(adminAddress);
     const content = Cell.fromHex(contentHex);
@@ -241,6 +247,27 @@ program
             await executeITSOperation('Add Trusted Chain', messageBody, cost);
         } catch (error) {
             console.error('❌ Error adding trusted chain:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('remove-trusted-chain')
+    .description('Remove a trusted chain from the ITS')
+    .argument('<chain-name>', 'Name of the chain to remove (e.g., "ethereum", "polygon")')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (chainName, options) => {
+        try {
+            console.log('Removing Trusted Chain with parameters:');
+            console.log('  Chain Name:', chainName);
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildRemoveTrustedChainMessage(chainName);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Remove Trusted Chain', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error removing trusted chain:', error.message);
             process.exit(1);
         }
     });
