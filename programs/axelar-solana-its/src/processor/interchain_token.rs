@@ -258,6 +258,11 @@ pub(crate) fn process_outbound_deploy<'a>(
     let token_id = crate::interchain_token_id_internal(&salt);
     let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
 
+    if !payer.is_signer {
+        msg!("Payer should be a signer");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     let destination_minter_data = if let Some(destination_minter) = maybe_destination_minter {
         let minter = next_account_info(accounts_iter)?;
         let deploy_approval = next_account_info(accounts_iter)?;

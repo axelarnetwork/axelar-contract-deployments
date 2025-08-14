@@ -6,6 +6,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::system_program;
 use solana_program_test::tokio;
 use solana_sdk::program_pack::Pack;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_instruction;
@@ -548,5 +549,69 @@ async fn test_prevent_deploy_approval_created_by_anyone(
                 .find_log("Provided seeds do not result in a valid address")
                 .is_some()
     );
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_deploy_remote_interchain_token_payer_must_be_signer(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    let destination_chain = "ethereum";
+    let destination_minter = vec![1, 2, 3, 4, 5];
+    // Use the already deployed token salt from the test context setup
+    let salt = solana_sdk::keccak::hash(b"TestTokenSalt").0;
+    let fake_payer = Pubkey::new_unique();
+
+    let approve_deploy_ix = axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        ctx.solana_chain.fixture.payer.pubkey(),
+        salt,
+        destination_chain.to_string(),
+        destination_minter.clone(),
+    )?;
+
+    ctx.send_solana_tx(&[approve_deploy_ix]).await.unwrap();
+
+    let mut deploy_remote_ix =
+        axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            fake_payer,
+            salt,
+            ctx.solana_chain.fixture.payer.pubkey(),
+            destination_chain.to_string(),
+            destination_minter,
+            0,
+        )?;
+
+    deploy_remote_ix.accounts[0].is_signer = false;
+
+    let result = ctx.send_solana_tx(&[deploy_remote_ix]).await;
+
+    assert!(
+        result.is_err(),
+        "Expected transaction to fail when payer is not a signer"
+    );
+
+    let err = result.unwrap_err();
+    let error_logs = err.metadata.unwrap().log_messages;
+
+    let has_payer_warning = error_logs
+        .iter()
+        .any(|log| log.contains("Payer should be a signer"));
+
+    assert!(
+        has_payer_warning,
+        "Expected warning about payer being a signer to be logged"
+    );
+
+    let has_missing_signature_error = error_logs
+        .iter()
+        .any(|log| log.contains("missing required signature"));
+
+    assert!(
+        has_missing_signature_error,
+        "Expected MissingRequiredSignature error when payer is not a signer"
+    );
+
     Ok(())
 }
