@@ -188,6 +188,14 @@ function buildLinkTokenMessage(salt, chainName, destinationAddress, tokenManager
 
     return message;
 }
+
+function buildRegisterCanonicalTokenMessage(adminAddress, contentHex) {
+    const admin = Address.parse(adminAddress);
+    const content = Cell.fromHex(contentHex);
+
+    return beginCell().storeUint(ITS_OPS.REGISTER_CANONICAL_INTERCHAIN_TOKEN, 32).storeAddress(admin).storeRef(content).endCell();
+}
+
 program
     .command('deploy-interchain-token')
     .description('Deploy a new interchain token')
@@ -433,6 +441,32 @@ program
             await executeITSOperation('Link Token', messageBody, cost);
         } catch (error) {
             console.error('❌ Error linking token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('register-canonical-token')
+    .description('Register a canonical interchain token (TEP-64 metadata)')
+    .argument('<admin-address>', 'Admin address for the token (TON address format)')
+    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .action(async (adminAddress, contentHex, options) => {
+        try {
+            // Remove 0x prefix if present
+            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
+
+            console.log('Registering Canonical Token with parameters:');
+            console.log('  Admin Address:', adminAddress);
+            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
+            console.log('  Gas:', options.gas, 'TON');
+
+            const messageBody = buildRegisterCanonicalTokenMessage(adminAddress, cleanContentHex);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Register Canonical Token', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error registering canonical token:', error.message);
             process.exit(1);
         }
     });

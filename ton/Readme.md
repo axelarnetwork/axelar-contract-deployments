@@ -195,3 +195,7 @@ node ton/its.js transfer-interchain-token <token-id> <chain-name> <destination-a
 ```bash
 node ton/its.js link-token <salt> <chain-name> <destination-address> <token-manager-type> <link-params>
 ```
+
+```bash
+node its.js register-canonical-token <token-admin-address> <tep-64-content-boc-hex>
+```
