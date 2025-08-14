@@ -27,7 +27,7 @@ export class InstantiationManager {
             return;
         }
 
-        await this.fetchAndUpdateCodeIdsFromProposals(client, CONTRACTS_TO_HANDLE);
+        await this.fetchAndUpdateCodeIds(client, CONTRACTS_TO_HANDLE);
         await this.executeMessageViaGovernance(chainName, options, client, wallet);
     }
 
@@ -50,7 +50,8 @@ export class InstantiationManager {
         const serviceName = options.serviceName || DEFAULTS.serviceName;
         const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
         const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
-        const sourceGatewayAddress = options.sourceGatewayAddress || '';
+        const sourceGatewayAddress =
+            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
 
         printInfo(`Governance address: ${governanceAddress}`);
         printInfo(`Service name: ${serviceName}`);
@@ -68,6 +69,8 @@ export class InstantiationManager {
         const encoder = options.encoder || DEFAULTS.encoder;
         const keyType = options.keyType || DEFAULTS.keyType;
         const domainSeparator = (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', '');
+        const contractAdminAddress = options.contractAdmin;
+        const multisigAdminAddress = options.multisigAdmin;
 
         return {
             instantiate_chain_contracts: {
@@ -79,6 +82,7 @@ export class InstantiationManager {
                             code_id: gatewayCodeId,
                             label: `Gateway-${chainName}`,
                             msg: null,
+                            contract_admin: contractAdminAddress,
                         },
                         verifier: {
                             code_id: verifierCodeId,
@@ -103,12 +107,14 @@ export class InstantiationManager {
                                 msg_id_format: msgIdFormat,
                                 address_format: addressFormat,
                             },
+                            contract_admin: contractAdminAddress,
                         },
                         prover: {
                             code_id: proverCodeId,
                             label: `Prover-${chainName}`,
                             msg: {
                                 governance_address: governanceAddress,
+                                admin_address: multisigAdminAddress,
                                 multisig_address: multisigAddress,
                                 signing_threshold: [
                                     options.signingThreshold?.[0] || DEFAULTS.signingThreshold[0],
@@ -126,6 +132,7 @@ export class InstantiationManager {
                                 key_type: keyType,
                                 domain_separator: domainSeparator,
                             },
+                            contract_admin: contractAdminAddress,
                         },
                     },
                 },
@@ -278,7 +285,7 @@ export class InstantiationManager {
     /**
      * Fetches and updates code IDs from proposals for all contracts that need them
      */
-    public async fetchAndUpdateCodeIdsFromProposals(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
+    public async fetchAndUpdateCodeIds(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
         printInfo('Fetching and updating code IDs from proposals...');
 
         for (const contractName of contractsToUpdate) {

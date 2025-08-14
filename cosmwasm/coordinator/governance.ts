@@ -88,7 +88,7 @@ export class GovernanceManager {
 
         const instantiationProposalId = this.configManager.getInstantiationProposalIdFromConfig(chainName);
         if (instantiationProposalId) {
-            await this.extractAddressesFromProposalResult(instantiationProposalId, client);
+            await this.fetchAddressesFromCoordinator(client, deploymentName);
         } else {
             printInfo('No instantiation proposal ID found in config, skipping event extraction');
         }
@@ -139,7 +139,10 @@ export class GovernanceManager {
         return { wallet, client };
     }
 
-    private async extractAddressesFromProposalResult(proposalId: string, client: unknown): Promise<void> {
-        // TODO tkulik: implement fetching Gateway, VotingVerifier, and MultisigProver addresses from proposal result
+    private async fetchAddressesFromCoordinator(client: unknown, deploymentName: string): Promise<void> {
+        // TODO tkulik: Implement fetching Gateway, VotingVerifier, and MultisigProver addresses from Coordinator
+        //              based on the deployment name.
+        //              This point requires action from protocol team.
+        //              The addresses should be saved to the config.
     }
 }

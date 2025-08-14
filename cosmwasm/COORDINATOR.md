@@ -1,6 +1,6 @@
 # Coordinator Script Documentation
 
-The Coordinator script is a TypeScript-based CLI tool for managing the deployment and instantiation of Axelar Amplifier contracts on Cosmos chains. It provides a streamlined workflow for deploying and configuring the core contracts needed for the Axelar Amplifier system.
+The Coordinator script is a TypeScript-based CLI tool for managing the deployment and instantiation of Axelar Amplifier contracts on Axelar chain. It provides a streamlined workflow for deploying and configuring the core contracts needed for the Axelar Amplifier system.
 
 ## Overview
 
@@ -37,20 +37,22 @@ Here's a complete example workflow for deploying and configuring contracts for a
 CHAIN_NAME="some-network"
 ENVIRONMENT="devnet-custom"
 MNEMONIC="your twelve word mnemonic phrase goes here"
-RUN_AS_ADDRESS="<axelar gov & admin>"
+GOVERNANCE_ADDRESS="<axelar governance address>"
 SRC_GATEWAY_ADDRESS="<external chain gateway address>"
+CONTRACT_ADMIN_ADDRESS="<axelar contracts' admin address>"
+MULTISIG_ADMIN="<multisig admin address>"
 
 # Step 1: Register protocol (if not already done)
 npx ts-node cosmwasm/coordinator.ts register-protocol \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
-    --run-as "$RUN_AS_ADDRESS"
+    --run-as "$GOVERNANCE_ADDRESS"
 
 # Step 2: Deploy contracts
 npx ts-node cosmwasm/coordinator.ts deploy \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
-    --run-as "$RUN_AS_ADDRESS" \
+    --run-as "$GOVERNANCE_ADDRESS" \
     --artifact-dir "./artifacts/"
 
 # Step 3: Instantiate contracts with custom parameters
@@ -58,20 +60,22 @@ npx ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
+    --contract-admin "$CONTRACT_ADMIN_ADDRESS" \
+    --multisig-admin "$MULTISIG_ADMIN" \
     --service-name "validators" \
     --voting-threshold "6,10" \
     --signing-threshold "6,10" \
     --block-expiry "10" \
     --confirmation-height "1" \
     --source-gateway-address "$SRC_GATEWAY_ADDRESS" \
-    --governance-address "$RUN_AS_ADDRESS" \
-    --run-as "$RUN_AS_ADDRESS"
+    --governance-address "$GOVERNANCE_ADDRESS" \
+    --run-as "$GOVERNANCE_ADDRESS"
 
 # Step 4: Register deployment
 npx ts-node cosmwasm/coordinator.ts register-deployment \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
-    --run-as "$RUN_AS_ADDRESS" \
+    --run-as "$GOVERNANCE_ADDRESS" \
     -n "$CHAIN_NAME"
 ```
 
@@ -107,14 +111,6 @@ Since we have to vote for the proposals anyway, there's no point in maintaining 
 3. **Governance Proposals**: All deployments require governance approval, ensuring proper oversight.
 4. **Confirmation Prompts**: Use `-y` flag to skip confirmation prompts in automated environments.
 
-## Error Handling
-
-The script includes comprehensive error handling:
-- Input validation for all parameters
-- Network connectivity checks
-- Transaction confirmation verification
-- Retry logic for failed operations
-- Detailed error messages for debugging
 
 ## Troubleshooting
 
