@@ -133,8 +133,8 @@ THRESHOLD_VALUE=2 # Unconfirmed
 
 | `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS`                        |
 |-------------|----------|---------------------|---------------------|----------------------------------------------|
-| **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
-|             | Monad    |                     | `monad`             | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
+| **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
+|             | Monad    |                     | `monad`             | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
 | **Mainnet** | Ethereum |                     | `ethereum`          |                                              |
 |             | Monad    |                     | `monad`             |                                              |
 
