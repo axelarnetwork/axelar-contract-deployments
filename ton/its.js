@@ -41,6 +41,8 @@ const ITS_OPS = {
     TOKEN_MANAGER_DEPLOYED_LOG: 0x00000108,
     INTERCHAIN_TOKEN_DEPLOYED_LOG: 0x00000109,
     INTERCHAIN_TRANSFER_LOG: 0x00000110,
+    PAUSE: 0x00000111,
+    UNPAUSE: 0x00000112,
 };
 
 const program = new Command();
@@ -223,6 +225,18 @@ function buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, c
         .storeAddress(jettonMinter)
         .storeRef(chainNameCell)
         .endCell();
+
+    return message;
+}
+
+function buildPauseMessage() {
+    const message = beginCell().storeUint(ITS_OPS.PAUSE, 32).endCell();
+
+    return message;
+}
+
+function buildUnpauseMessage() {
+    const message = beginCell().storeUint(ITS_OPS.UNPAUSE, 32).endCell();
 
     return message;
 }
@@ -564,6 +578,46 @@ program
             await executeITSOperation('Deploy Remote Canonical Token', messageBody, cost);
         } catch (error) {
             console.error('❌ Error deploying remote canonical token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('pause')
+    .description('Pause the Interchain Token Service (operator only)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (options) => {
+        try {
+            console.log('Pausing Interchain Token Service...');
+            console.log('  Gas:', options.gas, 'TON');
+            console.log('⚠️  Note: Only the operator can pause the service');
+
+            const messageBody = buildPauseMessage();
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Pause ITS', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error pausing ITS:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('unpause')
+    .description('Unpause the Interchain Token Service (operator only)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (options) => {
+        try {
+            console.log('Unpausing Interchain Token Service...');
+            console.log('  Gas:', options.gas, 'TON');
+            console.log('⚠️  Note: Only the operator can unpause the service');
+
+            const messageBody = buildUnpauseMessage();
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Unpause ITS', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error unpausing ITS:', error.message);
             process.exit(1);
         }
     });

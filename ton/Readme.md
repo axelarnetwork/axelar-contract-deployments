@@ -177,10 +177,6 @@ node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <toke
 ```
 
 ```bash
-node ton/its.js add-trusted-chain <chain-name> <chain-address>
-```
-
-```bash
 node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex>
 ```
 
@@ -206,4 +202,23 @@ node ton/its.js register-custom-token <salt> <token-manager-type> <operator-addr
 
 ```bash
 node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name>
+```
+
+
+### Admin only
+
+```bash
+node ton/its.js add-trusted-chain <chain-name> <chain-address>
+```
+
+```bash
+node ton/its.js remove-trusted-chain <chain-name>
+```
+
+```bash
+node ton/its.js pause
+```
+
+```bash
+node ton/its.js unpause
 ```
