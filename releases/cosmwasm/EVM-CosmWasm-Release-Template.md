@@ -89,27 +89,21 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 ```bash
 ts-node cosmwasm/coordinator.ts instantiate \
-    -n "$CHAIN_NAME" \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
+    --contract-admin "$CONTRACT_ADMIN" \
+    --multisig-admin "$MULTISIG_ADMIN_ADDRESS" \
     --service-name "$SERVICE_NAME" \
     --voting-threshold "$VOTING_THRESHOLD" \
     --signing-threshold "$SIGNING_THRESHOLD" \
     --confirmation-height "$CONFIRMATION_HEIGHT" \
     --source-gateway-address "$SOURCE_GATEWAY_ADDRESS" \
     --governance-address "$GOVERNANCE_ADDRESS" \
-    --contract-admin "$CONTRACT_ADMIN" \
-    --multisig-admin "$MULTISIG_ADMIN_ADDRESS" \
     --run-as "$GOVERNANCE_ADDRESS"
 ```
 
 2. Register the new chain in the **Coordinator** contract:
 ```bash
 ts-node cosmwasm/coordinator.ts register-deployment \
-    -e "$ENVIRONMENT" \
-    -m "$MNEMONIC" \
-    --run-as "$GOVERNANCE_ADDRESS" \
-    -n "$CHAIN_NAME"
+    --run-as "$GOVERNANCE_ADDRESS"
 ```
 
 3. Set environment variables
