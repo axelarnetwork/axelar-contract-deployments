@@ -34,6 +34,7 @@ export interface GatewayParams {
     code_id: number;
     label: string;
     msg: null;
+    contract_admin: string;
 }
 
 export interface VerifierParams {
@@ -51,6 +52,7 @@ export interface VerifierParams {
         msg_id_format: string;
         address_format: string;
     };
+    contract_admin: string;
 }
 
 export interface ProverParams {
@@ -67,6 +69,7 @@ export interface ProverParams {
         key_type: string;
         domain_separator: string;
     };
+    contract_admin: string;
 }
 
 export interface InstantiateChainContractsMsg {
@@ -118,6 +121,7 @@ export interface ContractConfigOptions {
     encoder?: string;
     keyType?: string;
     domainSeparator?: string;
+    contractAdmin: string;
 }
 
 export interface CLIOptions {

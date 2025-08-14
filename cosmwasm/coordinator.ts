@@ -85,6 +85,7 @@ program
     .command('instantiate')
     .description('Submit governance proposal to instantiate chain contracts using Coordinator')
     .requiredOption('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)')
+    .requiredOption('--contract-admin <address>', 'Admin address')
     .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)', 'testnet')
     .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
     .option('-y, --yes', 'Skip confirmation prompts')
