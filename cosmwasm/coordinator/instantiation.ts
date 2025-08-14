@@ -70,6 +70,7 @@ export class InstantiationManager {
         const keyType = options.keyType || DEFAULTS.keyType;
         const domainSeparator = (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', '');
         const contractAdminAddress = options.contractAdmin;
+        const multisigAdminAddress = options.multisigAdmin;
 
         return {
             instantiate_chain_contracts: {
@@ -113,6 +114,7 @@ export class InstantiationManager {
                             label: `Prover-${chainName}`,
                             msg: {
                                 governance_address: governanceAddress,
+                                admin_address: multisigAdminAddress,
                                 multisig_address: multisigAddress,
                                 signing_threshold: [
                                     options.signingThreshold?.[0] || DEFAULTS.signingThreshold[0],

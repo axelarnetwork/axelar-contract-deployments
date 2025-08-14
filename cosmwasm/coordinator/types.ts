@@ -60,6 +60,7 @@ export interface ProverParams {
     label: string;
     msg: {
         governance_address: string;
+        admin_address: string;
         multisig_address: string;
         signing_threshold: [string, string];
         service_name: string;
@@ -122,6 +123,7 @@ export interface ContractConfigOptions {
     keyType?: string;
     domainSeparator?: string;
     contractAdmin: string;
+    multisigAdmin: string;
 }
 
 export interface CLIOptions {

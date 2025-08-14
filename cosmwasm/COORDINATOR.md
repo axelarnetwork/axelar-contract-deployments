@@ -40,6 +40,7 @@ MNEMONIC="your twelve word mnemonic phrase goes here"
 GOVERNANCE_ADDRESS="<axelar governance address>"
 SRC_GATEWAY_ADDRESS="<external chain gateway address>"
 CONTRACT_ADMIN_ADDRESS="<axelar contracts' admin address>"
+MULTISIG_ADMIN="<multisig admin address>"
 
 # Step 1: Register protocol (if not already done)
 npx ts-node cosmwasm/coordinator.ts register-protocol \
@@ -52,7 +53,6 @@ npx ts-node cosmwasm/coordinator.ts deploy \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
     --run-as "$GOVERNANCE_ADDRESS" \
-    --contract-admin "$CONTRACT_ADMIN_ADDRESS" \
     --artifact-dir "./artifacts/"
 
 # Step 3: Instantiate contracts with custom parameters
@@ -60,6 +60,8 @@ npx ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
     -e "$ENVIRONMENT" \
     -m "$MNEMONIC" \
+    --contract-admin "$CONTRACT_ADMIN_ADDRESS" \
+    --multisig-admin "$MULTISIG_ADMIN" \
     --service-name "validators" \
     --voting-threshold "6,10" \
     --signing-threshold "6,10" \
