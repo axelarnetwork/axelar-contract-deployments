@@ -87,10 +87,6 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 1. Instantiate **Gateway**, **Verifier** and **Prover** contracts using **Coordinator**
 
-TODO: Once the protocol team updates the instantiate message, we should pass two additional values:
- - $MULTISIG_ADMIN to the multisigProver instantiate message
- - $CONTRACT_ADMIN as a separate field to be used as instantiate2 admin for the 3 contracts.
- 
 ```bash
 ts-node cosmwasm/coordinator.ts instantiate \
     -n "$CHAIN_NAME" \
