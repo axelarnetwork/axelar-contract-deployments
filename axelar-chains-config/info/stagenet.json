@@ -3059,7 +3059,13 @@
         "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
       },
       "ItsStacksTranslator": {
-        "stacks": {}
+        "stacks": {
+          "codeId": 63,
+          "address": "axelar1m9sppngus5sqhu5m46ztqa00f69jg4284symlacrrwxrpnr6w25q3zr60q"
+        },
+        "storeCodeProposalId": "249",
+        "storeCodeProposalCodeHash": "89c52311e1f76bf88523092f34d06f5bcc1d8e8f955bf423fbfee4c90ec32a53",
+        "lastUploadedCodeId": 63
       },
       "StacksVotingVerifier": {
         "stacks": {
@@ -3074,7 +3080,9 @@
           "confirmationHeight": 6,
           "msgIdFormat": "hex_tx_hash_and_event_index",
           "addressFormat": "stacks"
-        }
+        },
+        "storeCodeProposalId": "250",
+        "storeCodeProposalCodeHash": "d9ba807799694d7b0564ec95e885aadb4a4aea78a37004cb118f490635cc78cb"
       },
       "StacksMultisigProver": {
         "stacks": {
@@ -3088,7 +3096,9 @@
           "verifierSetDiffThreshold": 1,
           "encoder": "stacks",
           "keyType": "ecdsa"
-        }
+        },
+        "storeCodeProposalId": "251",
+        "storeCodeProposalCodeHash": "ecf6f5b4c0ad67f7d4971e87d6ceb907eaeccb6796d364e25bc32f6c5fe86814"
       }
     },
     "axelarId": "axelar",
