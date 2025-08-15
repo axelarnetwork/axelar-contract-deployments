@@ -43,19 +43,19 @@ async function executeOperation(operationName, messageBody, cost) {
 }
 
 // Helper function to send jettons with bundled operations
-async function sendJettonsTo(receiver, deployer, deployerJettonWallet, jettonMinter, jettonToSend, forwardPayload) {
+async function sendJettonsTo(receiver, deployerJettonWallet, jettonToSend, forwardPayload) {
     const client = getTonClient();
     const { contract, key } = await loadWallet(client);
 
     return await deployerJettonWallet.sendTransfer(
         client.provider(deployerJettonWallet.address),
         contract.sender(key.secretKey),
-        toNano('0.12'), // transaction fee
+        toNano('0.08'), // transaction fee
         jettonToSend, // amount of jettons to send
         receiver, // the destination address
         receiver, // responseAddress (can be your deployer address)
         beginCell().endCell(), // custom payload
-        toNano('0.08'), // forward_ton_amount
+        toNano('0.04'), // forward_ton_amount
         forwardPayload, // forwardPayload
     );
 }
@@ -110,8 +110,6 @@ program
 
             // Create the pay jetton gas message
             const payJettonGasMessage = buildPayJettonGasForContractCallMessage(
-                jettonMinterAddress,
-                jettonToSend,
                 destinationChain,
                 destinationAddress,
                 payload,
@@ -124,7 +122,7 @@ program
 
             console.log(`Sending ${jettonToSend.toString()} Jettons with bundled gas payment`);
 
-            const res = await sendJettonsTo(gasServiceAddress, contract, userJettonWallet, minter, jettonToSend, forwardPayload);
+            const res = await sendJettonsTo(gasServiceAddress, userJettonWallet, jettonToSend, forwardPayload);
 
             console.log('Transaction result:', res);
             console.log('✅ Bundled jetton gas payment transaction sent successfully!');
@@ -215,19 +213,14 @@ program
             const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
 
             // Create the add jetton gas message
-            const addJettonGasMessage = buildAddJettonGasMessage(
-                txHashBigInt,
-                jettonMinterAddress,
-                jettonToAdd,
-                Address.parse(refundAddress),
-            );
+            const addJettonGasMessage = buildAddJettonGasMessage(txHashBigInt, Address.parse(refundAddress));
 
             // Create the bundled forward payload
             const forwardPayload = beginCell().storeAddress(jettonMinterAddress).storeRef(addJettonGasMessage).endCell();
 
             console.log(`Adding ${jettonToAdd.toString()} Jettons as gas with bundled operation`);
 
-            const res = await sendJettonsTo(gasServiceAddress, contract, userJettonWallet, minter, jettonToAdd, forwardPayload);
+            const res = await sendJettonsTo(gasServiceAddress, userJettonWallet, jettonToAdd, forwardPayload);
 
             console.log('Transaction result:', res);
             console.log('✅ Bundled add jetton gas transaction sent successfully!');
