@@ -2403,7 +2403,6 @@
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "domainSeparator": "5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
             "minimumRotationDelay": "300",
-            "connectionType": "amplifier",
             "previousSignersRetention": "15",
             "initialSigners": [
               {
@@ -2417,7 +2416,8 @@
                 "threshold": "1"
               }
             ]
-          }
+          },
+          "connectionType": "amplifier"
         },
         "AxelarOperators": {
           "address": "CBYTWO3NS3BFVSZSNJL7BH2REK7V2OCKV5HMLISPP4PLGAX3NEPIPYD3",
