@@ -231,14 +231,30 @@ function buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, c
 
 function buildPauseMessage() {
     const message = beginCell().storeUint(ITS_OPS.PAUSE, 32).endCell();
-
     return message;
 }
 
 function buildUnpauseMessage() {
     const message = beginCell().storeUint(ITS_OPS.UNPAUSE, 32).endCell();
-
     return message;
+}
+
+// Helper function to send jettons with bundled operations
+async function sendJettonsTo(receiver, deployer, deployerJettonWallet, jettonMinter, jettonToSend, forwardPayload) {
+    const client = getTonClient();
+    const { contract, key } = await loadWallet(client);
+
+    return await deployerJettonWallet.sendTransfer(
+        client.provider(deployerJettonWallet.address),
+        contract.sender(key.secretKey),
+        toNano('0.12'), // transaction fee
+        jettonToSend, // amount of jettons to send
+        receiver, // the destination address
+        receiver, // responseAddress (can be your deployer address)
+        beginCell().endCell(), // custom payload
+        toNano('0.08'), // forward_ton_amount
+        forwardPayload, // forwardPayload
+    );
 }
 
 program
@@ -250,7 +266,7 @@ program
     .argument('<decimals>', 'Token decimals (0-255)')
     .argument('<initial-supply>', 'Initial token supply')
     .argument('[minter]', 'Optional minter address (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, name, symbol, decimals, initialSupply, minter, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
@@ -330,7 +346,7 @@ program
     .description('Register token metadata for a token (TEP-64 standard)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.3')
     .action(async (adminAddress, contentHex, options) => {
         try {
             // Remove 0x prefix if present
@@ -357,7 +373,7 @@ program
     .argument('<salt>', 'Salt value for token deployment (256-bit number or hex string)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
     .argument('[remote-minter]', 'Optional minter address on the remote chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.3')
     .action(async (salt, chainName, remoteMinter, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
@@ -379,7 +395,7 @@ program
     });
 
 program
-    .command('transfer-interchain-token')
+    .command('interchain-token-transfer')
     .description('Transfer interchain tokens to another chain')
     .argument('<token-id>', 'Token ID (256-bit number or hex string)')
     .argument('<chain-name>', 'Destination chain name (e.g., "ethereum", "polygon")')
@@ -389,67 +405,64 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
     .action(async (tokenId, chainName, destinationAddress, amount, jettonMinter, options) => {
         try {
-            const tokenIdBigInt = tokenId.startsWith('0x') ? tokenId.slice(2) : tokenId;
+            const tokenIdBigInt = tokenId.startsWith('0x') ? BigInt('0x' + tokenId.slice(2)) : BigInt(tokenId);
 
-            console.log('Transferring Interchain Token with parameters:');
-            console.log('  Token ID:', tokenIdBigInt);
+            console.log('Transferring Interchain Token with bundled operation:');
+            console.log('  Token ID:', tokenIdBigInt.toString());
             console.log('  Destination Chain:', chainName);
             console.log('  Destination Address:', destinationAddress);
             console.log('  Amount:', amount);
             console.log('  Jetton Minter:', jettonMinter);
             console.log('  Transaction Gas:', options.gas, 'TON');
 
-            // Payment step
             const client = getTonClient();
             const { contract, key } = await loadWallet(client);
 
             const itsAddress = Address.parse(process.env.TON_ITS_ADDRESS);
             const jettonMinterAddress = Address.parse(jettonMinter);
-            const myWalletAddress = contract.address;
+            const sender = contract.address;
 
             const minter = JettonMinter.createFromAddress(jettonMinterAddress);
-            const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), myWalletAddress);
 
-            const jettonToSend = amount;
-            const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
-
-            console.log(`Sending ${jettonToSend.toString()} Jettons for ITS payment`);
-
+            let jettonWalletAddress;
             try {
-                const res = await userJettonWallet.sendTransfer(
-                    client.provider(userJettonWallet.address),
-                    contract.sender(key.secretKey),
-                    toNano('0.1'),
-                    jettonToSend,
-                    itsAddress,
-                    itsAddress,
-                    beginCell().endCell(),
-                    toNano('0.05'),
-                    beginCell().storeUint(OP_PAYMENT, 32).storeAddress(jettonMinterAddress).endCell(),
-                );
-
-                console.log('Jetton payment transaction result:', res);
-                console.log('✅ Jetton payment transaction sent successfully!');
-
-                // Wait for gas payment confirmation
-                const seqno = await contract.getSeqno();
-                await waitForTransaction(contract, seqno);
+                jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), sender);
             } catch (error) {
-                console.error('❌ Error in jetton payment:', error);
-                console.error('Error details:', error.message);
-                throw error;
+                console.error(`❌ Failed to get jetton wallet address:`);
+                console.error(`   Jetton minter: ${jettonMinterAddress.toString()}`);
+                console.error(`   Original error: ${error.message}`);
+                process.exit(1);
             }
 
-            console.log('Waiting for payment to be registered...');
-            await sleep(60);
+            const spendAmount = amount;
+            const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
 
-            // Main ITS operation
-            const messageBody = buildInterchainTokenTransferMessage(tokenIdBigInt, chainName, destinationAddress, amount);
+            // Create the interchain token transfer message (same as buildInterchainTokenTransferMessage)
+            const interchainTransferMessage = beginCell()
+                .storeUint(ITS_OPS.INTERCHAIN_TOKEN_TRANSFER, 32)
+                .storeUint(tokenIdBigInt, 256)
+                .storeRef(beginCell().storeStringTail(chainName).endCell())
+                .storeRef(beginCell().storeStringTail(destinationAddress).endCell())
+                .storeUint(spendAmount, 256)
+                .endCell();
 
-            const cost = toNano(options.gas);
-            await executeITSOperation('Interchain Token Transfer', messageBody, cost);
+            // Create the bundled forward payload (payment + transfer operation)
+            const forwardPayload = beginCell().storeAddress(jettonMinterAddress).storeRef(interchainTransferMessage).endCell();
+
+            console.log(`Sending ${spendAmount.toString()} Jettons with bundled interchain transfer`);
+
+            // Use the sendJettonsTo helper function similar to gas service
+            const res = await sendJettonsTo(itsAddress, contract, userJettonWallet, minter, spendAmount, forwardPayload);
+
+            console.log('Transaction result:', res);
+            console.log('✅ Bundled interchain token transfer sent successfully!');
+
+            // Wait for confirmation
+            const seqno = await contract.getSeqno();
+            await waitForTransaction(contract, seqno);
         } catch (error) {
-            console.error('❌ Error transferring interchain token:', error.message);
+            console.error('❌ Error in bundled interchain token transfer:', error);
+            console.error('Error details:', error.message);
             process.exit(1);
         }
     });
@@ -466,7 +479,7 @@ program
         '2',
     )
     .argument('[link-params]', 'Link parameters as hex string (optional)', '0x')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.3')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
@@ -495,7 +508,7 @@ program
     .description('Register a canonical interchain token (TEP-64 metadata)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.3')
     .action(async (adminAddress, contentHex, options) => {
         try {
             // Remove 0x prefix if present
@@ -527,7 +540,7 @@ program
     .argument('<operator-address>', 'Operator address for the token (TON address format)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.3')
     .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
@@ -564,7 +577,7 @@ program
     .description('Deploy a canonical interchain token on a remote chain')
     .argument('<jetton-minter-address>', 'Jetton minter address for the canonical token (TON address format)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.1')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.3')
     .action(async (jettonMinterAddress, chainName, options) => {
         try {
             console.log('Deploying Remote Canonical Token with parameters:');

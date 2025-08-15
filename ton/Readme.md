@@ -185,7 +185,7 @@ node ton/its.js deploy-remote-interchain-token <salt> <chain-name>
 ```
 
 ```bash
-node ton/its.js transfer-interchain-token <token-id> <chain-name> <destination-address> <amount> <jetton-minter>
+node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-address> <amount> <jetton-minter>
 ```
 
 ```bash
