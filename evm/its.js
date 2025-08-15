@@ -7,7 +7,7 @@ const {
     BigNumber,
     Contract,
 } = ethers;
-const { Command, Option } = require('commander');
+const { Command, Option, Argument } = require('commander');
 const {
     printInfo,
     prompt,
@@ -28,6 +28,7 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
+const { validateDestinationChain, tokenManagerTypes, validateLinkType, getChainConfigByAxelarId } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -38,13 +39,6 @@ const ITokenManager = getContractJSON('ITokenManager');
 const { addOptionsToCommands } = require('../common');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
-const tokenManagerImplementations = {
-    INTERCHAIN_TOKEN: 0,
-    MINT_BURN_FROM: 1,
-    LOCK_UNLOCK: 2,
-    LOCK_UNLOCK_FEE: 3,
-    MINT_BURN: 4,
-};
 
 const IInterchainTokenServiceV211 = getContractJSON(
     'IInterchainTokenService',
@@ -132,7 +126,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(_axelar, chain, chains, action, options) {
+async function processCommand(axelar, chain, chains, action, options) {
     const { privateKey, address, yes, args } = options;
 
     const contracts = chain.contracts;
@@ -344,17 +338,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
             }
 
-            if (
-                implementationType !== tokenManagerImplementations.MINT_BURN &&
-                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
-            ) {
+            if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.INTERCHAIN_TOKEN) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
             const itsDestinationAddress = encodeITSDestination(chains, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
-            printInfo('Encoded ITS destination address', itsDestinationAddress);
 
             const tx = await interchainTokenService[INTERCHAIN_TRANSFER_WITH_METADATA](
                 tokenIdBytes32,
@@ -594,16 +584,17 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
             const { gasValue } = options;
             const deploymentSalt = getDeploymentSalt(options);
-            const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
                 isValidTokenId: { tokenId },
                 isString: { destinationChain },
                 isValidAddress: { destinationTokenAddress, operator },
-                isValidNumber: { gasValue, tokenManagerType },
+                isValidNumber: { gasValue },
+                isNonEmptyString: { type },
             });
-            validateChain(chains, destinationChain);
 
+            validateChain(chains, destinationChain);
+            const tokenManagerType = validateLinkType(getChainConfigByAxelarId(axelar, destinationChain).chainType, type);
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
 
@@ -840,7 +831,7 @@ if (require.main === module) {
         .argument('<token-id>', 'Token ID')
         .argument('<destination-chain>', 'Destination chain')
         .argument('<destination-token-address>', 'Destination token address')
-        .argument('<type>', 'Token manager type')
+        .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
