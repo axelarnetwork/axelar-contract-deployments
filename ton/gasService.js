@@ -42,6 +42,24 @@ async function executeOperation(operationName, messageBody, cost) {
     }
 }
 
+// Helper function to send jettons with bundled operations
+async function sendJettonsTo(receiver, deployer, deployerJettonWallet, jettonMinter, jettonToSend, forwardPayload) {
+    const client = getTonClient();
+    const { contract, key } = await loadWallet(client);
+
+    return await deployerJettonWallet.sendTransfer(
+        client.provider(deployerJettonWallet.address),
+        contract.sender(key.secretKey),
+        toNano('0.12'), // transaction fee
+        jettonToSend, // amount of jettons to send
+        receiver, // the destination address
+        receiver, // responseAddress (can be your deployer address)
+        beginCell().endCell(), // custom payload
+        toNano('0.08'), // forward_ton_amount
+        forwardPayload, // forwardPayload
+    );
+}
+
 // 1. Pay Native Gas For Contract Call
 program
     .command('pay-native-gas')
@@ -65,7 +83,7 @@ program
         );
     });
 
-// 2. Pay Jetton Gas For Contract Call
+// 2. Pay Jetton Gas For Contract Call (Bundled)
 program
     .command('pay-jetton-gas')
     .description('Pay jetton gas for contract call')
@@ -74,54 +92,24 @@ program
     .argument('<destination-chain>', 'Destination chain name')
     .argument('<destination-address>', 'Destination contract address')
     .argument('<payload>', 'Payload in hex format')
-    .action(async (jettonMinter, jettonAmount, destinationChain, destinationAddress, payload, gasAmount) => {
-        const cost = toNano('0.35'); // partial execution protection
-
-        const client = getTonClient();
-        const { contract, key } = await loadWallet(client);
-        const sender = contract.address;
-        const refundAddress = sender;
-
-        const gasServiceAddress = Address.parse(GAS_SERVICE_ADDRESS);
-        const jettonMinterAddress = Address.parse(jettonMinter);
-
-        const myWalletAddress = contract.address;
-
-        const minter = JettonMinter.createFromAddress(jettonMinterAddress);
-        const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), myWalletAddress);
-
-        const jettonToSend = toNano(jettonAmount);
-        const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
-
-        console.log(`Sending ${jettonToSend.toString()} Jettons`);
-
+    .action(async (jettonMinter, jettonAmount, destinationChain, destinationAddress, payload) => {
         try {
-            const res = await userJettonWallet.sendTransfer(
-                client.provider(userJettonWallet.address),
-                contract.sender(key.secretKey),
-                toNano('0.1'),
-                jettonToSend,
-                gasServiceAddress,
-                gasServiceAddress,
-                beginCell().endCell(),
-                toNano('0.05'), // will be sent with transfer notification to gas service
-                beginCell().storeAddress(jettonMinterAddress).endCell(), // forward payload
-            );
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
+            const refundAddress = sender;
 
-            console.log('Transaction result:', res);
-            console.log('✅ Jetton transfer transaction sent successfully!');
+            const gasServiceAddress = Address.parse(GAS_SERVICE_ADDRESS);
+            const jettonMinterAddress = Address.parse(jettonMinter);
 
-            // Wait for confirmation
-            const seqno = await contract.getSeqno();
-            await waitForTransaction(contract, seqno);
-        } catch (error) {
-            console.error('❌ Error in jetton transfer:', error);
-            console.error('Error details:', error.message);
-        }
+            const minter = JettonMinter.createFromAddress(jettonMinterAddress);
+            const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), sender);
 
-        await executeOperation(
-            'Pay Jetton Gas',
-            buildPayJettonGasForContractCallMessage(
+            const jettonToSend = jettonAmount;
+            const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
+
+            // Create the pay jetton gas message
+            const payJettonGasMessage = buildPayJettonGasForContractCallMessage(
                 jettonMinterAddress,
                 jettonToSend,
                 destinationChain,
@@ -129,9 +117,26 @@ program
                 payload,
                 sender,
                 refundAddress,
-            ),
-            cost,
-        );
+            );
+
+            // Create the bundled forward payload
+            const forwardPayload = beginCell().storeAddress(jettonMinterAddress).storeRef(payJettonGasMessage).endCell();
+
+            console.log(`Sending ${jettonToSend.toString()} Jettons with bundled gas payment`);
+
+            const res = await sendJettonsTo(gasServiceAddress, contract, userJettonWallet, minter, jettonToSend, forwardPayload);
+
+            console.log('Transaction result:', res);
+            console.log('✅ Bundled jetton gas payment transaction sent successfully!');
+
+            // Wait for confirmation
+            const seqno = await contract.getSeqno();
+            await waitForTransaction(contract, seqno);
+        } catch (error) {
+            console.error('❌ Error in bundled jetton gas payment:', error);
+            console.error('Error details:', error.message);
+            process.exit(1);
+        }
     });
 
 // 3. Collect Gas (Native)
@@ -159,7 +164,7 @@ program
     .argument('<receiver>', 'Receiver address')
     .argument('<jetton-amount>', 'Jetton amount to collect')
     .argument('<jetton-minter>', 'Jetton minter address')
-    .action(async (receiver, jettonAmount, jettonMinter, gasAmount) => {
+    .action(async (receiver, jettonAmount, jettonMinter) => {
         const cost = toNano('0.05');
         const jettonToCollect = toNano(jettonAmount);
 
@@ -184,7 +189,7 @@ program
         await executeOperation('Add Native Gas', buildAddNativeGasMessage(txHashBigInt, Address.parse(refundAddress)), cost);
     });
 
-// 6. Add Jetton Gas
+// 6. Add Jetton Gas (Bundled)
 program
     .command('add-jetton-gas')
     .description('Add jetton gas to existing transaction')
@@ -193,55 +198,48 @@ program
     .argument('<jetton-amount>', 'Jetton amount')
     .argument('<refund-address>', 'Refund address')
     .action(async (txHash, jettonMinter, jettonAmount, refundAddress) => {
-        const cost = toNano('0.35'); // partial execution protection
-        const txHashBigInt = BigInt('0x' + txHash);
-        const jettonToAdd = toNano(jettonAmount);
-
-        const client = getTonClient();
-        const { contract, key } = await loadWallet(client);
-
-        const gasServiceAddress = Address.parse(GAS_SERVICE_ADDRESS);
-        const jettonMinterAddress = Address.parse(jettonMinter);
-
-        const myWalletAddress = contract.address;
-
-        const minter = JettonMinter.createFromAddress(jettonMinterAddress);
-        const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), myWalletAddress);
-
-        const jettonToSend = toNano(jettonAmount);
-        const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
-
-        console.log(`Sending ${jettonToSend.toString()} Jettons`);
-
         try {
-            const res = await userJettonWallet.sendTransfer(
-                client.provider(userJettonWallet.address),
-                contract.sender(key.secretKey),
-                toNano('0.1'),
-                jettonToSend,
-                gasServiceAddress,
-                gasServiceAddress,
-                beginCell().endCell(),
-                toNano('0.05'), // will be sent with transfer notification to gas service
-                beginCell().storeAddress(jettonMinterAddress).endCell(), // forward payload
+            const txHashBigInt = BigInt('0x' + txHash);
+            const jettonToAdd = jettonAmount;
+
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+
+            const gasServiceAddress = Address.parse(GAS_SERVICE_ADDRESS);
+            const jettonMinterAddress = Address.parse(jettonMinter);
+            const sender = contract.address;
+
+            const minter = JettonMinter.createFromAddress(jettonMinterAddress);
+            const jettonWalletAddress = await minter.getWalletAddress(client.provider(jettonMinterAddress), sender);
+
+            const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
+
+            // Create the add jetton gas message
+            const addJettonGasMessage = buildAddJettonGasMessage(
+                txHashBigInt,
+                jettonMinterAddress,
+                jettonToAdd,
+                Address.parse(refundAddress),
             );
 
+            // Create the bundled forward payload
+            const forwardPayload = beginCell().storeAddress(jettonMinterAddress).storeRef(addJettonGasMessage).endCell();
+
+            console.log(`Adding ${jettonToAdd.toString()} Jettons as gas with bundled operation`);
+
+            const res = await sendJettonsTo(gasServiceAddress, contract, userJettonWallet, minter, jettonToAdd, forwardPayload);
+
             console.log('Transaction result:', res);
-            console.log('✅ Jetton transfer transaction sent successfully!');
+            console.log('✅ Bundled add jetton gas transaction sent successfully!');
 
             // Wait for confirmation
             const seqno = await contract.getSeqno();
             await waitForTransaction(contract, seqno);
         } catch (error) {
-            console.error('❌ Error in jetton transfer:', error);
+            console.error('❌ Error in bundled add jetton gas:', error);
             console.error('Error details:', error.message);
+            process.exit(1);
         }
-
-        await executeOperation(
-            'Add Jetton Gas',
-            buildAddJettonGasMessage(txHashBigInt, jettonMinterAddress, jettonWalletAddress, jettonToAdd, Address.parse(refundAddress)),
-            cost,
-        );
     });
 
 // 7. Update Gas Info
@@ -324,7 +322,7 @@ program
     .argument('<tx-hash>', 'Transaction hash (hex without 0x prefix)')
     .argument('<refund-address>', 'Refund address')
     .argument('<refund-amount>', 'Amount in TON to refund')
-    .action(async (txHash, refundAddress, refundAmount, gasAmount) => {
+    .action(async (txHash, refundAddress, refundAmount) => {
         const cost = toNano('0.01');
         const txHashBigInt = BigInt('0x' + txHash);
         const refundAmountTon = toNano(refundAmount);
@@ -344,7 +342,7 @@ program
     .argument('<receiver>', 'Receiver address')
     .argument('<jetton-amount>', 'Jetton amount to refund')
     .argument('<jetton-minter>', 'Jetton minter address')
-    .action(async (txHash, receiver, jettonAmount, jettonMinter, gasAmount) => {
+    .action(async (txHash, receiver, jettonAmount, jettonMinter) => {
         const cost = toNano('0.06');
         const txHashBigInt = BigInt('0x' + txHash);
         const jettonToSend = toNano(jettonAmount);
