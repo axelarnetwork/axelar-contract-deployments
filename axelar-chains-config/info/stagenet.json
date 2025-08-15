@@ -2488,6 +2488,89 @@
           "version": "2.1.1"
         }
       }
+    },
+    "stacks": {
+      "name": "Stacks",
+      "axelarId": "stacks",
+      "rpc": "https://api.testnet.hiro.so",
+      "tokenSymbol": "STX",
+      "networkType": "testnet",
+      "chainType": "stacks",
+      "finality": "6",
+      "decimals": 6,
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Stacks Explorer",
+        "url": "https://explorer.hiro.so/?chain=testnet"
+      },
+      "contracts": {
+        "ClarityStacks": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.clarity-stacks",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GasStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "Traits": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.traits",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GasImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "GatewayStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "AxelarGasService": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-service",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GatewayImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "AxelarGateway": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "connectionType": "amplifier"
+        },
+        "InterchainTokenServiceStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenFactory": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-factory",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenService": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenFactoryImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-factory-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "VerifyOnchain": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.verify-onchain",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenServiceImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "NativeInterchainToken": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.native-interchain-token",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        }
+      },
+      "initialContractsDeployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
     }
   },
   "axelar": {
@@ -2974,6 +3057,38 @@
         "codeId": 62,
         "instantiateProposalId": "241",
         "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
+      },
+      "ItsStacksTranslator": {
+        "stacks": {}
+      },
+      "StacksVotingVerifier": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "ST4JWJ9ZA3F825VPRN9KN77GMYR9FAXQDPH2QSJH.gateway-storage",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 6,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stacks"
+        }
+      },
+      "StacksMultisigProver": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 1,
+          "encoder": "stacks",
+          "keyType": "ecdsa"
+        }
       }
     },
     "axelarId": "axelar",
