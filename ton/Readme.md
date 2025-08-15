@@ -204,6 +204,10 @@ node ton/its.js register-custom-token <salt> <token-manager-type> <operator-addr
 node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name>
 ```
 
+```bash
+node ton/its/js approve-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+```
+
 
 ### Admin only
 
