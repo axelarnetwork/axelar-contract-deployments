@@ -115,6 +115,11 @@ const isString = (arg) => {
     return typeof arg === 'string';
 };
 
+const isNonArrayObject = (arg) => {
+    if (!arg) return false;
+    return typeof arg === 'object' && Array.isArray(arg) === false;
+};
+
 const isNonEmptyString = (arg) => {
     return isString(arg) && arg !== '';
 };
@@ -372,6 +377,7 @@ function isValidSvmAddressFormat(address) {
 const validationFunctions = {
     isNonEmptyString,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
@@ -721,6 +727,7 @@ module.exports = {
     isStringArray,
     isStringLowercase,
     isNumber,
+    isNonArrayObject,
     isValidNumber,
     isValidDecimal,
     isNumberArray,
