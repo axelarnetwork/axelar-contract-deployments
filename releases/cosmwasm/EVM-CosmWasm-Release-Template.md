@@ -225,37 +225,11 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 8. Confirm proposals have passed
 
 - Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
-  - "Register Gateway for `$CHAIN`"
-  - "Register Multisig Prover for `$CHAIN`"
-  - "Authorize Multisig Prover for `$CHAIN`"
+  - "Instantiate amplifier contracts"
+  - "Register chain deployment"
   - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
   - "Create pool for `$CHAIN` in axelar multisig"
   - (optional) "Register `$CHAIN` on ITS Hub"
-
-- Check Gateway registered at Router
-```bash
-axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --output json | jq .
-# You should see something like this:
-{
-  "data": {
-    "name": \"$CHAIN\",
-    "gateway": {
-      "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
-    },
-    "frozen_status": 0,
-    "msg_id_format": "hex_tx_hash_and_event_index"
-  }
-}
-```
-
-- Check Multisig Prover authorized on Multisig
-```bash
-axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"contract_address\": \"$MULTISIG_PROVER\", \"chain_name\": \"$CHAIN\"}}" --output json | jq .
-# Result should look like:
-{
-  "data": true
-}
-```
 
 - Check reward pool to confirm funding worked:
 
