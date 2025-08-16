@@ -1,49 +1,34 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
-const { toNano, Address, beginCell, Cell } = require('@ton/ton');
+const { toNano, Address, beginCell } = require('@ton/core');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
 const crypto = require('crypto');
-const { JettonWallet, JettonMinter } = require('axelar-cgp-ton');
-const ITS_DICT_KEY_LENGTH = 256;
+const { JettonWallet, JettonMinter, hexStringToCell } = require('axelar-cgp-ton');
+const {
+    buildDeployInterchainTokenMessage,
+    buildAddTrustedChainMessage,
+    buildRemoveTrustedChainMessage,
+    buildRegisterTokenMetadataMessage,
+    buildDeployRemoteInterchainTokenMessage,
+    buildLinkTokenMessage,
+    buildRegisterCanonicalTokenMessage,
+    buildRegisterCustomTokenMessage,
+    buildDeployRemoteCanonicalInterchainTokenMessage,
+    buildApproveRemoteDeploymentMessage,
+    buildRevokeRemoteDeploymentMessage,
+    buildInterchainTokenTransferPayload,
+    buildChangeOperatorMessage,
+    buildPauseMessage,
+    buildUnpauseMessage,
+    OP_INTERCHAIN_TOKEN_TRANSFER,
+    InterchainTokenService,
+} = require('axelar-cgp-ton');
 
 const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
 
 if (!ITS_ADDRESS) {
     throw new Error('Please set TON_ITS_ADDRESS in your .env file');
 }
-
-const OP_PAYMENT = 0x00000200;
-
-const ITS_OPS = {
-    DEPLOY_INTERCHAIN_TOKEN: 0x0000006b,
-    DEPLOY_REMOTE_INTERCHAIN_TOKEN: 0x00000069,
-    DEPLOY_REMOTE_INTERCHAIN_TOKEN_LOG: 0x0000006a,
-    CHANGE_OPERATOR: 0x0000006c,
-    ADD_TRUSTED_CHAIN: 0x0000006d,
-    REMOVE_TRUSTED_CHAIN: 0x0000006e,
-    REGISTER_CANONICAL_INTERCHAIN_TOKEN: 0x0000006f,
-    DEPLOY_REMOTE_CANONICAL_INTERCHAIN_TOKEN: 0x00000070,
-    INTERCHAIN_TOKEN_TRANSFER: 0x00000071,
-    REGISTER_CUSTOM_TOKEN: 0x00000072,
-    LINK_TOKEN: 0x00000073,
-    INTERCHAIN_TOKEN_ID_CLAIMED_LOG: 0x00000074,
-    INTERCHAIN_TOKEN_TRANSFER_SEND: 0x00000075,
-    INTERCHAIN_TOKEN_TRANSFER_TAKE: 0x00000076,
-    APPROVE_REMOTE_DEPLOYMENT: 0x00000077,
-    DEPLOY_REMOTE_INTERCHAIN_TOKEN_FROM_TOKEN_MANAGER: 0x00000100,
-    REGISTER_TOKEN_METADATA: 0x00000101,
-    INTERCHAIN_TOKEN_TRANSFER_FROM: 0x00000102,
-    INTERCHAIN_TOKEN_TRANSFER_TAKE_FROM: 0x00000103,
-    TOKEN_METADATA_REGISTERED_LOG: 0x00000104,
-    LINK_TOKEN_STARTED_LOG: 0x00000105,
-    INTERCHAIN_TRANSFER_RECEIVED_LOG: 0x00000106,
-    INTERCHAIN_TOKEN_DEPLOYMENT_STARTED_LOG: 0x00000107,
-    TOKEN_MANAGER_DEPLOYED_LOG: 0x00000108,
-    INTERCHAIN_TOKEN_DEPLOYED_LOG: 0x00000109,
-    INTERCHAIN_TRANSFER_LOG: 0x00000110,
-    PAUSE: 0x00000111,
-    UNPAUSE: 0x00000112,
-};
 
 const program = new Command();
 program.name('its').description('Axelar TON Interchain Token Service CLI').version('1.0.0');
@@ -65,159 +50,6 @@ async function executeITSOperation(operationName, messageBody, cost) {
     }
 }
 
-function buildDeployInterchainTokenMessage(salt, name, symbol, decimals, initialSupply, minter) {
-    const saltBigInt = BigInt(salt);
-    const nameCell = beginCell().storeStringTail(name).endCell();
-    const symbolCell = beginCell().storeStringTail(symbol).endCell();
-    const minterAddress = minter ? Address.parse(minter) : null;
-    const minterCell = beginCell();
-
-    if (minterAddress) {
-        minterCell.storeAddress(minterAddress);
-    } else {
-        minterCell.storeBit(0);
-    }
-
-    const minterRefCell = minterCell.endCell();
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.DEPLOY_INTERCHAIN_TOKEN, 32)
-        .storeUint(saltBigInt, 256)
-        .storeRef(nameCell)
-        .storeRef(symbolCell)
-        .storeUint(decimals, 8)
-        .storeUint(BigInt(initialSupply), 256)
-        .storeRef(minterRefCell)
-        .endCell();
-
-    return message;
-}
-
-function buildAddTrustedChainMessage(chainName, chainAddress) {
-    const chainNameHash = crypto.createHash('sha256').update(chainName).digest();
-    const chainNameBigInt = BigInt('0x' + chainNameHash.toString('hex'));
-
-    const chainAddressCell = beginCell().storeStringTail(chainAddress).endCell();
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.ADD_TRUSTED_CHAIN, 32)
-        .storeUint(chainNameBigInt, ITS_DICT_KEY_LENGTH)
-        .storeRef(chainAddressCell)
-        .endCell();
-
-    return message;
-}
-
-function buildRemoveTrustedChainMessage(chainName) {
-    const chainNameHash = crypto.createHash('sha256').update(chainName).digest();
-    const chainNameBigInt = BigInt('0x' + chainNameHash.toString('hex'));
-    return beginCell().storeUint(ITS_OPS.REMOVE_TRUSTED_CHAIN, 32).storeUint(chainNameBigInt, ITS_DICT_KEY_LENGTH).endCell();
-}
-
-function buildRegisterTokenMetadataMessage(adminAddress, contentHex) {
-    const admin = Address.parse(adminAddress);
-    const content = Cell.fromHex(contentHex);
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.REGISTER_TOKEN_METADATA, 32)
-        .storeAddress(admin)
-        .storeRef(content) // content cell (indirectly gives token address)
-        .endCell();
-
-    return message;
-}
-
-function buildDeployRemoteInterchainTokenMessage(salt, chainName, remoteMinter) {
-    const saltBigInt = BigInt(salt);
-    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
-
-    let minterCell;
-    if (remoteMinter) {
-        const minterAddress = Address.parse(remoteMinter);
-        minterCell = beginCell().storeAddress(minterAddress).endCell();
-    } else {
-        minterCell = beginCell().endCell();
-    }
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.DEPLOY_REMOTE_INTERCHAIN_TOKEN, 32)
-        .storeUint(saltBigInt, 256)
-        .storeRef(chainNameCell)
-        .storeRef(minterCell)
-        .endCell();
-
-    return message;
-}
-
-function buildLinkTokenMessage(salt, chainName, destinationAddress, tokenManagerType, linkParams) {
-    const saltBigInt = BigInt(salt);
-    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
-    const destinationAddressCell = beginCell().storeStringTail(destinationAddress).endCell();
-
-    // Handle linkParams - if given put it as cell, else empty cell
-    const linkParamsCell =
-        linkParams && linkParams !== '0x' && linkParams !== ''
-            ? Cell.fromHex(linkParams.startsWith('0x') ? linkParams.slice(2) : linkParams)
-            : beginCell().endCell();
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.LINK_TOKEN, 32)
-        .storeUint(saltBigInt, 256)
-        .storeRef(chainNameCell)
-        .storeRef(destinationAddressCell)
-        .storeUint(tokenManagerType, 8)
-        .storeRef(linkParamsCell)
-        .endCell();
-
-    return message;
-}
-
-function buildRegisterCanonicalTokenMessage(adminAddress, contentHex) {
-    const admin = Address.parse(adminAddress);
-    const content = Cell.fromHex(contentHex);
-
-    return beginCell().storeUint(ITS_OPS.REGISTER_CANONICAL_INTERCHAIN_TOKEN, 32).storeAddress(admin).storeRef(content).endCell();
-}
-
-function buildRegisterCustomTokenMessage(salt, tokenManagerType, operatorAddress, adminAddress, contentHex) {
-    const saltBigInt = BigInt(salt);
-    const operator = Address.parse(operatorAddress);
-    const admin = Address.parse(adminAddress);
-    const content = Cell.fromHex(contentHex);
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.REGISTER_CUSTOM_TOKEN, 32)
-        .storeUint(saltBigInt, 256)
-        .storeUint(tokenManagerType, 8)
-        .storeAddress(operator)
-        .storeAddress(admin)
-        .storeRef(content)
-        .endCell();
-
-    return message;
-}
-
-function buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, chainName) {
-    const jettonMinter = Address.parse(jettonMinterAddress);
-    const chainNameCell = beginCell().storeStringTail(chainName).endCell();
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.DEPLOY_REMOTE_CANONICAL_INTERCHAIN_TOKEN, 32)
-        .storeAddress(jettonMinter)
-        .storeRef(chainNameCell)
-        .endCell();
-
-    return message;
-}
-
-function buildPauseMessage() {
-    return beginCell().storeUint(ITS_OPS.PAUSE, 32).endCell();
-}
-
-function buildUnpauseMessage() {
-    return beginCell().storeUint(ITS_OPS.UNPAUSE, 32).endCell();
-}
-
 async function sendJettonsTo(receiver, deployer, deployerJettonWallet, jettonMinter, jettonToSend, forwardPayload) {
     const client = getTonClient();
     const { contract, key } = await loadWallet(client);
@@ -225,31 +57,14 @@ async function sendJettonsTo(receiver, deployer, deployerJettonWallet, jettonMin
     return await deployerJettonWallet.sendTransfer(
         client.provider(deployerJettonWallet.address),
         contract.sender(key.secretKey),
-        toNano('0.12'), // transaction fee
+        toNano('0.1'), // transaction fee
         jettonToSend, // amount of jettons to send
         receiver, // the destination address
         receiver, // responseAddress (can be your deployer address)
         beginCell().endCell(), // custom payload
-        toNano('0.08'), // forward_ton_amount
+        toNano('0.065'), // forward_ton_amount
         forwardPayload, // forwardPayload
     );
-}
-
-function buildApproveRemoteDeploymentMessage(salt, deployerAddress, destinationChain, minterToBeApproved) {
-    const saltBigInt = BigInt(salt);
-    const deployer = Address.parse(deployerAddress);
-    const destinationChainCell = beginCell().storeStringRefTail(destinationChain).endCell();
-    const minter = Address.parse(minterToBeApproved);
-
-    const message = beginCell()
-        .storeUint(ITS_OPS.APPROVE_REMOTE_DEPLOYMENT, 32)
-        .storeUint(saltBigInt, 256)
-        .storeAddress(deployer)
-        .storeAddress(minter)
-        .storeRef(destinationChainCell)
-        .endCell();
-
-    return message;
 }
 
 program
@@ -264,14 +79,28 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, name, symbol, decimals, initialSupply, minter, options) => {
         try {
-            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
 
             const decimalsParsed = parseInt(decimals, 10);
             if (isNaN(decimalsParsed) || decimalsParsed < 0 || decimalsParsed > 255) {
                 throw new Error('Decimals must be a number between 0 and 255');
             }
 
-            const initialSupplyBigInt = initialSupply;
+            const initialSupplyBigInt = BigInt(initialSupply);
+
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+
+            // Create the contract instance directly - no need for openContract with real provider
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            // Use the client's provider when calling contract methods
+            const tokenId = await interchainTokenService.getInterchainTokenId(
+                client.provider(itsAddress), // Pass the provider as first parameter
+                salt,
+                contract.address,
+            );
 
             console.log('Deploying Interchain Token with parameters:');
             console.log('  Salt:', saltBigInt);
@@ -280,9 +109,18 @@ program
             console.log('  Decimals:', decimalsParsed);
             console.log('  Initial Supply:', initialSupplyBigInt);
             console.log('  Minter:', minter || 'None');
+            console.log(`  TokenId: ${tokenId}`);
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildDeployInterchainTokenMessage(saltBigInt, name, symbol, decimalsParsed, initialSupplyBigInt, minter);
+            const minterAddress = minter ? Address.parse(minter) : undefined;
+            const messageBody = buildDeployInterchainTokenMessage(
+                saltBigInt,
+                name,
+                symbol,
+                BigInt(decimalsParsed),
+                initialSupplyBigInt,
+                minterAddress,
+            );
 
             const cost = toNano(options.gas);
             await executeITSOperation('Deploy Interchain Token', messageBody, cost);
@@ -352,7 +190,9 @@ program
             console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildRegisterTokenMetadataMessage(adminAddress, cleanContentHex);
+            const adminAddr = Address.parse(adminAddress);
+            const contentCell = hexStringToCell(cleanContentHex);
+            const messageBody = buildRegisterTokenMetadataMessage(adminAddr, contentCell);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Token Metadata', messageBody, cost);
@@ -371,7 +211,7 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.31')
     .action(async (salt, chainName, remoteMinter, options) => {
         try {
-            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
 
             console.log('Deploying Remote Interchain Token with parameters:');
             console.log('  Salt:', saltBigInt);
@@ -429,20 +269,11 @@ program
                 process.exit(1);
             }
 
-            const spendAmount = amount;
+            const spendAmount = BigInt(amount);
             const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
 
-            // Create the interchain token transfer message (same as buildInterchainTokenTransferMessage)
-            const interchainTransferMessage = beginCell()
-                .storeUint(ITS_OPS.INTERCHAIN_TOKEN_TRANSFER, 32)
-                .storeUint(tokenIdBigInt, 256)
-                .storeRef(beginCell().storeStringTail(chainName).endCell())
-                .storeRef(beginCell().storeStringTail(destinationAddress).endCell())
-                .storeUint(spendAmount, 256)
-                .endCell();
-
-            // Create the bundled forward payload (payment + transfer operation)
-            const forwardPayload = beginCell().storeAddress(jettonMinterAddress).storeRef(interchainTransferMessage).endCell();
+            // Create the interchain token transfer forward payload using the builder
+            const forwardPayload = buildInterchainTokenTransferPayload(jettonMinterAddress, tokenIdBigInt, chainName, destinationAddress);
 
             console.log(`Sending ${spendAmount.toString()} Jettons with bundled interchain transfer`);
 
@@ -477,7 +308,7 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
-            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
             const tmType = parseInt(tokenManagerType, 10);
 
             console.log('Linking Token with parameters:');
@@ -488,7 +319,11 @@ program
             console.log('  Link Params:', linkParams);
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildLinkTokenMessage(saltBigInt, chainName, destinationAddress, tmType, linkParams);
+            const linkParamsCell =
+                linkParams === '0x'
+                    ? beginCell().endCell()
+                    : hexStringToCell(linkParams.startsWith('0x') ? linkParams.slice(2) : linkParams);
+            const messageBody = buildLinkTokenMessage(saltBigInt, chainName, destinationAddress, tmType, linkParamsCell);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Link Token', messageBody, cost);
@@ -514,7 +349,9 @@ program
             console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildRegisterCanonicalTokenMessage(adminAddress, cleanContentHex);
+            const adminAddr = Address.parse(adminAddress);
+            const contentCell = hexStringToCell(cleanContentHex);
+            const messageBody = buildRegisterCanonicalTokenMessage(adminAddr, contentCell);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Canonical Token', messageBody, cost);
@@ -538,7 +375,7 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
     .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, options) => {
         try {
-            const saltBigInt = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
             const tmType = parseInt(tokenManagerType, 10);
 
             // Validate token manager type
@@ -557,7 +394,10 @@ program
             console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildRegisterCustomTokenMessage(saltBigInt, tmType, operatorAddress, adminAddress, cleanContentHex);
+            const operatorAddr = Address.parse(operatorAddress);
+            const adminAddr = Address.parse(adminAddress);
+            const contentCell = hexStringToCell(cleanContentHex);
+            const messageBody = buildRegisterCustomTokenMessage(saltBigInt, tmType, operatorAddr, adminAddr, contentCell);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Custom Token', messageBody, cost);
@@ -580,7 +420,8 @@ program
             console.log('  Chain Name:', chainName);
             console.log('  Gas:', options.gas, 'TON');
 
-            const messageBody = buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddress, chainName);
+            const jettonMinterAddr = Address.parse(jettonMinterAddress);
+            const messageBody = buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddr, chainName);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Deploy Remote Canonical Token', messageBody, cost);
@@ -600,22 +441,76 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
     .action(async (salt, deployerAddress, destinationChain, minterToBeApproved, options) => {
         try {
-            const saltFormatted = salt.startsWith('0x') ? salt.slice(2) : salt;
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
 
             console.log('Approving Remote Deployment with parameters:');
-            console.log('  Salt:', saltFormatted);
+            console.log('  Salt:', saltBigInt.toString());
             console.log('  Deployer Address:', deployerAddress);
             console.log('  Destination Chain:', destinationChain);
             console.log('  Minter to Approve:', minterToBeApproved);
             console.log('  Gas:', options.gas, 'TON');
             console.log('⚠️  Note: This transaction must be sent from the minter of the local token');
 
-            const messageBody = buildApproveRemoteDeploymentMessage(salt, deployerAddress, destinationChain, minterToBeApproved);
+            const deployerAddr = Address.parse(deployerAddress);
+            const messageBody = buildApproveRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToBeApproved, destinationChain);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Approve Remote Deployment', messageBody, cost);
         } catch (error) {
             console.error('❌ Error approving remote deployment:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('revoke-remote-deployment')
+    .description('Revoke remote deployment of an interchain token')
+    .argument('<salt>', 'Salt value used for token deployment (256-bit number or hex string)')
+    .argument('<deployer-address>', 'Address of the deployer (TON address format)')
+    .argument('<destination-chain>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
+    .argument('<minter-to-revoke>', 'Address of the minter to be revoked on the destination chain')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .action(async (salt, deployerAddress, destinationChain, minterToRevoke, options) => {
+        try {
+            const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
+
+            console.log('Revoking Remote Deployment with parameters:');
+            console.log('  Salt:', saltBigInt.toString());
+            console.log('  Deployer Address:', deployerAddress);
+            console.log('  Destination Chain:', destinationChain);
+            console.log('  Minter to Revoke:', minterToRevoke);
+            console.log('  Gas:', options.gas, 'TON');
+
+            const deployerAddr = Address.parse(deployerAddress);
+            const messageBody = buildRevokeRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToRevoke, destinationChain);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Revoke Remote Deployment', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error revoking remote deployment:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('change-operator')
+    .description('Change the operator of the Interchain Token Service (current operator only)')
+    .argument('<new-operator>', 'Address of the new operator (TON address format)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (newOperator, options) => {
+        try {
+            console.log('Changing ITS Operator with parameters:');
+            console.log('  New Operator:', newOperator);
+            console.log('  Gas:', options.gas, 'TON');
+            console.log('⚠️  Note: Only the current operator can change the operator');
+
+            const newOperatorAddr = Address.parse(newOperator);
+            const messageBody = buildChangeOperatorMessage(newOperatorAddr);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Change Operator', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error changing operator:', error.message);
             process.exit(1);
         }
     });
