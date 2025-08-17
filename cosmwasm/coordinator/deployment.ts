@@ -59,7 +59,7 @@ export class DeploymentManager {
 
         printInfo(`Submitted governance proposal for ${contractName} with proposalId: ${proposalId}`);
 
-        this.configManager.storeDeploymentInfo(contractName, proposalId, contractCodePath);
+        this.configManager.storeContractInfo(contractName, proposalId, contractCodePath);
         this.configManager.saveConfig();
     }
 

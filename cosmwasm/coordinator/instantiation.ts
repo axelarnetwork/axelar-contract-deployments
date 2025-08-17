@@ -5,9 +5,16 @@ import * as crypto from 'crypto';
 import { printInfo, prompt } from '../../common';
 import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
-import { CONTRACTS_TO_HANDLE, DEFAULTS } from './constants';
+import { CONTRACTS_TO_HANDLE } from './constants';
 import { RetryManager } from './retry';
-import type { CoordinatorOptions, InstantiateChainContractsMsg, WalletAndClient } from './types';
+import type {
+    CoordinatorOptions,
+    GatewayChainConfig,
+    InstantiateChainContractsMsg,
+    MultisigProverChainConfig,
+    VotingVerifierChainConfig,
+    WalletAndClient,
+} from './types';
 
 export class InstantiationManager {
     public configManager: ConfigManager;
@@ -33,25 +40,54 @@ export class InstantiationManager {
 
     private constructExecuteMessage(chainName: string, options: CoordinatorOptions, deploymentName: string): InstantiateChainContractsMsg {
         const chainConfig = this.configManager.getChainConfig(chainName);
+        const votingVerifierConfig = (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
+        const multisigProverConfig = (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
 
-        let salt: string;
+        const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
+            if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
+                throw new Error(`Missing required configuration for chain ${chainName}. Please configure it in ${configPath}.`);
+            }
+            return value;
+        };
 
-        if (options.salt) {
-            salt = options.salt;
-            printInfo(`Using provided salt: ${salt}`);
-        } else {
-            salt = this.generateSalt();
-            printInfo(`Generated salt: ${salt}`);
-        }
+        const validateThreshold = (value: [string, string] | undefined | null, configPath: string): [string, string] => {
+            if (!value || !Array.isArray(value) || value.length !== 2) {
+                throw new Error(
+                    `Missing or invalid threshold configuration for chain ${chainName}. Please configure it in ${configPath} as [numerator, denominator].`,
+                );
+            }
+            return value;
+        };
 
-        const saltBase64 = Buffer.from(salt, 'hex').toString('base64');
-
-        const governanceAddress = options.governanceAddress || null;
-        const serviceName = options.serviceName || DEFAULTS.serviceName;
-        const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
-        const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
-        const sourceGatewayAddress =
-            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
+        const governanceAddress = validateRequired(
+            votingVerifierConfig.governanceAddress,
+            `VotingVerifier[${chainName}].governanceAddress`,
+        );
+        const serviceName = validateRequired(votingVerifierConfig.serviceName, `VotingVerifier[${chainName}].serviceName`);
+        const rewardsAddress = validateRequired(votingVerifierConfig.rewardsAddress, `VotingVerifier[${chainName}].rewardsAddress`);
+        const sourceGatewayAddress = validateRequired(
+            votingVerifierConfig.sourceGatewayAddress,
+            `VotingVerifier[${chainName}].sourceGatewayAddress`,
+        );
+        const votingThreshold = validateThreshold(votingVerifierConfig.votingThreshold, `VotingVerifier[${chainName}].votingThreshold`);
+        const blockExpiry = validateRequired(votingVerifierConfig.blockExpiry, `VotingVerifier[${chainName}].blockExpiry`);
+        const confirmationHeight = validateRequired(
+            votingVerifierConfig.confirmationHeight,
+            `VotingVerifier[${chainName}].confirmationHeight`,
+        );
+        const msgIdFormat = validateRequired(votingVerifierConfig.msgIdFormat, `VotingVerifier[${chainName}].msgIdFormat`);
+        const addressFormat = validateRequired(votingVerifierConfig.addressFormat, `VotingVerifier[${chainName}].addressFormat`);
+        const encoder = validateRequired(multisigProverConfig.encoder, `MultisigProver[${chainName}].encoder`);
+        const keyType = validateRequired(multisigProverConfig.keyType, `MultisigProver[${chainName}].keyType`);
+        const domainSeparator = validateRequired(multisigProverConfig.domainSeparator, `MultisigProver[${chainName}].domainSeparator`);
+        const contractAdminAddress = validateRequired(chainConfig.contracts?.Coordinator?.address, 'Coordinator contract address');
+        const multisigAdminAddress = validateRequired(multisigProverConfig.adminAddress, `MultisigProver[${chainName}].adminAddress`);
+        const multisigAddress = validateRequired(multisigProverConfig.multisigAddress, `MultisigProver[${chainName}].multisigAddress`);
+        const verifierSetDiffThreshold = validateRequired(
+            multisigProverConfig.verifierSetDiffThreshold,
+            `MultisigProver[${chainName}].verifierSetDiffThreshold`,
+        );
+        const signingThreshold = validateThreshold(multisigProverConfig.signingThreshold, `MultisigProver[${chainName}].signingThreshold`);
 
         printInfo(`Governance address: ${governanceAddress}`);
         printInfo(`Service name: ${serviceName}`);
@@ -64,13 +100,17 @@ export class InstantiationManager {
 
         printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
 
-        const msgIdFormat = options.msgIdFormat || DEFAULTS.msgIdFormat;
-        const addressFormat = options.addressFormat || DEFAULTS.addressFormat;
-        const encoder = options.encoder || DEFAULTS.encoder;
-        const keyType = options.keyType || DEFAULTS.keyType;
-        const domainSeparator = (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', '');
-        const contractAdminAddress = options.contractAdmin;
-        const multisigAdminAddress = options.multisigAdmin;
+        let salt: string;
+
+        if (options.salt) {
+            salt = options.salt;
+            printInfo(`Using provided salt: ${salt}`);
+        } else {
+            salt = this.generateSalt();
+            printInfo(`Generated salt: ${salt}`);
+        }
+
+        const saltBase64 = Buffer.from(salt, 'hex').toString('base64');
 
         return {
             instantiate_chain_contracts: {
@@ -91,17 +131,9 @@ export class InstantiationManager {
                                 governance_address: governanceAddress,
                                 service_name: serviceName,
                                 source_gateway_address: sourceGatewayAddress,
-                                voting_threshold: [
-                                    options.votingThreshold?.[0] || DEFAULTS.votingThreshold[0],
-                                    options.votingThreshold?.[1] || DEFAULTS.votingThreshold[1],
-                                ],
-                                block_expiry: (options.blockExpiry || DEFAULTS.blockExpiry).toString(),
-                                confirmation_height:
-                                    typeof options.confirmationHeight === 'number'
-                                        ? options.confirmationHeight
-                                        : options.confirmationHeight
-                                          ? parseInt(options.confirmationHeight.toString())
-                                          : DEFAULTS.confirmationHeight,
+                                voting_threshold: [votingThreshold[0], votingThreshold[1]],
+                                block_expiry: String(blockExpiry),
+                                confirmation_height: confirmationHeight,
                                 source_chain: chainConfig.axelarId,
                                 rewards_address: rewardsAddress,
                                 msg_id_format: msgIdFormat,
@@ -116,18 +148,10 @@ export class InstantiationManager {
                                 governance_address: governanceAddress,
                                 admin_address: multisigAdminAddress,
                                 multisig_address: multisigAddress,
-                                signing_threshold: [
-                                    options.signingThreshold?.[0] || DEFAULTS.signingThreshold[0],
-                                    options.signingThreshold?.[1] || DEFAULTS.signingThreshold[1],
-                                ],
+                                signing_threshold: [signingThreshold[0], signingThreshold[1]],
                                 service_name: serviceName,
                                 chain_name: chainConfig.axelarId,
-                                verifier_set_diff_threshold:
-                                    typeof options.verifierSetDiffThreshold === 'number'
-                                        ? options.verifierSetDiffThreshold
-                                        : options.verifierSetDiffThreshold
-                                          ? parseInt(options.verifierSetDiffThreshold.toString())
-                                          : DEFAULTS.verifierSetDiffThreshold,
+                                verifier_set_diff_threshold: verifierSetDiffThreshold,
                                 encoder: encoder,
                                 key_type: keyType,
                                 domain_separator: domainSeparator,
@@ -138,6 +162,10 @@ export class InstantiationManager {
                 },
             },
         };
+    }
+
+    private generateSalt(): string {
+        return crypto.randomBytes(32).toString('hex');
     }
 
     private async executeMessageViaGovernance(
@@ -183,7 +211,7 @@ export class InstantiationManager {
         );
         printInfo(`Proposal submitted successfully with ID: ${proposalId}`);
 
-        this.storeChainSpecificParams(chainName, options, deploymentName, proposalId);
+        this.storeDeploymentInfo(chainName, deploymentName, proposalId);
         this.configManager.saveConfig();
 
         printInfo(`Chain contracts instantiation for ${chainName} completed successfully!`);
@@ -191,94 +219,41 @@ export class InstantiationManager {
         printInfo(`Proposal ID: ${proposalId}`);
     }
 
-    private storeChainSpecificParams(chainName: string, options: CoordinatorOptions, deploymentName?: string, proposalId?: string): void {
-        printInfo(`Storing chain-specific parameters for ${chainName}...`);
-
-        const chainConfig = this.configManager.getChainConfig(chainName);
-        const governanceAddress = options.governanceAddress || this.configManager.getDefaultGovernanceAddress();
-        const serviceName = options.serviceName || DEFAULTS.serviceName;
-        const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
-
-        const sourceGatewayAddress = options.sourceGatewayAddress || '';
-
-        const votingVerifierParams = {
-            governanceAddress,
-            serviceName,
-            sourceGatewayAddress,
-            votingThreshold: [
-                options.votingThreshold?.[0] || DEFAULTS.votingThreshold[0],
-                options.votingThreshold?.[1] || DEFAULTS.votingThreshold[1],
-            ],
-            blockExpiry: options.blockExpiry || DEFAULTS.blockExpiry,
-            confirmationHeight:
-                typeof options.confirmationHeight === 'number'
-                    ? options.confirmationHeight
-                    : options.confirmationHeight
-                      ? parseInt(options.confirmationHeight.toString())
-                      : DEFAULTS.confirmationHeight,
-            sourceChain: chainConfig.axelarId,
-            rewardsAddress,
-            msgIdFormat: options.msgIdFormat || DEFAULTS.msgIdFormat,
-            addressFormat: options.addressFormat || DEFAULTS.addressFormat,
-            deploymentName,
-            proposalId,
-        };
-
-        const multisigProverParams = {
-            governanceAddress,
-            multisigAddress: this.configManager.getContractAddressFromConfig('Multisig'),
-            signingThreshold: [
-                options.signingThreshold?.[0] || DEFAULTS.signingThreshold[0],
-                options.signingThreshold?.[1] || DEFAULTS.signingThreshold[1],
-            ],
-            serviceName,
-            chainName: chainConfig.axelarId,
-            verifierSetDiffThreshold:
-                typeof options.verifierSetDiffThreshold === 'number'
-                    ? options.verifierSetDiffThreshold
-                    : options.verifierSetDiffThreshold
-                      ? parseInt(options.verifierSetDiffThreshold.toString())
-                      : DEFAULTS.verifierSetDiffThreshold,
-            encoder: options.encoder || DEFAULTS.encoder,
-            keyType: options.keyType || DEFAULTS.keyType,
-            domainSeparator: (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', ''),
-            deploymentName,
-            proposalId,
-        };
-
-        const gatewayParams = {
-            deploymentName,
-            proposalId,
-        };
-
-        const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;
-        if (!axelarContracts) {
-            throw new Error('Axelar contracts section not found in config');
-        }
-
-        if (!axelarContracts.VotingVerifier) {
-            axelarContracts.VotingVerifier = {};
-        }
-        if (!axelarContracts.MultisigProver) {
-            axelarContracts.MultisigProver = {};
-        }
-        if (!axelarContracts.Gateway) {
-            axelarContracts.Gateway = {};
-        }
-
-        (axelarContracts.VotingVerifier as Record<string, unknown>)[chainName] = votingVerifierParams;
-        (axelarContracts.MultisigProver as Record<string, unknown>)[chainName] = multisigProverParams;
-        (axelarContracts.Gateway as Record<string, unknown>)[chainName] = gatewayParams;
-
-        printInfo('Chain-specific parameters stored successfully');
-    }
-
     private generateDeploymentName(chainName: string): string {
         return `deployment-${chainName}-${Date.now()}`;
     }
 
-    private generateSalt(): string {
-        return crypto.randomBytes(32).toString('hex');
+    private storeDeploymentInfo(chainName: string, deploymentName?: string, proposalId?: string): void {
+        // Store deployment info in the appropriate contract configs
+        if (deploymentName) {
+            const gatewayConfig = this.configManager.getContractConfig('Gateway');
+            const verifierConfig = this.configManager.getContractConfig('VotingVerifier');
+            const proverConfig = this.configManager.getContractConfig('MultisigProver');
+
+            if (gatewayConfig[chainName]) {
+                (gatewayConfig[chainName] as GatewayChainConfig).deploymentName = deploymentName;
+            }
+            if (verifierConfig[chainName]) {
+                (verifierConfig[chainName] as VotingVerifierChainConfig).deploymentName = deploymentName;
+            }
+            if (proverConfig[chainName]) {
+                (proverConfig[chainName] as MultisigProverChainConfig).deploymentName = deploymentName;
+            }
+        }
+
+        if (proposalId) {
+            const verifierConfig = this.configManager.getContractConfig('VotingVerifier');
+            const proverConfig = this.configManager.getContractConfig('MultisigProver');
+
+            if (verifierConfig[chainName]) {
+                (verifierConfig[chainName] as VotingVerifierChainConfig).proposalId = proposalId;
+            }
+            if (proverConfig[chainName]) {
+                (proverConfig[chainName] as MultisigProverChainConfig).proposalId = proposalId;
+            }
+        }
+
+        this.configManager.saveConfig();
     }
 
     /**
