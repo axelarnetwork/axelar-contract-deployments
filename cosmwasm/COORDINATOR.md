@@ -13,7 +13,7 @@ The Coordinator script manages the deployment of three main contract types:
 
 1. **Node.js and npm**: Ensure you have Node.js installed
 2. **TypeScript**: The script uses ts-node for execution
-3. **Mnemonic**: A valid mnemonic phrase for signing transactions
+3. **Mnemonic**: A valid environment-dependent deployer's mnemonic phrase for signing transactions
 4. **Contract Artifacts**: Compiled WASM files for the contracts
 
 ## Installation
@@ -35,6 +35,7 @@ Create `.env` file with:
 CHAIN_NAME="some-network"
 ENVIRONMENT="devnet-custom"
 MNEMONIC="your twelve word mnemonic phrase goes here"
+SALT="some salt string"
 ```
 
 Then you can run the commands:
@@ -48,17 +49,17 @@ SRC_GATEWAY_ADDRESS="<external chain gateway address>"
 CONTRACT_ADMIN_ADDRESS="<axelar contracts' admin address>"
 MULTISIG_ADMIN="<multisig admin address>"
 
-# Step 1: Register protocol (if not already done)
+# Step 0: Register protocol (if not already done)
 npx ts-node cosmwasm/coordinator.ts register-protocol \
     --run-as "$GOVERNANCE_ADDRESS"
 
-# Step 2: Deploy contracts
+# Step 1: Deploy contracts
 npx ts-node cosmwasm/coordinator.ts deploy \
     --run-as "$GOVERNANCE_ADDRESS" \
     --artifact-dir "./artifacts/"
 
-# Step 3: Instantiate contracts with custom parameters
-npx ts-node cosmwasm/coordinator.ts instantiate \
+# Step 2: Configure chain
+npx ts-node cosmwasm/coordinator.ts configure \
     --contract-admin "$CONTRACT_ADMIN_ADDRESS" \
     --multisig-admin "$MULTISIG_ADMIN" \
     --service-name "validators" \
@@ -68,6 +69,9 @@ npx ts-node cosmwasm/coordinator.ts instantiate \
     --confirmation-height "1" \
     --source-gateway-address "$SRC_GATEWAY_ADDRESS" \
     --governance-address "$GOVERNANCE_ADDRESS" \
+
+# Step 3: Instantiate contracts
+npx ts-node cosmwasm/coordinator.ts instantiate \
     --run-as "$GOVERNANCE_ADDRESS"
 
 # Step 4: Register deployment
