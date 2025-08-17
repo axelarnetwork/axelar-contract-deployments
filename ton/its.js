@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
-const { toNano, Address, beginCell } = require('@ton/core');
+const { toNano, Address, beginCell, Cell } = require('@ton/core');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost } = require('./common');
-const crypto = require('crypto');
 const { JettonWallet, JettonMinter, hexStringToCell } = require('axelar-cgp-ton');
 const {
     buildDeployInterchainTokenMessage,
@@ -20,7 +19,6 @@ const {
     buildChangeOperatorMessage,
     buildPauseMessage,
     buildUnpauseMessage,
-    OP_INTERCHAIN_TOKEN_TRANSFER,
     InterchainTokenService,
 } = require('axelar-cgp-ton');
 
@@ -89,28 +87,37 @@ program
             const initialSupplyBigInt = BigInt(initialSupply);
 
             const client = getTonClient();
-            const { contract, key } = await loadWallet(client);
+            const { contract, _ } = await loadWallet(client);
 
             // Create the contract instance directly - no need for openContract with real provider
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
             // Use the client's provider when calling contract methods
-            const tokenId = await interchainTokenService.getInterchainTokenId(
-                client.provider(itsAddress), // Pass the provider as first parameter
-                salt,
-                contract.address,
+            const tokenId = await interchainTokenService.getInterchainTokenId(client.provider(itsAddress), salt, contract.address);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const jettonMinterAddress = await interchainTokenService.getJettonMinterAddressForInterchainToken(
+                client.provider(itsAddress),
+                name,
+                symbol,
+                decimals,
             );
 
-            console.log('Deploying Interchain Token with parameters:');
-            console.log('  Salt:', saltBigInt);
-            console.log('  Name:', name);
-            console.log('  Symbol:', symbol);
-            console.log('  Decimals:', decimalsParsed);
-            console.log('  Initial Supply:', initialSupplyBigInt);
-            console.log('  Minter:', minter || 'None');
-            console.log(`  TokenId: ${tokenId}`);
-            console.log('  Gas:', options.gas, 'TON');
+            console.log('User Parameters:');
+            console.log('─'.repeat(40));
+            console.log(`  Salt:           ${saltBigInt}`);
+            console.log(`  Name:           ${name}`);
+            console.log(`  Symbol:         ${symbol}`);
+            console.log(`  Decimals:       ${decimalsParsed}`);
+            console.log(`  Initial Supply: ${initialSupplyBigInt}`);
+            console.log(`  Minter:         ${minter || 'None'}`);
+            console.log(`  Gas:            ${options.gas} TON`);
+            console.log();
+            console.log('Deployment Result:');
+            console.log('─'.repeat(40));
+            console.log(`  Token ID:       ${tokenId}`);
+            console.log(`  Token Manager:  ${tokenManagerAddress.toString()}`);
+            console.log(`  Jetton Minter:  ${jettonMinterAddress.toString()}`);
 
             const minterAddress = minter ? Address.parse(minter) : undefined;
             const messageBody = buildDeployInterchainTokenMessage(
@@ -179,20 +186,46 @@ program
     .description('Register token metadata for a token (TEP-64 standard)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (adminAddress, contentHex, options) => {
         try {
             // Remove 0x prefix if present
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
-            console.log('Registering Token Metadata with parameters:');
-            console.log('  Admin Address:', adminAddress);
-            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
-            console.log('  Gas:', options.gas, 'TON');
-
             const adminAddr = Address.parse(adminAddress);
-            const contentCell = hexStringToCell(cleanContentHex);
+            const contentCell = Cell.fromHex(cleanContentHex);
             const messageBody = buildRegisterTokenMetadataMessage(adminAddr, contentCell);
+
+            const client = getTonClient();
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            const jettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
+                client.provider(itsAddress),
+                adminAddr,
+                contentCell,
+            );
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddress);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+
+            console.log('User Parameters:');
+            console.log('─'.repeat(40));
+            console.log(`  Admin Address:         ${adminAddress}`);
+            console.log(`  Content Hex:           ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Gas:                   ${options.gas} TON`);
+            console.log();
+            console.log('Token Metadata:');
+            console.log('─'.repeat(40));
+            console.log(`  Name:                  ${name}`);
+            console.log(`  Symbol:                ${symbol}`);
+            console.log(`  Decimals:              ${decimals}`);
+            console.log();
+            console.log('Registration Result:');
+            console.log('─'.repeat(40));
+            console.log(`  Token ID:              ${tokenId}`);
+            console.log(`  Token Manager:         ${tokenManagerAddress}`);
+            console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Token Metadata', messageBody, cost);
@@ -208,7 +241,7 @@ program
     .argument('<salt>', 'Salt value for token deployment (256-bit number or hex string)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
     .argument('[remote-minter]', 'Optional minter address on the remote chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.4')
     .action(async (salt, chainName, remoteMinter, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
@@ -305,7 +338,7 @@ program
         '2',
     )
     .argument('[link-params]', 'Link parameters as hex string (optional)', '0x')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
@@ -338,20 +371,46 @@ program
     .description('Register a canonical interchain token (TEP-64 metadata)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (adminAddress, contentHex, options) => {
         try {
             // Remove 0x prefix if present
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
-            console.log('Registering Canonical Token with parameters:');
-            console.log('  Admin Address:', adminAddress);
-            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
-            console.log('  Gas:', options.gas, 'TON');
+            const client = getTonClient();
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
             const adminAddr = Address.parse(adminAddress);
-            const contentCell = hexStringToCell(cleanContentHex);
+            const contentCell = Cell.fromHex(cleanContentHex);
             const messageBody = buildRegisterCanonicalTokenMessage(adminAddr, contentCell);
+
+            const jettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
+                client.provider(itsAddress),
+                adminAddr,
+                contentCell,
+            );
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddress);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+
+            console.log('User Parameters:');
+            console.log('─'.repeat(40));
+            console.log(`  Admin Address:     ${adminAddress}`);
+            console.log(`  Content Hex:       ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Gas:               ${options.gas} TON`);
+            console.log();
+            console.log('Token Metadata:');
+            console.log('─'.repeat(40));
+            console.log(`  Name:              ${name}`);
+            console.log(`  Symbol:            ${symbol}`);
+            console.log(`  Decimals:          ${decimals}`);
+            console.log();
+            console.log('Deployment Result:');
+            console.log('─'.repeat(40));
+            console.log(`  Token ID:          ${tokenId}`);
+            console.log(`  Token Manager:     ${tokenManagerAddress}`);
+            console.log(`  Jetton Minter:     ${jettonMinterAddress}`);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Canonical Token', messageBody, cost);
@@ -372,7 +431,7 @@ program
     .argument('<operator-address>', 'Operator address for the token (TON address format)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
@@ -386,18 +445,44 @@ program
             // Remove 0x prefix if present
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
-            console.log('Registering Custom Token with parameters:');
-            console.log('  Salt:', saltBigInt);
-            console.log('  Token Manager Type:', tmType);
-            console.log('  Operator Address:', operatorAddress);
-            console.log('  Admin Address:', adminAddress);
-            console.log('  Content Hex (first 50 chars):', cleanContentHex.substring(0, 50) + '...');
-            console.log('  Gas:', options.gas, 'TON');
-
             const operatorAddr = Address.parse(operatorAddress);
             const adminAddr = Address.parse(adminAddress);
-            const contentCell = hexStringToCell(cleanContentHex);
+            const contentCell = Cell.fromHex(cleanContentHex);
             const messageBody = buildRegisterCustomTokenMessage(saltBigInt, tmType, operatorAddr, adminAddr, contentCell);
+
+            const client = getTonClient();
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            const jettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
+                client.provider(itsAddress),
+                adminAddr,
+                contentCell,
+            );
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddress);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+
+            console.log('User Parameters:');
+            console.log('─'.repeat(40));
+            console.log(`  Salt:                  ${saltBigInt}`);
+            console.log(`  Token Manager Type:    ${tmType}`);
+            console.log(`  Operator Address:      ${operatorAddress}`);
+            console.log(`  Admin Address:         ${adminAddress}`);
+            console.log(`  Content Hex:           ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Gas:                   ${options.gas} TON`);
+            console.log();
+            console.log('Token Metadata:');
+            console.log('─'.repeat(40));
+            console.log(`  Name:                  ${name}`);
+            console.log(`  Symbol:                ${symbol}`);
+            console.log(`  Decimals:              ${decimals}`);
+            console.log();
+            console.log('Deployment Result:');
+            console.log('─'.repeat(40));
+            console.log(`  Token ID:              ${tokenId}`);
+            console.log(`  Token Manager:         ${tokenManagerAddress}`);
+            console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Custom Token', messageBody, cost);
@@ -412,7 +497,7 @@ program
     .description('Deploy a canonical interchain token on a remote chain')
     .argument('<jetton-minter-address>', 'Jetton minter address for the canonical token (TON address format)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (jettonMinterAddress, chainName, options) => {
         try {
             console.log('Deploying Remote Canonical Token with parameters:');
@@ -438,7 +523,7 @@ program
     .argument('<deployer-address>', 'Address of the deployer (TON address format)')
     .argument('<destination-chain>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
     .argument('<minter-to-approve>', 'Address of the minter to be approved on the destination chain (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, deployerAddress, destinationChain, minterToBeApproved, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
@@ -469,7 +554,7 @@ program
     .argument('<deployer-address>', 'Address of the deployer (TON address format)')
     .argument('<destination-chain>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
     .argument('<minter-to-revoke>', 'Address of the minter to be revoked on the destination chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.31')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (salt, deployerAddress, destinationChain, minterToRevoke, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
