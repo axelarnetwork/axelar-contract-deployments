@@ -2,17 +2,6 @@ import { isValidCosmosAddress } from '../utils';
 import { DEFAULTS } from './constants';
 import type { CoordinatorOptions } from './types';
 
-function isValidHexString(hexString: string): boolean {
-    // Check if the string is not empty and has even length
-    if (!hexString || hexString.length % 2 !== 0) {
-        return false;
-    }
-
-    // Check if all characters are valid hex digits (0-9, a-f, A-F)
-    const hexPattern = /^[0-9a-fA-F]+$/;
-    return hexPattern.test(hexString);
-}
-
 export class OptionProcessor {
     private static parseThreshold(value: string | [string, string] | undefined, defaultThreshold: [string, string]): [string, string] {
         if (!value) return defaultThreshold;
@@ -106,7 +95,6 @@ export class OptionProcessor {
 
         this.validateAddressesForCommand(options);
         this.validateDomainSeparator(options.domainSeparator);
-        this.validateSalt(options.salt);
     }
 
     private static validateAddressesForCommand(options: CoordinatorOptions): void {
@@ -128,16 +116,6 @@ export class OptionProcessor {
 
         if (!/^0x[a-fA-F0-9]{64}$/.test(domainSeparator)) {
             throw new Error('Domain separator must be a valid 32-byte hex string');
-        }
-    }
-
-    private static validateSalt(salt?: string): void {
-        if (!salt) return;
-
-        if (!isValidHexString(salt)) {
-            throw new Error(
-                `Invalid salt format. Salt must be a valid hex string (even number of hex digits: 0-9, a-f, A-F). Provided: "${salt}"`,
-            );
         }
     }
 }

@@ -1,9 +1,8 @@
 import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import * as crypto from 'crypto';
 
 import { printInfo, prompt } from '../../common';
-import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, prepareClient, prepareWallet, submitProposal } from '../utils';
+import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
 import { CONTRACTS_TO_HANDLE } from './constants';
 import { RetryManager } from './retry';
@@ -42,6 +41,7 @@ export class InstantiationManager {
         const chainConfig = this.configManager.getChainConfig(chainName);
         const votingVerifierConfig = (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
         const multisigProverConfig = (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
+        const gatewayConfig = (this.configManager.getContractConfig('Gateway')[chainName] as GatewayChainConfig) || {};
 
         const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
             if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
@@ -88,6 +88,8 @@ export class InstantiationManager {
             `MultisigProver[${chainName}].verifierSetDiffThreshold`,
         );
         const signingThreshold = validateThreshold(multisigProverConfig.signingThreshold, `MultisigProver[${chainName}].signingThreshold`);
+        const salt = validateRequired(gatewayConfig.salt, 'Salt');
+        const saltUint8Array = getSalt(salt, chainName, chainConfig.axelarId);
 
         printInfo(`Governance address: ${governanceAddress}`);
         printInfo(`Service name: ${serviceName}`);
@@ -100,22 +102,10 @@ export class InstantiationManager {
 
         printInfo(`Code IDs - Gateway: ${gatewayCodeId}, Verifier: ${verifierCodeId}, Prover: ${proverCodeId}`);
 
-        let salt: string;
-
-        if (options.salt) {
-            salt = options.salt;
-            printInfo(`Using provided salt: ${salt}`);
-        } else {
-            salt = this.generateSalt();
-            printInfo(`Generated salt: ${salt}`);
-        }
-
-        const saltBase64 = Buffer.from(salt, 'hex').toString('base64');
-
         return {
             instantiate_chain_contracts: {
                 deployment_name: deploymentName,
-                salt: saltBase64,
+                salt: saltUint8Array,
                 params: {
                     manual: {
                         gateway: {
@@ -162,10 +152,6 @@ export class InstantiationManager {
                 },
             },
         };
-    }
-
-    private generateSalt(): string {
-        return crypto.randomBytes(32).toString('hex');
     }
 
     private async executeMessageViaGovernance(

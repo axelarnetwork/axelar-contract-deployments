@@ -76,7 +76,7 @@ export interface ProverParams {
 export interface InstantiateChainContractsMsg {
     instantiate_chain_contracts: {
         deployment_name: string;
-        salt: string;
+        salt: Uint8Array;
         params: {
             manual: {
                 gateway: GatewayParams;
@@ -190,4 +190,5 @@ export interface MultisigProverChainConfig {
 export interface GatewayChainConfig {
     deploymentName?: string;
     proposalId?: string;
+    salt?: string;
 }

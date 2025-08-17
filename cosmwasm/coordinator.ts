@@ -98,6 +98,7 @@ program
     .description('Creates or updates a configuration for a chain')
     .requiredOption('--contract-admin <address>', 'Admin address for MultisigProver, Gateway, and VotingVerifier contracts')
     .requiredOption('--multisig-admin <address>', 'Multisig admin address passed to the MultisigProver contract')
+    .addOption(new Option('--salt <salt>', 'Custom salt for contracts instantiation').env('SALT').makeOptionMandatory(true))
     .addOption(new Option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN_NAME').makeOptionMandatory(true))
     .addOption(
         new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
@@ -105,7 +106,6 @@ program
             .makeOptionMandatory(true),
     )
     .option('-y, --yes', 'Skip confirmation prompts')
-    .option('--salt <salt>', 'Custom salt for deployment (optional, will generate if not provided)')
     .option('--governance-address <address>', 'Governance address')
     .option('--service-name <name>', 'Service name')
     .option('--rewards-address <address>', 'Rewards address')

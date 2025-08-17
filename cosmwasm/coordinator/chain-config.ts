@@ -65,6 +65,10 @@ export class ChainConfigManager {
             domainSeparator: domainSeparator.replace('0x', ''),
         };
 
+        const gatewayParams = {
+            salt: options.salt,
+        };
+
         const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;
         if (!axelarContracts) {
             throw new Error('Axelar contracts section not found in config');
@@ -82,7 +86,7 @@ export class ChainConfigManager {
 
         (axelarContracts.VotingVerifier as Record<string, unknown>)[chainName] = votingVerifierParams;
         (axelarContracts.MultisigProver as Record<string, unknown>)[chainName] = multisigProverParams;
-        (axelarContracts.Gateway as Record<string, unknown>)[chainName] = {};
+        (axelarContracts.Gateway as Record<string, unknown>)[chainName] = gatewayParams;
 
         this.configManager.saveConfig();
 
