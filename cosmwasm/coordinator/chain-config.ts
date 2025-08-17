@@ -19,11 +19,7 @@ export class ChainConfigManager {
             options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
         const domainSeparator =
             options.domainSeparator ||
-            calculateDomainSeparator(
-                chainName,
-                this.configManager.getContractAddressFromChainConfig(chainName, 'Router'),
-                chainConfig.axelarId,
-            );
+            calculateDomainSeparator(chainName, this.configManager.getContractAddressFromConfig('Router'), chainConfig.axelarId);
         const votingVerifierParams = {
             governanceAddress,
             serviceName,
@@ -43,6 +39,7 @@ export class ChainConfigManager {
             rewardsAddress,
             msgIdFormat: options.msgIdFormat || DEFAULTS.msgIdFormat,
             addressFormat: options.addressFormat || DEFAULTS.addressFormat,
+            contractAdmin: options.contractAdmin,
         };
 
         const multisigProverParams = {
@@ -63,10 +60,13 @@ export class ChainConfigManager {
             encoder: options.encoder || DEFAULTS.encoder,
             keyType: options.keyType || DEFAULTS.keyType,
             domainSeparator: domainSeparator.replace('0x', ''),
+            contractAdmin: options.contractAdmin,
+            adminAddress: options.multisigAdmin,
         };
 
         const gatewayParams = {
             salt: options.salt,
+            contractAdmin: options.contractAdmin,
         };
 
         const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;

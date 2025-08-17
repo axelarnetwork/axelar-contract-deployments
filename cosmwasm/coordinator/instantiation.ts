@@ -42,6 +42,10 @@ export class InstantiationManager {
         const votingVerifierConfig = (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
         const multisigProverConfig = (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
         const gatewayConfig = (this.configManager.getContractConfig('Gateway')[chainName] as GatewayChainConfig) || {};
+        const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;
+        if (!axelarContracts) {
+            throw new Error('Axelar contracts section not found in config');
+        }
 
         const validateRequired = <T>(value: T | undefined | null, configPath: string): T => {
             if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
@@ -80,7 +84,15 @@ export class InstantiationManager {
         const encoder = validateRequired(multisigProverConfig.encoder, `MultisigProver[${chainName}].encoder`);
         const keyType = validateRequired(multisigProverConfig.keyType, `MultisigProver[${chainName}].keyType`);
         const domainSeparator = validateRequired(multisigProverConfig.domainSeparator, `MultisigProver[${chainName}].domainSeparator`);
-        const contractAdminAddress = validateRequired(chainConfig.contracts?.Coordinator?.address, 'Coordinator contract address');
+        const verifierContractAdminAddress = validateRequired(
+            votingVerifierConfig.contractAdmin,
+            `VotingVerifier[${chainName}].contractAdmin`,
+        );
+        const multisigContractAdminAddress = validateRequired(
+            multisigProverConfig.contractAdmin,
+            `MultisigProver[${chainName}].contractAdmin`,
+        );
+        const gatewayContractAdminAddress = validateRequired(gatewayConfig.contractAdmin, `Gateway[${chainName}].contractAdmin`);
         const multisigAdminAddress = validateRequired(multisigProverConfig.adminAddress, `MultisigProver[${chainName}].adminAddress`);
         const multisigAddress = validateRequired(multisigProverConfig.multisigAddress, `MultisigProver[${chainName}].multisigAddress`);
         const verifierSetDiffThreshold = validateRequired(
@@ -105,14 +117,14 @@ export class InstantiationManager {
         return {
             instantiate_chain_contracts: {
                 deployment_name: deploymentName,
-                salt: saltUint8Array,
+                salt: Buffer.from(saltUint8Array).toString('base64'),
                 params: {
                     manual: {
                         gateway: {
                             code_id: gatewayCodeId,
                             label: `Gateway-${chainName}`,
                             msg: null,
-                            contract_admin: contractAdminAddress,
+                            contract_admin: gatewayContractAdminAddress,
                         },
                         verifier: {
                             code_id: verifierCodeId,
@@ -129,7 +141,7 @@ export class InstantiationManager {
                                 msg_id_format: msgIdFormat,
                                 address_format: addressFormat,
                             },
-                            contract_admin: contractAdminAddress,
+                            contract_admin: verifierContractAdminAddress,
                         },
                         prover: {
                             code_id: proverCodeId,
@@ -146,7 +158,7 @@ export class InstantiationManager {
                                 key_type: keyType,
                                 domain_separator: domainSeparator,
                             },
-                            contract_admin: contractAdminAddress,
+                            contract_admin: multisigContractAdminAddress,
                         },
                     },
                 },
