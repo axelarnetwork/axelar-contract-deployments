@@ -103,8 +103,6 @@ export interface DeploymentOptions {
 export interface GovernanceOptions {
     governanceAddress?: string;
     deposit?: string;
-    title?: string;
-    description?: string;
     yes?: boolean;
 }
 

@@ -155,9 +155,8 @@ export class InstantiationManager {
         printInfo(`Message: ${messageJson}`);
         printInfo(`Deployment name: ${deploymentName}`);
 
-        const title = options.title || `Instantiate Chain Contracts for ${chainName}`;
-        const description =
-            options.description || `Instantiate Gateway, VotingVerifier, and MultisigProver contracts for chain ${chainName}`;
+        const title = `Instantiate Chain Contracts for ${chainName}`;
+        const description = `Instantiate Gateway, VotingVerifier, and MultisigProver contracts for chain ${chainName}`;
 
         printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(

@@ -22,8 +22,6 @@ program
     .option('--run-as <address>', 'Address to run the contract as')
     .option('--artifact-dir <path>', 'Path to contract artifacts directory')
     .option('--version <version>', 'Contract version for artifact downloading (e.g., v1.0.0 or commit hash)')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -44,8 +42,6 @@ program
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -67,8 +63,6 @@ program
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -111,8 +105,6 @@ program
     .option('--encoder <encoder>', 'Encoder type', 'abi')
     .option('--key-type <type>', 'Key type', 'ecdsa')
     .option('--domain-separator <separator>', 'Domain separator')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);

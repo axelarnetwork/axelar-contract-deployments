@@ -30,8 +30,8 @@ export class DeploymentManager {
 
         printInfo(`Submitting governance proposal for ${contractName}...`);
 
-        const title = options.title || `Store Code for ${contractName}`;
-        const description = options.description || `Store ${contractName} contract code on Axelar`;
+        const title = `Store Code for ${contractName}`;
+        const description = `Store ${contractName} contract code on Axelar`;
 
         const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
         const accounts = await wallet.getAccounts();
