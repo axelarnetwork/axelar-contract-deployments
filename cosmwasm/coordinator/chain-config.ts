@@ -1,5 +1,5 @@
 import { ConfigManager, CoordinatorOptions, DEFAULTS } from '.';
-import { printInfo } from '../../common';
+import { calculateDomainSeparator, printInfo } from '../../common';
 
 export class ChainConfigManager {
     private configManager: ConfigManager;
@@ -17,7 +17,13 @@ export class ChainConfigManager {
         const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
         const sourceGatewayAddress =
             options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
-
+        const domainSeparator =
+            options.domainSeparator ||
+            calculateDomainSeparator(
+                chainName,
+                this.configManager.getContractAddressFromChainConfig(chainName, 'Router'),
+                chainConfig.axelarId,
+            );
         const votingVerifierParams = {
             governanceAddress,
             serviceName,
@@ -56,7 +62,7 @@ export class ChainConfigManager {
                       : DEFAULTS.verifierSetDiffThreshold,
             encoder: options.encoder || DEFAULTS.encoder,
             keyType: options.keyType || DEFAULTS.keyType,
-            domainSeparator: (options.domainSeparator || DEFAULTS.domainSeparator).replace('0x', ''),
+            domainSeparator: domainSeparator.replace('0x', ''),
         };
 
         const axelarContracts = this.configManager.getFullConfig().axelar?.contracts;

@@ -111,13 +111,12 @@ export class OptionProcessor {
             addressFormat: DEFAULTS.addressFormat,
             encoder: DEFAULTS.encoder,
             keyType: DEFAULTS.keyType,
-            domainSeparator: DEFAULTS.domainSeparator,
         };
 
         Object.entries(stringDefaults).forEach(([key, defaultValue]) => {
             const typedKey = key as keyof Pick<
                 CoordinatorOptions,
-                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType' | 'domainSeparator'
+                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType'
             >;
             if (!processedOptions[typedKey]) {
                 processedOptions[typedKey] = defaultValue;
