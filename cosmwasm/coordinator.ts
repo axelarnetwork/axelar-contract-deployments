@@ -9,7 +9,13 @@ import { DeploymentManager } from './coordinator/deployment';
 import { GovernanceManager } from './coordinator/governance';
 import { InstantiationManager } from './coordinator/instantiation';
 import { OptionProcessor } from './coordinator/option-processor';
-import { ConfigureChainOptions, DeployContractsOptions, InstantiateChainOptions, RegisterDeploymentOptions, RegisterProtocolOptions } from './coordinator/types';
+import type {
+    ConfigureChainOptions,
+    DeployContractsOptions,
+    InstantiateChainOptions,
+    RegisterDeploymentOptions,
+    RegisterProtocolOptions,
+} from './coordinator/option-processor';
 
 const program = new Command();
 

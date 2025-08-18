@@ -1,8 +1,50 @@
 import { createHash } from 'crypto';
 
 import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import type { ChainConfig, ContractConfig, FullConfig } from './types';
-import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
+
+export const AMPLIFIER_CONTRACTS_TO_HANDLE = ['VotingVerifier', 'MultisigProver', 'Gateway'];
+
+export interface FullConfig {
+    axelar?: {
+        contracts?: {
+            [key: string]: ContractConfig & {
+                governanceAddress?: string;
+                governanceAccount?: string;
+            };
+        };
+        rpc?: string;
+        gasPrice?: string;
+        gasLimit?: string | number;
+        govProposalInstantiateAddresses?: string[];
+    };
+    chains?: {
+        [chainName: string]: ChainConfig;
+    };
+    [key: string]: unknown;
+}
+
+export interface ChainConfig {
+    name: string;
+    axelarId: string;
+    chainId: number;
+    rpc: string;
+    tokenSymbol: string;
+    decimals: number;
+    confirmations?: number;
+    chainType: string;
+    contracts: {
+        [key: string]: ContractConfig;
+    };
+}
+
+export interface ContractConfig {
+    address?: string;
+    codeId?: number;
+    storeCodeProposalCodeHash?: string;
+    storeCodeProposalId?: string;
+    lastUploadedCodeId?: number;
+    [key: string]: unknown;
+}
 
 export class ConfigManager {
     private environment: string;

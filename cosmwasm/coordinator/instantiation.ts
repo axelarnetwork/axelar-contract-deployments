@@ -3,17 +3,101 @@ import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 
 import { printInfo, prompt } from '../../common';
 import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepareClient, prepareWallet, submitProposal } from '../utils';
-import { ConfigManager } from './config';
+import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
+import type { InstantiateChainOptions } from './option-processor';
 import { RetryManager } from './retry';
-import type {
-    GatewayChainConfig,
-    InstantiateChainContractsMsg,
-    InstantiateChainOptions,
-    MultisigProverChainConfig,
-    VotingVerifierChainConfig,
-    WalletAndClient,
-} from './types';
-import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
+
+export interface GatewayParams {
+    code_id: number;
+    label: string;
+    msg: null;
+    contract_admin: string;
+}
+
+export interface VerifierParams {
+    code_id: number;
+    label: string;
+    msg: {
+        governance_address: string;
+        service_name: string;
+        source_gateway_address: string;
+        voting_threshold: [string, string];
+        block_expiry: string;
+        confirmation_height: number;
+        source_chain: string;
+        rewards_address: string;
+        msg_id_format: string;
+        address_format: string;
+    };
+    contract_admin: string;
+}
+
+export interface ProverParams {
+    code_id: number;
+    label: string;
+    msg: {
+        governance_address: string;
+        admin_address: string;
+        multisig_address: string;
+        signing_threshold: [string, string];
+        service_name: string;
+        chain_name: string;
+        verifier_set_diff_threshold: number;
+        encoder: string;
+        key_type: string;
+        domain_separator: string;
+    };
+    contract_admin: string;
+}
+
+export interface InstantiateChainContractsMsg {
+    instantiate_chain_contracts: {
+        deployment_name: string;
+        salt: string;
+        params: {
+            manual: {
+                gateway: GatewayParams;
+                verifier: VerifierParams;
+                prover: ProverParams;
+            };
+        };
+    };
+}
+
+export interface VotingVerifierChainConfig {
+    governanceAddress?: string;
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    votingThreshold?: [string, string];
+    blockExpiry?: string | number;
+    confirmationHeight?: number;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface MultisigProverChainConfig {
+    encoder?: string;
+    keyType?: string;
+    domainSeparator?: string;
+    adminAddress?: string;
+    multisigAddress?: string;
+    verifierSetDiffThreshold?: number;
+    signingThreshold?: [string, string];
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface GatewayChainConfig {
+    deploymentName?: string;
+    proposalId?: string;
+    salt?: string;
+    contractAdmin?: string;
+}
 
 export class InstantiationManager {
     public configManager: ConfigManager;
@@ -259,7 +343,7 @@ export class InstantiationManager {
         }
     }
 
-    private async prepareWalletAndClient(mnemonic: string): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(mnemonic: string): Promise<{ wallet: DirectSecp256k1HdWallet; client: SigningCosmWasmClient }> {
         const wallet = await prepareWallet({ mnemonic });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };

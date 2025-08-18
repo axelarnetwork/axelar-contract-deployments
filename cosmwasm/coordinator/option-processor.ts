@@ -1,5 +1,56 @@
 import { isValidCosmosAddress } from '../utils';
-import type { CoordinatorOptions } from './types';
+
+export interface ProposalOptions {
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    mnemonic: string;
+    env: string;
+}
+
+export interface DeployContractsOptions extends ProposalOptions {
+    artifactDir?: string;
+    version?: string;
+    deploymentName?: string;
+}
+
+export interface ConfigureChainOptions {
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    governanceAddress?: string;
+    votingThreshold?: [string, string] | string;
+    signingThreshold?: [string, string] | string;
+    blockExpiry?: string;
+    confirmationHeight?: number | string;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    verifierSetDiffThreshold?: number | string;
+    encoder?: string;
+    keyType?: string;
+    domainSeparator?: string;
+    chainName: string;
+    contractAdmin: string;
+    multisigAdmin: string;
+    salt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RegisterProtocolOptions extends ProposalOptions {}
+
+export interface InstantiateChainOptions extends ProposalOptions {
+    chainName: string;
+}
+
+export interface RegisterDeploymentOptions extends ProposalOptions {
+    chainName: string;
+}
+
+export type CoordinatorOptions = DeployContractsOptions &
+    ConfigureChainOptions &
+    RegisterProtocolOptions &
+    InstantiateChainOptions &
+    RegisterDeploymentOptions;
 
 export class OptionProcessor {
     private static parseThreshold(value: string | [string, string] | undefined): [string, string] {

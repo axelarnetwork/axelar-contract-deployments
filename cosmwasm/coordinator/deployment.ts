@@ -1,9 +1,11 @@
+import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
 import { printInfo, prompt } from '../../common';
 import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
-import { ConfigManager } from './config';
+import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
+import type { DeployContractsOptions } from './option-processor';
 import { RetryManager } from './retry';
-import type { DeployContractsOptions, WalletAndClient } from './types';
-import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class DeploymentManager {
     private configManager: ConfigManager;
@@ -64,7 +66,7 @@ export class DeploymentManager {
         }
     }
 
-    private async prepareWalletAndClient(mnemonic: string): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(mnemonic: string): Promise<{ wallet: DirectSecp256k1HdWallet; client: SigningCosmWasmClient }> {
         printInfo('Preparing wallet and client...');
         const wallet = await prepareWallet({ mnemonic });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
