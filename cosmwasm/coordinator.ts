@@ -9,7 +9,7 @@ import { DeploymentManager } from './coordinator/deployment';
 import { GovernanceManager } from './coordinator/governance';
 import { InstantiationManager } from './coordinator/instantiation';
 import { OptionProcessor } from './coordinator/option-processor';
-import { ConfigureChainOptions, DeployContractsOptions, InstantiateChainOptions, RegisterDeploymentOptions } from './coordinator/types';
+import { ConfigureChainOptions, DeployContractsOptions, InstantiateChainOptions, RegisterDeploymentOptions, RegisterProtocolOptions } from './coordinator/types';
 
 const program = new Command();
 
@@ -58,7 +58,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const governanceManager = new GovernanceManager(configManager);
-            await governanceManager.registerProtocol(processedOptions);
+            await governanceManager.registerProtocol(processedOptions as RegisterProtocolOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;

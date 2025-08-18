@@ -89,15 +89,18 @@ export interface RegisterDeploymentMsg {
     };
 }
 
-export interface DeployContractsOptions {
+export interface ProposalOptions {
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    mnemonic: string;
+    env: string;
+}
+
+export interface DeployContractsOptions extends ProposalOptions {
     artifactDir?: string;
     version?: string;
     deploymentName?: string;
-    yes?: boolean;
-    runAs?: string;
-    deposit?: string;
-    mnemonic: string;
-    env: string;
 }
 
 export interface ConfigureChainOptions {
@@ -121,33 +124,15 @@ export interface ConfigureChainOptions {
     salt: string;
 }
 
-export interface RegisterProtocolOptions {
-    governanceAddress?: string;
-    deposit?: string;
-    yes?: boolean;
-    runAs?: string;
-    mnemonic: string;
-    env: string;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RegisterProtocolOptions extends ProposalOptions {}
+
+export interface InstantiateChainOptions extends ProposalOptions {
+    chainName: string;
 }
 
-export interface InstantiateChainOptions {
-    governanceAddress?: string;
-    deposit?: string;
-    yes?: boolean;
-    runAs?: string;
+export interface RegisterDeploymentOptions extends ProposalOptions {
     chainName: string;
-    mnemonic: string;
-    env: string;
-}
-
-export interface RegisterDeploymentOptions {
-    governanceAddress?: string;
-    deposit?: string;
-    yes?: boolean;
-    runAs?: string;
-    chainName: string;
-    mnemonic: string;
-    env: string;
 }
 
 export interface CoordinatorOptions
