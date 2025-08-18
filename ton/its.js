@@ -28,6 +28,19 @@ if (!ITS_ADDRESS) {
     throw new Error('Please set TON_ITS_ADDRESS in your .env file');
 }
 
+const OP_REGISTER_CANONICAL_INTERCHAIN_TOKEN_PERMISSIONED = 0x00000116;
+
+function buildRegisterCanonicalTokenPermissionedMessage(name, symbol, decimals, jettonMinterAddress, jettonWalletCode) {
+    return beginCell()
+        .storeUint(OP_REGISTER_CANONICAL_INTERCHAIN_TOKEN_PERMISSIONED, 32)
+        .storeRef(beginCell().storeStringTail(name).endCell())
+        .storeRef(beginCell().storeStringTail(symbol).endCell())
+        .storeUint(decimals, 8)
+        .storeAddress(jettonMinterAddress)
+        .storeRef(jettonWalletCode)
+        .endCell();
+}
+
 const program = new Command();
 program.name('its').description('Axelar TON Interchain Token Service CLI').version('1.0.0');
 
@@ -392,11 +405,7 @@ program
             const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
             const messageBody = buildRegisterCanonicalTokenMessage(adminAddr, contentCell, jettonMinterCode, jettonWalletCode);
 
-            const canonicalJettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
-                client.provider(itsAddress),
-                adminAddr,
-                contentCell,
-            );
+            const canonicalJettonMinterAddress = Address.parse(jettonMinterAddress);
 
             const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), canonicalJettonMinterAddress);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
@@ -425,6 +434,70 @@ program
             await executeITSOperation('Register Canonical Token', messageBody, cost);
         } catch (error) {
             console.error('❌ Error registering canonical token:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('register-canonical-token-permissioned')
+    .description('Register a canonical interchain token with permissioned access using metadata parameters')
+    .argument('<name>', 'Token name (e.g., "My Token")')
+    .argument('<symbol>', 'Token symbol (e.g., "MTK")')
+    .argument('<decimals>', 'Token decimals (e.g., 9, 18)')
+    .argument('<jetton-minter-address>', 'Existing jetton minter address to extract wallet code from')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
+    .action(async (name, symbol, decimals, jettonMinterAddress, options) => {
+        try {
+            // Validate decimals
+            const decimalNum = parseInt(decimals, 10);
+            if (isNaN(decimalNum) || decimalNum < 0 || decimalNum > 255) {
+                throw new Error('Decimals must be a number between 0 and 255');
+            }
+
+            const client = getTonClient();
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            const jettonMinterAddr = Address.parse(jettonMinterAddress);
+
+            // Use the same pattern as other registration commands - get jetton codes from the minter
+            const { _, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
+
+            const messageBody = buildRegisterCanonicalTokenPermissionedMessage(
+                name,
+                symbol,
+                decimalNum,
+                jettonMinterAddr,
+                jettonWalletCode,
+            );
+
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddr);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+
+            console.log('User Parameters:');
+            console.log('─'.repeat(40));
+            console.log(`  Name:                  ${name}`);
+            console.log(`  Symbol:                ${symbol}`);
+            console.log(`  Decimals:              ${decimalNum}`);
+            console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
+            console.log(`  Gas:                   ${options.gas} TON`);
+            console.log();
+            console.log('Token Metadata:');
+            console.log('─'.repeat(40));
+            console.log(`  Name:                  ${name}`);
+            console.log(`  Symbol:                ${symbol}`);
+            console.log(`  Decimals:              ${decimalNum}`);
+            console.log();
+            console.log('Registration Result:');
+            console.log('─'.repeat(40));
+            console.log(`  Token ID:              ${tokenId}`);
+            console.log(`  Token Manager:         ${tokenManagerAddress}`);
+            console.log(`  Canonical Minter:      ${jettonMinterAddr}`);
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Register Canonical Token (Permissioned)', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error registering canonical token (permissioned):', error.message);
             process.exit(1);
         }
     });
