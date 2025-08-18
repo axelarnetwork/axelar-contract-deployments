@@ -90,6 +90,11 @@ pub(crate) fn process_outbound<'a>(
     let payer = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;
 
+    if !payer.is_signer {
+        msg!("Payer Should be Signer");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     msg!("Instruction: ProcessOutbound");
     let deploy_salt = crate::linked_token_deployer_salt(payer.key, &salt);
     let token_id = crate::interchain_token_id_internal(&deploy_salt);
