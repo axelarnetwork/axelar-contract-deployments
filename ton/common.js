@@ -1,6 +1,7 @@
 const { TonClient, WalletContractV5R1, internal, Cell } = require('@ton/ton');
+const { Address } = require('@ton/core');
 const { mnemonicToWalletKey } = require('@ton/crypto');
-const { getEmptySignature } = require('axelar-cgp-ton');
+const { getEmptySignature, JettonMinter } = require('axelar-cgp-ton');
 require('dotenv').config();
 
 // Constants
@@ -125,6 +126,32 @@ function bocToCell(encodedPayload) {
     return Cell.fromBoc(Buffer.from(encodedPayload, 'hex'))[0];
 }
 
+async function getJettonCodes(jettonMinterAddress) {
+    try {
+        const client = getTonClient();
+        const minterAddress = typeof jettonMinterAddress === 'string' ? Address.parse(jettonMinterAddress) : jettonMinterAddress;
+
+        const jettonMinter = JettonMinter.createFromAddress(minterAddress);
+        const provider = client.provider(minterAddress);
+
+        const jettonData = await jettonMinter.getJettonData(provider);
+        const jettonWalletCode = jettonData.walletCode;
+
+        // Get the jetton minter code from the contract state
+        const contractState = await provider.getState();
+        const jettonMinterCodeBuffer = contractState.state.code;
+        const jettonMinterCodeHex = jettonMinterCodeBuffer.toString('hex');
+        const jettonMinterCode = Cell.fromHex(jettonMinterCodeHex);
+
+        return {
+            jettonMinterCode,
+            jettonWalletCode,
+        };
+    } catch (error) {
+        throw new Error(`Failed to get jetton codes from ${jettonMinterAddress}: ${error.message}`);
+    }
+}
+
 module.exports = {
     sendTransactionWithCost,
     getTonClient,
@@ -132,6 +159,7 @@ module.exports = {
     loadWallet,
     waitForTransaction,
     bocToCell,
+    getJettonCodes,
     TONCENTER_ENDPOINT,
     CHAINSTACK_ENDPOINT,
     GATEWAY_ADDRESS,

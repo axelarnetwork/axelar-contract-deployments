@@ -193,7 +193,7 @@ node ton/its.js link-token <salt> <chain-name> <destination-address> <token-mana
 ```
 
 ```bash
-node ton/its.js register-canonical-token <token-admin-address> <tep-64-content-boc-hex>
+node ton/its.js register-canonical-token <token-admin-address> <tep-64-content-boc-hex> <jetton-minter-address>
 ```
 
 ```bash
