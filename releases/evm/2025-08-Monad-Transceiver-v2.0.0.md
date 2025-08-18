@@ -135,7 +135,7 @@ THRESHOLD_VALUE=2 # Unconfirmed
 |-------------|----------|---------------------|---------------------|----------------------------------------------|
 | **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
 |             | Monad    |                     | `monad`             | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
-| **Mainnet** | Ethereum |                     | `ethereum`          |                                              |
+| **Mainnet** | Ethereum |                     | `Ethereum`          |                                              |
 |             | Monad    |                     | `monad`             |                                              |
 
 2. Set Axelar Chain ID
