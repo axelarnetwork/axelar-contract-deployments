@@ -27,6 +27,7 @@ mod from_solana_to_evm;
 mod handover_mint_authority;
 mod pause_unpause;
 mod role_management;
+mod token_id_validation;
 
 use event_utils::Event;
 use solana_program_test::BanksTransactionResultWithMetadata;

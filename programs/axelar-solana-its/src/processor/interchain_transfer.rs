@@ -239,9 +239,14 @@ pub(crate) fn process_outbound_transfer<'a>(
     assert_valid_token_manager_pda(
         take_token_accounts.token_manager_pda,
         take_token_accounts.its_root_pda.key,
-        &token_manager.token_id,
+        &token_id,
         token_manager.bump,
     )?;
+
+    if token_manager.token_address != *take_token_accounts.token_mint.key {
+        msg!("Mint and token ID don't match");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     let amount_minus_fees = take_token(&take_token_accounts, &token_manager, amount)?;
     amount = amount_minus_fees;
