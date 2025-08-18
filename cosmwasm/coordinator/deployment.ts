@@ -30,8 +30,8 @@ export class DeploymentManager {
 
         printInfo(`Submitting governance proposal for ${contractName}...`);
 
-        const title = options.title || `Store Code for ${contractName}`;
-        const description = options.description || `Store ${contractName} contract code on Axelar`;
+        const title = `Store Code for ${contractName}`;
+        const description = `Store ${contractName} contract code on Axelar`;
 
         const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
         const accounts = await wallet.getAccounts();
@@ -59,7 +59,7 @@ export class DeploymentManager {
 
         printInfo(`Submitted governance proposal for ${contractName} with proposalId: ${proposalId}`);
 
-        this.configManager.storeDeploymentInfo(contractName, proposalId, contractCodePath);
+        this.configManager.storeContractInfo(contractName, proposalId, contractCodePath);
         this.configManager.saveConfig();
     }
 

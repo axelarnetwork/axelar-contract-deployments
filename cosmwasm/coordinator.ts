@@ -1,7 +1,9 @@
 #!/usr/bin/env ts-node
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
+import 'dotenv/config';
 
 import { printError } from '../common';
+import { ChainConfigManager } from './coordinator/chain-config';
 import { ConfigManager } from './coordinator/config';
 import { DeploymentManager } from './coordinator/deployment';
 import { GovernanceManager } from './coordinator/governance';
@@ -15,15 +17,17 @@ program.name('coordinator').description('Submit governance proposal to instantia
 program
     .command('deploy')
     .description('Deploy VotingVerifier, MultisigProver, and Gateway contracts without instantiating them')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
-    .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
+    .addOption(
+        new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
+            .env('ENV')
+            .makeOptionMandatory(true),
+    )
+    .addOption(new Option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing').env('MNEMONIC').makeOptionMandatory(true))
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
     .option('--artifact-dir <path>', 'Path to contract artifacts directory')
     .option('--version <version>', 'Contract version for artifact downloading (e.g., v1.0.0 or commit hash)')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -39,13 +43,15 @@ program
 program
     .command('register-protocol')
     .description('Submit governance proposal to register protocol contracts with Coordinator')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
-    .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
+    .addOption(
+        new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
+            .env('ENV')
+            .makeOptionMandatory(true),
+    )
+    .addOption(new Option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing').env('MNEMONIC').makeOptionMandatory(true))
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -61,14 +67,20 @@ program
 program
     .command('register-deployment')
     .description('Submit governance proposal to register a new deployment with Coordinator')
-    .option('-n, --chain <chain>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
-    .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
+    .addOption(
+        new Option('-n, --chain <chain>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
+            .env('CHAIN_NAME')
+            .makeOptionMandatory(true),
+    )
+    .addOption(
+        new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
+            .env('ENV')
+            .makeOptionMandatory(true),
+    )
+    .addOption(new Option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing').env('MNEMONIC').makeOptionMandatory(true))
     .option('-y, --yes', 'Skip confirmation prompts')
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
@@ -82,17 +94,18 @@ program
     });
 
 program
-    .command('instantiate')
-    .description('Submit governance proposal to instantiate chain contracts using Coordinator')
-    .requiredOption('--contract-admin <address>', 'Admin address')
-    .requiredOption('--multisig-admin <address>', 'Multisig admin address passed to the multisigProver contract')
-    .option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)')
-    .option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
-    .option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing (or set MNEMONIC environment variable)')
+    .command('configure')
+    .description('Creates or updates a configuration for a chain')
+    .requiredOption('--contract-admin <address>', 'Admin address for MultisigProver, Gateway, and VotingVerifier contracts')
+    .requiredOption('--multisig-admin <address>', 'Multisig admin address passed to the MultisigProver contract')
+    .addOption(new Option('--salt <salt>', 'Custom salt for contracts instantiation').env('SALT').makeOptionMandatory(true))
+    .addOption(new Option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN_NAME').makeOptionMandatory(true))
+    .addOption(
+        new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
+            .env('ENV')
+            .makeOptionMandatory(true),
+    )
     .option('-y, --yes', 'Skip confirmation prompts')
-    .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
-    .option('--run-as <address>', 'Address to run the contract as')
-    .option('--salt <salt>', 'Custom salt for deployment (optional, will generate if not provided)')
     .option('--governance-address <address>', 'Governance address')
     .option('--service-name <name>', 'Service name')
     .option('--rewards-address <address>', 'Rewards address')
@@ -111,8 +124,31 @@ program
     .option('--encoder <encoder>', 'Encoder type', 'abi')
     .option('--key-type <type>', 'Key type', 'ecdsa')
     .option('--domain-separator <separator>', 'Domain separator')
-    .option('--title <title>', 'Proposal title')
-    .option('--description <description>', 'Proposal description')
+    .action(async (options) => {
+        try {
+            const processedOptions = OptionProcessor.processOptions(options);
+            const configManager = new ConfigManager(processedOptions.env);
+            const chainConfigManager = new ChainConfigManager(configManager);
+            chainConfigManager.updateChainConfig(processedOptions.chain, processedOptions);
+        } catch (error) {
+            printError('Error in CLI:', (error as Error).message);
+            throw error;
+        }
+    });
+
+program
+    .command('instantiate')
+    .description('Submit governance proposal to instantiate chain contracts using Coordinator')
+    .addOption(new Option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN_NAME').makeOptionMandatory(true))
+    .addOption(
+        new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
+            .env('ENV')
+            .makeOptionMandatory(true),
+    )
+    .addOption(new Option('-m, --mnemonic <mnemonic>', 'Mnemonic for signing').env('MNEMONIC').makeOptionMandatory(true))
+    .option('-y, --yes', 'Skip confirmation prompts')
+    .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
+    .option('--run-as <address>', 'Address to run the contract as')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);

@@ -40,8 +40,8 @@ export class GovernanceManager {
 
         printInfo('Generated register protocol message:', messageJson);
 
-        const title = options.title || 'Register Protocol Contracts';
-        const description = options.description || 'Register ServiceRegistry, Router, and Multisig contracts with Coordinator';
+        const title = 'Register Protocol Contracts';
+        const description = 'Register ServiceRegistry, Router, and Multisig contracts with Coordinator';
 
         printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(
@@ -102,8 +102,8 @@ export class GovernanceManager {
 
         printInfo('Generated register deployment message:', messageJson);
 
-        const title = options.title || `Register Deployment for ${deploymentName}`;
-        const description = options.description || `Register deployment with name ${deploymentName} with Coordinator`;
+        const title = `Register Deployment for ${deploymentName}`;
+        const description = `Register deployment with name ${deploymentName} with Coordinator`;
 
         printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(

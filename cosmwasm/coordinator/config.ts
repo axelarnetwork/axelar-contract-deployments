@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
+import { loadConfig, printError, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
 import { CONTRACTS_TO_HANDLE } from './constants';
 import type { ChainConfig, ConfigFile, ContractConfig, CoordinatorOptions, FullConfig } from './types';
 
@@ -91,7 +91,7 @@ export class ConfigManager {
         return contract.address;
     }
 
-    public getDefaultAddress(addressType: 'runAs' | 'governance'): string {
+    public getDefaultGovernanceAddress(): string {
         const axelarConfig = this.fullConfig.axelar;
         if (!axelarConfig) {
             throw new Error('Axelar configuration not found in config');
@@ -100,7 +100,7 @@ export class ConfigManager {
         const instantiateAddresses = axelarConfig.govProposalInstantiateAddresses;
         if (instantiateAddresses && Array.isArray(instantiateAddresses) && instantiateAddresses.length > 0) {
             const defaultAddress = instantiateAddresses[0];
-            printInfo(`Using default ${addressType} address from config: ${defaultAddress}`);
+            printInfo(`Using default governance address from config: ${defaultAddress}`);
             return defaultAddress;
         }
 
@@ -108,42 +108,28 @@ export class ConfigManager {
         if (contracts) {
             const coordinatorContract = contracts.Coordinator as { governanceAddress?: string };
             if (coordinatorContract?.governanceAddress) {
-                printInfo(
-                    `Using Coordinator governance address as fallback ${addressType} address: ${coordinatorContract.governanceAddress}`,
-                );
+                printInfo(`Using Coordinator governance address as fallback governance address: ${coordinatorContract.governanceAddress}`);
                 return coordinatorContract.governanceAddress;
             }
 
             const serviceRegistryContract = contracts.ServiceRegistry as { governanceAccount?: string };
             if (serviceRegistryContract?.governanceAccount) {
                 printInfo(
-                    `Using ServiceRegistry governance account as fallback ${addressType} address: ${serviceRegistryContract.governanceAccount}`,
+                    `Using ServiceRegistry governance account as fallback governance address: ${serviceRegistryContract.governanceAccount}`,
                 );
                 return serviceRegistryContract.governanceAccount;
             }
         }
 
         throw new Error(
-            `No ${addressType} addresses found in config for environment ${this.environment}. ` +
+            `No governance addresses found in config for environment ${this.environment}. ` +
                 `Please add 'govProposalInstantiateAddresses' array to the axelar section of your config file, ` +
                 `or ensure that contract configurations have governance addresses.`,
         );
     }
 
-    public getDefaultRunAsAddress(): string {
-        return this.getDefaultAddress('runAs');
-    }
-
-    public getDefaultGovernanceAddress(): string {
-        return this.getDefaultAddress('governance');
-    }
-
     public processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
-
-        if (!processedOptions.runAs) {
-            processedOptions.runAs = this.getDefaultRunAsAddress();
-        }
 
         if (!processedOptions.governanceAddress) {
             processedOptions.governanceAddress = this.getDefaultGovernanceAddress();
@@ -154,7 +140,7 @@ export class ConfigManager {
                 processedOptions.rewardsAddress = this.getContractAddressFromConfig('Rewards');
                 printInfo(`Using rewards address from config: ${processedOptions.rewardsAddress}`);
             } catch (error) {
-                printWarn(`Could not get rewards address from config: ${(error as Error).message}`);
+                printError(`Could not get rewards address from config: ${(error as Error).message}`);
             }
         }
 
@@ -172,7 +158,7 @@ export class ConfigManager {
         printInfo(`Updated code ID for ${configContractName} in config: ${codeId}`);
     }
 
-    public storeDeploymentInfo(configContractName: string, proposalId: string, contractCodePath: string): void {
+    public storeContractInfo(configContractName: string, proposalId: string, contractCodePath: string): void {
         if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
             throw new Error(`Contract ${configContractName} not found in config`);
         }

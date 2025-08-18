@@ -9,7 +9,6 @@ export const DEFAULTS = {
     verifierSetDiffThreshold: 1,
     encoder: 'abi',
     keyType: 'ecdsa',
-    domainSeparator: '0x79191ee0824b0f995492dc4ac6e737040f4d9fd4501f6078e56671da70968259',
     proposalDeposit: '1000000000',
     minAddressLength: 39,
     maxAddressLength: 100,

@@ -1,60 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
-import { printInfo } from '../../common/utils';
 import { isValidCosmosAddress } from '../utils';
 import { DEFAULTS } from './constants';
 import type { CoordinatorOptions } from './types';
 
-function isValidHexString(hexString: string): boolean {
-    // Check if the string is not empty and has even length
-    if (!hexString || hexString.length % 2 !== 0) {
-        return false;
-    }
-
-    // Check if all characters are valid hex digits (0-9, a-f, A-F)
-    const hexPattern = /^[0-9a-fA-F]+$/;
-    return hexPattern.test(hexString);
-}
-
 export class OptionProcessor {
-    private static envCache: Map<string, string> | null = null;
-
-    private static loadEnvFile(): Map<string, string> {
-        if (this.envCache) {
-            return this.envCache;
-        }
-
-        this.envCache = new Map();
-        const envPath = path.join(process.cwd(), '.env');
-
-        if (fs.existsSync(envPath)) {
-            try {
-                const envContent = fs.readFileSync(envPath, 'utf8');
-                const envLines = envContent.split('\n');
-
-                for (const line of envLines) {
-                    const trimmedLine = line.trim();
-                    if (trimmedLine && !trimmedLine.startsWith('#')) {
-                        const [key, ...valueParts] = trimmedLine.split('=');
-                        if (key && valueParts.length > 0) {
-                            const value = valueParts.join('=');
-                            this.envCache.set(key, value);
-                        }
-                    }
-                }
-            } catch (error) {
-                printInfo('Failed to load .env file:', error);
-            }
-        }
-
-        return this.envCache;
-    }
-
-    private static getEnvValue(key: string): string | undefined {
-        return this.loadEnvFile().get(key);
-    }
-
     private static parseThreshold(value: string | [string, string] | undefined, defaultThreshold: [string, string]): [string, string] {
         if (!value) return defaultThreshold;
         if (typeof value === 'string') {
@@ -70,30 +18,6 @@ export class OptionProcessor {
 
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
-
-        // Check for mnemonic in environment variable or .env file if not provided via command line
-        if (!processedOptions.mnemonic) {
-            const envMnemonic = process.env.MNEMONIC || this.getEnvValue('MNEMONIC');
-            if (envMnemonic) {
-                processedOptions.mnemonic = envMnemonic;
-            }
-        }
-
-        // Check for environment in environment variable or .env file if not provided via command line
-        if (!processedOptions.env) {
-            const envEnvironment = process.env.ENVIRONMENT || this.getEnvValue('ENVIRONMENT');
-            if (envEnvironment) {
-                processedOptions.env = envEnvironment;
-            }
-        }
-
-        // Check for chain name in environment variable or .env file if not provided via command line
-        if (!processedOptions.chain && !processedOptions.chainName) {
-            const envChainName = process.env.CHAIN_NAME || this.getEnvValue('CHAIN_NAME');
-            if (envChainName) {
-                processedOptions.chain = envChainName;
-            }
-        }
 
         // Process thresholds
         processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold, DEFAULTS.votingThreshold);
@@ -111,13 +35,12 @@ export class OptionProcessor {
             addressFormat: DEFAULTS.addressFormat,
             encoder: DEFAULTS.encoder,
             keyType: DEFAULTS.keyType,
-            domainSeparator: DEFAULTS.domainSeparator,
         };
 
         Object.entries(stringDefaults).forEach(([key, defaultValue]) => {
             const typedKey = key as keyof Pick<
                 CoordinatorOptions,
-                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType' | 'domainSeparator'
+                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType'
             >;
             if (!processedOptions[typedKey]) {
                 processedOptions[typedKey] = defaultValue;
@@ -172,7 +95,6 @@ export class OptionProcessor {
 
         this.validateAddressesForCommand(options);
         this.validateDomainSeparator(options.domainSeparator);
-        this.validateSalt(options.salt);
     }
 
     private static validateAddressesForCommand(options: CoordinatorOptions): void {
@@ -194,16 +116,6 @@ export class OptionProcessor {
 
         if (!/^0x[a-fA-F0-9]{64}$/.test(domainSeparator)) {
             throw new Error('Domain separator must be a valid 32-byte hex string');
-        }
-    }
-
-    private static validateSalt(salt?: string): void {
-        if (!salt) return;
-
-        if (!isValidHexString(salt)) {
-            throw new Error(
-                `Invalid salt format. Salt must be a valid hex string (even number of hex digits: 0-9, a-f, A-F). Provided: "${salt}"`,
-            );
         }
     }
 }

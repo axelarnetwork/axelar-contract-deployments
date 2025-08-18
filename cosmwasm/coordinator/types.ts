@@ -103,8 +103,6 @@ export interface DeploymentOptions {
 export interface GovernanceOptions {
     governanceAddress?: string;
     deposit?: string;
-    title?: string;
-    description?: string;
     yes?: boolean;
 }
 
@@ -161,4 +159,39 @@ export interface ContractInfo {
 export interface WalletAndClient {
     wallet: DirectSecp256k1HdWallet;
     client: SigningCosmWasmClient;
+}
+
+export interface VotingVerifierChainConfig {
+    governanceAddress?: string;
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    votingThreshold?: [string, string];
+    blockExpiry?: string | number;
+    confirmationHeight?: number;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface MultisigProverChainConfig {
+    encoder?: string;
+    keyType?: string;
+    domainSeparator?: string;
+    adminAddress?: string;
+    multisigAddress?: string;
+    verifierSetDiffThreshold?: number;
+    signingThreshold?: [string, string];
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface GatewayChainConfig {
+    deploymentName?: string;
+    proposalId?: string;
+    salt?: string;
+    contractAdmin?: string;
 }

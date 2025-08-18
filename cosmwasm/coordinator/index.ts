@@ -6,3 +6,4 @@ export * from './instantiation';
 export * from './governance';
 export * from './option-processor';
 export * from './retry';
+export * from './chain-config';
