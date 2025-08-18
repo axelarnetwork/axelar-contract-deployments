@@ -27,7 +27,7 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
-const { validateDestinationChain, tokenManagerTypes, validateLinkType, getChainConfigByAxelarId } = require('../common/utils');
+const { getChainConfigByAxelarId, validateDestinationChain, tokenManagerTypes, validateLinkType } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -337,10 +337,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
             }
 
-            if (
-                implementationType !== tokenManagerImplementations.MINT_BURN &&
-                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
-            ) {
+            if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.INTERCHAIN_TOKEN) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
@@ -596,7 +593,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             });
             validateDestinationChain(chains, destinationChain);
 
-            const chainType = getChainConfig(chains, destinationChain, { skipCheck: true })?.chainType;
+            const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
             const tokenManagerType = validateLinkType(chainType, type);
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);

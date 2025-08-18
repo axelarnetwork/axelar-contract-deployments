@@ -379,7 +379,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     });
     validateDestinationChain(config.chains, destinationChain);
 
-    const chainType = getChainConfig(config.chains, destinationChain, { skipCheck: true })?.chainType;
+    const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
     const tokenManagerType = validateLinkType(chainType, type);
 
     printInfo('Salt', salt);
