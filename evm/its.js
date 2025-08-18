@@ -587,10 +587,9 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateParameters({
                 isValidTokenId: { tokenId },
-                isString: { destinationChain },
+                isNonEmptyString: { destinationChain, type },
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue },
-                isNonEmptyString: { type },
             });
             validateDestinationChain(chains, destinationChain);
 
