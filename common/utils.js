@@ -370,8 +370,12 @@ const tokenManagerTypes = {
  * Validates if a token manager type is supported for link token operations on a specific chain.
  * Different chains may have different supported token manager types for linking tokens.
  *
+ * Supported types by chain:
+ * - EVM: All types except INTERCHAIN_TOKEN (MINT_BURN_FROM, LOCK_UNLOCK, LOCK_UNLOCK_FEE, MINT_BURN)
+ * - Stellar: LOCK_UNLOCK, MINT_BURN, MINT_BURN_FROM
+ *
  * @param {string} chainType - The chain type (e.g., 'stellar', 'evm', etc.)
- * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN')
+ * @param {string} type - The token manager type string to validate (e.g., 'LOCK_UNLOCK', 'MINT_BURN', 'MINT_BURN_FROM')
  * @returns {number} The validated token manager type value
  * @throws {Error} If the token manager type is not valid for the specified chain type
  */
@@ -388,8 +392,9 @@ const validateLinkType = (chainType, type) => {
             errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
         },
         stellar: {
-            validate: (type) => [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN].includes(type),
-            errorMsg: 'Only LOCK_UNLOCK and MINT_BURN are supported for Stellar.',
+            validate: (type) =>
+                [tokenManagerTypes.LOCK_UNLOCK, tokenManagerTypes.MINT_BURN, tokenManagerTypes.MINT_BURN_FROM].includes(type),
+            errorMsg: 'Only LOCK_UNLOCK, MINT_BURN, and MINT_BURN_FROM are supported for Stellar.',
         },
     };
 

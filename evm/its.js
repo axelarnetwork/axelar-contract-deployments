@@ -337,7 +337,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
             }
 
-            if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.INTERCHAIN_TOKEN) {
+            if (
+                implementationType !== tokenManagerImplementations.MINT_BURN &&
+                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
+            ) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
