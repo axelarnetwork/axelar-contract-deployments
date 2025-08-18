@@ -177,7 +177,7 @@ node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <toke
 ```
 
 ```bash
-node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex>
+node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex> <jetton-minter>
 ```
 
 ```bash
