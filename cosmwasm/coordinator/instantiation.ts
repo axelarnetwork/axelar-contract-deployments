@@ -37,7 +37,7 @@ export class InstantiationManager {
         await this.executeMessageViaGovernance(chainName, options, client, wallet);
     }
 
-    private constructExecuteMessage(chainName: string, options: CoordinatorOptions, deploymentName: string): InstantiateChainContractsMsg {
+    private constructExecuteMessage(chainName: string, deploymentName: string): InstantiateChainContractsMsg {
         const chainConfig = this.configManager.getChainConfig(chainName);
         const votingVerifierConfig = (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
         const multisigProverConfig = (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
@@ -102,12 +102,6 @@ export class InstantiationManager {
         const signingThreshold = validateThreshold(multisigProverConfig.signingThreshold, `MultisigProver[${chainName}].signingThreshold`);
         const salt = validateRequired(gatewayConfig.salt, 'Salt');
         const saltUint8Array = getSalt(salt, chainName, chainConfig.axelarId);
-
-        printInfo(`Governance address: ${governanceAddress}`);
-        printInfo(`Service name: ${serviceName}`);
-        printInfo(`Rewards address: ${rewardsAddress}`);
-        printInfo(`Source gateway address: ${sourceGatewayAddress}`);
-
         const gatewayCodeId: number = this.configManager.getContractConfig('Gateway').codeId;
         const verifierCodeId: number = this.configManager.getContractConfig('VotingVerifier').codeId;
         const proverCodeId: number = this.configManager.getContractConfig('MultisigProver').codeId;
@@ -172,10 +166,8 @@ export class InstantiationManager {
         client: SigningCosmWasmClient,
         wallet: DirectSecp256k1HdWallet,
     ): Promise<void> {
-        printInfo('Executing message via governance proposal...');
-
         const deploymentName = this.generateDeploymentName(chainName);
-        const message = this.constructExecuteMessage(chainName, options, deploymentName);
+        const message = this.constructExecuteMessage(chainName, deploymentName);
         const messageJson = JSON.stringify(message, null, 2);
 
         printInfo(`Message: ${messageJson}`);
@@ -183,8 +175,6 @@ export class InstantiationManager {
 
         const title = `Instantiate Chain Contracts for ${chainName}`;
         const description = `Instantiate Gateway, VotingVerifier, and MultisigProver contracts for chain ${chainName}`;
-
-        printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(
             this.configManager.getFullConfig(),
             {
@@ -202,12 +192,9 @@ export class InstantiationManager {
             return;
         }
 
-        printInfo('Submitting proposal...');
-
         const proposalId = await RetryManager.withRetry(() =>
             submitProposal(client, wallet, this.configManager.getFullConfig(), options, proposal),
         );
-        printInfo(`Proposal submitted successfully with ID: ${proposalId}`);
 
         this.storeDeploymentInfo(chainName, deploymentName, proposalId);
         this.configManager.saveConfig();
@@ -222,7 +209,6 @@ export class InstantiationManager {
     }
 
     private storeDeploymentInfo(chainName: string, deploymentName?: string, proposalId?: string): void {
-        // Store deployment info in the appropriate contract configs
         if (deploymentName) {
             const gatewayConfig = this.configManager.getContractConfig('Gateway');
             const verifierConfig = this.configManager.getContractConfig('VotingVerifier');
@@ -254,12 +240,7 @@ export class InstantiationManager {
         this.configManager.saveConfig();
     }
 
-    /**
-     * Fetches and updates code IDs from proposals for all contracts that need them
-     */
-    public async fetchAndUpdateCodeIds(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
-        printInfo('Fetching and updating code IDs from proposals...');
-
+    private async fetchAndUpdateCodeIds(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
         for (const contractName of contractsToUpdate) {
             const contractConfig = this.configManager.getContractConfig(contractName);
 

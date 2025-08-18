@@ -27,8 +27,6 @@ export class ChainConfigManager {
     }
 
     public updateChainConfig(chainName: string, options: CoordinatorOptions): void {
-        printInfo(`Storing chain-specific parameters for ${chainName}...`);
-
         const chainConfig = this.configManager.getChainConfig(chainName);
         const governanceAddress = options.governanceAddress || this.configManager.getDefaultGovernanceAddress();
         const serviceName = options.serviceName || DEFAULTS.serviceName;

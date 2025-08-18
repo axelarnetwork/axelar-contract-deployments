@@ -26,12 +26,6 @@ export interface ContractConfig {
     [key: string]: unknown;
 }
 
-export interface ConfigFile {
-    chains: {
-        [chainName: string]: ChainConfig;
-    };
-}
-
 export interface GatewayParams {
     code_id: number;
     label: string;
@@ -131,7 +125,6 @@ export interface CLIOptions {
     mnemonic?: string;
     chainName?: string;
     env?: string;
-    chain?: string;
 }
 
 export interface CoordinatorOptions extends DeploymentOptions, GovernanceOptions, ContractConfigOptions, CLIOptions {}
@@ -149,13 +142,10 @@ export interface FullConfig {
         gasLimit?: string | number;
         govProposalInstantiateAddresses?: string[];
     };
+    chains?: {
+        [chainName: string]: ChainConfig;
+    };
     [key: string]: unknown;
-}
-
-export interface ContractInfo {
-    gateway?: { address: string; codeId: number };
-    verifier?: { address: string; codeId: number };
-    prover?: { address: string; codeId: number };
 }
 
 export interface WalletAndClient {

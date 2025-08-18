@@ -68,8 +68,8 @@ program
     .command('register-deployment')
     .description('Submit governance proposal to register a new deployment with Coordinator')
     .addOption(
-        new Option('-n, --chain <chain>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
-            .env('CHAIN_NAME')
+        new Option('-n, --chainName <chainName>', 'Chain name (e.g., avalanche, ethereum-sepolia, celo)')
+            .env('CHAIN')
             .makeOptionMandatory(true),
     )
     .addOption(
@@ -86,7 +86,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const governanceManager = new GovernanceManager(configManager);
-            await governanceManager.registerDeployment(processedOptions, processedOptions.chain);
+            await governanceManager.registerDeployment(processedOptions, processedOptions.chainName);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -99,7 +99,9 @@ program
     .requiredOption('--contract-admin <address>', 'Admin address for MultisigProver, Gateway, and VotingVerifier contracts')
     .requiredOption('--multisig-admin <address>', 'Multisig admin address passed to the MultisigProver contract')
     .addOption(new Option('--salt <salt>', 'Custom salt for contracts instantiation').env('SALT').makeOptionMandatory(true))
-    .addOption(new Option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN_NAME').makeOptionMandatory(true))
+    .addOption(
+        new Option('-n, --chainName <chainName>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN').makeOptionMandatory(true),
+    )
     .addOption(
         new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
             .env('ENV')
@@ -129,7 +131,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const chainConfigManager = new ChainConfigManager(configManager);
-            chainConfigManager.updateChainConfig(processedOptions.chain, processedOptions);
+            chainConfigManager.updateChainConfig(processedOptions.chainName, processedOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -139,7 +141,9 @@ program
 program
     .command('instantiate')
     .description('Submit governance proposal to instantiate chain contracts using Coordinator')
-    .addOption(new Option('-n, --chain <chain>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN_NAME').makeOptionMandatory(true))
+    .addOption(
+        new Option('-n, --chainName <chainName>', 'Chain name (e.g., ethereum-sepolia, celo)').env('CHAIN').makeOptionMandatory(true),
+    )
     .addOption(
         new Option('-e, --env <environment>', 'Environment (testnet, mainnet, devnet-amplifier, stagenet)')
             .env('ENV')
@@ -154,7 +158,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const instantiationManager = new InstantiationManager(configManager);
-            await instantiationManager.instantiateChainContracts(processedOptions.chain, processedOptions);
+            await instantiationManager.instantiateChainContracts(processedOptions.chainName, processedOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;

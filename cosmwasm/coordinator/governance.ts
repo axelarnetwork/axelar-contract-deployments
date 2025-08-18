@@ -15,7 +15,7 @@ export class GovernanceManager {
         printInfo('Preparing register protocol proposal...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-        const processedOptions = this.configManager.processOptions(options);
+        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
 
         initContractConfig(this.configManager.getFullConfig(), { contractName: 'Coordinator', chainName: undefined });
 
@@ -75,7 +75,7 @@ export class GovernanceManager {
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
         printInfo(`Chain: ${chainName}`);
 
-        const processedOptions = this.configManager.processOptions(options);
+        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
         const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
         const deploymentName = this.configManager.getDeploymentNameFromConfig(chainName);
 
@@ -90,7 +90,7 @@ export class GovernanceManager {
         if (instantiationProposalId) {
             await this.fetchAddressesFromCoordinator(client, deploymentName);
         } else {
-            printInfo('No instantiation proposal ID found in config, skipping event extraction');
+            throw new Error('No instantiation proposal ID found in config, skipping event extraction');
         }
 
         const message: RegisterDeploymentMsg = {
@@ -104,8 +104,6 @@ export class GovernanceManager {
 
         const title = `Register Deployment for ${deploymentName}`;
         const description = `Register deployment with name ${deploymentName} with Coordinator`;
-
-        printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(
             this.configManager.getFullConfig(),
             {
@@ -123,7 +121,6 @@ export class GovernanceManager {
             return;
         }
 
-        printInfo('Submitting register deployment proposal...');
         const proposalId = await RetryManager.withRetry(() =>
             submitProposal(client, wallet, this.configManager.getFullConfig(), processedOptions, proposal),
         );

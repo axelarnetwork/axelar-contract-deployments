@@ -13,11 +13,9 @@ export class DeploymentManager {
     }
 
     public async deployContract(contractName: string, options: CoordinatorOptions): Promise<void> {
-        printInfo(`Deploying ${contractName} contract...`);
-
         initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-        const processedOptions = this.configManager.processOptions(options);
+        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
         const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
         const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
@@ -28,18 +26,12 @@ export class DeploymentManager {
             return;
         }
 
-        printInfo(`Submitting governance proposal for ${contractName}...`);
-
         const title = `Store Code for ${contractName}`;
         const description = `Store ${contractName} contract code on Axelar`;
-
         const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
         const accounts = await wallet.getAccounts();
         const senderAddress = accounts[0].address;
         const instantiateAddresses = [coordinatorAddress, senderAddress];
-
-        printInfo(`Setting instantiate permissions for ${contractName} with addresses: ${instantiateAddresses.join(', ')}`);
-
         const proposalId = await RetryManager.withRetry(() =>
             submitProposal(
                 client,
