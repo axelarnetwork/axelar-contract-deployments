@@ -377,9 +377,10 @@ async function linkToken(wallet, config, chain, contract, args, options) {
         isValidNumber: { gasAmount },
         isNonEmptyString: { destinationChain, destinationTokenAddress, type },
     });
-    validateDestinationChain(config, destinationChain);
+    validateDestinationChain(config.chains, destinationChain);
 
-    const tokenManagerType = validateLinkType(getChainConfigByAxelarId(config, destinationChain).chainType, type);
+    const chainType = getChainConfig(config.chains, destinationChain, { skipCheck: true })?.chainType;
+    const tokenManagerType = validateLinkType(chainType, type);
 
     printInfo('Salt', salt);
     printInfo('Deployment salt (bytes32)', saltBytes32);
@@ -406,30 +407,6 @@ async function linkToken(wallet, config, chain, contract, args, options) {
 
     const returnValue = await broadcast(operation, wallet, chain, 'Token Linked', options);
     printInfo('tokenId', serializeValue(returnValue.value()));
-}
-
-async function createMintAuths(tokenAddress, tokenAddressScVal, tokenManager, recipientScVal, amountScVal, wallet, chain) {
-    const publicKey = wallet.publicKey();
-    const networkPassphrase = getNetworkPassphrase(chain.networkType);
-
-    const validUntil = await getAuthValidUntilLedger(chain);
-
-    const mintAuth = createAuthorizedFunc(Address.fromString(tokenAddress), 'mint', [recipientScVal, amountScVal]);
-    const executeAuth = createAuthorizedFunc(Address.fromString(tokenManager), 'execute', [
-        tokenAddressScVal,
-        nativeToScVal('mint', { type: 'symbol' }),
-        nativeToScVal([recipientScVal, amountScVal]),
-    ]);
-
-    const [mintInvocation, executeInvocation] = [
-        new xdr.SorobanAuthorizedInvocation({ function: mintAuth, subInvocations: [] }),
-        new xdr.SorobanAuthorizedInvocation({ function: executeAuth, subInvocations: [] }),
-    ];
-
-    return Promise.all([
-        authorizeInvocation(wallet, validUntil, mintInvocation, publicKey, networkPassphrase),
-        authorizeInvocation(wallet, validUntil, executeInvocation, publicKey, networkPassphrase),
-    ]);
 }
 
 async function addMinter(wallet, _, chain, contract, args, options) {

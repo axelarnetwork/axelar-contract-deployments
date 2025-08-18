@@ -756,14 +756,14 @@ const getProposalConfig = (config, env, key) => {
 };
 
 /**
- * Validates if a chain name is valid in the config.
+ * Validates if a chain is valid in the config.
  *
- * @param {Object} config - The configuration object
+ * @param {Object} chains - The chains object
  * @param {string} chainName - The chain name to validate
  * @throws {Error} If the chain is not valid
  */
-function validateChainName(config, chainName) {
-    const validChain = Object.values(config.chains).some((chainObject) => chainObject.axelarId === chainName);
+function validateChain(chains, chainName) {
+    const validChain = Object.values(chains).some((chainObject) => chainObject.axelarId === chainName);
 
     if (!validChain) {
         throw new Error(`Invalid destination chain: ${chainName}`);
@@ -773,15 +773,15 @@ function validateChainName(config, chainName) {
 /**
  * Validates if a destination chain is valid (allows empty string).
  *
- * @param {Object} config - The configuration object
+ * @param {Object} chains - The chains object
  * @param {string} destinationChain - The destination chain to validate
  */
-function validateDestinationChain(config, destinationChain) {
+function validateDestinationChain(chains, destinationChain) {
     if (destinationChain === '') {
         return;
     }
 
-    validateChainName(config, destinationChain);
+    validateChain(chains, destinationChain);
 }
 
 module.exports = {
@@ -847,7 +847,7 @@ module.exports = {
     getProposalConfig,
     tokenManagerTypes,
     validateLinkType,
-    validateChainName,
+    validateChain,
     validateDestinationChain,
     itsHubContractAddress,
     asyncLocalLoggerStorage,
