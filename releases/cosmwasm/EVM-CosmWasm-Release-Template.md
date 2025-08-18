@@ -46,7 +46,7 @@ ENV=<devnet-amplifier|stagenet|testnet|mainnet>
 CHAIN=<chain name>
 ```
 
-| Network              | `deployer address`                              |
+| Network              | `DEPLOYER_ADDRESS`                              |
 | -------------------- | ----------------------------------------------- |
 | **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
 | **Stagenet**         | `axelar1pumrull7z8y5kc9q4azfrmcaxd8w0779kg6anm` |
@@ -84,39 +84,40 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
-
-1. Instantiate **Gateway**, **Verifier** and **Prover** contracts using **Coordinator**
-
+1. Configure a new chain. Use `ts-node cosmwasm/coordinator.ts configure --help` to see all the parameters that can be set up. Otherwise default values will be assigned.
 ```bash
-ts-node cosmwasm/coordinator.ts instantiate \
+ts-node cosmwasm/coordinator.ts configure \
     --contract-admin "$CONTRACT_ADMIN" \
     --multisig-admin "$MULTISIG_ADMIN_ADDRESS" \
     --service-name "$SERVICE_NAME" \
     --voting-threshold "$VOTING_THRESHOLD" \
     --signing-threshold "$SIGNING_THRESHOLD" \
     --confirmation-height "$CONFIRMATION_HEIGHT" \
-    --source-gateway-address "$SOURCE_GATEWAY_ADDRESS" \
-    --governance-address "$GOVERNANCE_ADDRESS" \
+    --source-gateway-address "$SOURCE_GATEWAY_ADDRESS"
+```
+
+2. Review changes made by the previous command to the `$ENV.json` config file. Instantiate **Gateway**, **Verifier** and **Prover** contracts using **Coordinator**
+```bash
+ts-node cosmwasm/coordinator.ts instantiate \
     --run-as "$GOVERNANCE_ADDRESS"
 ```
 
-2. Register the new chain in the **Coordinator** contract:
+
+3. Register the new chain in the **Coordinator** contract:
 ```bash
 ts-node cosmwasm/coordinator.ts register-deployment \
     --run-as "$GOVERNANCE_ADDRESS"
 ```
 
-3. Set environment variables
+4. Set environment variables
 
 - These variables are network-specific
 
 ```bash
 VOTING_VERIFIER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
 MULTISIG_PROVER=$(cat ./axelar-chains-config/info/$ENV.json | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
 MULTISIG=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Multisig.address | tr -d '"')
 REWARDS=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Rewards.address | tr -d '"')
-ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router.address | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
@@ -132,7 +133,7 @@ ROUTER=$(cat ./axelar-chains-config/info/$ENV.json | jq .axelar.contracts.Router
 - Add a community post for the mainnet proposal. i.e: https://community.axelar.network/t/proposal-add-its-hub-to-mainnet/3227
 - Note: [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
-4. Create reward pool for voting verifier
+5. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -164,7 +165,7 @@ ts-node cosmwasm/submit-proposal.js execute \
 ```
 
 
-5. Create reward pool for multisig
+6. Create reward pool for multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -186,7 +187,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-6. Register ITS edge contract on ITS Hub
+7. Register ITS edge contract on ITS Hub
 
 Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
 
@@ -214,7 +215,7 @@ ts-node cosmwasm/submit-proposal.js \
 
 - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
-7. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+8. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
@@ -222,7 +223,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-8. Confirm proposals have passed
+9. Confirm proposals have passed
 
 - Check proposals on block explorer (i.e. https://axelarscan.io/proposals)
   - "Instantiate amplifier contracts"
@@ -237,7 +238,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-9. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+10. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
@@ -267,13 +268,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-10. Update `ampd` with the `$CHAIN` chain configuration.
+11. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "$SERVICE_NAME" $CHAIN
 ```
 
-11. Create genesis verifier set
+12. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
