@@ -128,6 +128,7 @@ function compareToConfig(contractConfig, contractName, toCheck) {
 async function processCommand(_axelar, chain, chains, action, options) {
     const { privateKey, address, yes, args } = options;
 
+    const config = loadConfig(options.env);
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenService';
 
