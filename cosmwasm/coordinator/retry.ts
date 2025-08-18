@@ -15,8 +15,9 @@ export class RetryManager {
                     throw error;
                 }
 
+                const errorMessage = error instanceof Error ? error.message : String(error);
                 printWarn(
-                    `Operation failed (attempt ${attempt}/${maxRetries}), retrying... Error: ${error.message}, next attempt in ${retryDelay}ms`,
+                    `Operation failed (attempt ${attempt}/${maxRetries}), retrying... Error: ${errorMessage}, next attempt in ${retryDelay}ms`,
                 );
 
                 await new Promise((resolve) => setTimeout(resolve, retryDelay));
