@@ -11,16 +11,13 @@ export class GovernanceManager {
         this.configManager = configManager;
     }
 
-    public async registerProtocol(options: RegisterProtocolOptions): Promise<void> {
+    public async registerProtocol(processedOptions: RegisterProtocolOptions): Promise<void> {
         printInfo('Preparing register protocol proposal...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
-
         initContractConfig(this.configManager.getFullConfig(), { contractName: 'Coordinator', chainName: undefined });
 
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
-
+        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
         const serviceRegistryAddress = this.configManager.getContractAddressFromConfig('ServiceRegistry');
         const routerAddress = this.configManager.getContractAddressFromConfig('Router');
         const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
@@ -56,7 +53,7 @@ export class GovernanceManager {
             undefined,
         );
 
-        if (prompt('Proceed with register protocol proposal submission?', options.yes)) {
+        if (prompt('Proceed with register protocol proposal submission?', processedOptions.yes)) {
             printInfo('Register protocol proposal submission cancelled');
             return;
         }
@@ -70,23 +67,22 @@ export class GovernanceManager {
         this.configManager.saveConfig();
     }
 
-    public async registerDeployment(options: RegisterDeploymentOptions): Promise<void> {
+    public async registerDeployment(processedOptions: RegisterDeploymentOptions): Promise<void> {
         printInfo('Preparing register deployment proposal...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
-        printInfo(`Chain: ${options.chainName}`);
+        printInfo(`Chain: ${processedOptions.chainName}`);
 
-        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
-        const deploymentName = this.configManager.getDeploymentNameFromConfig(options.chainName);
+        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
+        const deploymentName = this.configManager.getDeploymentNameFromConfig(processedOptions.chainName);
 
         printInfo(`Using deployment name from config: ${deploymentName}`);
 
-        if (prompt('Is the instantiation proposal executed?', options.yes)) {
+        if (prompt('Is the instantiation proposal executed?', processedOptions.yes)) {
             printInfo('Instantiation proposal extraction is not finished yet, please wait for it to be executed');
             return;
         }
 
-        const instantiationProposalId = this.configManager.getInstantiationProposalIdFromConfig(options.chainName);
+        const instantiationProposalId = this.configManager.getInstantiationProposalIdFromConfig(processedOptions.chainName);
         if (instantiationProposalId) {
             await this.fetchAddressesFromCoordinator(client, deploymentName);
         } else {
@@ -116,7 +112,7 @@ export class GovernanceManager {
             undefined,
         );
 
-        if (prompt('Proceed with register deployment proposal submission?', options.yes)) {
+        if (prompt('Proceed with register deployment proposal submission?', processedOptions.yes)) {
             printInfo('Register deployment proposal submission cancelled');
             return;
         }
@@ -129,9 +125,9 @@ export class GovernanceManager {
         this.configManager.saveConfig();
     }
 
-    private async prepareWalletAndClient(options: RegisterProtocolOptions | RegisterDeploymentOptions): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(mnemonic: string): Promise<WalletAndClient> {
         printInfo('Preparing wallet and client...');
-        const wallet = await prepareWallet(options as { mnemonic: string });
+        const wallet = await prepareWallet({ mnemonic });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };
     }

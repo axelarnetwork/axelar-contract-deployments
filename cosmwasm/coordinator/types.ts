@@ -89,23 +89,22 @@ export interface RegisterDeploymentMsg {
     };
 }
 
-export interface DeploymentOptions {
+export interface DeployContractsOptions {
     artifactDir?: string;
     version?: string;
-    salt?: string;
     deploymentName?: string;
-}
-
-export interface GovernanceOptions {
-    governanceAddress?: string;
-    deposit?: string;
     yes?: boolean;
+    runAs?: string;
+    deposit?: string;
+    mnemonic: string;
+    env: string;
 }
 
-export interface ContractConfigOptions {
+export interface ConfigureChainOptions {
     serviceName?: string;
     rewardsAddress?: string;
     sourceGatewayAddress?: string;
+    governanceAddress?: string;
     votingThreshold?: [string, string] | string;
     signingThreshold?: [string, string] | string;
     blockExpiry?: string;
@@ -116,41 +115,47 @@ export interface ContractConfigOptions {
     encoder?: string;
     keyType?: string;
     domainSeparator?: string;
+    chainName: string;
     contractAdmin: string;
     multisigAdmin: string;
+    salt: string;
 }
 
-export interface CLIOptions {
-    runAs?: string;
-    mnemonic?: string;
-    chainName?: string;
-    env?: string;
-}
-
-export interface DeployContractsOptions extends DeploymentOptions, GovernanceOptions, CLIOptions {}
-
-export interface ConfigureChainOptions extends ContractConfigOptions, GovernanceOptions, CLIOptions {
-    salt: string; // Required for configuration
-}
-
-export interface InstantiateChainOptions extends GovernanceOptions, CLIOptions {
-    chainName: string; // Required for instantiation
-}
-
-export interface RegisterProtocolOptions extends GovernanceOptions, CLIOptions {}
-
-export interface RegisterDeploymentOptions extends GovernanceOptions, CLIOptions {
-    chainName: string; // Required for deployment registration
-}
-
-// Interface for options that need governance and rewards addresses
-export interface GovernanceRewardsOptions {
+export interface RegisterProtocolOptions {
     governanceAddress?: string;
-    rewardsAddress?: string;
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    mnemonic: string;
+    env: string;
 }
 
-// Legacy interface - should be gradually replaced with specific types
-export interface CoordinatorOptions extends DeploymentOptions, GovernanceOptions, ContractConfigOptions, CLIOptions {}
+export interface InstantiateChainOptions {
+    governanceAddress?: string;
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    chainName: string;
+    mnemonic: string;
+    env: string;
+}
+
+export interface RegisterDeploymentOptions {
+    governanceAddress?: string;
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    chainName: string;
+    mnemonic: string;
+    env: string;
+}
+
+export interface CoordinatorOptions
+    extends DeployContractsOptions,
+        ConfigureChainOptions,
+        RegisterProtocolOptions,
+        InstantiateChainOptions,
+        RegisterDeploymentOptions {}
 
 export interface FullConfig {
     axelar?: {

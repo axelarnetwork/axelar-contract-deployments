@@ -12,17 +12,15 @@ export class DeploymentManager {
         this.configManager = configManager;
     }
 
-    public async deployContract(contractName: string, options: DeployContractsOptions): Promise<void> {
+    public async deployContract(contractName: string, processedOptions: DeployContractsOptions): Promise<void> {
         initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-        const governanceRewardsOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
-        const processedOptions = { ...options, ...governanceRewardsOptions };
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
+        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
         const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
         printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
 
-        if (prompt(`Proceed with ${contractName} deployment?`, options.yes)) {
+        if (prompt(`Proceed with ${contractName} deployment?`, processedOptions.yes)) {
             printInfo(`${contractName} deployment cancelled`);
             return;
         }
@@ -66,9 +64,9 @@ export class DeploymentManager {
         }
     }
 
-    private async prepareWalletAndClient(options: DeployContractsOptions): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(mnemonic: string): Promise<WalletAndClient> {
         printInfo('Preparing wallet and client...');
-        const wallet = await prepareWallet(options as { mnemonic: string });
+        const wallet = await prepareWallet({ mnemonic });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };
     }

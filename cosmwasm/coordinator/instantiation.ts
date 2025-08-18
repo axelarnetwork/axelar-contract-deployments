@@ -26,7 +26,7 @@ export class InstantiationManager {
         printInfo(`Instantiating chain contracts for ${options.chainName}...`);
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-        const { wallet, client } = await this.prepareWalletAndClient(options);
+        const { wallet, client } = await this.prepareWalletAndClient(options.mnemonic);
 
         if (prompt('Are the deployment proposals executed?', options.yes)) {
             printInfo('Deployment proposals are not finished yet, please wait for them to be executed');
@@ -244,32 +244,23 @@ export class InstantiationManager {
         for (const contractName of contractsToUpdate) {
             const contractConfig = this.configManager.getContractConfig(contractName);
 
-            if (contractConfig.storeCodeProposalId && contractConfig.storeCodeProposalCodeHash) {
-                printInfo(`Found proposal data for ${contractName}, fetching latest code ID from chain...`);
-
+            if (contractConfig.storeCodeProposalCodeHash) {
                 const contractBaseConfig = {
                     storeCodeProposalCodeHash: contractConfig.storeCodeProposalCodeHash,
                 };
 
                 try {
                     const codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-                    printInfo(`Successfully fetched code ID ${codeId} for ${contractName} from chain`);
-
                     this.configManager.updateContractCodeId(contractName, codeId);
-                    printInfo(`Updated ${contractName} code ID in config: ${codeId}`);
                 } catch (error) {
-                    printInfo(`Failed to fetch code ID for ${contractName} from chain: ${(error as Error).message}`);
-                    if (contractConfig.codeId) {
-                        printInfo(`Using existing code ID from config as fallback: ${contractConfig.codeId}`);
-                        this.configManager.updateContractCodeId(contractName, contractConfig.codeId);
-                    }
+                    throw new Error(`Failed to fetch code ID for ${contractName} from chain: ${(error as Error).message}`);
                 }
             }
         }
     }
 
-    private async prepareWalletAndClient(options: InstantiateChainOptions): Promise<WalletAndClient> {
-        const wallet = await prepareWallet(options as { mnemonic: string });
+    private async prepareWalletAndClient(mnemonic: string): Promise<WalletAndClient> {
+        const wallet = await prepareWallet({ mnemonic });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };
     }

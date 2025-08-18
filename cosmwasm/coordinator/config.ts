@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
-import { loadConfig, printError, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import type { ChainConfig, ContractConfig, FullConfig, GovernanceRewardsOptions } from './types';
+import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
+import type { ChainConfig, ContractConfig, FullConfig } from './types';
 import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class ConfigManager {
@@ -87,15 +87,13 @@ export class ConfigManager {
         if (contracts) {
             const coordinatorContract = contracts.Coordinator as { governanceAddress?: string };
             if (coordinatorContract?.governanceAddress) {
-                printInfo(`Using Coordinator governance address as fallback governance address: ${coordinatorContract.governanceAddress}`);
+                printInfo(`Using Coordinator governance address read from config: ${coordinatorContract.governanceAddress}`);
                 return coordinatorContract.governanceAddress;
             }
 
             const serviceRegistryContract = contracts.ServiceRegistry as { governanceAccount?: string };
             if (serviceRegistryContract?.governanceAccount) {
-                printInfo(
-                    `Using ServiceRegistry governance account as fallback governance address: ${serviceRegistryContract.governanceAccount}`,
-                );
+                printInfo(`Using ServiceRegistry governance account read from config: ${serviceRegistryContract.governanceAccount}`);
                 return serviceRegistryContract.governanceAccount;
             }
         }
@@ -105,24 +103,6 @@ export class ConfigManager {
                 `Please add 'govProposalInstantiateAddresses' array to the axelar section of your config file, ` +
                 `or ensure that contract configurations have governance addresses.`,
         );
-    }
-
-    public fetchRewardsAndGovernanceAddresses(options: GovernanceRewardsOptions): GovernanceRewardsOptions {
-        const processedOptions = { ...options };
-
-        if (!processedOptions.governanceAddress) {
-            processedOptions.governanceAddress = this.getDefaultGovernanceAddress();
-        }
-
-        if (!processedOptions.rewardsAddress) {
-            try {
-                processedOptions.rewardsAddress = this.getContractAddressFromConfig('Rewards');
-            } catch (error) {
-                printError(`Could not get rewards address from config: ${(error as Error).message}`);
-            }
-        }
-
-        return processedOptions;
     }
 
     public updateContractCodeId(configContractName: string, codeId: number): void {
