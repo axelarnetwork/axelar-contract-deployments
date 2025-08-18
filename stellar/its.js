@@ -409,24 +409,6 @@ async function linkToken(wallet, config, chain, contract, args, options) {
     printInfo('tokenId', serializeValue(returnValue.value()));
 }
 
-async function addMinter(wallet, _, chain, contract, args, options) {
-    const [tokenAddress, minter] = args;
-
-    validateParameters({
-        isValidStellarAddress: { tokenAddress, minter },
-    });
-
-    const operation = contract.call(
-        'add_minter',
-        nativeToScVal(tokenAddress, { type: 'address' }),
-        nativeToScVal(minter, { type: 'address' }),
-    );
-
-    await broadcast(operation, wallet, chain, 'Add Minter', options);
-    printInfo('Successfully added minter for token', tokenAddress);
-    printInfo('Minter address', minter);
-}
-
 async function transferTokenAdmin(wallet, _config, chain, contract, args, options) {
     const [tokenId, newAdmin] = args;
 
@@ -611,13 +593,6 @@ if (require.main === module) {
         .description('Get the deployed token manager address with the given token id')
         .action((tokenId, options) => {
             mainProcessor(deployedTokenManager, [tokenId], options);
-        });
-
-    program
-        .command('add-minter <tokenAddress> <minter>')
-        .description('Add a minter to a token contract via ITS (only operator)')
-        .action((tokenAddress, minter, options) => {
-            mainProcessor(addMinter, [tokenAddress, minter], options);
         });
 
     program
