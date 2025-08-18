@@ -522,9 +522,26 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
+const getVerifierContractForChain = (chainName) => {
+    const chainVerifierMapping = {
+        'stacks': 'StacksVotingVerifier',
+        'solana': 'SolanaVotingVerifier',
+    };
+    
+    return chainVerifierMapping[chainName] || 'VotingVerifier';
+};
+
+const getGatewayContractForChain = (chainName) => {
+    const chainGatewayMapping = {
+        'solana': 'SolanaGateway',
+    };
+    
+    return chainGatewayMapping[chainName] || 'Gateway';
+};
+
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+    const verifierContract = getVerifierContractForChain(chainName);
 
     const {
         axelar: {
@@ -542,7 +559,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${verifierContract}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -673,7 +690,8 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+    const verifierContract = getVerifierContractForChain(chainName);
+    const gatewayContract = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -686,7 +704,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
-        Gateway: {
+        [gatewayContract]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -1167,6 +1185,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
     },
+    SolanaVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1174,6 +1196,10 @@ const CONTRACTS = {
     XrplGateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
+    },
+    SolanaGateway: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeGatewayInstantiateMsg,
     },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1184,6 +1210,10 @@ const CONTRACTS = {
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
     StacksMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
+    SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
