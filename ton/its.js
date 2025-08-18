@@ -427,7 +427,7 @@ program
 
 program
     .command('register-custom-token')
-    .description('Register a custom interchain token with specific token manager type')
+    .description('Register a custom interchain token with specific token manager type and jetton codes')
     .argument('<salt>', 'Salt value for token registration (256-bit number or hex string)')
     .argument(
         '<token-manager-type>',
@@ -436,8 +436,9 @@ program
     .argument('<operator-address>', 'Operator address for the token (TON address format)')
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
+    .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
-    .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, options) => {
+    .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, jettonMinterAddress, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
             const tmType = parseInt(tokenManagerType, 10);
@@ -450,21 +451,32 @@ program
             // Remove 0x prefix if present
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
-            const operatorAddr = Address.parse(operatorAddress);
-            const adminAddr = Address.parse(adminAddress);
-            const contentCell = Cell.fromHex(cleanContentHex);
-            const messageBody = buildRegisterCustomTokenMessage(saltBigInt, tmType, operatorAddr, adminAddr, contentCell);
-
             const client = getTonClient();
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
-            const jettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
+            const operatorAddr = Address.parse(operatorAddress);
+            const adminAddr = Address.parse(adminAddress);
+            const contentCell = Cell.fromHex(cleanContentHex);
+
+            const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
+            const messageBody = buildRegisterCustomTokenMessage(
+                saltBigInt,
+                tmType,
+                operatorAddr,
+                adminAddr,
+                contentCell,
+                jettonMinterCode,
+                jettonWalletCode,
+            );
+
+            const canonicalJettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
                 client.provider(itsAddress),
                 adminAddr,
                 contentCell,
             );
-            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddress);
+
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), canonicalJettonMinterAddress);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
             const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
 
@@ -475,6 +487,7 @@ program
             console.log(`  Operator Address:      ${operatorAddress}`);
             console.log(`  Admin Address:         ${adminAddress}`);
             console.log(`  Content Hex:           ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
             console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
             console.log('Token Metadata:');
@@ -487,7 +500,7 @@ program
             console.log('─'.repeat(40));
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
-            console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
+            console.log(`  Custom Minter:         ${canonicalJettonMinterAddress}`);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Custom Token', messageBody, cost);

@@ -189,7 +189,7 @@ node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-a
 ```
 
 ```bash
-node ton/its.js link-token <salt> <chain-name> <destination-address> <token-manager-type> <link-params>
+node ton/its.js link-token <salt> <chain-name> <destination-address> <token-manager-type> <link-params> <jetton-minter-address>
 ```
 
 ```bash
@@ -197,7 +197,7 @@ node ton/its.js register-canonical-token <token-admin-address> <tep-64-content-b
 ```
 
 ```bash
-node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <token-admin-address> <tep-64-content-boc-hex>
+node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <token-admin-address> <tep-64-content-boc-hex> <jetton-minter-address>
 ```
 
 ```bash
