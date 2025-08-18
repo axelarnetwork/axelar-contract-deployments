@@ -1,9 +1,9 @@
 import { printInfo, prompt } from '../../common';
 import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
-import { CONTRACTS_TO_HANDLE } from './constants';
 import { RetryManager } from './retry';
 import type { CoordinatorOptions, WalletAndClient } from './types';
+import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class DeploymentManager {
     private configManager: ConfigManager;
@@ -67,7 +67,7 @@ export class DeploymentManager {
         printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-        for (const contractName of CONTRACTS_TO_HANDLE) {
+        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
             printInfo(`\n--- Deploying ${contractName} ---`);
             await this.deployContract(contractName, options);
         }

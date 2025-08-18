@@ -2,8 +2,6 @@ import { printInfo, printWarn } from '../../common';
 
 export class RetryManager {
     public static async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error;
-
         const maxRetries = 3;
         const retryDelay = 1000;
 
@@ -13,20 +11,16 @@ export class RetryManager {
             try {
                 return await operation();
             } catch (error) {
-                lastError = error as Error;
-
                 if (attempt === maxRetries) {
-                    throw lastError;
+                    throw error;
                 }
 
                 printWarn(
-                    `Operation failed (attempt ${attempt}/${maxRetries}), retrying... Error: ${lastError.message}, next attempt in ${retryDelay}ms`,
+                    `Operation failed (attempt ${attempt}/${maxRetries}), retrying... Error: ${error.message}, next attempt in ${retryDelay}ms`,
                 );
 
                 await new Promise((resolve) => setTimeout(resolve, retryDelay));
             }
         }
-
-        throw lastError!;
     }
 }

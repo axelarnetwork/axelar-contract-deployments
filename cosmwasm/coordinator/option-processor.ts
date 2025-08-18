@@ -1,52 +1,33 @@
 import { isValidCosmosAddress } from '../utils';
-import { DEFAULTS } from './constants';
 import type { CoordinatorOptions } from './types';
 
 export class OptionProcessor {
-    private static parseThreshold(value: string | [string, string] | undefined, defaultThreshold: [string, string]): [string, string] {
-        if (!value) return defaultThreshold;
+    private static parseThreshold(value: string | [string, string] | undefined): [string, string] {
         if (typeof value === 'string') {
             const parts = value.split(',').map((s) => s.trim());
-            return parts.length === 2 ? (parts as [string, string]) : defaultThreshold;
+            if (parts.length === 2) {
+                return parts as [string, string];
+            } else {
+                throw new Error('Threshold must be in format "numerator,denominator"');
+            }
         }
-        return value;
+        return value as [string, string];
     }
 
-    private static parseNumber(value: number | string | undefined, defaultValue: number): number {
-        return value ? parseInt(value.toString(), 10) : defaultValue;
+    private static parseNumber(value: number | string | undefined): number {
+        if (value) {
+            return parseInt(value.toString(), 10);
+        } else {
+            throw new Error('Value must be a number');
+        }
     }
 
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
-
-        // Process thresholds
-        processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold, DEFAULTS.votingThreshold);
-        processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold, DEFAULTS.signingThreshold);
-
-        // Process numeric values
-        processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight, DEFAULTS.confirmationHeight);
-        processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold, DEFAULTS.verifierSetDiffThreshold);
-
-        // Set defaults for string values
-        const stringDefaults = {
-            serviceName: DEFAULTS.serviceName,
-            blockExpiry: DEFAULTS.blockExpiry,
-            msgIdFormat: DEFAULTS.msgIdFormat,
-            addressFormat: DEFAULTS.addressFormat,
-            encoder: DEFAULTS.encoder,
-            keyType: DEFAULTS.keyType,
-        };
-
-        Object.entries(stringDefaults).forEach(([key, defaultValue]) => {
-            const typedKey = key as keyof Pick<
-                CoordinatorOptions,
-                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType'
-            >;
-            if (!processedOptions[typedKey]) {
-                processedOptions[typedKey] = defaultValue;
-            }
-        });
-
+        processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold);
+        processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold);
+        processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight);
+        processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold);
         this.validateOptions(processedOptions);
         return processedOptions;
     }

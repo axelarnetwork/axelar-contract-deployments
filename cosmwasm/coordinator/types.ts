@@ -1,6 +1,8 @@
 import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 
+export const AMPLIFIER_CONTRACTS_TO_HANDLE = ['VotingVerifier', 'MultisigProver', 'Gateway'];
+
 export interface ChainConfig {
     name: string;
     axelarId: string;

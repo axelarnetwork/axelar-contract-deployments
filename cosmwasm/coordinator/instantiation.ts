@@ -4,7 +4,6 @@ import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { printInfo, prompt } from '../../common';
 import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
-import { CONTRACTS_TO_HANDLE } from './constants';
 import { RetryManager } from './retry';
 import type {
     CoordinatorOptions,
@@ -14,6 +13,7 @@ import type {
     VotingVerifierChainConfig,
     WalletAndClient,
 } from './types';
+import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class InstantiationManager {
     public configManager: ConfigManager;
@@ -33,7 +33,7 @@ export class InstantiationManager {
             return;
         }
 
-        await this.fetchAndUpdateCodeIds(client, CONTRACTS_TO_HANDLE);
+        await this.fetchAndUpdateCodeIds(client, AMPLIFIER_CONTRACTS_TO_HANDLE);
         await this.executeMessageViaGovernance(chainName, options, client, wallet);
     }
 

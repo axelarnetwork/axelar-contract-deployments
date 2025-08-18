@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { loadConfig, printError, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import { CONTRACTS_TO_HANDLE } from './constants';
 import type { ChainConfig, ConfigFile, ContractConfig, CoordinatorOptions, FullConfig } from './types';
+import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class ConfigManager {
     private config: ConfigFile;
@@ -219,7 +219,7 @@ export class ConfigManager {
 
         const deploymentNames = new Set<string>();
 
-        for (const contractName of CONTRACTS_TO_HANDLE) {
+        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
             const contract = axelarContracts[contractName]?.[chainName] as { deploymentName?: string };
             if (!contract) {
                 throw new Error(`Contract ${contractName} not found in config`);
@@ -246,7 +246,7 @@ export class ConfigManager {
             return undefined;
         }
 
-        for (const contractName of CONTRACTS_TO_HANDLE) {
+        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
             const contract = axelarContracts[contractName]?.[chainName] as { proposalId?: string };
             if (contract?.proposalId) {
                 return contract.proposalId;
