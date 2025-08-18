@@ -282,17 +282,17 @@ ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC 
 
 # Register custom token metadata on Stellar
 # Custom token should exist at this point
-ts-node stellar/its register-token-metadata CB64D3G...USDC --gas-amount 10000000
+ts-node stellar/its register-token-metadata CB64D3G...TEST --gas-amount 10000000
 
 # Verify token metadata is registered on ITS Hub
-ts-node cosmwasm/query custom-tokens stellar CB64D3G...USDC
+ts-node cosmwasm/query custom-tokens stellar CB64D3G...TEST
 ts-node cosmwasm/query custom-tokens evm_chain 0xa0b86a33...USDC
 
 # Register custom token on Stellar (MINT_BURN_FROM)
-ts-node stellar/its register-custom-token 0x1234 CB64D3G...USDC MINT_BURN_FROM
+ts-node stellar/its register-custom-token 0x1234 CB64D3G...TEST MINT_BURN_FROM
 
 # Link token to EVM (LOCK_UNLOCK type for the existing Ethereum USDC)
-ts-node stellar/its link-token 0x1234 evm_chain 0xa0b86a33...USDC LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
+ts-node stellar/its link-token 0x1234 evm_chain 0xa0b86a33...TEST LOCK_UNLOCK --gas-amount 10000000 --operator <operatorAddress>
 # Result: 89a0c5...abcd (token id)
 
 # Get token manager address
