@@ -5,6 +5,7 @@ require('dotenv').config();
 
 // Constants
 const TONCENTER_ENDPOINT = 'https://testnet.toncenter.com/api/v2/jsonRPC';
+const CHAINSTACK_ENDPOINT = process.env.CHAINSTACK_ENDPOINT;
 const GATEWAY_ADDRESS = process.env.TON_GATEWAY_ADDRESS;
 
 if (!GATEWAY_ADDRESS) {
@@ -13,14 +14,36 @@ if (!GATEWAY_ADDRESS) {
 
 // Helper function to initialize TON client
 function getTonClient() {
-    if (!process.env.TONCENTER_API_KEY) {
-        throw new Error('Please set TONCENTER_API_KEY environment variable. Get it from https://t.me/tontestnetapibot');
-    }
+    // Try Chainstack first (no API key required)
+    try {
+        console.log('Using Chainstack endpoint...');
+        return new TonClient({
+            endpoint: CHAINSTACK_ENDPOINT,
+            timeout: 30000,
+        });
+    } catch (chainstackError) {
+        console.log('Chainstack initialization failed, trying TONCenter...', chainstackError.message);
 
-    return new TonClient({
-        endpoint: TONCENTER_ENDPOINT,
-        apiKey: process.env.TONCENTER_API_KEY,
-    });
+        // Fallback to TONCenter
+        if (!process.env.TONCENTER_API_KEY) {
+            throw new Error(
+                'Chainstack failed and no TONCENTER_API_KEY found. Please set TONCENTER_API_KEY environment variable or ensure Chainstack is accessible. Get API key from https://t.me/tontestnetapibot',
+            );
+        }
+
+        try {
+            console.log('Using TONCenter endpoint...');
+            return new TonClient({
+                endpoint: TONCENTER_ENDPOINT,
+                apiKey: process.env.TONCENTER_API_KEY,
+                timeout: 30000,
+            });
+        } catch (toncenterError) {
+            throw new Error(
+                `Both Chainstack and TONCenter failed. Chainstack: ${chainstackError.message}, TONCenter: ${toncenterError.message}`,
+            );
+        }
+    }
 }
 
 // Helper function to load wallet
@@ -110,5 +133,6 @@ module.exports = {
     waitForTransaction,
     bocToCell,
     TONCENTER_ENDPOINT,
+    CHAINSTACK_ENDPOINT,
     GATEWAY_ADDRESS,
 };
