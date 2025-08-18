@@ -2,7 +2,7 @@ import { printInfo, prompt } from '../../common';
 import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
 import { ConfigManager } from './config';
 import { RetryManager } from './retry';
-import type { CoordinatorOptions, WalletAndClient } from './types';
+import type { DeployContractsOptions, WalletAndClient } from './types';
 import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class DeploymentManager {
@@ -12,10 +12,11 @@ export class DeploymentManager {
         this.configManager = configManager;
     }
 
-    public async deployContract(contractName: string, options: CoordinatorOptions): Promise<void> {
+    public async deployContract(contractName: string, options: DeployContractsOptions): Promise<void> {
         initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-        const processedOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
+        const governanceRewardsOptions = this.configManager.fetchRewardsAndGovernanceAddresses(options);
+        const processedOptions = { ...options, ...governanceRewardsOptions };
         const { wallet, client } = await this.prepareWalletAndClient(processedOptions);
         const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
@@ -55,7 +56,7 @@ export class DeploymentManager {
         this.configManager.saveConfig();
     }
 
-    public async deployContracts(options: CoordinatorOptions): Promise<void> {
+    public async deployContracts(options: DeployContractsOptions): Promise<void> {
         printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
@@ -65,7 +66,7 @@ export class DeploymentManager {
         }
     }
 
-    private async prepareWalletAndClient(options: CoordinatorOptions): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(options: DeployContractsOptions): Promise<WalletAndClient> {
         printInfo('Preparing wallet and client...');
         const wallet = await prepareWallet(options as { mnemonic: string });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);

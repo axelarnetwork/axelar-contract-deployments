@@ -9,6 +9,7 @@ import { DeploymentManager } from './coordinator/deployment';
 import { GovernanceManager } from './coordinator/governance';
 import { InstantiationManager } from './coordinator/instantiation';
 import { OptionProcessor } from './coordinator/option-processor';
+import { ConfigureChainOptions, DeployContractsOptions, InstantiateChainOptions, RegisterDeploymentOptions } from './coordinator/types';
 
 const program = new Command();
 
@@ -33,7 +34,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const deploymentManager = new DeploymentManager(configManager);
-            await deploymentManager.deployContracts(processedOptions);
+            await deploymentManager.deployContracts(processedOptions as DeployContractsOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -86,7 +87,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const governanceManager = new GovernanceManager(configManager);
-            await governanceManager.registerDeployment(processedOptions, processedOptions.chainName);
+            await governanceManager.registerDeployment(processedOptions as RegisterDeploymentOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -131,7 +132,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const chainConfigManager = new ChainConfigManager(configManager);
-            chainConfigManager.updateChainConfig(processedOptions.chainName, processedOptions);
+            chainConfigManager.updateChainConfig(processedOptions as ConfigureChainOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;
@@ -158,7 +159,7 @@ program
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
             const instantiationManager = new InstantiationManager(configManager);
-            await instantiationManager.instantiateChainContracts(processedOptions.chainName, processedOptions);
+            await instantiationManager.instantiateChainContracts(processedOptions as InstantiateChainOptions);
         } catch (error) {
             printError('Error in CLI:', (error as Error).message);
             throw error;

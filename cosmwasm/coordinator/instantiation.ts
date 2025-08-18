@@ -6,9 +6,9 @@ import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepar
 import { ConfigManager } from './config';
 import { RetryManager } from './retry';
 import type {
-    CoordinatorOptions,
     GatewayChainConfig,
     InstantiateChainContractsMsg,
+    InstantiateChainOptions,
     MultisigProverChainConfig,
     VotingVerifierChainConfig,
     WalletAndClient,
@@ -22,8 +22,8 @@ export class InstantiationManager {
         this.configManager = configManager;
     }
 
-    public async instantiateChainContracts(chainName: string, options: CoordinatorOptions): Promise<void> {
-        printInfo(`Instantiating chain contracts for ${chainName}...`);
+    public async instantiateChainContracts(options: InstantiateChainOptions): Promise<void> {
+        printInfo(`Instantiating chain contracts for ${options.chainName}...`);
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
         const { wallet, client } = await this.prepareWalletAndClient(options);
@@ -34,7 +34,7 @@ export class InstantiationManager {
         }
 
         await this.fetchAndUpdateCodeIds(client, AMPLIFIER_CONTRACTS_TO_HANDLE);
-        await this.executeMessageViaGovernance(chainName, options, client, wallet);
+        await this.executeMessageViaGovernance(options.chainName, options, client, wallet);
     }
 
     private constructExecuteMessage(chainName: string, deploymentName: string): InstantiateChainContractsMsg {
@@ -162,7 +162,7 @@ export class InstantiationManager {
 
     private async executeMessageViaGovernance(
         chainName: string,
-        options: CoordinatorOptions,
+        options: InstantiateChainOptions,
         client: SigningCosmWasmClient,
         wallet: DirectSecp256k1HdWallet,
     ): Promise<void> {
@@ -268,7 +268,7 @@ export class InstantiationManager {
         }
     }
 
-    private async prepareWalletAndClient(options: CoordinatorOptions): Promise<WalletAndClient> {
+    private async prepareWalletAndClient(options: InstantiateChainOptions): Promise<WalletAndClient> {
         const wallet = await prepareWallet(options as { mnemonic: string });
         const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
         return { wallet, client };

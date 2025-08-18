@@ -127,6 +127,29 @@ export interface CLIOptions {
     env?: string;
 }
 
+export interface DeployContractsOptions extends DeploymentOptions, GovernanceOptions, CLIOptions {}
+
+export interface ConfigureChainOptions extends ContractConfigOptions, GovernanceOptions, CLIOptions {
+    salt: string; // Required for configuration
+}
+
+export interface InstantiateChainOptions extends GovernanceOptions, CLIOptions {
+    chainName: string; // Required for instantiation
+}
+
+export interface RegisterProtocolOptions extends GovernanceOptions, CLIOptions {}
+
+export interface RegisterDeploymentOptions extends GovernanceOptions, CLIOptions {
+    chainName: string; // Required for deployment registration
+}
+
+// Interface for options that need governance and rewards addresses
+export interface GovernanceRewardsOptions {
+    governanceAddress?: string;
+    rewardsAddress?: string;
+}
+
+// Legacy interface - should be gradually replaced with specific types
 export interface CoordinatorOptions extends DeploymentOptions, GovernanceOptions, ContractConfigOptions, CLIOptions {}
 
 export interface FullConfig {

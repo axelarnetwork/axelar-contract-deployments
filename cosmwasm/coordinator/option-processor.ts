@@ -24,10 +24,21 @@ export class OptionProcessor {
 
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
-        processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold);
-        processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold);
-        processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight);
-        processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold);
+
+        // Only process fields that exist in the options
+        if ('votingThreshold' in processedOptions) {
+            processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold);
+        }
+        if ('signingThreshold' in processedOptions) {
+            processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold);
+        }
+        if ('confirmationHeight' in processedOptions) {
+            processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight);
+        }
+        if ('verifierSetDiffThreshold' in processedOptions) {
+            processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold);
+        }
+
         this.validateOptions(processedOptions);
         return processedOptions;
     }

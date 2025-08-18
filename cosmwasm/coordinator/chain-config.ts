@@ -1,4 +1,4 @@
-import { ConfigManager, CoordinatorOptions } from '.';
+import { ConfigManager, ConfigureChainOptions } from '.';
 import { calculateDomainSeparator, printInfo } from '../../common';
 
 export const DEFAULTS = {
@@ -26,16 +26,16 @@ export class ChainConfigManager {
         this.configManager = configManager;
     }
 
-    public updateChainConfig(chainName: string, options: CoordinatorOptions): void {
-        const chainConfig = this.configManager.getChainConfig(chainName);
+    public updateChainConfig(options: ConfigureChainOptions): void {
+        const chainConfig = this.configManager.getChainConfig(options.chainName);
         const governanceAddress = options.governanceAddress || this.configManager.getDefaultGovernanceAddress();
         const serviceName = options.serviceName || DEFAULTS.serviceName;
         const rewardsAddress = options.rewardsAddress || this.configManager.getContractAddressFromConfig('Rewards');
         const sourceGatewayAddress =
-            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(chainName, 'AxelarGateway');
+            options.sourceGatewayAddress || this.configManager.getContractAddressFromChainConfig(options.chainName, 'AxelarGateway');
         const domainSeparator =
             options.domainSeparator ||
-            calculateDomainSeparator(chainName, this.configManager.getContractAddressFromConfig('Router'), chainConfig.axelarId);
+            calculateDomainSeparator(options.chainName, this.configManager.getContractAddressFromConfig('Router'), chainConfig.axelarId);
         const votingVerifierParams = {
             governanceAddress,
             serviceName,
@@ -100,9 +100,9 @@ export class ChainConfigManager {
             axelarContracts.Gateway = {};
         }
 
-        (axelarContracts.VotingVerifier as Record<string, unknown>)[chainName] = votingVerifierParams;
-        (axelarContracts.MultisigProver as Record<string, unknown>)[chainName] = multisigProverParams;
-        (axelarContracts.Gateway as Record<string, unknown>)[chainName] = gatewayParams;
+        (axelarContracts.VotingVerifier as Record<string, unknown>)[options.chainName] = votingVerifierParams;
+        (axelarContracts.MultisigProver as Record<string, unknown>)[options.chainName] = multisigProverParams;
+        (axelarContracts.Gateway as Record<string, unknown>)[options.chainName] = gatewayParams;
 
         this.configManager.saveConfig();
 

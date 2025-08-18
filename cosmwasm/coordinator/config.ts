@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
 import { loadConfig, printError, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import type { ChainConfig, ContractConfig, CoordinatorOptions, FullConfig } from './types';
+import type { ChainConfig, ContractConfig, FullConfig, GovernanceRewardsOptions } from './types';
 import { AMPLIFIER_CONTRACTS_TO_HANDLE } from './types';
 
 export class ConfigManager {
@@ -107,7 +107,7 @@ export class ConfigManager {
         );
     }
 
-    public fetchRewardsAndGovernanceAddresses(options: CoordinatorOptions): CoordinatorOptions {
+    public fetchRewardsAndGovernanceAddresses(options: GovernanceRewardsOptions): GovernanceRewardsOptions {
         const processedOptions = { ...options };
 
         if (!processedOptions.governanceAddress) {
