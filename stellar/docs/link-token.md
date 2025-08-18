@@ -217,7 +217,7 @@ ts-node evm/its --action tokenManagerAddress --tokenId <tokenId> -n <destination
 ts-node evm/its --action transferMintership --tokenAddress <tokenAddress> --minter <tokenManagerAddress> -n <destinationChain>
 ```
 
-### Step 7: Transfer Token Admin (Optional - MINT_BURN Type Only)
+### Optional: Transfer Token Admin (MINT_BURN Type Only)
 
 **Note: This step is optional and only applicable when using the MINT_BURN token manager type. For MINT_BURN_FROM and LOCK_UNLOCK types, skip this step.**
 
