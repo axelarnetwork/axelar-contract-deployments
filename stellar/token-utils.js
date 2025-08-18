@@ -275,5 +275,7 @@ if (require.main === module) {
             mainProcessor(mintFrom, [tokenAddress, recipient, amount], options);
         });
 
+    addOptionsToCommands(program, addBaseOptions);
+
     program.parse();
 }

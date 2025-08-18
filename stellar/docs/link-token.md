@@ -168,10 +168,10 @@ Before linking tokens, verify that token metadata is registered on ITS Hub for b
 
 ```bash
 # Verify source token metadata (Stellar)
-ts-node cosmwasm/query custom-tokens <sourceChain> <tokenAddress>
+ts-node cosmwasm/query token-config <sourceChain> <tokenAddress>
 
 # Verify destination token metadata (EVM)
-ts-node cosmwasm/query custom-tokens <destinationChain> <destinationTokenAddress>
+ts-node cosmwasm/query token-config <destinationChain> <destinationTokenAddress>
 ```
 
 If either query fails or returns null, ensure you complete Step 2 (Register Token Metadata) before proceeding.
@@ -251,8 +251,8 @@ ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AV
 ts-node stellar/its register-token-metadata CB64D3G...USDC --gas-amount 10000000
 
 # Verify token metadata is registered on ITS Hub
-ts-node cosmwasm/query custom-tokens stellar CB64D3G...USDC
-ts-node cosmwasm/query custom-tokens evm_chain 0xa0b86a33...USDC
+ts-node cosmwasm/query token-config stellar CB64D3G...USDC
+ts-node cosmwasm/query token-config evm_chain 0xa0b86a33...USDC
 
 # Register custom token on Stellar (MINT_BURN)
 ts-node stellar/its register-custom-token 0x1234 CB64D3G...USDC MINT_BURN
@@ -285,8 +285,8 @@ ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC 
 ts-node stellar/its register-token-metadata CB64D3G...TEST --gas-amount 10000000
 
 # Verify token metadata is registered on ITS Hub
-ts-node cosmwasm/query custom-tokens stellar CB64D3G...TEST
-ts-node cosmwasm/query custom-tokens evm_chain 0xa0b86a33...USDC
+ts-node cosmwasm/query token-config stellar CB64D3G...TEST
+ts-node cosmwasm/query token-config evm_chain 0xa0b86a33...USDC
 
 # Register custom token on Stellar (MINT_BURN_FROM)
 ts-node stellar/its register-custom-token 0x1234 CB64D3G...TEST MINT_BURN_FROM

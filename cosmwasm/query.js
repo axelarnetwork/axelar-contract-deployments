@@ -31,8 +31,8 @@ async function rewards(client, config, _args, options) {
     }
 }
 
-async function customTokens(client, config, args, _options) {
-    const [chainName, tokenAddress] = args;
+async function tokenConfig(client, config, args, _options) {
+    const [chainName, tokenId] = args;
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     if (!itsHubAddress) {
@@ -42,12 +42,12 @@ async function customTokens(client, config, args, _options) {
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
-            custom_tokens: { chain: chainName, token_address: tokenAddress },
+            token_config: { chain: chainName, token_id: tokenId },
         });
 
-        printInfo(`Custom token metadata for ${tokenAddress} on ${chainName}`, JSON.stringify(result, null, 2));
+        printInfo(`Custom token metadata for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to fetch custom token metadata for ${tokenAddress} on ${chainName}`, error?.message || String(error));
+        printWarn(`Failed to fetch custom token metadata for ${tokenId} on ${chainName}`, error?.message || String(error));
     }
 }
 
@@ -75,15 +75,15 @@ const programHandler = () => {
             mainProcessor(rewards, [], options);
         });
 
-    const customTokensCmd = program
-        .command('custom-tokens <chainName> <tokenAddress>')
+    const tokenConfigCmd = program
+        .command('token-config <chainName> <tokenId>')
         .description('Query custom token metadata from ITS Hub')
-        .action((chainName, tokenAddress, options) => {
-            mainProcessor(customTokens, [chainName, tokenAddress], options);
+        .action((chainName, tokenId, options) => {
+            mainProcessor(tokenConfig, [chainName, tokenId], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);
-    addAmplifierQueryOptions(customTokensCmd);
+    addAmplifierQueryOptions(tokenConfigCmd);
 
     program.parse();
 };
