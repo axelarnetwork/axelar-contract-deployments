@@ -17,10 +17,13 @@ const fetch = require('node-fetch');
 const StellarSdk = require('@stellar/stellar-sdk');
 const bs58 = require('bs58');
 const { AsyncLocalStorage } = require('async_hooks');
+const { cvToHex, principalCV } = require('@stacks/transactions');
 
 const pascalToSnake = (str) => str.replace(/([A-Z])/g, (group) => `_${group.toLowerCase()}`).replace(/^_/, '');
 
 const pascalToKebab = (str) => str.replace(/([A-Z])/g, (group) => `-${group.toLowerCase()}`).replace(/^-/, '');
+
+const kebabToPascal = (str) => str.replace(/-./g, (match) => match.charAt(1).toUpperCase()).replace(/^./, (match) => match.toUpperCase());
 
 const VERSION_REGEX = /^\d+\.\d+\.\d+$/;
 const SHORT_COMMIT_HASH_REGEX = /^[a-f0-9]{7,}$/;
@@ -483,14 +486,14 @@ const getSaltFromKey = (key) => {
     return keccak256(defaultAbiCoder.encode(['string'], [key.toString()]));
 };
 
-const getAmplifierContractOnchainConfig = async (axelar, chain) => {
+const getAmplifierContractOnchainConfig = async (axelar, chain, contract = 'MultisigProver') => {
     const key = Buffer.from('config');
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractRaw(axelar.contracts.MultisigProver[chain].address, key);
+    const value = await client.queryContractRaw(axelar.contracts[contract][chain].address, key);
     return JSON.parse(Buffer.from(value).toString('ascii'));
 };
 
-async function getDomainSeparator(axelar, chain, options) {
+async function getDomainSeparator(axelar, chain, options, contract = 'MultisigProver') {
     // Allow any domain separator for local deployments or `0x` if not provided
     if (options.env === 'local') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
@@ -530,7 +533,7 @@ async function getDomainSeparator(axelar, chain, options) {
     }
 
     printInfo(`Retrieving domain separator for ${chain.name} from Axelar network`);
-    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(axelar, chain.axelarId)).domain_separator);
+    const domainSeparator = hexlify((await getAmplifierContractOnchainConfig(axelar, chain.axelarId, contract)).domain_separator);
 
     if (domainSeparator !== expectedDomainSeparator) {
         throw new Error(`unexpected domain separator (want ${expectedDomainSeparator}, got ${domainSeparator})`);
@@ -574,10 +577,10 @@ const getMultisigProof = async (axelar, chain, multisigSessionId) => {
     return value;
 };
 
-const getCurrentVerifierSet = async (axelar, chain) => {
+const getCurrentVerifierSet = async (axelar, chain, contract = 'MultisigProver') => {
     const client = await CosmWasmClient.connect(axelar.rpc);
     const { id: verifierSetId, verifier_set: verifierSet } = await client.queryContractSmart(
-        axelar.contracts.MultisigProver[chain].address,
+        axelar.contracts[contract][chain].address,
         'current_verifier_set',
     );
 
@@ -682,6 +685,9 @@ function encodeITSDestination(chains, destinationChain, destinationAddress) {
             // TODO: validate XRPL address format
             return asciiToBytes(destinationAddress);
 
+        case 'stacks':
+            return cvToHex(principalCV(destinationAddress));
+
         case 'evm':
         case 'sui':
         default: // EVM, Sui, and other chains (return as-is)
@@ -744,6 +750,7 @@ module.exports = {
     downloadContractCode,
     pascalToKebab,
     pascalToSnake,
+    kebabToPascal,
     readContractCode,
     VERSION_REGEX,
     SHORT_COMMIT_HASH_REGEX,
