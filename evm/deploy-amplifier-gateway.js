@@ -399,7 +399,6 @@ async function programHandler() {
     ); // 1 day
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
-    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--owner <owner>', 'owner/governance address').env('OWNER'));
     program.addOption(new Option('--operator <operator>', 'gateway operator address'));
     program.addOption(new Option('--keyID <keyID>', 'use the specified key ID address instead of the querying the chain').env('KEY_ID'));

@@ -105,7 +105,6 @@ dist
 build/
 cache/
 artifacts/
-chains-info/
 
 local.json
 keys.json
@@ -126,3 +125,4 @@ sui/move
 .idea
 
 .stellar/
+*.clar

@@ -1322,6 +1322,132 @@
           "version": "2.1.1"
         }
       }
+    },
+    "stacks": {
+      "name": "Stacks",
+      "axelarId": "stacks",
+      "rpc": "https://api.testnet.hiro.so",
+      "tokenSymbol": "STX",
+      "networkType": "testnet",
+      "chainType": "stacks",
+      "finality": "1",
+      "decimals": 6,
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Stacks Explorer",
+        "url": "https://explorer.hiro.so/?chain=testnet"
+      },
+      "contracts": {
+        "ClarityStacks": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.clarity-stacks",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "GasStorage": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gas-storage",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "Traits": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.traits",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "GasImpl": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gas-impl",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "version": "1.3.0"
+        },
+        "GatewayStorage": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gateway-storage",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "AxelarGasService": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gas-service",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "gasCollector": "ST3ASWHNH5G542F1V58CQAND5GFN4ZDGXAJHC2VR0"
+        },
+        "GatewayImpl": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gateway-impl",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "version": "1.3.0"
+        },
+        "AxelarGateway": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gateway",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "connectionType": "amplifier",
+          "signers": {
+            "weightedSigners": [
+              {
+                "signer": "0x026e4a6fc3a6988c4cd7d3bc02e07bac8b72a9f5342d92f42161e7b6e57dd47e18",
+                "weight": 1
+              },
+              {
+                "signer": "0x02d19c406d763c98d98554c980ae03543b936aad0c3f1289a367a0c2aafb71e8c1",
+                "weight": 1
+              },
+              {
+                "signer": "0x03ea531f69879b3b15b6e3fe262250d5ceca6217e03e4def6919d4bdce3a7ec389",
+                "weight": 1
+              }
+            ],
+            "threshold": 2,
+            "nonce": "0x000000000000000000000000000000000000000000000000000000000038d32c"
+          },
+          "claritySigners": "0c00000003056e6f6e63650200000020000000000000000000000000000000000000000000000000000000000038d32c077369676e6572730b000000030c00000002067369676e65720200000021026e4a6fc3a6988c4cd7d3bc02e07bac8b72a9f5342d92f42161e7b6e57dd47e180677656967687401000000000000000000000000000000010c00000002067369676e6572020000002102d19c406d763c98d98554c980ae03543b936aad0c3f1289a367a0c2aafb71e8c10677656967687401000000000000000000000000000000010c00000002067369676e6572020000002103ea531f69879b3b15b6e3fe262250d5ceca6217e03e4def6919d4bdce3a7ec389067765696768740100000000000000000000000000000001097468726573686f6c640100000000000000000000000000000002",
+          "owner": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "operator": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
+          "minimumRotationDelay": 0,
+          "previousSignerRetention": 15
+        },
+        "InterchainTokenServiceStorage": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-service-storage",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "InterchainTokenFactory": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-factory",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "InterchainTokenService": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-service",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "itsContractAddressName": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-service",
+          "gasServiceAddress": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.gas-service",
+          "operator": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "itsHubChainName": "axelar",
+          "itsHubAddress": "axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4"
+        },
+        "InterchainTokenFactoryImpl": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-factory-impl",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "version": "1.3.0"
+        },
+        "VerifyOnchain": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.verify-onchain",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "InterchainTokenServiceImpl": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.interchain-token-service-impl",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "version": "1.3.0"
+        },
+        "NativeInterchainToken": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.native-interchain-token",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "HelloWorld": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.hello-world",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "SampleSip010": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.sample-sip-010",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
+        },
+        "TokenManagerSample": {
+          "address": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.token-manager-sample",
+          "deployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1",
+          "token": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1.sample-sip-010"
+        }
+      },
+      "initialContractsDeployer": "STX1M8AD16Y5P606QK6FFXS25BQ3R03TWDFDW7J1"
     }
   },
   "axelar": {
@@ -1619,6 +1745,10 @@
         "berachain": {
           "codeId": 848,
           "address": "axelar129htsgeyygnc6mlhxxjsdrtu2yj8wam83ur6mcdlvdttvk3zlecqwdjnl0"
+        },
+        "stacks": {
+          "codeId": 1396,
+          "address": "axelar1r5aggjq5d5np83ejq5ynt7ah30y9srk84es3xatnyc9k4nmq7grsc7qnda"
         }
       },
       "XrplMultisigProver": {
@@ -1822,6 +1952,55 @@
         "codeId": 1407,
         "instantiateProposalId": "991",
         "address": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
+      },
+      "ItsStacksTranslator": {
+        "stacks": {
+          "codeId": 1415,
+          "address": "axelar1yww9ktd6a877dlayhvrxsdq09hkk03el5498zmxn9cy2jfprpqkql40aun"
+        },
+        "storeCodeProposalId": "898",
+        "storeCodeProposalCodeHash": "9eed64f761969979fe0be46e26b42f958f2103ebfdeb7edc76d393dfe0e691c0",
+        "lastUploadedCodeId": 1415
+      },
+      "StacksVotingVerifier": {
+        "stacks": {
+          "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "serviceName": "validators",
+          "sourceGatewayAddress": "ST1MZFF6CRD7DA2PCQCN0N4606S1QVTD7JQEBJ0W6.gateway-storage",
+          "votingThreshold": [
+            "2",
+            "3"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stacks",
+          "codeId": 1393,
+          "address": "axelar1mjlvl44v8er50nxjxcuugd4prafzxj4r84q84pf3ntgte6crnywsrk0s5e"
+        },
+        "storeCodeProposalId": "631",
+        "storeCodeProposalCodeHash": "e2db56111c000c7f9be4cc98ccae3ba504133fff29b05619e9433569737823b8",
+        "lastUploadedCodeId": 1393
+      },
+      "StacksMultisigProver": {
+        "stacks": {
+          "governanceAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "adminAddress": "axelar1e98ervm2x6jt58szwyg99dn6ts77v2clkvytrc",
+          "signingThreshold": [
+            "2",
+            "3"
+          ],
+          "serviceName": "validators",
+          "verifierSetDiffThreshold": 1,
+          "encoder": "stacks",
+          "keyType": "ecdsa",
+          "codeId": 1395,
+          "domainSeparator": "0x9f3f816350e47038614b888448ffbcb9f520b2bcdeeff15cec6c08c3c61c4f20",
+          "address": "axelar1az8gj559csay9am80dj04xtr2l5027qw4h0hxgspsrm5u09zey4sptt4mq"
+        },
+        "storeCodeProposalId": "575",
+        "storeCodeProposalCodeHash": "2f802e3abff11ca183e6fa5a25c4de361b49d628c64b3e174409929fa98f7e89",
+        "lastUploadedCodeId": 1395
       }
     },
     "axelarId": "axelar",
