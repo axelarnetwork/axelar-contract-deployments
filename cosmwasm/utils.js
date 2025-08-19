@@ -375,12 +375,14 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
+    const axelarGatewayContract = getGatewayContractForChain(chainName);
+    console.log('axelarGatewayContract', axelarGatewayContract);
     const {
         axelar: { contracts },
         chains: {
             [chainName]: {
                 contracts: {
-                    AxelarGateway: { address: gatewayAddress },
+                    [axelarGatewayContract]: { address: gatewayAddress },
                 },
             },
         },
