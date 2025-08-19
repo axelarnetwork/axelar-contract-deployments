@@ -197,6 +197,38 @@ function parseSimulatedResponse(response) {
     return response.result.retval._value;
 }
 
+function isReadOnly(response: rpc.Api.SimulateTransactionResponse): boolean {
+    if (
+        !rpc.Api.isSimulationSuccess(response) ||
+        response.transactionData.getReadWrite().length > 0 ||
+        response.result?.auth?.length > 0 ||
+        response.stateChanges?.length > 0
+    ) {
+        return false;
+    }
+
+    printInfo('Read-only query detected, using simulation.');
+
+    return true;
+}
+
+async function simulate(operation, wallet, chain, options: Options = {}) {
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+
+    try {
+        const simulationResponse = await server.simulateTransaction(tx);
+
+        if (!rpc.Api.isSimulationSuccess(simulationResponse)) {
+            throw new Error(`Simulation failed: ${simulationResponse.error}`);
+        }
+
+        return simulationResponse;
+    } catch (error) {
+        throw new Error(`Simulation failed: ${error}`);
+    }
+}
+
 async function broadcast(operation, wallet, chain, action, options: Options) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
@@ -205,6 +237,7 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
+
     if (options && options.estimateCost) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
@@ -212,17 +245,19 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
         return;
     }
 
-    if (options && options.simulateTransaction) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
-        try {
-            return await server.simulateTransaction(tx);
-        } catch (error) {
-            throw new Error(error);
-        }
+    // Always simulate first
+    const simulationResponse = await simulate(operation, wallet, chain, options);
+
+    if (isReadOnly(simulationResponse)) {
+        // For read-only transactions, return a wrapper that behaves like a transaction result
+        return {
+            value: () => parseSimulatedResponse(simulationResponse),
+        };
     }
 
-    const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
-    return sendTransaction(tx, server, action, options);
+    // For write transactions, continue with normal flow
+    const preparedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
+    return sendTransaction(preparedTx, server, action, options);
 }
 
 function getAssetCode(balance, chain) {
@@ -598,7 +633,9 @@ module.exports = {
     prepareTransaction,
     sendTransaction,
     broadcast,
+    simulate,
     parseSimulatedResponse,
+    isReadOnly,
     getWallet,
     estimateCost,
     getNetworkPassphrase,

@@ -165,7 +165,7 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
     const simulateOptions = { ...options, simulateTransaction: true };
     const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', simulateOptions);
 
-    if (!parseSimulatedResponse(messageApproved)) {
+    if (!messageApproved.value()) {
         printWarn('Contract call not approved at the gateway');
         return;
     }

@@ -22,7 +22,6 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
-    parseSimulatedResponse,
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
@@ -36,9 +35,9 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
 
         try {
             const simulateOptions = { ...options, simulateTransaction: true };
-            const isTrusted = parseSimulatedResponse(
-                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', simulateOptions),
-            );
+            const isTrusted = (
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', simulateOptions)
+            ).value();
 
             if (isTrusted && action === 'set_trusted_chain') {
                 printWarn('The chain is already trusted', trustedChain);
@@ -81,8 +80,8 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
         minter,
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
@@ -105,8 +104,8 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
         tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function registerCanonicalToken(wallet, _, chain, contract, args, options) {
@@ -114,8 +113,8 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
@@ -137,8 +136,8 @@ async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, opti
         tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function interchainTransfer(wallet, config, chain, contract, args, options) {
@@ -195,7 +194,8 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
     options.simulateTransaction = true;
 
-    const flowLimit = parseSimulatedResponse(await broadcast(operation, wallet, chain, 'Get Flow Limit', options));
+    const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
+    const flowLimit = response.value();
 
     printInfo('Flow Limit', flowLimit || 'No limit set');
 }

@@ -35,8 +35,8 @@ const deploy = async (options, config, chain, contractName) => {
     });
     printInfo('Initializing contract with args', JSON.stringify(serializedArgs, null, 2));
 
-    const deployResponse = await broadcast(operation, wallet, chain, 'Initialized contract', options);
-    const contractAddress = Address.fromScAddress(deployResponse.address()).toString();
+    const response = await broadcast(operation, wallet, chain, 'Initialized contract', options);
+    const contractAddress = Address.fromScAddress(response.address()).toString();
 
     validateParameters({
         isValidStellarAddress: { contractAddress },

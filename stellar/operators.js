@@ -2,7 +2,7 @@
 
 const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
-const { getWallet, broadcast, addBaseOptions, parseSimulatedResponse, addressToScVal, tokenToScVal, isValidAddress } = require('./utils');
+const { getWallet, broadcast, addBaseOptions, addressToScVal, tokenToScVal, isValidAddress } = require('./utils');
 const {
     loadConfig,
     printInfo,
@@ -26,7 +26,7 @@ async function isOperator(wallet, _, chain, contract, args, options) {
     const simulateOptions = { ...options, simulateTransaction: true };
     const isOperator = await broadcast(operation, wallet, chain, 'is_operator called', simulateOptions);
 
-    if (parseSimulatedResponse(isOperator)) {
+    if (isOperator.value()) {
         printInfo(address + ' is an operator');
     } else {
         printWarn(address + ' is not an operator');
