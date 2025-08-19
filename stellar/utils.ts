@@ -106,14 +106,12 @@ async function buildTransaction(operation, server, wallet, networkType, options:
     return builtTransaction;
 }
 
-const prepareTransaction = async (operation, server, wallet, networkType, options: Options = {}) => {
-    const builtTransaction = await buildTransaction(operation, server, wallet, networkType, options);
-
+const prepareTransaction = async (tx, server, wallet, options: Options = {}) => {
     // We use the RPC server to "prepare" the transaction. This simulating the
     // transaction, discovering the storage footprint, and updating the
     // transaction to include that footprint. If you know the footprint ahead of
     // time, you could manually use `addFootprint` and skip this step.
-    const preparedTransaction = await server.prepareTransaction(builtTransaction);
+    const preparedTransaction = await server.prepareTransaction(tx);
 
     preparedTransaction.sign(wallet);
 
@@ -207,14 +205,10 @@ function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: stri
         return false;
     }
 
-    printInfo(`Read-only query detected for '${action}', using simulation.`);
-
     return true;
 }
 
-async function simulate(operation, wallet, chain, options: Options = {}) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
-    const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+async function simulate(tx, server, options: Options = {}) {
     const simulationResponse = await server.simulateTransaction(tx);
 
     if (!rpc.Api.isSimulationSuccess(simulationResponse)) {
@@ -226,22 +220,21 @@ async function simulate(operation, wallet, chain, options: Options = {}) {
 
 async function broadcast(operation, wallet, chain, action, options: Options) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
 
     if (options && options.nativePayment) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
 
     if (options && options.estimateCost) {
-        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
     }
 
     // Always simulate first
-    const simulationResponse = await simulate(operation, wallet, chain, options);
+    const simulationResponse = await simulate(tx, server, options);
 
     if (isReadOnly(simulationResponse, action)) {
         return {
@@ -249,7 +242,7 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
         };
     }
 
-    const preparedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
+    const preparedTx = await prepareTransaction(tx, server, wallet, options);
     return sendTransaction(preparedTx, server, action, options);
 }
 
