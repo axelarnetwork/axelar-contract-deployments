@@ -213,10 +213,15 @@ const registerItsChain = async (client, wallet, config, options) => {
             try {
                 const currentConfig = await getItsChainConfig(client, config, chain);
 
-                const hasChanges = JSON.stringify(currentConfig) !== JSON.stringify(proposedConfig);
+                const hasChanges =
+                    currentConfig.chain !== proposedConfig.chain ||
+                    currentConfig.its_edge_contract !== proposedConfig.its_edge_contract ||
+                    currentConfig.msg_translator !== proposedConfig.msg_translator ||
+                    currentConfig.truncation.max_uint_bits !== proposedConfig.truncation.max_uint_bits ||
+                    currentConfig.truncation.max_decimals_when_truncating !== proposedConfig.truncation.max_decimals_when_truncating;
 
                 if (!hasChanges) {
-                    throw new Error(`No changes detected for chain '${chain}'.`);
+                    throw new Error(`No changes detected for chain '${chain}'. Update is unnecessary.`);
                 }
             } catch (error) {
                 if (error.message.includes('No changes detected')) {
