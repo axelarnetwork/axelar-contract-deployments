@@ -249,13 +249,11 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     const simulationResponse = await simulate(operation, wallet, chain, options);
 
     if (isReadOnly(simulationResponse, action)) {
-        // For read-only transactions, return a wrapper that behaves like a transaction result
         return {
             value: () => parseSimulatedResponse(simulationResponse),
         };
     }
 
-    // For write transactions, continue with normal flow
     const preparedTx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
     return sendTransaction(preparedTx, server, action, options);
 }
