@@ -36,11 +36,11 @@ const CONTRACT_UPGRADE_OPTIONS = {
         new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
         new Option(
             '--interchain-token-version <interchainTokenVersion>',
-            'version for InterchainToken contract (defaults to main contract version)',
+            'version for InterchainToken contract (defaults to InterchainTokenService version)',
         ),
         new Option(
             '--token-manager-version <tokenManagerVersion>',
-            'version for TokenManager contract (defaults to main contract version)',
+            'version for TokenManager contract (defaults to InterchainTokenService version)',
         ),
     ],
 };
