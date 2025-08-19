@@ -139,8 +139,18 @@ const getInitializeArgs = async (config, chain, contractName, wallet, options) =
             const itsHubAddress = nativeToScVal(config.axelar?.contracts?.InterchainTokenService?.address, { type: 'string' });
             const chainName = nativeToScVal(chain.axelarId, { type: 'string' });
             const nativeTokenAddress = nativeToScVal(Address.fromString(chain?.tokenAddress), { type: 'address' });
-            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', options, wallet, chain));
-            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', options, wallet, chain));
+
+            const interchainTokenOptions = {
+                ...options,
+                version: options.interchainTokenVersion || options.version,
+            };
+            const tokenManagerOptions = {
+                ...options,
+                version: options.tokenManagerVersion || options.version,
+            };
+
+            const interchainTokenWasmHash = BytesToScVal(await uploadContract('InterchainToken', interchainTokenOptions, wallet, chain));
+            const tokenManagerWasmHash = BytesToScVal(await uploadContract('TokenManager', tokenManagerOptions, wallet, chain));
 
             return {
                 owner,

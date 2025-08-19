@@ -17,12 +17,32 @@ const CONTRACT_DEPLOY_OPTIONS = {
     AxelarExample: () => [
         new Option('--use-dummy-its-address', 'use dummy its address for AxelarExample contract to test a GMP call').default(false),
     ],
+    InterchainTokenService: () => [
+        new Option(
+            '--interchain-token-version <interchainTokenVersion>',
+            'version for InterchainToken contract (defaults to InterchainTokenService version)',
+        ),
+        new Option(
+            '--token-manager-version <tokenManagerVersion>',
+            'version for TokenManager contract (defaults to InterchainTokenService version)',
+        ),
+    ],
 };
 
 const CONTRACT_UPGRADE_OPTIONS = {
     AxelarGateway: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
     AxelarOperators: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
-    InterchainTokenService: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
+    InterchainTokenService: () => [
+        new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
+        new Option(
+            '--interchain-token-version <interchainTokenVersion>',
+            'version for InterchainToken contract (defaults to main contract version)',
+        ),
+        new Option(
+            '--token-manager-version <tokenManagerVersion>',
+            'version for TokenManager contract (defaults to main contract version)',
+        ),
+    ],
 };
 
 const CONTRACT_UPLOAD_OPTIONS = {};
