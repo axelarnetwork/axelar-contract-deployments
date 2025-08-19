@@ -404,12 +404,11 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
-    console.log('rewardsAddress', rewardsAddress);
+
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
     }
 
-    console.log('governanceAddress', governanceAddress);
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
     }
@@ -526,7 +525,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const getVerifierContractForChain = (chainName) => {
     const chainVerifierMapping = {
-        'stacks-2': 'StacksVotingVerifier',
+        'stacks': 'StacksVotingVerifier',
         'solana': 'SolanaVotingVerifier',
     };
     
@@ -543,7 +542,7 @@ const getGatewayContractForChain = (chainName) => {
 
 const getAxelarGatewayContractForChain = (chainName) => {
     const chainGatewayMapping = {
-        'stacks-2': 'GatewayStorage',
+        'stacks': 'GatewayStorage',
     };
     
     return chainGatewayMapping[chainName] || 'AxelarGateway';
