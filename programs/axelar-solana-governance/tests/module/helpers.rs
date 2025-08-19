@@ -13,7 +13,7 @@ use axelar_solana_governance::instructions::builder::{
 use axelar_solana_governance::state::GovernanceConfig;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use borsh::to_vec;
-use solana_program_test::{tokio, BanksTransactionResultWithMetadata, ProgramTest};
+use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::bpf_loader_upgradeable;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::program_error::ProgramError;
@@ -208,17 +208,6 @@ pub(crate) fn events(
         .iter()
         .filter_map(GovernanceEvent::parse_log)
         .collect::<Vec<_>>()
-}
-
-pub(crate) fn assert_msg_present_in_logs(res: BanksTransactionResultWithMetadata, msg: &str) {
-    assert!(
-        res.metadata
-            .unwrap()
-            .log_messages
-            .into_iter()
-            .any(|x| x.contains(msg)),
-        "Expected error message not found!"
-    );
 }
 
 pub(crate) async fn approve_ix_at_gateway(

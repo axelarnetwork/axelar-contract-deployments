@@ -8,11 +8,13 @@ use solana_program_test::tokio;
 use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer as _;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
 use test_context::test_context;
 
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_its::state::token_manager::{TokenManager, Type as TokenManagerType};
 use evm_contracts_test_suite::evm_contracts_rs::contracts::{
     custom_test_token::CustomTestToken, interchain_token::InterchainToken,
@@ -839,6 +841,118 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         .call()
         .await?;
     assert_eq!(evm_balance, transfer_amount.into());
+
+    Ok(())
+}
+
+/// Test that an one cannot pass an arbitrary token_manager_ata
+/// to process_outbound_transfer for LockUnlock token managers.
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let initial_balance = 300;
+    let (token_id, evm_token, solana_token) =
+        custom_token(ctx, TokenManagerType::LockUnlock).await?;
+
+    let token_account = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &solana_token,
+        &spl_token_2022::id(),
+    );
+
+    {
+        let create_ata_ix = create_associated_token_account(
+            &ctx.solana_wallet,
+            &ctx.solana_wallet,
+            &solana_token,
+            &spl_token_2022::id(),
+        );
+
+        let mint_ix = spl_token_2022::instruction::mint_to(
+            &spl_token_2022::id(),
+            &solana_token,
+            &token_account,
+            &ctx.solana_wallet,
+            &[],
+            initial_balance,
+        )?;
+
+        ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
+    }
+
+    // Mint some tokens to the token manager so it can unlock
+    {
+        let token_manager = ctx
+            .evm_its_contracts
+            .interchain_token_service
+            .token_manager_address(token_id)
+            .call()
+            .await?;
+
+        evm_token
+            .mint(token_manager, 900.into())
+            .send()
+            .await?
+            .await?;
+
+        evm_token
+            .approve(
+                ctx.evm_its_contracts.interchain_token_service.address(),
+                u64::MAX.into(),
+            )
+            .send()
+            .await?
+            .await?;
+    }
+
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
+    let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
+        token_account,
+        token_id,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        initial_balance,
+        solana_token,
+        spl_token_2022::id(),
+        0,
+        clock_sysvar.unix_timestamp,
+    )
+    .unwrap();
+
+    // Now inject an arbitrary ATA that does not match the token manager PDA
+    transfer_ix.accounts[4].pubkey = {
+        let attacker_wallet = Keypair::new();
+
+        // Fund the attacker wallet (for transaction fees)
+        ctx.solana_chain
+            .fixture
+            .fund_account(&attacker_wallet.pubkey(), 1_000_000)
+            .await;
+
+        // Create the attacker's ATA
+        let create_attacker_ata_ix = create_associated_token_account(
+            &ctx.solana_wallet,        // payer
+            &attacker_wallet.pubkey(), // owner
+            &solana_token,
+            &spl_token_2022::id(),
+        );
+        ctx.send_solana_tx(&[create_attacker_ata_ix]).await.unwrap();
+
+        get_associated_token_address_with_program_id(
+            &attacker_wallet.pubkey(),
+            &solana_token,
+            &spl_token_2022::id(),
+        )
+    };
+
+    let res = ctx.send_solana_tx(&[transfer_ix]).await;
+
+    assert!(res.is_err());
+    assert_msg_present_in_logs(
+        res.err().unwrap(),
+        "Provided token_manager_ata doesn't match expected derivation",
+    );
 
     Ok(())
 }

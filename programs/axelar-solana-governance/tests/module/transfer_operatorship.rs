@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::IxBuilder;
@@ -9,9 +10,8 @@ use solana_sdk::signer::Signer;
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta,
-    deploy_governance_program, events, gmp_sample_metadata, init_contract_with_operator,
-    setup_programs,
+    approve_ix_at_gateway, default_proposal_eta, deploy_governance_program, events,
+    gmp_sample_metadata, init_contract_with_operator, setup_programs,
 };
 
 #[tokio::test]

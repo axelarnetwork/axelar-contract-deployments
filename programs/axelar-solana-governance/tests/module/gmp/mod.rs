@@ -1,11 +1,12 @@
 use axelar_solana_encoding::types::messages::CrossChainId;
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_governance::state::proposal::ExecutableProposal;
 use solana_program_test::tokio;
 use solana_sdk::{instruction::AccountMeta, signature::Signer};
 
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, gmp_sample_metadata,
-    ix_builder_with_sample_proposal_data, setup_programs,
+    approve_ix_at_gateway, gmp_sample_metadata, ix_builder_with_sample_proposal_data,
+    setup_programs,
 };
 
 mod approve_operator;

@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use axelar_solana_governance::state::{GovernanceConfig, VALID_PROPOSAL_DELAY_RANGE};
@@ -6,10 +7,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 
 use crate::fixtures::MINIMUM_PROPOSAL_DELAY;
-use crate::helpers::{
-    assert_msg_present_in_logs, deploy_governance_program,
-    deploy_governance_program_with_upgrade_authority,
-};
+use crate::helpers::{deploy_governance_program, deploy_governance_program_with_upgrade_authority};
 
 #[tokio::test]
 async fn test_successfully_initialize_config() {

@@ -14,3 +14,15 @@ pub mod gateway;
 pub mod test_signer;
 
 pub use gateway::{SolanaAxelarIntegration, SolanaAxelarIntegrationMetadata};
+use solana_program_test::BanksTransactionResultWithMetadata;
+
+pub fn assert_msg_present_in_logs(res: BanksTransactionResultWithMetadata, msg: &str) {
+    assert!(
+        res.metadata
+            .unwrap()
+            .log_messages
+            .into_iter()
+            .any(|x| x.contains(msg)),
+        "Expected error message not found!"
+    );
+}

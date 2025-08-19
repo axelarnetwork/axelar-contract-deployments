@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
@@ -8,9 +9,8 @@ use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::signature::Signer;
 
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, events,
-    gmp_memo_metadata, gmp_sample_metadata, ix_builder_with_memo_proposal_data,
-    ix_builder_with_sample_proposal_data, setup_programs,
+    approve_ix_at_gateway, default_proposal_eta, events, gmp_memo_metadata, gmp_sample_metadata,
+    ix_builder_with_memo_proposal_data, ix_builder_with_sample_proposal_data, setup_programs,
 };
 
 #[tokio::test]
