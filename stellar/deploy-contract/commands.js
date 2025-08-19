@@ -32,17 +32,7 @@ const CONTRACT_DEPLOY_OPTIONS = {
 const CONTRACT_UPGRADE_OPTIONS = {
     AxelarGateway: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
     AxelarOperators: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
-    InterchainTokenService: () => [
-        new Option('--migration-data <migrationData>', 'migration data').default(null, '()'),
-        new Option(
-            '--interchain-token-version <interchainTokenVersion>',
-            'version for InterchainToken contract (defaults to InterchainTokenService version)',
-        ),
-        new Option(
-            '--token-manager-version <tokenManagerVersion>',
-            'version for TokenManager contract (defaults to InterchainTokenService version)',
-        ),
-    ],
+    InterchainTokenService: () => [new Option('--migration-data <migrationData>', 'migration data').default(null, '()')],
 };
 
 const CONTRACT_UPLOAD_OPTIONS = {};
