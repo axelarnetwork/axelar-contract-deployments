@@ -2570,7 +2570,7 @@
           "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
         }
       },
-      "initialContractsDeployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+      "initialContractsDeployer": "STB2BYNQSKZ0M9RQ4FAPH046RT3N8J3PR3FW85A8"
     }
   },
   "axelar": {
@@ -2836,6 +2836,10 @@
         "stellar-2025-q3": {
           "codeId": 58,
           "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
+        },
+        "stacks": {
+          "codeId": 58,
+          "address": "axelar1p2qndluxmx2c40qqn3r5yzukvchfkhct040u45s4yz0rf479stpq69y9fn"
         }
       },
       "VotingVerifier": {
@@ -3079,10 +3083,13 @@
           "blockExpiry": 10,
           "confirmationHeight": 6,
           "msgIdFormat": "hex_tx_hash_and_event_index",
-          "addressFormat": "stacks"
+          "addressFormat": "stacks",
+          "codeId": 64,
+          "address": "axelar16mq0q43g0d86zxgpaxag0mrjks4zvqg82ex5eez3c7madueudy7qum3axh"
         },
         "storeCodeProposalId": "250",
-        "storeCodeProposalCodeHash": "d9ba807799694d7b0564ec95e885aadb4a4aea78a37004cb118f490635cc78cb"
+        "storeCodeProposalCodeHash": "d9ba807799694d7b0564ec95e885aadb4a4aea78a37004cb118f490635cc78cb",
+        "lastUploadedCodeId": 64
       },
       "StacksMultisigProver": {
         "stacks": {
@@ -3095,10 +3102,14 @@
           "serviceName": "amplifier",
           "verifierSetDiffThreshold": 1,
           "encoder": "stacks",
-          "keyType": "ecdsa"
+          "keyType": "ecdsa",
+          "codeId": 65,
+          "domainSeparator": "0x79bda3786ee446a150368462571c9184dfa4ae603b89f46f172aac7b0b4f0c35",
+          "address": "axelar130ddhw25j98uc6h4sx5utgpj52msw7gxuv0uu8sphq50n5gsg76sz4f5cq"
         },
         "storeCodeProposalId": "251",
-        "storeCodeProposalCodeHash": "ecf6f5b4c0ad67f7d4971e87d6ceb907eaeccb6796d364e25bc32f6c5fe86814"
+        "storeCodeProposalCodeHash": "ecf6f5b4c0ad67f7d4971e87d6ceb907eaeccb6796d364e25bc32f6c5fe86814",
+        "lastUploadedCodeId": 65
       }
     },
     "axelarId": "axelar",
