@@ -27,7 +27,13 @@ const {
     isTrustedChain,
     loadConfig,
 } = require('./utils');
-const { getChainConfigByAxelarId, validateDestinationChain, tokenManagerTypes, validateLinkType } = require('../common/utils');
+const {
+    getChainConfigByAxelarId,
+    validateDestinationChain,
+    validateChain,
+    tokenManagerTypes,
+    validateLinkType,
+} = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -591,7 +597,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 isValidAddress: { destinationTokenAddress, operator },
                 isValidNumber: { gasValue },
             });
-            validateDestinationChain(chains, destinationChain);
+            validateChain(chains, destinationChain);
 
             const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
             const tokenManagerType = validateLinkType(chainType, type);

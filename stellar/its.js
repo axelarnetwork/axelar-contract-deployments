@@ -13,6 +13,7 @@ const {
     printError,
     validateParameters,
     validateDestinationChain,
+    validateChain,
 } = require('../common');
 const {
     addBaseOptions,
@@ -376,7 +377,7 @@ async function linkToken(wallet, config, chain, contract, args, options) {
         isValidNumber: { gasAmount },
         isNonEmptyString: { destinationChain, destinationTokenAddress, type },
     });
-    validateDestinationChain(config.chains, destinationChain);
+    validateChain(config.chains, destinationChain);
 
     const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
     const tokenManagerType = validateLinkType(chainType, type);
