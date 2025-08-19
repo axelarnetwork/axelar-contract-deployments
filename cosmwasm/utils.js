@@ -375,8 +375,7 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const axelarGatewayContract = getGatewayContractForChain(chainName);
-    console.log('axelarGatewayContract', axelarGatewayContract);
+    const axelarGatewayContract = getAxelarGatewayContractForChain(chainName);
     const {
         axelar: { contracts },
         chains: {
@@ -405,11 +404,12 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
     }
-
+    console.log('rewardsAddress', rewardsAddress);
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
     }
 
+    console.log('governanceAddress', governanceAddress);
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].governanceAddress in axelar info`);
     }
@@ -526,7 +526,7 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const getVerifierContractForChain = (chainName) => {
     const chainVerifierMapping = {
-        'stacks': 'StacksVotingVerifier',
+        'stacks-2': 'StacksVotingVerifier',
         'solana': 'SolanaVotingVerifier',
     };
     
@@ -539,6 +539,14 @@ const getGatewayContractForChain = (chainName) => {
     };
     
     return chainGatewayMapping[chainName] || 'Gateway';
+};
+
+const getAxelarGatewayContractForChain = (chainName) => {
+    const chainGatewayMapping = {
+        'stacks-2': 'GatewayStorage',
+    };
+    
+    return chainGatewayMapping[chainName] || 'AxelarGateway';
 };
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
@@ -693,7 +701,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContract = getGatewayContractForChain(chainName);
+    const gatewayContractAddress = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -706,7 +714,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContract]: {
+        [gatewayContractAddress]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
