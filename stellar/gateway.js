@@ -162,7 +162,6 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         addressToScVal(destinationAddress),
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
-    
     const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options);
 
     if (!messageApproved.value()) {
