@@ -197,7 +197,7 @@ function parseSimulatedResponse(response) {
     return response.result.retval._value;
 }
 
-function isReadOnly(response: rpc.Api.SimulateTransactionResponse): boolean {
+function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: string): boolean {
     if (
         !rpc.Api.isSimulationSuccess(response) ||
         response.transactionData.getReadWrite().length > 0 ||
@@ -207,7 +207,7 @@ function isReadOnly(response: rpc.Api.SimulateTransactionResponse): boolean {
         return false;
     }
 
-    printInfo('Read-only query detected, using simulation.');
+    printInfo(`Read-only query detected for '${action}', using simulation.`);
 
     return true;
 }
@@ -248,7 +248,7 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
     // Always simulate first
     const simulationResponse = await simulate(operation, wallet, chain, options);
 
-    if (isReadOnly(simulationResponse)) {
+    if (isReadOnly(simulationResponse, action)) {
         // For read-only transactions, return a wrapper that behaves like a transaction result
         return {
             value: () => parseSimulatedResponse(simulationResponse),
