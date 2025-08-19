@@ -1,23 +1,21 @@
-import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-
 import { printInfo, prompt } from '../../common';
-import { encodeStoreCodeProposal, getContractCodePath, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
+import { encodeStoreCodeProposal, getContractCodePath, initContractConfig } from '../utils';
 import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
 import type { DeployContractsOptions } from './option-processor';
-import { RetryManager } from './retry';
+import { ProposalManager } from './proposal-manager';
 
 export class DeploymentManager {
     private configManager: ConfigManager;
+    private proposalManager: ProposalManager;
 
-    constructor(configManager: ConfigManager) {
+    constructor(configManager: ConfigManager, proposalManager: ProposalManager) {
         this.configManager = configManager;
+        this.proposalManager = proposalManager;
     }
 
     public async deployContract(contractName: string, processedOptions: DeployContractsOptions): Promise<void> {
         initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
         const contractCodePath = await getContractCodePath(processedOptions, contractName);
 
         printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
@@ -30,24 +28,20 @@ export class DeploymentManager {
         const title = `Store Code for ${contractName}`;
         const description = `Store ${contractName} contract code on Axelar`;
         const coordinatorAddress = this.configManager.getContractAddressFromConfig('Coordinator');
-        const accounts = await wallet.getAccounts();
-        const senderAddress = accounts[0].address;
+        const [account] = await this.proposalManager.getAccounts(processedOptions.mnemonic);
+        const senderAddress = account.address;
         const instantiateAddresses = [coordinatorAddress, senderAddress];
-        const proposalId = await RetryManager.withRetry(() =>
-            submitProposal(
-                client,
-                wallet,
-                this.configManager.getFullConfig(),
-                processedOptions,
-                encodeStoreCodeProposal({
-                    ...processedOptions,
-                    contractName,
-                    contractCodePath,
-                    title,
-                    description,
-                    instantiateAddresses,
-                }),
-            ),
+        const proposalId = await this.proposalManager.submitProposal(
+            encodeStoreCodeProposal({
+                ...processedOptions,
+                contractName,
+                contractCodePath,
+                title,
+                description,
+                instantiateAddresses,
+            }),
+            processedOptions.mnemonic,
+            processedOptions.deposit,
         );
 
         printInfo(`Submitted governance proposal for ${contractName} with proposalId: ${proposalId}`);
@@ -64,12 +58,5 @@ export class DeploymentManager {
             printInfo(`\n--- Deploying ${contractName} ---`);
             await this.deployContract(contractName, options);
         }
-    }
-
-    private async prepareWalletAndClient(mnemonic: string): Promise<{ wallet: DirectSecp256k1HdWallet; client: SigningCosmWasmClient }> {
-        printInfo('Preparing wallet and client...');
-        const wallet = await prepareWallet({ mnemonic });
-        const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
-        return { wallet, client };
     }
 }

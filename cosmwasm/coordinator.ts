@@ -16,6 +16,7 @@ import type {
     RegisterDeploymentOptions,
     RegisterProtocolOptions,
 } from './coordinator/option-processor';
+import { ProposalManager } from './coordinator/proposal-manager';
 
 const program = new Command();
 
@@ -39,10 +40,11 @@ program
         try {
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
-            const deploymentManager = new DeploymentManager(configManager);
+            const proposalManager = new ProposalManager(configManager);
+            const deploymentManager = new DeploymentManager(configManager, proposalManager);
             await deploymentManager.deployContracts(processedOptions as DeployContractsOptions);
         } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
+            printError(error);
             throw error;
         }
     });
@@ -63,10 +65,11 @@ program
         try {
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
-            const governanceManager = new GovernanceManager(configManager);
+            const proposalManager = new ProposalManager(configManager);
+            const governanceManager = new GovernanceManager(configManager, proposalManager);
             await governanceManager.registerProtocol(processedOptions as RegisterProtocolOptions);
         } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
+            printError(error);
             throw error;
         }
     });
@@ -92,10 +95,11 @@ program
         try {
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
-            const governanceManager = new GovernanceManager(configManager);
+            const proposalManager = new ProposalManager(configManager);
+            const governanceManager = new GovernanceManager(configManager, proposalManager);
             await governanceManager.registerDeployment(processedOptions as RegisterDeploymentOptions);
         } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
+            printError(error);
             throw error;
         }
     });
@@ -140,7 +144,7 @@ program
             const chainConfigManager = new ChainConfigManager(configManager);
             chainConfigManager.updateChainConfig(processedOptions as ConfigureChainOptions);
         } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
+            printError(error);
             throw error;
         }
     });
@@ -164,10 +168,11 @@ program
         try {
             const processedOptions = OptionProcessor.processOptions(options);
             const configManager = new ConfigManager(processedOptions.env);
-            const instantiationManager = new InstantiationManager(configManager);
+            const proposalManager = new ProposalManager(configManager);
+            const instantiationManager = new InstantiationManager(configManager, proposalManager);
             await instantiationManager.instantiateChainContracts(processedOptions as InstantiateChainOptions);
         } catch (error) {
-            printError('Error in CLI:', (error as Error).message);
+            printError(error);
             throw error;
         }
     });

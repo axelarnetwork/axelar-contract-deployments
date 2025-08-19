@@ -50,9 +50,13 @@ export class ConfigManager {
     private environment: string;
     private fullConfig: FullConfig;
 
-    constructor(environment: string) {
+    constructor(environment: string, fullConfig?: FullConfig) {
         this.environment = environment;
-        this.fullConfig = loadConfig(this.environment);
+        if (fullConfig) {
+            this.fullConfig = fullConfig;
+        } else {
+            this.fullConfig = loadConfig(this.environment);
+        }
     }
 
     public getChainConfig(chainName: string): ChainConfig {

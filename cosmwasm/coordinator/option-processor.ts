@@ -76,16 +76,18 @@ export class OptionProcessor {
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
 
-        // Only process fields that exist in the options
         if ('votingThreshold' in processedOptions) {
             processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold);
         }
+
         if ('signingThreshold' in processedOptions) {
             processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold);
         }
+
         if ('confirmationHeight' in processedOptions) {
             processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight);
         }
+
         if ('verifierSetDiffThreshold' in processedOptions) {
             processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold);
         }
@@ -153,11 +155,7 @@ export class OptionProcessor {
     private static validateDomainSeparator(domainSeparator?: string): void {
         if (!domainSeparator) return;
 
-        if (!domainSeparator.startsWith('0x')) {
-            throw new Error('Domain separator must start with 0x');
-        }
-
-        if (!/^0x[a-fA-F0-9]{64}$/.test(domainSeparator)) {
+        if (!/^[a-fA-F0-9]{64}$/.test(domainSeparator)) {
             throw new Error('Domain separator must be a valid 32-byte hex string');
         }
     }

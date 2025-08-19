@@ -1,11 +1,10 @@
-import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/signingcosmwasmclient';
 
 import { printInfo, prompt } from '../../common';
-import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepareClient, prepareWallet, submitProposal } from '../utils';
+import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt } from '../utils';
 import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
 import type { InstantiateChainOptions } from './option-processor';
-import { RetryManager } from './retry';
+import { ProposalManager } from './proposal-manager';
 
 export interface GatewayParams {
     code_id: number;
@@ -101,24 +100,25 @@ export interface GatewayChainConfig {
 
 export class InstantiationManager {
     public configManager: ConfigManager;
+    private proposalManager: ProposalManager;
 
-    constructor(configManager: ConfigManager) {
+    constructor(configManager: ConfigManager, proposalManager: ProposalManager) {
         this.configManager = configManager;
+        this.proposalManager = proposalManager;
     }
 
     public async instantiateChainContracts(options: InstantiateChainOptions): Promise<void> {
         printInfo(`Instantiating chain contracts for ${options.chainName}...`);
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
 
-        const { wallet, client } = await this.prepareWalletAndClient(options.mnemonic);
-
         if (prompt('Are the deployment proposals executed?', options.yes)) {
             printInfo('Deployment proposals are not finished yet, please wait for them to be executed');
             return;
         }
 
+        const client = await this.proposalManager.getClient(options.mnemonic);
         await this.fetchAndUpdateCodeIds(client, AMPLIFIER_CONTRACTS_TO_HANDLE);
-        await this.executeMessageViaGovernance(options.chainName, options, client, wallet);
+        await this.executeMessageViaGovernance(options.chainName, options);
     }
 
     private constructExecuteMessage(chainName: string, deploymentName: string): InstantiateChainContractsMsg {
@@ -244,12 +244,7 @@ export class InstantiationManager {
         };
     }
 
-    private async executeMessageViaGovernance(
-        chainName: string,
-        options: InstantiateChainOptions,
-        client: SigningCosmWasmClient,
-        wallet: DirectSecp256k1HdWallet,
-    ): Promise<void> {
+    private async executeMessageViaGovernance(chainName: string, options: InstantiateChainOptions): Promise<void> {
         const deploymentName = this.generateDeploymentName(chainName);
         const message = this.constructExecuteMessage(chainName, deploymentName);
         const messageJson = JSON.stringify(message, null, 2);
@@ -276,9 +271,7 @@ export class InstantiationManager {
             return;
         }
 
-        const proposalId = await RetryManager.withRetry(() =>
-            submitProposal(client, wallet, this.configManager.getFullConfig(), options, proposal),
-        );
+        const proposalId = await this.proposalManager.submitProposal(proposal, options.mnemonic, options.deposit);
 
         this.storeDeploymentInfo(chainName, deploymentName, proposalId);
         this.configManager.saveConfig();
@@ -341,11 +334,5 @@ export class InstantiationManager {
                 }
             }
         }
-    }
-
-    private async prepareWalletAndClient(mnemonic: string): Promise<{ wallet: DirectSecp256k1HdWallet; client: SigningCosmWasmClient }> {
-        const wallet = await prepareWallet({ mnemonic });
-        const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
-        return { wallet, client };
     }
 }

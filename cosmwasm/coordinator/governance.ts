@@ -1,11 +1,8 @@
-import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-
 import { printInfo, prompt } from '../../common';
-import { encodeExecuteContractProposal, initContractConfig, prepareClient, prepareWallet, submitProposal } from '../utils';
+import { encodeExecuteContractProposal, initContractConfig } from '../utils';
 import { ConfigManager } from './config';
 import type { RegisterDeploymentOptions, RegisterProtocolOptions } from './option-processor';
-import { RetryManager } from './retry';
+import { ProposalManager } from './proposal-manager';
 
 export interface RegisterDeploymentMsg {
     register_deployment: {
@@ -15,9 +12,11 @@ export interface RegisterDeploymentMsg {
 
 export class GovernanceManager {
     public configManager: ConfigManager;
+    private proposalManager: ProposalManager;
 
-    constructor(configManager: ConfigManager) {
+    constructor(configManager: ConfigManager, proposalManager: ProposalManager) {
         this.configManager = configManager;
+        this.proposalManager = proposalManager;
     }
 
     public async registerProtocol(processedOptions: RegisterProtocolOptions): Promise<void> {
@@ -26,7 +25,6 @@ export class GovernanceManager {
 
         initContractConfig(this.configManager.getFullConfig(), { contractName: 'Coordinator', chainName: undefined });
 
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
         const serviceRegistryAddress = this.configManager.getContractAddressFromConfig('ServiceRegistry');
         const routerAddress = this.configManager.getContractAddressFromConfig('Router');
         const multisigAddress = this.configManager.getContractAddressFromConfig('Multisig');
@@ -68,9 +66,7 @@ export class GovernanceManager {
         }
 
         printInfo('Submitting register protocol proposal...');
-        const proposalId = await RetryManager.withRetry(() =>
-            submitProposal(client, wallet, this.configManager.getFullConfig(), processedOptions, proposal),
-        );
+        const proposalId = await this.proposalManager.submitProposal(proposal, processedOptions.mnemonic, processedOptions.deposit);
         printInfo(`Register protocol proposal submitted successfully with ID: ${proposalId}`);
 
         this.configManager.saveConfig();
@@ -81,7 +77,6 @@ export class GovernanceManager {
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
         printInfo(`Chain: ${processedOptions.chainName}`);
 
-        const { wallet, client } = await this.prepareWalletAndClient(processedOptions.mnemonic);
         const deploymentName = this.configManager.getDeploymentNameFromConfig(processedOptions.chainName);
 
         printInfo(`Using deployment name from config: ${deploymentName}`);
@@ -93,6 +88,7 @@ export class GovernanceManager {
 
         const instantiationProposalId = this.configManager.getInstantiationProposalIdFromConfig(processedOptions.chainName);
         if (instantiationProposalId) {
+            const client = await this.proposalManager.getClient(processedOptions.mnemonic);
             await this.fetchAddressesFromCoordinator(client, deploymentName);
         } else {
             throw new Error('No instantiation proposal ID found in config, skipping event extraction');
@@ -126,19 +122,10 @@ export class GovernanceManager {
             return;
         }
 
-        const proposalId = await RetryManager.withRetry(() =>
-            submitProposal(client, wallet, this.configManager.getFullConfig(), processedOptions, proposal),
-        );
+        const proposalId = await this.proposalManager.submitProposal(proposal, processedOptions.mnemonic, processedOptions.deposit);
         printInfo(`Register deployment proposal submitted successfully with ID: ${proposalId}`);
 
         this.configManager.saveConfig();
-    }
-
-    private async prepareWalletAndClient(mnemonic: string): Promise<{ wallet: DirectSecp256k1HdWallet; client: SigningCosmWasmClient }> {
-        printInfo('Preparing wallet and client...');
-        const wallet = await prepareWallet({ mnemonic });
-        const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
-        return { wallet, client };
     }
 
     private async fetchAddressesFromCoordinator(client: unknown, deploymentName: string): Promise<void> {
