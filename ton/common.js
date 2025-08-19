@@ -17,7 +17,6 @@ if (!GATEWAY_ADDRESS) {
 function getTonClient() {
     // Try Chainstack first (no API key required)
     try {
-        console.log('Using Chainstack endpoint...');
         return new TonClient({
             endpoint: CHAINSTACK_ENDPOINT,
             timeout: 30000,

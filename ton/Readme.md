@@ -11,6 +11,7 @@ TONCENTER_API_KEY=
 TON_GATEWAY_ADDRESS=
 TON_GAS_SERVICE_ADDRESS=
 TON_GOVERNANCE_ADDRESS=
+TON_ITS_ADDRESS=
 ```
 
 ## Approving a message
@@ -208,6 +209,9 @@ node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name>
 node ton/its/js approve-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
 ```
 
+```bash
+node ton/its/js revoke-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+```
 
 ### Admin only
 
