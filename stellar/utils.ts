@@ -215,18 +215,13 @@ function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: stri
 async function simulate(operation, wallet, chain, options: Options = {}) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
     const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+    const simulationResponse = await server.simulateTransaction(tx);
 
-    try {
-        const simulationResponse = await server.simulateTransaction(tx);
-
-        if (!rpc.Api.isSimulationSuccess(simulationResponse)) {
-            throw new Error(`Simulation failed: ${simulationResponse.error}`);
-        }
-
-        return simulationResponse;
-    } catch (error) {
-        throw new Error(`Simulation failed: ${error}`);
+    if (!rpc.Api.isSimulationSuccess(simulationResponse)) {
+        throw new Error(`Simulation failed: ${simulationResponse.error}`);
     }
+
+    return simulationResponse;
 }
 
 async function broadcast(operation, wallet, chain, action, options: Options) {
