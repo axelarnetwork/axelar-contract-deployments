@@ -10,10 +10,10 @@
 > - [`Solana CPI`](https://solana.com/docs/core/cpi)
 > - [`Solana PDAs`](https://solana.com/docs/core/pda)
 > 
-> 👆 a shorter-summary version is available [on Axelar Executable docs](src/executable.rs).
+> 👆 a shorter-summary version is available [on Axelar Executable docs](./axelar-executable.md#solana-specific-rundown).
 
 When integrating with it, you are not expected to be exposed to the Axelar Solana Gateway's inner workings and security mechanisms. 
-- To receive GMP messages from other chains, read [Axelar Executable docs](src/executable.rs).
+- To receive GMP messages from other chains, read [Axelar Executable docs](./axelar-executable.md#solana-specific-rundown).
 - To send messages to other chains, read [Sending messages from Solana](#sending-messages-from-solana).
 
 ## Sending messages from Solana
@@ -123,7 +123,7 @@ After the Relayer reports the event to Amplifier API about a message being appro
     - `Incoming Message PDA`: contains the execution status of a message (will be `approved` state after message approval). Relationship - 1 PDA for each unique message on the Axelar network.
     - `Message Payload PDA`: contains the raw payload of a message. There can be many `Message Payload PDA`s, one for each operation relayer. Each `Message Payload PDA` points to a specific `Incoming Message PDA`.
   
-Next, the Relayer must communicate with the destination program. For a third-party developer to build an integration with the `Axelar Solana Gateway` and receive GMP messages, the only expectation is for the contract to implement [`axelar-executable`](src/executable.rs) interface. This allows the Relayer PDA to have a known interface to compose and send transactions after they've been approved on the Gateway. Exception of the rule is [`Interchain Token Service`](../axelar-solana-its/README.md) & [`Governance`](../axelar-solana-governance/README.md) programs, which do not implement `axelar-executable`.
+Next, the Relayer must communicate with the destination program. For a third-party developer to build an integration with the `Axelar Solana Gateway` and receive GMP messages, the only expectation is for the contract to implement [`axelar-executable`](./axelar-executable.md) interface. This allows the Relayer PDA to have a known interface to compose and send transactions after they've been approved on the Gateway. Exception of the rule is [`Interchain Token Service`](../axelar-solana-its/README.md) & [`Governance`](../axelar-solana-governance/README.md) programs, which do not implement `axelar-executable`.
 
 | action | tx count | description |
 | - | - | - |
