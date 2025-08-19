@@ -193,7 +193,11 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
     }
 }
 
-async function broadcast(operation, wallet, chain, action, options: Options, simulateTransaction = false) {
+function parseSimulatedResponse(response) {
+    return response.result.retval._value;
+}
+
+async function broadcast(operation, wallet, chain, action, options: Options) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
 
     if (options && options.nativePayment) {
@@ -208,12 +212,10 @@ async function broadcast(operation, wallet, chain, action, options: Options, sim
         return;
     }
 
-    if (simulateTransaction) {
+    if (options && options.simulateTransaction) {
         const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         try {
-            const response = await server.simulateTransaction(tx);
-            printInfo('successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
-            return response;
+            return await server.simulateTransaction(tx);
         } catch (error) {
             throw new Error(error);
         }
@@ -596,6 +598,7 @@ module.exports = {
     prepareTransaction,
     sendTransaction,
     broadcast,
+    parseSimulatedResponse,
     getWallet,
     estimateCost,
     getNetworkPassphrase,

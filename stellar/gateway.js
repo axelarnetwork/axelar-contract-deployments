@@ -162,10 +162,10 @@ async function execute(wallet, _, chain, contractConfig, args, options) {
         addressToScVal(destinationAddress),
         nativeToScVal(Buffer.from(payloadHash, 'hex')),
     );
+    const simulateOptions = { ...options, simulateTransaction: true };
+    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', simulateOptions);
 
-    const messageApproved = await broadcast(isMessageApprovedOperation, wallet, chain, 'is_message_approved called', options, true);
-
-    if (!messageApproved.result.retval._value) {
+    if (!parseSimulatedResponse(messageApproved)) {
         printWarn('Contract call not approved at the gateway');
         return;
     }

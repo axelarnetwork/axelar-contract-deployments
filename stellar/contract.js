@@ -4,7 +4,16 @@ const { Contract, SorobanRpc } = require('@stellar/stellar-sdk');
 const { Command, Option } = require('commander');
 const { execSync } = require('child_process');
 const { loadConfig, printInfo, saveConfig } = require('../evm/utils');
-const { stellarCmd, getNetworkPassphrase, addBaseOptions, getWallet, broadcast, serializeValue, addressToScVal } = require('./utils');
+const {
+    stellarCmd,
+    getNetworkPassphrase,
+    addBaseOptions,
+    getWallet,
+    broadcast,
+    parseSimulatedResponse,
+    serializeValue,
+    addressToScVal,
+} = require('./utils');
 const { getChainConfig, addOptionsToCommands } = require('../common');
 const { prompt, validateParameters } = require('../common/utils');
 require('./cli-utils');
@@ -16,10 +25,15 @@ async function submitOperation(wallet, chain, _contractName, contract, args, opt
         operation = args.operation;
     }
 
+    if (args.simulate) {
+        options.simulateTransaction = true;
+    }
+
     const callOperation = Array.isArray(args) ? await contract.call(operation, ...args) : await contract.call(operation);
 
-    const returnValue = await broadcast(callOperation, wallet, chain, `${operation}`, options, args.simulate);
-    const result = args.simulate ? returnValue.result.retval._value : returnValue.value();
+    const response = await broadcast(callOperation, wallet, chain, `${operation}`, options);
+
+    const result = args.simulate ? parseSimulatedResponse(response) : response.value();
 
     if (result !== undefined) {
         printInfo(`${_contractName}:${operation} returned`, serializeValue(result));

@@ -22,6 +22,7 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
+    parseSimulatedResponse,
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
 
@@ -34,9 +35,10 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
         const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
 
         try {
-            const isTrusted = (
-                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
-            ).value();
+            const simulateOptions = { ...options, simulateTransaction: true };
+            const isTrusted = parseSimulatedResponse(
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', simulateOptions),
+            );
 
             if (isTrusted && action === 'set_trusted_chain') {
                 printWarn('The chain is already trusted', trustedChain);
@@ -191,9 +193,9 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     });
 
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
+    options.simulateTransaction = true;
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
-    const flowLimit = returnValue.value();
+    const flowLimit = parseSimulatedResponse(await broadcast(operation, wallet, chain, 'Get Flow Limit', options));
 
     printInfo('Flow Limit', flowLimit || 'No limit set');
 }
