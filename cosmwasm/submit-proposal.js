@@ -38,6 +38,7 @@ const {
     readContractCode,
     getProposalConfig,
 } = require('../common');
+const { getItsChainConfig } = require('./query');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -191,7 +192,6 @@ const registerItsChain = async (client, wallet, config, options) => {
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-
         const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
 
         return {
@@ -204,6 +204,28 @@ const registerItsChain = async (client, wallet, config, options) => {
             },
         };
     });
+
+    if (options.update) {
+        for (let i = 0; i < options.chains.length; i++) {
+            const chain = options.chains[i];
+            const proposedConfig = chains[i];
+
+            try {
+                const currentConfig = await getItsChainConfig(client, config, chain);
+
+                const hasChanges = JSON.stringify(currentConfig) !== JSON.stringify(proposedConfig);
+
+                if (!hasChanges) {
+                    throw new Error(`No changes detected for chain '${chain}'.`);
+                }
+            } catch (error) {
+                if (error.message.includes('No changes detected')) {
+                    throw error;
+                }
+                throw new Error(`Failed to validate changes for chain '${chain}': ${error.message}`);
+            }
+        }
+    }
 
     const operation = options.update ? 'update' : 'register';
     await execute(client, wallet, config, {
