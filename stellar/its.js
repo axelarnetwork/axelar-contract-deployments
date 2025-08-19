@@ -92,8 +92,8 @@ async function deployInterchainToken(wallet, _config, chain, contract, args, opt
         minter,
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function deployRemoteInterchainToken(wallet, _config, chain, contract, args, options) {
@@ -119,8 +119,8 @@ async function deployRemoteInterchainToken(wallet, _config, chain, contract, arg
         tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Remote Interchain Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function registerCanonicalToken(wallet, _config, chain, contract, args, options) {
@@ -128,8 +128,8 @@ async function registerCanonicalToken(wallet, _config, chain, contract, args, op
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Canonical Token Registered', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function deployRemoteCanonicalToken(wallet, _config, chain, contract, args, options) {
@@ -151,8 +151,8 @@ async function deployRemoteCanonicalToken(wallet, _config, chain, contract, args
         tokenToScVal(gasTokenAddress, gasAmount),
     );
 
-    const returnValue = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
-    printInfo('tokenId', serializeValue(returnValue.value()));
+    const response = await broadcast(operation, wallet, chain, 'Remote Canonical Token Deployed', options);
+    printInfo('tokenId', serializeValue(response.value()));
 }
 
 async function interchainTransfer(wallet, config, chain, contract, args, options) {
@@ -206,9 +206,8 @@ async function flowLimit(wallet, _config, chain, contract, args, options) {
     });
 
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
-
-    const returnValue = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
-    const flowLimit = returnValue.value();
+    const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
+    const flowLimit = response.value();
 
     printInfo('Flow Limit', flowLimit || 'No limit set');
 }

@@ -36,9 +36,9 @@ async function createStellarAssetContract(wallet, _config, chain, contract, args
     const xdrAssetScVal = assetToScVal(asset);
 
     const operation = contract.call('create_stellar_asset_contract', xdrAssetScVal);
-    const returnValue = await broadcast(operation, wallet, chain, 'create_stellar_asset_contract', options);
+    const response = await broadcast(operation, wallet, chain, 'create_stellar_asset_contract', options);
 
-    printInfo('Stellar asset contract address', serializeValue(returnValue.value()));
+    printInfo('Stellar asset contract address', serializeValue(response.value()));
 }
 
 async function changeTrust(wallet, _config, chain, _contract, args, options) {
