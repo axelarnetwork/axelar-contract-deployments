@@ -191,8 +191,6 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     });
 
     const operation = contract.call('flow_limit', hexToScVal(tokenId));
-    options.simulateTransaction = true;
-
     const response = await broadcast(operation, wallet, chain, 'Get Flow Limit', options);
     const flowLimit = response.value();
 
