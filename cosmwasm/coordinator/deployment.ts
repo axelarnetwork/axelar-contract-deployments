@@ -1,6 +1,6 @@
 import { printInfo, prompt } from '../../common';
 import { encodeStoreCodeProposal, getContractCodePath, initContractConfig } from '../utils';
-import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
+import { ConfigManager } from './config';
 import type { DeployContractsOptions } from './option-processor';
 import { ProposalManager } from './proposal-manager';
 
@@ -13,10 +13,10 @@ export class DeploymentManager {
         this.proposalManager = proposalManager;
     }
 
-    public async deployContract(contractName: string, processedOptions: DeployContractsOptions): Promise<void> {
+    public async deployContract(contractName: string, processedOptions: DeployContractsOptions, version: string): Promise<void> {
         initContractConfig(this.configManager.getFullConfig(), { contractName, chainName: undefined });
 
-        const contractCodePath = await getContractCodePath(processedOptions, contractName);
+        const contractCodePath = await getContractCodePath({ artifactDir: processedOptions.artifactDir, version }, contractName);
 
         printInfo(`The contract ${contractName} is being deployed from ${contractCodePath}.`);
 
@@ -53,10 +53,11 @@ export class DeploymentManager {
     public async deployContracts(options: DeployContractsOptions): Promise<void> {
         printInfo('Deploying VotingVerifier, MultisigProver, and Gateway contracts...');
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
-
-        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
-            printInfo(`\n--- Deploying ${contractName} ---`);
-            await this.deployContract(contractName, options);
-        }
+        printInfo(`\n--- Deploying VotingVerifier ---`);
+        await this.deployContract('VotingVerifier', options, options.versionVerifier);
+        printInfo(`\n--- Deploying MultisigProver ---`);
+        await this.deployContract('MultisigProver', options, options.versionMultisig);
+        printInfo(`\n--- Deploying Gateway ---`);
+        await this.deployContract('Gateway', options, options.versionGateway);
     }
 }

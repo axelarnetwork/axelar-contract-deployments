@@ -2,8 +2,6 @@ import { createHash } from 'crypto';
 
 import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
 
-export const AMPLIFIER_CONTRACTS_TO_HANDLE = ['VotingVerifier', 'MultisigProver', 'Gateway'];
-
 export interface FullConfig {
     axelar?: {
         contracts?: {
@@ -216,7 +214,7 @@ export class ConfigManager {
 
         const deploymentNames = new Set<string>();
 
-        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
+        for (const contractName of ['VotingVerifier', 'MultisigProver', 'Gateway']) {
             const contract = axelarContracts[contractName]?.[chainName] as { deploymentName?: string };
             if (!contract) {
                 throw new Error(`Contract ${contractName} not found in config`);
@@ -243,7 +241,7 @@ export class ConfigManager {
             return undefined;
         }
 
-        for (const contractName of AMPLIFIER_CONTRACTS_TO_HANDLE) {
+        for (const contractName of ['VotingVerifier', 'MultisigProver', 'Gateway']) {
             const contract = axelarContracts[contractName]?.[chainName] as { proposalId?: string };
             if (contract?.proposalId) {
                 return contract.proposalId;

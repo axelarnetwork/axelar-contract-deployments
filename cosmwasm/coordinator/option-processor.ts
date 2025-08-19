@@ -10,7 +10,9 @@ export interface ProposalOptions {
 
 export interface DeployContractsOptions extends ProposalOptions {
     artifactDir?: string;
-    version?: string;
+    versionVerifier?: string;
+    versionMultisig?: string;
+    versionGateway?: string;
     deploymentName?: string;
 }
 

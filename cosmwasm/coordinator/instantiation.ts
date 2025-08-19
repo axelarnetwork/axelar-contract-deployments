@@ -2,7 +2,7 @@ import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/signingco
 
 import { printInfo, prompt } from '../../common';
 import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt } from '../utils';
-import { AMPLIFIER_CONTRACTS_TO_HANDLE, ConfigManager } from './config';
+import { ConfigManager } from './config';
 import type { InstantiateChainOptions } from './option-processor';
 import { ProposalManager } from './proposal-manager';
 
@@ -117,7 +117,7 @@ export class InstantiationManager {
         }
 
         const client = await this.proposalManager.getClient(options.mnemonic);
-        await this.fetchAndUpdateCodeIds(client, AMPLIFIER_CONTRACTS_TO_HANDLE);
+        await this.fetchAndUpdateCodeIds(client, ['VotingVerifier', 'MultisigProver', 'Gateway']);
         await this.executeMessageViaGovernance(options.chainName, options);
     }
 

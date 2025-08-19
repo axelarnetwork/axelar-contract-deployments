@@ -35,7 +35,9 @@ program
     .option('--deposit <deposit>', 'Proposal deposit amount', '1000000000')
     .option('--run-as <address>', 'Address to run the contract as')
     .option('--artifact-dir <path>', 'Path to contract artifacts directory')
-    .option('--version <version>', 'Contract version for artifact downloading (e.g., v1.0.0 or commit hash)')
+    .option('--version-verifier <version>', 'Contract version for VotingVerifier artifact downloading (e.g., v1.0.0 or commit hash)')
+    .option('--version-multisig <version>', 'Contract version for MultisigProver artifact downloading (e.g., v1.0.0 or commit hash)')
+    .option('--version-gateway <version>', 'Contract version for Gateway artifact downloading (e.g., v1.0.0 or commit hash)')
     .action(async (options) => {
         try {
             const processedOptions = OptionProcessor.processOptions(options);
