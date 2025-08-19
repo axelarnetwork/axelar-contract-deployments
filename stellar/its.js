@@ -34,9 +34,8 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
         const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
 
         try {
-            const simulateOptions = { ...options, simulateTransaction: true };
             const isTrusted = (
-                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', simulateOptions)
+                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
             ).value();
 
             if (isTrusted && action === 'set_trusted_chain') {

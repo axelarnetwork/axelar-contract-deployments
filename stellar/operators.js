@@ -23,8 +23,7 @@ async function isOperator(wallet, _, chain, contract, args, options) {
     });
 
     const operation = contract.call('is_operator', addressToScVal(address));
-    const simulateOptions = { ...options, simulateTransaction: true };
-    const isOperator = await broadcast(operation, wallet, chain, 'is_operator called', simulateOptions);
+    const isOperator = await broadcast(operation, wallet, chain, 'is_operator called', options);
 
     if (isOperator.value()) {
         printInfo(address + ' is an operator');
