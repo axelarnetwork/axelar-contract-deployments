@@ -359,7 +359,7 @@ function isValidStellarContract(address) {
 /// Token Manager Types supported by ITS
 /// These are the standardized token manager implementations across all chains
 const tokenManagerTypes = {
-    INTERCHAIN_TOKEN: 0,
+    NATIVE_INTERCHAIN_TOKEN: 0,
     MINT_BURN_FROM: 1,
     LOCK_UNLOCK: 2,
     LOCK_UNLOCK_FEE: 3,
