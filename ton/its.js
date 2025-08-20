@@ -735,4 +735,79 @@ program
         }
     });
 
+program
+    .command('get-full-state')
+    .description('Get complete ITS contract state')
+    .argument('[its-address]', 'ITS contract address (defaults to TON_ITS_ADDRESS env var)')
+    .action(async (itsAddress) => {
+        try {
+            const addressToUse = itsAddress || ITS_ADDRESS;
+            if (!addressToUse) {
+                console.error('❌ Please provide ITS address or set TON_ITS_ADDRESS env var');
+                process.exit(1);
+            }
+
+            const client = getTonClient();
+            const itsAddr = Address.parse(addressToUse);
+            const its = InterchainTokenService.createFromAddress(itsAddr);
+            const provider = client.provider(itsAddr);
+
+            console.log('🔍 Retrieving ITS state...\n');
+
+            const [itsData, hubConfig, chainNameHash, saltPrefixes, codeHashes] = await Promise.all([
+                its.getInterchainTokenServiceData(provider),
+                its.getHubConfig(provider),
+                its.getChainNameHash(provider),
+                its.getSaltPrefixes(provider),
+                its.getContractCodeHashes(provider),
+            ]);
+
+            // Extract hub info
+            let hubAddress, hubChainName;
+            try {
+                hubAddress = hubConfig.hubAddress.beginParse().loadStringTail();
+                hubChainName = hubConfig.hubChainName.beginParse().loadStringTail();
+            } catch {
+                hubAddress = formatCellOutput(hubConfig.hubAddress);
+                hubChainName = formatCellOutput(hubConfig.hubChainName);
+            }
+
+            console.log('ContractState {');
+            console.log(`    id: ${itsData.id},`);
+            console.log(`    gateway_address: ${itsData.axelarGateway},`);
+            console.log(`    state: 0,`);
+            console.log(`    its_operator: ${itsData.operator},`);
+            console.log(`    its_owner: ${itsData.operator},`);
+            console.log(`    chain_name_hash: "${chainNameHash.toBoc().toString('hex').toUpperCase()}",`);
+            console.log(`    prefix_interchain_token_salt: "${saltPrefixes.interchainTokenPrefix.toBoc().toString('hex').toUpperCase()}",`);
+            console.log(`    prefix_canonical_token_salt: "${saltPrefixes.canonicalTokenPrefix.toBoc().toString('hex').toUpperCase()}",`);
+            console.log(`    prefix_custom_token_salt: "${saltPrefixes.customTokenPrefix.toBoc().toString('hex').toUpperCase()}",`);
+            console.log(`    its_hub_address: "${hubAddress}",`);
+            console.log(`    its_hub_chain_name: "${hubChainName}",`);
+            console.log(`    jetton_wallet_code_hash: "${codeHashes.jettonWalletCodeHash.toString(16)}",`);
+            console.log(`    jetton_minter_code_hash: "${codeHashes.jettonMinterCodeHash.toString(16)}",`);
+            console.log(`    token_manager_code_hash: "${codeHashes.tokenManagerCodeHash.toString(16)}",`);
+            console.log(`    minter_proxy_code_hash: "${codeHashes.minterProxyCodeHash.toString(16)}",`);
+            console.log(`    minter_approval_code_hash: "${codeHashes.minterApprovalCodeHash.toString(16)}",`);
+
+            // Check trusted chains
+            const chains = ['ethereum', 'polygon', 'avalanche', 'arbitrum', 'base', 'optimism', 'avalanche-fuji'];
+            const trustedChains = {};
+            for (const chain of chains) {
+                try {
+                    const result = await its.getTrustedChainAddress(provider, chain);
+                    if (result.found === -1 && result.chainAddress) {
+                        trustedChains[chain] = result.chainAddress;
+                    }
+                } catch {}
+            }
+
+            console.log(`    trusted_chains: ${JSON.stringify(trustedChains, null, 8).replace(/\n/g, '\n    ')},`);
+            console.log('}');
+        } catch (error) {
+            console.error('❌ Error getting full state:', error.message);
+            process.exit(1);
+        }
+    });
+
 program.parse();

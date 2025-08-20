@@ -55,7 +55,7 @@ program
     .version('1.0.0')
     .argument('<contract-address>', 'Address of the contract to upgrade')
     .argument('<new-code-hex>', 'New contract code as hex BOC (without 0x prefix)')
-    .argument('<new-state-hex>', 'Optional new contract state as hex BOC (without 0x prefix)')
+    .argument('[new-state-hex]', 'Optional new contract state as hex BOC (without 0x prefix)')
     .action(async (contractAddress, newCodeHex, newStateHex) => {
         await executeUpgrade(contractAddress, newCodeHex, newStateHex);
     });
