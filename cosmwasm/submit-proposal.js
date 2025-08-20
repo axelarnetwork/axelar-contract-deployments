@@ -27,6 +27,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
     governanceAddress,
+    validateItsChainChange,
 } = require('./utils');
 const {
     saveConfig,
@@ -38,7 +39,6 @@ const {
     readContractCode,
     getProposalConfig,
 } = require('../common');
-const { getItsChainConfig } = require('./query');
 const {
     StoreCodeProposal,
     StoreAndInstantiateContractProposal,
@@ -206,29 +206,9 @@ const registerItsChain = async (client, wallet, config, options) => {
     });
 
     if (options.update) {
-        for (let i = 0; i < options.chains.length; i++) {
-            const chain = options.chains[i];
-            const proposedConfig = chains[i];
-
-            try {
-                const currentConfig = await getItsChainConfig(client, config, chain);
-
-                const hasChanges =
-                    currentConfig.chain !== proposedConfig.chain ||
-                    currentConfig.its_edge_contract !== proposedConfig.its_edge_contract ||
-                    currentConfig.msg_translator !== proposedConfig.msg_translator ||
-                    currentConfig.truncation.max_uint_bits !== proposedConfig.truncation.max_uint_bits ||
-                    currentConfig.truncation.max_decimals_when_truncating !== proposedConfig.truncation.max_decimals_when_truncating;
-
-                if (!hasChanges) {
-                    throw new Error(`No changes detected for chain '${chain}'. Update is unnecessary.`);
-                }
-            } catch (error) {
-                if (error.message.includes('No changes detected')) {
-                    throw error;
-                }
-                throw new Error(`Failed to validate changes for chain '${chain}': ${error.message}`);
-            }
+        for (const chain of options.chains) {
+            const chainIndex = options.chains.indexOf(chain);
+            await validateItsChainChange(client, config, chain, chains[chainIndex]);
         }
     }
 

@@ -33,15 +33,12 @@ async function rewards(client, config, options) {
 
 async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
-    if (!chainConfig) {
-        throw new Error(`Chain '${chainName}' not found in config`);
-    }
 
     const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
 
     return await client.queryContractSmart(itsHubAddress, {
         its_chain: {
-            chain: chainName,
+            chain: chainConfig.axelarId,
         },
     });
 }
@@ -53,7 +50,6 @@ async function itsChainConfig(client, config, options) {
         const result = await getItsChainConfig(client, config, chainName);
         printInfo(`ITS chain config for ${chainName}`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to fetch chain config for ${chainName}`, `${error.message}`);
         throw error;
     }
 }
