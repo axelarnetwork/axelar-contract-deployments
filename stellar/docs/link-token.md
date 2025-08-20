@@ -302,7 +302,7 @@ ts-node stellar/its deployed-token-manager 0x89a0c5...abcd
 # Add minter permission based on your token implementation
 
 # Interchain Token Transfer
-ts-node stellar/its interchain-transfer 0x89a0c5...abcd evm_chain 0xba76...dest 1 --gas-amount 10000000
+ts-node stellar/its interchain-transfer <0x89a0c5...abcd> <evm_chain> <0xba76...dest> 1 --gas-amount 10000000
 ```
 
 ## Troubleshooting & Error Handling
