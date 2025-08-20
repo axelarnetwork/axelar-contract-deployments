@@ -54,7 +54,7 @@ The following token manager types are supported:
 - `LOCK_UNLOCK` (2): For tokens that are locked/unlocked on the chain
 - `MINT_BURN` (4): For tokens that are burned/minted on the chain
 
-**Important:** Linking two LOCK_UNLOCK tokens is highly not recommended. One token should be MINT_BURN or MINT_BURN_FROM (requiring minter permissions) and the other can be LOCK_UNLOCK (no permissions required).
+**Important:** Linking two LOCK_UNLOCK tokens is not recommended. One token should be MINT_BURN or MINT_BURN_FROM (requiring minter permissions) and the other can be LOCK_UNLOCK (no permissions required).
 
 ## Parameters
 
