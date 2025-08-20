@@ -238,7 +238,7 @@ Link USDC tokens with different decimals (19 decimals on EVM, 7 decimals on Stel
 
 ```bash
 # Register USDC metadata on EVM (18 decimals)
-ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n evm_chain
+ts-node evm/its --action registerTokenMetadata --tokenAddress 0xa0b86a33...USDC -n <evm_chain>
 
 # If you want to change trust limit for a Stellar classic asset
 ts-node stellar/token-utils change-trust USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN 10000000
