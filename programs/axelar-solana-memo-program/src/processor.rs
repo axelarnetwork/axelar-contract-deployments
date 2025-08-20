@@ -1,7 +1,9 @@
 //! Program state processor
 
-use axelar_executable::{validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX};
 use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::executable::{
+    validate_message, AxelarMessagePayload, PROGRAM_ACCOUNTS_START_INDEX,
+};
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use axelar_solana_its::executable::{
     AxelarInterchainTokenExecutablePayload, MaybeAxelarInterchainTokenExecutablePayload,
@@ -30,7 +32,9 @@ pub fn process_instruction<'a>(
 ) -> ProgramResult {
     check_program_account(program_id, crate::check_id)?;
 
-    if let Some(message) = axelar_executable::parse_axelar_message(input).transpose()? {
+    if let Some(message) =
+        axelar_solana_gateway::executable::parse_axelar_message(input).transpose()?
+    {
         msg!("Instruction: AxelarExecute");
         return process_message_from_axelar(program_id, accounts, &message);
     }

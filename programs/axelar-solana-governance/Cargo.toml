@@ -14,28 +14,24 @@ crate-type = ["cdylib", "lib"]
 no-entrypoint = []
 test-sbf = []
 devnet-amplifier = [
-    "axelar-executable/devnet-amplifier",
     "axelar-solana-gateway-test-fixtures/devnet-amplifier",
     "axelar-solana-gateway/devnet-amplifier",
     "axelar-solana-memo-program/devnet-amplifier",
     "program-utils/devnet-amplifier"
 ]
 stagenet = [
-    "axelar-executable/stagenet",
     "axelar-solana-gateway-test-fixtures/stagenet",
     "axelar-solana-gateway/stagenet",
     "axelar-solana-memo-program/stagenet",
     "program-utils/stagenet"
 ]
 testnet = [
-    "axelar-executable/testnet",
     "axelar-solana-gateway-test-fixtures/testnet",
     "axelar-solana-gateway/testnet",
     "axelar-solana-memo-program/testnet",
     "program-utils/testnet"
 ]
 mainnet = [
-    "axelar-executable/mainnet",
     "axelar-solana-gateway-test-fixtures/mainnet",
     "axelar-solana-gateway/mainnet",
     "axelar-solana-memo-program/mainnet",
@@ -45,7 +41,6 @@ default = ["devnet-amplifier"]
 
 [dependencies]
 solana-program.workspace = true
-axelar-executable = { workspace = true, default-features = false }
 program-utils = { workspace = true, default-features = false }
 governance-gmp.workspace = true
 borsh.workspace = true

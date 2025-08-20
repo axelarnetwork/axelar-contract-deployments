@@ -1,6 +1,6 @@
 //! Instructions supported by the multicall program.
 
-use axelar_executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
+use axelar_solana_gateway::executable::{AxelarMessagePayload, EncodingScheme, PayloadError};
 use borsh::{BorshDeserialize, BorshSerialize};
 use error::BuilderError;
 use solana_program::instruction::AccountMeta;
@@ -265,7 +265,7 @@ impl MultiCallPayloadBuilder {
 
 /// Error types for the multicall program builder.
 pub mod error {
-    use axelar_executable::PayloadError;
+    use axelar_solana_gateway::executable::PayloadError;
     use thiserror::Error;
 
     /// Error types for the multicall program builder.
@@ -289,7 +289,7 @@ pub mod error {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use axelar_executable::EncodingScheme;
+    use axelar_solana_gateway::executable::EncodingScheme;
 
     use crate::instructions::encoding::{MultiCallPayload, ProgramPayload};
 

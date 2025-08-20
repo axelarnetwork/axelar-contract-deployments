@@ -50,6 +50,7 @@ program-utils.workspace = true
 role-management.workspace = true
 solana-program.workspace = true
 thiserror.workspace = true
+alloy-sol-types.workspace = true
 
 [dev-dependencies]
 hex.workspace = true
@@ -64,3 +65,7 @@ typed-builder.workspace = true
 axelar-solana-gateway-test-fixtures.workspace = true
 rstest.workspace = true
 pretty_assertions.workspace = true
+evm-contracts-rs.workspace = true
+evm-contracts-test-suite.workspace = true
+test-log.workspace = true
+tokio.workspace = true

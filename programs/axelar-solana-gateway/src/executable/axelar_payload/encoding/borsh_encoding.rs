@@ -1,6 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use crate::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
+use crate::executable::{AxelarMessagePayload, PayloadError, SolanaAccountRepr};
 
 impl<'payload> AxelarMessagePayload<'payload> {
     pub(super) fn encode_borsh(&self) -> Result<Vec<u8>, PayloadError> {
@@ -82,7 +82,7 @@ impl BorshDeserialize for SolanaAccountRepr {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::axelar_payload::encoding::tests::{account_fixture, account_fixture_2};
+    use crate::executable::axelar_payload::encoding::tests::{account_fixture, account_fixture_2};
     use rand::{thread_rng, Rng, RngCore};
 
     #[test]

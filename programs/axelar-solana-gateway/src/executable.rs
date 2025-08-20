@@ -1,10 +1,10 @@
 //! Utility functions for on-chain integration with the Axelar Gatewey on Solana
 
+use crate::error::GatewayError;
+use crate::state::incoming_message::{command_id, IncomingMessage};
+use crate::state::message_payload::ImmutMessagePayload;
+use crate::{get_validate_message_signing_pda, BytemuckedPda};
 use axelar_solana_encoding::types::messages::Message;
-use axelar_solana_gateway::error::GatewayError;
-use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
-use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
-use axelar_solana_gateway::{get_validate_message_signing_pda, BytemuckedPda};
 use core::str::FromStr;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -55,7 +55,7 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
         let incoming_message_pda = next_account_info(accounts_iter)?;
 
         // Check: Incoming Message account is owned by the Gateway
-        if incoming_message_pda.owner != &axelar_solana_gateway::ID {
+        if incoming_message_pda.owner != &crate::ID {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
@@ -68,7 +68,7 @@ pub fn validate_message(accounts: &[AccountInfo<'_>], message: &Message) -> Prog
 
     // Check: Message Payload account is owned by the Gateway
     let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &axelar_solana_gateway::ID {
+    if message_payload_account.owner != &crate::ID {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
@@ -141,7 +141,7 @@ pub fn validate_with_gmp_metadata(
 
     // Check: Message Payload account is owned by the Gateway
     let message_payload_account = next_account_info(accounts_iter)?;
-    if message_payload_account.owner != &axelar_solana_gateway::ID {
+    if message_payload_account.owner != &crate::ID {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
@@ -192,7 +192,7 @@ fn validate_message_internal(
     }
 
     invoke_signed(
-        &axelar_solana_gateway::instructions::validate_message(
+        &crate::instructions::validate_message(
             gateway_incoming_message.key,
             signing_pda.key,
             message.clone(),
@@ -244,7 +244,7 @@ pub fn construct_axelar_executable_ix(
         AccountMeta::new(gateway_incoming_message, false),
         AccountMeta::new_readonly(gateway_message_payload, false),
         AccountMeta::new_readonly(signing_pda, false),
-        AccountMeta::new_readonly(axelar_solana_gateway::id(), false),
+        AccountMeta::new_readonly(crate::id(), false),
     ];
     accounts.extend(passed_in_accounts);
 

@@ -190,10 +190,6 @@ crate = "axelar-message-primitives"
 expression = "MIT"
 license-files = []
 [[licenses.clarify]]
-crate = "axelar-executable"
-expression = "MIT"
-license-files = []
-[[licenses.clarify]]
 crate = "its-instruction-builder"
 expression = "MIT"
 license-files = []

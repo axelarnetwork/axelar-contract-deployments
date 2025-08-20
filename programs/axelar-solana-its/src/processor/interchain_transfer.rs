@@ -1,7 +1,7 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
-use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer};

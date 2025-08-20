@@ -330,7 +330,7 @@ impl SolanaAxelarIntegrationMetadata {
 
         let (incoming_message_pda, _bump) =
             get_incoming_message_pda(&command_id(&message.cc_id.chain, &message.cc_id.id));
-        let ix = axelar_executable::construct_axelar_executable_ix(
+        let ix = axelar_solana_gateway::executable::construct_axelar_executable_ix(
             &message,
             raw_payload,
             incoming_message_pda,

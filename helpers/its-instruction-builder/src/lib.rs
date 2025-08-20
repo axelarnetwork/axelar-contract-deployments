@@ -2,8 +2,8 @@
 
 use core::ops::Deref;
 
-use axelar_executable::AxelarMessagePayload;
 use axelar_solana_encoding::types::messages::Message;
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_its::instruction::ItsGmpInstructionInputs;
 use axelar_solana_its::state::token_manager::TokenManager;
 use borsh::BorshDeserialize;

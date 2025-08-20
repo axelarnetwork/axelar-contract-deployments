@@ -1,4 +1,4 @@
-use axelar_executable::EncodingScheme;
+use axelar_solana_gateway::executable::EncodingScheme;
 use axelar_solana_gateway_test_fixtures::gateway::random_message;
 use axelar_solana_memo_program::instruction::AxelarMemoInstruction;
 use axelar_solana_memo_program::state::Counter;

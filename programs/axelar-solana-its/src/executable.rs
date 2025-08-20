@@ -1,6 +1,6 @@
 //! Module that defines the struct used by contracts adhering to the `AxelarInterchainTokenExecutable` interface.
 
-use axelar_executable::AxelarMessagePayload;
+use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::message_payload::ImmutMessagePayload;
 use borsh::{BorshDeserialize, BorshSerialize};
 use interchain_token_transfer_gmp::GMPPayload;
