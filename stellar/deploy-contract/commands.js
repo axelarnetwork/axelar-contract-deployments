@@ -17,6 +17,10 @@ const CONTRACT_DEPLOY_OPTIONS = {
     AxelarExample: () => [
         new Option('--use-dummy-its-address', 'use dummy its address for AxelarExample contract to test a GMP call').default(false),
     ],
+    InterchainTokenService: () => [
+        new Option('--interchain-token-version <interchainTokenVersion>', 'version for InterchainToken contract').makeOptionMandatory(true),
+        new Option('--token-manager-version <tokenManagerVersion>', 'version for TokenManager contract').makeOptionMandatory(true),
+    ],
 };
 
 const CONTRACT_UPGRADE_OPTIONS = {
