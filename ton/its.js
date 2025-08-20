@@ -29,6 +29,7 @@ if (!ITS_ADDRESS) {
 }
 
 const OP_REGISTER_CANONICAL_INTERCHAIN_TOKEN_PERMISSIONED = 0x00000116;
+const OP_CHANGE_OWNER = 0x00000117;
 
 function buildRegisterCanonicalTokenPermissionedMessage(name, symbol, decimals, jettonMinterAddress, jettonWalletCode) {
     return beginCell()
@@ -696,6 +697,29 @@ program
     });
 
 program
+    .command('change-owner')
+    .description('Change the owner of the Interchain Token Service (current owner only)')
+    .argument('<new-owner>', 'Address of the new owner (TON address format)')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
+    .action(async (newOwner, options) => {
+        try {
+            console.log('Changing ITS Operator with parameters:');
+            console.log('  New Operator:', newOwner);
+            console.log('  Gas:', options.gas, 'TON');
+            console.log('⚠️  Note: Only the current operator can change the operator');
+
+            const newOwnerAddr = Address.parse(newOwner);
+            const messageBody = beginCell().storeUint(OP_CHANGE_OWNER, 32).storeAddress(newOwnerAddr).endCell();
+
+            const cost = toNano(options.gas);
+            await executeITSOperation('Change Owner', messageBody, cost);
+        } catch (error) {
+            console.error('❌ Error changing owner:', error.message);
+            process.exit(1);
+        }
+    });
+
+program
     .command('pause')
     .description('Pause the Interchain Token Service (operator only)')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
@@ -777,7 +801,7 @@ program
             console.log(`    gateway_address: ${itsData.axelarGateway},`);
             console.log(`    state: 0,`);
             console.log(`    its_operator: ${itsData.operator},`);
-            console.log(`    its_owner: ${itsData.operator},`);
+            console.log(`    its_owner: ${itsData.owner},`);
             console.log(`    chain_name_hash: "${chainNameHash.toBoc().toString('hex').toUpperCase()}",`);
             console.log(`    prefix_interchain_token_salt: "${saltPrefixes.interchainTokenPrefix.toBoc().toString('hex').toUpperCase()}",`);
             console.log(`    prefix_canonical_token_salt: "${saltPrefixes.canonicalTokenPrefix.toBoc().toString('hex').toUpperCase()}",`);

@@ -13,36 +13,37 @@ if (!GATEWAY_ADDRESS) {
     throw new Error('Please set TON_GATEWAY_ADDRESS in your .env file');
 }
 
-// Helper function to initialize TON client
 function getTonClient() {
-    // Try Chainstack first (no API key required)
-    try {
-        return new TonClient({
-            endpoint: CHAINSTACK_ENDPOINT,
-            timeout: 30000,
-        });
-    } catch (chainstackError) {
-        console.log('Chainstack initialization failed, trying TONCenter...', chainstackError.message);
-
-        // Fallback to TONCenter
-        if (!process.env.TONCENTER_API_KEY) {
-            throw new Error(
-                'Chainstack failed and no TONCENTER_API_KEY found. Please set TONCENTER_API_KEY environment variable or ensure Chainstack is accessible. Get API key from https://t.me/tontestnetapibot',
-            );
-        }
-
+    // Try Chainstack first if endpoint is configured
+    if (CHAINSTACK_ENDPOINT) {
         try {
-            console.log('Using TONCenter endpoint...');
             return new TonClient({
-                endpoint: TONCENTER_ENDPOINT,
-                apiKey: process.env.TONCENTER_API_KEY,
+                endpoint: CHAINSTACK_ENDPOINT,
                 timeout: 30000,
             });
-        } catch (toncenterError) {
-            throw new Error(
-                `Both Chainstack and TONCenter failed. Chainstack: ${chainstackError.message}, TONCenter: ${toncenterError.message}`,
-            );
+        } catch (error) {
+            console.log('⚠️  Chainstack failed, falling back to TONCenter:', error.message);
         }
+    }
+
+    // Fallback to TONCenter
+    if (!process.env.TONCENTER_API_KEY) {
+        throw new Error(
+            'No Chainstack endpoint configured and no TONCENTER_API_KEY found. ' +
+                'Please set CHAINSTACK_ENDPOINT or TONCENTER_API_KEY environment variable. ' +
+                'Get TONCenter API key from https://t.me/tontestnetapibot',
+        );
+    }
+
+    try {
+        console.log('🔗 Using TONCenter endpoint...');
+        return new TonClient({
+            endpoint: TONCENTER_ENDPOINT,
+            apiKey: process.env.TONCENTER_API_KEY,
+            timeout: 30000,
+        });
+    } catch (error) {
+        throw new Error(`TONCenter initialization failed: ${error.message}`);
     }
 }
 
