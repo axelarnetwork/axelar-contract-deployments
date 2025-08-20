@@ -1,7 +1,7 @@
 'use strict';
 
 const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
-const { loadConfig, printInfo, printWarn, getChainConfig } = require('../common');
+const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -34,9 +34,7 @@ async function rewards(client, config, options) {
 async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
-    const itsHubAddress = config.axelar.contracts.InterchainTokenService.address;
-
-    return await client.queryContractSmart(itsHubAddress, {
+    return await client.queryContractSmart(itsHubContractAddress(config.axelar), {
         its_chain: {
             chain: chainConfig.axelarId,
         },
