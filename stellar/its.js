@@ -576,7 +576,7 @@ if (require.main === module) {
 
     program
         .command('registered-token-address <tokenId>')
-        .description('Get the registered token address with the given token id')
+        .description('Get the registered token address for the given token id')
         .action((tokenId, options) => {
             mainProcessor(registeredTokenAddress, [tokenId], options);
         });
