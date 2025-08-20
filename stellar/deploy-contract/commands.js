@@ -17,6 +17,10 @@ const CONTRACT_DEPLOY_OPTIONS = {
     AxelarExample: () => [
         new Option('--use-dummy-its-address', 'use dummy its address for AxelarExample contract to test a GMP call').default(false),
     ],
+    InterchainTokenService: () => [
+        new Option('--interchain-token-version <interchainTokenVersion>', 'version for InterchainToken contract').makeOptionMandatory(true),
+        new Option('--token-manager-version <tokenManagerVersion>', 'version for TokenManager contract').makeOptionMandatory(true),
+    ],
 };
 
 const CONTRACT_UPGRADE_OPTIONS = {
@@ -96,20 +100,7 @@ const getDeployContractCommands = () => {
 
 const getUpgradeContractCommands = () => {
     return Array.from(SUPPORTED_CONTRACTS).map((contractName) => {
-        const command = new Command(contractName).description(`Upgrade ${contractName} contract`).addHelpText(
-            'after',
-            `
-Examples:
-  # using Vec<Address> as migration data:
-  $ deploy-contract upgrade axelar-operators deploy --artifact-path {releasePath}/stellar_axelar_operators.optimized.wasm --version 2.1.7 --migration-data '["GDYBNA2LAWDKRSCIR4TKCB5LJCDRVUWKHLMSKUWMJ3YX3BD6DWTNT5FW"]'
-
-  # default void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1
-
-  # equivalent explicit void migration data:
-  $ deploy-contract upgrade axelar-gateway deploy --artifact-path {releasePath}/stellar_axelar_gateway.optimized.wasm --version 1.0.1 --migration-data '()'
-`,
-        );
+        const command = new Command(contractName).description(`Upgrade ${contractName} contract`);
 
         addUpgradeOptions(command);
 
