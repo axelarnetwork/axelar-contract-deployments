@@ -1,6 +1,17 @@
 'use strict';
 
-import { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
+import {
+    Address,
+    BASE_FEE,
+    Horizon,
+    Keypair,
+    Networks,
+    TransactionBuilder,
+    authorizeInvocation,
+    nativeToScVal,
+    rpc,
+    xdr,
+} from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
@@ -20,6 +31,9 @@ const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 const TRANSACTION_TIMEOUT = 30;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
+
+// Ledger extension for authorization operations
+const LEDGER_EXTENSION_FOR_AUTH = 20;
 
 // TODO: Need to be migrated to Pascal Case
 const SUPPORTED_CONTRACTS = new Set([
@@ -68,6 +82,17 @@ function getNetworkPassphrase(networkType: NetworkType) {
         default:
             throw new Error(`Unknown network type: ${networkType}`);
     }
+}
+
+/**
+ * Calculates the validUntil ledger sequence for authorization operations
+ * @param {Object} chain - Chain configuration object containing RPC URL
+ * @returns {Promise<number>} - The ledger sequence number until which the authorization is valid
+ */
+async function getAuthValidUntilLedger(chain) {
+    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
+    const latestLedger = await server.getLatestLedger();
+    return latestLedger.sequence + LEDGER_EXTENSION_FOR_AUTH;
 }
 
 const addBaseOptions = (command: Command, options: Options = {}) => {
@@ -244,6 +269,35 @@ async function broadcast(operation, wallet, chain, action, options: Options) {
 
     const preparedTx = await prepareTransaction(tx, server, wallet, options);
     return sendTransaction(preparedTx, server, action, options);
+}
+
+async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
+    const server = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
+
+    try {
+        const account = await server.loadAccount(wallet.publicKey());
+
+        const transactionBuilder = new TransactionBuilder(account, {
+            fee: BASE_FEE,
+            networkPassphrase: getNetworkPassphrase(chain.networkType),
+        });
+
+        const operationsArray = Array.isArray(operations) ? operations : [operations];
+        operationsArray.forEach((operation) => {
+            transactionBuilder.addOperation(operation);
+        });
+
+        const transaction = transactionBuilder.setTimeout(30).build();
+        transaction.sign(wallet);
+
+        const result = await server.submitTransaction(transaction);
+
+        printInfo(`Successfully executed ${action}`, `Transaction hash: ${result.hash}`);
+
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to execute ${action}: ${error.message}`);
+    }
 }
 
 function getAssetCode(balance, chain) {
@@ -619,9 +673,11 @@ module.exports = {
     prepareTransaction,
     sendTransaction,
     broadcast,
+    broadcastHorizon,
     getWallet,
     estimateCost,
     getNetworkPassphrase,
+    getAuthValidUntilLedger,
     addBaseOptions,
     getNewSigners,
     serializeValue,
@@ -642,4 +698,5 @@ module.exports = {
     generateKeypair,
     isFriendbotSupported,
     assetToScVal,
+    isHexString,
 };
