@@ -206,9 +206,9 @@ const registerItsChain = async (client, wallet, config, options) => {
     });
 
     if (options.update) {
-        for (const chain of options.chains) {
-            const chainIndex = options.chains.indexOf(chain);
-            await validateItsChainChange(client, config, chain, chains[chainIndex]);
+        for (let i = 0; i < options.chains.length; i++) {
+            const chain = options.chains[i];
+            await validateItsChainChange(client, config, chain, chains[i]);
         }
     }
 
