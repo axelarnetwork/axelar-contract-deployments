@@ -138,6 +138,12 @@ SESSION_ID= # multisig session ID, e.g., 22306
 ts-node evm/gateway.js -p $EVM_PRIVATE_KEY -n $DESTINATION_CHAIN --action submitProof --multisigSessionId $SESSION_ID
 ```
 
+Note that manual executation of the proof might be necessary if relayer fails to pickup transaction
+
+```bash
+ts-node evm/gateway.js -n <destination chain> --action execute --messageId $MESSAGE_ID --sourceChain axelar  --sourceAddress <itsHubAddress>   --destination <destination gateway contract address>   --payload 0x$PAYLOAD
+```
+
 ### 8. Token Instance Registration
 
 Once both legs of the remote token deployment have succeeded, register the token instance
