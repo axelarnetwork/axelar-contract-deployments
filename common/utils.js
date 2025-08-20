@@ -388,8 +388,8 @@ const validateLinkType = (chainType, type) => {
 
     const chainRules = {
         evm: {
-            validate: (type) => ![tokenManagerTypes.INTERCHAIN_TOKEN].includes(type),
-            errorMsg: 'INTERCHAIN_TOKEN is not supported for EVM chains.',
+            validate: (type) => ![tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN].includes(type),
+            errorMsg: 'NATIVE_INTERCHAIN_TOKEN is not supported for EVM chains.',
         },
         stellar: {
             validate: (type) =>
