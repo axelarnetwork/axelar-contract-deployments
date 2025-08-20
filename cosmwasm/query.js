@@ -5,7 +5,7 @@ const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress 
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, options) {
+async function rewards(client, config, _args, options) {
     const { chainName } = options;
 
     const rewardsContractAddresses = {
@@ -52,7 +52,27 @@ async function itsChainConfig(client, config, options) {
     }
 }
 
-const mainProcessor = async (processor, options) => {
+async function tokenConfig(client, config, args, _options) {
+    const [chainName, tokenId] = args;
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            token_config: { chain: chainName, token_id: tokenId },
+        });
+
+        printInfo(`Custom token metadata for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch custom token metadata for ${tokenId} on ${chainName}`, error?.message || String(error));
+    }
+}
+
+const mainProcessor = async (processor, args, options) => {
     const { env } = options;
     const config = loadConfig(env);
 
@@ -61,7 +81,7 @@ const mainProcessor = async (processor, options) => {
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await processor(client, config, options);
+    await processor(client, config, args, options);
 };
 
 const programHandler = () => {
@@ -73,10 +93,18 @@ const programHandler = () => {
         .command('rewards')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
-            mainProcessor(rewards, options);
+            mainProcessor(rewards, [], options);
+        });
+
+    const tokenConfigCmd = program
+        .command('token-config <chainName> <tokenId>')
+        .description('Query custom token metadata from ITS Hub')
+        .action((chainName, tokenId, options) => {
+            mainProcessor(tokenConfig, [chainName, tokenId], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);
+    addAmplifierQueryOptions(tokenConfigCmd);
 
     const itsChainConfigCmd = program
         .command('its-chain-config')
