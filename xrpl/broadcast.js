@@ -1,5 +1,5 @@
 const { Command } = require('commander');
-const { mainProcessor } = require('./utils');
+const { mainProcessor, broadcastTxBlob } = require('./utils');
 const { addBaseOptions, addSkipPromptOption } = require('./cli-utils');
 
 async function broadcast(_config, _wallet, client, _chain, options, args) {
