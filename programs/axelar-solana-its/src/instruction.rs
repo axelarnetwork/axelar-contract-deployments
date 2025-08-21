@@ -1025,11 +1025,14 @@ pub fn deploy_remote_canonical_interchain_token(
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
+    let token_id = crate::canonical_interchain_token_id(&mint);
+    let (token_manager, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(token_manager, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
@@ -1144,11 +1147,13 @@ pub fn deploy_remote_interchain_token(
         axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
     let (metadata_account_key, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint);
     let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
+    let (token_manager, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
 
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(token_manager, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),
@@ -1207,10 +1212,10 @@ pub fn deploy_remote_interchain_token_with_minter(
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
         AccountMeta::new_readonly(metadata_account_key, false),
+        AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(minter, false),
         AccountMeta::new(deploy_approval, false),
         AccountMeta::new_readonly(minter_roles_pda, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),

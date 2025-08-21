@@ -2,7 +2,6 @@
 
 use event_utils::Event as _;
 use interchain_token_transfer_gmp::{GMPPayload, LinkToken, RegisterTokenMetadata};
-use mpl_token_metadata::accounts::Metadata;
 use program_utils::pda::BorshPda;
 use solana_program::account_info::{next_account_info, AccountInfo};
 use solana_program::entrypoint::ProgramResult;
@@ -13,16 +12,15 @@ use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
 use spl_token_2022::state::Mint;
 
-use crate::processor::gmp::GmpAccounts;
+use crate::processor::gmp::{self, GmpAccounts};
+use crate::processor::interchain_token;
+use crate::processor::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
 use crate::state::token_manager::TokenManager;
 use crate::state::{token_manager, InterchainTokenService};
 use crate::{
     assert_its_not_paused, assert_valid_its_root_pda, assert_valid_token_manager_pda, event,
     FromAccountInfoSlice,
 };
-
-use super::gmp;
-use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
 
 pub(crate) fn process_inbound<'a>(
     payer: &'a AccountInfo<'a>,
@@ -243,35 +241,29 @@ fn register_token<'a>(
     let (payer, metadata_account) = registration_accounts
         .split_first()
         .ok_or(ProgramError::NotEnoughAccountKeys)?;
-    let metadata_account = metadata_account
-        .first()
-        .ok_or(ProgramError::NotEnoughAccountKeys)?;
+    let maybe_metadata_account = metadata_account.first();
 
     msg!("Instruction: RegisterToken");
 
     let its_config = InterchainTokenService::load(parsed_accounts.its_root_pda)?;
     assert_its_not_paused(&its_config)?;
 
-    match Metadata::from_bytes(&metadata_account.try_borrow_data()?) {
-        Ok(metadata) => {
-            if metadata.mint.ne(parsed_accounts.token_mint.key) {
-                msg!("Metadata and mint mismatch");
+    let (token_manager_type, operator, deploy_salt) = match *registration {
+        TokenRegistration::Canonical => {
+            // Metadata is required for canonical tokens
+            if let Err(_err) = interchain_token::get_token_metadata(
+                parsed_accounts.token_mint,
+                maybe_metadata_account,
+            ) {
                 return Err(ProgramError::InvalidAccountData);
             }
-        }
-        Err(error) => {
-            msg!("Failed to fetch required Metaplex metadata for the token");
 
-            return Err(error.into());
+            (
+                token_manager::Type::LockUnlock,
+                None,
+                crate::canonical_interchain_token_deploy_salt(parsed_accounts.token_mint.key),
+            )
         }
-    };
-
-    let (token_manager_type, operator, deploy_salt) = match *registration {
-        TokenRegistration::Canonical => (
-            token_manager::Type::LockUnlock,
-            None,
-            crate::canonical_interchain_token_deploy_salt(parsed_accounts.token_mint.key),
-        ),
         TokenRegistration::Custom {
             salt,
             token_manager_type,

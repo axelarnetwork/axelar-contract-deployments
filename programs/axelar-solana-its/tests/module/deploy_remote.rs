@@ -451,3 +451,109 @@ async fn test_deploy_remote_without_minter_with_mismatched_metadata(
 
     Ok(())
 }
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_deploy_remote_interchain_token_with_mismatched_token_manager(
+    ctx: &mut ItsTestContext,
+) -> anyhow::Result<()> {
+    // First, deploy two separate local interchain tokens
+    let salt1 = solana_sdk::keccak::hash(b"FirstToken").0;
+    let deploy_local_ix1 = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
+        salt1,
+        "First Token".to_owned(),
+        "FIRST".to_owned(),
+        9,
+        1000,
+        Some(ctx.solana_wallet),
+    )?;
+
+    ctx.send_solana_tx(&[deploy_local_ix1])
+        .await
+        .expect("First InterchainToken deployment failed");
+
+    let salt2 = solana_sdk::keccak::hash(b"SecondToken").0;
+    let deploy_local_ix2 = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
+        salt2,
+        "Second Token".to_owned(),
+        "SECOND".to_owned(),
+        9,
+        1000,
+        Some(ctx.solana_wallet),
+    )?;
+
+    ctx.send_solana_tx(&[deploy_local_ix2])
+        .await
+        .expect("Second InterchainToken deployment failed");
+
+    // Get the token IDs and mint addresses for both tokens
+    let token_id2 = axelar_solana_its::interchain_token_id(&ctx.solana_wallet, &salt2);
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (mint2, _) = axelar_solana_its::find_interchain_token_pda(&its_root_pda, &token_id2);
+
+    // Approve remote deployment for the first token
+    let approve_remote_deployment1 =
+        axelar_solana_its::instruction::approve_deploy_remote_interchain_token(
+            ctx.solana_wallet,
+            ctx.solana_wallet,
+            salt1,
+            "ethereum".to_string(),
+            vec![1, 2, 3, 4],
+        )?;
+
+    ctx.send_solana_tx(&[approve_remote_deployment1])
+        .await
+        .unwrap();
+
+    // Try to deploy remote for the first token but use the second token's mint and metadata
+    let deploy_remote_ix =
+        axelar_solana_its::instruction::deploy_remote_interchain_token_with_minter(
+            ctx.solana_wallet,
+            salt1,
+            ctx.solana_wallet,
+            "ethereum".to_string(),
+            vec![1, 2, 3, 4],
+            0,
+        )?;
+
+    // Get the accounts from the instruction
+    let mut accounts = deploy_remote_ix.accounts.clone();
+
+    // Replace the mint account with the second token's mint
+    // but keep the token manager for the first token (salt1)
+    accounts[1].pubkey = mint2;
+    let (metadata2_pda, _) = mpl_token_metadata::accounts::Metadata::find_pda(&mint2);
+    accounts[2].pubkey = metadata2_pda;
+
+    // Create the modified instruction
+    let mismatched_token_manager_ix = Instruction {
+        program_id: axelar_solana_its::id(),
+        accounts,
+        data: deploy_remote_ix.data,
+    };
+
+    let result = ctx.send_solana_tx(&[mismatched_token_manager_ix]).await;
+
+    // Transaction should fail
+    assert!(
+        result.is_err(),
+        "Expected deployment to fail with mismatched token manager"
+    );
+
+    let err = result.unwrap_err();
+    let error_logs = err.metadata.unwrap().log_messages;
+
+    // Check for the specific error message
+    let has_token_manager_error = error_logs
+        .iter()
+        .any(|log| log.contains("TokenManager doesn't match mint"));
+
+    assert!(
+        has_token_manager_error,
+        "Expected 'TokenManager doesn't match mint' error"
+    );
+
+    Ok(())
+}

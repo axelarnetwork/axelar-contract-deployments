@@ -25,8 +25,11 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_pack::Pack as _;
 use solana_program::pubkey::Pubkey;
 use spl_token_2022::check_spl_token_program_account;
+use spl_token_2022::extension::metadata_pointer::MetadataPointer;
+use spl_token_2022::extension::{BaseStateWithExtensions, StateWithExtensions};
 use spl_token_2022::instruction::initialize_mint;
 use spl_token_2022::state::Mint;
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use super::gmp::{self, GmpAccounts};
 use super::token_manager::{DeployTokenManagerAccounts, DeployTokenManagerInternal};
@@ -242,6 +245,52 @@ pub(crate) fn process_inbound_deploy<'a>(
     Ok(())
 }
 
+/// Retrieves token metadata with fallback logic:
+/// 1. First, try to get metadata from Token 2022 extensions
+///     - If the metadata pointer points to the mint itself, we try to deserialize it using
+///     `TokenMetadata`
+/// 2. If we can't retrieve the metadata from embedded TokenMetadata, we try to deserialize the
+///    data from the given metadata account, if any, as Metaplex `Metadata`.
+pub(crate) fn get_token_metadata(
+    mint: &AccountInfo,
+    maybe_metadata_account: Option<&AccountInfo>,
+) -> Result<(String, String), ProgramError> {
+    let mint_data = mint.try_borrow_data()?;
+
+    if let Ok(mint_with_extensions) = StateWithExtensions::<Mint>::unpack(&mint_data) {
+        if let Ok(metadata_pointer) = mint_with_extensions.get_extension::<MetadataPointer>() {
+            if let Some(metadata_address) =
+                Option::<Pubkey>::from(metadata_pointer.metadata_address)
+            {
+                if metadata_address == *mint.key {
+                    if let Ok(token_metadata_ext) =
+                        mint_with_extensions.get_variable_len_extension::<TokenMetadata>()
+                    {
+                        return Ok((token_metadata_ext.name, token_metadata_ext.symbol));
+                    }
+                }
+            }
+        }
+    }
+
+    let metadata_account = maybe_metadata_account.ok_or(ProgramError::NotEnoughAccountKeys)?;
+    if *metadata_account.owner != mpl_token_metadata::ID {
+        msg!("Invalid Metaplex metadata account");
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    let token_metadata = Metadata::from_bytes(&metadata_account.try_borrow_data()?)?;
+    if token_metadata.mint != *mint.key {
+        msg!("The metadata and mint accounts passed don't match");
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    let name = token_metadata.name.trim_end_matches('\0').to_owned();
+    let symbol = token_metadata.symbol.trim_end_matches('\0').to_owned();
+
+    Ok((name, symbol))
+}
+
 pub(crate) fn process_outbound_deploy<'a>(
     accounts: &'a [AccountInfo<'a>],
     salt: [u8; 32],
@@ -250,11 +299,12 @@ pub(crate) fn process_outbound_deploy<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    const OUTBOUND_MESSAGE_ACCOUNTS_INDEX: usize = 3;
+    const OUTBOUND_MESSAGE_ACCOUNTS_INDEX: usize = 4;
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint = next_account_info(accounts_iter)?;
     let metadata = next_account_info(accounts_iter)?;
+    let token_manager_account = next_account_info(accounts_iter)?;
     let token_id = crate::interchain_token_id_internal(&salt);
     let mut outbound_message_accounts_index = OUTBOUND_MESSAGE_ACCOUNTS_INDEX;
 
@@ -267,8 +317,7 @@ pub(crate) fn process_outbound_deploy<'a>(
         let minter = next_account_info(accounts_iter)?;
         let deploy_approval = next_account_info(accounts_iter)?;
         let minter_roles_account = next_account_info(accounts_iter)?;
-        let token_manager_account = next_account_info(accounts_iter)?;
-        outbound_message_accounts_index = outbound_message_accounts_index.saturating_add(4);
+        outbound_message_accounts_index = outbound_message_accounts_index.saturating_add(3);
 
         msg!("Instruction: OutboundDeployMinter");
         ensure_roles(
@@ -288,16 +337,23 @@ pub(crate) fn process_outbound_deploy<'a>(
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
     msg!("Instruction: OutboundDeploy");
 
-    let token_metadata = Metadata::from_bytes(&metadata.try_borrow_data()?)?;
-    let mint_data = Mint::unpack(&mint.try_borrow_data()?)?;
+    // Get metadata with fallback logic (Token 2022 extensions first, then Metaplex)
+    let (name, symbol) = get_token_metadata(mint, Some(metadata))?;
+    let mint_data_ref = mint.try_borrow_data()?;
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_data_ref)?;
+    let mint_data = mint_state.base;
 
-    if token_metadata.mint != *mint.key {
-        msg!("The metadata and mint accounts passed don't match");
+    let token_manager = TokenManager::load(token_manager_account)?;
+    assert_valid_token_manager_pda(
+        token_manager_account,
+        gmp_accounts.its_root_account.key,
+        &token_id,
+        token_manager.bump,
+    )?;
+    if token_manager.token_address != *mint.key {
+        msg!("TokenManager doesn't match mint");
         return Err(ProgramError::InvalidArgument);
     }
-
-    let name = token_metadata.name.trim_end_matches('\0').to_owned();
-    let symbol = token_metadata.symbol.trim_end_matches('\0').to_owned();
 
     let deployment_started_event = event::InterchainTokenDeploymentStarted {
         token_id,
