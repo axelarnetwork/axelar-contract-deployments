@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::base::TestFixture;
 use axelar_solana_governance::events::GovernanceEvent;
@@ -10,9 +11,9 @@ use solana_sdk::signature::{Keypair, Signer};
 
 use crate::fixtures::operator_keypair;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, deploy_governance_program, events,
-    gmp_memo_metadata, gmp_sample_metadata, init_contract_with_operator,
-    ix_builder_with_memo_proposal_data, ix_builder_with_sample_proposal_data, setup_programs,
+    approve_ix_at_gateway, deploy_governance_program, events, gmp_memo_metadata,
+    gmp_sample_metadata, init_contract_with_operator, ix_builder_with_memo_proposal_data,
+    ix_builder_with_sample_proposal_data, setup_programs,
 };
 
 /// This is a full flow test that tests the execution of a proposal that reaches

@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::add_upgradeable_loader_account;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use solana_program_test::tokio;
@@ -6,8 +7,7 @@ use solana_sdk::bpf_loader_upgradeable::UpgradeableLoaderState;
 use solana_sdk::signature::{Keypair, Signer};
 
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, default_proposal_eta, gmp_memo_metadata,
-    setup_programs,
+    approve_ix_at_gateway, default_proposal_eta, gmp_memo_metadata, setup_programs,
 };
 #[tokio::test]
 async fn test_gateway_upgrade_through_proposal() {

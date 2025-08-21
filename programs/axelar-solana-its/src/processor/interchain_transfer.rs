@@ -236,12 +236,24 @@ pub(crate) fn process_outbound_transfer<'a>(
 
     msg!("Instruction: OutboundTransfer");
     let token_manager = TokenManager::load(take_token_accounts.token_manager_pda)?;
+
     assert_valid_token_manager_pda(
         take_token_accounts.token_manager_pda,
         take_token_accounts.its_root_pda.key,
         &token_id,
         token_manager.bump,
     )?;
+
+    let expected_token_manager_ata =
+        spl_associated_token_account::get_associated_token_address_with_program_id(
+            take_token_accounts.token_manager_pda.key,
+            take_token_accounts.token_mint.key,
+            take_token_accounts.token_program.key,
+        );
+    if *take_token_accounts.token_manager_ata.key != expected_token_manager_ata {
+        msg!("Provided token_manager_ata doesn't match expected derivation");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if token_manager.token_address != *take_token_accounts.token_mint.key {
         msg!("Mint and token ID don't match");

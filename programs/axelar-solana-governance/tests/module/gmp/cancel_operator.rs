@@ -1,3 +1,4 @@
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
@@ -8,9 +9,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 
 use crate::gmp::{gmp_sample_metadata, setup_programs};
-use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, events, ix_builder_with_sample_proposal_data,
-};
+use crate::helpers::{approve_ix_at_gateway, events, ix_builder_with_sample_proposal_data};
 
 #[tokio::test]
 async fn test_successfully_process_gmp_cancel_operator_proposal() {

@@ -1,5 +1,7 @@
 use axelar_solana_gateway_test_fixtures::base::FindLog;
-use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegrationMetadata;
+use axelar_solana_gateway_test_fixtures::{
+    assert_msg_present_in_logs, SolanaAxelarIntegrationMetadata,
+};
 use axelar_solana_governance::events::GovernanceEvent;
 use axelar_solana_governance::instructions::builder::{IxBuilder, ProposalRelated};
 use borsh::to_vec;
@@ -10,8 +12,7 @@ use solana_sdk::signer::Signer;
 
 use crate::gmp::gmp_sample_metadata;
 use crate::helpers::{
-    approve_ix_at_gateway, assert_msg_present_in_logs, events,
-    ix_builder_with_sample_proposal_data, setup_programs,
+    approve_ix_at_gateway, events, ix_builder_with_sample_proposal_data, setup_programs,
 };
 
 #[tokio::test]
