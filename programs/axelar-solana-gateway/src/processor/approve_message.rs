@@ -96,7 +96,7 @@ impl Processor {
         if message.leaf.signing_verifier_set
             != session.signature_verification.signing_verifier_set_hash
         {
-            return Err(GatewayError::SigningSessionNotValid.into());
+            return Err(GatewayError::InvalidVerificationSessionPDA.into());
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
