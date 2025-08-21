@@ -92,7 +92,7 @@ pub(crate) fn deploy<'a>(
     check_accounts(accounts)?;
     validate_mint_extensions(deploy_token_manager.manager_type, accounts.token_mint)?;
 
-    crate::create_associated_token_account(
+    crate::create_associated_token_account_idempotent(
         payer,
         accounts.token_mint,
         accounts.token_manager_ata,

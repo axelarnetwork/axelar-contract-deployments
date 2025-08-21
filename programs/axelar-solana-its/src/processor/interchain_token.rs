@@ -552,7 +552,7 @@ fn setup_mint<'a>(
     )?;
 
     if initial_supply > 0 {
-        crate::create_associated_token_account(
+        crate::create_associated_token_account_idempotent(
             payer,
             accounts.token_mint,
             accounts.payer_ata,

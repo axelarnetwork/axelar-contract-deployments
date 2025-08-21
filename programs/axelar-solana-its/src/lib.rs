@@ -490,42 +490,6 @@ pub fn deployment_approval_pda(
     }
 }
 
-/// Creates an associated token account for the given wallet address and token
-/// mint.
-///
-/// # Errors
-///
-/// Returns an error if the account already exists.
-pub(crate) fn create_associated_token_account<'a>(
-    payer: &AccountInfo<'a>,
-    token_mint_account: &AccountInfo<'a>,
-    associated_token_account: &AccountInfo<'a>,
-    wallet: &AccountInfo<'a>,
-    system_account: &AccountInfo<'a>,
-    token_program: &AccountInfo<'a>,
-) -> ProgramResult {
-    let create_ata_ix = spl_associated_token_account::instruction::create_associated_token_account(
-        payer.key,
-        wallet.key,
-        token_mint_account.key,
-        token_program.key,
-    );
-
-    invoke(
-        &create_ata_ix,
-        &[
-            payer.clone(),
-            associated_token_account.clone(),
-            wallet.clone(),
-            token_mint_account.clone(),
-            system_account.clone(),
-            token_program.clone(),
-        ],
-    )?;
-
-    Ok(())
-}
-
 /// Creates an associated token account for the given program address and token
 /// mint, if it doesn't already exist.
 ///
@@ -536,14 +500,14 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
     payer: &AccountInfo<'a>,
     token_mint_account: &AccountInfo<'a>,
     associated_token_account: &AccountInfo<'a>,
-    program: &AccountInfo<'a>,
+    wallet: &AccountInfo<'a>,
     system_account: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
 ) -> ProgramResult {
     let create_ata_ix =
         spl_associated_token_account::instruction::create_associated_token_account_idempotent(
             payer.key,
-            program.key,
+            wallet.key,
             token_mint_account.key,
             token_program.key,
         );
@@ -553,7 +517,7 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
         &[
             payer.clone(),
             associated_token_account.clone(),
-            program.clone(),
+            wallet.clone(),
             token_mint_account.clone(),
             system_account.clone(),
             token_program.clone(),
