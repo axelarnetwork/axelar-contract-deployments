@@ -1,16 +1,19 @@
 'use strict';
 
-const { Contract, nativeToScVal } = require('@stellar/stellar-sdk');
-const { Command, Option } = require('commander');
+const { Contract, nativeToScVal, Operation, Address, authorizeInvocation, rpc, xdr } = require('@stellar/stellar-sdk');
+const { Command, Option, Argument } = require('commander');
 const {
     saveConfig,
     loadConfig,
     addOptionsToCommands,
     getChainConfig,
+    getChainConfigByAxelarId,
     printInfo,
     printWarn,
     printError,
     validateParameters,
+    validateDestinationChain,
+    validateChain,
 } = require('../common');
 const {
     addBaseOptions,
@@ -22,8 +25,11 @@ const {
     hexToScVal,
     saltToBytes32,
     serializeValue,
+    createAuthorizedFunc,
+    getNetworkPassphrase,
+    getAuthValidUntilLedger,
 } = require('./utils');
-const { prompt, parseTrustedChains, encodeITSDestination } = require('../common/utils');
+const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
@@ -64,11 +70,19 @@ async function removeTrustedChains(wallet, config, chain, contract, args, option
     await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
 }
 
-async function deployInterchainToken(wallet, _, chain, contract, args, options) {
+async function deployInterchainToken(wallet, _config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const minter = caller;
     const [symbol, name, decimal, salt, initialSupply] = args;
     const saltBytes32 = saltToBytes32(salt);
+
+    validateParameters({
+        isNonEmptyString: { symbol, name },
+        isValidNumber: { decimal, initialSupply },
+    });
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
         'deploy_interchain_token',
@@ -83,7 +97,7 @@ async function deployInterchainToken(wallet, _, chain, contract, args, options) 
     printInfo('tokenId', serializeValue(response.value()));
 }
 
-async function deployRemoteInterchainToken(wallet, _, chain, contract, args, options) {
+async function deployRemoteInterchainToken(wallet, _config, chain, contract, args, options) {
     const caller = addressToScVal(wallet.publicKey());
     const [salt, destinationChain] = args;
     const saltBytes32 = saltToBytes32(salt);
@@ -94,6 +108,9 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
         isValidStellarAddress: { gasTokenAddress },
         isValidNumber: { gasAmount },
     });
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
 
     const operation = contract.call(
         'deploy_remote_interchain_token',
@@ -107,7 +124,7 @@ async function deployRemoteInterchainToken(wallet, _, chain, contract, args, opt
     printInfo('tokenId', serializeValue(response.value()));
 }
 
-async function registerCanonicalToken(wallet, _, chain, contract, args, options) {
+async function registerCanonicalToken(wallet, _config, chain, contract, args, options) {
     const [tokenAddress] = args;
 
     const operation = contract.call('register_canonical_token', nativeToScVal(tokenAddress, { type: 'address' }));
@@ -116,7 +133,7 @@ async function registerCanonicalToken(wallet, _, chain, contract, args, options)
     printInfo('tokenId', serializeValue(response.value()));
 }
 
-async function deployRemoteCanonicalToken(wallet, _, chain, contract, args, options) {
+async function deployRemoteCanonicalToken(wallet, _config, chain, contract, args, options) {
     const spenderScVal = addressToScVal(wallet.publicKey());
     const [tokenAddress, destinationChain] = args;
     const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
@@ -153,7 +170,6 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
 
     const itsDestinationAddress = encodeITSDestination(config.chains, destinationChain, destinationAddress);
     printInfo('Human-readable destination address', destinationAddress);
-    printInfo('Encoded ITS destination address', itsDestinationAddress);
 
     const operation = contract.call(
         'interchain_transfer',
@@ -169,7 +185,7 @@ async function interchainTransfer(wallet, config, chain, contract, args, options
     await broadcast(operation, wallet, chain, 'Interchain Token Transferred', options);
 }
 
-async function execute(wallet, _, chain, contract, args, options) {
+async function execute(wallet, _config, chain, contract, args, options) {
     const [sourceChain, messageId, sourceAddress, payload] = args;
 
     const operation = contract.call(
@@ -183,7 +199,7 @@ async function execute(wallet, _, chain, contract, args, options) {
     await broadcast(operation, wallet, chain, 'Executed', options);
 }
 
-async function flowLimit(wallet, _, chain, contract, args, options) {
+async function flowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -197,7 +213,7 @@ async function flowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Flow Limit', flowLimit || 'No limit set');
 }
 
-async function setFlowLimit(wallet, _, chain, contract, args, options) {
+async function setFlowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId, flowLimit] = args;
 
     validateParameters({
@@ -213,7 +229,7 @@ async function setFlowLimit(wallet, _, chain, contract, args, options) {
     printInfo('Successfully set flow limit', flowLimit);
 }
 
-async function removeFlowLimit(wallet, _, chain, contract, args, options) {
+async function removeFlowLimit(wallet, _config, chain, contract, args, options) {
     const [tokenId] = args;
 
     validateParameters({
@@ -226,6 +242,185 @@ async function removeFlowLimit(wallet, _, chain, contract, args, options) {
 
     await broadcast(operation, wallet, chain, 'Remove Flow Limit', options);
     printInfo('Successfully removed flow limit');
+}
+
+async function interchainTokenAddress(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const operation = contract.call('interchain_token_address', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get interchain token address', options);
+    const tokenAddress = serializeValue(returnValue.value());
+
+    printInfo(`Interchain Token Address`, tokenAddress);
+
+    return tokenAddress;
+}
+
+async function registeredTokenAddress(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const operation = contract.call('registered_token_address', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get registered token address', options);
+    const tokenAddress = serializeValue(returnValue.value());
+
+    printInfo(`Registered Token Address`, tokenAddress);
+
+    return tokenAddress;
+}
+
+async function tokenAdmin(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+    const operation = contract.call('token_admin', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get token admin', options);
+    const adminAddress = serializeValue(returnValue.value());
+
+    printInfo(`Token Admin Address`, adminAddress);
+
+    return adminAddress;
+}
+
+async function deployedTokenManager(wallet, _config, chain, contract, args, options) {
+    const [tokenId] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+    });
+
+    const tokenIdBytes = hexToScVal(tokenId);
+
+    const operation = contract.call('deployed_token_manager', tokenIdBytes);
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Get deployed token manager', options);
+    const tokenManagerAddress = serializeValue(returnValue.value());
+
+    printInfo(`Deployed Token Manager Address`, tokenManagerAddress);
+
+    return tokenManagerAddress;
+}
+
+async function registerTokenMetadata(wallet, _config, chain, contract, args, options) {
+    const [tokenAddress] = args;
+    const spender = addressToScVal(wallet.publicKey());
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, gasTokenAddress },
+        isValidNumber: { gasAmount },
+    });
+
+    const operation = contract.call(
+        'register_token_metadata',
+        nativeToScVal(tokenAddress, { type: 'address' }),
+        spender,
+        tokenToScVal(gasTokenAddress, gasAmount),
+    );
+
+    await broadcast(operation, wallet, chain, 'Token Metadata Registered', options);
+}
+
+async function registerCustomToken(wallet, _config, chain, contract, args, options) {
+    const deployer = addressToScVal(wallet.publicKey());
+    const [salt, tokenAddress, type] = args;
+    const saltBytes32 = saltToBytes32(salt);
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress },
+        isNonEmptyString: { type },
+    });
+
+    const tokenManagerType = validateLinkType(chain.chainType, type);
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
+
+    const operation = contract.call(
+        'register_custom_token',
+        deployer,
+        hexToScVal(saltBytes32),
+        nativeToScVal(tokenAddress, { type: 'address' }),
+        nativeToScVal(tokenManagerType, { type: 'u32' }),
+    );
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Custom Token Registered', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
+}
+
+async function linkToken(wallet, config, chain, contract, args, options) {
+    const deployer = addressToScVal(wallet.publicKey());
+    const [salt, destinationChain, destinationTokenAddress, type] = args;
+    const saltBytes32 = saltToBytes32(salt);
+    const gasTokenAddress = options.gasTokenAddress || chain.tokenAddress;
+    const gasAmount = options.gasAmount;
+
+    validateParameters({
+        isValidStellarAddress: { gasTokenAddress },
+        isValidNumber: { gasAmount },
+        isNonEmptyString: { destinationChain, destinationTokenAddress, type },
+    });
+    validateChain(config.chains, destinationChain);
+
+    const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
+    const tokenManagerType = validateLinkType(chainType, type);
+
+    printInfo('Salt', salt);
+    printInfo('Deployment salt (bytes32)', saltBytes32);
+
+    const itsDestinationTokenAddress = encodeITSDestination(config.chains, destinationChain, destinationTokenAddress);
+    printInfo('Human-readable destination token address', destinationTokenAddress);
+
+    let operatorBytes = nativeToScVal(null, { type: 'void' });
+    if (options.operator) {
+        printInfo('Destination Operator address', options.operator);
+        operatorBytes = hexToScVal(encodeITSDestination(config.chains, destinationChain, options.operator));
+    }
+
+    const operation = contract.call(
+        'link_token',
+        deployer,
+        hexToScVal(saltBytes32),
+        nativeToScVal(destinationChain, { type: 'string' }),
+        hexToScVal(itsDestinationTokenAddress),
+        nativeToScVal(tokenManagerType, { type: 'u32' }),
+        operatorBytes,
+        tokenToScVal(gasTokenAddress, gasAmount),
+    );
+
+    const returnValue = await broadcast(operation, wallet, chain, 'Token Linked', options);
+    printInfo('tokenId', serializeValue(returnValue.value()));
+}
+
+async function transferTokenAdmin(wallet, _config, chain, contract, args, options) {
+    const [tokenId, newAdmin] = args;
+
+    validateParameters({
+        isNonEmptyString: { tokenId },
+        isValidStellarAddress: { newAdmin },
+    });
+
+    const operation = contract.call('transfer_token_admin', hexToScVal(tokenId), nativeToScVal(newAdmin, { type: 'address' }));
+
+    await broadcast(operation, wallet, chain, 'Transfer Token Admin', options);
+    printInfo('New admin address', newAdmin);
 }
 
 async function mainProcessor(processor, args, options) {
@@ -307,6 +502,34 @@ if (require.main === module) {
         });
 
     program
+        .command('register-token-metadata <tokenAddress>')
+        .description('register token metadata')
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .action((tokenAddress, options) => {
+            mainProcessor(registerTokenMetadata, [tokenAddress], options);
+        });
+
+    program
+        .command('register-custom-token <salt> <tokenAddress>')
+        .description('register custom token')
+        .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
+        .action((salt, tokenAddress, type, options) => {
+            mainProcessor(registerCustomToken, [salt, tokenAddress, type], options);
+        });
+
+    program
+        .command('link-token <salt> <destinationChain> <destinationTokenAddress>')
+        .description('link token')
+        .addArgument(new Argument('<type>', 'token manager type').choices(Object.keys(tokenManagerTypes)))
+        .addOption(new Option('--gas-token-address <gasTokenAddress>', 'gas token address (default: XLM)'))
+        .addOption(new Option('--gas-amount <gasAmount>', 'gas amount').default(0))
+        .addOption(new Option('--operator <operator>', 'operator for the token id on the destination chain'))
+        .action((salt, destinationChain, destinationTokenAddress, type, options) => {
+            mainProcessor(linkToken, [salt, destinationChain, destinationTokenAddress, type], options);
+        });
+
+    program
         .command('interchain-transfer <tokenId> <destinationChain> <destinationAddress> <amount>')
         .description('interchain transfer')
         .addOption(new Option('--data <data>', 'data').default(''))
@@ -342,6 +565,41 @@ if (require.main === module) {
         .description('Remove the flow limit for a token')
         .action((tokenId, options) => {
             mainProcessor(removeFlowLimit, [tokenId], options);
+        });
+
+    program
+        .command('interchain-token-address <tokenId>')
+        .description('Get the interchain token address with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(interchainTokenAddress, [tokenId], options);
+        });
+
+    program
+        .command('registered-token-address <tokenId>')
+        .description('Get the registered token address for the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(registeredTokenAddress, [tokenId], options);
+        });
+
+    program
+        .command('token-admin <tokenId>')
+        .description('Get the admin address for a token with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(tokenAdmin, [tokenId], options);
+        });
+
+    program
+        .command('deployed-token-manager <tokenId>')
+        .description('Get the deployed token manager address with the given token id')
+        .action((tokenId, options) => {
+            mainProcessor(deployedTokenManager, [tokenId], options);
+        });
+
+    program
+        .command('transfer-token-admin <tokenId> <newAdmin>')
+        .description('Transfer admin of a token contract from token id')
+        .action((tokenId, newAdmin, options) => {
+            mainProcessor(transferTokenAdmin, [tokenId, newAdmin], options);
         });
 
     addOptionsToCommands(program, addBaseOptions);
