@@ -5,7 +5,6 @@ const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-uti
 const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
 const { mainCosmosProcessor } = require('./utils');
-const { contract } = require('@stellar/stellar-sdk');
 
 const registerTokenMetadata = async (config, options, wallet, client, fee) => {
     const { chainName, issuer, currency } = options;
