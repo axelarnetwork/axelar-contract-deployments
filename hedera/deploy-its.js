@@ -156,6 +156,10 @@ async function deployAll(config, wallet, chain, options) {
         printInfo('Trusted chains', trustedChains);
     }
 
+    if (!isAddress(options.whbarAddress)) {
+        throw new Error(`Invalid WHBAR address: ${options.whbarAddress}`);
+    }
+
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
 
     if (existingAddress !== undefined && interchainTokenService !== existingAddress) {
@@ -257,6 +261,7 @@ async function deployAll(config, wallet, chain, options) {
                     itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
+                    options.whbarAddress,
                 ];
 
                 printInfo('ITS Implementation args', args);

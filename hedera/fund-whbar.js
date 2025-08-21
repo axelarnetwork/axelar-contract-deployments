@@ -17,7 +17,7 @@ const WHBAR_ABI = [
 ];
 
 async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
-    printInfo(`Funding ${targetAddress} with ${amount.toFixed(8)} WHBAR...`);
+    printInfo(`Funding ${targetAddress} with ${amount / 10 ** 18} WHBAR...`);
 
     // Deposit HBAR to get WHBAR
     const depositTx = await whbar.connect(wallet).deposit({ value: amount });
