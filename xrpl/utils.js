@@ -12,6 +12,29 @@ function hex(str) {
     return Buffer.from(str).toString('hex');
 }
 
+function getEvent(events, type) {
+    if (!Array.isArray(events)) {
+        throw new Error('Events list missing or not an array');
+    }
+
+    const evt = events.find((e) => e && e.type === type);
+    if (!evt) {
+        throw new Error(`${type} event not found`);
+    }
+
+    return evt;
+}
+
+function getEventAttr(event, attr) {
+    const attrs = Array.isArray(event.attributes) ? event.attributes : [];
+    const a = attrs.find((x) => x && x.key === attr);
+    if (!a || typeof a.value === 'undefined') {
+        throw new Error(`Attribute "${attr}" not found in ${event.type}`);
+    }
+
+    return a.value;
+}
+
 function roundUpToNearestXRP(amountInDrops) {
     return Math.ceil(amountInDrops / 1e6) * 1e6;
 }
@@ -164,6 +187,8 @@ module.exports = {
     mainProcessor,
     mainCosmosProcessor,
     hex,
+    getEvent,
+    getEventAttr,
     roundUpToNearestXRP,
     deriveAddress,
     parseTokenAmount,

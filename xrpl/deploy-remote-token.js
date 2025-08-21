@@ -4,7 +4,9 @@ const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
 const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
-const { mainCosmosProcessor } = require('./utils');
+const { mainCosmosProcessor, getEvent, getEventAttr } = require('./utils');
+
+const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
 
 const deployRemoteToken = async (config, options, wallet, client, fee) => {
     const { chainName, issuer, currency, tokenName, tokenSymbol, destinationChain } = options;
@@ -36,12 +38,16 @@ const deployRemoteToken = async (config, options, wallet, client, fee) => {
 
     printInfo('Initiated remote token deployment', transactionHash);
 
-    const contractCalledEvent = events.find((e) => e.type === 'wasm-contract_called');
-    const messageId = contractCalledEvent.attributes.find((a) => a.key === 'message_id').value;
-    const payload = contractCalledEvent.attributes.find((a) => a.key === 'payload').value;
-
-    printInfo('Message ID', messageId);
-    printInfo('Payload', payload);
+    try {
+        const contractCalledEvent = getEvent(events, CONTRACT_CALLED_EVENT_TYPE);
+        const messageId = getEventAttr(contractCalledEvent, 'message_id');
+        const payload = getEventAttr(contractCalledEvent, 'payload');
+        printInfo('Message ID', messageId);
+        printInfo('Payload', payload);
+    } catch (err) {
+        printError(err.message);
+        process.exit(1);
+    }
 };
 
 const programHandler = () => {

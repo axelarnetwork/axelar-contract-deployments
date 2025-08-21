@@ -4,7 +4,10 @@ const { Command, Option } = require('commander');
 const { addAmplifierOptions, addChainNameOption } = require('../cosmwasm/cli-utils');
 const { executeTransaction: executeCosmosTransaction } = require('../cosmwasm/utils');
 const { printInfo, printError } = require('../common');
-const { mainCosmosProcessor } = require('./utils');
+const { mainCosmosProcessor, getEvent, getEventAttr } = require('./utils');
+
+const CONTRACT_CALLED_EVENT_TYPE = 'wasm-contract_called';
+const TOKEN_METADATA_REGISTERED_EVENT_TYPE = 'wasm-token_metadata_registered';
 
 const registerTokenMetadata = async (config, options, wallet, client, fee) => {
     const { chainName, issuer, currency } = options;
@@ -31,16 +34,21 @@ const registerTokenMetadata = async (config, options, wallet, client, fee) => {
 
     printInfo('Initiated token metadata registration', transactionHash);
 
-    const contractCalledEvent = events.find((e) => e.type === 'wasm-contract_called');
-    const messageId = contractCalledEvent.attributes.find((a) => a.key === 'message_id').value;
-    const payload = contractCalledEvent.attributes.find((a) => a.key === 'payload').value;
+    try {
+        const contractCalledEvent = getEvent(events, CONTRACT_CALLED_EVENT_TYPE);
+        const messageId = getEventAttr(contractCalledEvent, 'message_id');
+        const payload = getEventAttr(contractCalledEvent, 'payload');
 
-    const tokenMetadataRegisteredEvent = events.find((e) => e.type === 'wasm-token_metadata_registered');
-    const tokenAddress = tokenMetadataRegisteredEvent.attributes.find((a) => a.key === 'token_address').value;
+        const tokenMetadataRegisteredEvent = getEvent(events, TOKEN_METADATA_REGISTERED_EVENT_TYPE);
+        const tokenAddress = getEventAttr(tokenMetadataRegisteredEvent, 'token_address');
 
-    printInfo('Message ID', messageId);
-    printInfo('Payload', payload);
-    printInfo('Token address', tokenAddress);
+        printInfo('Message ID', messageId);
+        printInfo('Payload', payload);
+        printInfo('Token address', tokenAddress);
+    } catch (err) {
+        printError(err.message);
+        process.exit(1);
+    }
 };
 
 const programHandler = () => {
