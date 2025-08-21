@@ -92,6 +92,13 @@ impl Processor {
             return Err(GatewayError::SigningSessionNotValid.into());
         }
 
+        // Check: message signing verifier set matches the verification session verifier set
+        if message.leaf.signing_verifier_set
+            != session.signature_verification.signing_verifier_set_hash
+        {
+            return Err(GatewayError::SigningSessionNotValid.into());
+        }
+
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();
         let message_hash = message.leaf.message.hash::<SolanaSyscallHasher>();
         let proof = rs_merkle::MerkleProof::<SolanaSyscallHasher>::from_bytes(&message.proof)
