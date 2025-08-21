@@ -79,7 +79,7 @@ async function tokenInstance(client, _config, itsHubAddress, args, _options) {
     }
 }
 
-const mainProcessor = async (processor, args, options) => {
+const mainProcessor = async (processor, args, options, requiresItsHub = true) => {
     const { env } = options;
     const config = loadConfig(env);
 
@@ -90,7 +90,7 @@ const mainProcessor = async (processor, args, options) => {
 
     const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
-    if (!itsHubAddress) {
+    if (requiresItsHub && !itsHubAddress) {
         printWarn('ITS Hub contract address not found in config');
         return;
     }
@@ -107,7 +107,7 @@ const programHandler = () => {
         .command('rewards')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
-            mainProcessor(rewards, [], options);
+            mainProcessor(rewards, [], options, false);
         });
 
     const tokenConfigCmd = program
