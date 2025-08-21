@@ -62,8 +62,9 @@ const deployPackage = async (packageName, client, keypair, options = {}) => {
 
     const builder = new TxBuilder(client);
     await builder.publishPackageAndTransferCap(packageName, options.owner || keypair.toSuiAddress(), moveDir);
+    console.log("-------------------------------- before publishTxn");
     const publishTxn = await broadcastFromTxBuilder(builder, keypair, `Deployed ${packageName} Package`, options);
-
+    console.log("-------------------------------- after publishTxn");
     const packageId = (findPublishedObject(publishTxn) ?? []).packageId;
 
     updateMoveToml(packageName, packageId, moveDir);

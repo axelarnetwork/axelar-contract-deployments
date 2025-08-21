@@ -381,6 +381,7 @@ async function deploy(keypair, client, supportedContract, config, chain, options
 
     // Check if dependencies are deployed
     const dependencies = getLocalDependencies(packageDir, `${__dirname}/../node_modules/@axelar-network/axelar-cgp-sui/move`);
+    console.log("dependencies: ", dependencies);
 
     for (const { name } of dependencies) {
         if (!chain.contracts[name]) {
@@ -388,8 +389,11 @@ async function deploy(keypair, client, supportedContract, config, chain, options
         }
     }
 
+    console.log("-------------------------------- before deploy package");
     // Deploy package
     const published = await deployPackage(packageDir, client, keypair, options);
+
+    console.log("-------------------------------- after deploy package");
 
     printInfo(`${packageName} Package ID`, published.packageId);
 

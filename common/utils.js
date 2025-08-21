@@ -476,7 +476,7 @@ const getAmplifierContractOnchainConfig = async (axelar, chain) => {
 
 async function getDomainSeparator(axelar, chain, options) {
     // Allow any domain separator for local deployments or `0x` if not provided
-    if (options.env === 'local') {
+    if (options.env === 'local' || options.env == 'devnet-amplifier') {
         if (options.domainSeparator && options.domainSeparator !== 'offline') {
             return options.domainSeparator;
         }
