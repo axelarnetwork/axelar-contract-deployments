@@ -19,7 +19,7 @@ const registerTokenMetadata = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const registerTokenMetadata = {
+    const execMsg = {
         register_token_metadata: {
             xrpl_token: {
                 issued: {
@@ -30,7 +30,7 @@ const registerTokenMetadata = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplGateway.address, registerTokenMetadata, fee);
+    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
 
     printInfo('Initiated token metadata registration', transactionHash);
 

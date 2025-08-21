@@ -16,14 +16,14 @@ const registerRemoteToken = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const registerRemoteToken = {
+    const execMsg = {
         register_remote_token: {
             token_id: tokenId,
             xrpl_currency: currency,
         },
     };
 
-    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, registerRemoteToken, fee);
+    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered remote token', transactionHash);
 };

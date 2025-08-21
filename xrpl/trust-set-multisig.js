@@ -16,13 +16,13 @@ const trustSet = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const trustSet = {
+    const execMsg = {
         trust_set: {
             token_id: tokenId,
         },
     };
 
-    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplMultisigProver.address, trustSet, fee);
+    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplMultisigProver.address, execMsg, fee);
 
     printInfo('Creating trust line between token and multisig', transactionHash);
     const multisigSessionId = events

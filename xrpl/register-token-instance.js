@@ -16,7 +16,7 @@ const registerTokenInstance = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const registerTokenInstance = {
+    const execMsg = {
         register_token_instance: {
             token_id: tokenId,
             chain: sourceChain,
@@ -24,7 +24,7 @@ const registerTokenInstance = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, registerTokenInstance, fee);
+    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered token instance', transactionHash);
 };

@@ -16,7 +16,7 @@ const registerLocalToken = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const registerLocalToken = {
+    const execMsg = {
         register_local_token: {
             xrpl_token: {
                 issuer,
@@ -25,7 +25,7 @@ const registerLocalToken = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, registerLocalToken, fee);
+    const { transactionHash } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
 
     printInfo('Registered local token', transactionHash);
 };

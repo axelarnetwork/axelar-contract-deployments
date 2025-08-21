@@ -18,7 +18,7 @@ const deployRemoteToken = async (config, options, wallet, client, fee) => {
         process.exit(1);
     }
 
-    const deployRemoteToken = {
+    const execMsg = {
         deploy_remote_token: {
             xrpl_token: {
                 issued: {
@@ -34,7 +34,7 @@ const deployRemoteToken = async (config, options, wallet, client, fee) => {
         },
     };
 
-    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplGateway.address, deployRemoteToken, fee);
+    const { transactionHash, events } = await executeCosmosTransaction(client, account, xrplGateway.address, execMsg, fee);
 
     printInfo('Initiated remote token deployment', transactionHash);
 
