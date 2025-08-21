@@ -1398,6 +1398,22 @@
           "connectionType": "amplifier",
           "owner": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
           "salt": "AxelarAmplifierGateway"
+        },
+        "Operators": {
+          "owner": "0x9f5CDBc370B00C0dF52cf2619FA95907508108df",
+          "address": "0xFe52cB696C387f85b8eebaD5f7B5eaD34300c549",
+          "predeployCodehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233",
+          "deploymentMethod": "create2",
+          "codehash": "0xc561dc32ef670c929db9d7fbf6b5f6c074a62a30602481ba3b88912ca6d79feb",
+          "salt": "Operators"
+        },
+        "AxelarGasService": {
+          "collector": "0xFe52cB696C387f85b8eebaD5f7B5eaD34300c549",
+          "salt": "AxelarGasService",
+          "address": "0xc421Ac0479de15cF8e488Da5F07f40F40B643cF9",
+          "implementation": "0xfc94EC931Fa14326faA309d7d116148a821668d5",
+          "deployer": "0xba76c6980428A0b10CFC5d8ccb61949677A61233"
         }
       }
     }
