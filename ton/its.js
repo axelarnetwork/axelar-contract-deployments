@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 const { Command } = require('commander');
 const { toNano, Address, beginCell, Cell } = require('@ton/core');
-const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, getJettonCodes } = require('./common');
+const {
+    getTonClient,
+    loadWallet,
+    waitForTransaction,
+    sendTransactionWithCost,
+    getJettonCodes,
+    sendMultipleTransactionWithCost,
+} = require('./common');
 const { JettonWallet, JettonMinter, hexStringToCell } = require('axelar-cgp-ton');
 const {
     buildDeployInterchainTokenMessage,
@@ -20,7 +27,9 @@ const {
     buildPauseMessage,
     buildUnpauseMessage,
     InterchainTokenService,
+    buildPayNativeGasForContractCallMessage,
 } = require('axelar-cgp-ton');
+const ethers = require('ethers');
 
 const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
 
@@ -40,6 +49,18 @@ function buildRegisterCanonicalTokenPermissionedMessage(name, symbol, decimals, 
         .storeAddress(jettonMinterAddress)
         .storeRef(jettonWalletCode)
         .endCell();
+}
+
+function encodeInterchainTransferHubMessage(params) {
+    const abiCoder = new ethers.utils.AbiCoder();
+
+    // First encode the inner payload (interchain transfer message)
+    const innerPayload = abiCoder.encode(
+        ['uint256', 'bytes32', 'bytes', 'bytes', 'uint256', 'bytes'],
+        [0, params.tokenId, params.sourceAddress, params.destinationAddress, params.amount, params.data],
+    );
+
+    return innerPayload.slice(2);
 }
 
 const program = new Command();
@@ -304,9 +325,25 @@ program
             const client = getTonClient();
             const { contract, key } = await loadWallet(client);
 
+            const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
             const itsAddress = Address.parse(process.env.TON_ITS_ADDRESS);
             const jettonMinterAddress = Address.parse(jettonMinter);
             const sender = contract.address;
+
+            // Convert tokenId to bytes32 format
+            const tokenIdBytes32 = '0x' + tokenIdBigInt.toString(16).padStart(64, '0');
+            const data = Buffer.from('', 'hex');
+            const destAddr = Buffer.from(destinationAddress.slice(2), 'hex');
+
+            const payload = encodeInterchainTransferHubMessage({
+                tokenId: tokenIdBytes32,
+                sourceAddress: sender.hash,
+                destinationAddress: destAddr,
+                amount: amount,
+                data: data,
+            });
+
+            const payNativeGasMessage = buildPayNativeGasForContractCallMessage(sender, chainName, destinationAddress, payload, sender);
 
             const minter = JettonMinter.createFromAddress(jettonMinterAddress);
 
@@ -324,18 +361,43 @@ program
             const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
 
             // Create the interchain token transfer forward payload using the builder
-            const forwardPayload = buildInterchainTokenTransferPayload(jettonMinterAddress, tokenIdBigInt, chainName, destinationAddress);
+            const forwardPayload = buildInterchainTokenTransferPayload(
+                jettonMinterAddress,
+                tokenIdBigInt,
+                chainName,
+                Buffer.from(destinationAddress.slice(2), 'hex'),
+            );
 
             console.log(`Sending ${spendAmount.toString()} Jettons with bundled interchain transfer`);
 
             // Use the sendJettonsTo helper function similar to gas service
-            const res = await sendJettonsTo(itsAddress, contract, userJettonWallet, minter, spendAmount, forwardPayload);
+            const jettonTransferMessage = JettonWallet.transferMessage(
+                spendAmount, // jetton_amount
+                itsAddress, // to: destination address (ITS)
+                sender, // responseAddress
+                null, // customPayload
+                toNano('0.065'), // forward_ton_amount
+                forwardPayload, // forwardPayload
+            );
 
-            console.log('Transaction result:', res);
+            // const res = await sendJettonsTo(itsAddress, contract, userJettonWallet, minter, spendAmount, forwardPayload);
+
+            const { transfer, seqno } = await sendMultipleTransactionWithCost(
+                contract,
+                key,
+                userJettonWallet.address, // to1: jetton wallet address for token transfer
+                jettonTransferMessage, // messageBody1: jetton transfer message
+                toNano('0.1'), // cost1: jetton transfer cost
+                gasServiceAddress, // to2: gas service address
+                payNativeGasMessage, // messageBody2: gas payment message
+                toNano('0.05'), // cost2: gas payment cost (hardcoded)
+            );
+
+            console.log('Transaction result:', transfer);
             console.log('✅ Bundled interchain token transfer sent successfully!');
 
             // Wait for confirmation
-            const seqno = await contract.getSeqno();
+            // const seqno = await contract.getSeqno();
             await waitForTransaction(contract, seqno);
         } catch (error) {
             console.error('❌ Error in bundled interchain token transfer:', error);

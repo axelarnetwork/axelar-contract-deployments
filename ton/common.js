@@ -122,6 +122,31 @@ async function sendTransactionWithCost(contract, key, gateway, messageBody, cost
     return { transfer, seqno };
 }
 
+async function sendMultipleTransactionWithCost(contract, key, to1, messageBody1, cost1, to2, messageBody2, cost2) {
+    const message1 = internal({
+        to: to1,
+        value: cost1,
+        body: messageBody1,
+    });
+
+    const message2 = internal({
+        to: to2,
+        value: cost2,
+        body: messageBody2,
+    });
+
+    const seqno = await contract.getSeqno();
+    console.log('Current wallet seqno:', seqno);
+
+    const transfer = await contract.sendTransfer({
+        secretKey: key.secretKey,
+        messages: [message1, message2],
+        seqno: seqno,
+    });
+
+    return { transfer, seqno };
+}
+
 function bocToCell(encodedPayload) {
     return Cell.fromBoc(Buffer.from(encodedPayload, 'hex'))[0];
 }
@@ -160,6 +185,7 @@ module.exports = {
     waitForTransaction,
     bocToCell,
     getJettonCodes,
+    sendMultipleTransactionWithCost,
     TONCENTER_ENDPOINT,
     CHAINSTACK_ENDPOINT,
     GATEWAY_ADDRESS,
