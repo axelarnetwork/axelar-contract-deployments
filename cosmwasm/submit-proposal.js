@@ -273,10 +273,14 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
     if (!config.axelar.contracts.Coordinator.deployments) {
         config.axelar.contracts.Coordinator.deployments = {};
     }
+    deploymentName = deploymentName || msg.instantiate_chain_contracts.deployment_name;
     config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName: deploymentName || msg.instantiate_chain_contracts.deployment_name,
+        deploymentName,
         proposalId: null,
     };
+
+    printInfo(`Deployment name saved: ${deploymentName}`);
+    printInfo(`After proposal executes, run: ts-node cosmwasm/query.js deployed-contracts -n ${chainName}`);
 };
 
 function addGovProposalDefaults(options, config, env) {

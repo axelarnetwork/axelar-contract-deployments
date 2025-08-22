@@ -51,6 +51,82 @@ async function tokenConfig(client, config, args, _options) {
     }
 }
 
+async function deployedContracts(client, config, args, options) {
+    const { chainName, deploymentName } = options;
+    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
+
+    if (!coordinatorAddress) {
+        printWarn('Coordinator contract address not found in config');
+        return;
+    }
+
+    let deployment = deploymentName;
+    if (!deployment && chainName) {
+        deployment = config.axelar?.contracts?.Coordinator?.deployments?.[chainName]?.deploymentName;
+        if (!deployment) {
+            printWarn(`No deployment name found for chain ${chainName} in config`);
+            return;
+        }
+    }
+
+    if (!deployment) {
+        printWarn('Deployment name is required. Use --deploymentName or --chainName with saved deployment');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(coordinatorAddress, {
+            deployed_contracts: {
+                deployment_name: deployment,
+            },
+        });
+
+        printInfo(`Deployed contracts for deployment "${deployment}"`, JSON.stringify(result, null, 2));
+
+        if (chainName && result) {
+            if (!config.axelar.contracts.VotingVerifier) {
+                config.axelar.contracts.VotingVerifier = {};
+            }
+            if (!config.axelar.contracts.Gateway) {
+                config.axelar.contracts.Gateway = {};
+            }
+            if (!config.axelar.contracts.MultisigProver) {
+                config.axelar.contracts.MultisigProver = {};
+            }
+
+            if (result.verifier) {
+                if (!config.axelar.contracts.VotingVerifier[chainName]) {
+                    config.axelar.contracts.VotingVerifier[chainName] = {};
+                }
+                config.axelar.contracts.VotingVerifier[chainName].address = result.verifier;
+                printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+            }
+
+            if (result.gateway) {
+                if (!config.axelar.contracts.Gateway[chainName]) {
+                    config.axelar.contracts.Gateway[chainName] = {};
+                }
+                config.axelar.contracts.Gateway[chainName].address = result.gateway;
+                printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
+            }
+
+            if (result.prover) {
+                if (!config.axelar.contracts.MultisigProver[chainName]) {
+                    config.axelar.contracts.MultisigProver[chainName] = {};
+                }
+                config.axelar.contracts.MultisigProver[chainName].address = result.prover;
+                printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+            }
+
+            const { saveConfig } = require('../common');
+            saveConfig(config, options.env);
+            printInfo('Config updated successfully');
+        }
+    } catch (error) {
+        printWarn(`Failed to fetch deployed contracts for deployment "${deployment}"`, error?.message || String(error));
+    }
+}
+
 const mainProcessor = async (processor, args, options) => {
     const { env } = options;
     const config = loadConfig(env);
@@ -82,8 +158,18 @@ const programHandler = () => {
             mainProcessor(tokenConfig, [chainName, tokenId], options);
         });
 
+    const deployedContractsCmd = program
+        .command('deployed-contracts')
+        .description('Query deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
+        .option('-n, --chainName <chainName>', 'chain name of deployment')
+        .option('--deploymentName <deploymentName>', 'deployment name to query')
+        .action((options) => {
+            mainProcessor(deployedContracts, [], options);
+        });
+
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
+    addAmplifierQueryOptions(deployedContractsCmd);
 
     program.parse();
 };
