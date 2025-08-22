@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use axelar_solana_encoding::types::execute_data::{MerkleisedMessage, SigningVerifierSetInfo};
 use axelar_solana_encoding::types::messages::Message;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use itertools::Itertools;
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -92,7 +91,7 @@ pub enum GatewayInstruction {
     /// 2. [] Gateway's `ProgramData` account
     /// 3. [WRITE] Gateway Root Config PDA account
     /// 4. [] System Program account
-    /// 5..N [WRITE] uninitialized `VerifierSetTracker` PDA accounts
+    /// 5. [WRITE] uninitialized `VerifierSetTracker` PDA account
     InitializeConfig(InitializeConfig),
 
     /// Initializes a verification session for a given Payload root.
@@ -226,16 +225,22 @@ pub enum GatewayInstruction {
     TransferOperatorship,
 }
 
+/// Represents an initial verifier set with its hash and PDA
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct InitialVerifierSet {
+    /// The hash of the verifier set
+    pub hash: VerifierSetHash,
+    /// The PDA for the verifier set tracker
+    pub pda: Pubkey,
+}
+
 /// Configuration parameters for initializing the axelar-solana gateway
-#[derive(Debug, Clone, Default, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct InitializeConfig {
     /// The domain separator, used as an input for hashing payloads.
     pub domain_separator: [u8; 32],
-    /// initial signer sets
-    /// The order is important:
-    /// - first element == oldest entry
-    /// - last element == latest entry
-    pub initial_verifier_set: Vec<VerifierSetHash>,
+    /// initial verifier set
+    pub initial_verifier_set: InitialVerifierSet,
     /// the minimum delay required between rotations
     pub minimum_rotation_delay: RotationDelaySecs,
     /// The gateway operator.
@@ -403,7 +408,7 @@ pub fn initialize_config(
     payer: Pubkey,
     upgrade_authority: Pubkey,
     domain_separator: [u8; 32],
-    initial_verifier_sets: Vec<(VerifierSetHash, Pubkey)>,
+    initial_verifier_set: InitialVerifierSet,
     minimum_rotation_delay: RotationDelaySecs,
     operator: Pubkey,
     previous_verifier_retention: VerifierSetEpoch,
@@ -412,27 +417,22 @@ pub fn initialize_config(
     let gateway_program_data =
         solana_program::bpf_loader_upgradeable::get_program_data_address(&crate::ID);
 
-    let mut accounts = vec![
+    let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(upgrade_authority, true),
         AccountMeta::new_readonly(gateway_program_data, false),
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    ];
-    for (_hash, pda) in &initial_verifier_sets {
-        accounts.push(AccountMeta {
-            pubkey: *pda,
+        AccountMeta {
+            pubkey: initial_verifier_set.pda,
             is_signer: false,
             is_writable: true,
-        });
-    }
+        },
+    ];
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
         domain_separator,
-        initial_verifier_set: initial_verifier_sets
-            .into_iter()
-            .map(|x| (x.0))
-            .collect_vec(),
+        initial_verifier_set,
         minimum_rotation_delay,
         operator,
         previous_verifier_retention,

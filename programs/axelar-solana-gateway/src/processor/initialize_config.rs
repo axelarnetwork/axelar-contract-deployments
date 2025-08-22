@@ -1,7 +1,6 @@
 use core::mem::size_of;
 
 use axelar_message_primitives::U256;
-use itertools::Itertools;
 use program_utils::{
     pda::{BytemuckedPda, ValidPDA},
     validate_system_account_key,
@@ -26,7 +25,7 @@ use crate::{
 };
 
 impl Processor {
-    /// Initializes the gateway program by setting up configuration and verifier set accounts.
+    /// Initializes the gateway program by setting up configuration and a verifier set account.
     ///
     /// # Errors
     ///
@@ -48,7 +47,6 @@ impl Processor {
     /// # Panics
     ///
     /// This function will panic if:
-    /// * Converting verifier set length to u64 fails (via `expect`)
     /// * Converting `size_of::<VerifierSetTracker>` to u64 overflows (via `expect`)
     /// * Converting `size_of::<GatewayConfig>` to u64 overflows (via `expect`)
     /// * Converting `unix_timestamp` to u64 results in an invalid timestamp (via `expect`)
@@ -57,15 +55,13 @@ impl Processor {
         accounts: &[AccountInfo<'_>],
         init_config: &InitializeConfig,
     ) -> ProgramResult {
-        let (core_accounts, init_verifier_sets) = split_core_accounts(accounts)?;
-
-        let init_verifier_sets = &mut init_verifier_sets.iter();
-        let core_accounts = &mut core_accounts.iter();
-        let payer = next_account_info(core_accounts)?;
-        let upgrade_authority = next_account_info(core_accounts)?;
-        let program_data = next_account_info(core_accounts)?;
-        let gateway_root_pda = next_account_info(core_accounts)?;
-        let system_account = next_account_info(core_accounts)?;
+        let accounts = &mut accounts.iter();
+        let payer = next_account_info(accounts)?;
+        let upgrade_authority = next_account_info(accounts)?;
+        let program_data = next_account_info(accounts)?;
+        let gateway_root_pda = next_account_info(accounts)?;
+        let system_account = next_account_info(accounts)?;
+        let verifier_set_pda = next_account_info(accounts)?;
 
         validate_system_account_key(system_account.key)?;
 
@@ -76,53 +72,40 @@ impl Processor {
         if !system_program::check_id(system_account.key) {
             return Err(ProgramError::InvalidInstructionData);
         }
-        let verifier_sets = init_config
-            .initial_verifier_set
-            .iter()
-            .zip_eq(init_verifier_sets);
-        // Expect: Safe as verifier set length cannot realistically exceed `u64::MAX`.
-        let current_epochs: u64 = verifier_sets.len().try_into().map_err(|_err| {
-            solana_program::msg!("unexpected u64 overflow");
-            ProgramError::ArithmeticOverflow
-        })?;
 
-        let current_epochs = U256::from_u64(current_epochs);
+        // Initialize single verifier set
+        let verifier_set_hash = init_config.initial_verifier_set.hash;
+        let epoch = U256::from_u64(1);
+        let current_epochs = U256::from_u64(1);
 
-        for (idx, (verifier_set_hash, verifier_set_pda)) in verifier_sets.enumerate() {
-            let idx: u64 = idx
-                .try_into()
-                .map_err(|_err| ProgramError::InvalidInstructionData)?;
-            let epoch = U256::from_u64(idx.saturating_add(1));
+        let (_, pda_bump) = get_verifier_set_tracker_pda(verifier_set_hash);
+        verifier_set_pda.check_uninitialized_pda()?;
 
-            let (_, pda_bump) = get_verifier_set_tracker_pda(*verifier_set_hash);
-            verifier_set_pda.check_uninitialized_pda()?;
+        // Initialize the tracker account
+        program_utils::pda::init_pda_raw(
+            payer,
+            verifier_set_pda,
+            program_id,
+            system_account,
+            size_of::<VerifierSetTracker>().try_into().map_err(|_err| {
+                solana_program::msg!("unexpected u64 overflow in struct size");
+                ProgramError::ArithmeticOverflow
+            })?,
+            &[
+                seed_prefixes::VERIFIER_SET_TRACKER_SEED,
+                verifier_set_hash.as_slice(),
+                &[pda_bump],
+            ],
+        )?;
 
-            // Initialize the tracker account
-            program_utils::pda::init_pda_raw(
-                payer,
-                verifier_set_pda,
-                program_id,
-                system_account,
-                size_of::<VerifierSetTracker>().try_into().map_err(|_err| {
-                    solana_program::msg!("unexpected u64 overflow in struct size");
-                    ProgramError::ArithmeticOverflow
-                })?,
-                &[
-                    seed_prefixes::VERIFIER_SET_TRACKER_SEED,
-                    verifier_set_hash.as_slice(),
-                    &[pda_bump],
-                ],
-            )?;
+        // store account data
+        let mut data = verifier_set_pda.try_borrow_mut_data()?;
+        let tracker =
+            VerifierSetTracker::read_mut(&mut data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
+        *tracker = VerifierSetTracker::new(pda_bump, epoch, verifier_set_hash);
 
-            // store account data
-            let mut data = verifier_set_pda.try_borrow_mut_data()?;
-            let tracker = VerifierSetTracker::read_mut(&mut data)
-                .ok_or(GatewayError::BytemuckDataLenInvalid)?;
-            *tracker = VerifierSetTracker::new(pda_bump, epoch, *verifier_set_hash);
-
-            // check that everything has been derived correctly
-            assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
-        }
+        // check that everything has been derived correctly
+        assert_valid_verifier_set_tracker_pda(tracker, verifier_set_pda.key)?;
 
         let (_, bump) = get_gateway_root_config_internal(program_id);
 
@@ -162,13 +145,4 @@ impl Processor {
 
         Ok(())
     }
-}
-
-const CORE_ACCOUNTS: usize = 5;
-
-const fn split_core_accounts<T>(accounts: &[T]) -> Result<(&[T], &[T]), ProgramError> {
-    if accounts.len() <= CORE_ACCOUNTS {
-        return Err(ProgramError::NotEnoughAccountKeys);
-    }
-    Ok(accounts.split_at(CORE_ACCOUNTS))
 }

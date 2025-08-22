@@ -13,6 +13,7 @@ use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::verifier_set::{verifier_set_hash, VerifierSet};
 use axelar_solana_encoding::{borsh, hash_payload};
 use axelar_solana_gateway::error::GatewayError;
+use axelar_solana_gateway::instructions::InitialVerifierSet;
 use axelar_solana_gateway::num_traits::FromPrimitive;
 use axelar_solana_gateway::processor::GatewayEvent;
 use axelar_solana_gateway::state::incoming_message::{command_id, IncomingMessage};
@@ -75,12 +76,15 @@ impl SolanaAxelarIntegrationMetadata {
     /// Get the gateway init verifier set data.
     /// This is useful for building the instantiation message for the gateway
     #[must_use]
-    pub fn init_gateway_config_verifier_set_data(&self) -> Vec<([u8; 32], Pubkey)> {
+    pub fn init_gateway_config_verifier_set_data(&self) -> InitialVerifierSet {
         let init_signers_hash =
             verifier_set_hash::<NativeHasher>(&self.signers.verifier_set(), &self.domain_separator)
                 .unwrap();
         let (initial_signers_pda, _initial_signers_bump) = self.signers.verifier_set_tracker();
-        vec![(init_signers_hash, initial_signers_pda)]
+        InitialVerifierSet {
+            hash: init_signers_hash,
+            pda: initial_signers_pda,
+        }
     }
 
     /// Initialise the gateway root config

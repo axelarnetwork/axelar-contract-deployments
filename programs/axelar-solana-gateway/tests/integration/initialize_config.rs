@@ -25,20 +25,20 @@ fn cmp_config(init: &SolanaAxelarIntegrationMetadata, created: &GatewayConfig) -
 #[allow(clippy::arithmetic_side_effects)]
 #[allow(clippy::as_conversions)]
 async fn assert_verifier_sets(metadata: &mut SolanaAxelarIntegrationMetadata) {
-    let vs_data = metadata.init_gateway_config_verifier_set_data();
-    for (idx, (verifier_set_hash, pda)) in vs_data.into_iter().enumerate() {
-        let vs_data = metadata.verifier_set_tracker(pda).await;
-        let epoch = U256::from_u64(idx as u64 + 1);
+    let initial_verifier_set = metadata.init_gateway_config_verifier_set_data();
+    let vs_data = metadata
+        .verifier_set_tracker(initial_verifier_set.pda)
+        .await;
+    let epoch = U256::from_u64(1);
 
-        assert_eq!(
-            vs_data.epoch, epoch,
-            "verifier set tracker not properly initialized"
-        );
-        assert_eq!(
-            vs_data.verifier_set_hash, verifier_set_hash,
-            "verifier set tracker not properly initialized"
-        );
-    }
+    assert_eq!(
+        vs_data.epoch, epoch,
+        "verifier set tracker not properly initialized"
+    );
+    assert_eq!(
+        vs_data.verifier_set_hash, initial_verifier_set.hash,
+        "verifier set tracker not properly initialized"
+    );
 }
 
 #[tokio::test]
