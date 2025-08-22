@@ -175,7 +175,7 @@ const execute = async (client, wallet, config, options) => {
         return;
     }
 
-    await callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const registerItsChain = async (client, wallet, config, options) => {
@@ -206,7 +206,7 @@ const registerItsChain = async (client, wallet, config, options) => {
         };
     });
 
-    await execute(client, wallet, config, {
+    return execute(client, wallet, config, {
         ...options,
         contractName: 'InterchainTokenService',
         msg: `{ "register_chains": { "chains": ${JSON.stringify(chains)} } }`,
@@ -218,7 +218,7 @@ const registerProtocol = async (client, wallet, config, options) => {
     const router = config.axelar?.contracts?.Router?.address;
     const multisig = config.axelar?.contracts?.Multisig?.address;
 
-    await execute(client, wallet, config, {
+    return execute(client, wallet, config, {
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify({
@@ -238,7 +238,7 @@ const paramChange = async (client, wallet, config, options) => {
         return;
     }
 
-    await callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const migrate = async (client, wallet, config, options) => {
@@ -251,7 +251,7 @@ const migrate = async (client, wallet, config, options) => {
         return;
     }
 
-    await callSubmitProposal(client, wallet, config, options, proposal);
+    return callSubmitProposal(client, wallet, config, options, proposal);
 };
 
 const instantiateChainContracts = async (client, wallet, config, options) => {
@@ -264,7 +264,7 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
 
     const msg = await makeInstantiateChainContractsMsg(client, config, options);
 
-    await execute(client, wallet, config, {
+    const proposalId = await execute(client, wallet, config, {
         ...options,
         contractName: 'Coordinator',
         msg: JSON.stringify(msg),
@@ -276,10 +276,13 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
     deploymentName = deploymentName || msg.instantiate_chain_contracts.deployment_name;
     config.axelar.contracts.Coordinator.deployments[chainName] = {
         deploymentName,
-        proposalId: null,
+        proposalId,
     };
 
     printInfo(`Deployment name saved: ${deploymentName}`);
+    if (proposalId) {
+        printInfo(`Proposal ID: ${proposalId}`);
+    }
     printInfo(`After proposal executes, run: ts-node cosmwasm/query.js deployed-contracts -n ${chainName}`);
 };
 
