@@ -245,18 +245,21 @@ function formatTonAmount(amount) {
         return `${amount} TON`;
     }
     if (typeof amount === 'bigint') {
-        return `${(amount / 1000000000n).toString()} TON`;
+        const tonValue = Number(amount) / 1000000000;
+        return `${tonValue} TON`;
     }
     return `${amount} TON`;
 }
 
 // Helper function for executing operations with gas service
-async function executeWithGasService(contract, key, itsAddress, itsMessage, gasServiceAddress, gasMessage, itsGas, gasServiceGas, dryRun = false) {
+async function executeWithGasService(contract, key, itsAddress, itsMessage, gasServiceAddress, gasMessage, gasServiceGas, dryRun = false) {
+    const ITS_COST = '0.4'; // Fixed cost for all ITS operations
+
     if (dryRun) {
         console.log('🔍 DRY RUN: Would send dual transaction');
         console.log(`  ITS Transaction:`);
         console.log(`    To: ${itsAddress.toString()}`);
-        console.log(`    Cost: ${formatTonAmount(itsGas)}`);
+        console.log(`    Cost: ${formatTonAmount(ITS_COST)}`);
         console.log(`    Message size: ${itsMessage.toBoc().length} bytes`);
         console.log(`  Gas Service Transaction:`);
         console.log(`    To: ${gasServiceAddress.toString()}`);
@@ -271,7 +274,7 @@ async function executeWithGasService(contract, key, itsAddress, itsMessage, gasS
         key,
         itsAddress,
         itsMessage,
-        toNano(itsGas),
+        toNano(ITS_COST),
         gasServiceAddress,
         gasMessage,
         gasServiceGas
@@ -325,7 +328,6 @@ program
     .argument('<decimals>', 'Token decimals (0-255)')
     .argument('<initial-supply>', 'Initial token supply')
     .argument('[minter]', 'Optional minter address (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, name, symbol, decimals, initialSupply, minter, options) => {
         try {
@@ -362,7 +364,6 @@ program
             console.log(`  Decimals:       ${decimalsParsed}`);
             console.log(`  Initial Supply: ${initialSupplyBigInt}`);
             console.log(`  Minter:         ${minter || 'None'}`);
-            console.log(`  Gas:            ${options.gas} TON`);
             console.log();
             printSectionHeader('Deployment Result', '🎯');
             console.log(`  Token ID:       ${tokenId}`);
@@ -380,7 +381,7 @@ program
                 minterAddress,
             );
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Deploy Interchain Token', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('deploying interchain token', error);
@@ -392,18 +393,16 @@ program
     .description('Add a trusted chain to the ITS')
     .argument('<chain-name>', 'Name of the chain to add (e.g., "ethereum", "polygon")')
     .argument('<chain-address>', 'ITS address on the remote chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (chainName, chainAddress, options) => {
         try {
             printSectionHeader('Adding Trusted Chain');
             console.log(`  Chain Name:     ${chainName}`);
             console.log(`  Chain Address:  ${chainAddress}`);
-            console.log(`  Gas:            ${options.gas} TON`);
 
             const messageBody = buildAddTrustedChainMessage(chainName, chainAddress);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Add Trusted Chain', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('adding trusted chain', error);
@@ -414,17 +413,15 @@ program
     .command('remove-trusted-chain')
     .description('Remove a trusted chain from the ITS')
     .argument('<chain-name>', 'Name of the chain to remove (e.g., "ethereum", "polygon")')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (chainName, options) => {
         try {
             printSectionHeader('Removing Trusted Chain');
             console.log(`  Chain Name:     ${chainName}`);
-            console.log(`  Gas:            ${options.gas} TON`);
 
             const messageBody = buildRemoveTrustedChainMessage(chainName);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Remove Trusted Chain', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('removing trusted chain', error);
@@ -435,7 +432,7 @@ program
     .command('register-token-metadata')
     .description('Register token metadata for a token (TEP-64 standard) - automatically extracts admin and content from jetton minter')
     .argument('<jetton-minter-address>', 'Jetton minter address to extract admin, content, and codes from')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
+    .option('-g, --gas <amount>', 'Gas service amount in TON', '0.2')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (jettonMinterAddress, options) => {
         try {
@@ -474,7 +471,7 @@ program
 
             const gasMessage = createGasServiceMessage(sender, hubPayload.slice(2));
 
-            await executeWithGasService(contract, key, itsAddress, registerTokenMetadataMeessage, gasServiceAddress, gasMessage, '0.4', options.gas, options.dryRun);
+            await executeWithGasService(contract, key, itsAddress, registerTokenMetadataMeessage, gasServiceAddress, gasMessage, options.gas, options.dryRun);
         } catch (error) {
             handleCommandError('registering token metadata', error);
         }
@@ -487,7 +484,7 @@ program
     .argument('<salt>', 'Salt value for token deployment (256-bit number or hex string)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
     .argument('[remote-minter]', 'Optional minter address on the remote chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.4')
+    .option('-g, --gas <amount>', 'Gas service amount in TON', '0.2')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, chainName, remoteMinter, options) => {
         try {
@@ -522,7 +519,7 @@ program
 
             const gasMessage = createGasServiceMessage(sender, hubPayload);
 
-            await executeWithGasService(contract, key, itsAddress, deployRemoteInterchainTokenMessage, gasServiceAddress, gasMessage, '0.4', options.gas, options.dryRun);
+            await executeWithGasService(contract, key, itsAddress, deployRemoteInterchainTokenMessage, gasServiceAddress, gasMessage, options.gas, options.dryRun);
         } catch (error) {
             handleCommandError('deploying remote interchain token', error);
         }
@@ -536,7 +533,7 @@ program
     .argument('<destination-address>', 'Recipient address on the destination chain')
     .argument('<amount>', 'Amount of tokens to transfer')
     .argument('<jetton-minter>', 'Jetton minter address for gas payment')
-    .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
+    .option('-g, --gas <amount>', 'Gas service amount in TON', '0.2')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (tokenId, chainName, destinationAddress, amount, jettonMinter, options) => {
         try {
@@ -645,7 +642,7 @@ program
         'Token manager type (0=INTERCHAIN_TOKEN, 1=MINT_BURN_FROM, 2=LOCK_UNLOCK, 3=LOCK_UNLOCK_FEE, 4=MINT_BURN)',
     )
     .argument('<link-params>', 'Link parameters as hex string (use "0x" for empty params)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
+    .option('-g, --gas <amount>', 'Gas service amount in TON', '0.2')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
@@ -706,7 +703,6 @@ program
     .command('register-canonical-token')
     .description('Register a canonical interchain token (TEP-64 metadata) with jetton codes')
     .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (jettonMinterAddress, options) => {
         try {
@@ -727,7 +723,6 @@ program
             console.log(`  Admin Address:     ${adminAddress}`);
             console.log(`  Content Hex:       ${content.toBoc().toString('hex').substring(0, 50)}...`);
             console.log(`  Jetton Minter:     ${jettonMinterAddress}`);
-            console.log(`  Gas:               ${options.gas} TON`);
             console.log();
             printSectionHeader('Token Metadata', '📦');
             console.log(`  Name:              ${name}`);
@@ -740,7 +735,7 @@ program
             console.log(`  Canonical Minter:  ${canonicalJettonMinterAddress}`);
 
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Register Canonical Token', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('registering canonical token', error);
@@ -754,7 +749,6 @@ program
     .argument('<symbol>', 'Token symbol (e.g., "MTK")')
     .argument('<decimals>', 'Token decimals (e.g., 9, 18)')
     .argument('<jetton-minter-address>', 'Existing jetton minter address to extract wallet code from')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (name, symbol, decimals, jettonMinterAddress, options) => {
         try {
@@ -787,7 +781,6 @@ program
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimalNum}`);
             console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
-            console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
             printSectionHeader('Token Metadata', '📦');
             console.log(`  Name:                  ${name}`);
@@ -799,7 +792,7 @@ program
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
             console.log(`  Canonical Minter:      ${jettonMinterAddr}`);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Register Canonical Token (Permissioned)', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('registering canonical token (permissioned)', error);
@@ -816,7 +809,6 @@ program
     )
     .argument('<operator-address>', 'Operator address for the token (TON address format)')
     .argument('<jetton-minter-address>', 'Jetton minter address to extract admin, content, and codes from')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, tokenManagerType, operatorAddress, jettonMinterAddress, options) => {
         try {
@@ -861,7 +853,6 @@ program
             console.log(`  Admin Address:         ${adminAddress}`);
             console.log(`  Content (hex):         ${contentHex.substring(0, 50)}...`);
             console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
-            console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
             printSectionHeader('Token Metadata', '📦');
             console.log(`  Name:                  ${name}`);
@@ -872,7 +863,7 @@ program
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Register Custom Token', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('registering custom token', error);
@@ -884,7 +875,7 @@ program
     .description('Deploy a canonical interchain token on a remote chain')
     .argument('<jetton-minter-address>', 'Jetton minter address for the canonical token (TON address format)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
+    .option('-g, --gas <amount>', 'Gas service amount in TON', '0.2')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (jettonMinterAddress, chainName, options) => {
         try {
@@ -917,7 +908,7 @@ program
 
             const gasMessage = createGasServiceMessage(sender, hubPayload);
 
-            await executeWithGasService(contract, key, itsAddress, deployRemoteCanonicalMessage, gasServiceAddress, gasMessage, '0.4', options.gas, options.dryRun);
+            await executeWithGasService(contract, key, itsAddress, deployRemoteCanonicalMessage, gasServiceAddress, gasMessage, options.gas, options.dryRun);
         } catch (error) {
             handleCommandError('deploying remote canonical token', error);
         }
@@ -930,7 +921,6 @@ program
     .argument('<deployer-address>', 'Address of the deployer (TON address format)')
     .argument('<destination-chain>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
     .argument('<minter-to-approve>', 'Address of the minter to be approved on the destination chain (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, deployerAddress, destinationChain, minterToBeApproved, options) => {
         try {
@@ -941,12 +931,11 @@ program
             console.log(`  Deployer Address:     ${deployerAddress}`);
             console.log(`  Destination Chain:    ${destinationChain}`);
             console.log(`  Minter to Approve:    ${minterToBeApproved}`);
-            console.log(`  Gas:                  ${options.gas} TON`);
 
             const deployerAddr = Address.parse(deployerAddress);
             const messageBody = buildApproveRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToBeApproved, destinationChain);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Approve Remote Deployment', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('approving remote deployment', error);
@@ -960,7 +949,6 @@ program
     .argument('<deployer-address>', 'Address of the deployer (TON address format)')
     .argument('<destination-chain>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
     .argument('<minter-to-revoke>', 'Address of the minter to be revoked on the destination chain')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (salt, deployerAddress, destinationChain, minterToRevoke, options) => {
         try {
@@ -971,12 +959,11 @@ program
             console.log(`  Deployer Address:     ${deployerAddress}`);
             console.log(`  Destination Chain:    ${destinationChain}`);
             console.log(`  Minter to Revoke:     ${minterToRevoke}`);
-            console.log(`  Gas:                  ${options.gas} TON`);
 
             const deployerAddr = Address.parse(deployerAddress);
             const messageBody = buildRevokeRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToRevoke, destinationChain);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.4');
             await executeITSOperation('Revoke Remote Deployment', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('revoking remote deployment', error);
@@ -987,18 +974,15 @@ program
     .command('change-operator')
     .description('Change the operator of the Interchain Token Service (current operator only)')
     .argument('<new-operator>', 'Address of the new operator (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (newOperator, options) => {
         try {
             printSectionHeader('Changing Operator');
             console.log(`  New Operator:      ${newOperator}`);
-            console.log(`  Gas:               ${options.gas} TON`);
-
             const operatorAddress = Address.parse(newOperator);
             const messageBody = buildChangeOperatorMessage(operatorAddress);
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Change Operator', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('changing operator', error);
@@ -1009,18 +993,15 @@ program
     .command('change-owner')
     .description('Change the owner of the ITS (must be called by the owner)')
     .argument('<new-owner>', 'New owner address (TON address format)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (newOwner, options) => {
         try {
             printSectionHeader('Changing Owner');
             console.log(`  New Owner:         ${newOwner}`);
-            console.log(`  Gas:               ${options.gas} TON`);
-
             const newOwnerAddr = Address.parse(newOwner);
             const messageBody = beginCell().storeUint(OP_CHANGE_OWNER, 32).storeAddress(newOwnerAddr).endCell();
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Change Owner', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('changing owner', error);
@@ -1030,16 +1011,13 @@ program
 program
     .command('pause')
     .description('Pause the Interchain Token Service (operator only)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (options) => {
         try {
             printSectionHeader('Pausing ITS');
-            console.log(`  Gas:               ${options.gas} TON`);
-
             const messageBody = buildPauseMessage();
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Pause ITS', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('pausing ITS', error);
@@ -1049,16 +1027,13 @@ program
 program
     .command('unpause')
     .description('Unpause the Interchain Token Service (operator only)')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .option('--dry-run', 'Show what would be executed without sending transaction')
     .action(async (options) => {
         try {
             printSectionHeader('Unpausing ITS');
-            console.log(`  Gas:               ${options.gas} TON`);
-
             const messageBody = buildUnpauseMessage();
 
-            const cost = toNano(options.gas);
+            const cost = toNano('0.02');
             await executeITSOperation('Unpause ITS', messageBody, cost, options.dryRun);
         } catch (error) {
             handleCommandError('unpausing ITS', error);
