@@ -115,7 +115,12 @@ impl TestSigningKey {
                 let message = libsecp256k1::Message::parse(message.try_into().unwrap());
                 let (signature, recovery_id) = libsecp256k1::sign(&message, signing_key);
                 let mut signature_bytes = signature.serialize().to_vec();
-                signature_bytes.push(recovery_id.serialize());
+                // Convert recovery ID to Ethereum format (0,1 -> 27,28)
+                let recovery_value = recovery_id.serialize();
+                if recovery_value > 1 {
+                    panic!("Unexpected recovery ID: {} (expected 0 or 1)", recovery_value);
+                }
+                signature_bytes.push(recovery_value + 27);
                 Signature::EcdsaRecoverable(signature_bytes.try_into().unwrap())
             }
             Self::Ed25519(signing_key) => {
