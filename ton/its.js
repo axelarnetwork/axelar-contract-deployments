@@ -29,7 +29,6 @@ const {
     InterchainTokenService,
     buildPayNativeGasForContractCallMessage,
     TokenManager,
-    encodeLinkTokenHubMessage,
     encodeRegisterTokenMetadataAbi,
     MessageType
 } = require('axelar-cgp-ton');
@@ -108,6 +107,31 @@ function encodeDeployInterchainTokenHubMessage(
     // Then wrap it in the hub message format
     const hubMessage = abiCoder.encode(
         ["uint256", "string", "bytes"],
+        [MessageType.SEND_TO_HUB, originalSourceChain, innerPayload],
+    );
+
+    return hubMessage.slice(2); // remove the "0x" prefix
+}
+
+function encodeLinkTokenHubMessage(originalSourceChain, params) {
+    const abiCoder = new ethers.utils.AbiCoder();
+
+    // First encode the inner payload (link token message)
+    const innerPayload = abiCoder.encode(
+        ['uint256', 'bytes32', 'uint256', 'bytes', 'bytes', 'bytes'],
+        [
+            MessageType.LINK_TOKEN,
+            params.tokenId,
+            params.tokenManagerType,
+            params.sourceAddress,
+            params.destinationAddress,
+            params.linkParams,
+        ],
+    );
+
+    // Then wrap it in the hub message format
+    const hubMessage = abiCoder.encode(
+        ['uint256', 'string', 'bytes'],
         [MessageType.SEND_TO_HUB, originalSourceChain, innerPayload],
     );
 
@@ -543,7 +567,7 @@ program
         '2',
     )
     .argument('[link-params]', 'Link parameters as hex string (optional)', '0x')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
@@ -585,7 +609,7 @@ program
                     ? beginCell().endCell()
                     : hexStringToCell(linkParams.startsWith('0x') ? linkParams.slice(2) : linkParams);
 
-            const hubPayload = encodeLinkTokenHubMessage(TON_CHAIN_NAME, {
+            const hubPayload = encodeLinkTokenHubMessage(chainName, {
                 tokenId: '0x' + tokenManagerInfo.tokenId.toString(16),
                 tokenManagerType: tmType,
                 destinationAddress: destinationAddress,
