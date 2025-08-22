@@ -1144,9 +1144,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
             contracts: {
                 ServiceRegistry: { address: serviceRegistryAddress },
                 Rewards: { address: rewardsAddress },
-                VotingVerifier: {
-                    [chainName]: verifierConfig,
-                },
+                VotingVerifier: { [chainName]: verifierConfig },
             },
         },
     } = config;
@@ -1224,9 +1222,7 @@ const getProverInstantiateMsg = (config, chainName) => {
     const {
         axelar: {
             contracts: {
-                MultisigProver: {
-                    [chainName]: proverConfig,
-                },
+                MultisigProver: { [chainName]: proverConfig },
             },
             chainId: axelarChainId,
         },
@@ -1236,16 +1232,8 @@ const getProverInstantiateMsg = (config, chainName) => {
         throw new Error(`MultisigProver config not found for chain ${chainName}`);
     }
 
-    const {
-        governanceAddress,
-        adminAddress,
-        signingThreshold,
-        serviceName,
-        verifierSetDiffThreshold,
-        encoder,
-        keyType,
-        domainSeparator,
-    } = proverConfig;
+    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator } =
+        proverConfig;
 
     if (!isString(axelarChainId)) {
         throw new Error(`Missing or invalid chain ID`);

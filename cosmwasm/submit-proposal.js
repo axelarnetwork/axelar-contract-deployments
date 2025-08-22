@@ -414,7 +414,9 @@ const programHandler = () => {
 
     const instantiateChainContractsCmd = program
         .command('instantiate-chain-contracts')
-        .description('Submit an execute wasm contract proposal to instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
+        .description(
+            'Submit an execute wasm contract proposal to instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator',
+        )
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
         .option('--deploymentName <deploymentName>', 'deployment name (default: deployment-<chain>-<timestamp>)')
