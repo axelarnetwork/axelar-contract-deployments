@@ -255,10 +255,12 @@ pub fn verify_ecdsa_signature(
 
     // Transform from Ethereum recovery_id (27, 28) to a range accepted by
     // secp256k1_recover (0, 1, 2, 3)
-    let recovery_id = if *recovery_id >= 27 {
+    // Only values 27 and 28 are valid Ethereum recovery IDs
+    let recovery_id = if *recovery_id == 27 || *recovery_id == 28 {
         recovery_id.saturating_sub(27)
     } else {
-        *recovery_id
+        solana_program::msg!("Invalid recovery ID: {} (must be 27 or 28)", recovery_id);
+        return false;
     };
 
     // This is results in a Solana syscall.
