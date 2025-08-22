@@ -7,6 +7,7 @@ const {
     waitForTransaction,
     sendTransactionWithCost,
     getJettonCodes,
+    getJettonDataComplete,
     sendMultipleTransactionWithCost,
 } = require('./common');
 const { JettonWallet, JettonMinter, hexStringToCell } = require('axelar-cgp-ton');
@@ -248,8 +249,8 @@ program
                 decimals,
             );
 
-            console.log('User Parameters:');
-            console.log('─'.repeat(40));
+            console.log('🏗️ Deploying Interchain Token');
+            console.log('─'.repeat(45));
             console.log(`  Salt:           ${saltBigInt}`);
             console.log(`  Name:           ${name}`);
             console.log(`  Symbol:         ${symbol}`);
@@ -258,11 +259,12 @@ program
             console.log(`  Minter:         ${minter || 'None'}`);
             console.log(`  Gas:            ${options.gas} TON`);
             console.log();
-            console.log('Deployment Result:');
-            console.log('─'.repeat(40));
+            console.log('🎯 Deployment Result:');
+            console.log('─'.repeat(45));
             console.log(`  Token ID:       ${tokenId}`);
             console.log(`  Token Manager:  ${tokenManagerAddress.toString()}`);
             console.log(`  Jetton Minter:  ${jettonMinterAddress.toString()}`);
+
 
             const minterAddress = minter ? Address.parse(minter) : undefined;
             const messageBody = buildDeployInterchainTokenMessage(
@@ -290,10 +292,11 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .action(async (chainName, chainAddress, options) => {
         try {
-            console.log('Adding Trusted Chain with parameters:');
-            console.log('  Chain Name:', chainName);
-            console.log('  Chain Address:', chainAddress);
-            console.log('  Gas:', options.gas, 'TON');
+            console.log('🔧 Adding Trusted Chain');
+            console.log('─'.repeat(45));
+            console.log(`  Chain Name:     ${chainName}`);
+            console.log(`  Chain Address:  ${chainAddress}`);
+            console.log(`  Gas:            ${options.gas} TON`);
 
             const messageBody = buildAddTrustedChainMessage(chainName, chainAddress);
 
@@ -312,9 +315,10 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.05')
     .action(async (chainName, options) => {
         try {
-            console.log('Removing Trusted Chain with parameters:');
-            console.log('  Chain Name:', chainName);
-            console.log('  Gas:', options.gas, 'TON');
+            console.log('🔧 Removing Trusted Chain');
+            console.log('─'.repeat(45));
+            console.log(`  Chain Name:     ${chainName}`);
+            console.log(`  Gas:            ${options.gas} TON`);
 
             const messageBody = buildRemoveTrustedChainMessage(chainName);
 
@@ -328,17 +332,11 @@ program
 
 program
     .command('register-token-metadata')
-    .description('Register token metadata for a token (TEP-64 standard) with jetton codes')
-    .argument('<admin-address>', 'Admin address for the token (TON address format)')
-    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
+    .description('Register token metadata for a token (TEP-64 standard) - automatically extracts admin and content from jetton minter')
+    .argument('<jetton-minter-address>', 'Jetton minter address to extract admin, content, and codes from')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
-    .action(async (adminAddress, contentHex, jettonMinterAddress, options) => {
+    .action(async (jettonMinterAddress, options) => {
         try {
-
-            // Remove 0x prefix if present
-            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
-
             const client = getTonClient();
             const { contract, key } = await loadWallet(client);
             const sender = contract.address;
@@ -347,22 +345,26 @@ program
             const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
-            const adminAddr = Address.parse(adminAddress);
-            const contentCell = Cell.fromHex(cleanContentHex);
+            console.log('🔍 Extracting jetton data...');
 
-            const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
-            const registerTokenMetadataMeessage = buildRegisterTokenMetadataMessage(adminAddr, contentCell, jettonMinterCode, jettonWalletCode);
-            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+            // Get all jetton data from the minter
+            const { adminAddress, content, jettonMinterCode, jettonWalletCode } = await getJettonDataComplete(jettonMinterAddress);
 
-            console.log('User Parameters:');
-            console.log('─'.repeat(40));
-            console.log(`  Admin Address:         ${adminAddress}`);
-            console.log(`  Content Hex:           ${cleanContentHex.substring(0, 50)}...`);
+            // Convert content cell to hex for display
+            const contentHex = content.toBoc().toString('hex');
+
+            const registerTokenMetadataMeessage = buildRegisterTokenMetadataMessage(adminAddress, content, jettonMinterCode, jettonWalletCode);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), content);
+
+            console.log('📋 Extracted Jetton Information:');
+            console.log('─'.repeat(45));
             console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
+            console.log(`  Admin Address:         ${adminAddress.toString()}`);
+            console.log(`  Content (hex):         ${contentHex.substring(0, 50)}...`);
             console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
-            console.log('Token Metadata:');
-            console.log('─'.repeat(40));
+            console.log('📦 Token Metadata:');
+            console.log('─'.repeat(45));
             console.log(`  Name:                  ${name}`);
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimals}`);
@@ -395,6 +397,7 @@ program
             process.exit(1);
         }
     });
+
 
 program
     .command('deploy-remote-interchain-token')
@@ -578,11 +581,10 @@ program
     .argument('<chain-name>', 'Name of the destination chain (e.g., "ethereum", "polygon")')
     .argument('<destination-address>', 'Token address on the destination chain')
     .argument(
-        '[token-manager-type]',
+        '<token-manager-type>',
         'Token manager type (0=INTERCHAIN_TOKEN, 1=MINT_BURN_FROM, 2=LOCK_UNLOCK, 3=LOCK_UNLOCK_FEE, 4=MINT_BURN)',
-        '2',
     )
-    .argument('[link-params]', 'Link parameters as hex string (optional)', '0x')
+    .argument('<link-params>', 'Link parameters as hex string (use "0x" for empty params)')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
     .action(async (salt, chainName, destinationAddress, tokenManagerType, linkParams, options) => {
         try {
@@ -666,49 +668,44 @@ program
 program
     .command('register-canonical-token')
     .description('Register a canonical interchain token (TEP-64 metadata) with jetton codes')
-    .argument('<admin-address>', 'Admin address for the token (TON address format)')
-    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
     .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
-    .action(async (adminAddress, contentHex, jettonMinterAddress, options) => {
+    .action(async (jettonMinterAddress, options) => {
         try {
-            // Remove 0x prefix if present
-            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
             const client = getTonClient();
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
-            const adminAddr = Address.parse(adminAddress);
-            const contentCell = Cell.fromHex(cleanContentHex);
 
-            const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
-            const messageBody = buildRegisterCanonicalTokenMessage(adminAddr, contentCell, jettonMinterCode, jettonWalletCode);
+            const { adminAddress, content, jettonMinterCode, jettonWalletCode } = await getJettonDataComplete(jettonMinterAddress);
+            const messageBody = buildRegisterCanonicalTokenMessage(adminAddress, content, jettonMinterCode, jettonWalletCode);
 
             const canonicalJettonMinterAddress = Address.parse(jettonMinterAddress);
 
             const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), canonicalJettonMinterAddress);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
-            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), content);
 
-            console.log('User Parameters:');
-            console.log('─'.repeat(40));
+            console.log('📝 Registering Canonical Token');
+            console.log('─'.repeat(45));
             console.log(`  Admin Address:     ${adminAddress}`);
-            console.log(`  Content Hex:       ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Content Hex:       ${content.toBoc().toString('hex').substring(0, 50)}...`);
             console.log(`  Jetton Minter:     ${jettonMinterAddress}`);
             console.log(`  Gas:               ${options.gas} TON`);
             console.log();
-            console.log('Token Metadata:');
-            console.log('─'.repeat(40));
+            console.log('📦 Token Metadata:');
+            console.log('─'.repeat(45));
             console.log(`  Name:              ${name}`);
             console.log(`  Symbol:            ${symbol}`);
             console.log(`  Decimals:          ${decimals}`);
             console.log();
-            console.log('Deployment Result:');
-            console.log('─'.repeat(40));
+            console.log('🎯 Registration Result:');
+            console.log('─'.repeat(45));
             console.log(`  Token ID:          ${tokenId}`);
             console.log(`  Token Manager:     ${tokenManagerAddress}`);
             console.log(`  Canonical Minter:  ${canonicalJettonMinterAddress}`);
+
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Canonical Token', messageBody, cost);
@@ -737,7 +734,6 @@ program
             const client = getTonClient();
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
-
             const jettonMinterAddr = Address.parse(jettonMinterAddress);
 
             // Use the same pattern as other registration commands - get jetton codes from the minter
@@ -754,25 +750,26 @@ program
             const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddr);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
 
-            console.log('User Parameters:');
-            console.log('─'.repeat(40));
+            console.log('📝 Registering Canonical Token (Permissioned)');
+            console.log('─'.repeat(45));
             console.log(`  Name:                  ${name}`);
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimalNum}`);
             console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
             console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
-            console.log('Token Metadata:');
-            console.log('─'.repeat(40));
+            console.log('📦 Token Metadata:');
+            console.log('─'.repeat(45));
             console.log(`  Name:                  ${name}`);
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimalNum}`);
             console.log();
-            console.log('Registration Result:');
-            console.log('─'.repeat(40));
+            console.log('🎯 Registration Result:');
+            console.log('─'.repeat(45));
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
             console.log(`  Canonical Minter:      ${jettonMinterAddr}`);
+
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Canonical Token (Permissioned)', messageBody, cost);

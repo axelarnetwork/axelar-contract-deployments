@@ -178,7 +178,7 @@ node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <toke
 ```
 
 ```bash
-node ton/its.js register-token-metadata <admin-address> <tep-64-content-boc-hex> <jetton-minter>
+node ton/its.js register-token-metadata <jetton-minter-address>
 ```
 
 ```bash
@@ -202,18 +202,22 @@ node ton/its.js register-custom-token <salt> <token-manager-type> <operator-addr
 ```
 
 ```bash
-node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name>
+node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name> [remote-minter]
 ```
 
 ```bash
-node ton/its/js approve-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+node ton/its.js approve-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
 ```
 
 ```bash
-node ton/its/js revoke-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+node ton/its.js revoke-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
 ```
 
 ### Admin only
+
+```bash
+node ton/its.js register-canonical-token-permissioned <name> <symbol> <decimals> <jetton-minter-address>
+```
 
 ```bash
 node ton/its.js add-trusted-chain <chain-name> <chain-address>

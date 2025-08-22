@@ -177,6 +177,35 @@ async function getJettonCodes(jettonMinterAddress) {
     }
 }
 
+async function getJettonDataComplete(jettonMinterAddress) {
+    try {
+        const client = getTonClient();
+        const minterAddress = typeof jettonMinterAddress === 'string' ? Address.parse(jettonMinterAddress) : jettonMinterAddress;
+
+        const jettonMinter = JettonMinter.createFromAddress(minterAddress);
+        const provider = client.provider(minterAddress);
+
+        const jettonData = await jettonMinter.getJettonData(provider);
+
+        // Get the jetton minter code from the contract state
+        const contractState = await provider.getState();
+        const jettonMinterCodeBuffer = contractState.state.code;
+        const jettonMinterCodeHex = jettonMinterCodeBuffer.toString('hex');
+        const jettonMinterCode = Cell.fromHex(jettonMinterCodeHex);
+
+        return {
+            adminAddress: jettonData.adminAddress,
+            content: jettonData.content,
+            totalSupply: jettonData.totalSupply,
+            mintable: jettonData.mintable,
+            jettonMinterCode,
+            jettonWalletCode: jettonData.walletCode,
+        };
+    } catch (error) {
+        throw new Error(`Failed to get complete jetton data from ${jettonMinterAddress}: ${error.message}`);
+    }
+}
+
 module.exports = {
     sendTransactionWithCost,
     getTonClient,
@@ -185,6 +214,7 @@ module.exports = {
     waitForTransaction,
     bocToCell,
     getJettonCodes,
+    getJettonDataComplete,
     sendMultipleTransactionWithCost,
     TONCENTER_ENDPOINT,
     CHAINSTACK_ENDPOINT,
