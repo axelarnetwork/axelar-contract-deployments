@@ -117,9 +117,10 @@ impl TestSigningKey {
                 let mut signature_bytes = signature.serialize().to_vec();
                 // Convert recovery ID to Ethereum format (0,1 -> 27,28)
                 let recovery_value = recovery_id.serialize();
-                if recovery_value > 1 {
-                    panic!("Unexpected recovery ID: {} (expected 0 or 1)", recovery_value);
-                }
+                assert!(
+                    recovery_value > 1,
+                    "Unexpected recovery ID: {recovery_value} (expected 0 or 1)"
+                );
                 signature_bytes.push(recovery_value + 27);
                 Signature::EcdsaRecoverable(signature_bytes.try_into().unwrap())
             }
