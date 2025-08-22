@@ -194,15 +194,15 @@ node ton/its.js link-token <salt> <chain-name> <destination-address> <token-mana
 ```
 
 ```bash
-node ton/its.js register-canonical-token <token-admin-address> <tep-64-content-boc-hex> <jetton-minter-address>
+node ton/its.js register-canonical-token <jetton-minter-address>
 ```
 
 ```bash
-node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <token-admin-address> <tep-64-content-boc-hex> <jetton-minter-address>
+node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <jetton-minter-address>
 ```
 
 ```bash
-node ton/its.js deploy-remote-canonical-token <jetton-minter> <chain-name> [remote-minter]
+node ton/its.js deploy-remote-canonical-token <jetton-minter-address> <chain-name> [remote-minter]
 ```
 
 ```bash

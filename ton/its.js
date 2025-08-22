@@ -781,18 +781,16 @@ program
 
 program
     .command('register-custom-token')
-    .description('Register a custom interchain token with specific token manager type and jetton codes')
+    .description('Register a custom interchain token with specific token manager type - automatically extracts admin and content from jetton minter')
     .argument('<salt>', 'Salt value for token registration (256-bit number or hex string)')
     .argument(
         '<token-manager-type>',
         'Token manager type (0=INTERCHAIN_TOKEN, 1=MINT_BURN_FROM, 2=LOCK_UNLOCK, 3=LOCK_UNLOCK_FEE, 4=MINT_BURN)',
     )
     .argument('<operator-address>', 'Operator address for the token (TON address format)')
-    .argument('<admin-address>', 'Admin address for the token (TON address format)')
-    .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
-    .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
+    .argument('<jetton-minter-address>', 'Jetton minter address to extract admin, content, and codes from')
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
-    .action(async (salt, tokenManagerType, operatorAddress, adminAddress, contentHex, jettonMinterAddress, options) => {
+    .action(async (salt, tokenManagerType, operatorAddress, jettonMinterAddress, options) => {
         try {
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
             const tmType = parseInt(tokenManagerType, 10);
@@ -802,9 +800,6 @@ program
                 throw new Error('Token manager type must be a number between 0 and 4');
             }
 
-            // Remove 0x prefix if present
-            const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
-
             const client = getTonClient();
             const { contract, key } = await loadWallet(client);
             const sender = contract.address;
@@ -812,42 +807,47 @@ program
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
             const operatorAddr = Address.parse(operatorAddress);
-            const adminAddr = Address.parse(adminAddress);
-            const contentCell = Cell.fromHex(cleanContentHex);
 
-            const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
+            console.log('🔍 Extracting jetton data...');
+
+            // Get all jetton data from the minter
+            const { adminAddress, content, jettonMinterCode, jettonWalletCode } = await getJettonDataComplete(jettonMinterAddress);
+
+            // Convert content cell to hex for display
+            const contentHex = content.toBoc().toString('hex');
+
             const messageBody = buildRegisterCustomTokenMessage(
                 saltBigInt,
                 tmType,
                 operatorAddr,
-                adminAddr,
-                contentCell,
+                adminAddress,
+                content,
                 jettonMinterCode,
                 jettonWalletCode,
             );
 
             const tokenId = await interchainTokenService.getLinkedTokenId(client.provider(itsAddress), sender, saltBigInt);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
-            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
+            const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), content);
 
-            console.log('User Parameters:');
-            console.log('─'.repeat(40));
+            console.log('🏗️ Registering Custom Token');
+            console.log('─'.repeat(45));
             console.log(`  Salt:                  ${saltBigInt}`);
             console.log(`  Token Manager Type:    ${tmType}`);
             console.log(`  Operator Address:      ${operatorAddress}`);
-            console.log(`  Admin Address:         ${adminAddress}`);
-            console.log(`  Content Hex:           ${cleanContentHex.substring(0, 50)}...`);
+            console.log(`  Admin Address:         ${adminAddress.toString()}`);
+            console.log(`  Content (hex):         ${contentHex.substring(0, 50)}...`);
             console.log(`  Jetton Minter:         ${jettonMinterAddress}`);
             console.log(`  Gas:                   ${options.gas} TON`);
             console.log();
-            console.log('Token Metadata:');
-            console.log('─'.repeat(40));
+            console.log('📦 Token Metadata:');
+            console.log('─'.repeat(45));
             console.log(`  Name:                  ${name}`);
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimals}`);
             console.log();
-            console.log('Deployment Result:');
-            console.log('─'.repeat(40));
+            console.log('🎯 Registration Result:');
+            console.log('─'.repeat(45));
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
             console.log(`  Custom Minter:         ${jettonMinterAddress}`);
