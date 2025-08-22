@@ -28,10 +28,17 @@ const {
     buildUnpauseMessage,
     InterchainTokenService,
     buildPayNativeGasForContractCallMessage,
+    TokenManager,
+    encodeLinkTokenHubMessage,
+    encodeRegisterTokenMetadataAbi,
+    MessageType
 } = require('axelar-cgp-ton');
 const ethers = require('ethers');
 
 const ITS_ADDRESS = process.env.TON_ITS_ADDRESS;
+const TON_CHAIN_NAME = 'ton2';
+const AXELAR_HUB_CHAIN_NAME = 'axelar';
+const AXELAR_HUB_ADDRESS = 'axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4'
 
 if (!ITS_ADDRESS) {
     throw new Error('Please set TON_ITS_ADDRESS in your .env file');
@@ -51,16 +58,95 @@ function buildRegisterCanonicalTokenPermissionedMessage(name, symbol, decimals, 
         .endCell();
 }
 
-function encodeInterchainTransferInnerMessage(params) {
+function encodeInterchainTransferHubMessage(
+    originalSourceChain,
+    params,
+) {
     const abiCoder = new ethers.utils.AbiCoder();
 
     // First encode the inner payload (interchain transfer message)
     const innerPayload = abiCoder.encode(
         ['uint256', 'bytes32', 'bytes', 'bytes', 'uint256', 'bytes'],
-        [0, params.tokenId, params.sourceAddress, params.destinationAddress, params.amount, params.data],
+        [
+            MessageType.INTERCHAIN_TRANSFER,
+            params.tokenId,
+            params.sourceAddress,
+            params.destinationAddress,
+            params.amount,
+            params.data,
+        ],
     );
 
-    return innerPayload.slice(2);
+    // Then wrap it in the hub message format
+    const hubMessage = abiCoder.encode(
+        ['uint256', 'string', 'bytes'],
+        [MessageType.SEND_TO_HUB, originalSourceChain, innerPayload],
+    );
+
+    return hubMessage.slice(2); // remove the "0x" prefix
+}
+
+function encodeDeployInterchainTokenHubMessage(
+    originalSourceChain,
+    params,
+) {
+    const abiCoder = new ethers.utils.AbiCoder();
+
+    // First encode the inner payload (deploy interchain token message)
+    const innerPayload = abiCoder.encode(
+        ["uint256", "bytes32", "string", "string", "uint8", "bytes"],
+        [
+            MessageType.DEPLOY_INTERCHAIN_TOKEN,
+            params.tokenId,
+            params.name,
+            params.symbol,
+            params.decimals,
+            params.minter,
+        ],
+    );
+
+    // Then wrap it in the hub message format
+    const hubMessage = abiCoder.encode(
+        ["uint256", "string", "bytes"],
+        [MessageType.SEND_TO_HUB, originalSourceChain, innerPayload],
+    );
+
+    return hubMessage.slice(2); // remove the "0x" prefix
+}
+
+function parseTokenManagerInfo(tokenManagerInfo) {
+    // Begin parsing the cell
+    const slice = tokenManagerInfo.beginParse();
+    const tokenId = slice.loadUintBig(256);
+    const tokenManagerType = slice.loadUint(8);
+    const decimals = slice.loadUint(8);
+    const name = slice.loadStringRefTail();
+    const symbol = slice.loadStringRefTail();
+    const jettonMinterAddressCell = slice.loadRef();
+    const jettonMinterAddress = jettonMinterAddressCell.beginParse().loadAddress();
+    const itsJettonWallet = slice.loadAddress();
+
+    return {
+        tokenId,
+        tokenManagerType,
+        decimals,
+        name,
+        symbol,
+        jettonMinterAddress,
+        itsJettonWallet,
+    };
+}
+
+function prettyPrintTokenManagerInfo(tokenManagerInfo) {
+    console.log('🪙 Token Manager Info');
+    console.log(`Token ID              : ${tokenManagerInfo.tokenId}`);
+    console.log(`Token Manager Type    : ${tokenManagerInfo.tokenManagerType}`);
+    console.log(`Decimals              : ${tokenManagerInfo.decimals}`);
+    console.log(`Name                  : ${tokenManagerInfo.name}`);
+    console.log(`Symbol                : ${tokenManagerInfo.symbol}`);
+    console.log(`Jetton Minter Address : ${tokenManagerInfo.jettonMinterAddress}`);
+    console.log(`ITS Jetton Wallet     : ${tokenManagerInfo.itsJettonWallet}`);
+    console.log('─'.repeat(30));
 }
 
 const program = new Command();
@@ -208,26 +294,23 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
     .action(async (adminAddress, contentHex, jettonMinterAddress, options) => {
         try {
+
             // Remove 0x prefix if present
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
             const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
+
             const itsAddress = Address.parse(ITS_ADDRESS);
+            const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
             const adminAddr = Address.parse(adminAddress);
             const contentCell = Cell.fromHex(cleanContentHex);
 
             const { jettonMinterCode, jettonWalletCode } = await getJettonCodes(jettonMinterAddress);
-            const messageBody = buildRegisterTokenMetadataMessage(adminAddr, contentCell, jettonMinterCode, jettonWalletCode);
-
-            const canonicalJettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
-                client.provider(itsAddress),
-                adminAddr,
-                contentCell,
-            );
-            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), canonicalJettonMinterAddress);
-            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const registerTokenMetadataMeessage = buildRegisterTokenMetadataMessage(adminAddr, contentCell, jettonMinterCode, jettonWalletCode);
             const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
 
             console.log('User Parameters:');
@@ -243,14 +326,30 @@ program
             console.log(`  Symbol:                ${symbol}`);
             console.log(`  Decimals:              ${decimals}`);
             console.log();
-            console.log('Registration Result:');
-            console.log('─'.repeat(40));
-            console.log(`  Token ID:              ${tokenId}`);
-            console.log(`  Token Manager:         ${tokenManagerAddress}`);
-            console.log(`  Canonical Minter:      ${canonicalJettonMinterAddress}`);
 
-            const cost = toNano(options.gas);
-            await executeITSOperation('Register Token Metadata', messageBody, cost);
+            const jettonMinterAddr = Address.parse(jettonMinterAddress);
+
+            const hubPayload = encodeRegisterTokenMetadataAbi({
+              messageType: 6,
+              tokenAddress: '0x' + jettonMinterAddr.toRawString().slice(2),
+              decimals,
+            });
+
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
+
+            const { transfer, seqno } = await sendMultipleTransactionWithCost(
+                contract,
+                key,
+                itsAddress,
+                registerTokenMetadataMeessage,
+                toNano('0.4'),
+                gasServiceAddress,
+                gasMessage,
+                options.gas,
+            );
+
+            console.log('💸 Transaction sent successfully!');
+            await waitForTransaction(contract, seqno);
         } catch (error) {
             console.error('❌ Error registering token metadata:', error.message);
             process.exit(1);
@@ -266,18 +365,62 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.4')
     .action(async (salt, chainName, remoteMinter, options) => {
         try {
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
+
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
 
-            console.log('Deploying Remote Interchain Token with parameters:');
-            console.log('  Salt:', saltBigInt);
-            console.log('  Chain Name:', chainName);
-            console.log('  Remote Minter:', remoteMinter || 'None');
-            console.log('  Transaction Gas:', options.gas, 'TON');
+            const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
-            const messageBody = buildDeployRemoteInterchainTokenMessage(saltBigInt, chainName, remoteMinter);
+            const tokenId = await interchainTokenService.getInterchainTokenId(client.provider(itsAddress), salt, contract.address);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const tokenManager = TokenManager.createFromAddress(tokenManagerAddress);
+            const { data } = await tokenManager.getTokenManagerData(client.provider(tokenManagerAddress));
+            const tokenManagerInfo = parseTokenManagerInfo(data);
 
-            const cost = toNano(options.gas);
-            await executeITSOperation('Deploy Remote Interchain Token', messageBody, cost);
+            console.log('📦 Deploying Remote Interchain Token');
+            console.log('─'.repeat(45));
+            console.log(`Salt                  : ${saltBigInt}`);
+            console.log(`Chain Name            : ${chainName}`);
+            console.log(`Remote Minter         : ${remoteMinter || 'None'}`);
+            console.log(`Transaction Gas       : ${options.gas} TON`);
+            console.log(`Token ID              : ${tokenManagerInfo.tokenId}`);
+            console.log(`Token Manager Type    : ${tokenManagerInfo.tokenManagerType}`);
+            console.log(`Decimals              : ${tokenManagerInfo.decimals}`);
+            console.log(`Name                  : ${tokenManagerInfo.name}`);
+            console.log(`Symbol                : ${tokenManagerInfo.symbol}`);
+            console.log(`Jetton Minter Address : ${tokenManagerInfo.jettonMinterAddress}`);
+            console.log(`ITS Jetton Wallet     : ${tokenManagerInfo.itsJettonWallet}`);
+            console.log('─'.repeat(45));
+
+            const deployRemoteInterchainTokenMessage = buildDeployRemoteInterchainTokenMessage(saltBigInt, chainName, remoteMinter);
+
+            const hubPayload = encodeDeployInterchainTokenHubMessage(chainName, {
+                tokenId: '0x' + tokenId.toString(16).padStart(64, '0'),
+                name: tokenManagerInfo.name,
+                symbol: tokenManagerInfo.symbol,
+                decimals: tokenManagerInfo.decimals,
+                minter: remoteMinter || '0x',
+            });
+
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
+
+            const { transfer, seqno } = await sendMultipleTransactionWithCost(
+                contract,
+                key,
+                itsAddress,
+                deployRemoteInterchainTokenMessage,
+                toNano('0.4'),
+                gasServiceAddress,
+                gasMessage,
+                options.gas,
+            );
+
+            console.log('💸 Transaction sent successfully!');
+            await waitForTransaction(contract, seqno);
         } catch (error) {
             console.error('❌ Error deploying remote interchain token:', error.message);
             process.exit(1);
@@ -295,17 +438,6 @@ program
     .option('-g, --gas <amount>', 'Gas amount in TON for this transaction', '0.1')
     .action(async (tokenId, chainName, destinationAddress, amount, jettonMinter, options) => {
         try {
-            // Parse and validate inputs
-            const tokenIdBigInt = tokenId.startsWith('0x') ? BigInt(tokenId) : BigInt(tokenId);
-            const spendAmount = BigInt(amount);
-            const tokenIdBytes32 = '0x' + tokenIdBigInt.toString(16).padStart(64, '0');
-            const destAddrBuffer = Buffer.from(destinationAddress.slice(2), 'hex');
-
-            console.log('🚀 Transferring Interchain Token:');
-            console.log(`  Token ID: ${tokenIdBigInt.toString()}`);
-            console.log(`  Chain: ${chainName} → Address: ${destinationAddress}`);
-            console.log(`  Amount: ${spendAmount.toString()}`);
-
             // Initialize clients and addresses
             const client = getTonClient();
             const { contract, key } = await loadWallet(client);
@@ -314,6 +446,31 @@ program
             const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
             const itsAddress = Address.parse(process.env.TON_ITS_ADDRESS);
             const jettonMinterAddress = Address.parse(jettonMinter);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            // Parse and validate inputs
+            const tokenIdBigInt = tokenId.startsWith('0x') ? BigInt(tokenId) : BigInt(tokenId);
+            const spendAmount = BigInt(amount);
+            const tokenIdBytes32 = '0x' + tokenIdBigInt.toString(16).padStart(64, '0');
+            const destAddrBuffer = Buffer.from(destinationAddress.slice(2), 'hex');
+
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenIdBigInt);
+            const tokenManager = TokenManager.createFromAddress(tokenManagerAddress);
+            const { data } = await tokenManager.getTokenManagerData(client.provider(tokenManagerAddress));
+            const tokenManagerInfo = parseTokenManagerInfo(data);
+
+            console.log('💸 Transferring Interchain Token');
+            console.log('─'.repeat(45));
+            console.log(`Token ID              : ${tokenIdBigInt.toString()}`);
+            console.log(`Chain                 : ${chainName} → ${destinationAddress}`);
+            console.log(`Amount                : ${spendAmount.toString()}`);
+            console.log(`Token Manager Type    : ${tokenManagerInfo.tokenManagerType}`);
+            console.log(`Decimals              : ${tokenManagerInfo.decimals}`);
+            console.log(`Name                  : ${tokenManagerInfo.name}`);
+            console.log(`Symbol                : ${tokenManagerInfo.symbol}`);
+            console.log(`Jetton Minter Address : ${tokenManagerInfo.jettonMinterAddress}`);
+            console.log(`ITS Jetton Wallet     : ${tokenManagerInfo.itsJettonWallet}`);
+            console.log('─'.repeat(45));
 
             // Get jetton wallet address
             const minter = JettonMinter.createFromAddress(jettonMinterAddress);
@@ -321,15 +478,15 @@ program
             const userJettonWallet = JettonWallet.createFromAddress(jettonWalletAddress);
 
             // Build payloads
-            const hubPayload = encodeInterchainTransferInnerMessage({
+            const hubPayload = encodeInterchainTransferHubMessage(chainName, {
                 tokenId: tokenIdBytes32,
                 sourceAddress: sender.hash,
                 destinationAddress: destAddrBuffer,
                 amount: amount,
-                data: Buffer.from('', 'hex'),
+                data: Buffer.from('', 'hex'), // data is always empty
             });
 
-            const gasMessage = buildPayNativeGasForContractCallMessage(sender, chainName, destinationAddress, hubPayload, sender);
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
 
             const transferPayload = buildInterchainTokenTransferPayload(jettonMinterAddress, tokenIdBigInt, chainName, destAddrBuffer);
 
@@ -343,8 +500,6 @@ program
                 transferPayload,
             );
 
-            // Send bundled transaction
-            console.log('💸 Sending bundled transaction...');
             const { transfer, seqno } = await sendMultipleTransactionWithCost(
                 contract,
                 key,
@@ -353,12 +508,10 @@ program
                 toNano('0.1'),
                 gasServiceAddress,
                 gasMessage,
-                toNano('0.05'),
+                options.gas,
             );
 
-            console.log('✅ Transaction sent successfully!');
-            console.log(`📋 Transaction hash: ${transfer.hash().toString('hex')}`);
-
+            console.log('💸 Transaction sent successfully!');
             await waitForTransaction(contract, seqno);
             console.log('🎉 Transaction confirmed!');
         } catch (error) {
@@ -396,22 +549,74 @@ program
             const saltBigInt = salt.startsWith('0x') ? BigInt(salt) : BigInt(salt);
             const tmType = parseInt(tokenManagerType, 10);
 
-            console.log('Linking Token with parameters:');
-            console.log('  Salt:', saltBigInt);
-            console.log('  Chain Name:', chainName);
-            console.log('  Destination Address:', destinationAddress);
-            console.log('  Token Manager Type:', tmType);
-            console.log('  Link Params:', linkParams);
-            console.log('  Gas:', options.gas, 'TON');
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
+
+            // Create the contract instance directly - no need for openContract with real provider
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
+
+            const tokenId = await interchainTokenService.getLinkedTokenId(client.provider(itsAddress), contract.address, salt);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const tokenManager = TokenManager.createFromAddress(tokenManagerAddress);
+            const { data } = await tokenManager.getTokenManagerData(client.provider(tokenManagerAddress));
+            const tokenManagerInfo = parseTokenManagerInfo(data);
+
+            console.log('🔗 Linking Token');
+            console.log('─'.repeat(45));
+            console.log(`Salt                  : ${saltBigInt}`);
+            console.log(`Chain Name            : ${chainName}`);
+            console.log(`Destination Address   : ${destinationAddress}`);
+            console.log(`Token Manager Type    : ${tmType}`);
+            console.log(`Link Params           : ${linkParams}`);
+            console.log(`Gas                   : ${options.gas} TON`);
+            console.log(`Token ID              : ${tokenManagerInfo.tokenId}`);
+            console.log(`Decimals              : ${tokenManagerInfo.decimals}`);
+            console.log(`Name                  : ${tokenManagerInfo.name}`);
+            console.log(`Symbol                : ${tokenManagerInfo.symbol}`);
+            console.log(`Jetton Minter Address : ${tokenManagerInfo.jettonMinterAddress}`);
+            console.log(`ITS Jetton Wallet     : ${tokenManagerInfo.itsJettonWallet}`);
+            console.log('─'.repeat(45));
 
             const linkParamsCell =
                 linkParams === '0x'
                     ? beginCell().endCell()
                     : hexStringToCell(linkParams.startsWith('0x') ? linkParams.slice(2) : linkParams);
-            const messageBody = buildLinkTokenMessage(saltBigInt, chainName, destinationAddress, tmType, linkParamsCell);
 
-            const cost = toNano(options.gas);
-            await executeITSOperation('Link Token', messageBody, cost);
+            const hubPayload = encodeLinkTokenHubMessage(TON_CHAIN_NAME, {
+                tokenId: '0x' + tokenManagerInfo.tokenId.toString(16),
+                tokenManagerType: tmType,
+                destinationAddress: destinationAddress,
+                sourceAddress: '0x' + tokenManagerInfo.jettonMinterAddress.toRawString().slice(2),
+                linkParams,
+            });
+
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
+
+            const linkTokenMessage = buildLinkTokenMessage(
+                saltBigInt,
+                chainName,
+                Buffer.from(destinationAddress.slice(2), 'hex'),
+                tmType,
+                linkParamsCell,
+            );
+
+            // Send bundled transaction
+            const { transfer, seqno } = await sendMultipleTransactionWithCost(
+                contract,
+                key,
+                itsAddress,
+                linkTokenMessage,
+                toNano('0.4'),
+                gasServiceAddress,
+                gasMessage,
+                options.gas,
+            );
+
+            console.log('💸 Transaction sent successfully!');
+            await waitForTransaction(contract, seqno);
         } catch (error) {
             console.error('❌ Error linking token:', error.message);
             process.exit(1);
@@ -564,6 +769,8 @@ program
             const cleanContentHex = contentHex.startsWith('0x') ? contentHex.slice(2) : contentHex;
 
             const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
@@ -582,13 +789,7 @@ program
                 jettonWalletCode,
             );
 
-            const canonicalJettonMinterAddress = await interchainTokenService.getCanonicalJettonMinterAddress(
-                client.provider(itsAddress),
-                adminAddr,
-                contentCell,
-            );
-
-            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), canonicalJettonMinterAddress);
+            const tokenId = await interchainTokenService.getLinkedTokenId(client.provider(itsAddress), sender, saltBigInt);
             const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
             const { name, symbol, decimals } = await interchainTokenService.getJettonMetadata(client.provider(itsAddress), contentCell);
 
@@ -612,7 +813,7 @@ program
             console.log('─'.repeat(40));
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
-            console.log(`  Custom Minter:         ${canonicalJettonMinterAddress}`);
+            console.log(`  Custom Minter:         ${jettonMinterAddress}`);
 
             const cost = toNano(options.gas);
             await executeITSOperation('Register Custom Token', messageBody, cost);
