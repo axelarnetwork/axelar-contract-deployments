@@ -1335,6 +1335,39 @@
           "structs": {
             "Q": "0xd2e532fe78ec83498aaff97f937381612a69b1a58bc53575c325523c1c4631db::q::Q"
           }
+        },
+        "Example": {
+          "address": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b",
+          "versions": {
+            "0": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b"
+          },
+          "deployer": "0x1471a8acf730a05a7d720e52c7ef94024c7351502c83b80da5583db2f6b0b8df",
+          "structs": {
+            "Singleton": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::its::Singleton",
+            "Executed": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::gmp::Executed",
+            "ExecutedWithToken": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::its::ExecutedWithToken",
+            "TOKEN": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::token::TOKEN",
+            "TOKEN_A": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::token_a::TOKEN_A",
+            "TOKEN_B": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::token_b::TOKEN_B",
+            "TOKEN_C": "0xe5a7b3cd910d8c240789024eb92556d0ec6a57a26482d4457c485429a9606f3b::token_c::TOKEN_C"
+          },
+          "objects": {
+            "GmpSingleton": "0xa8bd7e568d5cc28034fa954338c665c0be227034b5d125fbd771de131bba4d85",
+            "GmpChannelId": "0xc02a13b1ea9127013b555d9ed6554e9ba16bc0a18f96e542690e98f419ccba3e",
+            "ItsSingleton": "0x085a285cad89283b3f9a5a7519a295585dea241d17266674716b446f461b035b",
+            "ItsChannelId": "0x4bb91a5fd8f2cf2208f0d8071cc88cc7048643a29158a6550a422875fd79053f"
+          }
+        },
+        "TST10": {
+          "address": "0x8a1878f5d499411edda4a7076953c0e294910709fa157a56bc1856c747371b1f",
+          "typeArgument": "0x8a1878f5d499411edda4a7076953c0e294910709fa157a56bc1856c747371b1f::tst10::TST10",
+          "decimals": "6",
+          "objects": {
+            "TreasuryCap": "0xe77f38ae83f932ea2f551e3506754f5dfc0b4be1ed5faa11a43b0441aa017c5d",
+            "Metadata": "0xf90a4c632db99f22e8d83faf8f3b8234088f1cc3ba25a1122cb827f267536115",
+            "TokenId": "0x968d3e84c2ee0f5fe9964fae6212989dad95d288b3f45b98230c136a24015af3",
+            "origin": true
+          }
         }
       },
       "explorer": {
