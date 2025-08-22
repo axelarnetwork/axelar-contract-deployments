@@ -118,7 +118,7 @@ impl TestSigningKey {
                 // Convert recovery ID to Ethereum format (0,1 -> 27,28)
                 let recovery_value = recovery_id.serialize();
                 assert!(
-                    recovery_value > 1,
+                    recovery_value <= 1,
                     "Unexpected recovery ID: {recovery_value} (expected 0 or 1)"
                 );
                 signature_bytes.push(recovery_value + 27);
