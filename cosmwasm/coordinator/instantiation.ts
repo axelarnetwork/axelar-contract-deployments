@@ -1,43 +1,127 @@
-import type { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import type { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/signingcosmwasmclient';
 
 import { printInfo, prompt } from '../../common';
-import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt, prepareClient, prepareWallet, submitProposal } from '../utils';
+import { encodeExecuteContractProposal, fetchCodeIdFromCodeHash, getSalt } from '../utils';
 import { ConfigManager } from './config';
-import { CONTRACTS_TO_HANDLE } from './constants';
-import { RetryManager } from './retry';
-import type {
-    CoordinatorOptions,
-    GatewayChainConfig,
-    InstantiateChainContractsMsg,
-    MultisigProverChainConfig,
-    VotingVerifierChainConfig,
-    WalletAndClient,
-} from './types';
+import type { InstantiateChainOptions } from './option-processor';
+import { ProposalManager } from './proposal-manager';
+
+export interface GatewayParams {
+    code_id: number;
+    label: string;
+    msg: null;
+    contract_admin: string;
+}
+
+export interface VerifierParams {
+    code_id: number;
+    label: string;
+    msg: {
+        governance_address: string;
+        service_name: string;
+        source_gateway_address: string;
+        voting_threshold: [string, string];
+        block_expiry: string;
+        confirmation_height: number;
+        source_chain: string;
+        rewards_address: string;
+        msg_id_format: string;
+        address_format: string;
+    };
+    contract_admin: string;
+}
+
+export interface ProverParams {
+    code_id: number;
+    label: string;
+    msg: {
+        governance_address: string;
+        admin_address: string;
+        multisig_address: string;
+        signing_threshold: [string, string];
+        service_name: string;
+        chain_name: string;
+        verifier_set_diff_threshold: number;
+        encoder: string;
+        key_type: string;
+        domain_separator: string;
+    };
+    contract_admin: string;
+}
+
+export interface InstantiateChainContractsMsg {
+    instantiate_chain_contracts: {
+        deployment_name: string;
+        salt: string;
+        params: {
+            manual: {
+                gateway: GatewayParams;
+                verifier: VerifierParams;
+                prover: ProverParams;
+            };
+        };
+    };
+}
+
+export interface VotingVerifierChainConfig {
+    governanceAddress?: string;
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    votingThreshold?: [string, string];
+    blockExpiry?: string | number;
+    confirmationHeight?: number;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface MultisigProverChainConfig {
+    encoder?: string;
+    keyType?: string;
+    domainSeparator?: string;
+    adminAddress?: string;
+    multisigAddress?: string;
+    verifierSetDiffThreshold?: number;
+    signingThreshold?: [string, string];
+    deploymentName?: string;
+    proposalId?: string;
+    contractAdmin?: string;
+}
+
+export interface GatewayChainConfig {
+    deploymentName?: string;
+    proposalId?: string;
+    salt?: string;
+    contractAdmin?: string;
+}
 
 export class InstantiationManager {
     public configManager: ConfigManager;
+    private proposalManager: ProposalManager;
 
-    constructor(configManager: ConfigManager) {
+    constructor(configManager: ConfigManager, proposalManager: ProposalManager) {
         this.configManager = configManager;
+        this.proposalManager = proposalManager;
     }
 
-    public async instantiateChainContracts(chainName: string, options: CoordinatorOptions): Promise<void> {
-        printInfo(`Instantiating chain contracts for ${chainName}...`);
+    public async instantiateChainContracts(options: InstantiateChainOptions): Promise<void> {
+        printInfo(`Instantiating chain contracts for ${options.chainName}...`);
         printInfo(`Environment: ${this.configManager.getEnvironment()}`);
-
-        const { wallet, client } = await this.prepareWalletAndClient(options);
 
         if (prompt('Are the deployment proposals executed?', options.yes)) {
             printInfo('Deployment proposals are not finished yet, please wait for them to be executed');
             return;
         }
 
-        await this.fetchAndUpdateCodeIds(client, CONTRACTS_TO_HANDLE);
-        await this.executeMessageViaGovernance(chainName, options, client, wallet);
+        const client = await this.proposalManager.getClient(options.mnemonic);
+        await this.fetchAndUpdateCodeIds(client, ['VotingVerifier', 'MultisigProver', 'Gateway']);
+        await this.executeMessageViaGovernance(options.chainName, options);
     }
 
-    private constructExecuteMessage(chainName: string, options: CoordinatorOptions, deploymentName: string): InstantiateChainContractsMsg {
+    private constructExecuteMessage(chainName: string, deploymentName: string): InstantiateChainContractsMsg {
         const chainConfig = this.configManager.getChainConfig(chainName);
         const votingVerifierConfig = (this.configManager.getContractConfig('VotingVerifier')[chainName] as VotingVerifierChainConfig) || {};
         const multisigProverConfig = (this.configManager.getContractConfig('MultisigProver')[chainName] as MultisigProverChainConfig) || {};
@@ -102,12 +186,6 @@ export class InstantiationManager {
         const signingThreshold = validateThreshold(multisigProverConfig.signingThreshold, `MultisigProver[${chainName}].signingThreshold`);
         const salt = validateRequired(gatewayConfig.salt, 'Salt');
         const saltUint8Array = getSalt(salt, chainName, chainConfig.axelarId);
-
-        printInfo(`Governance address: ${governanceAddress}`);
-        printInfo(`Service name: ${serviceName}`);
-        printInfo(`Rewards address: ${rewardsAddress}`);
-        printInfo(`Source gateway address: ${sourceGatewayAddress}`);
-
         const gatewayCodeId: number = this.configManager.getContractConfig('Gateway').codeId;
         const verifierCodeId: number = this.configManager.getContractConfig('VotingVerifier').codeId;
         const proverCodeId: number = this.configManager.getContractConfig('MultisigProver').codeId;
@@ -166,16 +244,9 @@ export class InstantiationManager {
         };
     }
 
-    private async executeMessageViaGovernance(
-        chainName: string,
-        options: CoordinatorOptions,
-        client: SigningCosmWasmClient,
-        wallet: DirectSecp256k1HdWallet,
-    ): Promise<void> {
-        printInfo('Executing message via governance proposal...');
-
+    private async executeMessageViaGovernance(chainName: string, options: InstantiateChainOptions): Promise<void> {
         const deploymentName = this.generateDeploymentName(chainName);
-        const message = this.constructExecuteMessage(chainName, options, deploymentName);
+        const message = this.constructExecuteMessage(chainName, deploymentName);
         const messageJson = JSON.stringify(message, null, 2);
 
         printInfo(`Message: ${messageJson}`);
@@ -183,8 +254,6 @@ export class InstantiationManager {
 
         const title = `Instantiate Chain Contracts for ${chainName}`;
         const description = `Instantiate Gateway, VotingVerifier, and MultisigProver contracts for chain ${chainName}`;
-
-        printInfo('Creating governance proposal...');
         const proposal = encodeExecuteContractProposal(
             this.configManager.getFullConfig(),
             {
@@ -202,12 +271,7 @@ export class InstantiationManager {
             return;
         }
 
-        printInfo('Submitting proposal...');
-
-        const proposalId = await RetryManager.withRetry(() =>
-            submitProposal(client, wallet, this.configManager.getFullConfig(), options, proposal),
-        );
-        printInfo(`Proposal submitted successfully with ID: ${proposalId}`);
+        const proposalId = await this.proposalManager.submitProposal(proposal, options.mnemonic, options.deposit);
 
         this.storeDeploymentInfo(chainName, deploymentName, proposalId);
         this.configManager.saveConfig();
@@ -222,7 +286,6 @@ export class InstantiationManager {
     }
 
     private storeDeploymentInfo(chainName: string, deploymentName?: string, proposalId?: string): void {
-        // Store deployment info in the appropriate contract configs
         if (deploymentName) {
             const gatewayConfig = this.configManager.getContractConfig('Gateway');
             const verifierConfig = this.configManager.getContractConfig('VotingVerifier');
@@ -254,42 +317,22 @@ export class InstantiationManager {
         this.configManager.saveConfig();
     }
 
-    /**
-     * Fetches and updates code IDs from proposals for all contracts that need them
-     */
-    public async fetchAndUpdateCodeIds(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
-        printInfo('Fetching and updating code IDs from proposals...');
-
+    private async fetchAndUpdateCodeIds(client: SigningCosmWasmClient, contractsToUpdate: string[]): Promise<void> {
         for (const contractName of contractsToUpdate) {
             const contractConfig = this.configManager.getContractConfig(contractName);
 
-            if (contractConfig.storeCodeProposalId && contractConfig.storeCodeProposalCodeHash) {
-                printInfo(`Found proposal data for ${contractName}, fetching latest code ID from chain...`);
-
+            if (contractConfig.storeCodeProposalCodeHash) {
                 const contractBaseConfig = {
                     storeCodeProposalCodeHash: contractConfig.storeCodeProposalCodeHash,
                 };
 
                 try {
                     const codeId = await fetchCodeIdFromCodeHash(client, contractBaseConfig);
-                    printInfo(`Successfully fetched code ID ${codeId} for ${contractName} from chain`);
-
                     this.configManager.updateContractCodeId(contractName, codeId);
-                    printInfo(`Updated ${contractName} code ID in config: ${codeId}`);
                 } catch (error) {
-                    printInfo(`Failed to fetch code ID for ${contractName} from chain: ${(error as Error).message}`);
-                    if (contractConfig.codeId) {
-                        printInfo(`Using existing code ID from config as fallback: ${contractConfig.codeId}`);
-                        this.configManager.updateContractCodeId(contractName, contractConfig.codeId);
-                    }
+                    throw new Error(`Failed to fetch code ID for ${contractName} from chain: ${(error as Error).message}`);
                 }
             }
         }
-    }
-
-    private async prepareWalletAndClient(options: CoordinatorOptions): Promise<WalletAndClient> {
-        const wallet = await prepareWallet(options as { mnemonic: string });
-        const client = await prepareClient(this.configManager.getFullConfig() as { axelar: { rpc: string; gasPrice: string } }, wallet);
-        return { wallet, client };
     }
 }

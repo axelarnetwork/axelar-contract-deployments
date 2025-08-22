@@ -67,8 +67,7 @@ npx ts-node cosmwasm/coordinator.ts configure \
     --signing-threshold "6,10" \
     --block-expiry "10" \
     --confirmation-height "1" \
-    --source-gateway-address "$SRC_GATEWAY_ADDRESS" \
-    --governance-address "$GOVERNANCE_ADDRESS" \
+    --source-gateway-address "$SRC_GATEWAY_ADDRESS"
 
 # Step 3: Instantiate contracts
 npx ts-node cosmwasm/coordinator.ts instantiate \

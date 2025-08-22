@@ -1,51 +1,98 @@
 import { isValidCosmosAddress } from '../utils';
-import { DEFAULTS } from './constants';
-import type { CoordinatorOptions } from './types';
+
+export interface ProposalOptions {
+    deposit?: string;
+    yes?: boolean;
+    runAs?: string;
+    mnemonic: string;
+    env: string;
+}
+
+export interface DeployContractsOptions extends ProposalOptions {
+    artifactDir?: string;
+    versionVerifier?: string;
+    versionMultisig?: string;
+    versionGateway?: string;
+    deploymentName?: string;
+}
+
+export interface ConfigureChainOptions {
+    serviceName?: string;
+    rewardsAddress?: string;
+    sourceGatewayAddress?: string;
+    governanceAddress?: string;
+    votingThreshold?: [string, string] | string;
+    signingThreshold?: [string, string] | string;
+    blockExpiry?: string;
+    confirmationHeight?: number | string;
+    msgIdFormat?: string;
+    addressFormat?: string;
+    verifierSetDiffThreshold?: number | string;
+    encoder?: string;
+    keyType?: string;
+    domainSeparator?: string;
+    chainName: string;
+    contractAdmin: string;
+    multisigAdmin: string;
+    salt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RegisterProtocolOptions extends ProposalOptions {}
+
+export interface InstantiateChainOptions extends ProposalOptions {
+    chainName: string;
+}
+
+export interface RegisterDeploymentOptions extends ProposalOptions {
+    chainName: string;
+}
+
+export type CoordinatorOptions = DeployContractsOptions &
+    ConfigureChainOptions &
+    RegisterProtocolOptions &
+    InstantiateChainOptions &
+    RegisterDeploymentOptions;
 
 export class OptionProcessor {
-    private static parseThreshold(value: string | [string, string] | undefined, defaultThreshold: [string, string]): [string, string] {
-        if (!value) return defaultThreshold;
+    private static parseThreshold(value: string | [string, string] | undefined): [string, string] {
         if (typeof value === 'string') {
             const parts = value.split(',').map((s) => s.trim());
-            return parts.length === 2 ? (parts as [string, string]) : defaultThreshold;
+            if (parts.length === 2) {
+                return parts as [string, string];
+            } else {
+                throw new Error('Threshold must be in format "numerator,denominator"');
+            }
         }
-        return value;
+        return value as [string, string];
     }
 
-    private static parseNumber(value: number | string | undefined, defaultValue: number): number {
-        return value ? parseInt(value.toString(), 10) : defaultValue;
+    private static parseNumber(value: number | string | undefined): number {
+        if (value) {
+            return parseInt(value.toString(), 10);
+        } else {
+            throw new Error('Value must be a number');
+        }
     }
 
     public static processOptions(options: CoordinatorOptions): CoordinatorOptions {
         const processedOptions = { ...options };
 
-        // Process thresholds
-        processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold, DEFAULTS.votingThreshold);
-        processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold, DEFAULTS.signingThreshold);
+        if ('votingThreshold' in processedOptions) {
+            processedOptions.votingThreshold = this.parseThreshold(options.votingThreshold);
+        }
 
-        // Process numeric values
-        processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight, DEFAULTS.confirmationHeight);
-        processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold, DEFAULTS.verifierSetDiffThreshold);
+        if ('signingThreshold' in processedOptions) {
+            processedOptions.signingThreshold = this.parseThreshold(options.signingThreshold);
+        }
 
-        // Set defaults for string values
-        const stringDefaults = {
-            serviceName: DEFAULTS.serviceName,
-            blockExpiry: DEFAULTS.blockExpiry,
-            msgIdFormat: DEFAULTS.msgIdFormat,
-            addressFormat: DEFAULTS.addressFormat,
-            encoder: DEFAULTS.encoder,
-            keyType: DEFAULTS.keyType,
-        };
+        if ('confirmationHeight' in processedOptions) {
+            processedOptions.confirmationHeight = this.parseNumber(options.confirmationHeight);
+        }
 
-        Object.entries(stringDefaults).forEach(([key, defaultValue]) => {
-            const typedKey = key as keyof Pick<
-                CoordinatorOptions,
-                'serviceName' | 'blockExpiry' | 'msgIdFormat' | 'addressFormat' | 'encoder' | 'keyType'
-            >;
-            if (!processedOptions[typedKey]) {
-                processedOptions[typedKey] = defaultValue;
-            }
-        });
+        if ('verifierSetDiffThreshold' in processedOptions) {
+            processedOptions.verifierSetDiffThreshold = this.parseNumber(options.verifierSetDiffThreshold);
+        }
 
         this.validateOptions(processedOptions);
         return processedOptions;
@@ -110,11 +157,7 @@ export class OptionProcessor {
     private static validateDomainSeparator(domainSeparator?: string): void {
         if (!domainSeparator) return;
 
-        if (!domainSeparator.startsWith('0x')) {
-            throw new Error('Domain separator must start with 0x');
-        }
-
-        if (!/^0x[a-fA-F0-9]{64}$/.test(domainSeparator)) {
+        if (!/^[a-fA-F0-9]{64}$/.test(domainSeparator)) {
             throw new Error('Domain separator must be a valid 32-byte hex string');
         }
     }

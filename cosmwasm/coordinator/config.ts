@@ -1,35 +1,99 @@
 import { createHash } from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
 
-import { loadConfig, printError, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
-import { CONTRACTS_TO_HANDLE } from './constants';
-import type { ChainConfig, ConfigFile, ContractConfig, CoordinatorOptions, FullConfig } from './types';
+import { loadConfig, printInfo, printWarn, readContractCode, saveConfig } from '../../common';
+
+export interface FullConfig {
+    axelar: {
+        contracts: {
+            [key: string]: ContractConfig & {
+                governanceAddress?: string;
+                governanceAccount?: string;
+            };
+        };
+        rpc: string;
+        gasPrice: string;
+        gasLimit: string | number;
+        govProposalInstantiateAddresses: string[];
+    };
+    chains: {
+        [chainName: string]: ChainConfig;
+    };
+    [key: string]: unknown;
+}
+
+export interface ChainConfig {
+    name: string;
+    axelarId: string;
+    chainId: number;
+    rpc: string;
+    tokenSymbol: string;
+    decimals: number;
+    confirmations?: number;
+    chainType: string;
+    contracts: {
+        [key: string]: ContractConfig;
+    };
+}
+
+export interface ContractConfig {
+    address?: string;
+    codeId?: number;
+    storeCodeProposalCodeHash?: string;
+    storeCodeProposalId?: string;
+    lastUploadedCodeId?: number;
+    [key: string]: unknown;
+}
 
 export class ConfigManager {
-    private config: ConfigFile;
     private environment: string;
     private fullConfig: FullConfig;
 
-    constructor(environment: string) {
+    constructor(environment: string, fullConfig?: FullConfig) {
         this.environment = environment;
-        this.loadConfig();
-        this.fullConfig = loadConfig(this.environment);
-    }
 
-    private loadConfig(): void {
-        const configPath = path.join(__dirname, '../../axelar-chains-config/info', `${this.environment}.json`);
-
-        if (!fs.existsSync(configPath)) {
-            throw new Error(`Config file not found: ${configPath}`);
+        if (fullConfig) {
+            this.fullConfig = fullConfig;
+        } else {
+            this.fullConfig = loadConfig(this.environment);
         }
 
-        const configData = fs.readFileSync(configPath, 'utf8');
-        this.config = JSON.parse(configData);
+        this.validateConfig();
+    }
+
+    private validateConfig(): void {
+        if (!this.fullConfig.axelar) {
+            throw new Error(`Missing 'axelar' section in ${this.environment} config`);
+        }
+
+        if (!this.fullConfig.axelar.contracts) {
+            throw new Error(`Missing 'axelar.contracts' section in ${this.environment} config`);
+        }
+
+        if (!this.fullConfig.chains) {
+            throw new Error(
+                `Missing 'chains' section in ${this.environment} config. Please ensure the config file has a 'chains' property.`,
+            );
+        }
+
+        if (typeof this.fullConfig.chains !== 'object' || this.fullConfig.chains === null) {
+            throw new Error(`'chains' section in ${this.environment} config must be an object`);
+        }
+
+        if (!this.fullConfig.axelar.rpc) {
+            throw new Error(`Missing 'axelar.rpc' in ${this.environment} config`);
+        }
+
+        if (!this.fullConfig.axelar.gasPrice) {
+            throw new Error(`Missing 'axelar.gasPrice' in ${this.environment} config`);
+        }
+
+        if (!this.fullConfig.axelar.gasLimit) {
+            throw new Error(`Missing 'axelar.gasLimit' in ${this.environment} config`);
+        }
     }
 
     public getChainConfig(chainName: string): ChainConfig {
-        const chainConfig = this.config.chains[chainName];
+        const chainConfig = this.fullConfig.chains[chainName];
         if (!chainConfig) {
             throw new Error(`Chain '${chainName}' not found in ${this.environment} config`);
         }
@@ -37,23 +101,20 @@ export class ConfigManager {
     }
 
     public getContractConfig(configContractName: string): ContractConfig {
-        const axelarContracts = this.fullConfig.axelar?.contracts;
+        const axelarContracts = this.fullConfig.axelar.contracts;
         if (!axelarContracts) {
             throw new Error(`Axelar contracts section not found in config for environment ${this.environment}`);
         }
 
         if (!axelarContracts[configContractName]) {
             axelarContracts[configContractName] = {};
-            printInfo(`Initialized contract config for ${configContractName}`);
         }
 
         return axelarContracts[configContractName];
     }
 
     public getContractAddressFromConfig(contractName: string): string | undefined {
-        printInfo(`Getting ${contractName} address from config...`);
-
-        const axelarContracts = this.fullConfig.axelar?.contracts;
+        const axelarContracts = this.fullConfig.axelar.contracts;
         if (!axelarContracts) {
             throw new Error('Axelar contracts not found in config');
         }
@@ -67,13 +128,10 @@ export class ConfigManager {
             throw new Error(`${contractName} address not found in axelar config. Please ensure the contract has been deployed.`);
         }
 
-        printInfo(`Found ${contractName} address in axelar config: ${contract.address}`);
         return contract.address;
     }
 
     public getContractAddressFromChainConfig(chainName: string, contractName: string): string {
-        printInfo(`Getting ${contractName} address from chain config...`);
-
         const chainConfig = this.getChainConfig(chainName);
         if (!chainConfig) {
             throw new Error(`Chain ${chainName} not found in config`);
@@ -93,9 +151,6 @@ export class ConfigManager {
 
     public getDefaultGovernanceAddress(): string {
         const axelarConfig = this.fullConfig.axelar;
-        if (!axelarConfig) {
-            throw new Error('Axelar configuration not found in config');
-        }
 
         const instantiateAddresses = axelarConfig.govProposalInstantiateAddresses;
         if (instantiateAddresses && Array.isArray(instantiateAddresses) && instantiateAddresses.length > 0) {
@@ -108,15 +163,13 @@ export class ConfigManager {
         if (contracts) {
             const coordinatorContract = contracts.Coordinator as { governanceAddress?: string };
             if (coordinatorContract?.governanceAddress) {
-                printInfo(`Using Coordinator governance address as fallback governance address: ${coordinatorContract.governanceAddress}`);
+                printInfo(`Using Coordinator governance address read from config: ${coordinatorContract.governanceAddress}`);
                 return coordinatorContract.governanceAddress;
             }
 
             const serviceRegistryContract = contracts.ServiceRegistry as { governanceAccount?: string };
             if (serviceRegistryContract?.governanceAccount) {
-                printInfo(
-                    `Using ServiceRegistry governance account as fallback governance address: ${serviceRegistryContract.governanceAccount}`,
-                );
+                printInfo(`Using ServiceRegistry governance account read from config: ${serviceRegistryContract.governanceAccount}`);
                 return serviceRegistryContract.governanceAccount;
             }
         }
@@ -128,38 +181,17 @@ export class ConfigManager {
         );
     }
 
-    public processOptions(options: CoordinatorOptions): CoordinatorOptions {
-        const processedOptions = { ...options };
-
-        if (!processedOptions.governanceAddress) {
-            processedOptions.governanceAddress = this.getDefaultGovernanceAddress();
-        }
-
-        if (!processedOptions.rewardsAddress) {
-            try {
-                processedOptions.rewardsAddress = this.getContractAddressFromConfig('Rewards');
-                printInfo(`Using rewards address from config: ${processedOptions.rewardsAddress}`);
-            } catch (error) {
-                printError(`Could not get rewards address from config: ${(error as Error).message}`);
-            }
-        }
-
-        return processedOptions;
-    }
-
     public updateContractCodeId(configContractName: string, codeId: number): void {
-        if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
+        if (!this.fullConfig.axelar.contracts[configContractName]) {
             throw new Error(`Contract ${configContractName} not found in config`);
         }
 
         this.fullConfig.axelar.contracts[configContractName].codeId = codeId;
         this.fullConfig.axelar.contracts[configContractName].lastUploadedCodeId = codeId;
-
-        printInfo(`Updated code ID for ${configContractName} in config: ${codeId}`);
     }
 
     public storeContractInfo(configContractName: string, proposalId: string, contractCodePath: string): void {
-        if (!this.fullConfig.axelar?.contracts?.[configContractName]) {
+        if (!this.fullConfig.axelar.contracts[configContractName]) {
             throw new Error(`Contract ${configContractName} not found in config`);
         }
 
@@ -173,7 +205,6 @@ export class ConfigManager {
             };
 
             codeHash = this.getContractCodeHash(options);
-            printInfo(`Successfully extracted code hash for ${configContractName}: ${codeHash}`);
         } catch (error) {
             printWarn(`Failed to extract code hash for ${configContractName}: ${(error as Error).message}`);
             printWarn(`Code hash will be extracted when fetching code ID from the chain`);
@@ -182,10 +213,6 @@ export class ConfigManager {
 
         this.fullConfig.axelar.contracts[configContractName].storeCodeProposalId = proposalId;
         this.fullConfig.axelar.contracts[configContractName].storeCodeProposalCodeHash = codeHash;
-
-        printInfo(`Stored deployment info for ${configContractName}:`);
-        printInfo(`  Proposal ID: ${proposalId}`);
-        printInfo(`  Code Hash: ${codeHash || 'Will be extracted when fetching code ID'}`);
     }
 
     private getContractCodeHash(options: {
@@ -211,15 +238,10 @@ export class ConfigManager {
     }
 
     public getDeploymentNameFromConfig(chainName: string): string {
-        const axelarContracts = this.fullConfig.axelar?.contracts;
-
-        if (!axelarContracts) {
-            throw new Error('Axelar contracts section not found in config');
-        }
-
+        const axelarContracts = this.fullConfig.axelar.contracts;
         const deploymentNames = new Set<string>();
 
-        for (const contractName of CONTRACTS_TO_HANDLE) {
+        for (const contractName of ['VotingVerifier', 'MultisigProver', 'Gateway']) {
             const contract = axelarContracts[contractName]?.[chainName] as { deploymentName?: string };
             if (!contract) {
                 throw new Error(`Contract ${contractName} not found in config`);
@@ -241,12 +263,9 @@ export class ConfigManager {
     }
 
     public getInstantiationProposalIdFromConfig(chainName: string): string | undefined {
-        const axelarContracts = this.fullConfig.axelar?.contracts;
-        if (!axelarContracts) {
-            return undefined;
-        }
+        const axelarContracts = this.fullConfig.axelar.contracts;
 
-        for (const contractName of CONTRACTS_TO_HANDLE) {
+        for (const contractName of ['VotingVerifier', 'MultisigProver', 'Gateway']) {
             const contract = axelarContracts[contractName]?.[chainName] as { proposalId?: string };
             if (contract?.proposalId) {
                 return contract.proposalId;
