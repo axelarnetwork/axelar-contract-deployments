@@ -865,19 +865,62 @@ program
     .description('Deploy a canonical interchain token on a remote chain')
     .argument('<jetton-minter-address>', 'Jetton minter address for the canonical token (TON address format)')
     .argument('<chain-name>', 'Name of the remote chain (e.g., "ethereum", "polygon")')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
     .action(async (jettonMinterAddress, chainName, options) => {
         try {
-            console.log('Deploying Remote Canonical Token with parameters:');
-            console.log('  Jetton Minter Address:', jettonMinterAddress);
-            console.log('  Chain Name:', chainName);
-            console.log('  Gas:', options.gas, 'TON');
-
+            const client = getTonClient();
+            const { contract, key } = await loadWallet(client);
+            const sender = contract.address;
+            const itsAddress = Address.parse(ITS_ADDRESS);
+            const gasServiceAddress = Address.parse(process.env.TON_GAS_SERVICE_ADDRESS);
+            const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
             const jettonMinterAddr = Address.parse(jettonMinterAddress);
-            const messageBody = buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddr, chainName);
+            const deployRemoteCanonicalmessage = buildDeployRemoteCanonicalInterchainTokenMessage(jettonMinterAddr, chainName);
 
-            const cost = toNano(options.gas);
-            await executeITSOperation('Deploy Remote Canonical Token', messageBody, cost);
+            const { tokenId } = await interchainTokenService.getCanonicalTokenId(client.provider(itsAddress), jettonMinterAddr);
+            const tokenManagerAddress = await interchainTokenService.getTokenManagerAddress(client.provider(itsAddress), tokenId);
+            const tokenManager = TokenManager.createFromAddress(tokenManagerAddress);
+            const { data } = await tokenManager.getTokenManagerData(client.provider(tokenManagerAddress));
+            const tokenManagerInfo = parseTokenManagerInfo(data);
+
+            console.log('🏗️ Deploying Remote Canonical Token');
+            console.log('─'.repeat(45));
+            console.log(`Jetton Minter         : ${jettonMinterAddress}`);
+            console.log(`Chain Name            : ${chainName}`);
+            console.log(`Transaction Gas       : ${options.gas} TON`);
+            console.log(`Token ID              : ${tokenManagerInfo.tokenId}`);
+            console.log(`Token Manager Type    : ${tokenManagerInfo.tokenManagerType}`);
+            console.log(`Decimals              : ${tokenManagerInfo.decimals}`);
+            console.log(`Name                  : ${tokenManagerInfo.name}`);
+            console.log(`Symbol                : ${tokenManagerInfo.symbol}`);
+            console.log(`Jetton Minter Address : ${tokenManagerInfo.jettonMinterAddress}`);
+            console.log(`ITS Jetton Wallet     : ${tokenManagerInfo.itsJettonWallet}`);
+            console.log('─'.repeat(45));
+
+            const hubPayload = encodeDeployInterchainTokenHubMessage(chainName, {
+                tokenId: '0x' + tokenId.toString(16).padStart(64, '0'),
+                name: tokenManagerInfo.name,
+                symbol: tokenManagerInfo.symbol,
+                decimals: tokenManagerInfo.decimals,
+                minter: '0x',
+            });
+
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
+
+            // Send bundled transaction
+            const { transfer, seqno } = await sendMultipleTransactionWithCost(
+                contract,
+                key,
+                itsAddress,
+                deployRemoteCanonicalmessage,
+                toNano('0.4'),
+                gasServiceAddress,
+                gasMessage,
+                options.gas,
+            );
+
+            console.log('💸 Transaction sent successfully!');
+            await waitForTransaction(contract, seqno);
         } catch (error) {
             console.error('❌ Error deploying remote canonical token:', error.message);
             process.exit(1);

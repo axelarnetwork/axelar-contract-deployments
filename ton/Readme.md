@@ -202,7 +202,7 @@ node ton/its.js register-custom-token <salt> <token-manager-type> <operator-addr
 ```
 
 ```bash
-node ton/its.js deploy-remote-canonical-token <jetton-minter-address> <chain-name> [remote-minter]
+node ton/its.js deploy-remote-canonical-token <jetton-minter-address> <chain-name>
 ```
 
 ```bash
