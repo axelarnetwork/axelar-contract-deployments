@@ -14,6 +14,15 @@ TON_GOVERNANCE_ADDRESS=
 TON_ITS_ADDRESS=
 ```
 
+Optional environment variables (with defaults):
+
+```
+AXELAR_HUB_CHAIN_NAME=axelar           # Default: 'axelar'
+AXELAR_HUB_ADDRESS=axelar157hl7gpuknjmhtac2qnphuazv2yerfagva7lsu9vuj2pgn32z22qa26dk4  # Default: devnet address
+```
+
+The hub chain variables are used for cross-chain communication when registering tokens and sending gas service messages. The defaults work for mainnet, but you may need to override them for testnet or different environments.
+
 ## Approving a message
 
 Run this with the hex encoded payload produced by the TON MultisigProver.
@@ -173,64 +182,102 @@ node ton/upgrade.js <contract-address> <new-code-box-hex>
 
 ## Interchain Token Service
 
+All commands support the `--dry-run` flag to preview what would be executed without sending transactions.
+
+### Interchain Token Flow
+
+Deploy a new interchain token with optional minter:
 ```bash
-node ton/its.js deploy-interchain-token <salt> <token-name> <token-symbol> <token-decimals> <initial-supply>
+node ton/its.js deploy-interchain-token <salt> <name> <symbol> <decimals> <initial-supply> [minter] [--gas <amount>] [--dry-run]
 ```
 
+Deploy the same token on a remote chain:
 ```bash
-node ton/its.js register-token-metadata <jetton-minter-address>
+node ton/its.js deploy-remote-interchain-token <salt> <chain-name> [remote-minter] [--gas <amount>] [--dry-run]
 ```
 
+Manage remote deployment permissions:
 ```bash
-node ton/its.js deploy-remote-interchain-token <salt> <chain-name>
+node ton/its.js approve-remote-deployment <salt> <deployer-address> <destination-chain> <minter-to-approve> [--gas <amount>] [--dry-run]
+node ton/its.js revoke-remote-deployment <salt> <deployer-address> <destination-chain> <minter-to-revoke> [--gas <amount>] [--dry-run]
 ```
 
+### Canonical Token Flow
+
+Register an existing jetton as a canonical interchain token:
 ```bash
-node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-address> <amount> <jetton-minter>
+node ton/its.js register-canonical-token <jetton-minter-address> [--gas <amount>] [--dry-run]
 ```
 
+Register canonical token with permissioned access (Admin only):
 ```bash
-node ton/its.js link-token <salt> <chain-name> <destination-address> <token-manager-type> <link-params> <jetton-minter-address>
+node ton/its.js register-canonical-token-permissioned <name> <symbol> <decimals> <jetton-minter-address> [--gas <amount>] [--dry-run]
 ```
 
+Deploy the canonical token on remote chains:
 ```bash
-node ton/its.js register-canonical-token <jetton-minter-address>
+node ton/its.js deploy-remote-canonical-token <jetton-minter-address> <chain-name> [--gas <amount>] [--dry-run]
 ```
 
+### Custom Token Flow
+
+Register token metadata (TEP-64 standard) for hub communication:
 ```bash
-node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <jetton-minter-address>
+node ton/its.js register-token-metadata <jetton-minter-address> [--gas <amount>] [--dry-run]
 ```
 
+Register a custom token with specific token manager behavior:
 ```bash
-node ton/its.js deploy-remote-canonical-token <jetton-minter-address> <chain-name>
+node ton/its.js register-custom-token <salt> <token-manager-type> <operator-address> <jetton-minter-address> [--gas <amount>] [--dry-run]
 ```
 
+Link existing token to remote chain with custom parameters:
 ```bash
-node ton/its.js approve-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+node ton/its.js link-token <salt> <chain-name> <destination-address> <token-manager-type> <link-params> [--gas <amount>] [--dry-run]
 ```
 
+### Token Transfer (Works with any token type)
+
+Transfer any registered token between chains:
 ```bash
-node ton/its.js revoke-remote-deployment <salt> <deployer-address> <chain-name> <remote-minter-address>
+node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-address> <amount> <jetton-minter> [--gas <amount>] [--dry-run]
 ```
 
-### Admin only
+### Admin Operations
 
+Add a trusted chain to the ITS (Operator or Owner):
 ```bash
-node ton/its.js register-canonical-token-permissioned <name> <symbol> <decimals> <jetton-minter-address>
+node ton/its.js add-trusted-chain <chain-name> <chain-address> [--gas <amount>] [--dry-run]
 ```
 
+Remove a trusted chain from the ITS (Operator or Owner):
 ```bash
-node ton/its.js add-trusted-chain <chain-name> <chain-address>
+node ton/its.js remove-trusted-chain <chain-name> [--gas <amount>] [--dry-run]
 ```
 
+Change the operator of the ITS (Current operator only):
 ```bash
-node ton/its.js remove-trusted-chain <chain-name>
+node ton/its.js change-operator <new-operator> [--gas <amount>] [--dry-run]
 ```
 
+Change the owner of the ITS (Owner only):
 ```bash
-node ton/its.js pause
+node ton/its.js change-owner <new-owner> [--gas <amount>] [--dry-run]
 ```
 
+Pause the ITS (Operator only):
 ```bash
-node ton/its.js unpause
+node ton/its.js pause [--gas <amount>] [--dry-run]
+```
+
+Unpause the ITS (Operator only):
+```bash
+node ton/its.js unpause [--gas <amount>] [--dry-run]
+```
+
+### Information Commands
+
+Get full state of the ITS contract:
+```bash
+node ton/its.js get-full-state [its-address]
 ```
