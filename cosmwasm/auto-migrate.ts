@@ -20,6 +20,7 @@ interface ChainEndpoint {
 
 interface ChainContracts {
     chain_name: string;
+    prover_address?: string;
     gateway_address: string;
     verifier_address: string;
 }
@@ -66,6 +67,23 @@ async function construct_chain_contracts(
     });
 }
 
+function add_missing_provers(
+    client: typeof SigningCosmWasmClient,
+    multisig_address: string,
+    chain_contracts: ChainContracts[],
+): Promise<ChainContracts[]> {
+    return new Promise(async (resolve, _) => {
+        for (let i = 0; i < chain_contracts.length; i++) {
+            const authorized_provers = await client.queryContractSmart(multisig_address, {
+                authorized_callers: { chain_name: chain_contracts[i].chain_name },
+            });
+            chain_contracts[i].prover_address = authorized_provers[0] ?? '';
+        }
+
+        resolve(chain_contracts);
+    });
+}
+
 function missing_chain(error_message: string): string | null {
     const re = new RegExp('missing contracts to register for chain (?<chain>[a-z0-9]+):');
     const result = error_message.match(re);
@@ -109,7 +127,8 @@ const programHandler = () => {
                 const dummy_address = coordinator_address;
 
                 const chain_endpoints = await query_chains_from_router(client, router_address);
-                const chain_contracts = await construct_chain_contracts(client, chain_endpoints);
+                let chain_contracts = await construct_chain_contracts(client, chain_endpoints);
+                chain_contracts = await add_missing_provers(client, multisig_address, chain_contracts);
 
                 const migration_msg = {
                     router: router_address,
