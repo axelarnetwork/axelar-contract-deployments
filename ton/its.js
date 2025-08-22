@@ -29,7 +29,6 @@ const {
     InterchainTokenService,
     buildPayNativeGasForContractCallMessage,
     TokenManager,
-    encodeRegisterTokenMetadataAbi,
     MessageType
 } = require('axelar-cgp-ton');
 const ethers = require('ethers');
@@ -136,6 +135,24 @@ function encodeLinkTokenHubMessage(originalSourceChain, params) {
     );
 
     return hubMessage.slice(2); // remove the "0x" prefix
+}
+
+function encodeRegisterTokenMetadataAbi(
+    message,
+) {
+    const abiCoder = new ethers.utils.AbiCoder();
+
+    // Encode inner payload: uint256, bytes, uint256
+    const encoded = abiCoder.encode(
+        ["uint256", "bytes", "uint256"],
+        [
+            MessageType.REGISTER_TOKEN_METADATA, // uint256 - MessageType.REGISTER_TOKEN_METADATA
+            message.tokenAddress, // bytes - token address
+            message.decimals, // uint256 - decimals
+        ],
+    );
+
+    return encoded;
 }
 
 function parseTokenManagerInfo(tokenManagerInfo) {
@@ -315,7 +332,7 @@ program
     .argument('<admin-address>', 'Admin address for the token (TON address format)')
     .argument('<content-hex>', 'TEP-64 metadata content as BOC hex string (without 0x prefix)')
     .argument('<jetton-minter-address>', 'Existing jetton minter address to extract minter and wallet codes from')
-    .option('-g, --gas <amount>', 'Gas amount in TON', '0.4')
+    .option('-g, --gas <amount>', 'Gas amount in TON', '0.2')
     .action(async (adminAddress, contentHex, jettonMinterAddress, options) => {
         try {
 
@@ -353,13 +370,12 @@ program
 
             const jettonMinterAddr = Address.parse(jettonMinterAddress);
 
-            const hubPayload = encodeRegisterTokenMetadataAbi({
-              messageType: 6,
+            let hubPayload = encodeRegisterTokenMetadataAbi({
               tokenAddress: '0x' + jettonMinterAddr.toRawString().slice(2),
               decimals,
             });
 
-            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
+            const gasMessage = buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload.slice(2), sender);
 
             const { transfer, seqno } = await sendMultipleTransactionWithCost(
                 contract,
