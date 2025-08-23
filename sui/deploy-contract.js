@@ -449,15 +449,30 @@ async function syncPackages(keypair, client, config, chain, options) {
     for (const packageDir of PACKAGE_DIRS) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
-        const packageId = chain.contracts[packageName]?.address;
+        const contractConfig = chain.contracts[packageName];
+
+        if (!contractConfig) {
+            printError(`Package ${packageName} not found in config`);
+            return;
+        }
+
+        const packageId = contractConfig.address;
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
-        updateMoveToml(packageDir, packageId, moveDir);
-        printInfo(`Synced ${packageName} with package ID`, packageId);
+        // Check if this contract has been upgraded (has versions other than just "0")
+        const versions = contractConfig.versions;
+        const isUpgraded = versions && Object.keys(versions).length > 1;
+
+        if (!isUpgraded) {
+            updateMoveToml(packageDir, packageId, moveDir);
+            printInfo(`Synced ${packageName} with package ID`, packageId);
+        } else {
+            printInfo(`Skipping for upgraded contract ${packageName}`);
+        }
     }
 }
 
