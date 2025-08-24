@@ -240,7 +240,15 @@ node ton/its.js link-token <salt> <chain-name> <destination-address> <token-mana
 
 Transfer any registered token between chains:
 ```bash
-node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-address> <amount> <jetton-minter> [--gas <amount>] [--dry-run]
+node ton/its.js interchain-token-transfer <token-id> <chain-name> <destination-address> <amount> [--gas <amount>] [--dry-run]
+```
+
+### Flow Limit Management
+
+Set flow limit for a specific token:
+
+```bash
+node ton/its.js set-flow-limit <token-id> <flow-limit> [--dry-run]
 ```
 
 ### Admin Operations
@@ -280,4 +288,23 @@ node ton/its.js unpause [--dry-run]
 Get full state of the ITS contract:
 ```bash
 node ton/its.js get-full-state [its-address]
+```
+
+Get comprehensive token manager information including flow data:
+```bash
+node ton/its.js get-token-manager <token-id>
+```
+
+Get minter proxy address for a jetton minter:
+```bash
+node ton/its.js get-minter-proxy <jetton-minter-address>
+```
+
+Get the ITS jetton wallet address for a given jetton minter:
+```bash
+node ton/its.js get-its-jetton-wallet <jetton-minter-address>
+```
+
+```bash
+node ton/its.js get-token-manager <token-id>
 ```
