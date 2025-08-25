@@ -13,7 +13,6 @@ const {
     printInfo,
     printWarn,
     printError,
-    getContractJSON,
     mainProcessor,
     prompt,
     sleep,
@@ -24,16 +23,18 @@ const {
     getDeployOptions,
     getDeployedAddress,
     wasEventEmitted,
-    isHyperliquidChain,
-    parseTrustedChains,
-} = require('./utils');
-const { itsHubContractAddress } = require('../common/utils');
-const { addEvmOptions } = require('./cli-utils');
+} = require('../evm/utils');
+
+const { getContractJSONWithHTS } = require('./utils.js');
+const { printHederaNetwork, addBaseOptions } = require('./cli-utils.js');
+
+const { addEvmOptions } = require('../evm/cli-utils');
 const { Command, Option } = require('commander');
-const { updateBlockSize } = require('./hyperliquid');
+const { WHBAR_ABI, fundWithWHBAR } = require('./fund-whbar.js');
+const { DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS, TINY_PARTS_PER_WHOLE } = require('./token-creation-price.js');
 
 /**
- * Function that handles the ITS deployment with chain-specific token support.
+ * Function that handles the ITS deployment.
  * @param {*} wallet
  * @param {*} chain
  * @param {*} deployOptions
@@ -44,20 +45,16 @@ const { updateBlockSize } = require('./hyperliquid');
 
 async function deployAll(config, wallet, chain, options) {
     const { env, artifactPath, deployMethod, proxyDeployMethod, skipExisting, verify, yes, predictOnly } = options;
-    const verifyOptions = verify ? { env, chain: chain.axelarId, only: verify === 'only' } : null;
+    const verifyOptions = verify ? { env, chain: chain.name, only: verify === 'only' } : null;
+
+    const getContractJSON = getContractJSONWithHTS(options.htsLibraryAddress);
 
     const provider = getDefaultProvider(chain.rpc);
+    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
 
     const contractName = 'InterchainTokenService';
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
-
-    // Deploy only the appropriate token implementation based on chain type
-    const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
-    const InterchainTokenService = getContractJSON(
-        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
-        artifactPath,
-    );
 
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
@@ -89,12 +86,15 @@ async function deployAll(config, wallet, chain, options) {
     itsFactoryContractConfig.deployer = wallet.address;
     itsFactoryContractConfig.salt = factorySalt;
 
+    contracts[contractName] = contractConfig;
+    contracts[itsFactoryContractName] = itsFactoryContractConfig;
+
     const proxyJSON = getContractJSON('InterchainProxy', artifactPath);
     const predeployCodehash = await getBytecodeHash(proxyJSON, chain.axelarId);
     const gasOptions = await getGasOptions(chain, options, contractName);
     const deployOptions = getDeployOptions(deployMethod, salt, chain);
 
-    const interchainTokenService = (contractConfig['address'] = options.reuseProxy
+    const interchainTokenService = options.reuseProxy
         ? contractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: proxySalt,
@@ -102,9 +102,19 @@ async function deployAll(config, wallet, chain, options) {
               contractJson: proxyJSON,
               constructorArgs: [],
               provider: wallet.provider,
-          }));
+          });
 
-    const interchainTokenFactory = (itsFactoryContractConfig['address'] = options.reuseProxy
+    if (!isValidAddress(interchainTokenService)) {
+        throw new Error(`Invalid ITS address: ${interchainTokenService}`);
+    }
+
+    if (options.reuseProxy) {
+        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
+    } else {
+        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
+    }
+
+    const interchainTokenFactory = options.reuseProxy
         ? itsFactoryContractConfig.address
         : await getDeployedAddress(wallet.address, proxyDeployMethod, {
               salt: factorySalt,
@@ -112,30 +122,42 @@ async function deployAll(config, wallet, chain, options) {
               contractJSON: proxyJSON,
               constructorArgs: [],
               provider: wallet.provider,
-          }));
+          });
+
+    if (!isValidAddress(interchainTokenFactory)) {
+        throw new Error(`Invalid Interchain Token Factory address: ${interchainTokenFactory}`);
+    }
 
     if (options.reuseProxy) {
-        if (!isValidAddress(interchainTokenService) || !isValidAddress(interchainTokenFactory)) {
-            printError('No ITS contract found for chain', chain.name);
-            return;
-        }
-
-        printInfo('Reusing existing Interchain Token Service proxy', interchainTokenService);
         printInfo('Reusing existing Interchain Token Factory proxy', interchainTokenFactory);
     } else {
-        printInfo('Interchain Token Service will be deployed to', interchainTokenService);
         printInfo('Interchain Token Factory will be deployed to', interchainTokenFactory);
     }
 
-    contracts[contractName] = contractConfig;
-    contracts[itsFactoryContractName] = itsFactoryContractConfig;
+    // Register all EVM chains that ITS is or will be deployed on.
+    const itsChains = Object.values(config.chains).filter(
+        (chain) => chain.chainType === 'evm' && chain.contracts?.InterchainTokenService?.address,
+    );
+    const trustedChains = itsChains.map((chain) => chain.axelarId);
 
-    const trustedChains = parseTrustedChains(config, ['all']);
-    const itsHubAddress = itsHubContractAddress(config);
+    // If ITS Hub is deployed, register it as a trusted chain as well
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (itsHubAddress) {
+        if (!config.axelar?.axelarId) {
+            throw new Error('Axelar ID for Axelar chain is not set');
+        }
+
+        trustedChains.push(config.axelar?.axelarId);
+    }
 
     // Trusted addresses are only used when deploying a new proxy
     if (!options.reuseProxy) {
         printInfo('Trusted chains', trustedChains);
+    }
+
+    if (!isAddress(options.whbarAddress)) {
+        throw new Error(`Invalid WHBAR address: ${options.whbarAddress}`);
     }
 
     const existingAddress = config.chains.ethereum?.contracts?.[contractName]?.address;
@@ -177,22 +199,6 @@ async function deployAll(config, wallet, chain, options) {
                 );
             },
         },
-        interchainToken: {
-            name: 'Interchain Token',
-            contractName: 'InterchainToken',
-            async deploy() {
-                return deployContract(
-                    deployMethod,
-                    wallet,
-                    getContractJSON(interchainTokenContractName, artifactPath),
-                    [interchainTokenService],
-                    deployOptions,
-                    gasOptions,
-                    verifyOptions,
-                    chain,
-                );
-            },
-        },
         interchainTokenDeployer: {
             name: 'Interchain Token Deployer',
             contractName: 'InterchainTokenDeployer',
@@ -201,7 +207,7 @@ async function deployAll(config, wallet, chain, options) {
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenDeployer', artifactPath),
-                    [contractConfig.interchainToken],
+                    [],
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -244,7 +250,6 @@ async function deployAll(config, wallet, chain, options) {
         implementation: {
             name: 'Interchain Token Service Implementation',
             contractName: 'InterchainTokenService',
-            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 const args = [
                     contractConfig.tokenManagerDeployer,
@@ -256,6 +261,7 @@ async function deployAll(config, wallet, chain, options) {
                     itsHubAddress,
                     contractConfig.tokenManager,
                     contractConfig.tokenHandler,
+                    options.whbarAddress,
                 ];
 
                 printInfo('ITS Implementation args', args);
@@ -278,11 +284,17 @@ async function deployAll(config, wallet, chain, options) {
             async deploy() {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
+                const tokenCreationPrice = options.tokenCreationPrice || DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS;
+
                 const deploymentParams = defaultAbiCoder.encode(
-                    ['address', 'string', 'string[]'],
-                    [operatorAddress, chain.axelarId, trustedChains],
+                    ['address', 'string', 'string[]', 'uint256'],
+                    [operatorAddress, chain.axelarId, trustedChains, tokenCreationPrice],
                 );
                 contractConfig.predeployCodehash = predeployCodehash;
+
+                printInfo(
+                    `Setting ITS token creation price to ${tokenCreationPrice} tinycents ($${tokenCreationPrice / TINY_PARTS_PER_WHOLE})`,
+                );
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
                 printInfo('ITS Proxy args', args);
@@ -302,7 +314,6 @@ async function deployAll(config, wallet, chain, options) {
         interchainTokenFactoryImplementation: {
             name: 'Interchain Token Factory Implementation',
             contractName: 'InterchainTokenFactory',
-            useHyperliquidBigBlocks: isHyperliquidChain(chain),
             async deploy() {
                 return deployContract(
                     deployMethod,
@@ -348,20 +359,9 @@ async function deployAll(config, wallet, chain, options) {
             continue;
         }
 
-        if (deployment.useHyperliquidBigBlocks) {
-            await updateBlockSize(wallet, chain, true);
-        }
-
         printInfo(`Deploying ${deployment.name}`);
 
-        let contract;
-        try {
-            contract = await deployment.deploy();
-        } finally {
-            if (deployment.useHyperliquidBigBlocks) {
-                await updateBlockSize(wallet, chain, false);
-            }
-        }
+        const contract = await deployment.deploy();
 
         if (key === 'interchainTokenFactoryImplementation') {
             itsFactoryContractConfig.implementation = contract.address;
@@ -382,6 +382,21 @@ async function deployAll(config, wallet, chain, options) {
         if (!(await isContract(contract.address, provider))) {
             throw new Error(`Contract ${deployment.name} at ${contract.address} was not deployed on ${chain.name}`);
         }
+
+        if (deployment.name === 'Interchain Token Service Proxy') {
+            if (options.whbarAddress && options.whbarAmount) {
+                printInfo(`Funding InterchainProxy at ${contract.address} with WHBAR...`);
+
+                const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
+
+                const amount = ethers.utils.parseUnits(options.whbarAmount.toString(), 8); // WHBAR has 8 decimals
+
+                await fundWithWHBAR(whbar, contract.address, amount, wallet);
+                printInfo(`Successfully funded InterchainProxy with ${options.whbarAmount} WHBAR.`);
+            } else {
+                printWarn(`Skipping WHBAR funding of InterchainServiceProxy. Please fund manually.`);
+            }
+        }
     }
 }
 
@@ -392,8 +407,17 @@ async function deploy(config, chain, options) {
     const provider = getDefaultProvider(rpc);
 
     const wallet = new Wallet(privateKey, provider);
+    const contractName = 'InterchainTokenService';
 
     await printWalletInfo(wallet, options);
+
+    const contracts = chain.contracts;
+    const contractConfig = contracts[contractName] || {};
+
+    contractConfig.salt = salt;
+    contractConfig.deployer = wallet.address;
+
+    contracts[contractName] = contractConfig;
 
     const operatorAddress = options.operatorAddress || wallet.address;
 
@@ -415,20 +439,15 @@ async function upgrade(_, chain, options) {
     await printWalletInfo(wallet, options);
 
     const contracts = chain.contracts;
-    const contractConfig = contracts[contractName];
-    const itsFactoryContractConfig = contracts[itsFactoryContractName];
+    const contractConfig = contracts[contractName] || {};
+    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
-    if (!contractConfig || !itsFactoryContractConfig) {
-        printError('No ITS contract found for chain', chain.name);
-        return;
-    }
+    contracts[contractName] = contractConfig;
+    contracts[itsFactoryContractName] = itsFactoryContractConfig;
 
-    printInfo(`Upgrading Interchain Token Service on ${chain.name}.`);
+    printInfo(`Upgrading Interchain Token Service.`);
 
-    const InterchainTokenService = getContractJSON(
-        isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
-        artifactPath,
-    );
+    const InterchainTokenService = getContractJSON('InterchainTokenService', artifactPath);
     const gasOptions = await getGasOptions(chain, options, contractName);
     const contract = new Contract(contractConfig.address, InterchainTokenService.abi, wallet);
     const codehash = await getBytecodeHash(contractConfig.implementation, chain.axelarId, provider);
@@ -503,15 +522,21 @@ async function processCommand(config, chain, options) {
 }
 
 async function main(options) {
+    printHederaNetwork(options);
+
     await mainProcessor(options, processCommand);
 }
 
 if (require.main === module) {
     const program = new Command();
 
-    program
-        .name('deploy-its')
-        .description('Deploy interchain token service and interchain token factory with chain-specific token support');
+    program.name('deploy-its').description('Deploy interchain token service and interchain token factory');
+
+    program.addOption(
+        new Option('-hts, --htsLibraryAddress <htsEvmAddress>', 'EVM address of the HTS library')
+            .env('HTS_LIB_ADDRESS')
+            .makeOptionMandatory(true),
+    );
 
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
@@ -525,7 +550,8 @@ if (require.main === module) {
             .default('create3'),
     );
 
-    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true });
+    addEvmOptions(program, { artifactPath: true, skipExisting: true, upgrade: true, predictOnly: true, ignoreChainNames: true });
+    addBaseOptions(program);
 
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy (useful for upgrade deployments'));
     program.addOption(new Option('--contractName <contractName>', 'contract name').default('InterchainTokenService')); // added for consistency
@@ -542,7 +568,29 @@ if (require.main === module) {
         new Option('-o, --operatorAddress <operatorAddress>', 'address of the ITS operator/rate limiter').env('OPERATOR_ADDRESS'),
     );
 
+    program.addOption(
+        new Option('--tokenCreationPrice <priceInTinycents>', 'price of token creation in tinycents').default(
+            DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS,
+        ),
+    );
+
+    // WHBAR funding options
+    program.addOption(
+        new Option('--whbarAddress <whbarAddress>', 'address of the WHBAR contract for funding InterchainProxy').env('WHBAR_ADDRESS'),
+    );
+    program.addOption(
+        new Option('--whbarAmount <whbarAmount>', 'amount of HBAR to deposit as WHBAR for InterchainProxy funding')
+            .argParser((value) => parseFloat(value))
+            .env('WHBAR_AMOUNT'),
+    );
+
+    program.addOption(new Option('-n, --chainName <chainName>', 'chain to run the script over').makeOptionMandatory(true).env('CHAIN'));
+
     program.action(async (options) => {
+        // Making an alias because inherited evm code depends on `chainNames` (plural)
+        if (options.chainName) {
+            options.chainNames = options.chainName;
+        }
         await main(options);
     });
 

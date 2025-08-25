@@ -55,7 +55,7 @@ class LedgerSigner extends Signer {
 
         tx = await ethers.utils.resolveProperties(tx);
 
-        printInfo('Unsigned tx', tx);
+        console.log('Unsigned tx', tx);
 
         const rawTx = serializeTransaction(tx).substring(2);
 

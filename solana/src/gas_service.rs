@@ -6,9 +6,8 @@ use solana_sdk::transaction::Transaction as SolanaTransaction;
 use crate::config::Config;
 use crate::types::{SerializableSolanaTransaction, SolanaTransactionParams};
 use crate::utils::{
-    ADDRESS_KEY, CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, OPERATOR_KEY,
-    UPGRADE_AUTHORITY_KEY, fetch_latest_blockhash, read_json_file_from_path,
-    write_json_to_file_path,
+    fetch_latest_blockhash, read_json_file_from_path, write_json_to_file_path, ADDRESS_KEY,
+    CHAINS_KEY, CONFIG_ACCOUNT_KEY, CONTRACTS_KEY, GAS_SERVICE_KEY, OPERATOR_KEY,
 };
 
 #[derive(Subcommand, Debug)]

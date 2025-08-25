@@ -12,6 +12,7 @@ const {
 } = ethers;
 
 const {
+    saveConfig,
     getBytecodeHash,
     printInfo,
     printError,
@@ -35,13 +36,13 @@ const { WEIGHTED_SIGNERS_TYPE, encodeWeightedSigners } = require('@axelar-networ
 const AxelarAmplifierGatewayProxy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGatewayProxy.sol/AxelarAmplifierGatewayProxy.json');
 const AxelarAmplifierGateway = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/contracts/gateway/AxelarAmplifierGateway.sol/AxelarAmplifierGateway.json');
 
-async function getSetupParams(axelar, chain, operator, options) {
-    const { signers: signerSets, verifierSetId } = await getWeightedSigners(axelar, chain, options);
+async function getSetupParams(config, chain, operator, options) {
+    const { signers: signerSets, verifierSetId } = await getWeightedSigners(config, chain, options);
     printInfo('Setup params', JSON.stringify([operator, signerSets], null, 2));
     return { params: defaultAbiCoder.encode([`address`, `${WEIGHTED_SIGNERS_TYPE}[]`], [operator, signerSets]), verifierSetId };
 }
 
-async function deploy(axelar, chain, chains, options) {
+async function deploy(config, chain, options) {
     const { privateKey, reuseProxy, yes, predictOnly } = options;
 
     const contractName = 'AxelarGateway';
@@ -114,7 +115,7 @@ async function deploy(axelar, chain, chains, options) {
 
     let existingAddress;
 
-    for (const chainConfig of Object.values(chains)) {
+    for (const chainConfig of Object.values(config.chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
 
         if (existingAddress !== undefined) {
@@ -137,7 +138,7 @@ async function deploy(axelar, chain, chains, options) {
     }
 
     contractConfig.deployer = wallet.address;
-    const domainSeparator = await getDomainSeparator(axelar, chain, options);
+    const domainSeparator = await getDomainSeparator(config, chain, options);
     const minimumRotationDelay = Number(options.minimumRotationDelay);
 
     printInfo(`Deploying gateway implementation contract`);
@@ -174,7 +175,7 @@ async function deploy(axelar, chain, chains, options) {
         gateway = gatewayFactory.attach(proxyAddress);
     } else if (!reuseProxy) {
         const operator = options.operator || contractConfig.operator || wallet.address;
-        const { params, verifierSetId } = await getSetupParams(axelar, chain, operator, options);
+        const { params, verifierSetId } = await getSetupParams(config, chain, operator, options);
 
         printInfo('Deploying gateway proxy contract');
         printInfo('Proxy deployment args', `${implementation.address}, ${params}`);
@@ -245,7 +246,7 @@ async function deploy(axelar, chain, chains, options) {
     }
 
     if (!reuseProxy) {
-        const { signers: signerSets } = await getWeightedSigners(axelar, chain, options);
+        const { signers: signerSets } = await getWeightedSigners(config, chain, options);
 
         for (let i = 0; i < signerSets.length; i++) {
             const signersHash = keccak256(encodeWeightedSigners(signerSets[i]));
@@ -289,9 +290,11 @@ async function deploy(axelar, chain, chains, options) {
     }
 
     printInfo('Deployment status', 'SUCCESS');
+
+    saveConfig(config, options.env);
 }
 
-async function upgrade(_axelar, chain, options) {
+async function upgrade(_, chain, options) {
     const { privateKey, yes, offline, env, predictOnly } = options;
     const contractName = 'AxelarGateway';
 
@@ -371,11 +374,11 @@ async function upgrade(_axelar, chain, options) {
     }
 }
 
-async function processCommand(axelar, chain, chains, options) {
+async function processCommand(config, chain, options) {
     if (!options.upgrade) {
-        await deploy(axelar, chain, chains, options);
+        await deploy(config, chain, options);
     } else {
-        await upgrade(axelar, chain, options);
+        await upgrade(config, chain, options);
     }
 }
 
@@ -399,6 +402,7 @@ async function programHandler() {
     ); // 1 day
 
     program.addOption(new Option('--reuseProxy', 'reuse proxy contract modules for new implementation deployment'));
+    program.addOption(new Option('--ignoreError', 'Ignore deployment errors and proceed to next chain'));
     program.addOption(new Option('--owner <owner>', 'owner/governance address').env('OWNER'));
     program.addOption(new Option('--operator <operator>', 'gateway operator address'));
     program.addOption(new Option('--keyID <keyID>', 'use the specified key ID address instead of the querying the chain').env('KEY_ID'));

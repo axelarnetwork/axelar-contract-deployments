@@ -1,17 +1,6 @@
 'use strict';
 
-import {
-    Address,
-    BASE_FEE,
-    Horizon,
-    Keypair,
-    Networks,
-    TransactionBuilder,
-    authorizeInvocation,
-    nativeToScVal,
-    rpc,
-    xdr,
-} from '@stellar/stellar-sdk';
+import { Address, BASE_FEE, Horizon, Keypair, Networks, TransactionBuilder, nativeToScVal, rpc, xdr } from '@stellar/stellar-sdk';
 import { Command, Option } from 'commander';
 import { ethers } from 'ethers';
 
@@ -31,9 +20,6 @@ const AXELAR_R2_BASE_URL = 'https://static.axelar.network';
 const TRANSACTION_TIMEOUT = 30;
 const RETRY_WAIT = 1000; // 1 sec
 const MAX_RETRIES = 30;
-
-// Ledger extension for authorization operations
-const LEDGER_EXTENSION_FOR_AUTH = 20;
 
 // TODO: Need to be migrated to Pascal Case
 const SUPPORTED_CONTRACTS = new Set([
@@ -84,17 +70,6 @@ function getNetworkPassphrase(networkType: NetworkType) {
     }
 }
 
-/**
- * Calculates the validUntil ledger sequence for authorization operations
- * @param {Object} chain - Chain configuration object containing RPC URL
- * @returns {Promise<number>} - The ledger sequence number until which the authorization is valid
- */
-async function getAuthValidUntilLedger(chain) {
-    const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
-    const latestLedger = await server.getLatestLedger();
-    return latestLedger.sequence + LEDGER_EXTENSION_FOR_AUTH;
-}
-
 const addBaseOptions = (command: Command, options: Options = {}) => {
     addEnvOption(command);
     command.addOption(new Option('-y, --yes', 'skip deployment prompt confirmation').env('YES'));
@@ -131,12 +106,14 @@ async function buildTransaction(operation, server, wallet, networkType, options:
     return builtTransaction;
 }
 
-const prepareTransaction = async (tx, server, wallet, options: Options = {}) => {
+const prepareTransaction = async (operation, server, wallet, networkType, options: Options = {}) => {
+    const builtTransaction = await buildTransaction(operation, server, wallet, networkType, options);
+
     // We use the RPC server to "prepare" the transaction. This simulating the
     // transaction, discovering the storage footprint, and updating the
     // transaction to include that footprint. If you know the footprint ahead of
     // time, you could manually use `addFootprint` and skip this step.
-    const preparedTransaction = await server.prepareTransaction(tx);
+    const preparedTransaction = await server.prepareTransaction(builtTransaction);
 
     preparedTransaction.sign(wallet);
 
@@ -216,88 +193,34 @@ async function sendTransaction(tx, server, action, options: Options = {}) {
     }
 }
 
-function parseSimulatedResponse(response) {
-    return response.result.retval._value;
-}
-
-function isReadOnly(response: rpc.Api.SimulateTransactionResponse, action?: string): boolean {
-    if (
-        !rpc.Api.isSimulationSuccess(response) ||
-        response.transactionData.getReadWrite().length > 0 ||
-        response.result?.auth?.length > 0 ||
-        response.stateChanges?.length > 0
-    ) {
-        return false;
-    }
-
-    return true;
-}
-
-async function simulate(tx, server, options: Options = {}) {
-    const simulationResponse = await server.simulateTransaction(tx);
-
-    if (!rpc.Api.isSimulationSuccess(simulationResponse)) {
-        throw new Error(`Simulation failed: ${simulationResponse.error}`);
-    }
-
-    return simulationResponse;
-}
-
-async function broadcast(operation, wallet, chain, action, options: Options) {
+async function broadcast(operation, wallet, chain, action, options: Options, simulateTransaction = false) {
     const server = new rpc.Server(chain.rpc, { allowHttp: chain.networkType === 'local' });
-    const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
 
     if (options && options.nativePayment) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         tx.sign(wallet);
         return sendTransaction(tx, server, action, options);
     }
-
     if (options && options.estimateCost) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
         const resourceCost = await estimateCost(tx, server);
         printInfo('Gas cost', JSON.stringify(resourceCost, null, 2));
         return;
     }
 
-    // Always simulate first
-    const simulationResponse = await simulate(tx, server, options);
-
-    if (isReadOnly(simulationResponse, action)) {
-        return {
-            value: () => parseSimulatedResponse(simulationResponse),
-        };
+    if (simulateTransaction) {
+        const tx = await buildTransaction(operation, server, wallet, chain.networkType, options);
+        try {
+            const response = await server.simulateTransaction(tx);
+            printInfo('successfully simulated tx', `action: ${action}, networkType: ${chain.networkType}, chainName: ${chain.name}`);
+            return response;
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
-    const preparedTx = await prepareTransaction(tx, server, wallet, options);
-    return sendTransaction(preparedTx, server, action, options);
-}
-
-async function broadcastHorizon(operations, wallet, chain, action, options: Options = {}) {
-    const server = new Horizon.Server(chain.horizonRpc, getRpcOptions(chain));
-
-    try {
-        const account = await server.loadAccount(wallet.publicKey());
-
-        const transactionBuilder = new TransactionBuilder(account, {
-            fee: BASE_FEE,
-            networkPassphrase: getNetworkPassphrase(chain.networkType),
-        });
-
-        const operationsArray = Array.isArray(operations) ? operations : [operations];
-        operationsArray.forEach((operation) => {
-            transactionBuilder.addOperation(operation);
-        });
-
-        const transaction = transactionBuilder.setTimeout(30).build();
-        transaction.sign(wallet);
-
-        const result = await server.submitTransaction(transaction);
-
-        printInfo(`Successfully executed ${action}`, `Transaction hash: ${result.hash}`);
-
-        return result;
-    } catch (error) {
-        throw new Error(`Failed to execute ${action}: ${error.message}`);
-    }
+    const tx = await prepareTransaction(operation, server, wallet, chain.networkType, options);
+    return sendTransaction(tx, server, action, options);
 }
 
 function getAssetCode(balance, chain) {
@@ -388,7 +311,7 @@ async function estimateCost(tx, server) {
 }
 
 const getAmplifierVerifiers = async (config, chain) => {
-    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config.axelar, chain);
+    const { verifierSetId, verifierSet, signers } = await getCurrentVerifierSet(config, chain);
 
     // Include pubKey for sorting, sort based on pubKey, then remove pubKey after sorting.
     const weightedSigners = signers
@@ -527,15 +450,19 @@ const getContractR2Url = (contractName, version) => {
     throw new Error(`Invalid version format: ${version}. Must be a semantic version (ommit prefix v) or a commit hash`);
 };
 
-const getContractArtifactPath = (artifactDir, contractName) => {
-    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
+function getContractArtifactPath(artifactPath, contractName) {
+    const basePath = artifactPath.slice(0, artifactPath.lastIndexOf('/') + 1);
     const fileName = `stellar_${pascalToKebab(contractName).replace(/-/g, '_')}.optimized.wasm`;
     return basePath + fileName;
-};
+}
 
 const getContractCodePath = async (options, contractName) => {
-    if (options && options.artifactDir) {
-        return getContractArtifactPath(options.artifactDir, contractName);
+    if (options && options.artifactPath) {
+        if (contractName === 'InterchainToken' || contractName === 'TokenManager') {
+            return getContractArtifactPath(options.artifactPath, contractName);
+        }
+
+        return options.artifactPath;
     }
 
     if (options && options.version) {
@@ -543,7 +470,18 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-dir or --version must be provided');
+    throw new Error('Either --artifact-path or --version must be provided');
+};
+
+const getUploadContractCodePath = async (options, contractName) => {
+    if (options && options.artifactPath) return options.artifactPath;
+
+    if (options && options.version) {
+        const url = getContractR2Url(contractName, options.version);
+        return downloadContractCode(url, contractName, options.version);
+    }
+
+    throw new Error('Either --artifact-path or --version must be provided');
 };
 
 function isValidAddress(address) {
@@ -673,11 +611,9 @@ module.exports = {
     prepareTransaction,
     sendTransaction,
     broadcast,
-    broadcastHorizon,
     getWallet,
     estimateCost,
     getNetworkPassphrase,
-    getAuthValidUntilLedger,
     addBaseOptions,
     getNewSigners,
     serializeValue,
@@ -690,6 +626,7 @@ module.exports = {
     tokenMetadataToScVal,
     saltToBytes32,
     getContractCodePath,
+    getUploadContractCodePath,
     isValidAddress,
     SUPPORTED_CONTRACTS,
     BytesToScVal,
@@ -698,5 +635,4 @@ module.exports = {
     generateKeypair,
     isFriendbotSupported,
     assetToScVal,
-    isHexString,
 };

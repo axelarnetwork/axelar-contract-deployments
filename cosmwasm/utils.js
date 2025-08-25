@@ -524,13 +524,11 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
 
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
-
     const {
         axelar: {
             contracts: {
                 Router: { address: routerAddress },
-                [verifierContract]: {
+                VotingVerifier: {
                     [chainName]: { address: verifierAddress },
                 },
             },
@@ -673,8 +671,6 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
-
     const {
         axelar: { contracts, chainId: axelarChainId },
     } = config;
@@ -683,7 +679,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        [verifierContract]: {
+        VotingVerifier: {
             [chainName]: { address: verifierAddress },
         },
         Gateway: {
@@ -1111,15 +1107,9 @@ const getContractR2Url = (contractName, contractVersion) => {
     throw new Error(`Invalid contractVersion format: ${contractVersion}. Must be a semantic version (including prefix v) or a commit hash`);
 };
 
-const getContractArtifactPath = (artifactDir, contractName) => {
-    const basePath = artifactDir.endsWith('/') ? artifactDir : artifactDir + '/';
-    const fileName = `${pascalToKebab(contractName).replace(/-/g, '_')}.wasm`;
-    return basePath + fileName;
-};
-
 const getContractCodePath = async (options, contractName) => {
-    if (options.artifactDir) {
-        return getContractArtifactPath(options.artifactDir, contractName);
+    if (options.artifactPath) {
+        return options.artifactPath;
     }
 
     if (options.version) {
@@ -1127,7 +1117,7 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-dir or --version must be provided');
+    throw new Error('Either --artifact-path or --version must be provided');
 };
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
@@ -1163,10 +1153,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
     },
-    StacksVotingVerifier: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
-    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1183,10 +1169,6 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
-    StacksMultisigProver: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
-    },
     AxelarnetGateway: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeAxelarnetGatewayInstantiateMsg,
@@ -1198,10 +1180,6 @@ const CONTRACTS = {
     ItsAbiTranslator: {
         scope: CONTRACT_SCOPE_GLOBAL,
         makeInstantiateMsg: makeItsAbiTranslatorInstantiateMsg,
-    },
-    ItsStacksTranslator: {
-        scope: CONTRACT_SCOPE_CHAIN,
-        makeInstantiateMsg: () => ({}),
     },
 };
 

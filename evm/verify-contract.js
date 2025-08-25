@@ -22,7 +22,7 @@ const {
 const { addBaseOptions } = require('./cli-utils');
 const { getTrustedChains } = require('./its');
 
-async function verifyConsensusGateway(axelar, chain, contractConfig, env, wallet, verifyOptions, options) {
+async function verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options) {
     const contractJson = getContractJSON('AxelarGateway');
     const contractFactory = await getContractFactoryFromArtifact(contractJson, wallet);
 
@@ -31,7 +31,7 @@ async function verifyConsensusGateway(axelar, chain, contractConfig, env, wallet
     const auth = await gateway.authModule();
     const tokenDeployer = await gateway.tokenDeployer();
 
-    const { addresses, weights, threshold } = await getEVMAddresses(axelar, chain.axelarId, {
+    const { addresses, weights, threshold } = await getEVMAddresses(config, chain.axelarId, {
         keyID: chain.contracts.AxelarGateway.startingKeyIDs[0] || options.args || `evm-${chain.axelarId.toLowerCase()}-genesis`,
     });
     const authParams = [defaultAbiCoder.encode(['address[]', 'uint256[]', 'uint256'], [addresses, weights, threshold])];
@@ -72,7 +72,7 @@ async function verifyAmplifierGateway(chain, contractConfig, env, wallet, verify
     );
 }
 
-async function processCommand(axelar, chain, chains, options) {
+async function processCommand(config, chain, options) {
     const { env, contractName, dir } = options;
     const provider = getDefaultProvider(chain.rpc);
     const wallet = Wallet.createRandom().connect(provider);
@@ -153,7 +153,7 @@ async function processCommand(axelar, chain, chains, options) {
             if (contractConfig.connectionType === 'amplifier') {
                 verifyAmplifierGateway(chain, contractConfig, env, wallet, verifyOptions, options);
             } else if (contractConfig.connectionType === 'consensus') {
-                verifyConsensusGateway(axelar, chain, contractConfig, env, wallet, verifyOptions, options);
+                verifyConsensusGateway(config, chain, contractConfig, env, wallet, verifyOptions, options);
             } else {
                 throw new Error(`Incompatible Gateway connection type`);
             }
@@ -216,7 +216,9 @@ async function processCommand(axelar, chain, chains, options) {
                 getContractJSON('InterchainTokenDeployer').abi,
                 wallet,
             );
-            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
+						const interchainToken = 'implementationAddress' in interchainTokenDeployerContract
+							? await interchainTokenDeployerContract.implementationAddress()
+							: undefined;
             const interchainTokenFactory = await its.interchainTokenFactory();
             const interchainTokenFactoryContract = new Contract(
                 interchainTokenFactory,
@@ -228,8 +230,8 @@ async function processCommand(axelar, chain, chains, options) {
             const tokenManager = await its.tokenManager();
             const tokenHandler = await its.tokenHandler();
 
-            const itsHubAddress = axelar.contracts?.InterchainTokenService?.address;
-            const trustedChains = await getTrustedChains(chains, its);
+            const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+            const trustedChains = await getTrustedChains(config, its);
 
             const setupParams = defaultAbiCoder.encode(
                 ['address', 'string', 'string[]'],
@@ -237,8 +239,12 @@ async function processCommand(axelar, chain, chains, options) {
             );
 
             await verifyContract(env, chain.axelarId, tokenManagerDeployer, [], verifyOptions);
-            await verifyContract(env, chain.axelarId, interchainToken, [contractAddress], verifyOptions);
-            await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
+            if (interchainToken) {
+              await verifyContract(env, chain.axelarId, interchainToken, [contractAddress], verifyOptions);
+              await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
+            } else {
+            	await verifyContract(env, chain.axelarId, interchainTokenDeployer, [], verifyOptions);
+            }
             await verifyContract(env, chain.axelarId, tokenManager, [contractAddress], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenHandler, [], verifyOptions);
             await verifyContract(
@@ -329,7 +335,7 @@ async function processCommand(axelar, chain, chains, options) {
 }
 
 async function main(options) {
-    await mainProcessor(options, processCommand, false);
+    await mainProcessor(options, processCommand, false, true);
 }
 
 if (require.main === module) {

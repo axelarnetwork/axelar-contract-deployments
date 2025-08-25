@@ -1,7 +1,6 @@
 mod broadcast;
 mod combine;
 mod config;
-mod deploy;
 mod gas_service;
 mod gateway;
 mod generate;
@@ -34,7 +33,6 @@ use types::{AxelarNetwork, SerializableSolanaTransaction};
 use crate::broadcast::broadcast_solana_transaction;
 use crate::combine::combine_solana_signatures;
 use crate::config::Config;
-use crate::deploy::UpgradeArgs;
 use crate::generate::generate_from_transactions;
 use crate::misc::do_misc;
 use crate::sign::sign_solana_transaction;
@@ -78,9 +76,6 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// Deploys a Solana program that is present in the environment JSON file
-    Upgrade(UpgradeArgs),
-
     /// Build and send a transaction to the Solana network.
     Send(SendCommandArgs),
 
@@ -273,10 +268,6 @@ async fn run() -> eyre::Result<()> {
     )?;
 
     match cli.command {
-        Command::Upgrade(deploy_args) => {
-            deploy::upgrade_program(deploy_args, config)?;
-        }
-
         Command::Send(args) => {
             let key_path = args
                 .fee_payer

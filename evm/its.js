@@ -7,7 +7,7 @@ const {
     BigNumber,
     Contract,
 } = ethers;
-const { Command, Option, Argument } = require('commander');
+const { Command, Option } = require('commander');
 const {
     printInfo,
     prompt,
@@ -21,19 +21,11 @@ const {
     isValidTokenId,
     getGasOptions,
     isNonEmptyString,
+    validateChain,
     encodeITSDestination,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
-    isTrustedChain,
-    loadConfig,
 } = require('./utils');
-const {
-    getChainConfigByAxelarId,
-    validateDestinationChain,
-    validateChain,
-    tokenManagerTypes,
-    validateLinkType,
-} = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
 const IMinter = getContractJSON('IMinter');
@@ -44,26 +36,13 @@ const ITokenManager = getContractJSON('ITokenManager');
 const { addOptionsToCommands } = require('../common');
 const { addEvmOptions } = require('./cli-utils');
 const { getSaltFromKey } = require('@axelar-network/axelar-gmp-sdk-solidity/scripts/utils');
-
-const IInterchainTokenServiceV211 = getContractJSON(
-    'IInterchainTokenService',
-    '@axelar-network/interchain-token-service-v2.1.1/artifacts/contracts/interfaces/IInterchainTokenService.sol/IInterchainTokenService.json',
-);
-
-function createInterchainTokenServiceContract(address, wallet, version) {
-    if (version === '2.1.1') {
-        return new Contract(address, IInterchainTokenServiceV211.abi, wallet);
-    } else {
-        return new Contract(address, IInterchainTokenService.abi, wallet);
-    }
-}
-
-async function validateOwner(contract, walletAddress, action) {
-    const owner = await contract.owner();
-    if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-        throw new Error(`${action} can only be performed by contract owner: ${owner}`);
-    }
-}
+const tokenManagerImplementations = {
+    INTERCHAIN_TOKEN: 0,
+    MINT_BURN_FROM: 1,
+    LOCK_UNLOCK: 2,
+    LOCK_UNLOCK_FEE: 3,
+    MINT_BURN: 4,
+};
 
 function getDeploymentSalt(options) {
     const { rawSalt, salt } = options;
@@ -91,15 +70,15 @@ async function handleTx(tx, chain, contract, action, firstEvent, secondEvent) {
     }
 }
 
-async function getTrustedChains(chains, interchainTokenService, version) {
-    const chainIds = Object.values(chains)
+async function getTrustedChains(config, interchainTokenService) {
+    const chains = Object.values(config.chains)
         .filter((chain) => chain.contracts.InterchainTokenService !== undefined)
         .map((chain) => chain.axelarId);
 
     const trustedChains = [];
 
-    for (const chain of chainIds) {
-        if (await isTrustedChain(chain, interchainTokenService, version)) {
+    for (const chain of chains) {
+        if (await interchainTokenService.isTrustedChain(chain)) {
             trustedChains.push(chain);
         }
     }
@@ -121,7 +100,7 @@ function compare(contractValue, configValue, variableName) {
 }
 
 function compareToConfig(contractConfig, contractName, toCheck) {
-    for (const [key, value] of Object.entries(toCheck)) {
+    for (const [key, value] of Object.entries(toCheck).filter(([_key, value]) => typeof value !== 'undefined')) {
         if (contractConfig[key]) {
             const configValue = contractConfig[key];
             compare(value, configValue, key);
@@ -131,16 +110,13 @@ function compareToConfig(contractConfig, contractName, toCheck) {
     }
 }
 
-async function processCommand(_axelar, chain, chains, action, options) {
+async function processCommand(config, chain, action, options) {
     const { privateKey, address, yes, args } = options;
 
-    const config = loadConfig(options.env);
     const contracts = chain.contracts;
     const contractName = 'InterchainTokenService';
 
     const interchainTokenServiceAddress = address || contracts.InterchainTokenService?.address;
-
-    const itsVersion = contracts.InterchainTokenService?.version;
 
     if (!interchainTokenServiceAddress) {
         printWarn(`No InterchainTokenService address found for chain ${chain.name}`);
@@ -158,7 +134,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
     printInfo('Contract name', contractName);
     printInfo('Contract address', interchainTokenServiceAddress);
 
-    const interchainTokenService = createInterchainTokenServiceContract(interchainTokenServiceAddress, wallet, itsVersion);
+    const interchainTokenService = new Contract(interchainTokenServiceAddress, IInterchainTokenService.abi, wallet);
 
     const gasOptions = await getGasOptions(chain, options, contractName);
 
@@ -201,17 +177,20 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
 
-            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
-            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            if ('interchainTokenAddress' in interchainTokenService) {
+	            const interchainTokenAddress = await interchainTokenService.interchainTokenAddress(tokenIdBytes32);
+	            printInfo(`InterchainToken address for tokenId: ${tokenId}`, interchainTokenAddress);
+            }
 
             try {
-                await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+                const interchainTokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
                 printInfo(`Token for tokenId: ${tokenId} exists at address:`, interchainTokenAddress);
+                return interchainTokenAddress;
             } catch (error) {
                 printInfo(`Token for tokenId: ${tokenId} does not yet exist.`);
             }
 
-            return interchainTokenAddress;
+            return;
         }
 
         case 'interchain-token-id': {
@@ -285,7 +264,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [sourceChain, sourceAddress, payload] = args;
             validateParameters({ isNonEmptyString: { sourceChain, sourceAddress } });
 
-            if (!(await isTrustedChain(sourceChain, interchainTokenService, itsVersion))) {
+            if (!(await interchainTokenService.isTrustedChain(sourceChain))) {
                 throw new Error(`Invalid remote service: ${sourceChain} is not a trusted chain.`);
             }
 
@@ -344,13 +323,17 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 throw new Error(`Insufficient balance for transfer. Balance: ${balance}, amount: ${amountInUnits}`);
             }
 
-            if (implementationType !== tokenManagerTypes.MINT_BURN && implementationType !== tokenManagerTypes.NATIVE_INTERCHAIN_TOKEN) {
+            if (
+                implementationType !== tokenManagerImplementations.MINT_BURN &&
+                implementationType !== tokenManagerImplementations.INTERCHAIN_TOKEN
+            ) {
                 printInfo('Approving ITS for a transfer for token with token manager type', implementationType);
                 await token.approve(interchainTokenService.address, amountInUnits, gasOptions).then((tx) => tx.wait());
             }
 
-            const itsDestinationAddress = encodeITSDestination(chains, destinationChain, destinationAddress);
+            const itsDestinationAddress = encodeITSDestination(config, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
+            printInfo('Encoded ITS destination address', itsDestinationAddress);
 
             const tx = await interchainTokenService[INTERCHAIN_TRANSFER_WITH_METADATA](
                 tokenIdBytes32,
@@ -418,7 +401,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateParameters({ isNonEmptyString: { itsChain } });
 
-            if (await isTrustedChain(itsChain, interchainTokenService, itsVersion)) {
+            if (await interchainTokenService.isTrustedChain(itsChain)) {
                 printInfo(`${itsChain} is a trusted chain`);
             } else {
                 printInfo(`${itsChain} is not a trusted chain`);
@@ -430,25 +413,24 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-trusted-chains': {
             const trustedChains = args;
 
-            await validateOwner(interchainTokenService, walletAddress, action);
+            const owner = await interchainTokenService.owner();
+            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+            }
 
             if (prompt(`Proceed with setting trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
             const data = [];
+
             for (const trustedChain of trustedChains) {
-                if (itsVersion === '2.1.1') {
-                    const tx = await interchainTokenService.populateTransaction.setTrustedAddress(trustedChain, 'hub', gasOptions);
-                    data.push(tx.data);
-                } else {
-                    const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
-                    data.push(tx.data);
-                }
+                const tx = await interchainTokenService.populateTransaction.setTrustedChain(trustedChain, gasOptions);
+                data.push(tx.data);
             }
 
             const multicall = await interchainTokenService.multicall(data);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressSet', 'TrustedChainSet');
+            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainSet');
 
             break;
         }
@@ -456,25 +438,24 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'remove-trusted-chains': {
             const trustedChains = args;
 
-            await validateOwner(interchainTokenService, walletAddress, action);
+            const owner = await interchainTokenService.owner();
+            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+            }
 
             if (prompt(`Proceed with removing trusted chain(s): ${Array.from(trustedChains).join(', ')}?`, yes)) {
                 return;
             }
 
             const data = [];
+
             for (const trustedChain of trustedChains) {
-                if (itsVersion === '2.1.1') {
-                    const tx = await interchainTokenService.populateTransaction.removeTrustedAddress(trustedChain, gasOptions);
-                    data.push(tx.data);
-                } else {
-                    const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
-                    data.push(tx.data);
-                }
+                const tx = await interchainTokenService.populateTransaction.removeTrustedChain(trustedChain, gasOptions);
+                data.push(tx.data);
             }
 
             const multicall = await interchainTokenService.multicall(data);
-            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedAddressRemoved', 'TrustedChainRemoved');
+            await handleTx(multicall, chain, interchainTokenService, action, 'TrustedChainRemoved');
 
             break;
         }
@@ -482,7 +463,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
         case 'set-pause-status': {
             const [pauseStatus] = args;
 
-            await validateOwner(interchainTokenService, walletAddress, action);
+            const owner = await interchainTokenService.owner();
+            if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
+                throw new Error(`${action} can only be performed by contract owner: ${owner}`);
+            }
 
             const tx = await interchainTokenService.setPauseStatus(pauseStatus === 'true', gasOptions);
 
@@ -499,7 +483,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 isValidCalldata: { payload },
             });
 
-            if (!(await isTrustedChain(sourceChain, interchainTokenService, itsVersion))) {
+            if (!(await interchainTokenService.isTrustedChain(sourceChain))) {
                 throw new Error(`Invalid remote service: ${sourceChain} is not a trusted chain.`);
             }
 
@@ -521,9 +505,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const interchainTokenFactoryImplementation = await interchainTokenFactoryContract.implementation();
 
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
-            const interchainToken = await interchainTokenDeployerContract.implementationAddress();
 
-            const trustedChains = await getTrustedChains(chains, interchainTokenService, itsVersion);
+            // Note: only get `interchainToken` if the contract supports it
+						const interchainToken = 'implementationAddress' in interchainTokenDeployerContract
+							? await interchainTokenDeployerContract.implementationAddress()
+							: undefined;
+
+            const trustedChains = await getTrustedChains(config, interchainTokenService);
             printInfo('Trusted chains', trustedChains);
 
             const gateway = await interchainTokenService.gateway();
@@ -590,17 +578,16 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
             const { gasValue } = options;
             const deploymentSalt = getDeploymentSalt(options);
+            const tokenManagerType = tokenManagerImplementations[type];
 
             validateParameters({
                 isValidTokenId: { tokenId },
-                isNonEmptyString: { destinationChain, type },
+                isString: { destinationChain },
                 isValidAddress: { destinationTokenAddress, operator },
-                isValidNumber: { gasValue },
+                isValidNumber: { gasValue, tokenManagerType },
             });
-            validateChain(chains, destinationChain);
+            validateChain(config.chains, destinationChain);
 
-            const chainType = getChainConfigByAxelarId(config, destinationChain)?.chainType;
-            const tokenManagerType = validateLinkType(chainType, type);
             const interchainTokenId = await interchainTokenService.interchainTokenId(wallet.address, deploymentSalt);
             printInfo('Expected tokenId', interchainTokenId);
 
@@ -642,7 +629,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
 async function main(action, args, options) {
     options.args = args;
-    return mainProcessor(options, (axelar, chain, chains, options) => processCommand(axelar, chain, chains, action, options));
+    return mainProcessor(options, (config, chain, options) => processCommand(config, chain, action, options));
 }
 
 if (require.main === module) {
@@ -837,7 +824,7 @@ if (require.main === module) {
         .argument('<token-id>', 'Token ID')
         .argument('<destination-chain>', 'Destination chain')
         .argument('<destination-token-address>', 'Destination token address')
-        .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
+        .argument('<type>', 'Token manager type')
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
         .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))

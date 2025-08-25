@@ -270,6 +270,9 @@
       "decimals": 18,
       "confirmations": 1,
       "chainType": "evm",
+      "gasOptions": {
+        "gasLimit": 5000000
+      },
       "explorer": {
         "name": "Snowtrace",
         "url": "https://testnet.snowtrace.io",
