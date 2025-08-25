@@ -5,7 +5,7 @@ const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress 
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, _args, options) {
+async function rewards(client, config, _itsHubAddress, _args, options) {
     const { chainName } = options;
 
     const rewardsContractAddresses = {
@@ -41,6 +41,55 @@ async function getItsChainConfig(client, config, chainName) {
     });
 }
 
+async function tokenConfig(client, config, args, _options) {
+    const [chainName, tokenId] = args;
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            token_config: { token_id: tokenId },
+        });
+
+        printInfo(`Token config for ${tokenId}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch token config for ${tokenId}`, error?.message || String(error));
+    }
+}
+
+async function customTokenMetadata(client, _config, itsHubAddress, args, _options) {
+    const [chainName, tokenAddress] = args;
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            custom_token_metadata: {
+                chain: chainName,
+                token_address: tokenAddress,
+            },
+        });
+
+        printInfo(`Custom token metadata for ${tokenAddress} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch custom token metadata for ${tokenAddress} on ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function tokenInstance(client, _config, itsHubAddress, args, _options) {
+    const [chainName, tokenId] = args;
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            token_instance: {
+                chain: chainName,
+                token_id: tokenId,
+            },
+        });
+
+        printInfo(`Token instance for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch token instance for ${tokenId} on ${chainName}`, error?.message || String(error));
+    }
+}
+
 async function itsChainConfig(client, config, options) {
     const { chainName } = options;
 
@@ -52,27 +101,7 @@ async function itsChainConfig(client, config, options) {
     }
 }
 
-async function tokenConfig(client, config, args, _options) {
-    const [chainName, tokenId] = args;
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-
-    if (!itsHubAddress) {
-        printWarn('ITS Hub contract address not found in config');
-        return;
-    }
-
-    try {
-        const result = await client.queryContractSmart(itsHubAddress, {
-            token_config: { chain: chainName, token_id: tokenId },
-        });
-
-        printInfo(`Custom token metadata for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
-    } catch (error) {
-        printWarn(`Failed to fetch custom token metadata for ${tokenId} on ${chainName}`, error?.message || String(error));
-    }
-}
-
-const mainProcessor = async (processor, args, options) => {
+const mainProcessor = async (processor, args, options, requiresItsHub = true) => {
     const { env } = options;
     const config = loadConfig(env);
 
@@ -81,7 +110,14 @@ const mainProcessor = async (processor, args, options) => {
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
 
-    await processor(client, config, args, options);
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+
+    if (requiresItsHub && !itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    await processor(client, config, itsHubAddress, args, options);
 };
 
 const programHandler = () => {
@@ -93,18 +129,29 @@ const programHandler = () => {
         .command('rewards')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
-            mainProcessor(rewards, [], options);
+            mainProcessor(rewards, [], options, false);
         });
 
     const tokenConfigCmd = program
-        .command('token-config <chainName> <tokenId>')
-        .description('Query custom token metadata from ITS Hub')
-        .action((chainName, tokenId, options) => {
-            mainProcessor(tokenConfig, [chainName, tokenId], options);
+        .command('token-config <tokenId>')
+        .description('Query token config from ITS Hub')
+        .action((tokenId, options) => {
+            mainProcessor(tokenConfig, [tokenId], options);
         });
 
-    addAmplifierQueryOptions(rewardCmd);
-    addAmplifierQueryOptions(tokenConfigCmd);
+    const customTokenMetadataCmd = program
+        .command('custom-token-metadata <chainName> <tokenAddress>')
+        .description('Query custom token metadata by chain name and token address')
+        .action((chainName, tokenAddress, options) => {
+            mainProcessor(customTokenMetadata, [chainName, tokenAddress], options);
+        });
+
+    const tokenInstanceCmd = program
+        .command('token-instance <chainName> <tokenId>')
+        .description('Query token instance by chain name and token ID')
+        .action((chainName, tokenId, options) => {
+            mainProcessor(tokenInstance, [chainName, tokenId], options);
+        });
 
     const itsChainConfigCmd = program
         .command('its-chain-config')
@@ -115,6 +162,10 @@ const programHandler = () => {
             mainProcessor(itsChainConfig, options);
         });
 
+    addAmplifierQueryOptions(rewardCmd);
+    addAmplifierQueryOptions(tokenConfigCmd);
+    addAmplifierQueryOptions(customTokenMetadataCmd);
+    addAmplifierQueryOptions(tokenInstanceCmd);
     addAmplifierQueryOptions(itsChainConfigCmd);
 
     program.parse();
