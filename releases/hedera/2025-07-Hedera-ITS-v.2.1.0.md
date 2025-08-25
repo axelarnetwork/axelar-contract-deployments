@@ -7,12 +7,12 @@
 
 | **Network**          | **Deployment Status** | **Date**    |
 | -------------------- | --------------------- | ----------- |
-| **Devnet Amplifier** | -                     | TBD         |
+| **Devnet Amplifier** | Deployed              | 2025-08-21  |
 | **Stagenet**         | Deployed              | 2025-07-30  |
 | **Testnet**          | -                     | TBD         |
 | **Mainnet**          | -                     | TBD         |
 
-- [Release](https://github.com/commonprefix/interchain-token-service/tree/2198e2720444aec9bd85c0f3ae9ded26403bb1c1)
+- [Release](https://github.com/commonprefix/interchain-token-service/tree/01ac9020896b6e16577a9d922f6b7e23baae9145)
 
 ## Background
 
@@ -20,7 +20,7 @@ Deployment of the Hedera-fork of Interchain Token Service.
 
 ## Deployment
 
-Ensure that [<Chain's GMP>](../evm/path-to-GMP-release-doc) is deployed first.
+Ensure that [Hedera GMP](../evm/2025-04-Hedera-GMP-v6.0.4.md) is deployed first.
 
 Follow `hedera/README.md` for Hedera account setup and in-depth `.env` configuration.
 
@@ -74,6 +74,10 @@ ts-node hedera/fund-whbar.js <its_address> --whbarAddress <whbar_address> --amou
 
 The `--amount` is a value in HBAR. You can optionally skip the `--whbarAddress` argument if you have set the `WHBAR_ADDRESS` environment variable in your `.env` file.
 
+### Fund user with WHBAR and approve factory
+
+For local factory deployments, the user needs to have some WHBAR to pay for token creation. Repeat the step above with the user's address, afterwhich sufficent allowance needs to be given to the factory contract.
+
 ### Verify Upgraded ITS Contracts
 
 > TODO: Needs instructions for Hedera, missing in GMP Release.
@@ -116,11 +120,24 @@ ts-node evm/its.js checks -n $CHAIN -y
 - EVM Checklist
 
 ```bash
-# Create a token on `<ChainName>`
+# Fund user with some WHBAR (see above)
+# Approve factory to spend WHBAR
+
+# Create a token on Hedera
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" -n $CHAIN
+
+# To find the token manager use `deployedTokenManager(bytes32)` on the ITS contract
+# To find the token address use `registeredTokenAddress(bytes32)` on the ITS contract
+
+# Associate with the token address
+ts-node hedera/associate-token.js [token-address]
+
+# Mint some tokens via the TokenManager
 
 # Deploy token to a remote chain
 ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+
+# Approve token manager to spend tokens
 
 # Transfer token to remote chain
 ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
