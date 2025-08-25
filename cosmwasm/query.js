@@ -1,7 +1,7 @@
 'use strict';
 
 const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
-const { loadConfig, printInfo, printWarn } = require('../common');
+const { loadConfig, printInfo, printWarn, saveConfig } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -56,75 +56,56 @@ async function deployedContracts(client, config, args, options) {
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
 
     if (!coordinatorAddress) {
-        printWarn('Coordinator contract address not found in config');
-        return;
+        return printWarn('Coordinator contract address not found in config');
     }
 
-    let deployment = deploymentName;
-    if (!deployment && chainName) {
-        deployment = config.axelar?.contracts?.Coordinator?.deployments?.[chainName]?.deploymentName;
-        if (!deployment) {
-            printWarn(`No deployment name found for chain ${chainName} in config`);
-            return;
-        }
+    deploymentName = deploymentName ?? config.axelar?.contracts?.Coordinator?.deployments?.[chainName]?.deploymentName;
+
+    if (!deploymentName) {
+        return printWarn('Deployment name is required. Use --deploymentName');
     }
 
-    if (!deployment) {
-        printWarn('Deployment name is required. Use --deploymentName or --chainName with saved deployment');
-        return;
-    }
-
+    let result;
     try {
-        const result = await client.queryContractSmart(coordinatorAddress, {
+        result = await client.queryContractSmart(coordinatorAddress, {
             deployed_contracts: {
-                deployment_name: deployment,
+                deployment_name: deploymentName,
             },
         });
 
-        printInfo(`Deployed contracts for deployment "${deployment}"`, JSON.stringify(result, null, 2));
-
-        if (chainName && result) {
-            if (!config.axelar.contracts.VotingVerifier) {
-                config.axelar.contracts.VotingVerifier = {};
-            }
-            if (!config.axelar.contracts.Gateway) {
-                config.axelar.contracts.Gateway = {};
-            }
-            if (!config.axelar.contracts.MultisigProver) {
-                config.axelar.contracts.MultisigProver = {};
-            }
-
-            if (result.verifier) {
-                if (!config.axelar.contracts.VotingVerifier[chainName]) {
-                    config.axelar.contracts.VotingVerifier[chainName] = {};
-                }
-                config.axelar.contracts.VotingVerifier[chainName].address = result.verifier;
-                printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
-            }
-
-            if (result.gateway) {
-                if (!config.axelar.contracts.Gateway[chainName]) {
-                    config.axelar.contracts.Gateway[chainName] = {};
-                }
-                config.axelar.contracts.Gateway[chainName].address = result.gateway;
-                printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
-            }
-
-            if (result.prover) {
-                if (!config.axelar.contracts.MultisigProver[chainName]) {
-                    config.axelar.contracts.MultisigProver[chainName] = {};
-                }
-                config.axelar.contracts.MultisigProver[chainName].address = result.prover;
-                printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
-            }
-
-            const { saveConfig } = require('../common');
-            saveConfig(config, options.env);
-            printInfo('Config updated successfully');
-        }
+        printInfo(`Deployed contracts for deployment "${deploymentName}"`, JSON.stringify(result, null, 2));
     } catch (error) {
-        printWarn(`Failed to fetch deployed contracts for deployment "${deployment}"`, error?.message || String(error));
+        return printWarn(`Failed to fetch deployed contracts for deployment "${deploymentName}"`, error?.message || String(error));
     }
+
+    if (
+        !(result.verifier && config.axelar.contracts.VotingVerifier?.[chainName]) ||
+        !(result.gateway && config.axelar.contracts.Gateway?.[chainName]) ||
+        !(result.prover && config.axelar.contracts.MultisigProver?.[chainName])
+    ) {
+        printWarn(
+            `Config missing for ${chainName} not found.`,
+            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}' to instantiate.`
+        );
+    }
+
+    config.axelar.contracts.VotingVerifier[chainName] = {
+        ...config.axelar.contracts.VotingVerifier[chainName],
+        address: result.verifier,
+    };
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+
+    config.axelar.contracts.Gateway[chainName] = {
+        ...config.axelar.contracts.Gateway[chainName],
+        address: result.gateway,
+    };
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
+
+    config.axelar.contracts.MultisigProver[chainName] = {
+        ...config.axelar.contracts.MultisigProver[chainName],
+        address: result.prover,
+    };
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
 }
 
 const mainProcessor = async (processor, args, options) => {
@@ -161,7 +142,7 @@ const programHandler = () => {
     const deployedContractsCmd = program
         .command('deployed-contracts')
         .description('Query deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
-        .option('-n, --chainName <chainName>', 'chain name of deployment')
+        .requiredOption('-n, --chainName <chainName>', 'chain name')
         .option('--deploymentName <deploymentName>', 'deployment name to query')
         .action((options) => {
             mainProcessor(deployedContracts, [], options);
