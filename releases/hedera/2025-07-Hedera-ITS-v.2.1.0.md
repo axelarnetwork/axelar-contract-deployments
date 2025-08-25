@@ -120,14 +120,16 @@ ts-node evm/its.js checks -n $CHAIN -y
 - EVM Checklist
 
 ```bash
-# Fund user with some WHBAR (see above)
+# Fund user with some WHBAR
+ts-node hedera/fund-whbar.js [user-address] --whbarAddress [whbar-address] --amount 100
+
 # Approve factory to spend WHBAR
+ts-node hedera/approve-factory-whbar.js --whbarAddress [whbar-address] -n $CHAIN
 
 # Create a token on Hedera
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" --initialSupply 0 -n $CHAIN
 
-# To find the token manager use `deployedTokenManager(bytes32)` on the ITS contract
-# To find the token address use `registeredTokenAddress(bytes32)` on the ITS contract
+# Record the newly created token address from the output.
 
 # Associate with the token address
 ts-node hedera/associate-token.js [token-address]
