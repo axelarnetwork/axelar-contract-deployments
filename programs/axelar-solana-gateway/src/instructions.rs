@@ -423,11 +423,7 @@ pub fn initialize_config(
         AccountMeta::new_readonly(gateway_program_data, false),
         AccountMeta::new(gateway_config_pda, false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta {
-            pubkey: initial_verifier_set.pda,
-            is_signer: false,
-            is_writable: true,
-        },
+        AccountMeta::new(initial_verifier_set.pda, false),
     ];
 
     let data = to_vec(&GatewayInstruction::InitializeConfig(InitializeConfig {
