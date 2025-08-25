@@ -31,10 +31,6 @@ const {
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
-async function checkTrustedChain(wallet, chain, contract, trustedChainScVal, options) {
-    return (await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)).value();
-}
-
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
 
@@ -43,7 +39,7 @@ async function manageTrustedChains(action, wallet, config, chain, contract, args
 
         try {
             const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
-            const isTrusted = await checkTrustedChain(wallet, chain, contract, trustedChainScVal, options);
+            const isTrusted = (await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)).value();
 
             if (isTrusted && action === 'set_trusted_chain') {
                 printWarn('The chain is already trusted', trustedChain);
@@ -80,7 +76,7 @@ async function isTrustedChain(wallet, _config, chain, contract, args, options) {
 
     try {
         const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
-        const isTrusted = await checkTrustedChain(wallet, chain, contract, trustedChainScVal, options);
+        const isTrusted = (await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)).value();
 
         if (isTrusted) {
             printInfo(`${trustedChain} is a trusted chain`);
