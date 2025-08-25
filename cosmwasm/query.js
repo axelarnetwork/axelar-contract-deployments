@@ -1,7 +1,7 @@
 'use strict';
 
 const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
-const { loadConfig, printInfo, printWarn } = require('../common');
+const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -28,6 +28,27 @@ async function rewards(client, config, _args, options) {
         } catch (error) {
             printWarn(`Failed to fetch rewards pool for ${key} on ${chainName}`, `${error.message}`);
         }
+    }
+}
+
+async function getItsChainConfig(client, config, chainName) {
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    return await client.queryContractSmart(itsHubContractAddress(config.axelar), {
+        its_chain: {
+            chain: chainConfig.axelarId,
+        },
+    });
+}
+
+async function itsChainConfig(client, config, options) {
+    const { chainName } = options;
+
+    try {
+        const result = await getItsChainConfig(client, config, chainName);
+        printInfo(`ITS chain config for ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        throw error;
     }
 }
 
@@ -85,9 +106,24 @@ const programHandler = () => {
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
 
+    const itsChainConfigCmd = program
+        .command('its-chain-config')
+        .description('Query ITS chain configuration for a specific chain')
+        .argument('<chainName>', 'name of the chain to query')
+        .action((chainName, options) => {
+            options.chainName = chainName;
+            mainProcessor(itsChainConfig, options);
+        });
+
+    addAmplifierQueryOptions(itsChainConfigCmd);
+
     program.parse();
 };
 
 if (require.main === module) {
     programHandler();
 }
+
+module.exports = {
+    getItsChainConfig,
+};
