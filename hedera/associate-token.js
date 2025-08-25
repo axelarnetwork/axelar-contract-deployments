@@ -45,7 +45,12 @@ async function associateToken(_config, tokenId, options) {
         printInfo('Token associated with account successfully');
         printInfo('Transaction ID', submitTx.transactionId.toString());
         printInfo('Receipt status', receipt.status.toString());
+        process.exit(0);
     } catch (error) {
+        if (error.message.includes('TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT')) {
+            printInfo('Token is already associated with the account.');
+            process.exit(0);
+        }
         throw new Error(`Token association failed: ${error.message}`);
     }
 }
