@@ -1,7 +1,7 @@
 'use strict';
 
 const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
-const { loadConfig, printInfo, printWarn } = require('../common');
+const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -31,8 +31,19 @@ async function rewards(client, config, _itsHubAddress, _args, options) {
     }
 }
 
-async function tokenConfig(client, _config, itsHubAddress, args, _options) {
-    const [tokenId] = args;
+async function getItsChainConfig(client, config, chainName) {
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    return await client.queryContractSmart(itsHubContractAddress(config.axelar), {
+        its_chain: {
+            chain: chainConfig.axelarId,
+        },
+    });
+}
+
+async function tokenConfig(client, config, args, _options) {
+    const [chainName, tokenId] = args;
+    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
@@ -79,6 +90,17 @@ async function tokenInstance(client, _config, itsHubAddress, args, _options) {
     }
 }
 
+async function itsChainConfig(client, config, options) {
+    const { chainName } = options;
+
+    try {
+        const result = await getItsChainConfig(client, config, chainName);
+        printInfo(`ITS chain config for ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        throw error;
+    }
+}
+  
 const mainProcessor = async (processor, args, options, requiresItsHub = true) => {
     const { env } = options;
     const config = loadConfig(env);
@@ -131,10 +153,20 @@ const programHandler = () => {
             mainProcessor(tokenInstance, [chainName, tokenId], options);
         });
 
+    const itsChainConfigCmd = program
+        .command('its-chain-config')
+        .description('Query ITS chain configuration for a specific chain')
+        .argument('<chainName>', 'name of the chain to query')
+        .action((chainName, options) => {
+            options.chainName = chainName;
+            mainProcessor(itsChainConfig, options);
+        });
+  
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
     addAmplifierQueryOptions(customTokenMetadataCmd);
     addAmplifierQueryOptions(tokenInstanceCmd);
+    addAmplifierQueryOptions(itsChainConfigCmd);
 
     program.parse();
 };
@@ -142,3 +174,7 @@ const programHandler = () => {
 if (require.main === module) {
     programHandler();
 }
+
+module.exports = {
+    getItsChainConfig,
+};
