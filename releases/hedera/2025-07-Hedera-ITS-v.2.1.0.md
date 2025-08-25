@@ -124,7 +124,7 @@ ts-node evm/its.js checks -n $CHAIN -y
 # Approve factory to spend WHBAR
 
 # Create a token on Hedera
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" --initialSupply 0 -n $CHAIN
 
 # To find the token manager use `deployedTokenManager(bytes32)` on the ITS contract
 # To find the token address use `registeredTokenAddress(bytes32)` on the ITS contract
