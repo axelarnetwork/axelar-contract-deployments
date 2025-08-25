@@ -25,6 +25,7 @@ const {
     encodeITSDestination,
     printTokenInfo,
     INTERCHAIN_TRANSFER_WITH_METADATA,
+    getValueForGasValue,
 } = require('./utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -342,7 +343,7 @@ async function processCommand(config, chain, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: getValueForGasValue(chain, gasValue), ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
@@ -353,7 +354,10 @@ async function processCommand(config, chain, action, options) {
             const { gasValue } = options;
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
-            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, { value: gasValue, ...gasOptions });
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
+                value: getValueForGasValue(chain, gasValue),
+                ...gasOptions,
+            });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
         }
