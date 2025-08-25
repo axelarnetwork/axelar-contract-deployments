@@ -87,7 +87,7 @@ ts-node cosmwasm/submit-proposal.js store \
   -c SolanaVotingVerifier \
   -t "Upload VotingVerifier contract for Solana" \
   -d "Upload VotingVerifier contract for Solana integration" \
-  -a "$ARTIFACT_PATH/voting_verifier.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -98,7 +98,7 @@ ts-node cosmwasm/submit-proposal.js store \
   -c SolanaGateway \
   -t "Upload Gateway contract for Solana" \
   -d "Upload Gateway contract for Solana integration" \
-  -a "$ARTIFACT_PATH/gateway.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -109,7 +109,7 @@ ts-node cosmwasm/submit-proposal.js store \
   -c SolanaMultisigProver \
   -t "Upload MultisigProver contract for Solana" \
   -d "Upload MultisigProver contract for Solana integration" \
-  -a "$ARTIFACT_PATH/solana_multisig_prover.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
