@@ -100,7 +100,7 @@ async function itsChainConfig(client, config, options) {
         throw error;
     }
 }
-  
+
 const mainProcessor = async (processor, args, options, requiresItsHub = true) => {
     const { env } = options;
     const config = loadConfig(env);
@@ -161,7 +161,7 @@ const programHandler = () => {
             options.chainName = chainName;
             mainProcessor(itsChainConfig, options);
         });
-  
+
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
     addAmplifierQueryOptions(customTokenMetadataCmd);
