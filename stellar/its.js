@@ -31,18 +31,19 @@ const {
 } = require('./utils');
 const { prompt, parseTrustedChains, encodeITSDestination, tokenManagerTypes, validateLinkType } = require('../common/utils');
 
+async function checkTrustedChain(wallet, chain, contract, trustedChainScVal, options) {
+    return (await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)).value();
+}
+
 async function manageTrustedChains(action, wallet, config, chain, contract, args, options) {
     const trustedChains = parseTrustedChains(config.chains, args);
 
     for (const trustedChain of trustedChains) {
         printInfo(action, trustedChain);
 
-        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
-
         try {
-            const isTrusted = (
-                await broadcast(contract.call('is_trusted_chain', trustedChainScVal), wallet, chain, 'Is trusted chain', options)
-            ).value();
+            const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+            const isTrusted = await checkTrustedChain(wallet, chain, contract, trustedChainScVal, options);
 
             if (isTrusted && action === 'set_trusted_chain') {
                 printWarn('The chain is already trusted', trustedChain);
@@ -68,6 +69,27 @@ async function addTrustedChains(wallet, config, chain, contract, args, options) 
 
 async function removeTrustedChains(wallet, config, chain, contract, args, options) {
     await manageTrustedChains('remove_trusted_chain', wallet, config, chain, contract, args, options);
+}
+
+async function isTrustedChain(wallet, _config, chain, contract, args, options) {
+    const [trustedChain] = args;
+
+    validateParameters({
+        isNonEmptyString: { trustedChain },
+    });
+
+    try {
+        const trustedChainScVal = nativeToScVal(trustedChain, { type: 'string' });
+        const isTrusted = await checkTrustedChain(wallet, chain, contract, trustedChainScVal, options);
+
+        if (isTrusted) {
+            printInfo(`${trustedChain} is a trusted chain`);
+        } else {
+            printInfo(`${trustedChain} is not a trusted chain`);
+        }
+    } catch (error) {
+        printError(`Failed to check trusted chain`, trustedChain, error);
+    }
 }
 
 async function deployInterchainToken(wallet, _config, chain, contract, args, options) {
@@ -467,6 +489,13 @@ if (require.main === module) {
         .description(`Remove trusted chains. The <trusted-chains> can be a list of chains separated by whitespaces or special tag 'all'`)
         .action((trustedChains, options) => {
             mainProcessor(removeTrustedChains, trustedChains, options);
+        });
+
+    program
+        .command('is-trusted-chain <trusted-chain>')
+        .description('Check if a chain is trusted')
+        .action((trustedChain, options) => {
+            mainProcessor(isTrustedChain, [trustedChain], options);
         });
 
     program
