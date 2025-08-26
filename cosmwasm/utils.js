@@ -700,7 +700,7 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const verifierContract = getVerifierContractForChain(chainName);
-    const gatewayContractAddress = getGatewayContractForChain(chainName);
+    const gatewayContractName = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -713,7 +713,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
-        [gatewayContractAddress]: {
+        [gatewayContractName]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
