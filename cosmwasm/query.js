@@ -152,7 +152,7 @@ const programHandler = () => {
             mainProcessor(tokenConfig, [chainName, tokenId], options);
         });
 
-    const deployedContractsCmd = program
+    const saveDeployedContractsCmd = program
         .command('save-deployed-contracts')
         .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
         .requiredOption('-n, --chainName <chainName>', 'chain name')
@@ -162,7 +162,7 @@ const programHandler = () => {
 
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
-    addAmplifierQueryOptions(deployedContractsCmd);
+    addAmplifierQueryOptions(saveDeployedContractsCmd);
 
     program.parse();
 };
