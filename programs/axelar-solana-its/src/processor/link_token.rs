@@ -160,11 +160,17 @@ pub(crate) fn register_token_metadata<'a>(
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint_account = next_account_info(accounts_iter)?;
-    let _token_program = next_account_info(accounts_iter)?;
+    let token_program = next_account_info(accounts_iter)?;
 
     let (_other, outbound_message_accounts) = accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
     msg!("Instruction: RegisterTokenMetadata");
+
+    spl_token_2022::check_spl_token_program_account(token_program.key)?;
+    if mint_account.owner != token_program.key {
+        msg!("Invalid mint account");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     let mint = Mint::unpack(&mint_account.data.borrow())?;
     let payload = GMPPayload::RegisterTokenMetadata(RegisterTokenMetadata {

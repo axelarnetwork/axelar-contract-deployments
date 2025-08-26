@@ -28,6 +28,7 @@ mod handover_mint_authority;
 mod idempotent_ata_test;
 mod metadata_retrieval;
 mod pause_unpause;
+mod register_metadata;
 mod role_management;
 mod token_id_validation;
 
