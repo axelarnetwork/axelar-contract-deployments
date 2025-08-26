@@ -1087,7 +1087,7 @@ async function printTokenInfo(tokenAddress, provider) {
 // once scaled will be 200 * 10^10 = 20_000_000_000 wei
 function getValueForGasValue(chain, gasValue) {
     if (typeof chain.gasScalingFactor === 'number') {
-        return gasValue * 10 ** chain.gasScalingFactor;
+        return BigNumber.from(gasValue).mul(10 ** chain.gasScalingFactor);
     }
 
     return gasValue;
