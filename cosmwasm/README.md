@@ -226,12 +226,12 @@ ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
   --fetchCodeId
 ```
 
-This formats the execute message using the config, generates a deployment name (`deployment-<chain>-<timestamp>`), and submits a single proposal to deploy all three contracts.
+This formats the execute message using the config, generates a deployment name (`<chain>-<codeId>`), and submits a single proposal to deploy all three contracts.
 
-After the proposal executes, retrieve the deployed contract addresses:
+After the proposal executes, retrieve and write the deployed contract addresses to the config:
 
 ```bash
-ts-node cosmwasm/query.js deployed-contracts -n avalanche
+ts-node cosmwasm/query.js save-deployed-contracts -n avalanche
 ```
 
 ### Uploading and instantiating in one step
@@ -339,16 +339,10 @@ ts-node cosmwasm/submit-proposal.js migrate \
 Query deployed contracts via Coordinator:
 
 ```bash
-ts-node cosmwasm/query.js deployed-contracts -n <chain-name>
+ts-node cosmwasm/query.js save-deployed-contracts -n <chain-name>
 ```
 
-This will use the saved deployment name for the specified chain, query Coordinator contract for deployed addresses, and automatically update the config with the retrieved addresses.
-
-You can also query directly with a deployment name:
-
-```bash
-ts-node cosmwasm/query.js deployed-contracts --deploymentName <deployment-name>
-```
+This will query the Coordinator contract for a specific chain's deployed addresses and automatically update the config with those addresses.
 
 ### Rotating verifier set
 1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:

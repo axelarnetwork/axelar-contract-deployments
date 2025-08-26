@@ -27,7 +27,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
     governanceAddress,
-    makeInstantiateChainContractsMsg,
+    getInstantiateChainContractsMessage,
 } = require('./utils');
 const {
     saveConfig,
@@ -255,35 +255,34 @@ const migrate = async (client, wallet, config, options) => {
 };
 
 const instantiateChainContracts = async (client, wallet, config, options) => {
-    const { chainName, deploymentName } = options;
+    const { chainName } = options;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
     if (!coordinatorAddress) {
         throw new Error('Coordinator contract address not found in config');
     }
 
-    const msg = await makeInstantiateChainContractsMsg(client, config, options);
+    const message = await getInstantiateChainContractsMessage(client, config, options);
 
     const proposalId = await execute(client, wallet, config, {
         ...options,
         contractName: 'Coordinator',
-        msg: JSON.stringify(msg),
+        msg: JSON.stringify(message),
     });
 
     if (!config.axelar.contracts.Coordinator.deployments) {
         config.axelar.contracts.Coordinator.deployments = {};
     }
-    deploymentName = deploymentName || msg.instantiate_chain_contracts.deployment_name;
     config.axelar.contracts.Coordinator.deployments[chainName] = {
-        deploymentName,
+        deploymentName: message.instantiate_chain_contracts.deployment_name,
         proposalId,
     };
 
-    printInfo(`Deployment name saved: ${deploymentName}`);
+    printInfo(`Deployment successfully submitted to ${chainName}`);
     if (proposalId) {
         printInfo(`Proposal ID: ${proposalId}`);
     }
-    printInfo(`After proposal executes, run: ts-node cosmwasm/query.js deployed-contracts -n ${chainName}`);
+    printInfo(`After proposal executes, run: ts-node cosmwasm/query.js save-deployed-contracts -n ${chainName}`);
 };
 
 function addGovProposalDefaults(options, config, env) {
@@ -422,7 +421,6 @@ const programHandler = () => {
         )
         .requiredOption('-n, --chainName <chainName>', 'chain name')
         .requiredOption('-s, --salt <salt>', 'salt for instantiate2')
-        .option('--deploymentName <deploymentName>', 'deployment name (default: deployment-<chain>-<timestamp>)')
         .option('--gatewayCodeId <gatewayCodeId>', 'code ID for Gateway contract')
         .option('--verifierCodeId <verifierCodeId>', 'code ID for VotingVerifier contract')
         .option('--proverCodeId <proverCodeId>', 'code ID for MultisigProver contract')

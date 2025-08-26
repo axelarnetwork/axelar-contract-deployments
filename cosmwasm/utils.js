@@ -1134,8 +1134,8 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
-const generateDeploymentName = (chainName) => {
-    return `deployment-${chainName}-${Date.now()}`;
+const generateDeploymentName = (chainName, codeId) => {
+    return `${chainName}-${codeId}`;
 };
 
 const getVerifierInstantiateMsg = (config, chainName) => {
@@ -1287,8 +1287,8 @@ const getProverInstantiateMsg = (config, chainName) => {
     };
 };
 
-const makeInstantiateChainContractsMsg = async (client, config, options) => {
-    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId, deploymentName } = options;
+const getInstantiateChainContractsMessage = async (client, config, options) => {
+    const { chainName, salt, gatewayCodeId, verifierCodeId, proverCodeId } = options;
 
     if (!chainName) {
         throw new Error('Chain name is required');
@@ -1297,8 +1297,6 @@ const makeInstantiateChainContractsMsg = async (client, config, options) => {
     if (!salt) {
         throw new Error('Salt is required');
     }
-
-    const finalDeploymentName = deploymentName || generateDeploymentName(chainName);
 
     const gatewayCode = gatewayCodeId || (await getCodeId(client, config, { ...options, contractName: 'Gateway' }));
     const verifierCode = verifierCodeId || (await getCodeId(client, config, { ...options, contractName: 'VotingVerifier' }));
@@ -1310,7 +1308,7 @@ const makeInstantiateChainContractsMsg = async (client, config, options) => {
     return {
         instantiate_chain_contracts: {
             chain: chainName,
-            deployment_name: finalDeploymentName,
+            deployment_name: generateDeploymentName(chainName, `${gatewayCode}-${verifierCode}-${proverCode}`),
             salt: salt,
             params: {
                 gateway: {
@@ -1438,5 +1436,5 @@ module.exports = {
     generateDeploymentName,
     getVerifierInstantiateMsg,
     getProverInstantiateMsg,
-    makeInstantiateChainContractsMsg,
+    getInstantiateChainContractsMessage,
 };
