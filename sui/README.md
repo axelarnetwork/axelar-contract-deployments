@@ -171,7 +171,7 @@ ts-node sui/deploy-contract.js deploy ITS
 #### Interchain Transfer
 
 ```bash
-node sui/its.js interchain-transfer \
+ts-node sui/its.js interchain-transfer \
    coin-package-id \
    coin-package-name \
    coin-mod-name \
@@ -185,7 +185,7 @@ node sui/its.js interchain-transfer \
 ```
 
 ```bash
- node sui/its.js interchain-transfer \
+ts-node sui/its.js interchain-transfer \
   0x1e280e60f86e4c5b46d9fc39795d0253430dd3a53acc19edb080c6284de8322b \
   my_custom_coin \
   MY_CUSTOM_COIN \
