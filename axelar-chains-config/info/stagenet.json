@@ -2488,6 +2488,89 @@
           "initializeArgs": {}
         }
       }
+    },
+    "stacks": {
+      "name": "Stacks",
+      "axelarId": "stacks",
+      "rpc": "https://api.testnet.hiro.so",
+      "tokenSymbol": "STX",
+      "networkType": "testnet",
+      "chainType": "stacks",
+      "finality": "6",
+      "decimals": 6,
+      "approxFinalityWaitTime": 1,
+      "explorer": {
+        "name": "Stacks Explorer",
+        "url": "https://explorer.hiro.so/?chain=testnet"
+      },
+      "contracts": {
+        "ClarityStacks": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.clarity-stacks",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GasStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "Traits": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.traits",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GasImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "GatewayStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "AxelarGasService": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-service",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "GatewayImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "AxelarGateway": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "connectionType": "amplifier"
+        },
+        "InterchainTokenServiceStorage": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service-storage",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenFactory": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-factory",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenService": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenFactoryImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-factory-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "VerifyOnchain": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.verify-onchain",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "InterchainTokenServiceImpl": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service-impl",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "version": "1.3.0"
+        },
+        "NativeInterchainToken": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.native-interchain-token",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        }
+      },
+      "initialContractsDeployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
     }
   },
   "axelar": {
@@ -2753,6 +2836,10 @@
         "stellar-2025-q3": {
           "codeId": 58,
           "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
+        },
+        "stacks": {
+          "codeId": 58,
+          "address": "axelar1p2qndluxmx2c40qqn3r5yzukvchfkhct040u45s4yz0rf479stpq69y9fn"
         }
       },
       "VotingVerifier": {
@@ -2974,6 +3061,55 @@
         "codeId": 62,
         "instantiateProposalId": "241",
         "address": "axelar1sx63v929qf6n5c88uwhjsfktlrwg2a8pvnrqejnylzwm7h9mtw8s8x4wmc"
+      },
+      "ItsStacksTranslator": {
+        "stacks": {
+          "codeId": 63,
+          "address": "axelar1m9sppngus5sqhu5m46ztqa00f69jg4284symlacrrwxrpnr6w25q3zr60q"
+        },
+        "storeCodeProposalId": "249",
+        "storeCodeProposalCodeHash": "89c52311e1f76bf88523092f34d06f5bcc1d8e8f955bf423fbfee4c90ec32a53",
+        "lastUploadedCodeId": 63
+      },
+      "StacksVotingVerifier": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-storage",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 6,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "stacks",
+          "codeId": 64,
+          "address": "axelar16mq0q43g0d86zxgpaxag0mrjks4zvqg82ex5eez3c7madueudy7qum3axh"
+        },
+        "storeCodeProposalId": "250",
+        "storeCodeProposalCodeHash": "d9ba807799694d7b0564ec95e885aadb4a4aea78a37004cb118f490635cc78cb",
+        "lastUploadedCodeId": 64
+      },
+      "StacksMultisigProver": {
+        "stacks": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 1,
+          "encoder": "stacks",
+          "keyType": "ecdsa",
+          "codeId": 65,
+          "domainSeparator": "0x79bda3786ee446a150368462571c9184dfa4ae603b89f46f172aac7b0b4f0c35",
+          "address": "axelar130ddhw25j98uc6h4sx5utgpj52msw7gxuv0uu8sphq50n5gsg76sz4f5cq"
+        },
+        "storeCodeProposalId": "251",
+        "storeCodeProposalCodeHash": "ecf6f5b4c0ad67f7d4971e87d6ceb907eaeccb6796d364e25bc32f6c5fe86814",
+        "lastUploadedCodeId": 65
       }
     },
     "axelarId": "axelar",
