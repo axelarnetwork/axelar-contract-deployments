@@ -168,6 +168,42 @@ ts-node sui/deploy-contract.js deploy RelayerDiscovery
 ts-node sui/deploy-contract.js deploy ITS
 ```
 
+#### Interchain Transfer
+
+```bash
+node sui/its.js interchain-transfer \
+   coin-package-id \
+   coin-package-name \
+   coin-mod-name \
+   coin-object-id \
+   token-id \
+   destination-chain \
+   destination-address \
+   amount \
+   --env <environment> \
+   --signatureScheme <your_sig_scheme>
+```
+
+```bash
+ node sui/its.js interchain-transfer \
+  0x1e280e60f86e4c5b46d9fc39795d0253430dd3a53acc19edb080c6284de8322b \
+  my_custom_coin \
+  MY_CUSTOM_COIN \
+  0x9a51b93a9ae535e6d5969f3d714d1488f9edb47c1711803982454e403d2f266f \
+  0xc6acd961da74eed78fbe714ab7bb31bbf88ea6e2f92fd3f2a8721c6789eb0d4a \
+  ethereum-sepolia \
+  0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
+  1 \
+  --env testnet \
+  --signatureScheme ed25519
+```
+
+Response
+
+````bash
+Interchain Transfer: [4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz](https://testnet.axelarscan.io/gmp/4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz-3)
+````
+
 ### Squid
 
 ```bash
