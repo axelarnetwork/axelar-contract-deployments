@@ -53,8 +53,6 @@ async function processCommand(config, chain, options) {
 
     printInfo('Action', action);
 
-    getValueForGasValue(chain, options.gasValue);
-
     if (prompt(`Proceed with action ${action}`, yes)) {
         return;
     }
