@@ -66,6 +66,29 @@ ts-node hedera/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt
 ts-node hedera/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
+### Register ITS edge contract on ITS Hub
+
+##### Setup truncation params in InterchainTokenService contract
+
+As HTS tokens use uint64, set that as the max uint and 6 decimals. Add following under `config.axelar.contracts.InterchainTokenService`:
+
+```
+"$CHAIN": {
+    "maxUintBits": 64,
+    "maxDecimalsWhenTruncating": 6
+},
+```
+#### Register ITS edge contract on ITS Hub
+
+Before proceeding, confirm ITS contract is deployed and is mentioned in `ENV.json`. Run:
+
+```bash
+ts-node cosmwasm/submit-proposal.js \
+    its-hub-register-chains $CHAIN \
+    -t "Register $CHAIN on ITS Hub" \
+    -d "Register $CHAIN on ITS Hub"
+```
+
 ### Fund ITS with WHBAR
 
 ```bash
