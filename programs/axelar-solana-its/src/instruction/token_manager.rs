@@ -62,6 +62,7 @@ pub fn add_flow_limiter(
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
     let accounts = vec![
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),
@@ -97,6 +98,7 @@ pub fn remove_flow_limiter(
         role_management::find_user_roles_pda(&crate::id(), &token_manager_pda, &flow_limiter);
 
     let accounts = vec![
+        AccountMeta::new_readonly(its_root_pda, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(payer_roles_pda, false),

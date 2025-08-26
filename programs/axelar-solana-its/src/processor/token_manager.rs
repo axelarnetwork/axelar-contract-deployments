@@ -469,12 +469,23 @@ pub(crate) fn process_add_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -> P
     msg!("Instruction: AddTokenManagerFlowLimiter");
 
     let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
     let resource = next_account_info(accounts_iter)?;
     let destination_user_account = next_account_info(accounts_iter)?;
     let destination_roles_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    if resource.key == its_config_account.key {
+        msg!("Resource is not a TokenManager");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Ensure resource is a `TokenManager`
+    TokenManager::load(resource)?;
 
     let role_management_accounts = RoleAddAccounts {
         system_account,
@@ -497,12 +508,23 @@ pub(crate) fn process_remove_flow_limiter<'a>(accounts: &'a [AccountInfo<'a>]) -
     msg!("Instruction: RemoveTokenManagerFlowLimiter");
 
     let accounts_iter = &mut accounts.iter();
+    let its_config_account = next_account_info(accounts_iter)?;
     let system_account = next_account_info(accounts_iter)?;
     let payer = next_account_info(accounts_iter)?;
     let payer_roles_account = next_account_info(accounts_iter)?;
     let resource = next_account_info(accounts_iter)?;
     let origin_user_account = next_account_info(accounts_iter)?;
     let origin_roles_account = next_account_info(accounts_iter)?;
+
+    let its_config = InterchainTokenService::load(its_config_account)?;
+    assert_valid_its_root_pda(its_config_account, its_config.bump)?;
+    if resource.key == its_config_account.key {
+        msg!("Resource is not a TokenManager");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Ensure resource is a `TokenManager`
+    TokenManager::load(resource)?;
 
     let role_management_accounts = RoleRemoveAccounts {
         system_account,

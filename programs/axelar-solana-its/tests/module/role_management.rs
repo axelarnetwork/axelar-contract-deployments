@@ -9,7 +9,7 @@ use spl_associated_token_account::{
 };
 use test_context::test_context;
 
-use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_gateway_test_fixtures::{assert_msg_present_in_logs, base::FindLog};
 use axelar_solana_its::{
     instruction::InterchainTokenServiceInstruction, state::token_manager::TokenManager, Roles,
 };
@@ -1245,4 +1245,51 @@ async fn test_prevent_privilege_escalation_through_different_token(ctx: &mut Its
         .data;
     let bob_roles_token_a = UserRoles::<Roles>::try_from_slice(&data).unwrap();
     assert!(!bob_roles_token_a.contains(Roles::MINTER));
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_add_flow_limiter_to_its_root_config(ctx: &mut ItsTestContext) {
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let bob = Keypair::new();
+
+    let mut add_flow_limiter_ix = axelar_solana_its::instruction::token_manager::add_flow_limiter(
+        ctx.solana_chain.fixture.payer.pubkey(),
+        [0u8; 32],
+        bob.pubkey(),
+    )
+    .unwrap();
+
+    add_flow_limiter_ix.accounts[4].pubkey = its_root_pda;
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[add_flow_limiter_ix])
+        .await
+        .unwrap_err();
+
+    assert_msg_present_in_logs(tx_metadata, "Resource is not a TokenManager");
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_remove_flow_limiter_from_its_root_config(ctx: &mut ItsTestContext) {
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let bob = Keypair::new();
+
+    let mut remove_flow_limiter_ix =
+        axelar_solana_its::instruction::token_manager::remove_flow_limiter(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            [0u8; 32],
+            bob.pubkey(),
+        )
+        .unwrap();
+
+    remove_flow_limiter_ix.accounts[4].pubkey = its_root_pda;
+
+    let tx_metadata = ctx
+        .send_solana_tx(&[remove_flow_limiter_ix])
+        .await
+        .unwrap_err();
+
+    assert_msg_present_in_logs(tx_metadata, "Resource is not a TokenManager");
 }
