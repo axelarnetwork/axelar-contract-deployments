@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@ledgerhq/hw-transport-node-hid": "^6.27.21",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/defender-relay-client": "^1.54.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
