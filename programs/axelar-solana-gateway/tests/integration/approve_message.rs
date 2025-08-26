@@ -319,6 +319,53 @@ async fn fails_to_approve_message_not_in_payload() {
     }
 }
 
+// cannot approve a message signed by a different verifier set
+#[tokio::test]
+async fn fails_to_approve_message_from_different_verifier_set() {
+    // Setup
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42, 42])
+        .build()
+        .setup()
+        .await;
+
+    // Create a payload with messages signed by the registered verifier set
+    let payload = Payload::Messages(Messages(make_messages(1)));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload.clone());
+
+    // Initialize and sign the payload session with registered verifier set
+    let verification_session_pda = metadata
+        .init_payload_session_and_verify(&execute_data)
+        .await
+        .unwrap();
+
+    // Create a message signed byt a different verifier set (not registered with the gateway, but
+    // this shoulnd't affect this test)
+    let different_verifier_set = make_verifier_set(&[100, 200], 999, metadata.domain_separator);
+    let different_execute_data = metadata.construct_execute_data(&different_verifier_set, payload);
+    let MerkleisedPayload::NewMessages {
+        messages: different_messages,
+    } = different_execute_data.payload_items
+    else {
+        unreachable!();
+    };
+
+    // Attempt to approve message from different verifier set using the registered session
+    let different_message_info = different_messages.into_iter().next().unwrap();
+    let tx_result = metadata
+        .approve_message(
+            execute_data.payload_merkle_root, // Using registered payload merkle root
+            different_message_info,           // But message from different verifier set
+            verification_session_pda,
+        )
+        .await
+        .unwrap_err();
+
+    // Should fail due to verifier set hash mismatch
+    let gateway_error = tx_result.get_gateway_error().unwrap();
+    assert_eq!(gateway_error, GatewayError::InvalidVerificationSessionPDA);
+}
+
 // cannot approve a message using verifier set payload hash
 #[tokio::test]
 async fn fails_to_approve_message_using_verifier_set_as_the_root() {
