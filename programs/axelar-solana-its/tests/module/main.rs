@@ -20,6 +20,7 @@
 )]
 
 mod deploy_interchain_token;
+mod deploy_manager_mismatch;
 mod deploy_remote;
 mod flow_limits;
 mod from_evm_to_solana;
