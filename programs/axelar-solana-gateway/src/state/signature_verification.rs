@@ -312,6 +312,12 @@ pub fn verify_eddsa_signature(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axelar_solana_encoding::hasher::SolanaSyscallHasher;
+    use axelar_solana_encoding::types::execute_data::SigningVerifierSetInfo;
+    use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+    use axelar_solana_encoding::types::verifier_set::VerifierSetLeaf;
+    use axelar_solana_encoding::{rs_merkle, LeafHash};
+    use rand::Rng;
 
     #[test]
     fn test_initialize_when_hash_is_zero() {
@@ -352,5 +358,98 @@ mod tests {
         assert_eq!(result, Err(GatewayError::InvalidDigitalSignature));
         // Hash should remain unchanged after failure
         assert_eq!(verification.signing_verifier_set_hash, initial_hash);
+    }
+
+    #[test]
+    fn test_check_slot_is_done_returns_slot_already_verified_error() {
+        let mut verification = SignatureVerification::default();
+
+        // Set the bit at position 0 to indicate it's already verified
+        verification.signature_slots[0] = 0b0000_0001;
+
+        let verifier_leaf = VerifierSetLeaf {
+            signer_pubkey: PublicKey::Secp256k1([0; 33]),
+            signer_weight: 1,
+            position: 0u8.into(),
+            quorum: 1,
+            set_size: 1u8.into(),
+            domain_separator: [0; 32],
+            nonce: 0,
+        };
+
+        assert_eq!(
+            verification.check_slot_is_done(&verifier_leaf),
+            Err(GatewayError::SlotAlreadyVerified)
+        );
+    }
+
+    #[test]
+    fn test_process_signature_returns_slot_already_verified_error() {
+        // Create ECDSA keypair
+        let (secret_key, public_key_bytes) = {
+            let mut rng = rand::thread_rng();
+            let secret_key_bytes: [u8; 32] = rng.gen();
+            let secret_key =
+                libsecp256k1::SecretKey::parse(&secret_key_bytes).expect("valid secret key");
+            let public_key = libsecp256k1::PublicKey::from_secret_key(&secret_key);
+            let public_key_bytes = public_key.serialize_compressed();
+            (secret_key, public_key_bytes)
+        };
+
+        // Create verifier set leaf
+        let verifier_leaf = {
+            let mut rng = rand::thread_rng();
+            VerifierSetLeaf {
+                signer_pubkey: PublicKey::Secp256k1(public_key_bytes),
+                position: 0u8.into(),
+                signer_weight: rng.gen(),
+                quorum: rng.gen(),
+                set_size: 1u8.into(),
+                domain_separator: rng.gen(),
+                nonce: rng.gen(),
+            }
+        };
+
+        // Create Merkle tree and proof
+        let (merkle_root, proof_bytes) = {
+            let leaf_hash = verifier_leaf.hash::<SolanaSyscallHasher>();
+            let tree = rs_merkle::MerkleTree::<SolanaSyscallHasher>::from_leaves(&[leaf_hash]);
+            let merkle_root = tree.root().expect("tree should have root");
+            let merkle_proof = tree.proof(&[0]);
+            let proof_bytes = merkle_proof.to_bytes();
+            (merkle_root, proof_bytes)
+        };
+
+        // Create payload and signature
+        let (payload_merkle_root, signature_array) = {
+            let mut rng = rand::thread_rng();
+            let payload_merkle_root: [u8; 32] = rng.gen();
+            let message = libsecp256k1::Message::parse(&payload_merkle_root);
+            let (signature, recovery_id) = libsecp256k1::sign(&message, &secret_key);
+            let mut signature_bytes = signature.serialize().to_vec();
+            signature_bytes.push(recovery_id.serialize());
+            let signature_array: [u8; 65] = signature_bytes.try_into().unwrap();
+            (payload_merkle_root, signature_array)
+        };
+
+        // Assemble verifier info
+        let verifier_info = SigningVerifierSetInfo {
+            leaf: verifier_leaf,
+            signature: Signature::EcdsaRecoverable(signature_array),
+            merkle_proof: proof_bytes,
+        };
+
+        let mut verification = SignatureVerification::default();
+
+        // First call should succeed and mark the slot as verified
+        assert!(verification
+            .process_signature(&verifier_info, &merkle_root, &payload_merkle_root)
+            .is_ok());
+
+        // Second call with the same input should fail with SlotAlreadyVerified
+        assert_eq!(
+            verification.process_signature(&verifier_info, &merkle_root, &payload_merkle_root),
+            Err(GatewayError::SlotAlreadyVerified)
+        );
     }
 }
