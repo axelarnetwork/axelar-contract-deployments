@@ -429,7 +429,8 @@ mod tests {
             let message = libsecp256k1::Message::parse(&payload_merkle_root);
             let (signature, recovery_id) = libsecp256k1::sign(&message, &secret_key);
             let mut signature_bytes = signature.serialize().to_vec();
-            signature_bytes.push(recovery_id.serialize());
+            // Convert recovery_id from libsecp256k1 format (0-3) to Ethereum format (27-28)
+            signature_bytes.push(recovery_id.serialize() + 27);
             let signature_array: [u8; 65] = signature_bytes.try_into().unwrap();
             (payload_merkle_root, signature_array)
         };
