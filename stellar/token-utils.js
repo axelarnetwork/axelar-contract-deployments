@@ -155,6 +155,21 @@ async function isMinter(wallet, _config, chain, _contract, args, options) {
     return isMinterResult;
 }
 
+async function addMinter(wallet, _config, chain, _contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    const tokenContract = new Contract(tokenAddress);
+    const operation = tokenContract.call('add_minter', nativeToScVal(minter, { type: 'address' }));
+
+    await broadcast(operation, wallet, chain, 'Add Minter', options);
+    printInfo('Successfully added minter for token', tokenAddress);
+    printInfo('New minter address', minter);
+}
+
 async function createAuths(tokenAddress, functionName, args, wallet, chain) {
     const publicKey = wallet.publicKey();
     const networkPassphrase = getNetworkPassphrase(chain.networkType);
@@ -292,6 +307,13 @@ if (require.main === module) {
         .description('Check if an address is a minter for a token contract')
         .action((tokenAddress, minter, options) => {
             mainProcessor(isMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('add-minter <tokenAddress> <minter>')
+        .description('Add a minter for a token contract')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(addMinter, [tokenAddress, minter], options);
         });
 
     program
