@@ -253,6 +253,15 @@ ts-node stellar/its.js add-trusted-chains avalanche sui
 ts-node stellar/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+#### Check if Chain is Trusted
+
+```bash
+ts-node stellar/its.js is-trusted-chain <chain>
+
+# Example
+ts-node stellar/its.js is-trusted-chain avalanche
+```
+
 #### Deploy Interchain Token
 
 ```bash
