@@ -1526,6 +1526,10 @@
           "maxUintBits": 64,
           "maxDecimalsWhenTruncating": 255
         },
+        "hedera-2": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
+        },
         "storeCodeProposalId": "989",
         "storeCodeProposalCodeHash": "ba46bfa2daa4f5d8ac77f456aecafb63a2e13c7a7965fa5c3e2af05dbd865e97",
         "lastUploadedCodeId": 1406
