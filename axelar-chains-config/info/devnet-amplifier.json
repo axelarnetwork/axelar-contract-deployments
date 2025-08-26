@@ -1693,10 +1693,6 @@
         },
         "storeCodeProposalId": "64",
         "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
-        "stellar-2025-q1": {
-          "codeId": 848,
-          "address": "axelar1tatg2n9gsq6vkkafm6pv8hsunr236wgdk4gdc7lw0hs2e3cnspmsw75rld"
-        },
         "plume-2": {
           "codeId": 848,
           "address": "axelar1unafus3vpt7nawfzdjf7u26g2rl855lpkqussxmtl5r2njaz39mqrmyv7g"
