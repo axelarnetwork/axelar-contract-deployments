@@ -334,15 +334,15 @@ ts-node cosmwasm/submit-proposal.js migrate \
   --fetchCodeId \
 ```
 
-### Query chain contracts deployed via Coordinator
+### Save chain contracts deployed via Coordinator
 
-Query deployed contracts via Coordinator:
+Query and save deployed contracts via Coordinator:
 
 ```bash
 ts-node cosmwasm/query.js save-deployed-contracts -n <chain-name>
 ```
 
-This will query the Coordinator contract for a specific chain's deployed addresses and automatically update the config with those addresses.
+This will query the Coordinator contract for a specific chain's deployed addresses and update the config with those addresses.
 
 ### Rotating verifier set
 1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:
