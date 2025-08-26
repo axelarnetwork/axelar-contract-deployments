@@ -1243,6 +1243,10 @@ const getProverInstantiateMsg = (config, chainName) => {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
     }
 
+    if (!validateAddress(adminAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
+    }
+
     if (!isStringArray(signingThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
     }
@@ -1276,7 +1280,7 @@ const getProverInstantiateMsg = (config, chainName) => {
 
     return {
         governance_address: governanceAddress,
-        admin_address: '',
+        admin_address: adminAddress,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainName,

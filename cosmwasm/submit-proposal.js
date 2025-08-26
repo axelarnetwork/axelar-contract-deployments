@@ -286,12 +286,6 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
         deploymentName: message.instantiate_chain_contracts.deployment_name,
         proposalId,
     };
-
-    printInfo(`Deployment successfully submitted to ${chainName}`);
-    if (proposalId) {
-        printInfo(`Proposal ID: ${proposalId}`);
-    }
-    printInfo(`After proposal executes, run: ts-node cosmwasm/query.js save-deployed-contracts -n ${chainName}`);
 };
 
 function addGovProposalDefaults(options, config, env) {
