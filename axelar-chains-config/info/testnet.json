@@ -2657,17 +2657,6 @@
             "ItsSingleton": "0xb05ef95bcc7f51f32af0647de0736f4d0e267b95ea464617cbd4e7ce39519023",
             "ItsChannelId": "0xf4d96b9d30326a213df4f51aee73f9f44fc612a88498646b5cf78e84d478ef56"
           }
-        },
-        "IMD": {
-          "address": "0x92e0ba26c3d3bee05e666dd385be8e61a1cec15262da23d548e73ec9c7a0d6c5",
-          "typeArgument": "0x92e0ba26c3d3bee05e666dd385be8e61a1cec15262da23d548e73ec9c7a0d6c5::imd::IMD",
-          "decimals": "9",
-          "objects": {
-            "TreasuryCap": "0xf43cc860b3e9c2fab1ca54beb43ca41d246758059174902da41b9bcb994a87f7",
-            "Metadata": "0x2672f4f383dd8ab7978801abd8edfa994cf51f2f175e93e91802bc2161b08392",
-            "TokenId": "0x466c6296347ec641e398be916332eadf6187da822c7a86cfb094efc86058b3d7",
-            "origin": true
-          }
         }
       }
     },
