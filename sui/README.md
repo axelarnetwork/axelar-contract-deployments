@@ -184,6 +184,9 @@ ts-node sui/its.js interchain-transfer \
    --signatureScheme <your_sig_scheme>
 ```
 
+
+- Example Command: 
+
 ```bash
 ts-node sui/its.js interchain-transfer \
   0x1e280e60f86e4c5b46d9fc39795d0253430dd3a53acc19edb080c6284de8322b \
@@ -198,7 +201,7 @@ ts-node sui/its.js interchain-transfer \
   --signatureScheme ed25519
 ```
 
-Response
+Example Response:
 
 ````bash
 Interchain Transfer: [4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz](https://testnet.axelarscan.io/gmp/4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz-3)
