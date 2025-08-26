@@ -159,14 +159,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
         target: `${contracts.InterchainTokenService.address}::interchain_token_service::prepare_interchain_transfer`,
         typeArguments: [coinType],
-        arguments: [
-            tokenIdObj,
-            coinsToSend,
-            destinationChain,
-            destinationAddress,
-            '0x',
-            gatewayChannelId,
-        ],
+        arguments: [tokenIdObj, coinsToSend, destinationChain, destinationAddress, '0x', gatewayChannelId],
     });
 
     // Send Interchain Transfer()
@@ -189,19 +182,26 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     });
 
     // Send Message()
-    txBuilder.moveCall({
+    await txBuilder.moveCall({
         target: `${contracts.AxelarGateway.address}::gateway::send_message`,
         arguments: [contracts.AxelarGateway.objects.Gateway, interchainTransferTicket],
     });
 
-    // // Destroy Channel()
-    txBuilder.moveCall({
+    // Destroy Channel()
+    await txBuilder.moveCall({
         target: `${contracts.AxelarGateway.address}::channel::destroy`,
         arguments: [gatewayChannelId],
     });
 
     // Broadcast tx
-    await broadcastFromTxBuilder(txBuilder, keypair, 'Interchain Transfer', options);
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Interchain transfer for ${tokenId}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Interchain Transfer', options);
+    }
 }
 
 async function processCommand(command, config, chain, args, options) {
@@ -253,16 +253,20 @@ if (require.main === module) {
 
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
-        .command('interchain-transfer <coin-package-id> <coin-package-name> <coin-mod-name> <coin-object-id> <token-id> <destination-chain> <destination-address> <amount>')
+        .command(
+            'interchain-transfer <coin-package-id> <coin-package-name> <coin-mod-name> <coin-object-id> <token-id> <destination-chain> <destination-address> <amount>',
+        )
         .description('Send interchain transfer from sui to a chain where token is linked')
-        .action((coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
-            mainProcessor(
-                interchainTransfer,
-                options,
-                [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
-                processCommand,
-            );
-        });
+        .action(
+            (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+                mainProcessor(
+                    interchainTransfer,
+                    options,
+                    [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                    processCommand,
+                );
+            },
+        );
 
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
