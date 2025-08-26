@@ -246,6 +246,7 @@ fn register_token<'a>(
     msg!("Instruction: RegisterToken");
 
     let its_config = InterchainTokenService::load(parsed_accounts.its_root_pda)?;
+    assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_config.bump)?;
     assert_its_not_paused(&its_config)?;
 
     let (token_manager_type, operator, deploy_salt) = match *registration {
