@@ -2,7 +2,7 @@
 
 ## Setup
 
-Clone [Hedera fork of ITS](http://github.com/commonprefix/interchain-token-service/tree/hedera-its) and checkout the `hedera-its` branch. Set the dependency in `package.json` like so: `"@axelar-network/interchain-token-service": "file:../interchain-token-service"`. Make sure the ITS directory is called `interchain-token-service` and lives alongside this repo's directory — otherwise change the path in `package.json`. Reinstall dependencies via npm.
+Clone [Hedera fork of ITS](http://github.com/commonprefix/interchain-token-service/tree/hedera-its) and checkout the `hedera-its` branch. Set the dependency in `package.json` like so: `"@axelar-network/interchain-token-service": "file:../interchain-token-service"`. Make sure the ITS directory is called `interchain-token-service` and lives alongside this repo's directory — otherwise change the path in `package.json`. Reinstall dependencies via npm and generate artifacts as well. 
 
 Populate the `.env` with `PRIVATE_KEY` and `HEDERA_ID` you can get on [Hedera Portal](http://portal.hedera.com). Additionally set the `HEDERA_NETWORK` variable to `mainnet`/`testnet`/`previewnet`/`local`.
 
