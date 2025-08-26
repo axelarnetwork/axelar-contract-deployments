@@ -383,10 +383,11 @@ fn can_verify_signatures_with_ecrecover_recovery_id() {
     let (keypair, pubkey) = random_ecdsa_keypair();
     let message_hash = [42; 32];
     let signature = keypair.sign(&message_hash);
-    let Signature::EcdsaRecoverable(mut signature) = signature else {
+    let Signature::EcdsaRecoverable(signature) = signature else {
         panic!("unexpected signature type");
     };
-    signature[64] += 27;
+    // The test signer generates signatures with recovery IDs 27-28 (Ethereum format)
+    assert!((27_u8..=28_u8).contains(&signature[64]));
     let PublicKey::Secp256k1(pubkey) = pubkey else {
         panic!("unexpected pubkey type");
     };
@@ -403,7 +404,8 @@ fn can_verify_signatures_with_standard_recovery_id() {
     let Signature::EcdsaRecoverable(signature) = signature else {
         panic!("unexpected signature type");
     };
-    assert!((0_u8..=3_u8).contains(&signature[64]));
+    // The test signer generates signatures with recovery IDs 27-28 (Ethereum format)
+    assert!((27_u8..=28_u8).contains(&signature[64]));
     let PublicKey::Secp256k1(pubkey) = pubkey else {
         panic!("unexpected pubkey type");
     };
