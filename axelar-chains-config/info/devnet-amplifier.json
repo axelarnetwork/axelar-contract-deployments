@@ -1456,6 +1456,12 @@
           "address": "0:5c7ce881e1217bdef1059b589cb9fde8a9a1478f56cd420c6fc072a4c408888f",
           "implementationCodehash": "0x350d8fff90a94b80d65f75a065a40042d8cb6592f3ed73b507ee9d91dead620c",
           "deployer": "0:e1e633eb701b118b44297716cee7069ee847b56db88c497efea681ed14b2d2c7"
+        },
+        "InterchainTokenService": {
+          "deployer": "0:5ce8d72d353e3073ef1ec1e224368d497127b334af4b02b47f94cc0c5eaa2aff",
+          "implementationCodehash": "0x044004d6900727dca0ab7dd00b5780585bbe0aa278e93cf2b92562da756fa3fb",
+          "address": "0:dd53a319657fd060ee113d331a3c9f64154757db8ef8cf6cb146f0ee8675d9bf",
+          "msg_translator": "axelar13kj7wfmy42wwa6cxrlf6ahpkud0772x6fpct4y8myknjnan4khcqqqlwt7"
         }
       }
      }
@@ -1547,6 +1553,10 @@
         },
         "solana-2": {
           "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 255
+        },
+        "ton2": {
+          "maxUintBits": 256,
           "maxDecimalsWhenTruncating": 255
         },
         "storeCodeProposalId": "989",
