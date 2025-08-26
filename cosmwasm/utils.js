@@ -18,7 +18,6 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     printInfo,
-    printWarn,
     isString,
     isStringArray,
     isKeccak256Hash,
@@ -28,6 +27,7 @@ const {
     getSaltFromKey,
     calculateDomainSeparator,
     validateParameters,
+    tryItsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -1161,6 +1161,32 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
+const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+    if (!itsEdgeContract) {
+        throw new Error(`ITS edge contract not found for chain '${chainName}'.`);
+    }
+
+    const currentConfig = await client.queryContractSmart(config.axelar.contracts.InterchainTokenService.address, {
+        its_chain: {
+            chain: chainConfig.axelarId,
+        },
+    });
+
+    const hasChanges =
+        currentConfig.chain !== proposedConfig.chain ||
+        currentConfig.its_edge_contract !== proposedConfig.its_edge_contract ||
+        currentConfig.msg_translator !== proposedConfig.msg_translator ||
+        currentConfig.truncation.max_uint_bits !== proposedConfig.truncation.max_uint_bits ||
+        currentConfig.truncation.max_decimals_when_truncating !== proposedConfig.truncation.max_decimals_when_truncating;
+
+    if (!hasChanges) {
+        throw new Error(`No changes detected for chain '${chainName}'.`);
+    }
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1276,4 +1302,5 @@ module.exports = {
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
+    validateItsChainChange,
 };
