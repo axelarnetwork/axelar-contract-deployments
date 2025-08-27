@@ -11,14 +11,32 @@ import { prepareClient, prepareDummyWallet } from './utils';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { CosmWasmClient } = require('@cosmjs/cosmwasm-stargate');
 
-interface ContractInfo {
+export interface ContractInfo {
     contract: string;
     version: string;
 }
 
-const Contracts = ['ServiceRegistry', 'Router', 'Multisig', 'Coordinator', 'Rewards', 'AxelarnetGateway', 'InterchainTokenService'];
+export enum Contract {
+  ServiceRegistry,
+  Router,
+  Multisig,
+  Coordinator,
+  Rewards,
+  AxelarnetGateway,
+  InterchainTokenService,
+}
 
-async function get_contract_info(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+export const ContractMap = new Map<Contract, string>([
+  [Contract.ServiceRegistry, "ServiceRegistry"],
+  [Contract.Router, "Router"],
+  [Contract.Multisig, "Multisig"],
+  [Contract.Coordinator, "Coordinator"],
+  [Contract.Rewards, "Rewards"],
+  [Contract.AxelarnetGateway, "AxelarnetGateway"],
+  [Contract.InterchainTokenService, "InterchainTokenService"],
+]);
+
+export async function get_contract_info(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
     try {
         const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
         const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
@@ -37,7 +55,7 @@ const programHandler = () => {
         program
             .command('info')
             .description('Query contract info')
-            .addOption(new Option('--contract <contract>', 'amplifier contract').choices(Contracts))
+            .addOption(new Option('--contract <contract>', 'amplifier contract').choices(Array.from(ContractMap.values())))
             .option('--address <address>', 'contract address')
             .action(async (options: { env: string; contract?: string; address?: string }) => {
                 const { env } = options;
