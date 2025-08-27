@@ -1,9 +1,9 @@
-use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use axelar_solana_governance::instructions::builder::IxBuilder;
 use solana_program_test::tokio;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::system_instruction;
+use solana_sdk::transaction::TransactionError;
 
 use crate::helpers::{
     approve_ix_at_gateway, default_proposal_eta, gmp_sample_metadata, setup_programs,
@@ -119,10 +119,9 @@ async fn test_cannot_withdraw_surpassing_rent_exemption() {
     // Send the proposal execution instruction
     let ix = ix_builder.clone().execute_proposal(&config_pda).build();
     let res = sol_integration.fixture.send_tx(&[ix]).await;
-    assert!(res.is_err());
 
-    assert_msg_present_in_logs(
-        res.err().unwrap(),
-        "Not enough lamports to keep the account alive",
-    );
+    assert!(matches!(
+        res.err().unwrap().result.err().unwrap(),
+        TransactionError::InsufficientFundsForRent { .. } // account_index is varying here across test runs, so we omit it from the match
+    ));
 }
