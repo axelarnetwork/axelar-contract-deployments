@@ -84,6 +84,13 @@ pub(crate) fn process_outbound<'a>(
         accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
 
+    let its_root_config = InterchainTokenService::load(gmp_accounts.its_root_account)?;
+    assert_valid_its_root_pda(gmp_accounts.its_root_account, its_root_config.bump)?;
+    if destination_chain == its_root_config.chain_name {
+        msg!("Cannot link to another token on the same chain");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     let accounts_iter = &mut link_token_accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let token_manager_account = next_account_info(accounts_iter)?;

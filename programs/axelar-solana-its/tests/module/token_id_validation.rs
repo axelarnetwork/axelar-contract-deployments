@@ -1,4 +1,4 @@
-use axelar_solana_gateway_test_fixtures::base::FindLog;
+use axelar_solana_gateway_test_fixtures::{assert_msg_present_in_logs, base::FindLog};
 use evm_contracts_test_suite::ethers::signers::Signer;
 use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
@@ -409,6 +409,105 @@ async fn test_lock_unlock_token_id_validation(ctx: &mut ItsTestContext) -> anyho
         error_tx.find_log("Mint and token ID don't match").is_some(),
         "Expected 'Mint and token ID don't match' error message for worthless token attack"
     );
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_self_remote_deployment_rejected(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let salt = solana_sdk::keccak::hash(b"SelfDeployTest").0;
+    let deploy_local_ix = axelar_solana_its::instruction::deploy_interchain_token(
+        ctx.solana_wallet,
+        salt,
+        "Self Deploy Test Token".to_owned(),
+        "SDT".to_owned(),
+        9,
+        1000,
+        Some(ctx.solana_wallet),
+    )?;
+
+    ctx.send_solana_tx(&[deploy_local_ix]).await.unwrap();
+
+    let deploy_remote_ix = axelar_solana_its::instruction::deploy_remote_interchain_token(
+        ctx.solana_wallet,
+        salt,
+        ctx.solana_chain_name.clone(),
+        0,
+    )?;
+
+    let result = ctx.send_solana_tx(&[deploy_remote_ix]).await;
+
+    assert!(result.is_err());
+
+    let error_tx = result.unwrap_err();
+    assert_msg_present_in_logs(error_tx, "Cannot deploy remotely to the origin chain");
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_self_token_linking_rejected(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    use axelar_solana_its::state::token_manager::Type as TokenManagerType;
+
+    let salt = [42u8; 32];
+    let custom_token = ctx
+        .evm_signer
+        .deploy_axelar_custom_test_token("Link Test Token".to_owned(), "LTT".to_owned(), 18)
+        .await?;
+
+    let custom_solana_token = ctx
+        .solana_chain
+        .fixture
+        .init_new_mint(ctx.solana_wallet, spl_token_2022::id(), 9)
+        .await;
+
+    let (metadata_pda, _) = Metadata::find_pda(&custom_solana_token);
+    let metadata_ix = CreateV1Builder::new()
+        .metadata(metadata_pda)
+        .token_standard(TokenStandard::Fungible)
+        .mint(custom_solana_token, false)
+        .authority(ctx.solana_wallet)
+        .update_authority(ctx.solana_wallet, true)
+        .payer(ctx.solana_wallet)
+        .is_mutable(false)
+        .name("Link Test Token".to_owned())
+        .symbol("LTT".to_owned())
+        .uri(String::new())
+        .seller_fee_basis_points(0)
+        .instruction();
+
+    ctx.send_solana_tx(&[metadata_ix]).await.unwrap();
+
+    let register_custom_token_ix = axelar_solana_its::instruction::register_custom_token(
+        ctx.solana_wallet,
+        salt,
+        custom_solana_token,
+        TokenManagerType::LockUnlock,
+        spl_token_2022::id(),
+        None,
+    )?;
+
+    ctx.send_solana_tx(&[register_custom_token_ix])
+        .await
+        .unwrap();
+
+    let link_token_ix = axelar_solana_its::instruction::link_token(
+        ctx.solana_wallet,
+        salt,
+        ctx.solana_chain_name.clone(),
+        custom_token.address().as_bytes().to_vec(),
+        TokenManagerType::LockUnlock,
+        vec![],
+        0,
+    )?;
+
+    let result = ctx.send_solana_tx(&[link_token_ix]).await;
+    assert!(result.is_err(),);
+
+    let error_tx = result.unwrap_err();
+    assert_msg_present_in_logs(error_tx, "Cannot link to another token on the same chain");
 
     Ok(())
 }

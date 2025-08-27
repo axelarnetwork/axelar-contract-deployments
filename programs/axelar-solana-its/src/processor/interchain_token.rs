@@ -335,6 +335,13 @@ pub(crate) fn process_outbound_deploy<'a>(
 
     let (_other, outbound_message_accounts) = accounts.split_at(outbound_message_accounts_index);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
+    let its_root_config = InterchainTokenService::load(gmp_accounts.its_root_account)?;
+    assert_valid_its_root_pda(gmp_accounts.its_root_account, its_root_config.bump)?;
+    if destination_chain == its_root_config.chain_name {
+        msg!("Cannot deploy remotely to the origin chain");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
     msg!("Instruction: OutboundDeploy");
 
     // Get metadata with fallback logic (Token 2022 extensions first, then Metaplex)
