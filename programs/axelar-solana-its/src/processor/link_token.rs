@@ -8,8 +8,8 @@ use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program::set_return_data;
 use solana_program::program_error::ProgramError;
-use solana_program::program_pack::Pack;
 use solana_program::pubkey::Pubkey;
+use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
 use spl_token_2022::state::Mint;
 
 use crate::processor::gmp::{self, GmpAccounts};
@@ -179,18 +179,19 @@ pub(crate) fn register_token_metadata<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let mint = Mint::unpack(&mint_account.data.borrow())?;
+    let mint_data = mint_account.try_borrow_data()?;
+    let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
     let payload = GMPPayload::RegisterTokenMetadata(RegisterTokenMetadata {
         selector: RegisterTokenMetadata::MESSAGE_TYPE_ID
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_address: mint_account.key.to_bytes().into(),
-        decimals: mint.decimals,
+        decimals: mint.base.decimals,
     });
 
     event::TokenMetadataRegistered {
         token_address: *mint_account.key,
-        decimals: mint.decimals,
+        decimals: mint.base.decimals,
     }
     .emit();
 
@@ -261,6 +262,11 @@ fn register_token<'a>(
     let its_config = InterchainTokenService::load(parsed_accounts.its_root_pda)?;
     assert_valid_its_root_pda(parsed_accounts.its_root_pda, its_config.bump)?;
     assert_its_not_paused(&its_config)?;
+    let mint_data = parsed_accounts.token_mint.try_borrow_data()?;
+    let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
+    let has_fee_extension = mint
+        .get_extension_types()?
+        .contains(&ExtensionType::TransferFeeConfig);
 
     let (token_manager_type, operator, deploy_salt) = match *registration {
         TokenRegistration::Canonical => {
@@ -272,8 +278,14 @@ fn register_token<'a>(
                 return Err(ProgramError::InvalidAccountData);
             }
 
+            let token_manager_type = if has_fee_extension {
+                token_manager::Type::LockUnlockFee
+            } else {
+                token_manager::Type::LockUnlock
+            };
+
             (
-                token_manager::Type::LockUnlock,
+                token_manager_type,
                 None,
                 crate::canonical_interchain_token_deploy_salt(parsed_accounts.token_mint.key),
             )

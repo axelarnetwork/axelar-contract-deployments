@@ -251,17 +251,21 @@ pub(crate) fn validate_mint_extensions(
     let mint_data = token_mint.try_borrow_data()?;
     let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;
 
-    if ty == token_manager::Type::LockUnlockFee
-        && !mint
-            .get_extension_types()?
-            .contains(&ExtensionType::TransferFeeConfig)
-    {
-        msg!("The mint is not compatible with the LockUnlockFee TokenManager type, please make sure the mint has the TransferFeeConfig extension initialized");
-        return Err(ProgramError::InvalidAccountData);
+    if matches!(
+        (
+            ty,
+            mint.get_extension_types()?
+                .contains(&ExtensionType::TransferFeeConfig)
+        ),
+        (token_manager::Type::LockUnlock, true) | (token_manager::Type::LockUnlockFee, false)
+    ) {
+        msg!("The mint is not compatible with the type");
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     Ok(())
 }
+
 pub(crate) fn validate_token_manager_type(
     ty: token_manager::Type,
     token_mint: &AccountInfo<'_>,

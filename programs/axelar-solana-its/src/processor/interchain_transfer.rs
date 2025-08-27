@@ -86,7 +86,7 @@ pub(crate) fn process_inbound_transfer<'a>(
         return Err(ProgramError::InvalidInstructionData);
     };
 
-    give_token(&parsed_accounts, &token_manager, converted_amount)?;
+    let transferred_amount = give_token(&parsed_accounts, &token_manager, converted_amount)?;
 
     event::InterchainTransferReceived {
         command_id: command_id(&message.cc_id.chain, &message.cc_id.id),
@@ -98,7 +98,7 @@ pub(crate) fn process_inbound_transfer<'a>(
             .map_or(parsed_accounts.destination_account.key, |account| {
                 account.key
             }),
-        amount: converted_amount,
+        amount: transferred_amount,
         data_hash: if payload.data.is_empty() {
             [0; 32]
         } else {
@@ -145,7 +145,7 @@ pub(crate) fn process_inbound_transfer<'a>(
             *program_account.key,
             destination_payload.account_meta(),
             payload.token_id.0,
-            converted_amount,
+            transferred_amount,
         )?;
         let its_root_bump =
             InterchainTokenService::load(axelar_executable_accounts.its_root_pda)?.bump;
@@ -322,7 +322,7 @@ fn give_token(
     accounts: &GiveTokenAccounts<'_>,
     token_manager: &TokenManager,
     amount: u64,
-) -> ProgramResult {
+) -> Result<u64, ProgramError> {
     token_manager_processor::validate_token_manager_type(
         token_manager.ty,
         accounts.token_mint,
@@ -340,9 +340,9 @@ fn give_token(
         )?;
     }
 
-    handle_give_token_transfer(accounts, token_manager, amount)?;
+    let transferred_amount = handle_give_token_transfer(accounts, token_manager, amount)?;
 
-    Ok(())
+    Ok(transferred_amount)
 }
 
 fn track_token_flow(
@@ -402,7 +402,7 @@ fn handle_give_token_transfer(
     accounts: &GiveTokenAccounts<'_>,
     token_manager: &TokenManager,
     amount: u64,
-) -> ProgramResult {
+) -> Result<u64, ProgramError> {
     use token_manager::Type::{
         LockUnlock, LockUnlockFee, MintBurn, MintBurnFrom, NativeInterchainToken,
     };
@@ -424,21 +424,26 @@ fn handle_give_token_transfer(
         &token_id,
         &[token_manager_pda_bump],
     ];
-    match token_manager.ty {
-        NativeInterchainToken | MintBurn | MintBurnFrom => mint_to(
-            accounts.its_root_pda,
-            accounts.token_program,
-            accounts.token_mint,
-            destination,
-            accounts.token_manager_pda,
-            token_manager,
-            amount,
-        ),
+    let transferred = match token_manager.ty {
+        NativeInterchainToken | MintBurn | MintBurnFrom => {
+            mint_to(
+                accounts.its_root_pda,
+                accounts.token_program,
+                accounts.token_mint,
+                destination,
+                accounts.token_manager_pda,
+                token_manager,
+                amount,
+            )?;
+            amount
+        }
         LockUnlock => {
             let decimals = get_mint_decimals(accounts.token_mint)?;
             let transfer_info =
                 create_give_token_transfer_info(accounts, amount, decimals, None, signer_seeds);
-            transfer_to(&transfer_info)
+            transfer_to(&transfer_info)?;
+
+            amount
         }
         LockUnlockFee => {
             let (fee, decimals) = get_fee_and_decimals(accounts.token_mint, amount)?;
@@ -449,9 +454,14 @@ fn handle_give_token_transfer(
                 Some(fee),
                 signer_seeds,
             );
-            transfer_with_fee_to(&transfer_info)
+            transfer_with_fee_to(&transfer_info)?;
+            amount
+                .checked_sub(fee)
+                .ok_or(ProgramError::ArithmeticOverflow)?
         }
-    }
+    };
+
+    Ok(transferred)
 }
 
 fn handle_take_token_transfer(
