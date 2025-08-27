@@ -18,12 +18,14 @@ interface ContractInfo {
 
 const Contracts = ['ServiceRegistry', 'Router', 'Multisig', 'Coordinator', 'Rewards', 'AxelarnetGateway', 'InterchainTokenService'];
 
-function get_contract_info(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
-    return new Promise(async (resolve, _) => {
+async function get_contract_info(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+    try {
         const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
         const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
-        resolve(contract_info);
-    });
+        return contract_info;
+    } catch (error) {
+        throw error;
+    }
 }
 
 const programHandler = () => {
@@ -59,7 +61,12 @@ const programHandler = () => {
                     address = options.address;
                 }
 
-                console.log(await get_contract_info(client, address));
+                try {
+                    const contract_info: ContractInfo = await get_contract_info(client, address);
+                    console.log(contract_info);
+                } catch (error) {
+                    console.error(error);
+                }
             }),
     );
 
