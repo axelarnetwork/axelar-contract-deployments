@@ -265,7 +265,7 @@ pub(crate) fn process_outbound_transfer<'a>(
 
     let transfer_event = event::InterchainTransfer {
         token_id,
-        source_address: *take_token_accounts.token_manager_ata.key,
+        source_address: *take_token_accounts.source_account.key,
         destination_chain,
         destination_address,
         amount,
@@ -286,7 +286,7 @@ pub(crate) fn process_outbound_transfer<'a>(
             .try_into()
             .map_err(|_err| ProgramError::ArithmeticOverflow)?,
         token_id: token_id.into(),
-        source_address: take_token_accounts.token_mint.key.to_bytes().into(),
+        source_address: transfer_event.source_address.to_bytes().into(),
         destination_address: transfer_event.destination_address.into(),
         amount: alloy_primitives::U256::from(amount),
         data: data.unwrap_or_default().into(),
