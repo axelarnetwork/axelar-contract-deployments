@@ -135,7 +135,7 @@ if (require.main === module) {
         )
         .addOption(
             new Option('-e, --env <env>', 'Environment configuration to use')
-                .choices(['mainnet', 'testnet', 'devnet-amplifier'])
+                .choices(['mainnet', 'stagenet', 'testnet', 'devnet-amplifier'])
                 .default('devnet-amplifier')
                 .env('ENV'),
         )
