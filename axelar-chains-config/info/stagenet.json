@@ -1608,6 +1608,7 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "timeout": 50000,
+      "gasScalingFactor": 10,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
