@@ -293,7 +293,7 @@ async function processCommand(_axelar, chain, chains, options) {
             printInfo('Human-readable destination token address', destinationTokenAddress);
 
             validateParameters({
-                isNonEmptyString: { destinationChain },
+                isNonEmptyString: { destinationChain, destinationTokenAddress },
                 isValidNumber: { tokenManagerType, gasValue },
                 isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
