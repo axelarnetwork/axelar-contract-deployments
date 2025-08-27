@@ -172,39 +172,39 @@ ts-node sui/deploy-contract.js deploy ITS
 
 ```bash
 ts-node sui/its.js interchain-transfer \
-   coin-package-id \
-   coin-package-name \
-   coin-mod-name \
-   coin-object-id \
-   token-id \
-   destination-chain \
-   destination-address \
-   amount \
-   --env <environment> \
-   --signatureScheme <your_sig_scheme>
+  --coin-package-id <coin-package-address> \
+  --coin-package-name <coin-package-name> \
+  --coin-mod-name <coin-mod-name> \
+  --coin-object-id <coin-object-id> \
+  --token-id <interchain-token-id> \
+  --destination-chain <destination-chain-name> \
+  --destination-address <receiving-address> \
+  --amount 1 \ 
+  --env <env> \  
+  --signatureScheme <signature-scheme>
 ```
 
 
 - Example Command: 
 
 ```bash
-ts-node sui/its.js interchain-transfer \
-  0x1e280e60f86e4c5b46d9fc39795d0253430dd3a53acc19edb080c6284de8322b \
-  my_custom_coin \
-  MY_CUSTOM_COIN \
-  0x9a51b93a9ae535e6d5969f3d714d1488f9edb47c1711803982454e403d2f266f \
-  0xc6acd961da74eed78fbe714ab7bb31bbf88ea6e2f92fd3f2a8721c6789eb0d4a \
-  ethereum-sepolia \
-  0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
-  1 \
-  --env testnet \
+node sui/its.js interchain-transfer \
+  --coin-package-id 0xa3091cd8d87da219185e9af76362abb0818c851749ec8a537efd1c8f8e89f78f \
+  --coin-package-name my_custom_coin \
+  --coin-mod-name MY_CUSTOM_COIN \
+  --coin-object-id 0x724c2ca74b7225ca718c96345011b24358a8b6e0635e432f5a780eff89abad2f \
+  --token-id 0x3439e1756ab210d8a2b711ad63f0aef4dffad3915e748e9aea1f578cb7ff9373 \
+  --destination-chain ethereum-sepolia \
+  --destination-address 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
+  --amount 1 \ 
+  --evn testnet \  
   --signatureScheme ed25519
 ```
 
 Example Response:
 
 ````bash
-Interchain Transfer: [4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz](https://testnet.axelarscan.io/gmp/4WFznnh4UM81e5fEfBpfCbY1prA5WVmXFBBKmuhb7tQz-3)
+Interchain Transfer: [E4ybURhguyxsxwbJik1QcWbg4bH35KENpRCwcfPqYieA](https://testnet.axelarscan.io/gmp/E4ybURhguyxsxwbJik1QcWbg4bH35KENpRCwcfPqYieA)
 ````
 
 ### Squid
