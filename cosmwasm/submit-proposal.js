@@ -27,6 +27,7 @@ const {
     encodeMigrateContractProposal,
     submitProposal,
     governanceAddress,
+    validateItsChainChange,
 } = require('./utils');
 const {
     saveConfig,
@@ -191,7 +192,6 @@ const registerItsChain = async (client, wallet, config, options) => {
     const chains = options.chains.map((chain) => {
         const chainConfig = getChainConfig(config.chains, chain);
         const { maxUintBits, maxDecimalsWhenTruncating } = getChainTruncationParams(config, chainConfig);
-
         const itsEdgeContractAddress = options.itsEdgeContract || itsEdgeContract(chainConfig);
 
         return {
@@ -205,10 +205,18 @@ const registerItsChain = async (client, wallet, config, options) => {
         };
     });
 
+    if (options.update) {
+        for (let i = 0; i < options.chains.length; i++) {
+            const chain = options.chains[i];
+            await validateItsChainChange(client, config, chain, chains[i]);
+        }
+    }
+
+    const operation = options.update ? 'update' : 'register';
     await execute(client, wallet, config, {
         ...options,
         contractName: 'InterchainTokenService',
-        msg: `{ "register_chains": { "chains": ${JSON.stringify(chains)} } }`,
+        msg: `{ "${operation}_chains": { "chains": ${JSON.stringify(chains)} } }`,
     });
 };
 
@@ -338,20 +346,21 @@ const programHandler = () => {
 
     const registerItsChainCmd = program
         .command('its-hub-register-chains')
-        .description('Submit an execute wasm contract proposal to register an InterchainTokenService chain')
-        .argument('<chains...>', 'list of chains to register on InterchainTokenService hub')
+        .description('Submit an execute wasm contract proposal to register or update an InterchainTokenService chain')
+        .argument('<chains...>', 'list of chains to register or update on InterchainTokenService hub')
         .addOption(
             new Option(
                 '--its-msg-translator <itsMsgTranslator>',
-                'address for the message translation contract associated with the chain being registered on ITS Hub',
+                'address for the message translation contract associated with the chain being registered or updated on ITS Hub',
             ),
         )
         .addOption(
             new Option(
                 '--its-edge-contract <itsEdgeContract>',
-                'address for the ITS edge contract associated with the chain being registered on ITS Hub',
+                'address for the ITS edge contract associated with the chain being registered or updated on ITS Hub',
             ),
         )
+        .addOption(new Option('--update', 'update existing chain registration instead of registering new chain'))
         .action((chains, options) => {
             options.chains = chains;
             return mainProcessor(registerItsChain, options);
