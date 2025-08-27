@@ -140,7 +140,6 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
-
     const tokenIdObj = await txBuilder.moveCall({
         target: `${contracts.InterchainTokenService.address}::token_id::from_u256`,
         arguments: [tokenId],
