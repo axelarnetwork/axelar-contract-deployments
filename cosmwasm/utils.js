@@ -1212,6 +1212,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
     },
+    TonVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
     XrplVotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplVotingVerifierInstantiateMsg,
@@ -1237,6 +1241,10 @@ const CONTRACTS = {
         makeInstantiateMsg: makeGatewayInstantiateMsg,
     },
     MultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
+    TonMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
