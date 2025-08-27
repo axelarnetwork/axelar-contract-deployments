@@ -51,6 +51,10 @@ Here's an example signer set rotation:
 ts-node xrpl/rotate-signers.js -e testnet -n xrpl --signerPublicKeys 028E425D6F75EC61C8568B7E1C29D3085E210A90A0CE6491E7A249747D34431F6C 02D904B083B855A5AE1DAB39ACE60227E110E0490AAA74DE18F5806121369DBB48 02F77F629E38433F6D2CE5EE46B7E8E1724444163FB08B99CF2C1B117A0E8578F1 0285737FE8BA5D8E8F2A10CB39E814D5E72DADF8FF05BDFABCCF1EF20C51279EC8 --signerWeights 1 1 1 1 --quorum 3
 ```
 
+### Token Deployments
+
+Refer to the XRPL ITS [Local Token Deployment](./docs/deploy-local-token.md), [Remote Token Deployment](./docs/deploy-remote-token.md),  and [Link Token](./docs/link-token.md) guides to enable transferring new tokens between XRPL and remote chains.
+
 ## Contract Interactions
 
 Since there's no smart contracts on XRPL, all interactions happen as `Payment` transactions towards the XRPL multisig account.
@@ -403,4 +407,123 @@ Here's an example:
 
 ```bash
 ts-node xrpl/account-set.js -e testnet -n xrpl --multisign --account rsCPY4vwEiGogSraV9FeRZXca6gUBWZkhg --transferRate 0 --tickSize 6 --domain axelar.foundation --flag 14
+```
+
+### Submit Amplifier Proofs
+
+To submit proofs constructed on Amplifier to the XRPL multisig, use the following command:
+
+```bash
+ts-node xrpl/submit-proof.js -e <env> -n <chain-name> [session id]
+```
+
+### Query XRPL Token ID
+
+Query an XRPL token ID from the `XRPLGateway` contract.
+
+```bash
+ts-node xrpl/xrpl-token-id.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/xrpl-token-id.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
+# Token ID for XYZ.r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1: a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc249
+```
+
+### Register Local XRPL Token
+
+Add support for an XRPL IOU token.
+
+```bash
+ts-node xrpl/register-local-token.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/register-local-token.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
+```
+
+### Create a Trust Line via the Multisig
+
+Create a trust line between the multisig account and a token issuer (via a TrustSet transaction).
+
+```bash
+ts-node xrpl/trust-set-multisig.js -e <env> -n <chain-name> --tokenId <token-id>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/trust-set-multisig.js -e devnet-amplifier -n xrpl-dev --tokenId a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc249
+```
+
+### Register Remote Token
+
+Add support for a remote token.
+
+```bash
+ts-node xrpl/register-remote-token.js -e <env> -n <chain-name> --tokenId <token-id> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/register-remote-token.js -e devnet-amplifier -n xrpl-dev --tokenId d059cbf3cf520f4d96064e094cb5e8fbb501bc4744034a5ca840dc2beb658aaa --currency FOO
+```
+
+### Register Token Instance
+
+Add support for bridging a token from/to some remote chain. Decimals should be set to the decimal representation of the relevant token on the given remote chain.
+
+```bash
+ts-node xrpl/register-token-instance.js -e <env> -n <chain-name> --tokenId <token-id> --sourceChain <source-chain> --decimals <token-decimals>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/register-token-instance.js -e devnet-amplifier -n xrpl-dev --tokenId fc00a5a83e7c6814a85ba59222e35a15a3c2b45b318b3c837e5c4aafc0b301ca --sourceChain xrpl-evm-devnet --decimals 6
+```
+
+### Register Token Metadata
+
+Register an XRPL token's metadata on ITS Hub.
+
+```bash
+ts-node xrpl/register-token-metadata.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/register-token-metadata.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ
+# Initiated token metadata registration: 69C696A56200BDFB25D7CCB44537239801D69D8B67D8077E2D1012404378A4A0
+#
+# Message ID: 0x52006f03806f806d680bb8c932072fe3a12f1a171161e8e894f76ff355052d46
+#
+# Payload: 00000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000002658595a2e72344456487945697362675152415843694d74503278757a35683364446b777166310000000000000000000000000000000000000000000000000000
+#
+# Token address: 58595a2e72344456487945697362675152415843694d74503278757a35683364446b77716631
+```
+
+### Deploy Remote Token
+
+Deploy an XRPL token to a remote chain.
+
+```bash
+ts-node xrpl/deploy-remote-token.js -e <env> -n <chain-name> --issuer <token-issuer> --currency <token-currency> --tokenName <token-name> --tokenSymbol <token-symbol> --destinationChain <destination-chain>
+```
+
+Here's an example:
+
+```bash
+ts-node xrpl/deploy-remote-token.js -e devnet-amplifier -n xrpl-dev --issuer r4DVHyEisbgQRAXCiMtP2xuz5h3dDkwqf1 --currency XYZ --tokenName XYZ.axl --tokenSymbol XYZ.axl --destinationChain flow
+# Initiated remote token deployment: FD4CA2F86DAD7B93E434C771FC2805876B6A1032E0714FE97695DFED5D009FC5
+#
+# Message ID: 0x6e9e04a2443546b7b201965850bcdfef4af303ebd041e12cd63d6273e4b5b6cd
+#
+# Payload: 0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000004666c6f770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000001a7ea6e58bb50cc7f25a9a68a245d5757089b775100509454bc236b56806fc24900000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000758595a2e61786c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000758595a2e61786c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ```
