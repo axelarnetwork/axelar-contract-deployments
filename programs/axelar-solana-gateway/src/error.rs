@@ -136,6 +136,10 @@ pub enum GatewayError {
     /// Caller is not a signer.
     #[error("Caller not signer")]
     CallerNotSigner,
+
+    /// Message domain separator does not match gateway domain separator.
+    #[error("Invalid domain separator")]
+    InvalidDomainSeparator,
 }
 
 impl GatewayError {
@@ -176,7 +180,7 @@ mod tests {
 
         // confidence check that we derived the errors correctly
         assert_eq!(errors_to_proceed.len(), 12);
-        assert_eq!(errors_to_not_proceed.len(), 17);
+        assert_eq!(errors_to_not_proceed.len(), 18);
 
         // Errors that should cause the relayer to proceed (error numbers < 500)
         for error in errors_to_proceed {
