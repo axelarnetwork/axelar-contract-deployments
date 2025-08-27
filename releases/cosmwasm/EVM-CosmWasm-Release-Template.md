@@ -164,39 +164,7 @@ EPOCH_DURATION=[epoch duration according to the environment]
 
 - Note: all the following governance proposals should be submitted at one time so deployment doesn't get held up while waiting for voting. [ITS proposal](../evm/EVM-ITS-Release-Template.md) should also be submitted at this time if possible.
 
-4. Register Gateway at the Router
-
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Router \
-  -t "Register Gateway for $CHAIN" \
-  -d "Register Gateway address for $CHAIN at Router contract" \
-  --msg "{
-    \"register_chain\": {
-      \"chain\": \"$CHAIN\",
-      \"gateway_address\": \"$GATEWAY\",
-      \"msg_id_format\": \"hex_tx_hash_and_event_index\"
-      }
-    }"
-```
-
-5. Authorize `$CHAIN` Multisig Prover on Multisig
-
-```bash
-ts-node cosmwasm/submit-proposal.js execute \
-  -c Multisig \
-  -t "Authorize Multisig Prover for $CHAIN" \
-  -d "Authorize Multisig Prover address for $CHAIN at Multisig contract" \
-  --msg "{
-    \"authorize_callers\": {
-      \"contracts\": {
-        \"$MULTISIG_PROVER\": \"$CHAIN\"
-      }
-    }
-  }"
-```
-
-6. Create reward pool for voting verifier
+4. Create reward pool for voting verifier
 
 #### Rewards
 
@@ -227,7 +195,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-7. Create reward pool for multisig
+5. Create reward pool for multisig
 
 ```bash
 ts-node cosmwasm/submit-proposal.js execute \
@@ -249,7 +217,7 @@ ts-node cosmwasm/submit-proposal.js execute \
   }"
 ```
 
-8. Register ITS edge contract on ITS Hub
+6. Register ITS edge contract on ITS Hub
 
 Proceed with this step only if ITS deployment on $CHAIN is confirmed. Add the following to `contracts` in the `$CHAIN` config within `ENV.json`:
 
@@ -277,7 +245,7 @@ ts-node cosmwasm/submit-proposal.js \
 
 - Please remove this temporary config after submitting the proposal and reset contracts to an empty object.
 
-9. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
+7. Add funds to reward pools from a wallet containing the reward funds `$REWARD_AMOUNT`
 
 ```bash
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$MULTISIG\" } } }" --amount $REWARD_AMOUNT --from $WALLET
@@ -285,12 +253,10 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 ```
 
-10. Confirm proposals have passed
+8. Confirm proposals have passed
 
 - Check proposals on block explorer (i.e. <https://axelarscan.io/proposals>)
   - "Instantiate contracts for `$CHAIN`"
-  - "Register Gateway for `$CHAIN`"
-  - "Authorize Multisig Prover for `$CHAIN`"
   - "Create pool for `$CHAIN` in `$CHAIN` voting verifier"
   - "Create pool for `$CHAIN` in axelar multisig"
   - (optional) "Register `$CHAIN` on ITS Hub"
@@ -328,7 +294,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 ts-node cosmwasm/query.js rewards -n $CHAIN
 ```
 
-11. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
+9. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.
 
 | Network              | `http_url`        |
 | -------------------- | ----------------- |
@@ -358,13 +324,13 @@ cosmwasm_contract="$VOTING_VERIFIER"
 type="EvmVerifierSetVerifier"
 ```
 
-12. Update `ampd` with the `$CHAIN` chain configuration.
+10. Update `ampd` with the `$CHAIN` chain configuration.
 
 ```bash
 ampd register-chain-support "[service name]" $CHAIN
 ```
 
-13. Create genesis verifier set
+11. Create genesis verifier set
 
 Note that this step can only be run once a sufficient number of verifiers have registered.
 
