@@ -1581,6 +1581,7 @@
       "approxFinalityWaitTime": 1,
       "timeout": 50000,
       "chainType": "evm",
+      "gasScalingFactor": 10,
       "explorer": {
         "name": "HashScan",
         "url": "https://hashscan.io/testnet",
