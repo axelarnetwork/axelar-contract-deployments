@@ -511,9 +511,17 @@ async function processCommand(config, chain, action, options) {
             const interchainTokenDeployerContract = new Contract(interchainTokenDeployer, IInterchainTokenDeployer.abi, wallet);
 
             // Note: only get `interchainToken` if the contract supports it
-						const interchainToken = 'implementationAddress' in interchainTokenDeployerContract
-							? await interchainTokenDeployerContract.implementationAddress()
-							: undefined;
+            let interchainToken;
+            if ('implementationAddress' in interchainTokenDeployerContract) {
+                try {
+                    interchainToken = await interchainTokenDeployerContract.implementationAddress();
+                } catch (error) {
+                    printWarn(`Warning: implementationAddress() method not implemented in deployed contract at ${interchainTokenDeployer}`);
+                    interchainToken = undefined;
+                }
+            } else {
+                interchainToken = undefined;
+            }
 
             const trustedChains = await getTrustedChains(config, interchainTokenService);
             printInfo('Trusted chains', trustedChains);
