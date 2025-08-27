@@ -106,12 +106,12 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 ### Instantiate Amplifier contracts
 
-| Network              | `CONTRACT_ADMIN`                                | `SALT`                                          |
-| -------------------- | ----------------------------------------------- | ----------------------------------------------- |
-| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` | `$CHAIN-amplifier`                              |
-| **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` | `$CHAIN-amplifier`                              |
-| **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` | `$CHAIN-amplifier`                              |
-| **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `$CHAIN-amplifier`                              |
+| Network              | `CONTRACT_ADMIN`                                |
+| -------------------- | ----------------------------------------------- |
+| **Devnet-amplifier** | `axelar1zlr7e5qf3sz7yf890rkh9tcnu87234k6k7ytd9` |
+| **Stagenet**         | `axelar12qvsvse32cjyw60ztysd3v655aj5urqeup82ky` |
+| **Testnet**          | `axelar12f2qn005d4vl03ssjq07quz6cja72w5ukuchv7` |
+| **Mainnet**          | `axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` |
 
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
