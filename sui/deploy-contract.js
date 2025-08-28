@@ -459,12 +459,6 @@ async function syncPackages(keypair, client, config, chain, options) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
         const contractConfig = chain.contracts[packageName];
-
-        if (!contractConfig) {
-            printError(`Package ${packageName} not found in config`);
-            return;
-        }
-
         const packageId = contractConfig.address;
 
         if (!packageId) {
