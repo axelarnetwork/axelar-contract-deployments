@@ -466,6 +466,7 @@ async function syncPackages(keypair, client, config, chain, options) {
         const isUpgraded = await isContractUpgraded(contractConfig);
 
         updateMoveToml(packageDir, packageId, moveDir, undefined, isUpgraded);
+        printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
 
