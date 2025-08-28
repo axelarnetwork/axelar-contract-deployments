@@ -5,7 +5,7 @@ const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress 
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, _itsHubAddress, _args, options) {
+async function rewards(client, config, _args, options) {
     const { chainName } = options;
 
     const rewardsContractAddresses = {
@@ -42,8 +42,8 @@ async function getItsChainConfig(client, config, chainName) {
 }
 
 async function tokenConfig(client, config, args, _options) {
-    const [chainName, tokenId] = args;
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
+    const [tokenId] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
@@ -56,8 +56,9 @@ async function tokenConfig(client, config, args, _options) {
     }
 }
 
-async function customTokenMetadata(client, _config, itsHubAddress, args, _options) {
+async function customTokenMetadata(client, config, args, _options) {
     const [chainName, tokenAddress] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
@@ -73,8 +74,9 @@ async function customTokenMetadata(client, _config, itsHubAddress, args, _option
     }
 }
 
-async function tokenInstance(client, _config, itsHubAddress, args, _options) {
+async function tokenInstance(client, config, args, _options) {
     const [chainName, tokenId] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
 
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
@@ -101,7 +103,7 @@ async function itsChainConfig(client, config, options) {
     }
 }
 
-const mainProcessor = async (processor, args, options, requiresItsHub = true) => {
+const mainProcessor = async (processor, args, options) => {
     const { env } = options;
     const config = loadConfig(env);
 
@@ -110,14 +112,7 @@ const mainProcessor = async (processor, args, options, requiresItsHub = true) =>
     const wallet = await prepareDummyWallet(options);
     const client = await prepareClient(config, wallet);
 
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-
-    if (requiresItsHub && !itsHubAddress) {
-        printWarn('ITS Hub contract address not found in config');
-        return;
-    }
-
-    await processor(client, config, itsHubAddress, args, options);
+    await processor(client, config, args, options);
 };
 
 const programHandler = () => {
@@ -129,7 +124,7 @@ const programHandler = () => {
         .command('rewards')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((options) => {
-            mainProcessor(rewards, [], options, false);
+            mainProcessor(rewards, [], options);
         });
 
     const tokenConfigCmd = program
