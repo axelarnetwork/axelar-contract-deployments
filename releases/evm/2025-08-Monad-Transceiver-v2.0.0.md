@@ -1,4 +1,4 @@
-## Monad Transceiver Deployment v1.1.0
+## Monad Transceiver Deployment v2.0.0
 
 |                | **Owner**                                                                     |
 |----------------|-------------------------------------------------------------------------------|
@@ -16,7 +16,7 @@
 
 - This is the Monad Axelar/Wormhole Transceiver release. Wormhole uses their own fork of OpenZeppelin contract, thus we are using external repo to deploy contracts.
 
-- This release deploys `AxelarTransceiver` used as name `MonadAxelarTransceiver` & `ERC1967Proxy` contracts from the example-wormhole-axelar-wsteth [repo](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth).
+- This release deploys `AxelarTransceiver` used as name `MonadAxelarTransceiver` & `ERC1967Proxy` contracts from the example-wormhole-axelar-ntt-transceiver [repo](https://github.com/wormholelabs-xyz/example-wormhole-axelar-ntt-transceiver).
 
 ## Deployment
 
@@ -37,16 +37,16 @@ CHAIN=xyz
 
 | `Network`   | `deployer address`                           | `ITS_OWNER`                                  |
 |-------------|----------------------------------------------|----------------------------------------------|
-| **Testnet** | `0x377F94Ebd3255FfF32511E5C1C471232024189fb` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet** | `0x377F94Ebd3255FfF32511E5C1C471232024189fb` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Testnet** | `0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet** | `0xBedE88C378b2b229880B64eF5f9FF76e84e236Fc` | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ## MonadAxelarTransceiver and ERC1967 Proxy Deployment
 
 ### Prerequisites
 
 1. Install Foundry: https://github.com/foundry-rs/foundry
-2. Clone Transceiver repo: `git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git`
-3. `cd` into `example-wormhole-axelar-wsteth` 
+2. Clone Transceiver repo: `git clone https://github.com/wormholelabs-xyz/example-wormhole-axelar-ntt-transceiver.git`
+3. `cd` into `example-wormhole-axelar-ntt-transceiver` 
 
 | `NETWORK`   | `CHAIN`  | `TRANSCEIVER_STRUCTS_ADDRESS`                | `GMP_MANAGER_ADDRESS`                        |
 |-------------|----------|----------------------------------------------|----------------------------------------------|
@@ -91,7 +91,7 @@ CHAIN=xyz
 ts-node evm/deploy-contract.js \
   -c MonadAxelarTransceiver \
   -m create \
-  --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+  --artifactPath path/to/example-wormhole-axelar-ntt-transceiver/out/
 ```
 
 4. Deploy ERC1967Proxy 
@@ -104,7 +104,7 @@ ts-node evm/deploy-contract.js \
 ts-node evm/deploy-contract.js \
   -c ERC1967Proxy \
   -m create \
-  --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
+  --artifactPath path/to/example-wormhole-axelar-ntt-transceiver/out/ \
   --forContract MonadAxelarTransceiver
 ```
 
@@ -115,7 +115,7 @@ ts-node evm/deploy-contract.js \
     - Deployer as `pauser` of MonadAxelarTransceiver contract
 
 ```bash
-ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-ntt-transceiver/out/
 ```
 
 ## Registration (Wormhole's End)
@@ -133,15 +133,15 @@ THRESHOLD_VALUE=2 # Unconfirmed
 
 | `NETWORK`   | `CHAIN`  | `WORMHOLE_CHAIN_ID` | `AXELAR_CHAIN_NAME` | `TRANSCEIVER_ADDRESS`                        |
 |-------------|----------|---------------------|---------------------|----------------------------------------------|
-| **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
-|             | Monad    |                     | `monad`             | `0x9B94e0Ef74a2d026c28039bCe22338a8A3637059` |
-| **Mainnet** | Ethereum |                     | `ethereum`          |                                              |
+| **Testnet** | Ethereum |                     | `ethereum-sepolia`  | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
+|             | Monad    |                     | `monad`             | `0x3CB1623EfA778C4a3A10CB55A48909c2cdA8c74F` |
+| **Mainnet** | Ethereum |                     | `Ethereum`          |                                              |
 |             | Monad    |                     | `monad`             |                                              |
 
 2. Set Axelar Chain ID
 
 ```bash
-ts-node evm/axelar-transceiver.ts set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id $WORMHOLE_CHAIN_ID $AXELAR_CHAIN_NAME $TRANSCEIVER_ADDRESS --artifactPath path/to/example-wormhole-axelar-ntt-transceiver/out/
 ```
 
 3. Set MonadAxelarTransceiver contract on GmpManager
@@ -163,12 +163,12 @@ GmpManagerProxy.setThreshold(uint8 $THRESHOLD_VALUE)
 ## Transfer Pauser role to ITS owner after registration
 
 ```bash
-ts-node evm/axelar-transceiver.ts transfer-pauser $ITS_OWNER --artifactPath path/to/example-wormhole-axelar-wsteth/out/
+ts-node evm/axelar-transceiver.ts transfer-pauser $ITS_OWNER --artifactPath path/to/example-wormhole-axelar-ntt-transceiver/out/
 ```
 
 ### Verify Contracts
 
-Manually verify both contracts i.e. MonadAxelarTransceiver & ERC1967Proxy, foundry artifacts can be found on example-wormhole-axelar-wsteth repo.
+Manually verify both contracts i.e. MonadAxelarTransceiver & ERC1967Proxy, foundry artifacts can be found on example-wormhole-axelar-ntt-transceiver repo.
 
 ## Checklist
 
