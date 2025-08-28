@@ -824,7 +824,7 @@
       "name": "Polygon-Sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://eth-sepolia.api.onfinality.io/public",
+      "rpc": "https://rpc-amoy.polygon.technology",
       "tokenSymbol": "MATIC",
       "decimals": 18,
       "confirmations": 2,
