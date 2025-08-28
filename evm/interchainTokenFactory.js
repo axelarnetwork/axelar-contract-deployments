@@ -18,6 +18,7 @@ const {
     printWalletInfo,
     printTokenInfo,
     isTrustedChain,
+    getValueForGasValue,
 } = require('./utils');
 const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -197,7 +198,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 destinationChain,
                 gasValue,
                 {
-                    value: gasValue,
+                    value: getValueForGasValue(chain, gasValue),
                     ...gasOptions,
                 },
             );
@@ -240,7 +241,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 tokenAddress,
                 destinationChain,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: getValueForGasValue(chain, gasValue), ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.canonicalInterchainTokenId(tokenAddress);
@@ -301,7 +302,7 @@ async function processCommand(_axelar, chain, chains, options) {
                 tokenManagerType,
                 linkParams,
                 gasValue,
-                { value: gasValue, ...gasOptions },
+                { value: getValueForGasValue(chain, gasValue), ...gasOptions },
             );
 
             const tokenId = await interchainTokenFactory.linkedTokenId(wallet.address, deploymentSalt);
