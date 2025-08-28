@@ -3,7 +3,7 @@ const { Command, Option } = require('commander');
 const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig, isContractUpgraded } = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -463,16 +463,9 @@ async function syncPackages(keypair, client, config, chain, options) {
             continue;
         }
 
-        // Check if this contract has been upgraded (has versions other than just "0")
-        const versions = contractConfig.versions;
-        const isUpgraded = versions && Object.keys(versions).length > 1;
+        const isUpgraded = await isContractUpgraded(contractConfig);
 
-        if (!isUpgraded) {
-            updateMoveToml(packageDir, packageId, moveDir);
-            printInfo(`Synced ${packageName} with package ID`, packageId);
-        } else {
-            printInfo(`Skipping for upgraded contract ${packageName}`);
-        }
+        updateMoveToml(packageDir, packageId, moveDir, undefined, isUpgraded);
     }
 }
 
