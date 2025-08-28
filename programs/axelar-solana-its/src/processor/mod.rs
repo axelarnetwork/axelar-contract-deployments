@@ -153,7 +153,6 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             None,
-            None,
         ),
         InterchainTokenServiceInstruction::RegisterTokenMetadata {
             gas_value,
@@ -257,7 +256,6 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             Some(data),
-            None,
         ),
     }
 }

@@ -148,7 +148,6 @@ pub(crate) fn process_outbound<'a>(
         link_started_event.destination_chain,
         gas_value,
         signing_pda_bump,
-        None,
         true,
     )?;
 
@@ -202,7 +201,6 @@ pub(crate) fn register_token_metadata<'a>(
         crate::ITS_HUB_CHAIN_NAME.to_owned(),
         gas_value,
         signing_pda_bump,
-        None,
         false,
     )
 }
