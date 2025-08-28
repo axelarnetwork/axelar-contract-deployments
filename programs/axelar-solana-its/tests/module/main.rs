@@ -20,6 +20,7 @@
 )]
 
 mod deploy_interchain_token;
+mod deploy_manager_mismatch;
 mod deploy_remote;
 mod fee_handling;
 mod flow_limits;
