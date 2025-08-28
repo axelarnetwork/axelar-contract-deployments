@@ -288,7 +288,6 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
             options: {
                 showEffects: true,
                 showObjectChanges: true,
-                ...options,
             },
         });
     }
