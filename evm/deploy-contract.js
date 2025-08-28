@@ -163,13 +163,11 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
             const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
             const gmpManager = options.gmpManager ? options.gmpManager : contracts[transceiverContract]?.gmpManager;
 
-            if (!gmpManager) {
-                printError(`Please provide gmpManager. It isn't present in config nor provided as an option --gmpManager`);
-                return;
-            }
-
-            if (options.gmpManager && contracts[transceiverContract]?.gmpManager !== options.gmpManager) {
-                printWarn(`Expected gmpManager ${contracts[transceiverContract]?.gmpManager} but got ${options.gmpManager}.`);
+            if (options.gmpManager) {
+                if (contracts[transceiverContract]?.gmpManager) {
+                    printWarn(`Expected gmpManager ${contracts[transceiverContract].gmpManager} but got ${options.gmpManager}.`);
+                }
+                printWarn(`Using provided gmpManager ${options.gmpManager} for ${transceiverContract}`);
             }
 
             validateParameters({
@@ -247,6 +245,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
         case 'AxelarTransceiver': {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
+            const gmpManager = await contract.gmpManager();
             const transceiverContract = `${options.transceiverPrefix}AxelarTransceiver`;
 
             if (gateway !== contractConfig.gateway) {
@@ -255,6 +254,10 @@ async function checkContract(contractName, contract, contractConfig, options) {
 
             if (gasService !== contractConfig.gasService) {
                 printError(`Expected gasService ${contractConfig.gasService} but got ${gasService}.`);
+            }
+
+            if (gmpManager !== contractConfig.gmpManager) {
+                printError(`Expected gmpManager ${contractConfig.gmpManager} but got ${gmpManager}.`);
             }
 
             printInfo(`${transceiverContract} contract verification passed`);
