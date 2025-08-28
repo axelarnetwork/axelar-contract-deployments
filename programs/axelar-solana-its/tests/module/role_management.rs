@@ -1293,3 +1293,167 @@ async fn test_fail_remove_flow_limiter_from_its_root_config(ctx: &mut ItsTestCon
 
     assert_msg_present_in_logs(tx_metadata, "Resource is not a TokenManager");
 }
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_fail_double_acceptance_of_role_proposal(ctx: &mut ItsTestContext) {
+    let alice = Keypair::new();
+    let bob = Keypair::new();
+    let charlie = Keypair::new();
+    let token_id = ctx.deployed_interchain_token;
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (token_manager_pda, _) =
+        axelar_solana_its::find_token_manager_pda(&its_root_pda, &token_id);
+
+    // Fund accounts
+    ctx.send_solana_tx(&[
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &alice.pubkey(),
+            u32::MAX.into(),
+        ),
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &bob.pubkey(),
+            u32::MAX.into(),
+        ),
+        system_instruction::transfer(
+            &ctx.solana_chain.fixture.payer.pubkey(),
+            &charlie.pubkey(),
+            u32::MAX.into(),
+        ),
+    ])
+    .await
+    .unwrap();
+
+    // Transfer mintership from payer to Alice so Alice becomes the minter
+    let transfer_mintership_to_alice_ix =
+        axelar_solana_its::instruction::interchain_token::transfer_mintership(
+            ctx.solana_chain.fixture.payer.pubkey(),
+            token_id,
+            alice.pubkey(),
+        )
+        .unwrap();
+
+    ctx.send_solana_tx(&[transfer_mintership_to_alice_ix])
+        .await
+        .unwrap();
+
+    // Alice proposes mintership to Bob
+    let propose_mintership_to_bob_ix =
+        axelar_solana_its::instruction::interchain_token::propose_mintership(
+            alice.pubkey(),
+            token_id,
+            bob.pubkey(),
+        )
+        .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[propose_mintership_to_bob_ix],
+            &[
+                &alice.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Alice proposes mintership to Charlie
+    let propose_mintership_to_charlie_ix =
+        axelar_solana_its::instruction::interchain_token::propose_mintership(
+            alice.pubkey(),
+            token_id,
+            charlie.pubkey(),
+        )
+        .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[propose_mintership_to_charlie_ix],
+            &[
+                &alice.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Bob accepts the proposal (this should succeed and Alice loses minter role)
+    let accept_mintership_bob_ix =
+        axelar_solana_its::instruction::interchain_token::accept_mintership(
+            bob.pubkey(),
+            token_id,
+            alice.pubkey(),
+        )
+        .unwrap();
+
+    ctx.solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_mintership_bob_ix],
+            &[
+                &bob.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    // Verify Bob has the minter role
+    let (bob_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &bob.pubkey(),
+    );
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&bob_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let bob_roles = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+    assert!(bob_roles.contains(Roles::MINTER));
+
+    // Verify Alice no longer has the minter role
+    let (alice_roles_pda, _) = role_management::find_user_roles_pda(
+        &axelar_solana_its::id(),
+        &token_manager_pda,
+        &alice.pubkey(),
+    );
+    let data = ctx
+        .solana_chain
+        .fixture
+        .get_account(&alice_roles_pda, &axelar_solana_its::id())
+        .await
+        .data;
+    let alice_roles = UserRoles::<Roles>::try_from_slice(&data).unwrap();
+    assert!(!alice_roles.contains(Roles::MINTER));
+
+    // Charlie tries to accept the proposal (this should fail because Alice no longer has minter role)
+    let accept_mintership_charlie_ix =
+        axelar_solana_its::instruction::interchain_token::accept_mintership(
+            charlie.pubkey(),
+            token_id,
+            alice.pubkey(),
+        )
+        .unwrap();
+
+    let tx_metadata = ctx
+        .solana_chain
+        .fixture
+        .send_tx_with_custom_signers(
+            &[accept_mintership_charlie_ix],
+            &[
+                &charlie.insecure_clone(),
+                &ctx.solana_chain.fixture.payer.insecure_clone(),
+            ],
+        )
+        .await
+        .unwrap_err();
+
+    // Verify the transaction failed because Alice doesn't have the role to transfer anymore
+    assert_msg_present_in_logs(tx_metadata, "User doesn't have the required roles");
+}

@@ -142,7 +142,7 @@ pub fn accept_mintership(
         AccountMeta::new(payer, true),
         AccountMeta::new(payer_roles_pda, false),
         AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new_readonly(from, false),
+        AccountMeta::new(from, false),
         AccountMeta::new(origin_roles_pda, false),
         AccountMeta::new(proposal_pda, false),
     ];
