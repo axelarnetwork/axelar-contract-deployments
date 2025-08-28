@@ -259,25 +259,6 @@ pub fn process_instruction<'a>(
             Some(data),
             None,
         ),
-        InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
-            token_id,
-            destination_chain,
-            destination_address,
-            amount,
-            payload_hash,
-            gas_value,
-            signing_pda_bump,
-        } => interchain_transfer::process_outbound_transfer(
-            accounts,
-            token_id,
-            destination_chain,
-            destination_address,
-            amount,
-            gas_value,
-            signing_pda_bump,
-            None,
-            Some(payload_hash),
-        ),
     }
 }
 
