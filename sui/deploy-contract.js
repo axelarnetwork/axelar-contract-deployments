@@ -3,7 +3,16 @@ const { Command, Option } = require('commander');
 const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig, isContractUpgraded } = require('../common');
+const {
+    saveConfig,
+    printInfo,
+    printWarn,
+    validateParameters,
+    getDomainSeparator,
+    loadConfig,
+    getChainConfig,
+    isContractUpgraded,
+} = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
