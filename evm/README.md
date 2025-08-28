@@ -140,7 +140,6 @@ ts-node evm/deploy-contract.js \
 ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --gmpManager $GMP_MANAGER_ADDRESS \
   --transceiverPrefix $PREFIX \
   --upgrade
 ```
