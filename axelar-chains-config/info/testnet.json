@@ -3224,8 +3224,8 @@
         "InterchainTokenService": {
           "address": "CBTYHGZSS2HG2DJT7KJAHVUVUOSHCNZNBAPEKJW4U5RRBUHSYKDPZH3T",
           "deployer": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
-          "wasmHash": "28aeee6baad2b799bc136080f3bbdf4be65fd0a6cfad81725ef63f5b08c83ea4",
-          "version": "1.4.0",
+          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
+          "version": "1.4.1",
           "initializeArgs": {
             "owner": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
             "operator": "GA6HQ5Z4O6T3MFYDC4MIJSYOIGSX2HYMZ5V6DI3NRBNIL7JX7A7IEO5Z",
