@@ -3,12 +3,12 @@
 |                | **Owner**                              |
 |----------------|----------------------------------------|
 | **Created By** | @cjcobb23 <cj@interoplabs.io>          |
-| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-08-28 |
-| **Stagenet**         | Pending               |            |
+| **Stagenet**         | Deployed              | 2025-08-28 |
 | **Testnet**          | Pending               |            |
 | **Mainnet**          | Pending               |            |
 
