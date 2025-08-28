@@ -351,6 +351,18 @@ const getAllowedFunctions = async (client, versionedObjectId) => {
     return allowedFunctionsArray.map((allowedFunctions) => allowedFunctions.fields.contents);
 };
 
+const isContractUpgraded = async (contractConfig) => {
+    // Check if this contract has been upgraded (has versions other than just "0")
+    const versions = contractConfig.versions;
+    const isUpgraded = versions && Object.keys(versions).length > 1;
+    return isUpgraded;
+};
+
+const getBaseVersionPackageId = async (contractConfig) => {
+    const versions = contractConfig.versions;
+    return versions[Object.keys(versions)[0]];
+};
+
 module.exports = {
     suiCoinId,
     isGasToken,
@@ -378,4 +390,6 @@ module.exports = {
     saveGeneratedTx,
     isAllowed,
     getAllowedFunctions,
+    isContractUpgraded,
+    getBaseVersionPackageId,
 };

@@ -3,7 +3,17 @@ const { Command, Option } = require('commander');
 const { copyMovePackage, getLocalDependencies, updateMoveToml, TxBuilder, bcsStructs } = require('@axelar-network/axelar-cgp-sui');
 const { bcs } = require('@mysten/sui/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
-const { saveConfig, printInfo, printWarn, validateParameters, getDomainSeparator, loadConfig, getChainConfig } = require('../common');
+const {
+    saveConfig,
+    printInfo,
+    printWarn,
+    validateParameters,
+    getDomainSeparator,
+    loadConfig,
+    getChainConfig,
+    isContractUpgraded,
+    getBaseVersionPackageId,
+} = require('../common');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -449,14 +459,23 @@ async function syncPackages(keypair, client, config, chain, options) {
     for (const packageDir of PACKAGE_DIRS) {
         copyMovePackage(packageDir, null, moveDir);
         const packageName = readMovePackageName(packageDir);
-        const packageId = chain.contracts[packageName]?.address;
+        const contractConfig = chain.contracts[packageName];
+        const packageId = contractConfig.address;
 
         if (!packageId) {
             printWarn(`Package ID for ${packageName} not found in config. Skipping...`);
             continue;
         }
 
-        updateMoveToml(packageDir, packageId, moveDir);
+        const isUpgraded = await isContractUpgraded(contractConfig);
+
+        if (isUpgraded) {
+            const baseVersionPackageId = await getBaseVersionPackageId(contractConfig); // v0 address
+            updateMoveToml(packageDir, packageId, moveDir, undefined, baseVersionPackageId);
+        } else {
+            updateMoveToml(packageDir, packageId, moveDir);
+        }
+
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
