@@ -78,7 +78,7 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ## AxelarTransceiver and ERC1967 Proxy Deployment
 
-Note: You can deploy transceiver for any tokens/chains by providing the appropriate  i.e `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script save the config under fullname of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc) 
+Note: You can deploy transceiver for any tokens/chains by providing the appropriate  `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script saves the config under the full name of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc) 
 
 ### Prerequisites
 
