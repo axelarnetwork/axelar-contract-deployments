@@ -111,42 +111,41 @@ This folder contains deployment scripts for cosmwasm contracts needed for amplif
 ### Deploy the contracts
 
 Deploy each contract. Chain name should match the key of an object in the `chains` section of the config. Chain name should be omitted for contracts that are not chain specific.
-Contract wasm binary can be passed by specifiying the path to the contract artifact file or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
+Contract wasm binary can be passed by specifiying the path to the directory containing contract artifact files or by specifying the contract version. The contract version has to a be a tagged release in semantic version format vX.Y.Z or a commit hash.
 
--   `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-path [contract wasm path] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] --artifact-dir [contract wasm dir] -c [contract name] -e [environment] -n <chain name>`
 
--   `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
+- `ts-node deploy-contract.js [upload|instantiate|upload-instantiate|migrate] -m [mnemonic] -v [contract version] -c [contract name] -e [environment] -n <chain name>`
 
 Available subcommands:
 
--   `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
+- `upload`: Uploads wasm file and saves codeId to `lastUploadedCodeId` in config
 
--   `instantiate`: Instantiates a contract, it gets the codeId by order of priority from:
-
+- `instantiate`: Instantiates a contract, it gets the codeId by order of priority from:
     1. Value of `--codeId` option
     2. From the network when using `--fetchCodeId` option by comparing previously uploaded bytecode's code hash with config `storeCodeProposalCodeHash`
     3. Value of previously saved `lastUploadedCodeId` in config
 
--   `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
+- `upload-instantiate`: Both uploads and then instantiates a contract using the code Id that was just created. It doesn't accept `--codeId` nor `--fetchCodeId` options
 
--   `migrate`: Migrates a contract using a new codeId, which is retrieved the same way as `instantiate` subcommand. The migrate message must be provided using the `--msg` option.
+- `migrate`: Migrates a contract using a new codeId, which is retrieved the same way as `instantiate` subcommand. The migrate message must be provided using the `--msg` option.
 
 Some of the contracts depend on each other and need to be deployed in a specific order. Note the connection router and axelarnet gateway each need to know the other's address, so you need to pass `--instantiate2`, and upload both contract before instatiating them.
 
 Example deployments with order dependency:
 
-1.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "AxelarnetGateway" --instantiate2 -e devnet`
-2.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-path [contract wasm path] -c "Router" --instantiate2 -e devnet`
+1.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "AxelarnetGateway" --instantiate2 -e devnet`
+2.  `ts-node deploy-contract.js upload -m [mnemonic] --artifact-dir [contract wasm dir] -c "Router" --instantiate2 -e devnet`
 3.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "AxelarnetGateway" --instantiate2 -e devnet`
 4.  `ts-node deploy-contract.js instantiate -m [mnemonic] -c "Router" --instantiate2 -e devnet`
-5.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "ServiceRegistry" -e devnet`
-6.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Rewards" -e devnet`
-7.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Coordinator" -e devnet`
-8.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Multisig" -e devnet`
-9.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "InterchainTokenService" -e devnet`
-10. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "VotingVerifier" -e devnet -n "avalanche"`
-11. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "Gateway" -e devnet -n "avalanche"`
-12. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-path [contract wasm path] -c "MultisigProver" -e devnet -n "avalanche"`
+5.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "ServiceRegistry" -e devnet`
+6.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Rewards" -e devnet`
+7.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Coordinator" -e devnet`
+8.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Multisig" -e devnet`
+9.  `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "InterchainTokenService" -e devnet`
+10. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "VotingVerifier" -e devnet -n "avalanche"`
+11. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "Gateway" -e devnet -n "avalanche"`
+12. `ts-node deploy-contract.js upload-instantiate -m [mnemonic] --artifact-dir [contract wasm dir] -c "MultisigProver" -e devnet -n "avalanche"`
 
 ### Constant Address Deployment
 
@@ -174,8 +173,8 @@ By default, only governance will be able to instantiate the bytecode. To allow o
 
 For transparency and security, it's strongly recommended to include the `--source` and `--builder` options in your proposal:
 
--   `--source`: Code Source URL is a valid absolute HTTPS URI to the contract's source code.
--   `--builder`: Builder is a valid docker image name with tag, such as "cosmwasm/workspace-optimizer-arm64:0.16.0"
+- `--source`: Code Source URL is a valid absolute HTTPS URI to the contract's source code.
+- `--builder`: Builder is a valid docker image name with tag, such as "cosmwasm/workspace-optimizer-arm64:0.16.0"
 
 These options enable voters to independently verify that the proposed bytecode matches the public source code. For example: `--source "https://github.com/axelarnetwork/axelar-amplifier/tree/service-registry-v0.4.1/contracts/service-registry" --builder "cosmwasm/workspace-optimizer-arm64:0.16.0"`
 
@@ -237,9 +236,11 @@ Example usage:
 ts-node cosmwasm/submit-proposal.js execute -c Router -t "Proposal title" -d "Proposal description" --deposit 100000000 --msg '{"register_chain":{"chain":"avalanche","gateway_address":"axelar17cnq5hujmkf2lr2c5hatqmhzlvwm365rqc5ugryphxeftavjef9q89zxvp","msg_id_format":"hex_tx_hash_and_event_index"}}'
 ```
 
-### Register chain on ITS Hub through governance proposal
+### Register or update chain on ITS Hub through governance proposal
 
 To submit a governance proposal to register an ITS chain, use the `submit-proposal` script with the `its-hub-register-chains <chains...>` command. The `chains` argument is used to pass a list of chains to register on ITS hub.
+
+To update an existing chain registration (e.g., to change the translator contract), add the `--update` flag to the same command.
 
 **Prerequisites**: ITS hub contract configuration in json file must include the following attributes per chain:
 
@@ -271,7 +272,11 @@ Example configuration:
 Example usage:
 
 ```
+# Register new chains
 ts-node cosmwasm/submit-proposal.js its-hub-register-chains avalanche-fuji sui-test2 -t "Proposal title" -d "Proposal description" --deposit 100000000 -r $RUN_AS_ACCOUNT
+
+# Update existing chain registration (e.g., to change translator contract)
+ts-node cosmwasm/submit-proposal.js its-hub-register-chains aleo-2 --update -t "Update aleo-2 translator contract" -d "Update aleo-2 translator contract on ITS Hub" --deposit 100000000 --its-edge-contract aleo1ymrcwun5g9z0un8dqgdln7l3q77asqr98p7wh03dwgk4yfltpqgq9efvfz --its-msg-translator axelar1ejvjzx9vh9jxmtedl6xv9d5p4vh34g3vxejpxxx38ev4gjvh4mlsuesuq4
 ```
 
 ### Submit a proposal to change a parameter
@@ -299,9 +304,10 @@ ts-node cosmwasm/submit-proposal.js paramChange \
 
 To submit a governance proposal to migrate a contract, use the `submit-proposal` script with the `migrate` command. The `--msg` option should be used to pass the migrate message.
 
-Note: 
+Note:
+
 1. `-t` & `-d` is autogenrated, be can still be provided if required
-2. `  --deposit` is automatically assigned from config baseed on `env` being used 
+2. `  --deposit` is automatically assigned from config baseed on `env` being used
 
 Example usage:
 
@@ -314,13 +320,16 @@ ts-node cosmwasm/submit-proposal.js migrate \
 ```
 
 ### Rotating verifier set
+
 1. Create a .env for rotation, containing mnemonic for multisig-prover-admin and environment:
+
 ```
 MNEMONIC="<mnemonic for multisig prover admin>"
 ENV="<environment>"
 ```
 
 2. Register/Deregister verifiers for the chain in scope:
+
 ```bash
 ampd register-chain-support <service-name> <chain-name>
 or
@@ -328,21 +337,27 @@ ampd deregister-chain-support <service-name> <chain-name>
 ```
 
 3. Update verifier set
+
 ```bash
 ts-node cosmwasm/rotate-signers.js update-verifier-set <chain-name>
 ```
 
 4. Using multisig session id output in last command, submit proof on destination chain. For example:
+
 - Sui:
+
 ```bash
 ts-node sui/gateway.js submitProof <multisig-session-id>
 ```
+
 - EVM:
+
 ```bash
 ts-node evm/gateway.js --action submitProof --multisigSessionId <multisig-session-id> -n <chain-name>
 ```
 
 4. Confirm verifier rotation
+
 ```bash
 ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
 ```

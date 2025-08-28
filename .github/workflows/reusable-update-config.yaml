@@ -39,7 +39,7 @@ jobs:
         with:
           files: ${{ inputs.files }}
 
-      - uses: ./.github/actions/update-config
+      - uses: axelarnetwork/axelar-contract-deployments/.github/actions/update-config@main
         if: steps.changed-network-files.outputs.any_changed == 'true'
         with:
           network: ${{ inputs.network }}

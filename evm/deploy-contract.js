@@ -18,7 +18,6 @@ const {
     printWalletInfo,
     getDeployedAddress,
     deployContract,
-    saveConfig,
     prompt,
     mainProcessor,
     isContract,
@@ -28,9 +27,9 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
-async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
+async function upgradeMonadAxelarTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions) {
     const proxyAddress = contractConfig.address;
-    // using new AxelarTransceiver contract's address, which is recently deployed; part of the two-step upgrade process
+    // using new MonadAxelarTransceiver contract's address, which is recently deployed; part of the two-step upgrade process
     const newImplementation = contractConfig.implementation;
 
     validateParameters({
@@ -39,10 +38,10 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
 
-    printInfo(`AxelarTransceiver Proxy`, proxyAddress);
+    printInfo(`MonadAxelarTransceiver Proxy`, proxyAddress);
     printInfo(`New implementation`, newImplementation);
 
-    if (prompt(`Proceed with upgrade on AxelarTransceiver on ${chain.name}?`, options.yes)) {
+    if (prompt(`Proceed with upgrade on MonadAxelarTransceiver on ${chain.name}?`, options.yes)) {
         return;
     }
 
@@ -55,7 +54,7 @@ async function upgradeAxelarTransceiver(contractConfig, contractAbi, wallet, cha
 /**
  * Generates constructor arguments for a given contract based on its configuration and options.
  */
-async function getConstructorArgs(contractName, config, contractConfig, wallet, options) {
+async function getConstructorArgs(contractName, contracts, contractConfig, wallet, options) {
     // Safety check for undefined contractConfig
     if (!contractConfig) {
         throw new Error(
@@ -68,7 +67,7 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
 
     switch (contractName) {
         case 'AxelarServiceGovernance': {
-            const gateway = config.AxelarGateway?.address;
+            const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -86,8 +85,8 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         }
 
         case 'InterchainProposalSender': {
-            const gateway = config.AxelarGateway?.address;
-            const gasService = config.AxelarGasService?.address;
+            const gateway = contracts.AxelarGateway?.address;
+            const gasService = contracts.AxelarGasService?.address;
 
             validateParameters({
                 isAddress: { gateway, gasService },
@@ -97,7 +96,7 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
         }
 
         case 'InterchainGovernance': {
-            const gateway = config.AxelarGateway?.address;
+            const gateway = contracts.AxelarGateway?.address;
             const governanceChain = contractConfig.governanceChain || 'Axelarnet';
             contractConfig.governanceChain = governanceChain;
             const governanceAddress = contractConfig.governanceAddress || 'axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj';
@@ -152,10 +151,10 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             return [];
         }
 
-        case 'AxelarTransceiver': {
-            const gateway = config.AxelarGateway?.address;
-            const gasService = config.AxelarGasService?.address;
-            const gmpManager = options.gmpManager ? options.gmpManager : config.AxelarTransceiver.gmpManager;
+        case 'MonadAxelarTransceiver': {
+            const gateway = contracts.AxelarGateway?.address;
+            const gasService = contracts.AxelarGasService?.address;
+            const gmpManager = options.gmpManager ? options.gmpManager : contracts.MonadAxelarTransceiver.gmpManager;
 
             if (!options.gmpManager) {
                 printWarn(`--gmpManager is not provided. Using gmpManager from chain config.`);
@@ -172,7 +171,7 @@ async function getConstructorArgs(contractName, config, contractConfig, wallet, 
             const forContract = options.forContract;
             const proxyData = options.proxyData || '0x';
 
-            const implementationAddress = config[forContract]?.implementation;
+            const implementationAddress = contracts[forContract]?.implementation;
 
             validateParameters({
                 isAddress: { implementationAddress },
@@ -233,7 +232,7 @@ async function checkContract(contractName, contract, contractConfig) {
             break;
         }
 
-        case 'AxelarTransceiver': {
+        case 'MonadAxelarTransceiver': {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
             const gmpManager = await contract.nttManager();
@@ -256,7 +255,7 @@ async function checkContract(contractName, contract, contractConfig) {
     }
 }
 
-async function processCommand(config, chain, options) {
+async function processCommand(_axelar, chain, chains, options) {
     const { env, artifactPath, contractName, privateKey, verify, yes, predictOnly, upgrade, reuseProxy } = options;
 
     let { deployMethod } = options;
@@ -293,7 +292,7 @@ async function processCommand(config, chain, options) {
             break;
         }
 
-        case 'AxelarTransceiver': {
+        case 'MonadAxelarTransceiver': {
             if (!artifactPath) {
                 printError('--artifactPath is required. Please provide the path to the compiled artifacts.');
                 return;
@@ -307,10 +306,10 @@ async function processCommand(config, chain, options) {
             // Handle reuseProxy case
             if (reuseProxy) {
                 if (!contractConfig.implementation) {
-                    printError(`AxelarTransceiver is not deployed on ${chain.name}. Cannot reuse proxy.`);
+                    printError(`MonadAxelarTransceiver is not deployed on ${chain.name}. Cannot reuse proxy.`);
                     return;
                 }
-                printInfo(`Reusing existing AxelarTransceiver proxy on ${chain.name}`);
+                printInfo(`Reusing existing MonadAxelarTransceiver proxy on ${chain.name}`);
             }
 
             if (contractConfig.implementation && options.skipExisting) {
@@ -342,16 +341,16 @@ async function processCommand(config, chain, options) {
 
     printInfo('Contract name', contractName);
 
-    const contractJson = getContractJSON(contractName, artifactPath);
+    const contractJson = getContractJSON(contractName === 'MonadAxelarTransceiver' ? 'AxelarTransceiver' : contractName, artifactPath);
     const constructorArgs = await getConstructorArgs(contractName, contracts, contractConfig, wallet, options);
 
     const predeployCodehash = await getBytecodeHash(contractJson, chain.axelarId);
     printInfo('Pre-deploy Contract bytecode hash', predeployCodehash);
     const gasOptions = await getGasOptions(chain, options, contractName);
 
-    // Handle upgrade for AxelarTransceiver
-    if (upgrade && contractName === 'AxelarTransceiver') {
-        await upgradeAxelarTransceiver(contractConfig, contractJson.abi, wallet, chain, options, gasOptions);
+    // Handle upgrade for MonadAxelarTransceiver
+    if (upgrade && contractName === 'MonadAxelarTransceiver') {
+        await upgradeMonadAxelarTransceiver(contractConfig, contractJson.abi, wallet, chain, options, gasOptions);
         return;
     }
 
@@ -382,7 +381,7 @@ async function processCommand(config, chain, options) {
 
     let existingAddress, existingCodeHash;
 
-    for (const chainConfig of Object.values(config.chains)) {
+    for (const chainConfig of Object.values(chains)) {
         existingAddress = chainConfig.contracts?.[contractName]?.address;
         existingCodeHash = chainConfig.contracts?.[contractName]?.predeployCodehash;
 
@@ -433,7 +432,7 @@ async function processCommand(config, chain, options) {
                 );
             }
         }
-    } else if (contractName === 'AxelarTransceiver') {
+    } else if (contractName === 'MonadAxelarTransceiver') {
         contractConfig.implementation = contract.address;
         contractConfig.gateway = await contract.gateway();
         contractConfig.gasService = await contract.gasService();
@@ -451,11 +450,9 @@ async function processCommand(config, chain, options) {
         contractConfig.salt = salt;
     }
 
-    saveConfig(config, options.env);
-
     printInfo(
         `${chain.name} | ${contractName}`,
-        contractName === 'AxelarTransceiver' ? contractConfig.implementation : contractConfig.address,
+        contractName === 'MonadAxelarTransceiver' ? contractConfig.implementation : contractConfig.address,
     );
 
     await checkContract(contractName, contract, contractConfig);
@@ -489,11 +486,10 @@ if (require.main === module) {
     program.addOption(
         new Option('-m, --deployMethod <deployMethod>', 'deployment method').choices(['create', 'create2', 'create3']).default('create2'),
     );
-    program.addOption(new Option('--ignoreError', 'ignore errors during deployment for a given chain'));
     program.addOption(new Option('--args <args>', 'custom deployment args'));
-    program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., AxelarTransceiver)'));
+    program.addOption(new Option('--forContract <forContract>', 'specify which contract this proxy is for (e.g., MonadAxelarTransceiver)'));
     program.addOption(new Option('--proxyData <data>', 'specify initialization data for proxy (defaults to "0x" if not provided)'));
-    program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for AxelarTransceiver deployment'));
+    program.addOption(new Option('--gmpManager <address>', 'specify the GMP manager address for MonadAxelarTransceiver deployment'));
     program.addOption(new Option('--reuseProxy', 'reuse existing proxy contract (useful for upgrade deployments)'));
 
     program.action((options) => {

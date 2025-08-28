@@ -110,12 +110,12 @@ ts-node stellar/deploy-contract.js deploy Upgrader --version X.Y.Z
 After the `Upgrader` is deployed, any other instantiated contract can be upgraded by calling the `upgrade` function
 
 ```bash
-ts-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
+ts-node stellar/deploy-contract.js upgrade <CONTRACT_NAME> --artifact-dir ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release --version <NEW_VERSION> --migration-data <MIGRATION_DATA>
 ```
 
-where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifact-path` points to the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
+where `<CONTRACT_NAME>` is the name of the contract to be upgraded and `--artifact-dir` points to the folder containing the upgraded bytecode. As a sanity check, `<NEW_VERSION>` must match the version number defined by the provided bytecode, so upgrading to the wrong version can be prevented. `<MIGRATION_DATA>` is the json encoded data that will be passed to the contract's `migrate` function. If the flag is not provided, the default value `()` will be used, meaning that the migration data is of type `void`. The easiest way to generate the json data for complex types is to instantiate the rust type the contract expects and then use `serde_json::to_string` to convert it to json.
 
-Note: The `--artifact-path` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
+Note: The `--artifact-dir` flag is optional, so long as the `--version` flag is provided (and that version's wasm is present in R2 for download).
 
 #### Example `MIGRATION_DATA` Type Input
 
@@ -164,7 +164,7 @@ ts-node stellar/deploy-contract.js upload <CONTRACT_NAME> --version <NEW_VERSION
 ```
 
 ```bash
-ts-node stellar/deploy-contract.js upload <CONTRACT_NAME> --artifact-path ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release/<CONTRACT_NAME>.optimized.wasm
+ts-node stellar/deploy-contract.js upload <CONTRACT_NAME> --artifact-dir ./axelar-amplifier-stellar/target/wasm32-unknown-unknown/release
 ```
 
 ---
@@ -253,6 +253,15 @@ ts-node stellar/its.js add-trusted-chains avalanche sui
 ts-node stellar/its.js remove-trusted-chains <sourceChain> <sourceChain2> ...
 ```
 
+#### Check if Chain is Trusted
+
+```bash
+ts-node stellar/its.js is-trusted-chain <chain>
+
+# Example
+ts-node stellar/its.js is-trusted-chain avalanche
+```
+
 #### Deploy Interchain Token
 
 ```bash
@@ -275,6 +284,24 @@ ts-node stellar/its.js register-canonical-token [token-address]
 
 ```bash
 ts-node stellar/its.js deploy-remote-canonical-token [token-address] [destination-chain] --gas-amount [amount]
+```
+
+#### Register Token Metadata
+
+```bash
+ts-node stellar/its.js register-token-metadata [token-address] --gas-amount [amount]
+```
+
+#### Register Custom Token
+
+```bash
+ts-node stellar/its.js register-custom-token [salt] [token-address] [token-manager-type]
+```
+
+#### Link Token
+
+```bash
+ts-node stellar/its.js link-token [salt] [destination-chain] [destination-token-address] [token-manager-type] --gas-amount [amount] --operator [operator]
 ```
 
 #### Interchain Transfer
@@ -308,12 +335,36 @@ ts-node stellar/its.js set-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121f
 ```
 
 #### Remove Flow Limit
+
 ```bash
 ts-node stellar/its.js remove-flow-limit [token-id]
 
 # Example
 ts-node stellar/its.js remove-flow-limit 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
 ```
+
+#### Get Deployed Token Manager
+
+```bash
+ts-node stellar/its.js deployed-token-manager [token-id]
+
+# Example
+ts-node stellar/its.js deployed-token-manager 0x3e818f44d754748c2e7f59cfff8c34125884121fada921a31dcf383994eec1c5
+```
+
+#### Create Stellar Classic Asset
+
+Create a Stellar classic asset with trustline
+
+```bash
+ts-node stellar/token-utils.js create-stellar-classic-asset [asset-code] [issuer] [limit]
+```
+
+**Parameters:**
+
+- `asset-code`: The code of the Stellar asset (e.g., "USDC")
+- `issuer`: The issuer address of the Stellar asset
+- `limit`: Optional trust limit (defaults to 1000000000 if not specified)
 
 ## TTL extension and state archival recovery
 
@@ -377,7 +428,6 @@ ts-node stellar/contract.js [action] [contract-name]
 #### Options
 
 - `[action]` can be one of the following:
-
     - `pause`: Pause the contract
     - `paused`: Check if the contract is paused
     - `unpause`: Unpause the contract
@@ -420,14 +470,14 @@ Transfer the operatorship of the contract:
 ts-node stellar/contract.js transfer-operatorship [contract-name] [new-operator]
 ```
 
-## Deploy Stellar Asset Contract
+## Create Stellar Asset Contract
 
-The deploy-stellar-asset-contract command allows you to deploy a Stellar asset contract through the Token Utils contract. This creates a smart contract wrapper for an existing Stellar classic asset, enabling it to be used within the Stellar ecosystem. The command validates the asset parameters and returns the deployed contract's address.
+The create-stellar-asset-contract command allows you to deploy a Stellar asset contract through the Token Utils contract. This creates a smart contract wrapper for an existing Stellar classic asset, enabling it to be used within the Stellar ecosystem. The command validates the asset parameters and returns the deployed contract's address.
 
 #### Usage
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issuer-address]
+ts-node stellar/token-utils.js create-stellar-asset-contract [asset-code] [issuer-address]
 ```
 
 #### Parameters
@@ -438,5 +488,5 @@ ts-node stellar/token-utils.js deploy-stellar-asset-contract [asset-code] [issue
 #### Example
 
 ```bash
-ts-node stellar/token-utils.js deploy-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
+ts-node stellar/token-utils.js create-stellar-asset-contract PEN GALVTUIOIAXUB7FHCUS4PFPMILNIGG4DW4S2MHMB2EG7URASFBR5H374
 ```

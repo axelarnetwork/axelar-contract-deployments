@@ -1,13 +1,13 @@
-# Hedera GMP v6.0.6
+# Hedera GMP v6.0.4
 
 |                | **Owner**                              |
-| -------------- | -------------------------------------- |
+|----------------|----------------------------------------|
 | **Created By** | @blockchainguyy <ayush@interoplabs.io> |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | -                     | TBD        |
+|----------------------|-----------------------|------------|
+| **Devnet Amplifier** | Completed             | 2025-08-20 |
 | **Stagenet**         | Completed             | 2024-09-18 |
 | **Testnet**          | Completed             | 2024-09-18 |
 | **Mainnet**          | -                     | TBD        |
@@ -81,7 +81,7 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 1. Fund the following addresses with native tokens on chain:
 
 | Network              | Addresses                                                                                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
 | **Stagenet**         | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
 | **Testnet**          | `0xba76c6980428A0b10CFC5d8ccb61949677A61233`                                                                                                                                           |
@@ -92,8 +92,8 @@ An initial chain config needs to be added to `${ENV}.json` file under `CHAINS` k
 - `stagenet` and `testnet` use the same contract address, so we only deploy on `testnet`.
 
 | Network              | `deployer address`                           |
-| -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | ?                                            |
+|----------------------|----------------------------------------------|
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Testnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
 | **Mainnet**          | `0xE86375704CDb8491a5Ed82D90DceCE02Ee0ac25F` |
@@ -107,8 +107,8 @@ ts-node evm/deploy-contract.js -c ConstAddressDeployer -m create --artifactPath 
 - `stagenet` and `testnet` use the same contract address, so we only deploy on `testnet`.
 
 | Network              | `deployer address`                           |
-| -------------------- | -------------------------------------------- |
-| **Devnet-amplifier** | ?                                            |
+|----------------------|----------------------------------------------|
+| **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
@@ -127,7 +127,7 @@ ts-node evm/send-tokens.js -r 0xba76c6980428A0b10CFC5d8ccb61949677A61233 --amoun
 5. Deploy Gateway contract
 
 | Network              | `minimumRotationDelay` | `deploymentType` | `deployer`                                   |
-| -------------------- | ---------------------- | ---------------- | -------------------------------------------- |
+|----------------------|------------------------|------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0`                    | `create3`        | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `300`                  | `create`         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `3600`                 | `create`         | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
@@ -140,7 +140,7 @@ ts-node evm/deploy-amplifier-gateway.js -m [deploymentType] --minimumRotationDel
 6. Deploy `Operators`
 
 | Network              | `deployer address`                           |
-| -------------------- | -------------------------------------------- |
+|----------------------|----------------------------------------------|
 | **Devnet-amplifier** | `0xba76c6980428A0b10CFC5d8ccb61949677A61233` |
 | **Stagenet**         | `0xBeF25f4733b9d451072416360609e5A4c115293E` |
 | **Testnet**          | `0xB8Cd93C83A974649D76B1c19f311f639e62272BC` |
@@ -153,8 +153,8 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 7. After deploying the Operators contract, register the following operators according to their environment
 
 | Network              | `operators`                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| **Devnet-amplifier** | ?                                                                                          |
+|----------------------|--------------------------------------------------------------------------------------------|
+| **Devnet-amplifier** | `0x01c793e1F8185a2527C5a2Ef3b4a3FBCb8982690`, `0xDb32E08fd5d6823E7f0298963E487d5df4e54b1E` |
 | **Stagenet**         | `0x7054acf1b2d01e33b86235458edf0046cc354293`, `0xf669ed1ebc608c48f58b6e290df566ede7fb1103` |
 | **Testnet**          | `0x8f23e84c49624a22e8c252684129910509ade4e2`, `0x3b401fa00191acb03c24ebb7754fe35d34dd1abd` |
 | **Mainnet**          | `0x0CDeE446bD3c2E0D11568eeDB859Aa7112BE657a`, `0x1a07a2Ee043Dd3922448CD53D20Aae88a67e486E` |
@@ -163,7 +163,7 @@ ts-node evm/deploy-contract.js -c Operators -m create2
 ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ```
 
-8. Deploy GasService (set the `collector` to `Operators` address from step 6)
+8. Deploy GasService (set the `AxelarGasService.collector` to `Operators` contract address in config, which you will receive at step 6)
 
 | Network              | `deployer address`                           | `deployMethod` |
 | -------------------- | -------------------------------------------- | -------------- |
@@ -173,25 +173,41 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 | **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` | `create2`      |
 
 ```bash
-ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
+OPERATORS=$(cat "./axelar-chains-config/info/$ENV.json" | jq ".chains[\"$CHAIN\"].contracts.Operators.address" | tr -d '"')
+
+ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{\"collector\": \"$OPERATORS\"}"
 ```
 
-9. Transfer ownership for contracts on mainnet and testnet.
+9. Transfer ownership for contracts
 
-For Mainnet
+- 9.1 Transfer Operators ownership
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Devnet-amplifier** | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Stagenet**         | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Testnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+| **Mainnet**          | `0x9f5CDBc370B00C0dF52cf2619FA95907508108df` |
+
+```bash
+ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x9f5CDBc370B00C0dF52cf2619FA95907508108df
+```
+
+- 9.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+
+| Network              | New Owner Address                            |
+| -------------------- | -------------------------------------------- |
+| **Testnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
+| **Mainnet**          | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
-For Testnet
+- 9.3 Transfer AxelarGasService ownership (testnet only)
 
 ```bash
-ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-
 ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
-
-ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
 ## Checklist

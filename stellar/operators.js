@@ -23,9 +23,9 @@ async function isOperator(wallet, _, chain, contract, args, options) {
     });
 
     const operation = contract.call('is_operator', addressToScVal(address));
-    const result = await broadcast(operation, wallet, chain, 'is_operator called', options, true);
+    const isOperator = await broadcast(operation, wallet, chain, 'is_operator called', options);
 
-    if (result.result.retval._value) {
+    if (isOperator.value()) {
         printInfo(address + ' is an operator');
     } else {
         printWarn(address + ' is not an operator');
@@ -124,7 +124,7 @@ async function execute(wallet, _, chain, contract, args, options) {
 async function mainProcessor(processor, args, options) {
     const { yes } = options;
     const config = loadConfig(options.env);
-    const chain = getChainConfig(config, options.chainName);
+    const chain = getChainConfig(config.chains, options.chainName);
     const wallet = await getWallet(chain, options);
 
     if (prompt(`Proceed with action ${processor.name}`, yes)) {

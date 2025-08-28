@@ -237,7 +237,7 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
     const { minimumRotationDelay, policy, previousSigners } = options;
     const operator = options.operator || keypair.toSuiAddress();
     const signers = await getSigners(keypair, config, chain, options);
-    const domainSeparator = await getDomainSeparator(config, chain, options);
+    const domainSeparator = await getDomainSeparator(config.axelar, chain, options);
 
     validateParameters({
         isNonEmptyString: { previousSigners },
@@ -463,7 +463,7 @@ async function syncPackages(keypair, client, config, chain, options) {
 
 async function mainProcessor(args, options, processor) {
     const config = loadConfig(options.env);
-    const sui = getChainConfig(config, options.chainName);
+    const sui = getChainConfig(config.chains, options.chainName);
     const [keypair, client] = getWallet(sui, options);
 
     printInfo('Environment', options.env);

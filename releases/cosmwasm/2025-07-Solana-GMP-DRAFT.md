@@ -14,9 +14,10 @@
 
 - [Amplifier Fork](https://github.com/eigerco/axelar-amplifier/tree/v0.1.0)
 - Contract Checksums:
-  - VotingVerifier: `52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c`
-  - Gateway: `31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee`
+  - SolanaVotingVerifier: `52af1024c7548a724ec97728a1748bd1ce4ccb80bfb5c2a0ed7e57ee5ce5275c`
+  - SolanaGateway: `31572a174679ebbf31ac63fdfb99d7a99199d873b4558d61b8cfdf5800174fee`
   - SolanaMultisigProver: `20c38aff9c725424cd71e7f85e357fb8a078954c11302f6d5e325060de9dac5c`
+
 
 ## Background
 
@@ -83,10 +84,10 @@ RUN_AS_ACCOUNT=
 1. Store Voting Verifier:
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
-  -c VotingVerifier \
+  -c SolanaVotingVerifier \
   -t "Upload VotingVerifier contract for Solana" \
   -d "Upload VotingVerifier contract for Solana integration" \
-  -a "$ARTIFACT_PATH/voting_verifier.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -94,10 +95,10 @@ ts-node cosmwasm/submit-proposal.js store \
 2. Store Gateway:
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
-  -c Gateway \
+  -c SolanaGateway \
   -t "Upload Gateway contract for Solana" \
   -d "Upload Gateway contract for Solana integration" \
-  -a "$ARTIFACT_PATH/gateway.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -105,10 +106,10 @@ ts-node cosmwasm/submit-proposal.js store \
 3. Store Multisig Prover:\
 ```bash
 ts-node cosmwasm/submit-proposal.js store \
-  -c MultisigProver \
+  -c SolanaMultisigProver \
   -t "Upload MultisigProver contract for Solana" \
   -d "Upload MultisigProver contract for Solana integration" \
-  -a "$ARTIFACT_PATH/multisig_prover.wasm" \
+  -a "$ARTIFACT_PATH" \
   --deposit $DEPOSIT_VALUE \
   --instantiateAddresses $INIT_ADDRESSES
 ```
@@ -124,15 +125,15 @@ ts-node cosmwasm/submit-proposal.js store \
 | **Testnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar17qafmnc4hrfa96cq37wg5l68sxh354pj6eky35` |
 | **Mainnet**          | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `axelar1pczf792wf3p3xssk4dmwfxrh6hcqnrjp70danj` |
 
-| Network              | `serviceName` | `votingThreshold` | `signingThreshold` | 
-| -------------------- | ------------- | ----------------- | ------------------ | 
+| Network              | `serviceName` | `votingThreshold` | `signingThreshold` |
+| -------------------- | ------------- | ----------------- | ------------------ |
 | **Devnet-amplifier** | `validators`  | `["6", "10"]`     | `["6", "10"]`      |
 | **Stagenet**         | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
 | **Testnet**          | `amplifier`   | `["51", "100"]`   | `["51", "100"]`    |
 | **Mainnet**          | `amplifier`   | `["2", "3"]`      | `["2", "3"]`       |
 
 ```bash
-# Add under `config.axelar.contracts.VotingVerifier` based on Network
+# Add under `config.axelar.contracts.SolanaVotingVerifier` based on Network
 # External gateway address can be checked at pre-requisites section.
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
@@ -145,7 +146,7 @@ ts-node cosmwasm/submit-proposal.js store \
   "addressFormat": "base58_solana"
 }
 
-# Add under `config.axelar.contracts.MultisigProver` based on Network
+# Add under `config.axelar.contracts.SolanaMultisigProver` based on Network
 \"$CHAIN\" : {
   "governanceAddress": "[governance address]",
   "adminAddress": "[admin address]",
@@ -170,22 +171,22 @@ ts-node cosmwasm/submit-proposal.js store \
 CONTRACT_ADMIN=[wasm contract admin address for the upgrade and migration based on network]
 ```
 
-1. Instantiate `VotingVerifier`
+1. Instantiate `SolanaVotingVerifier`
 
 ```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c VotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaVotingVerifier --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
-2. Instantiate `Gateway`
+2. Instantiate `SolanaGateway`
 
 ```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c Gateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaGateway --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
-3. Instantiate `MultisigProver`
+3. Instantiate `SolanaMultisigProver`
 
 ```bash
-ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
+ts-node ./cosmwasm/deploy-contract.js instantiate -c SolanaMultisigProver --fetchCodeId --instantiate2 --admin $CONTRACT_ADMIN
 ```
 
 4. Set environment variables
@@ -193,12 +194,12 @@ ts-node ./cosmwasm/deploy-contract.js instantiate -c MultisigProver --fetchCodeI
 - Network-specific environment variables: These variables need to be updated by the network.
 
 ```bash
-VOTING_VERIFIER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.VotingVerifier[\"$CHAIN\"].address" | tr -d '"')
-GATEWAY=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Gateway[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG_PROVER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.MultisigProver[\"$CHAIN\"].address" | tr -d '"')
-MULTISIG=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
-REWARDS=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
-ROUTER=$(cat "./axelar-chains-config/info/\"$ENV\".json" | jq ".axelar.contracts.Router.address" | tr -d '"')
+VOTING_VERIFIER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaVotingVerifier[\"$CHAIN\"].address" | tr -d '"')
+GATEWAY=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaGateway[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG_PROVER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.SolanaMultisigProver[\"$CHAIN\"].address" | tr -d '"')
+MULTISIG=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Multisig.address" | tr -d '"')
+REWARDS=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Rewards.address" | tr -d '"')
+ROUTER=$(cat "./axelar-chains-config/info/${ENV}.json" | jq ".axelar.contracts.Router.address" | tr -d '"')
 ```
 
 - Gov proposal environment variables. Update these for each network
@@ -230,7 +231,7 @@ ts-node cosmwasm/submit-proposal.js execute \
     \"register_chain\": {
       \"chain\": \"$CHAIN\",
       \"gateway_address\": \"$GATEWAY\",
-      \"msg_id_format\": \"base58_tx_signature_and_log_index\"
+      \"msg_id_format\": \"base58_solana_tx_signature_and_event_index\"
       }
     }"
 ```
@@ -250,7 +251,7 @@ axelard q wasm contract-state smart $ROUTER "{\"chain_info\": \"$CHAIN\"}" --out
       "address": "axelar1jah3ac59xke2r266yjhh45tugzsvnlzsefyvx6jgp0msk6tp7vqqaktuz2"
     },
     "frozen_status": 0,
-    "msg_id_format": "base58_tx_signature_and_log_index"
+    "msg_id_format": "base58_solana_tx_signature_and_event_index"
   }
 }
 ```

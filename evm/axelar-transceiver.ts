@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { Contract, Wallet, getDefaultProvider, utils } from 'ethers';
 
 import { addOptionsToCommands, prompt as promptUser } from '../common';
-import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn, saveConfig } from './utils';
+import { getContractJSON, getGasOptions, mainProcessor, printError, printInfo, printWalletInfo, printWarn } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { addEvmOptions } = require('./cli-utils');
@@ -12,7 +12,7 @@ interface ChainConfig {
     name: string;
     rpc: string;
     contracts?: {
-        AxelarTransceiver?: {
+        MonadAxelarTransceiver?: {
             address?: string;
             pauser?: string;
             owner?: string;
@@ -40,10 +40,6 @@ interface Options {
     skipExisting?: boolean;
     upgrade?: boolean;
     predictOnly?: boolean;
-}
-
-interface Config {
-    chains: Record<string, ChainConfig>;
 }
 
 interface GasOptions {
@@ -77,7 +73,6 @@ async function initializeTransceiver(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     try {
         await printWalletInfo(wallet);
@@ -93,11 +88,11 @@ async function initializeTransceiver(
             throw new Error('initialize function not found in contract ABI');
         }
 
-        printInfo('Initializing AxelarTransceiver...');
+        printInfo('Initializing MonadAxelarTransceiver...');
 
-        const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
+        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
 
-        if (promptUser(`Proceed with AxelarTransceiver initialization on ${chain.name}?`, options.yes)) {
+        if (promptUser(`Proceed with MonadAxelarTransceiver initialization on ${chain.name}?`, options.yes)) {
             return;
         }
 
@@ -110,10 +105,10 @@ async function initializeTransceiver(
 
         const receipt = (await initTx.wait()) as TransactionReceipt;
         printInfo('Transaction confirmed in block', receipt.blockNumber.toString());
-        printInfo('AxelarTransceiver initialized successfully');
+        printInfo('MonadAxelarTransceiver initialized successfully');
 
         // Read addresses from contract state after initialization
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -122,7 +117,7 @@ async function initializeTransceiver(
             errorMessage.includes('InvalidInitialization') ||
             errorMessage.includes('execution reverted')
         ) {
-            printInfo('AxelarTransceiver is already initialized');
+            printInfo('MonadAxelarTransceiver is already initialized');
         } else {
             printError('Failed to initialize transceiver', errorMessage);
         }
@@ -135,7 +130,6 @@ async function readInitializationState(
     wallet: InstanceType<typeof Wallet>,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     try {
         const pauser = await transceiverContract.pauser();
@@ -147,13 +141,12 @@ async function readInitializationState(
         if (!chain.contracts) {
             chain.contracts = {};
         }
-        if (!chain.contracts.AxelarTransceiver) {
-            chain.contracts.AxelarTransceiver = {};
+        if (!chain.contracts.MonadAxelarTransceiver) {
+            chain.contracts.MonadAxelarTransceiver = {};
         }
 
-        chain.contracts.AxelarTransceiver.pauser = pauser;
-        chain.contracts.AxelarTransceiver.owner = owner;
-        saveConfig(config, options.env);
+        chain.contracts.MonadAxelarTransceiver.pauser = pauser;
+        chain.contracts.MonadAxelarTransceiver.owner = owner;
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         printError('Failed to read initialization state:', errorMessage);
@@ -168,7 +161,6 @@ async function transferPauserCapability(
     pauserAddress: string,
     chain: ChainConfig,
     options: Options,
-    config: Config,
 ): Promise<void> {
     if (!pauserAddress || !utils.isAddress(pauserAddress)) {
         throw new Error(`Invalid pauser address: ${pauserAddress}`);
@@ -182,7 +174,7 @@ async function transferPauserCapability(
             return;
         }
 
-        const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
+        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
 
         const transferTx = await transceiverContract.transferPauserCapability(pauserAddress, {
             ...gasOptions,
@@ -193,7 +185,7 @@ async function transferPauserCapability(
         const receipt = (await transferTx.wait()) as TransactionReceipt;
         printInfo('Pauser capability transferred successfully');
 
-        await readInitializationState(transceiverContract, receipt, wallet, chain, options, config);
+        await readInitializationState(transceiverContract, receipt, wallet, chain, options);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('OwnableUnauthorizedAccount') || errorMessage.includes('CallerNotNttManager')) {
@@ -238,7 +230,7 @@ async function setAxelarChainId(
             return;
         }
 
-        const gasOptions = await getGasOptions(chain, options, 'AxelarTransceiver');
+        const gasOptions = await getGasOptions(chain, options, 'MonadAxelarTransceiver');
 
         const setChainIdTx = await transceiverContract.setAxelarChainId(chainId, chainName, transceiverAddress, {
             ...gasOptions,
@@ -265,30 +257,30 @@ async function setAxelarChainId(
     }
 }
 
-async function processCommand(config: Config, chain: ChainConfig, action: string, options: Options): Promise<void> {
+async function processCommand(_axelar, chain: ChainConfig, action: string, options: Options): Promise<void> {
     const { env, artifactPath, privateKey, args } = options;
 
     if (!artifactPath) {
         throw new Error('--artifactPath is required. Please provide the path to the compiled artifacts.');
     }
 
-    if (!chain.contracts?.AxelarTransceiver?.address) {
+    if (!chain.contracts?.MonadAxelarTransceiver?.address) {
         printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
-        throw new Error('AxelarTransceiver address not found in configuration');
+        throw new Error('MonadAxelarTransceiver address not found in configuration');
     }
 
-    const transceiverAddress = chain.contracts.AxelarTransceiver.address;
+    const transceiverAddress = chain.contracts.MonadAxelarTransceiver.address;
     printInfo('Found transceiver address:', transceiverAddress);
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
 
-    printInfo(`Processing AxelarTransceiver operation: ${action} for chain: ${chain.name}`);
+    printInfo(`Processing MonadAxelarTransceiver operation: ${action} for chain: ${chain.name}`);
     printInfo(`Transceiver address: ${transceiverAddress}`);
 
     switch (action) {
         case 'initialize': {
-            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, config);
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options);
             break;
         }
 
@@ -297,7 +289,7 @@ async function processCommand(config: Config, chain: ChainConfig, action: string
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, config);
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options);
             break;
         }
 
@@ -314,22 +306,22 @@ async function processCommand(config: Config, chain: ChainConfig, action: string
         default:
             throw new Error(`Unknown action: ${action}`);
     }
-
-    saveConfig(config, env);
 }
 
-async function main(action: string, args: string[], options: Options): Promise<void[]> {
+async function main(action: string, args: string[], options: Options): Promise<Record<string, unknown>> {
     options.args = args;
-    return mainProcessor(options, (config: Config, chain: ChainConfig, options: Options) => processCommand(config, chain, action, options));
+    return mainProcessor(options, (_axelar, chain: ChainConfig, _chains, options: Options) =>
+        processCommand(_axelar, chain, action, options),
+    ) as Promise<Record<string, unknown>>;
 }
 
 if (require.main === module) {
     const program = new Command();
-    program.name('axelar-transceiver').description('Manage AxelarTransceiver operations');
+    program.name('axelar-transceiver').description('Manage MonadAxelarTransceiver operations');
 
     program
         .command('initialize')
-        .description('Initialize the AxelarTransceiver contract')
+        .description('Initialize the MonadAxelarTransceiver contract')
         .action((options: Options, cmd: InstanceType<typeof Command>) => {
             main(cmd.name(), [], options);
         });
