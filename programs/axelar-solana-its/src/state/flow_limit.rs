@@ -60,25 +60,33 @@ impl FlowSlot {
             return Ok(());
         }
 
-        // The flow limit can be interpreted as a limit over the net amount of tokens
-        // transferred from one chain to another within a six hours time window. Thus,
-        // if the limit is 100 and 30 tokens have been transferred in one
-        // direction, one could still transfer 130 tokens in the other direction
-        // within the same epoch, for instance.
-        let new_total = to_add
-            .checked_add(amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        let max_allowed_flow = to_compare
-            .checked_add(flow_limit)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        if new_total > max_allowed_flow || amount > flow_limit {
+        // Individual transfer amount cannot exceed the flow limit
+        if amount > flow_limit {
             msg!("Flow limit exceeded");
             return Err(ProgramError::InvalidArgument);
         }
 
-        *to_add = new_total;
+        // Calculate new flow amount after adding the transfer
+        let new_flow = to_add
+            .checked_add(amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // Calculate net flow: |new_flow - to_compare|
+        // The flow limit is interpreted as a limit over the net amount of tokens
+        // transferred from one chain to another within a six hours time window.
+        let net_flow = if new_flow >= to_compare {
+            new_flow - to_compare
+        } else {
+            to_compare - new_flow
+        };
+
+        // Check if net flow exceeds the limit
+        if net_flow > flow_limit {
+            msg!("Flow limit exceeded");
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        *to_add = new_flow;
 
         Ok(())
     }

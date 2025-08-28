@@ -1,5 +1,6 @@
 use alloy_primitives::Bytes;
 use anyhow::anyhow;
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use borsh::BorshDeserialize;
 use interchain_token_transfer_gmp::SendToHub;
 use solana_program_test::tokio;
@@ -7,6 +8,7 @@ use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
+use spl_token_2022::state::Account;
 use test_context::test_context;
 
 use axelar_solana_gateway::processor::GatewayEvent;
@@ -100,7 +102,6 @@ async fn test_incoming_interchain_transfer_within_limit(
 }
 
 #[test_context(ItsTestContext)]
-#[should_panic]
 #[tokio::test]
 async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext) {
     let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
@@ -148,33 +149,15 @@ async fn test_incoming_interchain_transfer_beyond_limit(ctx: &mut ItsTestContext
     })
     .encode();
 
-    ctx.relay_to_solana(
-        &inner_transfer_payload,
-        Some(interchain_token_pda),
-        token_program_id,
-    )
-    .await;
+    let tx = ctx
+        .relay_to_solana(
+            &inner_transfer_payload,
+            Some(interchain_token_pda),
+            token_program_id,
+        )
+        .await;
 
-    let destination_ata =
-        spl_associated_token_account::get_associated_token_address_with_program_id(
-            &ctx.solana_wallet,
-            &interchain_token_pda,
-            &token_program_id,
-        );
-
-    let destination_raw_account = ctx
-        .solana_chain
-        .try_get_account_no_checks(&destination_ata)
-        .await
-        .unwrap()
-        .unwrap();
-    let destination_ata_account =
-        spl_token_2022::state::Account::unpack_from_slice(&destination_raw_account.data).unwrap();
-
-    assert_eq!(
-        destination_ata_account.amount, flow_limit,
-        "New balance doesn't match expected balance"
-    );
+    assert_msg_present_in_logs(tx, "Flow limit exceeded");
 }
 
 #[test_context(ItsTestContext)]
@@ -263,7 +246,6 @@ async fn test_outgoing_interchain_transfer_within_limit(
 }
 
 #[test_context(ItsTestContext)]
-#[should_panic]
 #[tokio::test]
 async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContext) {
     let token_id = ctx.deployed_interchain_token;
@@ -321,7 +303,8 @@ async fn test_outgoing_interchain_transfer_outside_limit(ctx: &mut ItsTestContex
     )
     .unwrap();
 
-    ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
+    let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap_err();
+    assert_msg_present_in_logs(tx, "Flow limit exceeded");
 }
 
 #[test_context(ItsTestContext)]
@@ -623,6 +606,234 @@ async fn test_flow_slot_initialization_outgoing_transfer(
         flow_slot.flow_in, 0,
         "flow_in should be 0 for outgoing transfers"
     );
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_flow_limit_max_u64_no_overflow(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (interchain_token_pda, _) =
+        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
+    let token_program_id = spl_token_2022::id();
+    let flow_limit = u64::MAX;
+    let transfer_amount = 1000;
+
+    let flow_limit_ix = axelar_solana_its::instruction::set_flow_limit(
+        ctx.solana_wallet,
+        ctx.deployed_interchain_token,
+        flow_limit,
+    )?;
+
+    ctx.send_solana_tx(&[flow_limit_ix]).await;
+
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    let create_token_account_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    ctx.send_solana_tx(&[create_token_account_ix]).await;
+
+    // Simulate an incoming transfer
+    let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID.try_into()?,
+        destination_chain: ctx.solana_chain_name.clone(),
+        payload: GMPPayload::InterchainTransfer(InterchainTransfer {
+            selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
+            token_id: ctx.deployed_interchain_token.into(),
+            source_address: [5; 32].into(),
+            destination_address: associated_account_address.to_bytes().into(),
+            amount: transfer_amount.try_into()?,
+            data: Bytes::new(),
+        })
+        .encode()
+        .into(),
+    })
+    .encode();
+
+    ctx.relay_to_solana(
+        &inner_transfer_payload,
+        Some(interchain_token_pda),
+        token_program_id,
+    )
+    .await;
+
+    let ata = ctx
+        .solana_chain
+        .try_get_account_no_checks(&associated_account_address)
+        .await
+        .unwrap()
+        .unwrap();
+    let token_account = Account::unpack_from_slice(&ata.data).unwrap();
+    assert_eq!(token_account.amount, transfer_amount);
+
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
+
+    let outgoing_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
+        associated_account_address,
+        ctx.deployed_interchain_token,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        transfer_amount,
+        interchain_token_pda,
+        spl_token_2022::id(),
+        0,
+        clock_sysvar.unix_timestamp,
+    )?;
+
+    let tx = ctx.send_solana_tx(&[outgoing_transfer_ix]).await.unwrap();
+    let emitted_events = get_gateway_events(&tx)
+        .pop()
+        .ok_or_else(|| anyhow!("no events"))?;
+
+    let ProgramInvocationState::Succeeded(_) = emitted_events else {
+        panic!("transfer should succeed")
+    };
+
+    let ata = ctx
+        .solana_chain
+        .try_get_account_no_checks(&associated_account_address)
+        .await
+        .unwrap()
+        .unwrap();
+    let token_account = Account::unpack_from_slice(&ata.data).unwrap();
+    assert_eq!(token_account.amount, 0);
+
+    Ok(())
+}
+
+#[test_context(ItsTestContext)]
+#[tokio::test]
+async fn test_net_flow_calculation_bidirectional(ctx: &mut ItsTestContext) -> anyhow::Result<()> {
+    let (its_root_pda, _) = axelar_solana_its::find_its_root_pda();
+    let (interchain_token_pda, _) =
+        axelar_solana_its::find_interchain_token_pda(&its_root_pda, &ctx.deployed_interchain_token);
+    let token_program_id = spl_token_2022::id();
+    let flow_limit = 1000;
+
+    let flow_limit_ix = axelar_solana_its::instruction::set_flow_limit(
+        ctx.solana_wallet,
+        ctx.deployed_interchain_token,
+        flow_limit,
+    )?;
+
+    ctx.send_solana_tx(&[flow_limit_ix]).await;
+
+    let associated_account_address = get_associated_token_address_with_program_id(
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    let create_token_account_ix = create_associated_token_account(
+        &ctx.solana_wallet,
+        &ctx.solana_wallet,
+        &interchain_token_pda,
+        &spl_token_2022::id(),
+    );
+
+    ctx.send_solana_tx(&[create_token_account_ix]).await;
+
+    // Simulate an incoming transfer
+    let incoming_amount = 800;
+    let inner_transfer_payload = GMPPayload::SendToHub(SendToHub {
+        selector: SendToHub::MESSAGE_TYPE_ID.try_into()?,
+        destination_chain: ctx.solana_chain_name.clone(),
+        payload: GMPPayload::InterchainTransfer(InterchainTransfer {
+            selector: InterchainTransfer::MESSAGE_TYPE_ID.try_into()?,
+            token_id: ctx.deployed_interchain_token.into(),
+            source_address: [5; 32].into(),
+            destination_address: associated_account_address.to_bytes().into(),
+            amount: incoming_amount.try_into()?,
+            data: Bytes::new(),
+        })
+        .encode()
+        .into(),
+    })
+    .encode();
+
+    ctx.relay_to_solana(
+        &inner_transfer_payload,
+        Some(interchain_token_pda),
+        token_program_id,
+    )
+    .await;
+
+    let ata = ctx
+        .solana_chain
+        .try_get_account_no_checks(&associated_account_address)
+        .await
+        .unwrap()
+        .unwrap();
+    let token_account = Account::unpack_from_slice(&ata.data).unwrap();
+    assert_eq!(token_account.amount, incoming_amount);
+
+    let outgoing_amount = 600;
+    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
+
+    let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
+        associated_account_address,
+        ctx.deployed_interchain_token,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        outgoing_amount,
+        interchain_token_pda,
+        spl_token_2022::id(),
+        0,
+        clock_sysvar.unix_timestamp,
+    )?;
+
+    let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();
+    let emitted_events = get_gateway_events(&tx)
+        .pop()
+        .ok_or_else(|| anyhow!("no events"))?;
+
+    let ProgramInvocationState::Succeeded(_) = emitted_events else {
+        panic!("transfer should succeed")
+    };
+
+    let additional_amount = 200;
+    let transfer_ix_2 = axelar_solana_its::instruction::interchain_transfer(
+        ctx.solana_wallet,
+        associated_account_address,
+        ctx.deployed_interchain_token,
+        ctx.evm_chain_name.clone(),
+        ctx.evm_signer.wallet.address().as_bytes().to_vec(),
+        additional_amount,
+        interchain_token_pda,
+        spl_token_2022::id(),
+        0,
+        clock_sysvar.unix_timestamp,
+    )?;
+
+    let tx_2 = ctx.send_solana_tx(&[transfer_ix_2]).await.unwrap();
+    let emitted_events_2 = get_gateway_events(&tx_2)
+        .pop()
+        .ok_or_else(|| anyhow!("no events"))?;
+
+    let ProgramInvocationState::Succeeded(_) = emitted_events_2 else {
+        panic!("transfer should succeed")
+    };
+
+    let ata = ctx
+        .solana_chain
+        .try_get_account_no_checks(&associated_account_address)
+        .await
+        .unwrap()
+        .unwrap();
+    let token_account = Account::unpack_from_slice(&ata.data).unwrap();
+    assert_eq!(token_account.amount, 0);
 
     Ok(())
 }
