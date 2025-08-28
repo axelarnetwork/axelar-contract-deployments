@@ -360,8 +360,7 @@ const isContractUpgraded = async (contractConfig) => {
 
 const getBaseVersionPackageId = async (contractConfig) => {
     const versions = contractConfig.versions;
-    const baseVersion = versions[Object.keys(versions)[0]];
-    return baseVersion.address;
+    return versions[Object.keys(versions)[0]];
 };
 
 module.exports = {
