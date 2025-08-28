@@ -1,5 +1,6 @@
-use alloy_primitives::U256;
+use alloy_primitives::{hex, U256};
 use anyhow::anyhow;
+use axelar_solana_gateway_test_fixtures::assert_msg_present_in_logs;
 use borsh::BorshDeserialize;
 use solana_program_test::tokio;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -378,6 +379,11 @@ async fn test_call_contract_with_token(ctx: &mut ItsTestContext) -> anyhow::Resu
         tx.find_log("🐪🐪🐪🐪").is_some(),
         "expected memo not found in logs"
     );
+
+    // Verify that the InterchainTransferReceived event contains the correct source address
+    let expected_hex = hex::encode(ctx.evm_signer.wallet.address().as_bytes());
+    assert_msg_present_in_logs(tx, &format!("payload source address: {expected_hex}"));
+
     let counter_raw_account = ctx
         .solana_chain
         .try_get_account_no_checks(&ctx.counter_pda)
