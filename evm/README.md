@@ -82,7 +82,7 @@ Note: You can deploy transceiver for any tokens/chains by providing the appropri
 
 ### Prerequisites
 
-AxelarTransceiver and ERC1967Proxy contract are compiled from the example-wormhole-axelar-wsteth repo. Generate build using the following commands:
+AxelarTransceiver and ERC1967Proxy contract are compiled from the example-wormhole-axelar-wsteth repo. Build is generated using the following commands:
 
 ```bash
 git clone https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git
