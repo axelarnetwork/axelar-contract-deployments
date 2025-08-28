@@ -358,6 +358,12 @@ const isContractUpgraded = async (contractConfig) => {
     return isUpgraded;
 };
 
+const getBaseVersionPackageId = async (contractConfig) => {
+    const versions = contractConfig.versions;
+    const baseVersion = versions[Object.keys(versions)[0]];
+    return baseVersion.address;
+};
+
 module.exports = {
     suiCoinId,
     isGasToken,
@@ -386,4 +392,5 @@ module.exports = {
     isAllowed,
     getAllowedFunctions,
     isContractUpgraded,
+    getBaseVersionPackageId,
 };

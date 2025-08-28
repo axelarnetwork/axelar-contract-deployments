@@ -12,6 +12,7 @@ const {
     loadConfig,
     getChainConfig,
     isContractUpgraded,
+    getBaseVersionPackageId,
 } = require('../common');
 const {
     addBaseOptions,
@@ -468,7 +469,13 @@ async function syncPackages(keypair, client, config, chain, options) {
 
         const isUpgraded = await isContractUpgraded(contractConfig);
 
-        updateMoveToml(packageDir, packageId, moveDir, undefined, isUpgraded);
+        if (isUpgraded) {
+            const baseVersionPackageId = await getBaseVersionPackageId(contractConfig); // v0 address
+            updateMoveToml(packageDir, packageId, moveDir, undefined, baseVersionPackageId);
+        } else {
+            updateMoveToml(packageDir, packageId, moveDir);
+        }
+
         printInfo(`Synced ${packageName} with package ID`, packageId);
     }
 }
