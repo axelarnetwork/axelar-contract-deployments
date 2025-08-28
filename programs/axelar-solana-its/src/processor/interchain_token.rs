@@ -735,7 +735,7 @@ pub(crate) fn revoke_deploy_remote_interchain_token(
     }
     .emit();
 
-    program_utils::pda::close_pda(payer, deploy_approval_account)
+    program_utils::pda::close_pda(payer, deploy_approval_account, &crate::id())
 }
 
 pub(crate) fn use_deploy_approval(
@@ -759,7 +759,7 @@ pub(crate) fn use_deploy_approval(
         return Err(ProgramError::InvalidArgument);
     }
 
-    program_utils::pda::close_pda(minter, deploy_approval_account)
+    program_utils::pda::close_pda(minter, deploy_approval_account, &crate::id())
 }
 
 pub(crate) fn process_transfer_mintership<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {

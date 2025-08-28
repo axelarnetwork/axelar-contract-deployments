@@ -195,3 +195,38 @@ async fn test_program_checks_operator_pda_is_correctly_derived() {
         "Derived operator managed proposal PDA does not match provided one",
     );
 }
+
+#[tokio::test]
+async fn test_cannot_cancel_non_existent_operator_approval() {
+    let (mut sol_integration, config_pda, _) = Box::pin(setup_programs()).await;
+
+    let ix_builder = ix_builder_with_sample_proposal_data();
+
+    // We first schedule a time lock proposal
+    let meta = gmp_sample_metadata();
+    let mut gmp_call_data = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_msg_metadata(meta.clone())
+        .schedule_time_lock_proposal(&sol_integration.fixture.payer.pubkey(), &config_pda)
+        .build();
+
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_ok());
+
+    // We then try to cancel the operator proposal
+    let meta = gmp_sample_metadata();
+    let mut gmp_call_data = ix_builder
+        .clone()
+        .gmp_ix()
+        .with_msg_metadata(meta.clone())
+        .cancel_operator_proposal(&config_pda)
+        .build();
+
+    approve_ix_at_gateway(&mut sol_integration, &mut gmp_call_data).await;
+    let res = sol_integration.fixture.send_tx(&[gmp_call_data.ix]).await;
+    assert!(res.is_err());
+
+    assert_msg_present_in_logs(res.err().unwrap(), "PDA is not initialized");
+}

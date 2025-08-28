@@ -101,5 +101,5 @@ pub(crate) fn process(
     };
     event.emit()?;
     ExecutableProposal::remove(proposal_account, config_pda)?;
-    program_utils::pda::close_pda(config_pda, operator_pda_marker_account)
+    program_utils::pda::close_pda(config_pda, operator_pda_marker_account, &crate::id())
 }

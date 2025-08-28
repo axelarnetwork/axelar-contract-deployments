@@ -121,7 +121,7 @@ pub fn accept<F: RolesFlags>(
         required_payer_roles,
     )?;
 
-    close_pda(accounts.origin_user_account, proposal_account)?;
+    close_pda(accounts.origin_user_account, proposal_account, program_id)?;
 
     Ok(())
 }

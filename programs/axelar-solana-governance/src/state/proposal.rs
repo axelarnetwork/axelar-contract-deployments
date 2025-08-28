@@ -402,7 +402,7 @@ impl ExecutableProposal {
         pda_to_close: &AccountInfo<'_>,
         lamport_destination: &AccountInfo<'_>,
     ) -> Result<(), ProgramError> {
-        program_utils::pda::close_pda(lamport_destination, pda_to_close)
+        program_utils::pda::close_pda(lamport_destination, pda_to_close, &crate::id())
     }
 
     /// Returns the proposal bump seed.
