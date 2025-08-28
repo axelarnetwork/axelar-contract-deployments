@@ -166,17 +166,17 @@ const instantiateContract = async (client, wallet, initMsg, config, options) => 
 
     const { contractAddress } = instantiate2
         ? await client.instantiate2(
-            account.address,
-            contractConfig.codeId,
-            getSalt(salt, contractName, chainName),
-            initMsg,
-            contractLabel,
-            initFee,
-            { admin },
-        )
+              account.address,
+              contractConfig.codeId,
+              getSalt(salt, contractName, chainName),
+              initMsg,
+              contractLabel,
+              initFee,
+              { admin },
+          )
         : await client.instantiate(account.address, contractConfig.codeId, initMsg, contractLabel, initFee, {
-            admin,
-        });
+              admin,
+          });
 
     return contractAddress;
 };
@@ -424,8 +424,8 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     if (gatewayAddress !== undefined && gatewayAddress !== sourceGatewayAddress) {
         throw new Error(
             `Address mismatch for [${chainName}] in config:\n` +
-            `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
-            `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
+                `- [${chainName}].contracts.AxelarGateway.address: ${gatewayAddress}\n` +
+                `- axelar.contracts.VotingVerifier[${chainName}].sourceGatewayAddress: ${sourceGatewayAddress}`,
         );
     }
 
@@ -1188,7 +1188,7 @@ const getChainCodecInstantiateMsg = (config, chainName) => {
 
     return {
         domain_separator: separator.replace('0x', ''),
-        ...rest // we also pass on additional properties here
+        ...rest, // we also pass on additional properties here
     };
 };
 
@@ -1207,15 +1207,8 @@ const getVerifierInstantiateMsg = (config, chainName) => {
         throw new Error(`VotingVerifier config not found for chain ${chainName}`);
     }
 
-    const {
-        governanceAddress,
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-    } = verifierConfig;
+    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
+        verifierConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -1281,8 +1274,17 @@ const getProverInstantiateMsg = (config, chainName) => {
         throw new Error(`MultisigProver config not found for chain ${chainName}`);
     }
 
-    const { governanceAddress, adminAddress, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType, domainSeparator, sigVerifierAddress } =
-        proverConfig;
+    const {
+        governanceAddress,
+        adminAddress,
+        signingThreshold,
+        serviceName,
+        verifierSetDiffThreshold,
+        encoder,
+        keyType,
+        domainSeparator,
+        sigVerifierAddress,
+    } = proverConfig;
 
     if (!isString(axelarChainId)) {
         throw new Error(`Missing or invalid chain ID`);
