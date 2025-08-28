@@ -188,23 +188,23 @@ ts-node sui/its.js interchain-transfer \
 - Example Command: 
 
 ```bash
-node sui/its.js interchain-transfer \
-  --coin-package-id 0xa3091cd8d87da219185e9af76362abb0818c851749ec8a537efd1c8f8e89f78f \
-  --coin-package-name my_custom_coin \
-  --coin-mod-name MY_CUSTOM_COIN \
-  --coin-object-id 0x724c2ca74b7225ca718c96345011b24358a8b6e0635e432f5a780eff89abad2f \
-  --token-id 0x3439e1756ab210d8a2b711ad63f0aef4dffad3915e748e9aea1f578cb7ff9373 \
-  --destination-chain ethereum-sepolia \
-  --destination-address 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
-  --amount 1 \ 
-  --evn testnet \  
-  --signatureScheme ed25519
+ts-node sui/its.js interchain-transfer \
+--coin-package-id 0x5d693cebdbba9fdcc8a5990858998a2f7bee87ef2d537e9dd4588a30ec615ad7 \
+--coin-package-name my_custom_coin \
+--coin-mod-name MY_CUSTOM_COIN \
+--coin-object-id 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 \
+--token-id 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 \
+--destination-chain ethereum-sepolia \
+--destination-address 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
+--amount 1 \
+--env testnet \
+--signatureScheme ed25519
 ```
 
 Example Response:
 
 ````bash
-Interchain Transfer: [E4ybURhguyxsxwbJik1QcWbg4bH35KENpRCwcfPqYieA](https://testnet.axelarscan.io/gmp/E4ybURhguyxsxwbJik1QcWbg4bH35KENpRCwcfPqYieA)
+Interchain Transfer: [HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo](https://testnet.axelarscan.io/gmp/HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo)
 ````
 
 ### Squid

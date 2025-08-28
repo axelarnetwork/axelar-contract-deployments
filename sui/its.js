@@ -129,8 +129,6 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const { InterchainTokenService } = itsConfig.objects;
-
     const { coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount } = options;
 
     const walletAddress = keypair.toSuiAddress();
@@ -141,7 +139,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
     const tokenIdObj = await txBuilder.moveCall({
-        target: `${contracts.InterchainTokenService.address}::token_id::from_u256`,
+        target: `${itsConfig.address}::token_id::from_u256`,
         arguments: [tokenId],
     });
 
@@ -154,15 +152,15 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
     const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
-        target: `${contracts.InterchainTokenService.address}::interchain_token_service::prepare_interchain_transfer`,
+        target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,
         typeArguments: [coinType],
         arguments: [tokenIdObj, coinsToSend, destinationChain, destinationAddress, '0x', gatewayChannelId],
     });
 
     const interchainTransferTicket = await txBuilder.moveCall({
-        target: `${contracts.InterchainTokenService.address}::interchain_token_service::send_interchain_transfer`,
+        target: `${itsConfig.address}::interchain_token_service::send_interchain_transfer`,
         typeArguments: [coinType],
-        arguments: [InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
+        arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
     // Specify one unit of gas to be paid to gas service.
