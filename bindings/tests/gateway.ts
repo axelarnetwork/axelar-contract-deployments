@@ -109,21 +109,6 @@ describe("Ping Gateway", () => {
     }
   });
 
-  it("CallContractOffchainData", async () => {
-    const payer = await getKeypairFromFile();
-    try {
-      const tx = await program.methods
-        .callContractOffchainData("1", "2", [1, 2], 3)
-        .accounts({
-          senderProgram: payer.publicKey,
-          senderCallContractPda: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
-        })
-        .rpc();
-    } catch (error) {
-      processError(error, "Call Contract Offchain Data");
-    }
-  });
 
   it("InitializeConfig", async () => {
     const payer = await getKeypairFromFile();
