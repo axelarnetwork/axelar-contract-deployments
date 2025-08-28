@@ -18,7 +18,6 @@ const { ParameterChangeProposal } = require('cosmjs-types/cosmos/params/v1beta1/
 const { AccessType } = require('cosmjs-types/cosmwasm/wasm/v1/types');
 const {
     printInfo,
-    printWarn,
     isString,
     isStringArray,
     isKeccak256Hash,
@@ -28,6 +27,7 @@ const {
     getSaltFromKey,
     calculateDomainSeparator,
     validateParameters,
+    tryItsEdgeContract,
 } = require('../common');
 const {
     pascalToSnake,
@@ -375,12 +375,13 @@ const makeXrplVotingVerifierInstantiateMsg = (config, options, contractConfig) =
 
 const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
+    const axelarGatewayContract = getAxelarGatewayContractForChain(chainName);
     const {
         axelar: { contracts },
         chains: {
             [chainName]: {
                 contracts: {
-                    AxelarGateway: { address: gatewayAddress },
+                    [axelarGatewayContract]: { address: gatewayAddress },
                 },
             },
         },
@@ -522,9 +523,34 @@ const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
+const getVerifierContractForChain = (chainName) => {
+    const chainVerifierMapping = {
+        stacks: 'StacksVotingVerifier',
+        solana: 'SolanaVotingVerifier',
+    };
+
+    return chainVerifierMapping[chainName] || 'VotingVerifier';
+};
+
+const getGatewayContractForChain = (chainName) => {
+    const chainGatewayMapping = {
+        solana: 'SolanaGateway',
+    };
+
+    return chainGatewayMapping[chainName] || 'Gateway';
+};
+
+const getAxelarGatewayContractForChain = (chainName) => {
+    const chainGatewayMapping = {
+        stacks: 'GatewayStorage',
+    };
+
+    return chainGatewayMapping[chainName] || 'AxelarGateway';
+};
+
 const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+    const verifierContract = getVerifierContractForChain(chainName);
 
     const {
         axelar: {
@@ -542,7 +568,7 @@ const makeGatewayInstantiateMsg = (config, options, _contractConfig) => {
     }
 
     if (!validateAddress(verifierAddress)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
+        throw new Error(`Missing or invalid ${verifierContractName}[${chainName}].address in axelar info`);
     }
 
     return { router_address: routerAddress, verifier_address: verifierAddress };
@@ -673,7 +699,8 @@ const makeXrplMultisigProverInstantiateMsg = async (config, options, contractCon
 
 const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
-    const verifierContract = chainName === 'stacks' ? 'StacksVotingVerifier' : 'VotingVerifier';
+    const verifierContract = getVerifierContractForChain(chainName);
+    const gatewayContractName = getGatewayContractForChain(chainName);
 
     const {
         axelar: { contracts, chainId: axelarChainId },
@@ -686,7 +713,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
-        Gateway: {
+        [gatewayContractName]: {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
@@ -1134,6 +1161,32 @@ const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) 
     return {};
 };
 
+const validateItsChainChange = async (client, config, chainName, proposedConfig) => {
+    const chainConfig = getChainConfig(config.chains, chainName);
+
+    const itsEdgeContract = tryItsEdgeContract(chainConfig);
+    if (!itsEdgeContract) {
+        throw new Error(`ITS edge contract not found for chain '${chainName}'.`);
+    }
+
+    const currentConfig = await client.queryContractSmart(config.axelar.contracts.InterchainTokenService.address, {
+        its_chain: {
+            chain: chainConfig.axelarId,
+        },
+    });
+
+    const hasChanges =
+        currentConfig.chain !== proposedConfig.chain ||
+        currentConfig.its_edge_contract !== proposedConfig.its_edge_contract ||
+        currentConfig.msg_translator !== proposedConfig.msg_translator ||
+        currentConfig.truncation.max_uint_bits !== proposedConfig.truncation.max_uint_bits ||
+        currentConfig.truncation.max_decimals_when_truncating !== proposedConfig.truncation.max_decimals_when_truncating;
+
+    if (!hasChanges) {
+        throw new Error(`No changes detected for chain '${chainName}'.`);
+    }
+};
+
 const CONTRACTS = {
     Coordinator: {
         scope: CONTRACT_SCOPE_GLOBAL,
@@ -1167,6 +1220,10 @@ const CONTRACTS = {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
     },
+    SolanaVotingVerifier: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
     Gateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeGatewayInstantiateMsg,
@@ -1174,6 +1231,10 @@ const CONTRACTS = {
     XrplGateway: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeXrplGatewayInstantiateMsg,
+    },
+    SolanaGateway: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeGatewayInstantiateMsg,
     },
     MultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
@@ -1184,6 +1245,10 @@ const CONTRACTS = {
         makeInstantiateMsg: makeXrplMultisigProverInstantiateMsg,
     },
     StacksMultisigProver: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeMultisigProverInstantiateMsg,
+    },
+    SolanaMultisigProver: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeMultisigProverInstantiateMsg,
     },
@@ -1237,4 +1302,5 @@ module.exports = {
     submitProposal,
     isValidCosmosAddress,
     getContractCodePath,
+    validateItsChainChange,
 };

@@ -155,17 +155,58 @@ async function isMinter(wallet, _config, chain, _contract, args, options) {
     return isMinterResult;
 }
 
-async function createMintFromAuths(tokenAddress, recipientScVal, amountScVal, wallet, chain) {
+async function addMinter(wallet, _config, chain, _contract, args, options) {
+    const [tokenAddress, minter] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, minter },
+    });
+
+    const tokenContract = new Contract(tokenAddress);
+    const operation = tokenContract.call('add_minter', nativeToScVal(minter, { type: 'address' }));
+
+    await broadcast(operation, wallet, chain, 'Add Minter', options);
+    printInfo('Successfully added minter for token', tokenAddress);
+    printInfo('New minter address', minter);
+}
+
+async function createAuths(tokenAddress, functionName, args, wallet, chain) {
     const publicKey = wallet.publicKey();
     const networkPassphrase = getNetworkPassphrase(chain.networkType);
 
     const validUntil = await getAuthValidUntilLedger(chain);
 
-    const minterScVal = nativeToScVal(wallet.publicKey(), { type: 'address' });
-    const mintAuth = createAuthorizedFunc(Address.fromString(tokenAddress), 'mint_from', [minterScVal, recipientScVal, amountScVal]);
-    const [mintInvocation] = [new xdr.SorobanAuthorizedInvocation({ function: mintAuth, subInvocations: [] })];
+    const contractAuth = createAuthorizedFunc(Address.fromString(tokenAddress), functionName, args);
+    const [contractInvocation] = [new xdr.SorobanAuthorizedInvocation({ function: contractAuth, subInvocations: [] })];
 
-    return Promise.all([authorizeInvocation(wallet, validUntil, mintInvocation, publicKey, networkPassphrase)]);
+    return Promise.all([authorizeInvocation(wallet, validUntil, contractInvocation, publicKey, networkPassphrase)]);
+}
+
+async function mint(wallet, _config, chain, _contract, args, options) {
+    const [tokenAddress, recipient, amount] = args;
+
+    validateParameters({
+        isValidStellarAddress: { tokenAddress, recipient },
+        isValidNumber: { amount },
+    });
+
+    const recipientScVal = nativeToScVal(recipient, { type: 'address' });
+    const amountScVal = nativeToScVal(amount, { type: 'i128' });
+
+    const tokenContract = new Contract(tokenAddress);
+
+    let operation = Operation.invokeContractFunction({
+        contract: tokenContract.contractId(),
+        function: 'mint',
+        args: [recipientScVal, amountScVal],
+        auth: await createAuths(tokenAddress, 'mint', [recipientScVal, amountScVal], wallet, chain),
+    });
+
+    await broadcast(operation, wallet, chain, 'Mint', options);
+    printInfo('Successfully minted tokens');
+    printInfo('To recipient', recipient);
+    printInfo('Token address', tokenAddress);
+    printInfo('Amount minted', amount);
 }
 
 async function mintFrom(wallet, _config, chain, _contract, args, options) {
@@ -186,7 +227,7 @@ async function mintFrom(wallet, _config, chain, _contract, args, options) {
         contract: tokenContract.contractId(),
         function: 'mint_from',
         args: [minterScVal, recipientScVal, amountScVal],
-        auth: await createMintFromAuths(tokenAddress, recipientScVal, amountScVal, wallet, chain),
+        auth: await createAuths(tokenAddress, 'mint_from', [minterScVal, recipientScVal, amountScVal], wallet, chain),
     });
 
     await broadcast(operation, wallet, chain, 'Mint From', options);
@@ -266,6 +307,20 @@ if (require.main === module) {
         .description('Check if an address is a minter for a token contract')
         .action((tokenAddress, minter, options) => {
             mainProcessor(isMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('add-minter <tokenAddress> <minter>')
+        .description('Add a minter for a token contract')
+        .action((tokenAddress, minter, options) => {
+            mainProcessor(addMinter, [tokenAddress, minter], options);
+        });
+
+    program
+        .command('mint <tokenAddress> <recipient> <amount>')
+        .description('Mint tokens to a recipient address')
+        .action((tokenAddress, recipient, amount, options) => {
+            mainProcessor(mint, [tokenAddress, recipient, amount], options);
         });
 
     program

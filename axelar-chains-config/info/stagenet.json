@@ -2459,8 +2459,8 @@
         "InterchainTokenService": {
           "address": "CD4KVKOEP47KHG5MIJEBCUDJSJXCZ5WCG773L5SE3SZ3JLSNOGCIQYZM",
           "deployer": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
-          "wasmHash": "cd078e4d495a61a113a6ba457f5efa4579c5bc41a396779fd82f164aa75e9942",
-          "version": "1.2.0",
+          "wasmHash": "827225d8911a0034b6059f6279453b8d6a09a9510b061026bdcbdbe19f918d0d",
+          "version": "1.4.1",
           "initializeArgs": {
             "owner": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
             "operator": "GBP4FSAOFV5O72AB3YQRDCYVD47W4N7KQK3OJODXSU3OBPNGKX4SQTJ3",
