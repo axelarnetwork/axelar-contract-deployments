@@ -1,13 +1,13 @@
 # Cosmwasm Service Registry v1.2.0
 
-|                | **Owner**                             |
-| -------------- | ------------------------------------- |
-| **Created By** | @cjcobb23 <cj@interoplabs.io>         |
-| **Deployment** | TBD                                   |
+|                | **Owner**                              |
+|----------------|----------------------------------------|
+| **Created By** | @cjcobb23 <cj@interoplabs.io>          |
+| **Deployment** | @blockchainguyy <ayush@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
-| -------------------- | --------------------- | ---------- |
-| **Devnet Amplifier** | Pending               |            |
+|----------------------|-----------------------|------------|
+| **Devnet Amplifier** | Deployed              | 2025-08-28 |
 | **Stagenet**         | Pending               |            |
 | **Testnet**          | Pending               |            |
 | **Mainnet**          | Pending               |            |
