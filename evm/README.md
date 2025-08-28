@@ -95,6 +95,14 @@ forge build --out out --libraries "lib/example-native-token-transfers/evm/src/li
 
 Please ensure you have generated pre-linked artifacts.
 
+Set address of deployed `gmpManager` to the transceiver section in your chain config:
+
+```json
+"${PREFIX}AxelarTransceiver": {
+  "gmpManager": "0x..."
+}
+```
+
 To deploy an AxelarTransceiver contract, run:
 
 ```bash
@@ -102,7 +110,6 @@ ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --gmpManager $GMP_MANAGER_ADDRESS \
   --transceiverPrefix $PREFIX
 ```
 
