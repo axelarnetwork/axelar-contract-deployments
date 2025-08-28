@@ -34,6 +34,10 @@ async function rewards(client, config, _args, options) {
 async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
+    if (!chainConfig) {
+        throw new Error(`Chain ${chainName} not found in config`);
+    }
+
     return await client.queryContractSmart(itsHubContractAddress(config.axelar), {
         its_chain: {
             chain: chainConfig.axelarId,
@@ -92,8 +96,8 @@ async function tokenInstance(client, config, args, _options) {
     }
 }
 
-async function itsChainConfig(client, config, options) {
-    const { chainName } = options;
+async function itsChainConfig(client, config, args, _options) {
+    const [chainName] = args;
 
     try {
         const result = await getItsChainConfig(client, config, chainName);
@@ -153,8 +157,7 @@ const programHandler = () => {
         .description('Query ITS chain configuration for a specific chain')
         .argument('<chainName>', 'name of the chain to query')
         .action((chainName, options) => {
-            options.chainName = chainName;
-            mainProcessor(itsChainConfig, options);
+            mainProcessor(itsChainConfig, [chainName], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);
