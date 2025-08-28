@@ -18,6 +18,7 @@ const {
     printWalletInfo,
     printTokenInfo,
     isTrustedChain,
+    encodeITSDestination,
 } = require('./utils');
 const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -288,16 +289,19 @@ async function processCommand(_axelar, chain, chains, options) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
+            const itsDestinationTokenAddress = encodeITSDestination(chains, destinationChain, destinationTokenAddress);
+            printInfo('Human-readable destination token address', destinationTokenAddress);
+
             validateParameters({
-                isNonEmptyString: { destinationChain },
+                isNonEmptyString: { destinationChain, destinationTokenAddress },
                 isValidNumber: { tokenManagerType, gasValue },
-                isValidBytesArray: { linkParams, destinationTokenAddress },
+                isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
 
             const tx = await interchainTokenFactory.linkToken(
                 deploymentSalt,
                 destinationChain,
-                destinationTokenAddress,
+                itsDestinationTokenAddress,
                 tokenManagerType,
                 linkParams,
                 gasValue,
