@@ -596,6 +596,63 @@ async function processCommand(_axelar, chain, chains, action, options) {
             break;
         }
 
+        case 'mint-token': {
+            const [tokenId, to, amount] = args;
+            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { to }, isValidNumber: { amount } });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            // Get token manager address
+            const tokenManagerAddress = await interchainTokenService.deployedTokenManager(tokenIdBytes32);
+            printInfo(`TokenManager address for tokenId: ${tokenId}`, tokenManagerAddress);
+
+            // Get token address
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+            printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
+
+            const tokenManager = new Contract(tokenManagerAddress, ITokenManager.abi, wallet);
+
+            const amountInUnits = ethers.BigNumber.from(amount.toString());
+
+            if (prompt(`Proceed with minting ${amount} to ${to}?`, yes)) {
+                return;
+            }
+
+            // Execute mint
+            const tx = await tokenManager.mintToken(tokenAddress, to, amountInUnits, gasOptions);
+            await handleTx(tx, chain, tokenManager, action);
+
+            break;
+        }
+
+        case 'approve': {
+            const [tokenId, spender, amount] = args;
+            validateParameters({ isValidTokenId: { tokenId }, isValidAddress: { spender }, isValidNumber: { amount } });
+
+            const tokenIdBytes32 = hexZeroPad(tokenId.startsWith('0x') ? tokenId : '0x' + tokenId, 32);
+
+            // Get token address
+            const tokenAddress = await interchainTokenService.registeredTokenAddress(tokenIdBytes32);
+            printInfo(`Token address for tokenId: ${tokenId}`, tokenAddress);
+
+            // Create token contract instance
+            const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
+
+            // Use amount directly as wei
+            const amountInUnits = ethers.BigNumber.from(amount.toString());
+            printInfo(`Approving ${spender} to spend ${amount} wei of token ${tokenId}`);
+
+            if (prompt(`Proceed with approving ${spender} to spend ${amount} wei?`, yes)) {
+                return;
+            }
+
+            // Execute approval
+            const tx = await token.approve(spender, amountInUnits, gasOptions);
+            await handleTx(tx, chain, token, action, 'Approval');
+
+            break;
+        }
+
         case 'transfer-mintership': {
             const [tokenAddress, minter] = args;
             validateParameters({ isValidAddress: { tokenAddress, minter } });
@@ -842,6 +899,26 @@ if (require.main === module) {
         .argument('<token-id>', 'Token ID')
         .action((tokenId, options, cmd) => {
             main(cmd.name(), [tokenId], options);
+        });
+
+    program
+        .command('mint-token')
+        .description('Mint tokens using token manager')
+        .argument('<token-id>', 'Token ID')
+        .argument('<to>', 'Recipient address')
+        .argument('<amount>', 'Amount to mint')
+        .action((tokenId, to, amount, options, cmd) => {
+            main(cmd.name(), [tokenId, to, amount], options);
+        });
+
+    program
+        .command('approve')
+        .description('Approve spender to spend tokens')
+        .argument('<token-id>', 'Token ID')
+        .argument('<spender>', 'Spender address')
+        .argument('<amount>', 'Amount to approve (in wei)')
+        .action((tokenId, spender, amount, options, cmd) => {
+            main(cmd.name(), [tokenId, spender, amount], options);
         });
 
     program

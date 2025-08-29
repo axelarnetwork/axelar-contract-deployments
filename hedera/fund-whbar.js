@@ -5,7 +5,7 @@ const { Command, Option } = require('commander');
 const { ethers } = require('hardhat');
 const { Wallet, getDefaultProvider } = ethers;
 const { addBaseOptions, printHederaNetwork, addSkipPromptOption } = require('./cli-utils.js');
-const { prompt, printInfo, printError } = require('../common/utils.js');
+const { loadConfig, prompt, printInfo, printError } = require('../common/utils.js');
 const { getRpcUrl } = require('./client.js');
 
 // Basic WHBAR ABI for deposit, transfer, and balanceOf functions
@@ -46,19 +46,34 @@ async function fundWhbar(_config, receiverAddress, options) {
     printHederaNetwork(options);
 
     try {
-        // Get RPC URL from environment
-        const provider = getDefaultProvider(getRpcUrl(options.hederaNetwork));
+        // Load chain configuration
+        const config = loadConfig(options.env);
+        const chain = config.chains[options.chainName];
+
+        if (!chain) {
+            throw new Error(`Chain ${options.chainName} not found in ${options.env} configuration`);
+        }
+
+        // Get WHBAR address from config
+        const whbarAddress = chain.whbarAddress;
+        if (!whbarAddress) {
+            throw new Error(`WHBAR address not found for chain ${options.chainName}`);
+        }
+
+        // Get RPC URL and create provider
+        const provider = getDefaultProvider(chain.rpc || getRpcUrl(options.hederaNetwork));
 
         // Create wallet from private key
         const wallet = new Wallet(options.privateKey, provider);
         printInfo(`Using wallet address`, wallet.address);
+        printInfo(`Chain`, `${chain.name} (${options.chainName})`);
+        printInfo(`WHBAR contract address`, whbarAddress);
 
         const accountBalance = await wallet.getBalance();
         printInfo(`Account balance`, `${ethers.utils.formatEther(accountBalance)} HBAR`);
 
         // Create WHBAR contract instance
-        const whbar = new ethers.Contract(options.whbarAddress, WHBAR_ABI, provider);
-        printInfo(`Using WHBAR contract at`, options.whbarAddress);
+        const whbar = new ethers.Contract(whbarAddress, WHBAR_ABI, provider);
 
         // Parse amount
         const amount = ethers.utils.parseEther(options.amount.toString());
@@ -94,7 +109,13 @@ if (require.main === module) {
         .name('fund-whbar')
         .description('Fund an address with WHBAR by depositing HBAR')
         .argument('<receiverAddress>', 'Address to fund with WHBAR')
-        .addOption(new Option('--whbarAddress <address>', 'Address of the WHBAR contract').env('WHBAR_ADDRESS').makeOptionMandatory(true))
+        .addOption(new Option('-n, --chainName <chainName>', 'Chain name to get WHBAR address from').env('CHAIN').makeOptionMandatory(true))
+        .addOption(
+            new Option('-e, --env <env>', 'Environment configuration to use')
+                .choices(['mainnet', 'stagenet', 'testnet', 'devnet-amplifier'])
+                .default('devnet-amplifier')
+                .env('ENV'),
+        )
         .addOption(
             new Option('--amount <amount>', 'Amount of HBAR to deposit (will be converted to WHBAR)')
                 .makeOptionMandatory(true)

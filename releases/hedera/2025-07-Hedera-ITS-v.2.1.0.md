@@ -144,25 +144,27 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 ```bash
 # Fund user with some WHBAR
-ts-node hedera/fund-whbar.js [user-address] --whbarAddress [whbar-address] --amount 100
+ts-node hedera/fund-whbar.js [user-address] --amount 100 -n $CHAIN
 
 # Approve factory to spend WHBAR
-ts-node hedera/approve-factory-whbar.js --whbarAddress [whbar-address] -n $CHAIN
+ts-node hedera/approve-factory-whbar.js -n $CHAIN
 
 # Create a token on Hedera
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" --initialSupply 0 -n $CHAIN
 
-# Record the newly created token address from the output.
+# Record the newly created token id and address from the output.
 
 # Associate with the token address
 ts-node hedera/associate-token.js [token-address]
 
 # Mint some tokens via the TokenManager
+ts-node evm/its.js mint-token [token-id] [to] [amount] -n $CHAIN
 
 # Deploy token to a remote chain
 ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
 # Approve token manager to spend tokens
+ts-node evm/its.js approve [token-id] [spender] [amount]
 
 # Transfer token to remote chain
 ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
