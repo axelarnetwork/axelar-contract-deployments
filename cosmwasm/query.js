@@ -1,7 +1,7 @@
 'use strict';
 
 const { prepareDummyWallet, prepareClient, initContractConfig } = require('./utils');
-const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress } = require('../common');
+const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress, saveConfig } = require('../common');
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
@@ -72,6 +72,76 @@ async function tokenConfig(client, config, args, _options) {
     }
 }
 
+async function deployedContracts(client, config, args, options) {
+    const { chainName } = options;
+
+    const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
+    if (!coordinatorAddress) {
+        return printWarn(`Coordinator contract address not found in config for ${chainName}`);
+    }
+
+    const deploymentName = config.axelar?.contracts?.Coordinator?.deployments?.[chainName]?.deploymentName;
+    if (!deploymentName) {
+        return printWarn(
+            `No deployment found for chain ${chainName} in config.`,
+            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+        );
+    }
+
+    let result;
+    try {
+        result = await client.queryContractSmart(coordinatorAddress, {
+            deployed_contracts: {
+                deployment_name: deploymentName,
+            },
+        });
+
+        printInfo(`Fetched deployed contracts for ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        return printWarn(`Failed to fetch deployed contracts for ${chainName}`, error?.message || String(error));
+    }
+
+    if (
+        !result.verifier ||
+        !config.axelar.contracts.VotingVerifier?.[chainName] ||
+        !result.prover ||
+        !config.axelar.contracts.MultisigProver?.[chainName] ||
+        !result.gateway
+    ) {
+        return printWarn(
+            `Missing config for ${chainName}.`,
+            `Run 'ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts -n ${chainName}'.`,
+        );
+    }
+
+    config.axelar.contracts.VotingVerifier[chainName] = {
+        ...config.axelar.contracts.VotingVerifier[chainName],
+        address: result.verifier,
+    };
+    printInfo(`Updated VotingVerifier[${chainName}].address`, result.verifier);
+
+    if (!config.axelar.contracts.Gateway) {
+        config.axelar.contracts.Gateway = {};
+    }
+    if (!config.axelar.contracts.Gateway[chainName]) {
+        config.axelar.contracts.Gateway[chainName] = {};
+    }
+    config.axelar.contracts.Gateway[chainName] = {
+        ...config.axelar.contracts.Gateway[chainName],
+        address: result.gateway,
+    };
+    printInfo(`Updated Gateway[${chainName}].address`, result.gateway);
+
+    config.axelar.contracts.MultisigProver[chainName] = {
+        ...config.axelar.contracts.MultisigProver[chainName],
+        address: result.prover,
+    };
+    printInfo(`Updated MultisigProver[${chainName}].address`, result.prover);
+
+    saveConfig(config, options.env);
+    printInfo(`Config updated successfully for ${chainName}`);
+}
+
 const mainProcessor = async (processor, args, options) => {
     const { env } = options;
     const config = loadConfig(env);
@@ -103,8 +173,17 @@ const programHandler = () => {
             mainProcessor(tokenConfig, [chainName, tokenId], options);
         });
 
+    const saveDeployedContractsCmd = program
+        .command('save-deployed-contracts')
+        .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
+        .requiredOption('-n, --chainName <chainName>', 'chain name')
+        .action((options) => {
+            mainProcessor(deployedContracts, [], options);
+        });
+
     addAmplifierQueryOptions(rewardCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
+    addAmplifierQueryOptions(saveDeployedContractsCmd);
 
     const itsChainConfigCmd = program
         .command('its-chain-config')
