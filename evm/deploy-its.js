@@ -12,7 +12,7 @@ const {
     printInfo,
     printWarn,
     printError,
-    getContractJSON,
+    getContractJSONStandard,
     mainProcessor,
     prompt,
     sleep,
@@ -24,6 +24,7 @@ const {
     getDeployedAddress,
     wasEventEmitted,
     isHyperliquidChain,
+    isHederaChain,
     parseTrustedChains,
     detectITSVersion,
 } = require('./utils');
@@ -31,6 +32,8 @@ const { itsHubContractAddress } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
 const { Command, Option } = require('commander');
 const { updateBlockSize } = require('./hyperliquid');
+const { getContractJSONWithHTS } = require('../hedera/utils.js');
+const { DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS, DEFAULT_TOKEN_CREATION_PRICE_USD } = require('../hedera/token-creation-price.js');
 
 /**
  * Function that handles the ITS deployment with chain-specific token support.
@@ -52,15 +55,36 @@ async function deployAll(axelar, wallet, chain, chains, options) {
     const itsFactoryContractName = 'InterchainTokenFactory';
     const contracts = chain.contracts;
 
+    const contractConfig = contracts[contractName] || {};
+    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
+
+    let getContractJSON = getContractJSONStandard;
+
+    if (isHederaChain(chain)) {
+        // Hedera HTS library address
+        if (!isAddress(chain.htsLibraryAddress)) {
+            printError('No HTS library address found for chain', chain.name);
+            return;
+        }
+        printInfo('Using HTS library address', chain.htsLibraryAddress);
+
+        getContractJSON = getContractJSONWithHTS(chain.htsLibraryAddress);
+
+        // Hedera WHBAR address
+        if (!isAddress(chain.whbarAddress)) {
+            printError('No WHBAR address value found for chain', chain.name);
+            return;
+        } else {
+            printInfo('Using WHBAR address', chain.whbarAddress);
+        }
+    }
+
     // Deploy only the appropriate token implementation based on chain type
     const interchainTokenContractName = isHyperliquidChain(chain) ? 'HyperliquidInterchainToken' : 'InterchainToken';
     const InterchainTokenService = getContractJSON(
         isHyperliquidChain(chain) ? 'HyperliquidInterchainTokenService' : 'InterchainTokenService',
         artifactPath,
     );
-
-    const contractConfig = contracts[contractName] || {};
-    const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
 
     const itsVersion = detectITSVersion();
 
@@ -185,6 +209,7 @@ async function deployAll(axelar, wallet, chain, chains, options) {
         interchainToken: {
             name: 'Interchain Token',
             contractName: 'InterchainToken',
+            skip: isHederaChain(chain),
             async deploy() {
                 return deployContract(
                     deployMethod,
@@ -202,11 +227,13 @@ async function deployAll(axelar, wallet, chain, chains, options) {
             name: 'Interchain Token Deployer',
             contractName: 'InterchainTokenDeployer',
             async deploy() {
+                const params = isHederaChain(chain) ? [] : [contractConfig.interchainToken];
+
                 return deployContract(
                     deployMethod,
                     wallet,
                     getContractJSON('InterchainTokenDeployer', artifactPath),
-                    [contractConfig.interchainToken],
+                    params,
                     deployOptions,
                     gasOptions,
                     verifyOptions,
@@ -263,6 +290,10 @@ async function deployAll(axelar, wallet, chain, chains, options) {
                     contractConfig.tokenHandler,
                 ];
 
+                if (isHederaChain(chain)) {
+                    args.push(chain.whbarAddress);
+                }
+
                 printInfo('ITS Implementation args', args);
 
                 return deployContract(
@@ -283,10 +314,24 @@ async function deployAll(axelar, wallet, chain, chains, options) {
             async deploy() {
                 const operatorAddress = options.operatorAddress || wallet.address;
 
-                const deploymentParams = defaultAbiCoder.encode(
-                    ['address', 'string', 'string[]'],
-                    [operatorAddress, chain.axelarId, trustedChains],
-                );
+                let deploymentParams;
+                if (isHederaChain(chain)) {
+                    const tokenCreationPrice = DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS;
+
+                    deploymentParams = defaultAbiCoder.encode(
+                        ['address', 'string', 'string[]', 'uint256'],
+                        [operatorAddress, chain.axelarId, trustedChains, DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS],
+                    );
+
+                    printInfo(
+                        `Setting ITS token creation price to ${DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS} tinycents ($${DEFAULT_TOKEN_CREATION_PRICE_USD})`,
+                    );
+                } else {
+                    deploymentParams = defaultAbiCoder.encode(
+                        ['address', 'string', 'string[]'],
+                        [operatorAddress, chain.axelarId, trustedChains],
+                    );
+                }
                 contractConfig.predeployCodehash = predeployCodehash;
 
                 const args = [contractConfig.implementation, wallet.address, deploymentParams];
@@ -350,6 +395,11 @@ async function deployAll(axelar, wallet, chain, chains, options) {
         // When upgrading/reusing proxy, avoid re-deploying the proxy and the interchain token contract
         if (options.reuseProxy && ['InterchainToken', 'InterchainProxy'].includes(deployment.contractName)) {
             printInfo(`Reusing ${deployment.name} deployment`);
+            continue;
+        }
+
+        if (deployment.skip) {
+            printInfo(`Skipping ${deployment.name} deployment.`);
             continue;
         }
 

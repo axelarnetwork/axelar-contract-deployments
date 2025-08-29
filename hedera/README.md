@@ -34,6 +34,18 @@ node hedera/deploy-hts-lib.js [options]
 node hedera/deploy-hts-lib.js --gas <amount> --output <file>
 ```
 
+After this step, update the chain config for the appropriate in `axelar-chains-config/info/<env>.json` like so:
+
+```json
+{
+	//...
+	"chain-xyz": {
+		//...
+		"htsLibraryAddress": "0x...", // address of the deployed HTS library
+		//...
+	}
+}
+
 ### Fund with WHBAR
 
 Fund an address with WHBAR (Wrapped HBAR) by depositing HBAR. WHBAR is the ERC-20 compatible version of HBAR used in smart contracts. See more about WHBAR [here](https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar).
@@ -62,7 +74,7 @@ node hedera/fund-whbar.js --to 0x742d35cc6634c0532925a3b8d098e9c6084b66e6 --whba
 After deploying the HTS library and populating its address in `.env`, deploy the complete ITS contract suite:
 
 ```bash
-node hedera/deploy-its.js -s "salt123 devnet-amplifier" --proxySalt 'salt123 devnet-amplifier' -m create2 -e devnet-amplifier -n hedera
+node evm/deploy-its.js -s "salt123 devnet-amplifier" --proxySalt 'salt123 devnet-amplifier' -m create2 -e devnet-amplifier -n hedera
 ```
 
 ## Common Options
