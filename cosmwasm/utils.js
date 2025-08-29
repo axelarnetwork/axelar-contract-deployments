@@ -464,6 +464,13 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     };
 };
 
+const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
+    // dummy for now because it needs the multisig-prover address,
+    // but multisig-prover needs chain-codec address
+    // TODO: Implement chain codec instantiation for migrations to work
+    throw new Error('cannot instantiate directly, use instantiate-chain-codec instead');
+}
+
 const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
     const {
@@ -1442,6 +1449,10 @@ const CONTRACTS = {
     VotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
         makeInstantiateMsg: makeVotingVerifierInstantiateMsg,
+    },
+    ChainCodec: {
+        scope: CONTRACT_SCOPE_CHAIN,
+        makeInstantiateMsg: makeChainCodecInstantiateMsg,
     },
     XrplVotingVerifier: {
         scope: CONTRACT_SCOPE_CHAIN,
