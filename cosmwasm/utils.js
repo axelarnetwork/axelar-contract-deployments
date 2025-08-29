@@ -1145,6 +1145,10 @@ const getContractArtifactPath = (artifactDir, contractName) => {
 };
 
 const getContractCodePath = async (options, contractName) => {
+    if (options.wasm) {
+        return options.wasm;
+    }
+
     if (options.artifactDir) {
         return getContractArtifactPath(options.artifactDir, contractName);
     }
@@ -1154,7 +1158,7 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-dir or --version must be provided');
+    throw new Error('Either --artifact-dir, --wasm, or --version must be provided');
 };
 
 const makeItsAbiTranslatorInstantiateMsg = (_config, _options, _contractConfig) => {
