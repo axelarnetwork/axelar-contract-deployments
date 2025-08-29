@@ -1,4 +1,4 @@
-import { Idl, Coder } from "@coral-xyz/anchor";
+import { Idl, Coder } from "@project-serum/anchor";
 
 import { AxelarSolanaGatewayAccountsCoder } from "./accounts";
 import { AxelarSolanaGatewayEventsCoder } from "./events";

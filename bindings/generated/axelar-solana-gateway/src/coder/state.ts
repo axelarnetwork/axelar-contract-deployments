@@ -1,4 +1,4 @@
-import { Idl, StateCoder } from "@coral-xyz/anchor";
+import { Idl, StateCoder } from "@project-serum/anchor";
 
 export class AxelarSolanaGatewayStateCoder implements StateCoder {
   constructor(_idl: Idl) {}

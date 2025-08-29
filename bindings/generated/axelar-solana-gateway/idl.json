@@ -140,49 +140,6 @@
       ]
     },
     {
-      "name": "callContractOffchainData",
-      "accounts": [
-        {
-          "name": "senderProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "senderCallContractPda",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "gatewayRootPda",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "destinationChain",
-          "type": "string"
-        },
-        {
-          "name": "destinationContractAddress",
-          "type": "string"
-        },
-        {
-          "name": "payloadHash",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "signingPdaBump",
-          "type": "u8"
-        }
-      ]
-    },
-    {
       "name": "initializeConfig",
       "accounts": [
         {

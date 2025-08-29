@@ -1,6 +1,6 @@
 // @ts-nocheck
 import * as B from "@native-to-anchor/buffer-layout";
-import { Idl, InstructionCoder } from "@coral-xyz/anchor";
+import { Idl, InstructionCoder } from "@project-serum/anchor";
 
 export class AxelarSolanaGatewayInstructionCoder implements InstructionCoder {
   constructor(_idl: Idl) {}
@@ -15,9 +15,6 @@ export class AxelarSolanaGatewayInstructionCoder implements InstructionCoder {
       }
       case "callContract": {
         return encodeCallContract(ix);
-      }
-      case "callContractOffchainData": {
-        return encodeCallContractOffchainData(ix);
       }
       case "initializeConfig": {
         return encodeInitializeConfig(ix);
@@ -116,31 +113,6 @@ function encodeCallContract({
   );
 }
 
-function encodeCallContractOffchainData({
-  destinationChain,
-  destinationContractAddress,
-  payloadHash,
-  signingPdaBump,
-}: any): Buffer {
-  return encodeData(
-    {
-      callContractOffchainData: {
-        destinationChain,
-        destinationContractAddress,
-        payloadHash,
-        signingPdaBump,
-      },
-    },
-    1 +
-      4 +
-      destinationChain.length +
-      4 +
-      destinationContractAddress.length +
-      1 * 32 +
-      1
-  );
-}
-
 function encodeInitializeConfig({
   domainSeparator,
   initialSignerSets,
@@ -175,15 +147,6 @@ function encodeVerifySignature({
   payloadMerkleRoot,
   verifierInfo,
 }: any): Buffer {
-  
-  const signatureKey = Object.keys(verifierInfo.signature)[0];
-  const signatureValue = verifierInfo.signature[signatureKey];
-  verifierInfo.signature[signatureKey] = signatureValue['0'];
-
-  const signerPubKey = Object.keys(verifierInfo.leaf.signerPubkey)[0];
-  const signerPubKeyValue = verifierInfo.leaf.signerPubkey[signerPubKey];
-  verifierInfo.leaf.signerPubkey[signerPubKey] = signerPubKeyValue['0'];
-
   return encodeData(
     { verifySignature: { payloadMerkleRoot, verifierInfo } },
     1 +
@@ -313,16 +276,6 @@ LAYOUT.addVariant(
 LAYOUT.addVariant(
   3,
   B.struct([
-    B.utf8Str("destinationChain"),
-    B.utf8Str("destinationContractAddress"),
-    B.seq(B.u8(), 32, "payloadHash"),
-    B.u8("signingPdaBump"),
-  ]),
-  "callContractOffchainData"
-);
-LAYOUT.addVariant(
-  4,
-  B.struct([
     B.seq(B.u8(), 32, "domainSeparator"),
     B.vec(B.seq(B.u8(), 32), "initialSignerSets"),
     B.u64("minimumRotationDelay"),
@@ -332,12 +285,12 @@ LAYOUT.addVariant(
   "initializeConfig"
 );
 LAYOUT.addVariant(
-  5,
+  4,
   B.struct([B.seq(B.u8(), 32, "payloadMerkleRoot")]),
   "initializePayloadVerificationSession"
 );
 LAYOUT.addVariant(
-  6,
+  5,
   B.struct([
     B.seq(B.u8(), 32, "payloadMerkleRoot"),
     B.struct(
@@ -373,27 +326,27 @@ LAYOUT.addVariant(
   "verifySignature"
 );
 LAYOUT.addVariant(
-  7,
+  6,
   B.struct([B.u64("bufferSize"), B.seq(B.u8(), 32, "commandId")]),
   "initializeMessagePayload"
 );
 LAYOUT.addVariant(
-  8,
+  7,
   B.struct([B.u64("offset"), B.bytes("bytes"), B.seq(B.u8(), 32, "commandId")]),
   "writeMessagePayload"
 );
 LAYOUT.addVariant(
-  9,
+  8,
   B.struct([B.seq(B.u8(), 32, "commandId")]),
   "commitMessagePayload"
 );
 LAYOUT.addVariant(
-  10,
+  9,
   B.struct([B.seq(B.u8(), 32, "commandId")]),
   "closeMessagePayload"
 );
 LAYOUT.addVariant(
-  11,
+  10,
   B.struct([
     B.struct(
       [
@@ -408,7 +361,7 @@ LAYOUT.addVariant(
   ]),
   "validateMessage"
 );
-LAYOUT.addVariant(12, B.struct([]), "transferOperatorship");
+LAYOUT.addVariant(11, B.struct([]), "transferOperatorship");
 
 function encodeData(ix: any, span: number): Buffer {
   const b = Buffer.alloc(span);
