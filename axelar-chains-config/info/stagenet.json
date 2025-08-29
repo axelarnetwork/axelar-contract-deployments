@@ -1672,22 +1672,22 @@
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
         },
         "InterchainTokenService": {
-          "salt": "ITS v1.0.0 hedera",
+          "salt": "ITS v2.1.0",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "proxySalt": "ITS v1.0.0 hedera",
-          "tokenManagerDeployer": "0x9881245b8D4B232b57F1C05Ae0Ec2642920c5558",
-          "interchainTokenDeployer": "0x07B90C08D8fe141a8C282E499B7486C0F6De8834",
-          "tokenManager": "0x140CF81C5ADE7000950d135f653b4cc73E1F0f53",
-          "tokenHandler": "0x4cA09dF1E62440A1b623258158DDa40c8613c8c6",
-          "implementation": "0xaBc20e95338E36e3bC5aCB7641021855C964061B",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x835AF4Fa00f7D7E90e878A5Ed72c309fEA3CB675",
+          "interchainTokenDeployer": "0x48ca274849c3CBfAB152b46d88c52C7740cb1007",
+          "tokenManager": "0x377F8af458d247E6B92a988b015997De053a98ae",
+          "tokenHandler": "0x358f38620e86fBBDA786A1a1500241b3AFf2a973",
+          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
-          "address": "0xfb7E78E1E154ba2F86f2D06949C5127a0C71a9D5"
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
         },
         "InterchainTokenFactory": {
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
-          "salt": "ITS Factory v1.0.0 hedera",
-          "implementation": "0xFE2ffC4265427Bb36EbeC74fBA65f1e0D0C24Ea6",
-          "address": "0x4CadE08E5296533E25FAF6747b21f0b0A665Cc83"
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0x3296D09c102447ECEE9E469c83b22Bbec8e87a95",
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
         }
       }
     },
