@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Deployed              | 2025-08-28 |
 | **Stagenet**         | Deployed              | 2025-08-28 |
 | **Testnet**          | Pending               |            |
-| **Mainnet**          | Pending               |            |
+| **Mainnet**          | In Progress           | 2025-09-01 |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/service-registry-v1.2.0)
