@@ -9,7 +9,7 @@
 |----------------------|-----------------------|------------|
 | **Devnet Amplifier** | Deployed              | 2025-08-28 |
 | **Stagenet**         | Deployed              | 2025-08-28 |
-| **Testnet**          | Pending               |            |
+| **Testnet**          | Deployed              | 2025-08-29 |
 | **Mainnet**          | Pending               |            |
 
 
