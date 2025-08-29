@@ -1353,6 +1353,7 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "gasScalingFactor": 10,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
