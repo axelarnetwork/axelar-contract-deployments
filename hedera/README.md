@@ -92,19 +92,64 @@ Fund an address with WHBAR (Wrapped HBAR) by depositing HBAR. WHBAR is the ERC-2
 Addresses of `WHBAR` contracts can be found [here](https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar#contract-deployments).
 
 ```bash
-node hedera/fund-whbar.js <receiverAddress> --amount <amount> --whbarAddress <address>
+node hedera/fund-whbar.js <receiverAddress> --amount <amount> -e <env> -n <chainName>
 ```
 
 **Arguments:**
 - `<receiverAddress>` - Address to fund with WHBAR (required)
 
 **Options:**
-- `--whbarAddress <address>` - Address of the WHBAR contract (optional, defaults to `WHBAR_ADDRESS` env var)
-- `--amount <amount>` - Amount of HBAR to deposit and convert to WHBAR (optional, defaults to WHBAR_AMOUNT env var)
+- `--chainName <chainName>` - Chain name to get WHBAR address from (can use CHAIN env var)
+- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--amount <amount>` - Amount of HBAR to deposit and convert to WHBAR (can use WHBAR_AMOUNT env var)
 - `--privateKey <key>` - Private key for funding account (optional)
 - `--yes` - Skip confirmation prompt
 
 **Example:**
 ```bash
-node hedera/fund-whbar.js --to 0x742d35cc6634c0532925a3b8d098e9c6084b66e6 --whbarAddress 0x... --amount 10
+node hedera/fund-whbar.js 0x742d35cc6634c0532925a3b8d098e9c6084b66e6 --chainName hedera --env devnet-amplifier --amount 10
 ```
+
+### Approve WHBAR for InterchainTokenFactory
+
+Approve WHBAR spending for the InterchainTokenFactory contract. This allows the factory to spend your WHBAR tokens when deploying new interchain tokens locally on the same chain.
+
+```bash
+node hedera/approve-factory-whbar.js --amount <amount> --chainName <chainName> --env <env>
+```
+
+**Options:**
+- `--chainName <chainName>` - Chain name to get WHBAR and InterchainTokenFactory addresses from (can use CHAIN env var)
+- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--amount <amount>` - Amount to approve (use "max" for maximum uint256, defaults to "max")
+- `--privateKey <key>` - Private key for the account (optional)
+- `--yes` - Skip confirmation prompt
+
+**Example:**
+```bash
+node hedera/approve-factory-whbar.js --chainName hedera --env devnet-amplifier --amount max
+```
+
+### Associate Token with Account
+
+Associate a Hedera token with your account. This is required before you can receive or interact with HTS (Hedera Token Service) tokens. The script accepts both Hedera token IDs (0.0.xxxxx format) and EVM addresses.
+
+```bash
+node hedera/associate-token.js <tokenId>
+```
+
+**Arguments:**
+- `<tokenId>` - Token ID in Hedera format (0.0.xxxxx) or EVM address (0x...)
+
+**Options:**
+- `--accountId <id>` - Hedera account ID (can use HEDERA_ID env var)
+- `--privateKey <key>` - Private key for the account (can use PRIVATE_KEY env var)
+- `--hederaNetwork <network>` - Hedera network: testnet or mainnet (can use HEDERA_NETWORK env var)
+- `--yes` - Skip confirmation prompt
+
+**Example:**
+```bash
+node hedera/associate-token.js 0.0.123456
+```
+
+**Note:** If the token is already associated with your account, the script will detect this and exit successfully without performing a duplicate association.
