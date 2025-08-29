@@ -17,26 +17,26 @@ export interface ContractInfo {
 }
 
 export enum Contract {
-  ServiceRegistry,
-  Router,
-  Multisig,
-  Coordinator,
-  Rewards,
-  AxelarnetGateway,
-  InterchainTokenService,
+    ServiceRegistry,
+    Router,
+    Multisig,
+    Coordinator,
+    Rewards,
+    AxelarnetGateway,
+    InterchainTokenService,
 }
 
 export const ContractMap = new Map<Contract, string>([
-  [Contract.ServiceRegistry, "ServiceRegistry"],
-  [Contract.Router, "Router"],
-  [Contract.Multisig, "Multisig"],
-  [Contract.Coordinator, "Coordinator"],
-  [Contract.Rewards, "Rewards"],
-  [Contract.AxelarnetGateway, "AxelarnetGateway"],
-  [Contract.InterchainTokenService, "InterchainTokenService"],
+    [Contract.ServiceRegistry, 'ServiceRegistry'],
+    [Contract.Router, 'Router'],
+    [Contract.Multisig, 'Multisig'],
+    [Contract.Coordinator, 'Coordinator'],
+    [Contract.Rewards, 'Rewards'],
+    [Contract.AxelarnetGateway, 'AxelarnetGateway'],
+    [Contract.InterchainTokenService, 'InterchainTokenService'],
 ]);
 
-export async function get_contract_info(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
+export async function getContractInfo(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {
     try {
         const result = await client.queryContractRaw(contract_address, Buffer.from('contract_info'));
         const contract_info: ContractInfo = JSON.parse(Buffer.from(result).toString('ascii'));
@@ -80,7 +80,7 @@ const programHandler = () => {
                 }
 
                 try {
-                    const contract_info: ContractInfo = await get_contract_info(client, address);
+                    const contract_info: ContractInfo = await getContractInfo(client, address);
                     console.log(contract_info);
                 } catch (error) {
                     console.error(error);

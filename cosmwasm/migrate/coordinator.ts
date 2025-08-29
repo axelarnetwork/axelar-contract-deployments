@@ -1,11 +1,10 @@
-import { query_chains_from_router, ChainEndpoint, SigningCosmWasmClient } from './utils';
-import { ContractInfo } from '../contract';
+import { ChainEndpoint, SigningCosmWasmClient, queryChainsFromRouter } from './utils';
 
 interface Options {
-    env: string; 
+    env: string;
     mnemonic: string;
     address: string;
-    fees; 
+    fees;
     dry?;
     dummy?;
 }
@@ -17,43 +16,38 @@ interface ChainContracts {
     verifier_address: string;
 }
 
-async function construct_chain_contracts(
-    client: typeof SigningCosmWasmClient,
-    chain_endpoints: ChainEndpoint[],
-): Promise<ChainContracts[]> {
-    return new Promise(async (resolve, reject) => {
-        interface GatewayConfig {
-            verifier: string;
-        }
+async function constructChainContracts(client: typeof SigningCosmWasmClient, chain_endpoints: ChainEndpoint[]): Promise<ChainContracts[]> {
+    interface GatewayConfig {
+        verifier: string;
+    }
 
-        try {
-            const chain_contracts: ChainContracts[] = [];
+    try {
+        const chain_contracts: ChainContracts[] = [];
 
-            for (let i = 0; i < chain_endpoints.length; i++) {
-                const res = await client.queryContractRaw(chain_endpoints[i].gateway.address, Buffer.from('config'));
-                const config: GatewayConfig = JSON.parse(Buffer.from(res).toString('ascii'));
-                if (chain_endpoints[i].name && chain_endpoints[i].gateway.address && config.verifier) {
-                    chain_contracts.push({
-                        chain_name: chain_endpoints[i].name,
-                        gateway_address: chain_endpoints[i].gateway.address,
-                        verifier_address: config.verifier,
-                    });
-                }
+        for (let i = 0; i < chain_endpoints.length; i++) {
+            const res = await client.queryContractRaw(chain_endpoints[i].gateway.address, Buffer.from('config'));
+            const config: GatewayConfig = JSON.parse(Buffer.from(res).toString('ascii'));
+            if (chain_endpoints[i].name && chain_endpoints[i].gateway.address && config.verifier) {
+                chain_contracts.push({
+                    chain_name: chain_endpoints[i].name,
+                    gateway_address: chain_endpoints[i].gateway.address,
+                    verifier_address: config.verifier,
+                });
             }
-
-            resolve(chain_contracts);
-        } catch (e) {
-            reject(e);
         }
-    });
+
+        return chain_contracts;
+    } catch (e) {
+        throw e;
+    }
 }
 
-function add_missing_provers(
+async function addMissingProvers(
     client: typeof SigningCosmWasmClient,
     multisig_address: string,
     chain_contracts: ChainContracts[],
 ): Promise<ChainContracts[]> {
-    return new Promise(async (resolve, _) => {
+    try {
         for (let i = 0; i < chain_contracts.length; i++) {
             const authorized_provers = await client.queryContractSmart(multisig_address, {
                 authorized_callers: { chain_name: chain_contracts[i].chain_name },
@@ -61,11 +55,13 @@ function add_missing_provers(
             chain_contracts[i].prover_address = authorized_provers[0] ?? '';
         }
 
-        resolve(chain_contracts);
-    });
+        return chain_contracts;
+    } catch (e) {
+        throw e;
+    }
 }
 
-function missing_chain(error_message: string): string | null {
+function missingChain(error_message: string): string | null {
     const re = new RegExp('missing contracts to register for chain (?<chain>[a-z0-9]+):');
     const result = error_message.match(re);
     if (!result.groups.chain) {
@@ -75,14 +71,22 @@ function missing_chain(error_message: string): string | null {
     return result.groups.chain;
 }
 
-export async function migrate(client: typeof SigningCosmWasmClient, options: Options, config: any, sender_address: string, coordinator_address: string, version: string, code_id: number) {
+async function coordinatorToVersion2_0_1(
+    client: typeof SigningCosmWasmClient,
+    options: Options,
+    config,
+    sender_address: string,
+    coordinator_address: string,
+    version: string,
+    code_id: number,
+) {
     const router_address = config.axelar.contracts.Router.address;
     const multisig_address = config.axelar.contracts.Multisig.address;
     coordinator_address = options.address ?? config.axelar.contracts.Coordinator.address;
 
-    const chain_endpoints = await query_chains_from_router(client, router_address);
-    let chain_contracts = await construct_chain_contracts(client, chain_endpoints);
-    chain_contracts = await add_missing_provers(client, multisig_address, chain_contracts);
+    const chain_endpoints = await queryChainsFromRouter(client, router_address);
+    let chain_contracts = await constructChainContracts(client, chain_endpoints);
+    chain_contracts = await addMissingProvers(client, multisig_address, chain_contracts);
 
     const migration_msg = {
         router: router_address,
@@ -103,7 +107,7 @@ export async function migrate(client: typeof SigningCosmWasmClient, options: Opt
                 // Devnet has some incomplete registrations where a chain may have a prover, but
                 // no gateway or verifier. We must supply dummy data in those cases. Those addresses
                 // must be correctly encoded, so we can use the coordinator address by default.
-                const chain_to_add = missing_chain(e.message);
+                const chain_to_add = missingChain(e.message);
                 if (!options.dummy || !chain_to_add) {
                     console.log('Migration failed:', e.message);
 
@@ -126,5 +130,20 @@ export async function migrate(client: typeof SigningCosmWasmClient, options: Opt
                 migration_msg.chain_contracts.push(dummy_data);
             }
         }
+    }
+}
+
+export async function migrate(
+    client: typeof SigningCosmWasmClient,
+    options: Options,
+    config,
+    sender_address: string,
+    coordinator_address: string,
+    version: string,
+    code_id: number,
+) {
+    switch (version) {
+        case '1.1.0':
+            return coordinatorToVersion2_0_1(client, options, config, sender_address, coordinator_address, version, code_id);
     }
 }

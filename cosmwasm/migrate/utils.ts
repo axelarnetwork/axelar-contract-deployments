@@ -10,7 +10,7 @@ export interface ChainEndpoint {
     };
 }
 
-export async function query_chains_from_router(client: typeof SigningCosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
+export async function queryChainsFromRouter(client: typeof SigningCosmWasmClient, router_address: string): Promise<ChainEndpoint[]> {
     try {
         const res: ChainEndpoint[] = await client.queryContractSmart(router_address, { chains: {} });
         return res;
