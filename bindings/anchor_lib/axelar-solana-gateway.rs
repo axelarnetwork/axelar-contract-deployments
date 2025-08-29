@@ -33,15 +33,6 @@ pub mod axelar_solana_gateway {
         Ok(())
     }
 
-    pub fn call_contract_offchain_data(
-        ctx: Context<CallContractOffchainData>,
-        destination_chain: String,
-        destination_contract_address: String,
-        payload_hash: [u8; 32],
-        signing_pda_bump: u8,
-    ) -> Result<()> {
-        Ok(())
-    }
 
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
@@ -142,12 +133,6 @@ pub struct CallContract<'info> {
     gateway_root_pda: AccountInfo<'info>,
 }
 
-#[derive(Accounts)]
-pub struct CallContractOffchainData<'info> {
-    sender_program: AccountInfo<'info>,
-    sender_call_contract_pda: Signer<'info>,
-    gateway_root_pda: AccountInfo<'info>,
-}
 
 #[derive(Accounts)]
 pub struct InitializeConfig<'info> {
