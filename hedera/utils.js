@@ -2,7 +2,6 @@
 
 const { getContractPath } = require('../evm/utils.js');
 const { linkBytecode } = require('solc/linker');
-const { printInfo } = require('../common/utils');
 
 const HTS_DEPENDENT_CONTRACTS = ['InterchainTokenDeployer', 'TokenManager', 'InterchainTokenService', 'InterchainTokenFactory'];
 
@@ -28,7 +27,6 @@ function getContractJSONWithHTS(htsLibAddress) {
                     throw new Error('HTS library address is required.');
                 }
 
-                printInfo(`Linking ${contractName} bytecode with HTS library.`);
                 contractJson.bytecode = linkBytecode(contractJson.bytecode, {
                     [HTS_LIBRARY_NAME]: htsLibAddress,
                     [HTS_LIBRARY_SOURCE]: htsLibAddress,
