@@ -65,8 +65,9 @@ async function tokenConfig(client, config, args, _options) {
     }
 }
 
-async function customTokenMetadata(client, config, args, _options) {
-    const [chainName, tokenAddress] = args;
+async function customTokenMetadata(client, config, args, options) {
+    const [tokenAddress] = args;
+    const { chainName } = options;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
     if (!itsHubAddress) {
@@ -94,8 +95,9 @@ async function customTokenMetadata(client, config, args, _options) {
     }
 }
 
-async function tokenInstance(client, config, args, _options) {
-    const [chainName, tokenId] = args;
+async function tokenInstance(client, config, args, options) {
+    const [tokenId] = args;
+    const { chainName } = options;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
     if (!itsHubAddress) {
@@ -123,8 +125,8 @@ async function tokenInstance(client, config, args, _options) {
     }
 }
 
-async function itsChainConfig(client, config, args, _options) {
-    const [chainName] = args;
+async function itsChainConfig(client, config, _args, options) {
+    const { chainName } = options;
 
     try {
         const result = await getItsChainConfig(client, config, chainName);
@@ -166,25 +168,24 @@ const programHandler = () => {
         });
 
     const customTokenMetadataCmd = program
-        .command('custom-token-metadata <chainName> <tokenAddress>')
+        .command('custom-token-metadata <tokenAddress>')
         .description('Query custom token metadata by chain name and token address')
-        .action((chainName, tokenAddress, options) => {
-            mainProcessor(customTokenMetadata, [chainName, tokenAddress], options);
+        .action((tokenAddress, options) => {
+            mainProcessor(customTokenMetadata, [tokenAddress], options);
         });
 
     const tokenInstanceCmd = program
-        .command('token-instance <chainName> <tokenId>')
+        .command('token-instance <tokenId>')
         .description('Query token instance by chain name and token ID')
-        .action((chainName, tokenId, options) => {
-            mainProcessor(tokenInstance, [chainName, tokenId], options);
+        .action((tokenId, options) => {
+            mainProcessor(tokenInstance, [tokenId], options);
         });
 
     const itsChainConfigCmd = program
         .command('its-chain-config')
         .description('Query ITS chain configuration for a specific chain')
-        .argument('<chainName>', 'name of the chain to query')
-        .action((chainName, options) => {
-            mainProcessor(itsChainConfig, [chainName], options);
+        .action((options) => {
+            mainProcessor(itsChainConfig, [], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);

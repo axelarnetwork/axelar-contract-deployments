@@ -373,7 +373,7 @@ The `query.js` script provides commands to query various contract states and con
 Query the rewards pool state for multisig and voting verifier contracts:
 
 ```bash
-ts-node cosmwasm/query.js rewards -n <chain-name>
+ts-node cosmwasm/query.js rewards -n <chainName>
 ```
 
 ##### Query Token Configuration
@@ -389,7 +389,7 @@ ts-node cosmwasm/query.js token-config <tokenId>
 Query custom token metadata by chain name and token address:
 
 ```bash
-ts-node cosmwasm/query.js custom-token-metadata <chainName> <tokenAddress>
+ts-node cosmwasm/query.js custom-token-metadata <tokenAddress> -n <chainName>
 ```
 
 ##### Query Token Instance
@@ -397,7 +397,7 @@ ts-node cosmwasm/query.js custom-token-metadata <chainName> <tokenAddress>
 Query token instance information by chain name and token ID:
 
 ```bash
-ts-node cosmwasm/query.js token-instance <chainName> <tokenId>
+ts-node cosmwasm/query.js token-instance <tokenId> -n <chainName>
 ```
 
 ##### Query ITS Chain Configuration
@@ -405,7 +405,7 @@ ts-node cosmwasm/query.js token-instance <chainName> <tokenId>
 Query ITS chain configuration for a specific chain:
 
 ```bash
-ts-node cosmwasm/query.js its-chain-config <chainName>
+ts-node cosmwasm/query.js its-chain-config -n <chainName>
 ```
 
 #### Examples
@@ -418,11 +418,11 @@ ts-node cosmwasm/query.js rewards -n flow
 ts-node cosmwasm/query.js token-config 1234567890abcdef...
 
 # Query custom token metadata
-ts-node cosmwasm/query.js custom-token-metadata flow 0x742d35cc6460c0f692b8f7b6b0e1b7f9e0c9f9f9
+ts-node cosmwasm/query.js custom-token-metadata 0x742d35cc6460c0f692b8f7b6b0e1b7f9e0c9f9f9 -n flow
 
 # Query token instance
-ts-node cosmwasm/query.js token-instance flow 1234567890abcdef...
+ts-node cosmwasm/query.js token-instance 1234567890abcdef... -n flow
 
 # Query ITS chain configuration
-ts-node cosmwasm/query.js its-chain-config flow
+ts-node cosmwasm/query.js its-chain-config -n flow
 ```
