@@ -909,6 +909,7 @@ dependencies = [
  "borsh 1.5.7",
  "ethers-core",
  "evm-contracts-test-suite",
+ "hex",
  "itertools 0.12.1",
  "mpl-token-metadata",
  "pretty_assertions",

@@ -144,7 +144,7 @@ pub(crate) fn process_inbound_transfer<'a>(
             &axelar_executable_accounts,
             *program_account.key,
             destination_payload.account_meta(),
-            payload.token_id.0,
+            payload,
             transferred_amount,
         )?;
         let its_root_bump =
@@ -165,13 +165,14 @@ fn build_axelar_interchain_token_execute(
     axelar_its_executable_accounts: &AxelarInterchainTokenExecutableAccounts<'_>,
     program_id: Pubkey,
     mut program_accounts: Vec<AccountMeta>,
-    token_id: [u8; 32],
+    payload: &InterchainTransfer,
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let source_address = message.source_address;
+    let source_address = payload.source_address.to_vec();
     let source_chain = message.cc_id.chain;
     let token = axelar_its_executable_accounts.token_mint.key.to_bytes();
+    let token_id = payload.token_id.0;
 
     let mut accounts = vec![
         AccountMeta::new_readonly(*axelar_its_executable_accounts.its_root_pda.key, true),

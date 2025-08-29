@@ -74,6 +74,10 @@ pub fn process_message_from_axelar_with_token<'a>(
     msg!("amount: {}", payload.amount);
     msg!("symbol: {}", token_metadata.symbol);
     msg!("name: {}", token_metadata.name);
+    msg!(
+        "payload source address: {}",
+        hex::encode(&payload.source_address)
+    );
 
     let instruction: AxelarMemoInstruction = borsh::from_slice(&payload.data)?;
 
