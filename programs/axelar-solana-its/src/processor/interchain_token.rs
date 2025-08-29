@@ -142,6 +142,13 @@ pub(crate) fn process_deploy<'a>(
         return Err(ProgramError::InvalidArgument);
     }
 
+    if name.len() > mpl_token_metadata::MAX_NAME_LENGTH
+        || symbol.len() > mpl_token_metadata::MAX_SYMBOL_LENGTH
+    {
+        msg!("Name and/or symbol length too long");
+        return Err(ProgramError::InvalidArgument);
+    }
+
     event::InterchainTokenIdClaimed {
         token_id,
         deployer: *payer.key,
@@ -200,12 +207,18 @@ pub(crate) fn process_inbound_deploy<'a>(
         token_manager_pda_bump,
         initial_supply,
     )?;
+
+    let mut truncated_name = name;
+    let mut truncated_symbol = symbol;
+    truncated_name.truncate(mpl_token_metadata::MAX_NAME_LENGTH);
+    truncated_symbol.truncate(mpl_token_metadata::MAX_SYMBOL_LENGTH);
+
     setup_metadata(
         payer,
         &accounts,
         &token_id,
-        name.clone(),
-        symbol.clone(),
+        truncated_name.clone(),
+        truncated_symbol.clone(),
         String::new(),
         token_manager_pda_bump,
     )?;
@@ -236,8 +249,8 @@ pub(crate) fn process_inbound_deploy<'a>(
             .operator
             .map(|account| *account.key)
             .unwrap_or_default(),
-        name,
-        symbol,
+        name: truncated_name,
+        symbol: truncated_symbol,
         decimals,
     }
     .emit();
