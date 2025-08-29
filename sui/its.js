@@ -1,8 +1,20 @@
 const { Command } = require('commander');
 const { TxBuilder, STD_PACKAGE_ID } = require('@axelar-network/axelar-cgp-sui');
 const { loadConfig, saveConfig, getChainConfig, parseTrustedChains } = require('../common/utils');
-const { addBaseOptions, addOptionsToCommands, getWallet, printWalletInfo, broadcastFromTxBuilder, saveGeneratedTx } = require('./utils');
+const {
+    addBaseOptions,
+    addOptionsToCommands,
+    getWallet,
+    printWalletInfo,
+    broadcastFromTxBuilder,
+    saveGeneratedTx,
+    suiClockAddress,
+    suiCoinId,
+} = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
+const {
+    utils: { arrayify, parseUnits },
+} = require('hardhat').ethers;
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -114,6 +126,74 @@ async function removeTrustedChains(keypair, client, config, contracts, args, opt
     await broadcastFromTxBuilder(txBuilder, keypair, 'Remove Trusted Chains', options);
 }
 
+async function interchainTransfer(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+
+    const { coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount } = options;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    const txBuilder = new TxBuilder(client);
+    const tx = txBuilder.tx;
+
+    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+    const tokenIdObj = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_u256`,
+        arguments: [tokenId],
+    });
+
+    const gatewayChannelId = await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::channel::new`,
+        arguments: [],
+    });
+
+    // Split coins to set exact amount of coins to send.
+    const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
+
+    const prepareInterchainTransferTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,
+        typeArguments: [coinType],
+        arguments: [tokenIdObj, coinsToSend, destinationChain, destinationAddress, '0x', gatewayChannelId],
+    });
+
+    const interchainTransferTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::send_interchain_transfer`,
+        typeArguments: [coinType],
+        arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
+    });
+
+    // Specify one unit of gas to be paid to gas service.
+    const unitAmountGas = parseUnits('1', 9).toBigInt();
+
+    const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
+
+    await txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [suiCoinId],
+        arguments: [contracts.GasService.objects.GasService, interchainTransferTicket, gas, walletAddress, '0x'],
+    });
+
+    await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::gateway::send_message`,
+        arguments: [contracts.AxelarGateway.objects.Gateway, interchainTransferTicket],
+    });
+
+    await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::channel::destroy`,
+        arguments: [gatewayChannelId],
+    });
+
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Interchain transfer for ${tokenId}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Interchain Transfer', options);
+    }
+}
+
 async function processCommand(command, config, chain, args, options) {
     const [keypair, client] = getWallet(chain, options);
 
@@ -161,9 +241,26 @@ if (require.main === module) {
             mainProcessor(setFlowLimits, options, [tokenIds, flowLimits], processCommand);
         });
 
+    const interchainTransferProgram = new Command()
+        .name('interchain-transfer')
+        .command('interchain-transfer')
+        .description('Send interchain transfer from sui to a chain where token is linked')
+        .requiredOption('--coin-package-id <coinPackageId>', 'The coin package ID')
+        .requiredOption('--coin-package-name <coinPackageName>', 'The coin package name')
+        .requiredOption('--coin-mod-name <coinModName>', 'The coin module name')
+        .requiredOption('--coin-object-id <coinObjectId>', 'The coin object ID')
+        .requiredOption('--token-id <tokenId>', 'The token ID')
+        .requiredOption('--destination-chain <destinationChain>', 'The destination chain')
+        .requiredOption('--destination-address <destinationAddress>', 'The destination address')
+        .requiredOption('--amount <amount>', 'The amount to transfer')
+        .action((options) => {
+            mainProcessor(interchainTransfer, options, [], processCommand);
+        });
+
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
+    program.addCommand(interchainTransferProgram);
 
     addOptionsToCommands(program, addBaseOptions, { offline: true });
 

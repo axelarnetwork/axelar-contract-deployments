@@ -168,6 +168,45 @@ ts-node sui/deploy-contract.js deploy RelayerDiscovery
 ts-node sui/deploy-contract.js deploy ITS
 ```
 
+#### Interchain Transfer
+
+```bash
+ts-node sui/its.js interchain-transfer \
+  --coin-package-id <coin-package-address> \
+  --coin-package-name <coin-package-name> \
+  --coin-mod-name <coin-mod-name> \
+  --coin-object-id <coin-object-id> \
+  --token-id <interchain-token-id> \
+  --destination-chain <destination-chain-name> \
+  --destination-address <receiving-address> \
+  --amount 1 \ 
+  --env <env> \  
+  --signatureScheme <signature-scheme>
+```
+
+
+- Example Command: 
+
+```bash
+ts-node sui/its.js interchain-transfer \
+--coin-package-id 0x5d693cebdbba9fdcc8a5990858998a2f7bee87ef2d537e9dd4588a30ec615ad7 \
+--coin-package-name my_custom_coin \
+--coin-mod-name MY_CUSTOM_COIN \
+--coin-object-id 0xa8c34124a6d103214dbec1cfdc9a7505eac9b8a68c73c10a2d0b6f42ff5f3af4 \
+--token-id 0x3630dbd78a65b5b70745574d94268a71c142076543fabb71d30d9d315fdf87f4 \
+--destination-chain ethereum-sepolia \
+--destination-address 0xc5DcAC3e02f878FE995BF71b1Ef05153b71da8BE \
+--amount 1 \
+--env testnet \
+--signatureScheme ed25519
+```
+
+Example Response:
+
+````bash
+Interchain Transfer: [HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo](https://testnet.axelarscan.io/gmp/HbxjNv3nYwviRRdCZ2w4QvxT6yNm8ptbB5sDaV9TCXyo)
+````
+
 ### Squid
 
 ```bash
