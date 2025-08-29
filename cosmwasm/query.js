@@ -49,6 +49,11 @@ async function tokenConfig(client, config, args, _options) {
     const [tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
             token_config: { token_id: tokenId },
@@ -64,10 +69,21 @@ async function customTokenMetadata(client, config, args, _options) {
     const [chainName, tokenAddress] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
             custom_token_metadata: {
-                chain: chainName,
+                chain: chainConfig.axelarId,
                 token_address: tokenAddress,
             },
         });
@@ -82,10 +98,21 @@ async function tokenInstance(client, config, args, _options) {
     const [chainName, tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
     try {
         const result = await client.queryContractSmart(itsHubAddress, {
             token_instance: {
-                chain: chainName,
+                chain: chainConfig.axelarId,
                 token_id: tokenId,
             },
         });
