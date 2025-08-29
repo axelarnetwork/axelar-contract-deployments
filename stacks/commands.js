@@ -3,6 +3,12 @@ const { loadConfig, saveConfig, getChainConfig, printInfo } = require('../common
 const { addBaseOptions, addOptionsToCommands, getWallet } = require('./utils');
 const { Cl } = require('@stacks/transactions');
 const { sendContractCallTransaction } = require('./utils/sign-utils');
+const { governanceAddress } = require('../cosmwasm/utils');
+
+const TRANSFER_OWNERSHIP_CONTRACTS_IMPL = {
+    AxelarGasService: 'GasImpl',
+    InterchainTokenService: 'InterchainTokenServiceImpl',
+}
 
 async function setOwner(wallet, chain, args) {
     const [contract, governanceAddress] = args;
@@ -24,16 +30,31 @@ async function setOwner(wallet, chain, args) {
 async function transferOwnership(wallet, chain, args) {
     const [contract, ownerAddress] = args;
 
+    if (!(contract in TRANSFER_OWNERSHIP_CONTRACTS_IMPL)) {
+        throw new Error(`Contract ${contract} not supported`);
+    }
+
+    const contractImpl = TRANSFER_OWNERSHIP_CONTRACTS_IMPL[contract];
+
     const contracts = chain.contracts;
-    if (!contracts?.[contract]?.address) {
+    if (!contracts?.[contract]?.address || !contracts?.[contractImpl]?.address) {
         throw new Error(`Contract ${contract} not yet deployed`);
     }
 
     const contractAddress = contracts[contract].address;
+    const contractImplAddress = contracts[contractImpl].address;
 
-    printInfo(`Transferring ownership for contract ${contract}, address ${contractAddress}`);
+    printInfo(`Transferring ownership for contract ${contract}, implementation ${contractImplAddress}, address ${contractAddress}`);
 
-    const result = await sendContractCallTransaction(contractAddress, 'transfer-ownership', [Cl.address(ownerAddress)], wallet);
+    const result = await sendContractCallTransaction(
+      contractAddress,
+      'transfer-ownership',
+      [
+        Cl.address(contractImplAddress),
+        Cl.address(ownerAddress),
+      ],
+      wallet
+    );
 
     printInfo(`Finished transferring ownership`, result.txid);
 }

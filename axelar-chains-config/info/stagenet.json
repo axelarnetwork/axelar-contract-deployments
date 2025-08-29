@@ -2527,7 +2527,8 @@
         },
         "AxelarGasService": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-service",
-          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "gasCollector": "ST3VVD0KETMTB6349NDJHFT4M72R1NJVZVQFNV81X"
         },
         "GatewayImpl": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway-impl",
@@ -2537,7 +2538,39 @@
         "AxelarGateway": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gateway",
           "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
-          "connectionType": "amplifier"
+          "connectionType": "amplifier",
+          "signers": {
+            "weightedSigners": [
+              {
+                "signer": "0x02d91f480cbe1a442eb4f2512dd493daf619bc5c47d8a38c77bd739bdd163e2627",
+                "weight": 1
+              },
+              {
+                "signer": "0x030a0a128efeba8ba2925a75377569265a866e8130465cd6c4b77cebe4c915e20b",
+                "weight": 1
+              },
+              {
+                "signer": "0x038e880f83db6aa1e91532be6f6357f858ccfe57d9d59578490b0abf3b15c5acee",
+                "weight": 1
+              },
+              {
+                "signer": "0x039e5dae40fbae32d177be9b493b7bee8d0cc58e14518ab827ecd6b813a5c09fce",
+                "weight": 1
+              },
+              {
+                "signer": "0x03fd912799dba2fb4d824800feee047ad3ac1892ddc0b6358ce843a3858aef2d04",
+                "weight": 1
+              }
+            ],
+            "threshold": 3,
+            "nonce": "0x00000000000000000000000000000000000000000000000000000000006464e1"
+          },
+          "claritySigners": "0c00000003056e6f6e6365020000002000000000000000000000000000000000000000000000000000000000006464e1077369676e6572730b000000050c00000002067369676e6572020000002102d91f480cbe1a442eb4f2512dd493daf619bc5c47d8a38c77bd739bdd163e26270677656967687401000000000000000000000000000000010c00000002067369676e65720200000021030a0a128efeba8ba2925a75377569265a866e8130465cd6c4b77cebe4c915e20b0677656967687401000000000000000000000000000000010c00000002067369676e65720200000021038e880f83db6aa1e91532be6f6357f858ccfe57d9d59578490b0abf3b15c5acee0677656967687401000000000000000000000000000000010c00000002067369676e65720200000021039e5dae40fbae32d177be9b493b7bee8d0cc58e14518ab827ecd6b813a5c09fce0677656967687401000000000000000000000000000000010c00000002067369676e6572020000002103fd912799dba2fb4d824800feee047ad3ac1892ddc0b6358ce843a3858aef2d04067765696768740100000000000000000000000000000001097468726573686f6c640100000000000000000000000000000003",
+          "owner": "ST2ZY2VGBZQM6CS48DRX58PE3CMQEZP0BNE0F0GW6",
+          "operator": "ST2ZY2VGBZQM6CS48DRX58PE3CMQEZP0BNE0F0GW6",
+          "domainSeparator": "0x79bda3786ee446a150368462571c9184dfa4ae603b89f46f172aac7b0b4f0c35",
+          "minimumRotationDelay": 300,
+          "previousSignerRetention": 15
         },
         "InterchainTokenServiceStorage": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service-storage",
@@ -2549,7 +2582,12 @@
         },
         "InterchainTokenService": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service",
-          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "itsContractAddressName": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-service",
+          "gasServiceAddress": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.gas-service",
+          "operator": "ST2ZY2VGBZQM6CS48DRX58PE3CMQEZP0BNE0F0GW6",
+          "itsHubChainName": "axelar",
+          "itsHubAddress": "axelar1ph8qufmsh556e40uk0ceaufc06nwhnw0ksgdqqk6ldszxchh8llq8x52dk"
         },
         "InterchainTokenFactoryImpl": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.interchain-token-factory-impl",
@@ -2570,7 +2608,7 @@
           "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
         }
       },
-      "initialContractsDeployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+      "initialContractsDeployer": "ST3VVD0KETMTB6349NDJHFT4M72R1NJVZVQFNV81X"
     }
   },
   "axelar": {
