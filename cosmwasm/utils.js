@@ -389,6 +389,7 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const {
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
+        ChainCodec: { [chainName]: { address: chainCodecAddress } },
     } = contracts;
     const {
         governanceAddress,
@@ -398,7 +399,6 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         blockExpiry,
         confirmationHeight,
         msgIdFormat,
-        addressFormat,
     } = contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
@@ -407,6 +407,10 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 
     if (!validateAddress(rewardsAddress)) {
         throw new Error('Missing or invalid Rewards.address in axelar info');
+    }
+
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec[${chainName}].address in axelar info`);
     }
 
     if (!validateAddress(governanceAddress)) {
@@ -460,7 +464,7 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         confirmation_height: confirmationHeight,
         source_chain: chainName,
         msg_id_format: msgIdFormat,
-        address_format: addressFormat,
+        chain_codec_address: chainCodecAddress
     };
 };
 
@@ -746,6 +750,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
+        ChainCodec: { [chainName]: { address: chainCodecAddress } },
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
@@ -753,19 +758,20 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const { adminAddress, governanceAddress, domainSeparator, signingThreshold, serviceName, verifierSetDiffThreshold, encoder, keyType } =
+    const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } =
         contractConfig;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
     }
 
+    if (!validateAddress(chainCodecAddress)) {
+        throw new Error(`Missing or invalid ChainCodec[${chainName}].address in axelar info`);
+    }
+
     if (!isString(axelarChainId)) {
         throw new Error(`Missing or invalid chain ID`);
     }
-
-    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
-    contractConfig.domainSeparator = separator;
 
     if (!validateAddress(adminAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].adminAddress in axelar info`);
@@ -795,10 +801,6 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].address in axelar info`);
     }
 
-    if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
-    }
-
     if (!isStringArray(signingThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].signingThreshold in axelar info`);
     }
@@ -809,10 +811,6 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
 
     if (!isNumber(verifierSetDiffThreshold)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].verifierSetDiffThreshold in axelar info`);
-    }
-
-    if (!isString(encoder)) {
-        throw new Error(`Missing or invalid MultisigProver[${chainName}].encoder in axelar info`);
     }
 
     if (!isString(keyType)) {
@@ -827,12 +825,11 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         multisig_address: multisigAddress,
         service_registry_address: serviceRegistryAddress,
         voting_verifier_address: verifierAddress,
-        domain_separator: separator.replace('0x', ''),
+        chain_codec_address: chainCodecAddress,
         signing_threshold: signingThreshold,
         service_name: serviceName,
         chain_name: chainName,
         verifier_set_diff_threshold: verifierSetDiffThreshold,
-        encoder,
         key_type: keyType,
     };
 };
