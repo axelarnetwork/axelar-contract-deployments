@@ -4,7 +4,7 @@
       "name": "Celo",
       "axelarId": "celo",
       "chainId": 42220,
-      "rpc": "https://forno.celo.org",
+      "rpc": "https://axelar-rpc.quickapi.com:443",
       "tokenSymbol": "CELO",
       "decimals": 18,
       "chainType": "evm",
