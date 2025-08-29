@@ -16,6 +16,7 @@ use super::Processor;
 use crate::error::GatewayError;
 use crate::state::incoming_message::{command_id, IncomingMessage, MessageStatus};
 use crate::state::signature_verification_pda::SignatureVerificationSessionData;
+use crate::state::GatewayConfig;
 use crate::{
     assert_valid_incoming_message_pda, assert_valid_signature_verification_pda, event_prefixes,
     get_incoming_message_pda, get_validate_message_signing_pda, seed_prefixes,
@@ -70,6 +71,9 @@ impl Processor {
         // Check: Gateway Root PDA is initialized.
         // No need to check the bump because that would already be implied by a valid `verification_session_account`
         gateway_root_pda.check_initialized_pda_without_deserialization(program_id)?;
+        let gateway_data = gateway_root_pda.try_borrow_data()?;
+        let gateway_config =
+            GatewayConfig::read(&gateway_data).ok_or(GatewayError::BytemuckDataLenInvalid)?;
 
         // Check: Verification session PDA is initialized.
         verification_session_account.check_initialized_pda_without_deserialization(program_id)?;
@@ -97,6 +101,11 @@ impl Processor {
             != session.signature_verification.signing_verifier_set_hash
         {
             return Err(GatewayError::InvalidVerificationSessionPDA.into());
+        }
+
+        // Check: message domain separator matches the gateway's domain separator
+        if message.leaf.domain_separator != gateway_config.domain_separator {
+            return Err(GatewayError::InvalidDomainSeparator.into());
         }
 
         let leaf_hash = message.leaf.hash::<SolanaSyscallHasher>();

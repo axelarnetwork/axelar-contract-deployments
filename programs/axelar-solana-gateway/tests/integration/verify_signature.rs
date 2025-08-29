@@ -3,10 +3,11 @@ use std::sync::Arc;
 use axelar_solana_encoding::types::messages::Messages;
 use axelar_solana_encoding::types::payload::Payload;
 use axelar_solana_encoding::types::pubkey::{PublicKey, Signature};
+use axelar_solana_gateway::error::GatewayError;
 use axelar_solana_gateway::state::signature_verification::verify_ecdsa_signature;
 use axelar_solana_gateway_test_fixtures::base::FindLog;
 use axelar_solana_gateway_test_fixtures::gateway::{
-    make_verifier_set, random_bytes, random_message,
+    make_verifier_set, random_bytes, random_message, GetGatewayError,
 };
 use axelar_solana_gateway_test_fixtures::test_signer::{random_ecdsa_keypair, SigningVerifierSet};
 use axelar_solana_gateway_test_fixtures::SolanaAxelarIntegration;
@@ -22,7 +23,6 @@ async fn test_verify_one_signature(
     #[case] messages: Messages,
 ) {
     // Setup
-
     let mut metadata = SolanaAxelarIntegration::builder()
         .initial_signer_weights(initial_signer_weights.clone())
         .build()
@@ -412,4 +412,52 @@ fn can_verify_signatures_with_standard_recovery_id() {
 
     let is_valid = verify_ecdsa_signature(&pubkey, &signature, &message_hash);
     assert!(is_valid);
+}
+
+#[tokio::test]
+async fn fails_to_verify_signature_with_invalid_domain_separator() {
+    // Setup
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42, 42])
+        .build()
+        .setup()
+        .await;
+
+    let payload = Payload::Messages(Messages(vec![random_message()]));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+    metadata
+        .initialize_payload_verification_session(&execute_data)
+        .await
+        .unwrap();
+    let verifier_set_tracker_pda = metadata.signers.verifier_set_tracker().0;
+    let mut leaf_info = execute_data
+        .signing_verifier_set_leaves
+        .first()
+        .unwrap()
+        .clone();
+
+    // Modify the domain separator to simulate a cross-chain replay attack
+    leaf_info.leaf.domain_separator[0] = leaf_info.leaf.domain_separator[0].wrapping_add(1);
+
+    // Attempt to verify the signature with different domain separator
+    let ix = axelar_solana_gateway::instructions::verify_signature(
+        metadata.gateway_root_pda,
+        verifier_set_tracker_pda,
+        execute_data.payload_merkle_root,
+        leaf_info,
+    )
+    .unwrap();
+
+    let tx_result = metadata
+        .send_tx(&[
+            // native digital signature verification won't work without bumping the compute budget.
+            ComputeBudgetInstruction::set_compute_unit_limit(260_000),
+            ix,
+        ])
+        .await
+        .unwrap_err();
+
+    // Should fail due to domain separator mismatch
+    let gateway_error = tx_result.get_gateway_error().unwrap();
+    assert_eq!(gateway_error, GatewayError::InvalidDomainSeparator);
 }

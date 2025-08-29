@@ -72,6 +72,11 @@ impl Processor {
         // Check: Verifier set isn't expired
         gateway_config.assert_valid_epoch(verifier_set_tracker.epoch)?;
 
+        // Check: Verifier domain separator matches the gateway's domain separator
+        if verifier_info.leaf.domain_separator != gateway_config.domain_separator {
+            return Err(GatewayError::InvalidDomainSeparator.into());
+        }
+
         // Verify the signature
         session
             .signature_verification

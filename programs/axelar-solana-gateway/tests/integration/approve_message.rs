@@ -423,3 +423,50 @@ async fn fails_to_approve_message_using_verifier_set_as_the_root() {
         }
     }
 }
+
+#[tokio::test]
+async fn fails_to_approve_message_with_invalid_domain_separator() {
+    // Setup
+    let mut metadata = SolanaAxelarIntegration::builder()
+        .initial_signer_weights(vec![42, 42])
+        .build()
+        .setup()
+        .await;
+
+    // Create a payload with messages signed by the registered verifier set
+    let payload = Payload::Messages(Messages(make_messages(1)));
+    let execute_data = metadata.construct_execute_data(&metadata.signers.clone(), payload);
+
+    // Initialize and sign the payload session with registered verifier set
+    let verification_session_pda = metadata
+        .init_payload_session_and_verify(&execute_data)
+        .await
+        .unwrap();
+
+    // Get the original message and modify its domain separator (simulating cross-chain replay attack)
+    let MerkleisedPayload::NewMessages {
+        messages: original_messages,
+    } = execute_data.payload_items
+    else {
+        unreachable!();
+    };
+
+    let mut message_info = original_messages.into_iter().next().unwrap();
+
+    // Modify the domain separator to simulate a cross-chain replay attack
+    message_info.leaf.domain_separator[0] = message_info.leaf.domain_separator[0].wrapping_add(1);
+
+    // Attempt to approve message with different domain separator
+    let tx_result = metadata
+        .approve_message(
+            execute_data.payload_merkle_root,
+            message_info,
+            verification_session_pda,
+        )
+        .await
+        .unwrap_err();
+
+    // Should fail due to domain separator mismatch
+    let gateway_error = tx_result.get_gateway_error().unwrap();
+    assert_eq!(gateway_error, GatewayError::InvalidDomainSeparator);
+}
