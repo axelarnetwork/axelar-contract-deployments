@@ -36,7 +36,7 @@ pub struct AxelarInterchainTokenExecutablePayload {
     pub source_chain: String,
 
     /// The source address of the token transfer.
-    pub source_address: String,
+    pub source_address: Vec<u8>,
 
     /// The program instruction data.
     pub data: Vec<u8>,

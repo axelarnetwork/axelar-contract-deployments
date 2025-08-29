@@ -1,6 +1,5 @@
 //! Module that handles the processing of the `InterchainTransfer` ITS
 //! instruction.
-use alloy_primitives::hex;
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::executable::AxelarMessagePayload;
 use axelar_solana_gateway::state::incoming_message::command_id;
@@ -170,7 +169,7 @@ fn build_axelar_interchain_token_execute(
     amount: u64,
 ) -> Result<Instruction, ProgramError> {
     let command_id = command_id(&message.cc_id.chain, &message.cc_id.id);
-    let source_address = hex::encode(&payload.source_address);
+    let source_address = payload.source_address.to_vec();
     let source_chain = message.cc_id.chain;
     let token = axelar_its_executable_accounts.token_mint.key.to_bytes();
     let token_id = payload.token_id.0;
