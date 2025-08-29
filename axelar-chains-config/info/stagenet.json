@@ -2606,6 +2606,19 @@
         "NativeInterchainToken": {
           "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.native-interchain-token",
           "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "HelloWorld": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.hello-world-2",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "SampleSip010": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.sample-sip-010",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY"
+        },
+        "TokenManagerSample": {
+          "address": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.token-manager-sample",
+          "deployer": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY",
+          "token": "ST1K9DDVX1X3PZFPWCAKNYF7F4DDAVVPW89QGV2JY.sample-sip-010"
         }
       },
       "initialContractsDeployer": "ST3VVD0KETMTB6349NDJHFT4M72R1NJVZVQFNV81X"
