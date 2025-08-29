@@ -12,11 +12,11 @@ HEDERA_ID = '0.0.xxxxxxx'
 HEDERA_NETWORK = 'testnet'
 ```
 
-## Scripts
+## Deployment
 
 ### Deploy HTS Library
 
-Deploy the HTS (Hedera Token Service) library contract required for interacting with the Hedera precompiles.
+Before deploying the ITS contracts, we must first deploy the HTS (Hedera Token Service) library required for interacting with the Hedera precompiles.
 
 ```bash
 node hedera/deploy-hts-lib.js [options]
@@ -34,17 +34,57 @@ node hedera/deploy-hts-lib.js [options]
 node hedera/deploy-hts-lib.js --gas <amount> --output <file>
 ```
 
-After this step, update the chain config for the appropriate in `axelar-chains-config/info/<env>.json` like so:
+After this step, update the chain config in `axelar-chains-config/info/<env>.json` like so:
 
 ```json
 {
 	//...
-	"chain-xyz": {
+	"hedera": {
 		//...
 		"htsLibraryAddress": "0x...", // address of the deployed HTS library
 		//...
 	}
 }
+```
+
+### Set WHBAR Address
+
+Inside the same chain config file, set the `whbarAddress` field to the address of the WHBAR contract for your network. See the [Hedera docs](https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar#contract-deployments) for the WHBAR contract addresses.
+
+```json
+{
+	//...
+	"hedera": {
+		//...
+		"whbarAddress": "0x...", // address of the WHBAR contract
+		//...
+	}
+}
+```
+
+### Deploy ITS Contracts
+
+Finally deploy the complete ITS contract suite:
+
+```bash
+node evm/deploy-its.js -s "salt123 devnet-amplifier" --proxySalt 'salt123 devnet-amplifier' -m create2 -e devnet-amplifier -n hedera
+```
+
+## Utility Scripts
+
+### Common Options
+
+All scripts support these base options:
+- `--accountId <id>` - Hedera account ID (can use HEDERA_ID env var)
+- `--privateKey <key>` - Private key for the account (can use `PRIVATE_KEY` env var)
+- `--hederaNetwork <network>` - Hedera network: testnet or mainnet (can use HEDERA_NETWORK env var)
+
+### Environment Variables
+
+Set these Hedera-specific vars in your `.env` file:
+- `PRIVATE_KEY` - Your Hedera private key
+- `HEDERA_ID` - Your Hedera account ID
+- `HEDERA_NETWORK` - Network to use (testnet/mainnet)
 
 ### Fund with WHBAR
 
@@ -68,28 +108,3 @@ node hedera/fund-whbar.js <receiverAddress> --amount <amount> --whbarAddress <ad
 ```bash
 node hedera/fund-whbar.js --to 0x742d35cc6634c0532925a3b8d098e9c6084b66e6 --whbarAddress 0x... --amount 10
 ```
-
-### Deploy ITS Contracts
-
-After deploying the HTS library and populating its address in `.env`, deploy the complete ITS contract suite:
-
-```bash
-node evm/deploy-its.js -s "salt123 devnet-amplifier" --proxySalt 'salt123 devnet-amplifier' -m create2 -e devnet-amplifier -n hedera
-```
-
-## Common Options
-
-All scripts support these base options:
-- `--accountId <id>` - Hedera account ID (can use HEDERA_ID env var)
-- `--privateKey <key>` - Private key for the account (can use `PRIVATE_KEY` env var)
-- `--hederaNetwork <network>` - Hedera network: testnet or mainnet (can use HEDERA_NETWORK env var)
-
-## Environment Variables
-
-Set these Hedera-specific vars in your `.env` file:
-- `PRIVATE_KEY` - Your Hedera private key
-- `HEDERA_ID` - Your Hedera account ID
-- `HEDERA_NETWORK` - Network to use (testnet/mainnet)
-- `HTS_LIB_ADDRESS` - WHBAR contract address in EVM format (0x...)
-
-Otherwise consult the canonical `evm/deploy-its.js` script for more details on the ITS deployment process.
