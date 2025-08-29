@@ -152,17 +152,24 @@ ts-node hedera/approve-factory-whbar.js --whbarAddress [whbar-address] -n $CHAIN
 # Create a token on Hedera
 ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [minter-address] --name "test" --symbol "TST" --decimals 6 --salt "salt1234" --initialSupply 0 -n $CHAIN
 
-# Record the newly created token address from the output.
+# Record the newly created token addres and token id from the output.
 
 # Associate with the token address
 ts-node hedera/associate-token.js [token-address]
 
 # Mint some tokens via the TokenManager
 
-# Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+    ## Retrieve TokenManger's address
+    ts-node evm/its.js token-manager-address [token-id]
 
-# Approve token manager to spend tokens
+    ## Call `mintToken()` method on Token manager address after compiling `ITokenManger.sol` using remix
+
+# Deploy token to a remote chain
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "Aasalt1234" --gasValue [gas-value] -y -n $CHAIN
+
+# Approve TokenManager to Spend Tokens
+
+    ## Call approve() method on token address after compiling `IERC20Named.sol` using Remix
 
 # Transfer token to remote chain
 ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
