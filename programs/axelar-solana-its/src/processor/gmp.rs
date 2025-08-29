@@ -19,7 +19,10 @@ use crate::processor::interchain_transfer::process_inbound_transfer;
 use crate::processor::link_token;
 use crate::state::token_manager::TokenManager;
 use crate::state::InterchainTokenService;
-use crate::{assert_its_not_paused, assert_valid_its_root_pda, Validate, ITS_HUB_CHAIN_NAME};
+use crate::{
+    assert_its_not_paused, assert_valid_its_root_pda, check_program_account, Validate,
+    ITS_HUB_CHAIN_NAME,
+};
 use crate::{instruction, FromAccountInfoSlice};
 
 pub(crate) fn process_inbound<'a>(
@@ -161,6 +164,9 @@ pub(crate) fn process_outbound<'a>(
     let its_root_config = InterchainTokenService::load(accounts.its_root_account)?;
     assert_valid_its_root_pda(accounts.its_root_account, its_root_config.bump)?;
     assert_its_not_paused(&its_root_config)?;
+
+    check_program_account(*accounts.program_account.key)?;
+
     if !its_root_config.is_trusted_chain(&destination_chain)
         && destination_chain != ITS_HUB_CHAIN_NAME
     {
