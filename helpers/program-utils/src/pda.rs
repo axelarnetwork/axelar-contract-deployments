@@ -245,7 +245,7 @@ impl<'a> ValidPDA for &AccountInfo<'a> {
     }
 }
 
-/// Convenience trait to store and load rkyv serialized data to/from an account.
+/// Convenience trait to store and load borsh serialized data to/from an account.
 pub trait BorshPda
 where
     Self: Sized + Clone + BorshSerialize + BorshDeserialize,

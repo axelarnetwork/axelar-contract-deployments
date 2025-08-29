@@ -23,6 +23,7 @@ mod execute_proposal;
 pub mod gmp;
 mod init_config;
 mod transfer_operatorship;
+mod update_config;
 mod withdraw_tokens;
 
 pub use execute_operator_proposal::ExecuteOperatorProposalMeta;
@@ -33,6 +34,7 @@ pub use gmp::{
 };
 pub use init_config::GovernanceConfigMeta;
 pub use transfer_operatorship::TransferOperatorshipMeta;
+pub use update_config::GovernanceConfigUpdateMeta;
 pub use withdraw_tokens::WithdrawTokensMeta;
 
 /// Program state handler.
@@ -60,6 +62,9 @@ impl Processor {
         match governance_instruction {
             GovernanceInstruction::InitializeConfig(governance_config) => {
                 init_config::process(program_id, accounts, governance_config)
+            }
+            GovernanceInstruction::UpdateConfig(governance_config) => {
+                update_config::process(accounts, governance_config)
             }
             // GMP instructions
             GovernanceInstruction::ProcessGmp { message } => {

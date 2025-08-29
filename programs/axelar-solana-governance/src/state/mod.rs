@@ -5,6 +5,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use core::any::type_name;
 use core::mem::size_of;
 use core::ops::RangeInclusive;
+use solana_program::entrypoint::ProgramResult;
 use solana_program::pubkey::Pubkey;
 use solana_program::{
     msg,
@@ -61,11 +62,35 @@ impl GovernanceConfig {
             operator,
         }
     }
+
+    pub fn update(&mut self, mut update: GovernanceConfigUpdate) -> ProgramResult {
+        if let Some(new_chain_hash) = update.chain_hash.take() {
+            self.chain_hash = new_chain_hash;
+        }
+
+        if let Some(new_address_hash) = update.address_hash.take() {
+            self.address_hash = new_address_hash;
+        }
+
+        if let Some(new_minimum_proposal_eta_delay) = update.minimum_proposal_eta_delay.take() {
+            self.minimum_proposal_eta_delay = new_minimum_proposal_eta_delay;
+        }
+        validate_config(self)
+    }
+
     /// Calculate governance config PDA
     #[must_use]
     pub fn pda() -> (Pubkey, u8) {
         Pubkey::find_program_address(&[seed_prefixes::GOVERNANCE_CONFIG], &crate::ID)
     }
+}
+
+/// Governance configuration update type.
+#[derive(Debug, Eq, PartialEq, Clone, BorshSerialize, BorshDeserialize)]
+pub struct GovernanceConfigUpdate {
+    pub chain_hash: Option<Hash>,
+    pub address_hash: Option<Hash>,
+    pub minimum_proposal_eta_delay: Option<u32>,
 }
 
 impl Sealed for GovernanceConfig {}
@@ -93,4 +118,17 @@ impl Pack for GovernanceConfig {
             ProgramError::InvalidAccountData
         })
     }
+}
+
+pub(crate) fn validate_config(config: &GovernanceConfig) -> Result<(), ProgramError> {
+    if !VALID_PROPOSAL_DELAY_RANGE.contains(&config.minimum_proposal_eta_delay) {
+        msg!(
+            "The minimum proposal ETA delay must be among {} and {} seconds",
+            VALID_PROPOSAL_DELAY_RANGE.start(),
+            VALID_PROPOSAL_DELAY_RANGE.end()
+        );
+        return Err(ProgramError::InvalidArgument);
+    }
+
+    Ok(())
 }

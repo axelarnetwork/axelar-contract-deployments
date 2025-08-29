@@ -22,4 +22,5 @@ mod gmp;
 mod helpers;
 mod initialize_config;
 mod transfer_operatorship;
+mod update_config;
 mod withdraw_tokens;
