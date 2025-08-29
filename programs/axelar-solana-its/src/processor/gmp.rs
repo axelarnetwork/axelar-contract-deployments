@@ -175,7 +175,6 @@ pub(crate) fn process_outbound<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-
     let payload = if wrapped {
         GMPPayload::SendToHub(SendToHub {
             selector: SendToHub::MESSAGE_TYPE_ID
