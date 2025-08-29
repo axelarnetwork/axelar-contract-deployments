@@ -246,7 +246,6 @@ async function processCommand(axelar, chain, chains, options) {
             } else {
                 await verifyContract(env, chain.axelarId, interchainTokenDeployer, [], verifyOptions);
             }
-            await verifyContract(env, chain.axelarId, interchainTokenDeployer, [interchainToken], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenManager, [contractAddress], verifyOptions);
             await verifyContract(env, chain.axelarId, tokenHandler, [], verifyOptions);
             await verifyContract(

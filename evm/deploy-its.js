@@ -316,8 +316,6 @@ async function deployAll(axelar, wallet, chain, chains, options) {
 
                 let deploymentParams;
                 if (isHederaChain(chain)) {
-                    const tokenCreationPrice = DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS;
-
                     deploymentParams = defaultAbiCoder.encode(
                         ['address', 'string', 'string[]', 'uint256'],
                         [operatorAddress, chain.axelarId, trustedChains, DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS],
@@ -474,6 +472,19 @@ async function upgrade(_axelar, chain, _chains, options) {
     if (!contractConfig || !itsFactoryContractConfig) {
         printError('No ITS contract found for chain', chain.name);
         return;
+    }
+
+    let getContractJSON = getContractJSONStandard;
+
+    if (isHederaChain(chain)) {
+        // Hedera HTS library address
+        if (!isAddress(chain.htsLibraryAddress)) {
+            printError('No HTS library address found for chain', chain.name);
+            return;
+        }
+        printInfo('Using HTS library address', chain.htsLibraryAddress);
+
+        getContractJSON = getContractJSONWithHTS(chain.htsLibraryAddress);
     }
 
     const itsVersion = detectITSVersion();

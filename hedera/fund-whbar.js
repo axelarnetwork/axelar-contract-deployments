@@ -29,7 +29,7 @@ async function fundWithWHBAR(whbar, targetAddress, amount, wallet) {
 
     // Transfer WHBAR if target is different from wallet
     if (targetAddress.toLowerCase() !== wallet.address.toLowerCase()) {
-        printInfo(`Transfering to: ${targetAddress}`);
+        printInfo(`Transferring to: ${targetAddress}`);
 
         // See https://docs.hedera.com/hedera/core-concepts/smart-contracts/wrapped-hbar-whbar
         // as to why we need to scale down the amount

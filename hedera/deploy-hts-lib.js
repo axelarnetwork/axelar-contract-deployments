@@ -61,10 +61,10 @@ async function deployHtsLib(_config, options) {
             fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
             printInfo(`Deployment info saved to`, options.output);
         }
+
+        process.exit(0);
     } catch (error) {
         throw new Error(`Deployment failed: ${error.message}`);
-    } finally {
-        process.exit(0);
     }
 }
 
