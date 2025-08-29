@@ -465,10 +465,39 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 };
 
 const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
-    // dummy for now because it needs the multisig-prover address,
-    // but multisig-prover needs chain-codec address
-    // TODO: Implement chain codec instantiation for migrations to work
-    throw new Error('cannot instantiate directly, use instantiate-chain-codec instead');
+    const {
+        axelar: {
+            contracts: {
+                ChainCodec: { [chainName]: codecConfig },
+                MultisigProver: { [chainName]: {
+                    address: proverAddress // we expect this to be predicted and put into the config before calling
+                } },
+                Router: { address: routerAddress },
+            },
+        },
+    } = config;
+
+    if (!codecConfig) {
+        throw new Error(`ChainCodec config not found for chain ${chainName}`);
+    }
+
+    if (!validateAddress(proverAddress)) {
+        throw new Error(`Missing or invalid MultisigProver[${chainName}].address in axelar info`);
+    }
+
+    const { domainSeparator, ...rest } = codecConfig;
+
+    const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
+
+    if (!isKeccak256Hash(separator)) {
+        throw new Error(`Invalid ChainCodec[${chainName}].domainSeparator in axelar info`);
+    }
+
+    return {
+        domain_separator: separator.replace('0x', ''),
+        multisig_prover: proverAddress,
+        ...rest, // we also pass on additional properties here
+    };
 }
 
 const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
@@ -1194,7 +1223,7 @@ const getChainCodecInstantiateMsg = (config, chainName) => {
     const separator = domainSeparator || calculateDomainSeparator(chainName, routerAddress, axelarChainId);
 
     if (!isKeccak256Hash(separator)) {
-        throw new Error(`Invalid MultisigProver[${chainName}].domainSeparator in axelar info`);
+        throw new Error(`Invalid ChainCodec[${chainName}].domainSeparator in axelar info`);
     }
 
     return {
