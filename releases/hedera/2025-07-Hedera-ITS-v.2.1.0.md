@@ -57,13 +57,13 @@ You can set the `WHBAR_ADDRESS` environment variable in your `.env` file, or pas
 ### Devnet Amplifier
 
 ```bash
-ts-node hedera/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.1.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-ts-node hedera/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Register ITS edge contract on ITS Hub
@@ -138,7 +138,7 @@ ts-node evm/its.js checks -n $CHAIN -y
 
 - Verify the token manager proxy contract once an ITS token is deployed on `<ChainName>` and then mark it as a proxy.
 
-> Note: before transfering any tokens to an account on Hedera, that account must be associated with the token. Use the `associate-token.js` script to associate the token with the account, see `hedera/README.md` for more details.
+> Note: before transferring any tokens to an account on Hedera, that account must be associated with the token. Use the `associate-token.js` script to associate the token with the account, see `hedera/README.md` for more details.
 
 - EVM Checklist
 
