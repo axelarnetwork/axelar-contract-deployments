@@ -5,8 +5,8 @@ const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress 
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, _args, options) {
-    const { chainName } = options;
+async function rewards(client, config, args, options) {
+    const [chainName] = args;
 
     const rewardsContractAddresses = {
         multisig: config.axelar.contracts.Multisig.address,
@@ -66,8 +66,7 @@ async function tokenConfig(client, config, args, _options) {
 }
 
 async function customTokenMetadata(client, config, args, options) {
-    const [tokenAddress] = args;
-    const { chainName } = options;
+    const [chainName, tokenAddress] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
     if (!itsHubAddress) {
@@ -96,8 +95,7 @@ async function customTokenMetadata(client, config, args, options) {
 }
 
 async function tokenInstance(client, config, args, options) {
-    const [tokenId] = args;
-    const { chainName } = options;
+    const [chainName, tokenId] = args;
     const itsHubAddress = itsHubContractAddress(config.axelar);
 
     if (!itsHubAddress) {
@@ -125,8 +123,8 @@ async function tokenInstance(client, config, args, options) {
     }
 }
 
-async function itsChainConfig(client, config, _args, options) {
-    const { chainName } = options;
+async function itsChainConfig(client, config, args, options) {
+    const [chainName] = args;
 
     try {
         const result = await getItsChainConfig(client, config, chainName);
@@ -154,10 +152,10 @@ const programHandler = () => {
     program.name('query').description('Query contract state');
 
     const rewardCmd = program
-        .command('rewards')
+        .command('rewards <chainName>')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
-        .action((options) => {
-            mainProcessor(rewards, [], options);
+        .action((chainName, options) => {
+            mainProcessor(rewards, [chainName], options);
         });
 
     const tokenConfigCmd = program
@@ -168,24 +166,24 @@ const programHandler = () => {
         });
 
     const customTokenMetadataCmd = program
-        .command('custom-token-metadata <tokenAddress>')
+        .command('custom-token-metadata <chainName> <tokenAddress>')
         .description('Query custom token metadata by chain name and token address')
-        .action((tokenAddress, options) => {
-            mainProcessor(customTokenMetadata, [tokenAddress], options);
+        .action((chainName, tokenAddress, options) => {
+            mainProcessor(customTokenMetadata, [chainName, tokenAddress], options);
         });
 
     const tokenInstanceCmd = program
-        .command('token-instance <tokenId>')
+        .command('token-instance <chainName> <tokenId>')
         .description('Query token instance by chain name and token ID')
-        .action((tokenId, options) => {
-            mainProcessor(tokenInstance, [tokenId], options);
+        .action((chainName, tokenId, options) => {
+            mainProcessor(tokenInstance, [chainName, tokenId], options);
         });
 
     const itsChainConfigCmd = program
-        .command('its-chain-config')
+        .command('its-chain-config <chainName>')
         .description('Query ITS chain configuration for a specific chain')
-        .action((options) => {
-            mainProcessor(itsChainConfig, [], options);
+        .action((chainName, options) => {
+            mainProcessor(itsChainConfig, [chainName], options);
         });
 
     addAmplifierQueryOptions(rewardCmd);

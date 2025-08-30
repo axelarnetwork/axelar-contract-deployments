@@ -308,7 +308,7 @@ axelard q wasm contract-state smart $MULTISIG "{\"is_caller_authorized\": {\"con
 - Check reward pool to confirm funding worked:
 
 ```bash
-ts-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards $CHAIN
 ```
 
 12. Update `ampd` with the `$CHAIN` chain configuration. Verifiers should use their own `$CHAIN` RPC node for the `http_url` in production.

@@ -324,7 +324,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_name\": \"$CHAIN\", \"contract\": \"$VOTING_VERIFIER\" } } }" --amount $REWARD_AMOUNT --from $WALLET
 
 # Check reward pool to confirm funding worked
-ts-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards $CHAIN
 ```
 
 13. Create genesis verifier set
