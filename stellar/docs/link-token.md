@@ -307,7 +307,7 @@ ts-node stellar/its deployed-token-manager <tokenId>
 # Result: CATE...ABCD
 
 # Add the token manager as a minter on Stellar
-ts-node stellar/token-utils add-mninter <stellarTokenAddress> CATE...ABCD
+ts-node stellar/token-utils add-minter <stellarTokenAddress> CATE...ABCD
 
 # Interchain Token Transfer EVM to Stellar
 ts-node evm/its interchain-transfer stellar 0x89a0...abcd GABC...dest 1 -n <evmChainName> --gasValue 10000000000000000000
