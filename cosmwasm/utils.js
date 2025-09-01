@@ -449,10 +449,6 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         throw new Error(`Missing or invalid VotingVerifier[${chainName}].msgIdFormat in axelar info`);
     }
 
-    if (!isString(addressFormat)) {
-        throw new Error(`Missing or invalid VotingVerifier[${chainName}].addressFormat in axelar info`);
-    }
-
     return {
         service_registry_address: serviceRegistryAddress,
         rewards_address: rewardsAddress,
