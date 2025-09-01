@@ -153,3 +153,52 @@ node hedera/associate-token.js 0.0.123456
 ```
 
 **Note:** If the token is already associated with your account, the script will detect this and exit successfully without performing a duplicate association.
+
+### Token Creation Price Management
+
+Manage token creation pricing for the InterchainTokenService. Query prices in tinycents/tinybars and set prices in tinycents.
+
+#### Query Token Creation Price
+
+Get the current token creation price in all formats: tinycents, cents, USD, and optionally tinybars/HBAR.
+
+```bash
+node hedera/token-creation-price.js price --chainName <chainName> --env <env>
+```
+
+**Options:**
+- `--chainName <chainName>` - Chain name to get InterchainTokenService address from (can use CHAIN env var)
+- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+
+**Example:**
+```bash
+node hedera/token-creation-price.js price --chainName hedera --env devnet-amplifier
+```
+
+#### Set Token Creation Price
+
+Set the token creation price in tinycents.
+
+```bash
+node hedera/token-creation-price.js set-price <price> --chainName <chainName> --env <env>
+```
+
+**Arguments:**
+- `<price>` - Price value in tinycents (1 USD = 100 cents = 10,000,000,000 tinycents)
+
+**Options:**
+- `--chainName <chainName>` - Chain name to get InterchainTokenService address from (can use CHAIN env var)
+- `--env <env>` - Environment configuration to use: mainnet, stagenet, testnet, devnet-amplifier (defaults to devnet-amplifier, can use ENV env var)
+- `--privateKey <key>` - Private key for the account (optional)
+- `--yes` - Skip confirmation prompt
+
+**Examples:**
+```bash
+# Set price to 2 USD (2 * 100 * 100,000,000 = 20,000,000,000 tinycents)
+node hedera/token-creation-price.js set-price 20000000000 --chainName hedera --env devnet-amplifier
+
+# Set price to 50 cents (50 * 100,000,000 = 5,000,000,000 tinycents)
+node hedera/token-creation-price.js set-price 5000000000 --chainName hedera --env devnet-amplifier
+```
+
+**Note:** The script will display the equivalent values in cents and USD for confirmation before setting the price.
