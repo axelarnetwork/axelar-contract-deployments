@@ -688,6 +688,19 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         0,
     )?;
 
+    // Check that an invalid program account leads to a failure
+    {
+        let mut link_token_ix = link_token_ix.clone();
+        link_token_ix.accounts[9].pubkey = Pubkey::new_unique();
+        let result = ctx.send_solana_tx(&[link_token_ix]).await;
+        assert!(result.is_err());
+
+        assert_msg_present_in_logs(
+            result.unwrap_err(),
+            "failed: incorrect program id for instruction",
+        );
+    }
+
     let tx = ctx.send_solana_tx(&[link_token_ix]).await.unwrap();
     let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
     ctx.relay_to_evm(&call_contract_event.payload).await;
@@ -1011,6 +1024,7 @@ async fn test_source_address_stays_consistent_through_the_transfer(
 
     // Extract the CallContract event to get the GMP payload first
     let call_contract_event = fetch_first_call_contract_event_from_tx(&tx);
+
     let gmp_payload = GMPPayload::decode(&call_contract_event.payload)?;
 
     // Extract the InterchainTransfer event from logs
