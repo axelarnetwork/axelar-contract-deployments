@@ -87,8 +87,8 @@ const addStoreOptions = (program) => {
     program.hook('preAction', async (thisCommand) => {
         const opts = thisCommand.opts();
 
-        if (!opts.artifactDir && !opts.version) {
-            throw new Error('Either --artifact-dir or --version is required');
+        if (!opts.artifactDir && !opts.version && !opts.wasm) {
+            throw new Error('Either --artifact-dir or --version or --wasm is required');
         }
     });
 };

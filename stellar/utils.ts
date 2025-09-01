@@ -543,7 +543,11 @@ const getContractCodePath = async (options, contractName) => {
         return downloadContractCode(url, contractName, options.version);
     }
 
-    throw new Error('Either --artifact-dir or --version must be provided');
+    if (options && options.wasm) {
+        return options.wasm;
+    }
+
+    throw new Error('Either --artifact-dir or --version or --wasm must be provided');
 };
 
 function isValidAddress(address) {
