@@ -638,11 +638,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             // Create token contract instance
             const token = new Contract(tokenAddress, getContractJSON('InterchainToken').abi, wallet);
 
-            // Use amount directly as wei
             const amountInUnits = ethers.BigNumber.from(amount.toString());
-            printInfo(`Approving ${spender} to spend ${amount} wei of token ${tokenId}`);
+            printInfo(`Approving ${spender} to spend ${amount} of token ${tokenId}`);
 
-            if (prompt(`Proceed with approving ${spender} to spend ${amount} wei?`, yes)) {
+            if (prompt(`Proceed with approving ${spender} to spend ${amount}?`, yes)) {
                 return;
             }
 
