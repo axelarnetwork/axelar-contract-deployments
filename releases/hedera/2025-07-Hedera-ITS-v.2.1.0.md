@@ -158,16 +158,16 @@ ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [m
 ts-node hedera/associate-token.js [token-address]
 
 # Mint some tokens via the TokenManager
-ts-node evm/its.js mint-token [token-id] [to] [amount] -n $CHAIN
+ts-node evm/its.js mint-token [token-id] [to] [amount]
 
 # Deploy token to a remote chain
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain [destination-chain] --salt "salt1234" --gasValue [gas-value] -y
 
 # Approve token manager to spend tokens
 ts-node evm/its.js approve [token-id] [spender] [amount]
 
 # Transfer token to remote chain
-ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer [destination-chain] [token-id] [recipient] 1 --gasValue [gas-value]
 
 # Transfer token back from remote chain
 ts-node evm/its.js interchain-transfer $CHAIN [token-id] [destination-address] 1 --gasValue [gas-value] -n [destination-chain]
