@@ -469,6 +469,7 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
 };
 
 const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
+    const { chainName } = options;
     const {
         axelar: {
             contracts: {
@@ -479,6 +480,7 @@ const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
                 Router: { address: routerAddress },
             },
         },
+        chainId: axelarChainId
     } = config;
 
     if (!codecConfig) {
