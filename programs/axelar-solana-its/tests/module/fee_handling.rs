@@ -501,7 +501,6 @@ async fn test_custom_token_with_fee_lock_unlock_fee(
     let register_metadata = axelar_solana_its::instruction::register_token_metadata(
         ctx.solana_wallet,
         solana_custom_token,
-        spl_token_2022::id(),
         0,
     )?;
 

@@ -55,7 +55,6 @@ async fn setup_custom_token(
     let register_metadata = axelar_solana_its::instruction::register_token_metadata(
         ctx.solana_wallet,
         custom_solana_token,
-        spl_token_2022::id(),
         0,
     )?;
 
