@@ -26,7 +26,7 @@ const {
     INTERCHAIN_TRANSFER_WITH_METADATA,
     isTrustedChain,
     loadConfig,
-    getValueForGasValue,
+    scaleGasValue,
 } = require('./utils');
 const {
     getChainConfigByAxelarId,
@@ -360,7 +360,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
                 amountInUnits,
                 metadata,
                 gasValue,
-                { value: getValueForGasValue(chain, gasValue), ...gasOptions },
+                { value: scaleGasValue(chain, gasValue), ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
@@ -372,7 +372,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: getValueForGasValue(chain, gasValue),
+                value: scaleGasValue(chain, gasValue),
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);

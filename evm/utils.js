@@ -1104,7 +1104,7 @@ function detectITSVersion() {
 // Gas value passed as an argument is 200 (tinybars, 8 decimals)
 // but the RPC will accept the value in wei (18 decimals), so the value
 // once scaled will be 200 * 10^10 = 20_000_000_000 wei
-function getValueForGasValue(chain, gasValue) {
+function scaleGasValue(chain, gasValue) {
     if (typeof chain.gasScalingFactor === 'number') {
         return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
     }
@@ -1160,5 +1160,5 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
-    getValueForGasValue,
+    scaleGasValue,
 };
