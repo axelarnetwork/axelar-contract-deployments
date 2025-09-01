@@ -1,10 +1,10 @@
 import { PublicKey } from "@solana/web3.js";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { Program, AnchorProvider } from "@project-serum/anchor";
 
 import { AxelarSolanaGatewayCoder } from "./coder";
 
 export const AXELAR_SOLANA_GATEWAY_PROGRAM_ID = new PublicKey(
-  "gtwLjHAsfKAR6GWB4hzTUAA1w4SDdFMKamtGA5ttMEe"
+  "gtwi5T9x6rTWPtuuz6DA7ia1VmH8bdazm9QfDdi6DVp"
 );
 
 interface GetProgramParams {
@@ -151,46 +151,6 @@ type AxelarSolanaGateway = {
         {
           name: "payload";
           type: "bytes";
-        },
-        {
-          name: "signingPdaBump";
-          type: "u8";
-        }
-      ];
-    },
-    {
-      name: "callContractOffchainData";
-      accounts: [
-        {
-          name: "senderProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "senderCallContractPda";
-          isMut: false;
-          isSigner: true;
-        },
-        {
-          name: "gatewayRootPda";
-          isMut: false;
-          isSigner: false;
-        }
-      ];
-      args: [
-        {
-          name: "destinationChain";
-          type: "string";
-        },
-        {
-          name: "destinationContractAddress";
-          type: "string";
-        },
-        {
-          name: "payloadHash";
-          type: {
-            array: ["u8", 32];
-          };
         },
         {
           name: "signingPdaBump";
@@ -1029,46 +989,6 @@ const IDL: AxelarSolanaGateway = {
         {
           name: "payload",
           type: "bytes",
-        },
-        {
-          name: "signingPdaBump",
-          type: "u8",
-        },
-      ],
-    },
-    {
-      name: "callContractOffchainData",
-      accounts: [
-        {
-          name: "senderProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "senderCallContractPda",
-          isMut: false,
-          isSigner: true,
-        },
-        {
-          name: "gatewayRootPda",
-          isMut: false,
-          isSigner: false,
-        },
-      ],
-      args: [
-        {
-          name: "destinationChain",
-          type: "string",
-        },
-        {
-          name: "destinationContractAddress",
-          type: "string",
-        },
-        {
-          name: "payloadHash",
-          type: {
-            array: ["u8", 32],
-          },
         },
         {
           name: "signingPdaBump",

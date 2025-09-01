@@ -162,46 +162,6 @@ pub fn process_native_ix(
                 ]],
             )?;
         }
-        AxelarMemoInstruction::SendToGatewayOffchainMemo {
-            memo_hash,
-            destination_chain,
-            destination_address,
-        } => {
-            msg!("Instruction: SendToGatewayOffchainMemo");
-            let program_account = next_account_info(account_info_iter)?;
-            let counter_pda = next_account_info(account_info_iter)?;
-            let signing_pda_acc = next_account_info(account_info_iter)?;
-            let gateway_root_pda = next_account_info(account_info_iter)?;
-            let gateway_program = next_account_info(account_info_iter)?;
-
-            let counter_pda_account = counter_pda.check_initialized_pda::<Counter>(program_id)?;
-            assert_counter_pda_seeds(&counter_pda_account, counter_pda.key);
-            let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-            if &signing_pda.0 != signing_pda_acc.key {
-                msg!("invalid signing PDA");
-                return Err(ProgramError::InvalidAccountData);
-            }
-            invoke_signed(
-                &axelar_solana_gateway::instructions::call_contract_offchain_data(
-                    *gateway_program.key,
-                    *gateway_root_pda.key,
-                    crate::ID,
-                    Some(signing_pda),
-                    destination_chain,
-                    destination_address,
-                    memo_hash,
-                )?,
-                &[
-                    program_account.clone(),
-                    signing_pda_acc.clone(),
-                    gateway_root_pda.clone(),
-                ],
-                &[&[
-                    axelar_solana_gateway::seed_prefixes::CALL_CONTRACT_SIGNING_SEED,
-                    &[signing_pda.1],
-                ]],
-            )?;
-        }
         AxelarMemoInstruction::Initialize { counter_pda_bump } => {
             msg!("Instruction: Initialize");
             process_initialize_memo_program_counter(program_id, accounts, counter_pda_bump)?;

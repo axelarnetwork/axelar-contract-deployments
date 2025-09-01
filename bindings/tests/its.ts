@@ -424,41 +424,6 @@ describe("Ping ITS", () => {
     }
   });
 
-  it("CallContractWithInterchainTokenOffchainData", async () => {
-    const payer = await getKeypairFromFile();
-    try {
-      const tx = await program.methods
-        .callContractWithInterchainTokenOffchainData(
-          [1, 2],
-          "chain",
-          Buffer.from(new Uint8Array(1)),
-          new BN(1),
-          [3, 4],
-          new BN(4),
-          2
-        )
-        .accounts({
-          payer: payer.publicKey,
-          sourceAccount: payer.publicKey,
-          mint: payer.publicKey,
-          tokenManagerPda: payer.publicKey,
-          tokenManagerAta: payer.publicKey,
-          tokenProgram: payer.publicKey,
-          flowSlotPda: payer.publicKey,
-          gatewayRootPda: payer.publicKey,
-          axelarSolanaGateway: payer.publicKey,
-          gasConfigPda: payer.publicKey,
-          gasService: payer.publicKey,
-          systemProgram: systemAccount,
-          itsRootPda: payer.publicKey,
-          callContractSigningPda: payer.publicKey,
-          id: payer.publicKey,
-        })
-        .rpc();
-    } catch (error) {
-      processError(error, "OutboundTransfer");
-    }
-  });
 
   it("SetFlowLimit", async () => {
     const payer = await getKeypairFromFile();

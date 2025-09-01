@@ -409,7 +409,6 @@ pub(crate) fn process_outbound_deploy<'a>(
         destination_chain.clone(),
         gas_value,
         signing_pda_bump,
-        None,
         true,
     )?;
 

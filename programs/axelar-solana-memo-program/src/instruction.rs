@@ -52,25 +52,6 @@ pub enum AxelarMemoInstruction {
         /// Destination contract address on the destination chain
         destination_address: String,
     },
-
-    /// Send a memo to a contract deployed on a different chain, but pass the memo offchain. The
-    /// relayer API must be used to send the memo after calling this instruction.
-    ///
-    /// Accounts expected by this instruction:
-    ///
-    /// 0. [] Memo program id
-    /// 1. [w] Memo counter PDA
-    /// 2. [] Memo program CALL CONTRACT signing PDA
-    /// 3. [] gateway root pda
-    /// 4. [] gateway program id
-    SendToGatewayOffchainMemo {
-        /// Hash of the memo which is going to be sent directly to the relayer.
-        memo_hash: [u8; 32],
-        /// Destination chain we want to communicate with
-        destination_chain: String,
-        /// Destination contract address on the destination chain
-        destination_address: String,
-    },
 }
 
 /// Creates a [`AxelarMemoInstruction::Initialize`] instruction.
@@ -105,38 +86,6 @@ pub fn call_gateway_with_memo(
 ) -> Result<Instruction, ProgramError> {
     let data = to_vec(&AxelarMemoInstruction::SendToGateway {
         memo,
-        destination_chain,
-        destination_address,
-    })?;
-    let signing_pda = axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-    let accounts = vec![
-        AccountMeta::new_readonly(crate::ID, false),
-        AccountMeta::new(*memo_counter_pda, false),
-        AccountMeta::new_readonly(signing_pda.0, false),
-        AccountMeta::new_readonly(*gateway_root_pda, false),
-        AccountMeta::new_readonly(*gateway_program_id, false),
-    ];
-    Ok(Instruction {
-        program_id: crate::ID,
-        accounts,
-        data,
-    })
-}
-
-/// Create a [`AxelarMemoInstruction::SendToGatewayOffchainMemo`] instruction which will be
-/// used to send a memo to the Solana gateway (create a message that's supposed
-/// to land on an external chain)
-pub fn call_gateway_with_offchain_memo(
-    gateway_root_pda: &Pubkey,
-    memo_counter_pda: &Pubkey,
-    memo: String,
-    destination_chain: String,
-    destination_address: String,
-    gateway_program_id: &Pubkey,
-) -> Result<Instruction, ProgramError> {
-    let memo_hash = solana_program::keccak::hash(memo.as_bytes()).to_bytes();
-    let data = to_vec(&AxelarMemoInstruction::SendToGatewayOffchainMemo {
-        memo_hash,
         destination_chain,
         destination_address,
     })?;

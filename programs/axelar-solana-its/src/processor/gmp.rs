@@ -158,7 +158,6 @@ pub(crate) fn process_outbound<'a>(
     destination_chain: String,
     gas_value: u64,
     signing_pda_bump: u8,
-    payload_hash: Option<[u8; 32]>,
     wrapped: bool,
 ) -> ProgramResult {
     let its_root_config = InterchainTokenService::load(accounts.its_root_account)?;
@@ -182,45 +181,29 @@ pub(crate) fn process_outbound<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let (payload_hash, call_contract_ix) = if let Some(payload_hash) = payload_hash {
-        let ix = axelar_solana_gateway::instructions::call_contract_offchain_data(
-            axelar_solana_gateway::id(),
-            *accounts.gateway_root_account.key,
-            crate::ID,
-            Some((signing_pda, signing_pda_bump)),
-            crate::ITS_HUB_CHAIN_NAME.to_owned(),
-            its_root_config.its_hub_address.clone(),
-            payload_hash,
-        )?;
-
-        (payload_hash, ix)
+    let payload = if wrapped {
+        GMPPayload::SendToHub(SendToHub {
+            selector: SendToHub::MESSAGE_TYPE_ID
+                .try_into()
+                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
+            destination_chain,
+            payload: payload.encode().into(),
+        })
+        .encode()
     } else {
-        let payload = if wrapped {
-            GMPPayload::SendToHub(SendToHub {
-                selector: SendToHub::MESSAGE_TYPE_ID
-                    .try_into()
-                    .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-                destination_chain,
-                payload: payload.encode().into(),
-            })
-            .encode()
-        } else {
-            payload.encode()
-        };
-
-        let payload_hash = solana_program::keccak::hashv(&[&payload]).to_bytes();
-        let ix = axelar_solana_gateway::instructions::call_contract(
-            axelar_solana_gateway::id(),
-            *accounts.gateway_root_account.key,
-            crate::ID,
-            Some((signing_pda, signing_pda_bump)),
-            crate::ITS_HUB_CHAIN_NAME.to_owned(),
-            its_root_config.its_hub_address.clone(),
-            payload,
-        )?;
-
-        (payload_hash, ix)
+        payload.encode()
     };
+
+    let payload_hash = solana_program::keccak::hashv(&[&payload]).to_bytes();
+    let call_contract_ix = axelar_solana_gateway::instructions::call_contract(
+        axelar_solana_gateway::id(),
+        *accounts.gateway_root_account.key,
+        crate::ID,
+        Some((signing_pda, signing_pda_bump)),
+        crate::ITS_HUB_CHAIN_NAME.to_owned(),
+        its_root_config.its_hub_address.clone(),
+        payload,
+    )?;
 
     if gas_value > 0 {
         pay_gas(

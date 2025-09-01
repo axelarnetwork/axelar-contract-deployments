@@ -1,4 +1,4 @@
-import { Idl, TypesCoder } from "@coral-xyz/anchor";
+import { Idl, TypesCoder } from "@project-serum/anchor";
 
 export class AxelarSolanaGatewayTypesCoder implements TypesCoder {
   constructor(_idl: Idl) {}

@@ -7,7 +7,7 @@ use axelar_message_primitives::{DataPayload, DestinationProgramId};
 use axelar_solana_encoding::types::messages::Message;
 use axelar_solana_gateway::state::incoming_message::command_id;
 use borsh::{to_vec, BorshDeserialize, BorshSerialize};
-use interchain_token_transfer_gmp::{GMPPayload, InterchainTransfer, SendToHub};
+use interchain_token_transfer_gmp::GMPPayload;
 use solana_program::bpf_loader_upgradeable;
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::program_error::ProgramError;
@@ -415,51 +415,6 @@ pub enum InterchainTokenServiceInstruction {
 
         /// Call data
         data: Vec<u8>,
-
-        /// The gas value to be paid for the deploy transaction
-        gas_value: u64,
-
-        /// Signing PDA bump
-        signing_pda_bump: u8,
-    },
-
-    /// Transfers tokens to a contract on the destination chain and call the give instruction on
-    /// it. This instruction is is the same as [`InterchainTransfer`], but will fail if call data
-    /// is empty.
-    ///
-    /// 0. [writable,signer] The address of the payer
-    /// 1. [maybe signer] The address of the owner or delegate of the source account of the
-    ///    transfer. In case it's the `TokenManager`, it shouldn't be set as signer as the signing
-    ///    happens on chain.
-    /// 2. [writable] The source account from which the tokens are being transferred
-    /// 3. [] The mint account (token address)
-    /// 4. [] The token manager account associated with the interchain token
-    /// 5. [writable] The token manager Associated Token Account associated with the mint
-    /// 6. [] The token program account that was used to create the mint (`spl_token` vs `spl_token_2022`)
-    /// 7. [writable] The account tracking the flow of this mint for the current epoch
-    /// 8. [] The GMP gateway root account
-    /// 9. [] The GMP gateway program account
-    /// 10. [writable] The GMP gas configuration account
-    /// 11. [] The GMP gas service program account
-    /// 12. [] The system program account
-    /// 13. [] The ITS root account
-    /// 14. [] The GMP call contract signing account
-    /// 15. [] The ITS program account
-    CallContractWithInterchainTokenOffchainData {
-        /// The token id associated with the token
-        token_id: [u8; 32],
-
-        /// The chain where the tokens are being transferred to.
-        destination_chain: String,
-
-        /// The address on the destination chain to send the tokens to.
-        destination_address: Vec<u8>,
-
-        /// Amount of tokens being transferred.
-        amount: u64,
-
-        /// Hash of the entire payload
-        payload_hash: [u8; 32],
 
         /// The gas value to be paid for the deploy transaction
         gas_value: u64,
@@ -1521,94 +1476,6 @@ pub fn call_contract_with_interchain_token(
         accounts,
         data,
     })
-}
-
-/// Creates an [`InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData`]
-/// instruction.
-///
-/// # Errors
-///
-/// [`ProgramError::BorshIoError`]: When instruction serialization fails.
-pub fn call_contract_with_interchain_token_offchain_data(
-    payer: Pubkey,
-    source_account: Pubkey,
-    token_id: [u8; 32],
-    destination_chain: String,
-    destination_address: Vec<u8>,
-    amount: u64,
-    mint: Pubkey,
-    data: Vec<u8>,
-    token_program: Pubkey,
-    gas_value: u64,
-    timestamp: i64,
-) -> Result<(Instruction, Vec<u8>), ProgramError> {
-    let (its_root_pda, _) = crate::find_its_root_pda();
-    let (token_manager_pda, _) = crate::find_token_manager_pda(&its_root_pda, &token_id);
-    let flow_epoch = flow_limit::flow_epoch_with_timestamp(timestamp)?;
-    let (flow_slot_pda, _) = crate::find_flow_slot_pda(&token_manager_pda, flow_epoch);
-    let token_manager_ata =
-        get_associated_token_address_with_program_id(&token_manager_pda, &mint, &token_program);
-    let (call_contract_signing_pda, signing_pda_bump) =
-        axelar_solana_gateway::get_call_contract_signing_pda(crate::ID);
-    let (gas_config_pda, _bump) = axelar_solana_gas_service::get_config_pda();
-
-    let accounts = vec![
-        AccountMeta::new_readonly(payer, true),
-        AccountMeta::new(source_account, false),
-        AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(token_manager_pda, false),
-        AccountMeta::new(token_manager_ata, false),
-        AccountMeta::new_readonly(token_program, false),
-        AccountMeta::new(flow_slot_pda, false),
-        AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
-        AccountMeta::new(gas_config_pda, false),
-        AccountMeta::new_readonly(axelar_solana_gas_service::ID, false),
-        AccountMeta::new_readonly(system_program::ID, false),
-        AccountMeta::new_readonly(its_root_pda, false),
-        AccountMeta::new_readonly(call_contract_signing_pda, false),
-        AccountMeta::new_readonly(crate::ID, false),
-    ];
-
-    let payload = GMPPayload::SendToHub(SendToHub {
-        payload: GMPPayload::InterchainTransfer(InterchainTransfer {
-            selector: InterchainTransfer::MESSAGE_TYPE_ID
-                .try_into()
-                .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-            token_id: token_id.into(),
-            source_address: source_account.to_bytes().into(),
-            destination_address: destination_address.clone().into(),
-            amount: alloy_primitives::U256::from(amount),
-            data: data.into(),
-        })
-        .encode()
-        .into(),
-        selector: SendToHub::MESSAGE_TYPE_ID
-            .try_into()
-            .map_err(|_err| ProgramError::ArithmeticOverflow)?,
-        destination_chain: destination_chain.clone(),
-    })
-    .encode();
-
-    let data = to_vec(
-        &InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
-            token_id,
-            destination_chain,
-            destination_address,
-            amount,
-            gas_value,
-            signing_pda_bump,
-            payload_hash: solana_program::keccak::hashv(&[&payload]).0,
-        },
-    )?;
-
-    Ok((
-        Instruction {
-            program_id: crate::ID,
-            accounts,
-            data,
-        },
-        payload,
-    ))
 }
 
 /// Creates an [`InterchainTokenServiceInstruction::SetFlowLimit`].

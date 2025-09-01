@@ -153,7 +153,6 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             None,
-            None,
         ),
         InterchainTokenServiceInstruction::RegisterTokenMetadata {
             gas_value,
@@ -257,26 +256,6 @@ pub fn process_instruction<'a>(
             gas_value,
             signing_pda_bump,
             Some(data),
-            None,
-        ),
-        InterchainTokenServiceInstruction::CallContractWithInterchainTokenOffchainData {
-            token_id,
-            destination_chain,
-            destination_address,
-            amount,
-            payload_hash,
-            gas_value,
-            signing_pda_bump,
-        } => interchain_transfer::process_outbound_transfer(
-            accounts,
-            token_id,
-            destination_chain,
-            destination_address,
-            amount,
-            gas_value,
-            signing_pda_bump,
-            None,
-            Some(payload_hash),
         ),
     }
 }
