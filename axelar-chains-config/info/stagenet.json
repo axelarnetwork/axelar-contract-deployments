@@ -230,7 +230,7 @@
       "name": "Moonbeam",
       "axelarId": "moonbeam",
       "chainId": 1287,
-      "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
+      "rpc": "https://moonbeam.drpc.org",
       "tokenSymbol": "DEV",
       "decimals": 18,
       "chainType": "evm",
