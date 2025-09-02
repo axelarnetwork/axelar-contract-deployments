@@ -1096,14 +1096,6 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
-// Adjust gas value based on chain's gas scaling factor
-// Most of the chains will not need scaling, but certain chains
-// like Hedera have different decimals accepted by their EVM RPCs.
-//
-// Example:
-// Gas value passed as an argument is 200 (tinybars, 8 decimals)
-// but the RPC will accept the value in wei (18 decimals), so the value
-// once scaled will be 200 * 10^10 = 20_000_000_000 wei
 function scaleGasValue(chain, gasValue) {
     if (typeof chain.gasScalingFactor === 'number') {
         return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
