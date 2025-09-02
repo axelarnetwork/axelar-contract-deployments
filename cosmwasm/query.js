@@ -134,8 +134,8 @@ async function itsChainConfig(client, config, args, options) {
     }
 }
 
-async function deployedContracts(client, config, args, options) {
-    const { chainName } = options;
+async function saveDeployedContracts(client, config, args, options) {
+    const [chainName] = args;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
     if (!coordinatorAddress) {
@@ -221,7 +221,7 @@ const programHandler = () => {
 
     program.name('query').description('Query contract state');
 
-    const rewardCmd = program
+    const rewardsCmd = program
         .command('rewards <chainName>')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
         .action((chainName, options) => {
@@ -257,14 +257,13 @@ const programHandler = () => {
         });
 
     const saveDeployedContractsCmd = program
-        .command('save-deployed-contracts')
+        .command('save-deployed-contracts <chainName>')
         .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => {
-            mainProcessor(deployedContracts, [], options);
+        .action((chainName, options) => {
+            mainProcessor(saveDeployedContracts, [chainName], options);
         });
 
-    addAmplifierQueryOptions(rewardCmd);
+    addAmplifierQueryOptions(rewardsCmd);
     addAmplifierQueryOptions(tokenConfigCmd);
     addAmplifierQueryOptions(customTokenMetadataCmd);
     addAmplifierQueryOptions(tokenInstanceCmd);
