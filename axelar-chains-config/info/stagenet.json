@@ -1608,6 +1608,7 @@
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
       "timeout": 50000,
+      "gasScalingFactor": 10,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
@@ -1669,6 +1670,26 @@
           "address": "0xeE1d04E4F9F9AdEB7be7d6996f4A726773460A87",
           "implementation": "0x465F92fc79dE7304B2fc734f894A9fb679120b75",
           "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "proxySalt": "ITS v1.0.0",
+          "tokenManagerDeployer": "0x835AF4Fa00f7D7E90e878A5Ed72c309fEA3CB675",
+          "interchainTokenDeployer": "0x48ca274849c3CBfAB152b46d88c52C7740cb1007",
+          "tokenManager": "0x377F8af458d247E6B92a988b015997De053a98ae",
+          "tokenHandler": "0x358f38620e86fBBDA786A1a1500241b3AFf2a973",
+          "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
+          "htsLibrary": "0x0000000000000000000000000000000000653c18",
+          "whbar": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0xBeF25f4733b9d451072416360609e5A4c115293E",
+          "salt": "ITS Factory v1.0.0",
+          "implementation": "0x3296D09c102447ECEE9E469c83b22Bbec8e87a95",
+          "address": "0x35eAd6089aBF6233C3E0086CD3C0eF849bdE95c3"
         }
       }
     },
@@ -2494,10 +2515,10 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "67",
-        "storeCodeProposalCodeHash": "fcbd66ffc824fc52383132d7a57617e9bc40dd1521ecad77341726434f801406",
-        "codeId": 19,
-        "lastUploadedCodeId": 3,
+        "storeCodeProposalId": "261",
+        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
+        "codeId": 66,
+        "lastUploadedCodeId": 66,
         "address": "axelar15454y4v8x2ennqq6k0t4cu4r0cpqsy3d6m2jw7d0p4tagaafs29qnlhljd",
         "executeProposalId": "14"
       },
@@ -2909,6 +2930,10 @@
         "stellar-2025-q3": {
           "maxUintBits": 127,
           "maxDecimalsWhenTruncating": 255
+        },
+        "hedera": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
         },
         "lastUploadedCodeId": 61
       },

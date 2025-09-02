@@ -540,3 +540,5 @@ if (require.main === module) {
 
     program.parse();
 }
+
+module.exports = { migrate };
