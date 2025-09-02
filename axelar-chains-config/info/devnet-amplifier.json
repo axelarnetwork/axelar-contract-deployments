@@ -1360,7 +1360,6 @@
         "url": "https://hashscan.io/testnet",
         "api": ""
       },
-      "gasScalingFactor": 10,
       "gasOptions": {
         "gasLimit": 8000000
       },
