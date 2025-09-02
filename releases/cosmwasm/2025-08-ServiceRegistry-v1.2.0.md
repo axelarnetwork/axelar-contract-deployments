@@ -1,8 +1,8 @@
 # Cosmwasm Service Registry v1.2.0
 
-|                | **Owner**                              |
-|----------------|----------------------------------------|
-| **Created By** | @cjcobb23 <cj@interoplabs.io>          |
+|                | **Owner**                                                               |
+|----------------|-------------------------------------------------------------------------|
+| **Created By** | @cjcobb23 <cj@interoplabs.io>                                           |
 | **Deployment** | @blockchainguyy <ayush@interoplabs.io>, @isi8787 <isaac@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
@@ -10,7 +10,7 @@
 | **Devnet Amplifier** | Deployed              | 2025-08-28 |
 | **Stagenet**         | Deployed              | 2025-08-28 |
 | **Testnet**          | Deployed              | 2025-08-29 |
-| **Mainnet**          | Pending               |            |
+| **Mainnet**          | Deployed              | 2025-09-05 |
 
 
 [Release](https://github.com/axelarnetwork/axelar-amplifier/releases/tag/service-registry-v1.2.0)
