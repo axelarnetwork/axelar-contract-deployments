@@ -5,4 +5,6 @@ module.exports = {
     ...require('./upgrade-utils'),
     ...require('./cli-utils'),
     ...require('./LedgerSigner'),
+    ...require('./token-utils'),
+    ...require('./its-utils'),
 };

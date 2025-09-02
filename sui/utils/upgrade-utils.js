@@ -1,5 +1,5 @@
 const { bcs } = require('@mysten/bcs');
-const { fromB64 } = require('@mysten/bcs');
+const { fromBase64 } = require('@mysten/bcs');
 const { Transaction } = require('@mysten/sui/transactions');
 const { printInfo, validateParameters } = require('../../common/utils');
 const { copyMovePackage, updateMoveToml } = require('@axelar-network/axelar-cgp-sui');
@@ -64,7 +64,7 @@ async function upgradePackage(client, keypair, packageToUpgrade, contractConfig,
     const { modules, dependencies, digest } = await builder.getContractBuild(packageDir, moveDir);
     const { offline } = options;
     const upgradeCap = contractConfig.objects?.UpgradeCap;
-    const digestHash = options.digest ? fromB64(options.digest) : digest;
+    const digestHash = options.digest ? fromBase64(options.digest) : digest;
     const policy = getUpgradePolicyId(options.policy);
 
     validateParameters({ isNonEmptyString: { upgradeCap }, isNonEmptyStringArray: { modules, dependencies } });
