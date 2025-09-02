@@ -33,6 +33,31 @@ solana_program::declare_id!("its1111111111111111111111111111111111111111");
 
 pub(crate) const ITS_HUB_CHAIN_NAME: &str = "axelar";
 
+// Chain name hash constants for token ID derivation
+#[cfg(feature = "devnet-amplifier")]
+pub const CHAIN_NAME_HASH: [u8; 32] = [
+    10, 171, 102, 67, 72, 176, 161, 92, 42, 179, 148, 228, 13, 72, 172, 178, 168, 16, 138, 252, 99,
+    222, 187, 187, 25, 30, 121, 52, 235, 103, 11, 169,
+]; // keccak256("solana-devnet")
+
+#[cfg(feature = "stagenet")]
+pub const CHAIN_NAME_HASH: [u8; 32] = [
+    67, 5, 100, 18, 3, 83, 80, 76, 10, 94, 7, 166, 63, 92, 244, 200, 233, 32, 8, 242, 33, 188, 46,
+    11, 38, 32, 244, 151, 37, 161, 40, 0,
+]; // keccak256("solana-stagenet")
+
+#[cfg(feature = "testnet")]
+pub const CHAIN_NAME_HASH: [u8; 32] = [
+    159, 1, 245, 195, 103, 184, 207, 215, 88, 74, 183, 125, 33, 47, 221, 82, 55, 77, 255, 177, 89,
+    88, 76, 133, 128, 193, 177, 171, 2, 107, 173, 86,
+]; // keccak256("solana-testnet")
+
+#[cfg(feature = "mainnet")]
+pub const CHAIN_NAME_HASH: [u8; 32] = [
+    110, 239, 41, 235, 176, 58, 162, 20, 74, 26, 107, 98, 18, 206, 116, 245, 4, 163, 77, 183, 153,
+    184, 22, 26, 33, 20, 0, 23, 232, 13, 61, 138,
+]; // keccak256("solana")
+
 pub(crate) trait Validate {
     fn validate(&self) -> Result<(), ProgramError>;
 }
@@ -529,13 +554,18 @@ pub(crate) fn create_associated_token_account_idempotent<'a>(
 
 #[must_use]
 pub(crate) fn canonical_interchain_token_deploy_salt(mint: &Pubkey) -> [u8; 32] {
-    solana_program::keccak::hashv(&[seed_prefixes::PREFIX_CANONICAL_TOKEN_SALT, mint.as_ref()])
-        .to_bytes()
+    solana_program::keccak::hashv(&[
+        seed_prefixes::PREFIX_CANONICAL_TOKEN_SALT,
+        &CHAIN_NAME_HASH,
+        mint.as_ref(),
+    ])
+    .to_bytes()
 }
 
 pub(crate) fn interchain_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
     solana_program::keccak::hashv(&[
         seed_prefixes::PREFIX_INTERCHAIN_TOKEN_SALT,
+        &CHAIN_NAME_HASH,
         deployer.as_ref(),
         salt,
     ])
@@ -545,6 +575,7 @@ pub(crate) fn interchain_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32])
 pub(crate) fn linked_token_deployer_salt(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
     solana_program::keccak::hashv(&[
         seed_prefixes::PREFIX_CUSTOM_TOKEN_SALT,
+        &CHAIN_NAME_HASH,
         deployer.as_ref(),
         salt,
     ])
@@ -578,4 +609,23 @@ pub fn linked_token_id(deployer: &Pubkey, salt: &[u8; 32]) -> [u8; 32] {
     let salt = linked_token_deployer_salt(deployer, salt);
 
     interchain_token_id_internal(&salt)
+}
+#[cfg(test)]
+mod tests {
+    use super::CHAIN_NAME_HASH;
+
+    #[test]
+    fn test_chain_name_hash_constants() {
+        #[cfg(feature = "mainnet")]
+        let chain_name = "solana";
+        #[cfg(feature = "testnet")]
+        let chain_name = "solana-stagenet";
+        #[cfg(feature = "stagenet")]
+        let chain_name = "solana-testnet";
+        #[cfg(feature = "devnet-amplifier")]
+        let chain_name = "solana-devnet";
+
+        let actual = solana_program::keccak::hash(chain_name.as_bytes()).to_bytes();
+        assert_eq!(CHAIN_NAME_HASH, actual, "hash constant mismatch");
+    }
 }
