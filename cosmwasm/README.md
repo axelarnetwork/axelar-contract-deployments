@@ -230,7 +230,7 @@ This formats the execute message using the config, generates a deployment name (
 After the proposal executes, retrieve and write the deployed contract addresses to the config:
 
 ```bash
-ts-node cosmwasm/query.js save-deployed-contracts -n avalanche
+ts-node cosmwasm/query.js save-deployed-contracts avalanche
 ```
 
 ### Uploading and instantiating in one step
@@ -345,7 +345,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
 Query and save deployed contracts via Coordinator:
 
 ```bash
-ts-node cosmwasm/query.js save-deployed-contracts -n <chain-name>
+ts-node cosmwasm/query.js save-deployed-contracts <chain-name>
 ```
 
 This will query the Coordinator contract for a specific chain's deployed addresses and update the config with those addresses.
