@@ -1353,13 +1353,13 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
-      "gasScalingFactor": 10,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
         "url": "https://hashscan.io/testnet",
         "api": ""
       },
+      "gasScalingFactor": 10,
       "gasOptions": {
         "gasLimit": 8000000
       },

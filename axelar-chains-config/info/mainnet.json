@@ -3123,6 +3123,7 @@
         "url": "https://hashscan.io/mainnet",
         "api": ""
       },
+      "gasScalingFactor": 10,
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
