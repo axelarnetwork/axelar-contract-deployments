@@ -494,7 +494,7 @@
       "name": "Ethereum-Sepolia",
       "axelarId": "ethereum-sepolia",
       "chainId": 11155111,
-      "rpc": "https://sepolia.drpc.org",
+      "rpc": "https://eth-sepolia.public.blastapi.io",
       "tokenSymbol": "ETH",
       "decimals": 18,
       "confirmations": 2,
