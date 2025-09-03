@@ -230,7 +230,7 @@ This formats the execute message using the config, generates a deployment name (
 After the proposal executes, retrieve and write the deployed contract addresses to the config:
 
 ```bash
-ts-node cosmwasm/query.js save-deployed-contracts -n avalanche
+ts-node cosmwasm/query.js save-deployed-contracts avalanche
 ```
 
 ### Uploading and instantiating in one step
@@ -345,7 +345,7 @@ ts-node cosmwasm/submit-proposal.js migrate \
 Query and save deployed contracts via Coordinator:
 
 ```bash
-ts-node cosmwasm/query.js save-deployed-contracts -n <chain-name>
+ts-node cosmwasm/query.js save-deployed-contracts <chain-name>
 ```
 
 This will query the Coordinator contract for a specific chain's deployed addresses and update the config with those addresses.
@@ -391,4 +391,69 @@ ts-node evm/gateway.js --action submitProof --multisigSessionId <multisig-sessio
 
 ```bash
 ts-node cosmwasm/rotate-signers.js confirm-verifier-rotation <chain-name> <rotate-signers-tx>
+```
+
+### Querying Contract State
+
+The `query.js` script provides commands to query various contract states and configurations. Use these commands to inspect contract information and verify deployments.
+
+#### Available Commands
+
+##### Query Rewards Pool State
+
+Query the rewards pool state for multisig and voting verifier contracts:
+
+```bash
+ts-node cosmwasm/query.js rewards <chainName>
+```
+
+##### Query Token Configuration
+
+Query token configuration from the ITS Hub:
+
+```bash
+ts-node cosmwasm/query.js token-config <tokenId>
+```
+
+##### Query Custom Token Metadata
+
+Query custom token metadata by chain name and token address:
+
+```bash
+ts-node cosmwasm/query.js custom-token-metadata <chainName> <tokenAddress>
+```
+
+##### Query Token Instance
+
+Query token instance information by chain name and token ID:
+
+```bash
+ts-node cosmwasm/query.js token-instance <chainName> <tokenId>
+```
+
+##### Query ITS Chain Configuration
+
+Query ITS chain configuration for a specific chain:
+
+```bash
+ts-node cosmwasm/query.js its-chain-config <chainName>
+```
+
+#### Examples
+
+```bash
+# Query rewards for flow chain
+ts-node cosmwasm/query.js rewards flow
+
+# Query token config for a specific token ID
+ts-node cosmwasm/query.js token-config 1234567890abcdef...
+
+# Query custom token metadata
+ts-node cosmwasm/query.js custom-token-metadata flow 0x742d35cc6460c0f692b8f7b6b0e1b7f9e0c9f9f9
+
+# Query token instance
+ts-node cosmwasm/query.js token-instance flow 1234567890abcdef...
+
+# Query ITS chain configuration
+ts-node cosmwasm/query.js its-chain-config flow
 ```

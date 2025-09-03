@@ -2360,6 +2360,7 @@
         "url": "https://hashscan.io/testnet",
         "api": ""
       },
+      "gasScalingFactor": 10,
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -3259,10 +3260,10 @@
     "contracts": {
       "ServiceRegistry": {
         "governanceAccount": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
-        "storeCodeProposalId": "172",
-        "storeCodeProposalCodeHash": "fcbd66ffc824fc52383132d7a57617e9bc40dd1521ecad77341726434f801406",
-        "codeId": 15,
-        "lastUploadedCodeId": 15,
+        "storeCodeProposalId": "354",
+        "storeCodeProposalCodeHash": "1ece3b2b765257ed931f9e151b936ae24b26b632990baf90f63306a9db55f714",
+        "codeId": 61,
+        "lastUploadedCodeId": 61,
         "address": "axelar1rpj2jjrv3vpugx9ake9kgk3s2kgwt0y60wtkmcgfml5m3et0mrls6nct9m",
         "executeProposalId": "112",
         "flow": {

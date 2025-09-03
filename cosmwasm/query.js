@@ -5,8 +5,8 @@ const { loadConfig, printInfo, printWarn, getChainConfig, itsHubContractAddress,
 const { Command } = require('commander');
 const { addAmplifierQueryOptions } = require('./cli-utils');
 
-async function rewards(client, config, _args, options) {
-    const { chainName } = options;
+async function rewards(client, config, args, options) {
+    const [chainName] = args;
 
     const rewardsContractAddresses = {
         multisig: config.axelar.contracts.Multisig.address,
@@ -34,6 +34,10 @@ async function rewards(client, config, _args, options) {
 async function getItsChainConfig(client, config, chainName) {
     const chainConfig = getChainConfig(config.chains, chainName);
 
+    if (!chainConfig) {
+        throw new Error(`Chain ${chainName} not found in config`);
+    }
+
     return await client.queryContractSmart(itsHubContractAddress(config.axelar), {
         its_chain: {
             chain: chainConfig.axelarId,
@@ -41,8 +45,86 @@ async function getItsChainConfig(client, config, chainName) {
     });
 }
 
-async function itsChainConfig(client, config, options) {
-    const { chainName } = options;
+async function tokenConfig(client, config, args, _options) {
+    const [tokenId] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            token_config: { token_id: tokenId },
+        });
+
+        printInfo(`Token config for ${tokenId}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch token config for ${tokenId}`, error?.message || String(error));
+    }
+}
+
+async function customTokenMetadata(client, config, args, options) {
+    const [chainName, tokenAddress] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            custom_token_metadata: {
+                chain: chainConfig.axelarId,
+                token_address: tokenAddress,
+            },
+        });
+
+        printInfo(`Custom token metadata for ${tokenAddress} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch custom token metadata for ${tokenAddress} on ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function tokenInstance(client, config, args, options) {
+    const [chainName, tokenId] = args;
+    const itsHubAddress = itsHubContractAddress(config.axelar);
+
+    if (!itsHubAddress) {
+        printWarn('ITS Hub contract address not found in config');
+        return;
+    }
+
+    const chainConfig = getChainConfig(config.chains, chainName);
+    if (!chainConfig) {
+        printWarn(`Chain ${chainName} not found in config`);
+        return;
+    }
+
+    try {
+        const result = await client.queryContractSmart(itsHubAddress, {
+            token_instance: {
+                chain: chainConfig.axelarId,
+                token_id: tokenId,
+            },
+        });
+
+        printInfo(`Token instance for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
+    } catch (error) {
+        printWarn(`Failed to fetch token instance for ${tokenId} on ${chainName}`, error?.message || String(error));
+    }
+}
+
+async function itsChainConfig(client, config, args, options) {
+    const [chainName] = args;
 
     try {
         const result = await getItsChainConfig(client, config, chainName);
@@ -52,28 +134,8 @@ async function itsChainConfig(client, config, options) {
     }
 }
 
-async function tokenConfig(client, config, args, _options) {
-    const [chainName, tokenId] = args;
-    const itsHubAddress = config.axelar?.contracts?.InterchainTokenService?.address;
-
-    if (!itsHubAddress) {
-        printWarn('ITS Hub contract address not found in config');
-        return;
-    }
-
-    try {
-        const result = await client.queryContractSmart(itsHubAddress, {
-            token_config: { chain: chainName, token_id: tokenId },
-        });
-
-        printInfo(`Custom token metadata for ${tokenId} on ${chainName}`, JSON.stringify(result, null, 2));
-    } catch (error) {
-        printWarn(`Failed to fetch custom token metadata for ${tokenId} on ${chainName}`, error?.message || String(error));
-    }
-}
-
-async function deployedContracts(client, config, args, options) {
-    const { chainName } = options;
+async function saveDeployedContracts(client, config, args, options) {
+    const [chainName] = args;
 
     const coordinatorAddress = config.axelar?.contracts?.Coordinator?.address;
     if (!coordinatorAddress) {
@@ -159,42 +221,54 @@ const programHandler = () => {
 
     program.name('query').description('Query contract state');
 
-    const rewardCmd = program
-        .command('rewards')
+    const rewardsCmd = program
+        .command('rewards <chainName>')
         .description('Query rewards pool state for multisig and voting_verifier contracts')
-        .action((options) => {
-            mainProcessor(rewards, [], options);
+        .action((chainName, options) => {
+            mainProcessor(rewards, [chainName], options);
         });
 
     const tokenConfigCmd = program
-        .command('token-config <chainName> <tokenId>')
-        .description('Query custom token metadata from ITS Hub')
+        .command('token-config <tokenId>')
+        .description('Query token config from ITS Hub')
+        .action((tokenId, options) => {
+            mainProcessor(tokenConfig, [tokenId], options);
+        });
+
+    const customTokenMetadataCmd = program
+        .command('custom-token-metadata <chainName> <tokenAddress>')
+        .description('Query custom token metadata by chain name and token address')
+        .action((chainName, tokenAddress, options) => {
+            mainProcessor(customTokenMetadata, [chainName, tokenAddress], options);
+        });
+
+    const tokenInstanceCmd = program
+        .command('token-instance <chainName> <tokenId>')
+        .description('Query token instance by chain name and token ID')
         .action((chainName, tokenId, options) => {
-            mainProcessor(tokenConfig, [chainName, tokenId], options);
+            mainProcessor(tokenInstance, [chainName, tokenId], options);
+        });
+
+    const itsChainConfigCmd = program
+        .command('its-chain-config <chainName>')
+        .description('Query ITS chain configuration for a specific chain')
+        .action((chainName, options) => {
+            mainProcessor(itsChainConfig, [chainName], options);
         });
 
     const saveDeployedContractsCmd = program
-        .command('save-deployed-contracts')
+        .command('save-deployed-contracts <chainName>')
         .description('Query and save deployed Gateway, VotingVerifier and MultisigProver contracts via Coordinator')
-        .requiredOption('-n, --chainName <chainName>', 'chain name')
-        .action((options) => {
-            mainProcessor(deployedContracts, [], options);
-        });
-
-    addAmplifierQueryOptions(rewardCmd);
-    addAmplifierQueryOptions(tokenConfigCmd);
-    addAmplifierQueryOptions(saveDeployedContractsCmd);
-
-    const itsChainConfigCmd = program
-        .command('its-chain-config')
-        .description('Query ITS chain configuration for a specific chain')
-        .argument('<chainName>', 'name of the chain to query')
         .action((chainName, options) => {
-            options.chainName = chainName;
-            mainProcessor(itsChainConfig, options);
+            mainProcessor(saveDeployedContracts, [chainName], options);
         });
 
+    addAmplifierQueryOptions(rewardsCmd);
+    addAmplifierQueryOptions(tokenConfigCmd);
+    addAmplifierQueryOptions(customTokenMetadataCmd);
+    addAmplifierQueryOptions(tokenInstanceCmd);
     addAmplifierQueryOptions(itsChainConfigCmd);
+    addAmplifierQueryOptions(saveDeployedContractsCmd);
 
     program.parse();
 };
