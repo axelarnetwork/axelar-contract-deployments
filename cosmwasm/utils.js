@@ -475,16 +475,24 @@ const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
                 } },
                 Router: { address: routerAddress },
             },
+            chainId: axelarChainId,
         },
-        chainId: axelarChainId
     } = config;
 
     if (!codecConfig) {
         throw new Error(`ChainCodec config not found for chain ${chainName}`);
     }
 
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
     if (!validateAddress(proverAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].address in axelar info`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error(`Missing or invalid Router.address in axelar info`);
     }
 
     const { domainSeparator, ...rest } = codecConfig;
@@ -1205,12 +1213,22 @@ const getChainCodecInstantiateMsg = (config, chainName) => {
         axelar: {
             contracts: {
                 ChainCodec: { [chainName]: codecConfig },
+                Router: { address: routerAddress },
             },
+            chainId: axelarChainId,
         },
     } = config;
 
     if (!codecConfig) {
         throw new Error(`ChainCodec config not found for chain ${chainName}`);
+    }
+
+    if (!isString(axelarChainId)) {
+        throw new Error(`Missing or invalid chain ID`);
+    }
+
+    if (!validateAddress(routerAddress)) {
+        throw new Error(`Missing or invalid Router.address in axelar info`);
     }
 
     const { domainSeparator, ...rest } = codecConfig;
@@ -1301,7 +1319,6 @@ const getProverInstantiateMsg = (config, chainName) => {
             contracts: {
                 MultisigProver: { [chainName]: proverConfig },
             },
-            chainId: axelarChainId,
         },
     } = config;
 
@@ -1320,10 +1337,6 @@ const getProverInstantiateMsg = (config, chainName) => {
         domainSeparator,
         sigVerifierAddress,
     } = proverConfig;
-
-    if (!isString(axelarChainId)) {
-        throw new Error(`Missing or invalid chain ID`);
-    }
 
     if (!validateAddress(governanceAddress)) {
         throw new Error(`Missing or invalid MultisigProver[${chainName}].governanceAddress in axelar info`);
