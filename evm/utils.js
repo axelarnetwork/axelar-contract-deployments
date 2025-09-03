@@ -1045,6 +1045,7 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
 const isHyperliquidChain = (chain) => chain.axelarId.toLowerCase().includes('hyperliquid');
+const isHederaChain = (chain) => chain.axelarId.toLowerCase().includes('hedera');
 
 const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
 const INTERCHAIN_TRANSFER_WITH_METADATA = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
@@ -1096,6 +1097,14 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1137,6 +1146,7 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     isHyperliquidChain,
+    isHederaChain,
     INTERCHAIN_TRANSFER,
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
@@ -1144,4 +1154,5 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
+    scaleGasValue,
 };
