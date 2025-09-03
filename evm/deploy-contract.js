@@ -179,6 +179,22 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
 
             return [implementationAddress, proxyData];
         }
+
+        case 'CrossChainBurn': {
+            const name = contractConfig.name || 'CrossChain Token';
+            const symbol = contractConfig.symbol || 'CCT';
+            const admin = contractConfig.admin || wallet.address;
+            const homeChain = contractConfig.homeChain || 'avalanche';
+            const gateway = contracts.AxelarGateway?.address;
+            const gasService = contracts.AxelarGasService?.address;
+
+            validateParameters({
+                isAddress: { admin, gateway, gasService },
+                isNonEmptyString: { name, symbol, homeChain },
+            });
+
+            return [name, symbol, admin, homeChain, gateway, gasService];
+        }
     }
 
     throw new Error(`${contractName} is not supported.`);
