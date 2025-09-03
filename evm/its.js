@@ -938,7 +938,7 @@ if (require.main === module) {
         .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value, will default to estimate gas fee if none provided').default(0))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
