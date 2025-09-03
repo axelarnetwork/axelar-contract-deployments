@@ -2509,6 +2509,23 @@
           "initializeArgs": {}
         }
       }
+    },
+    "celo-sepolia": {
+      "name": "Celo-Sepolia",
+      "axelarId": "celo-sepolia",
+      "chainId": 11142220,
+      "rpc": "https://rpc.ankr.com/celo_sepolia",
+      "tokenSymbol": "CELO",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Celo Sepolia Explorer",
+        "url": "https://celo-sepolia.blockscout.com/"
+      },
+      "contracts": {}
     }
   },
   "axelar": {
