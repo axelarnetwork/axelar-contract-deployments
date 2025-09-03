@@ -366,7 +366,7 @@ if (require.main === module) {
     program.addOption(new Option('--initialSupply <initialSupply>', 'initial supply').default(1e9));
     program.addOption(new Option('--destinationChain <destinationChain>', 'destination chain'));
     program.addOption(new Option('--destinationAddress <destinationAddress>', 'destination address'));
-    program.addOption(new Option('--gasValue <gasValue>', 'gas value').default(0));
+    program.addOption(new Option('--gasValue <gasValue>', 'gas value, will default to estimate gas fee if none provided').default(0));
     program.addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'));
     program.addOption(new Option('--destinationTokenAddress <destinationTokenAddress>', 'destination token address'));
     program.addOption(new Option('--linkParams <linkParams>', 'parameters to use for linking'));
