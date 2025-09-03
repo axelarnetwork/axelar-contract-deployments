@@ -17,7 +17,7 @@
 
 ## Background
 
-Celo Sepolia will replace Alfajores testnet when Holesky sunsets in September 2025. TThese are the instructions for deploying Amplifier contracts for `Celo-Sepolia` connection in stagenet and testnet. Mainnet is not affected.
+Celo Sepolia will replace Alfajores testnet when Holesky sunsets in September 2025. These are the instructions for deploying Amplifier contracts for `Celo-Sepolia` connection in stagenet and testnet. Mainnet is not affected.
 
 ### Pre-requisites
 

@@ -162,13 +162,12 @@ ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPE
 | Network     | New Owner Address                            |
 | ----------- | -------------------------------------------- |
 | **Testnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
-| **Mainnet** | `0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05` |
 
 ```bash
 ts-node evm/ownership.js -c AxelarGateway --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
 ```
 
-- 8.3 Transfer AxelarGateway ownership (testnet only)
+- 8.3 Transfer AxelarGasService ownership (testnet only)
 
 ```bash
 ts-node evm/ownership.js -c AxelarGasService --action transferOwnership --newOwner 0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05
