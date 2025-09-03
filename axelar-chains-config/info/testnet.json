@@ -2022,7 +2022,7 @@
       "name": "Polygon-Sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://rpc-amoy.polygon.technology",
+      "rpc": "https://polygon-amoy.drpc.org",
       "tokenSymbol": "MATIC",
       "decimals": 18,
       "confirmations": 2,

@@ -969,7 +969,7 @@
       "axelarId": "plume-2",
       "networkType": "testnet",
       "chainId": 98867,
-      "rpc": "https://testnet-rpc.plumenetwork.xyz",
+      "rpc": "https://testnet-rpc.plume.org",
       "tokenSymbol": "PLUME",
       "confirmations": 1,
       "finality": "finalized",
