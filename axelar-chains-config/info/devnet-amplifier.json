@@ -1353,6 +1353,8 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x0000000000000000000000000000000000628e00",
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
