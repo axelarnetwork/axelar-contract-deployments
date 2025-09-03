@@ -15,7 +15,7 @@ const {
     buildPayGasMessage,
     JettonWallet,
     JettonMinter,
-} = require('axelar-cgp-ton');
+} = require('@commonprefix/axelar-cgp-ton');
 const { keccak256 } = require('@ethersproject/keccak256');
 
 const GAS_SERVICE_ADDRESS = process.env.TON_GAS_SERVICE_ADDRESS;

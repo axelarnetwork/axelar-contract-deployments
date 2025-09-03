@@ -8,7 +8,7 @@ const {
     sendTransactionWithCost,
     GATEWAY_ADDRESS,
 } = require('./common');
-const { INIT_SIGNERS_COST, serializeWeightedSigners, buildInitializeSignersMessage } = require('axelar-cgp-ton');
+const { INIT_SIGNERS_COST, serializeWeightedSigners, buildInitializeSignersMessage } = require('@commonprefix/axelar-cgp-ton');
 
 function createInitializeSignersCell(weightedSigners) {
     const signersCell = serializeWeightedSigners(weightedSigners);

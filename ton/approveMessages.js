@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Address, Cell, internal } = require('@ton/ton');
 const { getTonClient, loadWallet, sendTransactionWithCost, waitForTransaction, bocToCell, GATEWAY_ADDRESS } = require('./common');
-const { APPROVE_MESSAGES_COST } = require('axelar-cgp-ton');
+const { APPROVE_MESSAGES_COST } = require('@commonprefix/axelar-cgp-ton');
 
 async function run(encodedPayload) {
     try {

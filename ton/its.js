@@ -10,7 +10,7 @@ const {
     getJettonDataComplete,
     sendMultipleTransactionWithCost,
 } = require('./common');
-const { JettonWallet, JettonMinter, hexStringToCell } = require('axelar-cgp-ton');
+const { JettonWallet, JettonMinter, hexStringToCell } = require('@commonprefix/axelar-cgp-ton');
 const {
     buildDeployInterchainTokenMessage,
     buildAddTrustedChainMessage,
@@ -30,9 +30,8 @@ const {
     InterchainTokenService,
     buildPayNativeGasForContractCallMessage,
     TokenManager,
-    MessageType,
     OP_SET_FLOW_LIMIT,
-} = require('axelar-cgp-ton');
+} = require('@commonprefix/axelar-cgp-ton');
 
 const {
     encodeInterchainTransferHubMessage,
@@ -69,7 +68,6 @@ function buildRegisterCanonicalTokenPermissionedMessage(name, symbol, decimals, 
 }
 
 function parseTokenManagerInfo(tokenManagerInfo) {
-    // Begin parsing the cell
     const slice = tokenManagerInfo.beginParse();
     const tokenId = slice.loadUintBig(256);
     const tokenManagerType = slice.loadUint(8);
@@ -124,16 +122,6 @@ function createGasServiceMessage(sender, hubPayload) {
     return buildPayNativeGasForContractCallMessage(sender, AXELAR_HUB_CHAIN_NAME, AXELAR_HUB_ADDRESS, hubPayload, sender);
 }
 
-/**
- * Helper function for formatting TON amounts consistently in dry-run output
- * @param {string|bigint|number} amount - The amount to format
- * @returns {string} Formatted amount with "TON" suffix
- *
- * Examples:
- * - formatTonAmount('0.4') => '0.4 TON'
- * - formatTonAmount(400000000n) => '0.4 TON'
- * - formatTonAmount(0.1) => '0.1 TON'
- */
 function formatTonAmount(amount) {
     if (typeof amount === 'string') {
         return `${amount} TON`;
@@ -244,7 +232,6 @@ program
             const client = getTonClient();
             const { contract, _ } = await loadWallet(client);
 
-            // Create the contract instance directly - no need for openContract with real provider
             const itsAddress = Address.parse(ITS_ADDRESS);
             const interchainTokenService = InterchainTokenService.createFromAddress(itsAddress);
 
@@ -281,8 +268,7 @@ program
                 minterAddress,
             );
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Deploy Interchain Token', messageBody, cost, options.dryRun);
+            await executeITSOperation('Deploy Interchain Token', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('deploying interchain token', error);
         }
@@ -302,8 +288,7 @@ program
 
             const messageBody = buildAddTrustedChainMessage(chainName, chainAddress);
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Add Trusted Chain', messageBody, cost, options.dryRun);
+            await executeITSOperation('Add Trusted Chain', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('adding trusted chain', error);
         }
@@ -321,8 +306,7 @@ program
 
             const messageBody = buildRemoveTrustedChainMessage(chainName);
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Remove Trusted Chain', messageBody, cost, options.dryRun);
+            await executeITSOperation('Remove Trusted Chain', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('removing trusted chain', error);
         }
@@ -652,8 +636,7 @@ program
             console.log(`  Token Manager:     ${tokenManagerAddress}`);
             console.log(`  Canonical Minter:  ${canonicalJettonMinterAddress}`);
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Register Canonical Token', messageBody, cost, options.dryRun);
+            await executeITSOperation('Register Canonical Token', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('registering canonical token', error);
         }
@@ -706,8 +689,7 @@ program
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
             console.log(`  Canonical Minter:      ${jettonMinterAddr}`);
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Register Canonical Token (Permissioned)', messageBody, cost, options.dryRun);
+            await executeITSOperation('Register Canonical Token (Permissioned)', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('registering canonical token (permissioned)', error);
         }
@@ -776,8 +758,7 @@ program
             console.log(`  Token ID:              ${tokenId}`);
             console.log(`  Token Manager:         ${tokenManagerAddress}`);
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Register Custom Token', messageBody, cost, options.dryRun);
+            await executeITSOperation('Register Custom Token', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('registering custom token', error);
         }
@@ -857,8 +838,7 @@ program
             const deployerAddr = Address.parse(deployerAddress);
             const messageBody = buildApproveRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToBeApproved, destinationChain);
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Approve Remote Deployment', messageBody, cost, options.dryRun);
+            await executeITSOperation('Approve Remote Deployment', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('approving remote deployment', error);
         }
@@ -885,8 +865,7 @@ program
             const deployerAddr = Address.parse(deployerAddress);
             const messageBody = buildRevokeRemoteDeploymentMessage(saltBigInt, deployerAddr, minterToRevoke, destinationChain);
 
-            const cost = USER_OPERATION_COST;
-            await executeITSOperation('Revoke Remote Deployment', messageBody, cost, options.dryRun);
+            await executeITSOperation('Revoke Remote Deployment', messageBody, USER_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('revoking remote deployment', error);
         }
@@ -904,8 +883,7 @@ program
             const operatorAddress = Address.parse(newOperator);
             const messageBody = buildChangeOperatorMessage(operatorAddress);
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Change Operator', messageBody, cost, options.dryRun);
+            await executeITSOperation('Change Operator', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('changing operator', error);
         }
@@ -923,8 +901,7 @@ program
             const newOwnerAddr = Address.parse(newOwner);
             const messageBody = beginCell().storeUint(OP_CHANGE_OWNER, 32).storeAddress(newOwnerAddr).endCell();
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Change Owner', messageBody, cost, options.dryRun);
+            await executeITSOperation('Change Owner', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('changing owner', error);
         }
@@ -939,8 +916,7 @@ program
             printSectionHeader('Pausing ITS');
             const messageBody = buildPauseMessage();
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Pause ITS', messageBody, cost, options.dryRun);
+            await executeITSOperation('Pause ITS', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('pausing ITS', error);
         }
@@ -955,8 +931,7 @@ program
             printSectionHeader('Unpausing ITS');
             const messageBody = buildUnpauseMessage();
 
-            const cost = SIMPLE_OPERATION_COST;
-            await executeITSOperation('Unpause ITS', messageBody, cost, options.dryRun);
+            await executeITSOperation('Unpause ITS', messageBody, SIMPLE_OPERATION_COST, options.dryRun);
         } catch (error) {
             handleCommandError('unpausing ITS', error);
         }
@@ -1022,9 +997,13 @@ program
                 return;
             }
 
-            // Send transaction to token manager (not ITS)
-            const cost = SIMPLE_OPERATION_COST;
-            const { transfer, seqno } = await sendTransactionWithCost(contract, key, tokenManagerAddress, messageBody, cost);
+            const { transfer, seqno } = await sendTransactionWithCost(
+                contract,
+                key,
+                tokenManagerAddress,
+                messageBody,
+                SIMPLE_OPERATION_COST,
+            );
 
             console.log('✅ Set Flow Limit transaction sent successfully!');
             await waitForTransaction(contract, seqno);

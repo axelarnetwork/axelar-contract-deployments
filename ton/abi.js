@@ -1,7 +1,7 @@
 'use strict';
 
 const { ethers } = require('ethers');
-const { MessageType } = require('axelar-cgp-ton');
+const { MessageType } = require('@commonprefix/axelar-cgp-ton');
 
 function encodeInterchainTransferHubMessage(originalSourceChain, params) {
     const abiCoder = new ethers.utils.AbiCoder();

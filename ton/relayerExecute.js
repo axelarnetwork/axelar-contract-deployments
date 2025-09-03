@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Address, internal } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GATEWAY_ADDRESS } = require('./common');
-const { buildRelayerExecuteMessage, RELAYER_EXECUTE_COST } = require('axelar-cgp-ton');
+const { buildRelayerExecuteMessage, RELAYER_EXECUTE_COST } = require('@commonprefix/axelar-cgp-ton');
 
 async function run(messageId, sourceChain, sourceAddress, payload, executableAddress, destinationChain, payloadHash) {
     try {

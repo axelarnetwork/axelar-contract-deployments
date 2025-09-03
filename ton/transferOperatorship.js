@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Address, Cell, toNano } = require('@ton/ton');
 const { getTonClient, loadWallet, sendTransactionWithCost, waitForTransaction, GATEWAY_ADDRESS } = require('./common');
-const { buildTransferOperatorshipMessage } = require('axelar-cgp-ton');
+const { buildTransferOperatorshipMessage } = require('@commonprefix/axelar-cgp-ton');
 
 const TRANSFER_OWNERSHIP_COST = toNano('0.01');
 

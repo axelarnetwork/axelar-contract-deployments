@@ -8,7 +8,12 @@ const {
     sendTransactionWithCost,
     GATEWAY_ADDRESS,
 } = require('./common');
-const { START_SIGNER_ROTATION_COST, ROTATE_SIGNERS_COST, buildRotateSignersMessage, serializeWeightedSigners } = require('axelar-cgp-ton');
+const {
+    START_SIGNER_ROTATION_COST,
+    ROTATE_SIGNERS_COST,
+    buildRotateSignersMessage,
+    serializeWeightedSigners,
+} = require('@commonprefix/axelar-cgp-ton');
 
 function createStartSignerRotationCell(encodedPayload) {
     return Cell.fromBoc(Buffer.from(encodedPayload, 'hex'))[0];

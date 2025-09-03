@@ -1,7 +1,7 @@
 const { Command } = require('commander');
 const { Address, internal, toNano } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, GATEWAY_ADDRESS } = require('./common');
-const { buildContractCallMessageChained } = require('axelar-cgp-ton');
+const { buildContractCallMessageChained } = require('@commonprefix/axelar-cgp-ton');
 
 const CALL_CONTRACT_COST = toNano('0.1');
 

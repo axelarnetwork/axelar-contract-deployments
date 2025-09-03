@@ -1,7 +1,7 @@
 const { TonClient, WalletContractV5R1, internal, Cell } = require('@ton/ton');
 const { Address } = require('@ton/core');
 const { mnemonicToWalletKey } = require('@ton/crypto');
-const { getEmptySignature, JettonMinter } = require('axelar-cgp-ton');
+const { getEmptySignature, JettonMinter } = require('@commonprefix/axelar-cgp-ton');
 require('dotenv').config();
 
 // Constants
@@ -75,23 +75,28 @@ function parseWeightedSigners(jsonString) {
         const parsed = JSON.parse(jsonString);
 
         // Validate structure
-        if (!parsed.signers || !Array.isArray(parsed.signers)) {
-            throw new Error('Invalid format: signers must be an array');
+        if (!parsed.data?.verifier_set?.signers || typeof parsed.data.verifier_set.signers !== 'object') {
+            throw new Error('Invalid format: data.verifier_set.signers must be an object');
         }
 
-        if (typeof parsed.threshold === 'undefined' || typeof parsed.nonce === 'undefined') {
-            throw new Error('Invalid format: threshold and nonce are required');
+        if (typeof parsed.data.verifier_set.threshold === 'undefined') {
+            throw new Error('Invalid format: threshold is required');
         }
+
+        const verifierSet = parsed.data.verifier_set;
+
+        // Convert signers object to array format
+        const signersArray = Object.entries(verifierSet.signers).map(([address, signerData]) => ({
+            signer: BigInt('0x' + signerData.pub_key.ed25519), // Convert hex pub_key to BigInt
+            weight: BigInt(signerData.weight),
+            signature: getEmptySignature(),
+        }));
 
         // Convert to proper types
         const weightedSigners = {
-            signers: parsed.signers.map((signer) => ({
-                signer: BigInt(signer.signer),
-                weight: BigInt(signer.weight),
-                signature: getEmptySignature(),
-            })),
-            threshold: BigInt(parsed.threshold),
-            nonce: BigInt(parsed.nonce),
+            signers: signersArray,
+            threshold: BigInt(verifierSet.threshold),
+            nonce: BigInt(verifierSet.created_at || 0), // Use created_at as nonce, or 0 if not available
         };
 
         return weightedSigners;

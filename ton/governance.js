@@ -2,7 +2,7 @@
 const { Command } = require('commander');
 const { toNano, Address, Cell } = require('@ton/ton');
 const { getTonClient, loadWallet, waitForTransaction, sendTransactionWithCost, bocToCell } = require('./common');
-const { buildExecuteTimelockProposalPayload, buildExecuteOperatorProposal } = require('axelar-cgp-ton');
+const { buildExecuteTimelockProposalPayload, buildExecuteOperatorProposal } = require('@commonprefix/axelar-cgp-ton');
 
 // Governance contract address - should be set in environment variables
 const GOVERNANCE_ADDRESS = process.env.TON_GOVERNANCE_ADDRESS;
