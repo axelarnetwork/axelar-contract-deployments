@@ -13,10 +13,6 @@ const TINY_PARTS_PER_WHOLE = 100_000_000;
 const DEFAULT_TOKEN_CREATION_PRICE_USD = 1;
 const DEFAULT_TOKEN_CREATION_PRICE_TINY_CENTS = DEFAULT_TOKEN_CREATION_PRICE_USD * 100 * TINY_PARTS_PER_WHOLE;
 
-// Get ABIs from contract JSON files
-const TokenCreationPricing = getContractJSON('TokenCreationPricing');
-const InterchainTokenService = getContractJSON('InterchainTokenService');
-
 // Hedera system contract for exchange rate
 const EXCHANGE_RATE_PRECOMPILE_ADDRESS = '0x0000000000000000000000000000000000000168';
 const EXCHANGE_RATE_ABI = ['function tinycentsToTinybars(uint256 tinycents) external view returns (uint256 tinybars)'];
@@ -34,6 +30,9 @@ function formatPrice(price) {
 }
 
 async function queryTokenCreationPrice(_config, options) {
+    // Get ABIs from contract JSON files
+    const TokenCreationPricing = getContractJSON('TokenCreationPricing');
+
     try {
         // Load chain configuration
         const config = loadConfig(options.env);
@@ -79,6 +78,8 @@ async function queryTokenCreationPrice(_config, options) {
 }
 
 async function setTokenCreationPrice(_config, priceStr, options) {
+    const InterchainTokenService = getContractJSON('InterchainTokenService');
+
     try {
         // Load chain configuration
         const config = loadConfig(options.env);
