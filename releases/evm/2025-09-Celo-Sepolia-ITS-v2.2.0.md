@@ -41,7 +41,7 @@ CHAIN=celo-sepolis
 ### Stagenet / Testnet
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.1.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v1.0.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -117,11 +117,11 @@ ts-node evm/its.js --action interchainTransfer --destinationChain sui --tokenId 
 - Stellar Checklist
 
 ```bash
-# Deploy token to a Stellar from `Celo-Sepolia`
-ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
+# Deploy token to Stellar from `Celo-Sepolia`
+ts-node evm/interchainTokenFactory.js --action deployRemoteInterchainToken --destinationChain stellar-2025-q3 --salt "salt1234" --gasValue [gas-value] -y -n $CHAIN
 
 # Transfer token to Stellar
-ts-node evm/its.js interchain-transfer stellar [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
+ts-node evm/its.js interchain-transfer stellar-2025-q3 [token-id] [recipient] 1 --gasValue [gas-value] -n $CHAIN
 
 # Transfer token back from Stellar
 ts-node stellar/its.js interchain-transfer [token-id] $CHAIN [destination-address] 1 --gas-amount [gas-amount]
