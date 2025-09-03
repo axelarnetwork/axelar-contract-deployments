@@ -157,7 +157,7 @@ ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args "{
 ts-node evm/ownership.js -c Operators --action transferOwnership --newOwner $OPERATORS_OWNER_ADDRESS
 ```
 
-- 8.2 Transfer AxelarGateway ownership (mainnet and testnet only)
+- 8.2 Transfer AxelarGateway ownership (testnet only)
 
 | Network     | New Owner Address                            |
 | ----------- | -------------------------------------------- |
