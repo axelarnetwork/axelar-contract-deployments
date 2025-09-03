@@ -433,6 +433,7 @@ const programHandler = () => {
         proposalOptions: true,
         runAs: true,
         fetchCodeId: true,
+        instantiateOptions: true,
     });
 
     program.parse();
