@@ -175,6 +175,10 @@ TOKEN_MANAGER_ADDRESS=
 ts-node evm/its.js -n $SOURCE_CHAIN transfer-mintership $TOKEN_ADDRESS $TOKEN_MANAGER_ADDRESS
 ```
 
+### 9. Update Relayer Configuration
+
+Ping Common Prefix team to add token to XRPL relayer configuration.
+
 ## Cross-Chain Transfer Testing
 
 To test the newly linked token, refer to [2025-02-v.1.0.0.md](../../releases/xrpl/2025-02-v.1.0.0.md).

@@ -156,6 +156,10 @@ ts-node xrpl/register-token-instance.js --tokenId $TOKEN_ID --sourceChain $DESTI
 
 Repeat steps 4-8 for every `DESTINATION_CHAIN` that you want the XRPL token to be deployed to.
 
+### 9. Update Relayer Configuration
+
+Ping Common Prefix team to add token to XRPL relayer configuration.
+
 ## Cross-Chain Transfer Testing
 
 To test transferring the newly deployed token, refer to [2025-02-v.1.0.0.md](../../releases/xrpl/2025-02-v.1.0.0.md).
