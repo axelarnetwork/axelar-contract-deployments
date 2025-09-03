@@ -30,7 +30,7 @@ Create an `.env` config
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<stagenet|testnet>
-CHAIN=celo-sepolis
+CHAIN=celo-sepolia
 ```
 
 | Network      | `deployer address`                           |
