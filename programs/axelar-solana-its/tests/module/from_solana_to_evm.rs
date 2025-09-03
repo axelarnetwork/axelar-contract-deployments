@@ -7,7 +7,6 @@ use mpl_token_metadata::accounts::Metadata;
 use mpl_token_metadata::instructions::CreateV1Builder;
 use mpl_token_metadata::types::TokenStandard;
 use solana_program_test::tokio;
-use solana_sdk::clock::Clock;
 use solana_sdk::program_pack::Pack as _;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -510,7 +509,6 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
     )?;
 
     ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account,
@@ -521,10 +519,9 @@ async fn transfer_fails_with_wrong_gas_service(ctx: &mut ItsTestContext) -> anyh
         solana_token,
         spl_token_2022::id(),
         1000, // gas_value needs to be greater than 0 for pay_gas to be called
-        clock_sysvar.unix_timestamp,
     )
     .unwrap();
-    transfer_ix.accounts[10].pubkey = Pubkey::new_unique(); // invalid gas service
+    transfer_ix.accounts[9].pubkey = Pubkey::new_unique(); // invalid gas service
 
     assert!(ctx
         .send_solana_tx(&[transfer_ix])
@@ -581,7 +578,6 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
     ctx.send_solana_tx(&[create_ata_ix, mint_ix]).await.unwrap();
 
     // Try to transfer from the TokenManager to payer. This should fail after the fix
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_chain.fixture.payer.pubkey(),
         token_manager_ata,
@@ -592,7 +588,6 @@ async fn test_lock_unlock_transfer_fails_with_token_manager_as_authority(
         solana_token,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )
     .unwrap();
 
@@ -789,7 +784,6 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
 
     // Make solana_wallet perform an interchain transfer from bob's account using approved amount
     let transfer_amount = 300;
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let interchain_transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         bob_token_account,
@@ -800,7 +794,6 @@ async fn test_mint_burn_from_interchain_transfer_with_approval(
         solana_token,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[interchain_transfer_ix]).await.unwrap();
@@ -918,7 +911,6 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
             .await?;
     }
 
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let mut transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
         token_account,
@@ -929,7 +921,6 @@ async fn test_ata_must_match_pda_derivation(ctx: &mut ItsTestContext) -> anyhow:
         solana_token,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )
     .unwrap();
 
@@ -1003,7 +994,6 @@ async fn test_source_address_stays_consistent_through_the_transfer(
     // Perform interchain transfer to verify source_address
     let transfer_amount = 50;
     let destination_address = b"0x1234567890123456789012345678901234567890".to_vec();
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
 
     let transfer_ix = axelar_solana_its::instruction::interchain_transfer(
         ctx.solana_wallet,
@@ -1015,7 +1005,6 @@ async fn test_source_address_stays_consistent_through_the_transfer(
         interchain_token_mint,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )?;
 
     let tx = ctx.send_solana_tx(&[transfer_ix]).await.unwrap();

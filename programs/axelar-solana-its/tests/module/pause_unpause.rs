@@ -1,6 +1,6 @@
 use borsh::BorshDeserialize;
 use solana_program_test::tokio;
-use solana_sdk::{clock::Clock, pubkey::Pubkey, signer::Signer};
+use solana_sdk::{pubkey::Pubkey, signer::Signer};
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
@@ -112,7 +112,6 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         &token_address,
         &spl_token_2022::id(),
     );
-    let clock_sysvar = ctx.solana_chain.get_sysvar::<Clock>().await;
     let mint_ix = axelar_solana_its::instruction::interchain_token::mint(
         ctx.deployed_interchain_token,
         token_address,
@@ -132,7 +131,6 @@ async fn test_outbound_message_fails_when_paused(ctx: &mut ItsTestContext) {
         token_address,
         spl_token_2022::id(),
         0,
-        clock_sysvar.unix_timestamp,
     )
     .unwrap();
 

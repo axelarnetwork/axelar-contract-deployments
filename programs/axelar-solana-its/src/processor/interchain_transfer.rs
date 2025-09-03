@@ -25,13 +25,10 @@ use spl_token_2022::state::Mint;
 
 use crate::executable::{AxelarInterchainTokenExecutablePayload, AXELAR_INTERCHAIN_TOKEN_EXECUTE};
 use crate::processor::token_manager as token_manager_processor;
-use crate::state::flow_limit::{self, FlowDirection, FlowSlot};
+use crate::state::flow_limit::FlowDirection;
 use crate::state::token_manager::{self, TokenManager};
 use crate::state::InterchainTokenService;
-use crate::{
-    assert_valid_flow_slot_pda, assert_valid_token_manager_pda, event, seed_prefixes,
-    FromAccountInfoSlice, Validate,
-};
+use crate::{assert_valid_token_manager_pda, event, seed_prefixes, FromAccountInfoSlice, Validate};
 
 use super::gmp::{self, GmpAccounts};
 
@@ -229,7 +226,7 @@ pub(crate) fn process_outbound_transfer<'a>(
     signing_pda_bump: u8,
     data: Option<Vec<u8>>,
 ) -> ProgramResult {
-    const GMP_ACCOUNTS_IDX: usize = 7;
+    const GMP_ACCOUNTS_IDX: usize = 6;
     let take_token_accounts = TakeTokenAccounts::from_account_info_slice(accounts, &())?;
     let (_other, outbound_message_accounts) = accounts.split_at(GMP_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
@@ -354,45 +351,25 @@ fn track_token_flow(
         return Ok(());
     }
 
-    let current_flow_epoch = flow_limit::current_flow_epoch()?;
-    if let Ok(mut flow_slot) = FlowSlot::load(accounts.flow_slot_pda) {
-        assert_valid_flow_slot_pda(
-            accounts.flow_slot_pda,
-            accounts.token_manager_pda.key,
-            current_flow_epoch,
-            flow_slot.bump,
-        )?;
+    let mut token_manager = TokenManager::load(accounts.token_manager_pda)?;
 
-        flow_slot.add_flow(flow_limit, amount, direction)?;
-        flow_slot.store(
-            accounts.payer,
-            accounts.flow_slot_pda,
-            accounts.system_account,
-        )?;
-    } else {
-        let (flow_slot_pda, flow_slot_pda_bump) =
-            crate::find_flow_slot_pda(accounts.token_manager_pda.key, current_flow_epoch);
-
-        if flow_slot_pda.ne(accounts.flow_slot_pda.key) {
-            msg!("Invalid flow slot PDA provided");
-            return Err(ProgramError::InvalidArgument);
-        }
-
-        let mut flow_slot = FlowSlot::new(flow_slot_pda_bump);
-        flow_slot.add_flow(flow_limit, amount, direction)?;
-        flow_slot.init(
-            &crate::id(),
-            accounts.system_account,
-            accounts.payer,
-            accounts.flow_slot_pda,
-            &[
-                seed_prefixes::FLOW_SLOT_SEED,
-                accounts.token_manager_pda.key.as_ref(),
-                &current_flow_epoch.to_ne_bytes(),
-                &[flow_slot_pda_bump],
-            ],
-        )?;
+    // Reset the flow slot upon epoch change.
+    let current_epoch = crate::state::flow_limit::current_flow_epoch()?;
+    if token_manager.flow_slot.epoch != current_epoch {
+        msg!("Flow slot reset");
+        token_manager.flow_slot.flow_in = 0;
+        token_manager.flow_slot.flow_out = 0;
+        token_manager.flow_slot.epoch = current_epoch;
     }
+
+    token_manager
+        .flow_slot
+        .add_flow(flow_limit, amount, direction)?;
+    token_manager.store(
+        accounts.payer,
+        accounts.token_manager_pda,
+        accounts.system_account,
+    )?;
 
     Ok(())
 }
@@ -410,7 +387,7 @@ fn handle_give_token_transfer(
 
     track_token_flow(
         &accounts.into(),
-        token_manager.flow_limit,
+        token_manager.flow_slot.flow_limit,
         amount,
         FlowDirection::In,
     )?;
@@ -474,7 +451,7 @@ fn handle_take_token_transfer(
 
     track_token_flow(
         &accounts.into(),
-        token_manager.flow_limit,
+        token_manager.flow_slot.flow_limit,
         amount,
         FlowDirection::Out,
     )?;
@@ -701,7 +678,6 @@ pub(crate) struct TakeTokenAccounts<'a> {
     pub(crate) token_manager_pda: &'a AccountInfo<'a>,
     pub(crate) token_manager_ata: &'a AccountInfo<'a>,
     pub(crate) token_program: &'a AccountInfo<'a>,
-    pub(crate) flow_slot_pda: &'a AccountInfo<'a>,
     pub(crate) system_account: &'a AccountInfo<'a>,
     pub(crate) its_root_pda: &'a AccountInfo<'a>,
 }
@@ -728,7 +704,6 @@ impl<'a> FromAccountInfoSlice<'a> for TakeTokenAccounts<'a> {
             token_manager_pda: next_account_info(accounts_iter)?,
             token_manager_ata: next_account_info(accounts_iter)?,
             token_program: next_account_info(accounts_iter)?,
-            flow_slot_pda: next_account_info(accounts_iter)?,
             system_account: {
                 next_account_info(accounts_iter)?;
                 next_account_info(accounts_iter)?;
@@ -755,7 +730,6 @@ struct GiveTokenAccounts<'a> {
     _its_roles_pda: &'a AccountInfo<'a>,
     rent_sysvar: &'a AccountInfo<'a>,
     destination_account: &'a AccountInfo<'a>,
-    flow_slot_pda: &'a AccountInfo<'a>,
     program_ata: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_program: Option<&'a AccountInfo<'a>>,
     mpl_token_metadata_account: Option<&'a AccountInfo<'a>>,
@@ -795,7 +769,6 @@ impl<'a> FromAccountInfoSlice<'a> for GiveTokenAccounts<'a> {
             _its_roles_pda: next_account_info(accounts_iter)?,
             rent_sysvar: next_account_info(accounts_iter)?,
             destination_account: next_account_info(accounts_iter)?,
-            flow_slot_pda: next_account_info(accounts_iter)?,
             program_ata: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_program: next_account_info(accounts_iter).ok(),
             mpl_token_metadata_account: next_account_info(accounts_iter).ok(),
@@ -865,7 +838,6 @@ struct FlowTrackingAccounts<'a> {
     system_account: &'a AccountInfo<'a>,
     payer: &'a AccountInfo<'a>,
     token_manager_pda: &'a AccountInfo<'a>,
-    flow_slot_pda: &'a AccountInfo<'a>,
 }
 
 impl<'a> From<&TakeTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
@@ -874,7 +846,6 @@ impl<'a> From<&TakeTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
             system_account: value.system_account,
             payer: value.payer,
             token_manager_pda: value.token_manager_pda,
-            flow_slot_pda: value.flow_slot_pda,
         }
     }
 }
@@ -885,7 +856,6 @@ impl<'a> From<&GiveTokenAccounts<'a>> for FlowTrackingAccounts<'a> {
             system_account: value.system_account,
             payer: value.payer,
             token_manager_pda: value.token_manager_pda,
-            flow_slot_pda: value.flow_slot_pda,
         }
     }
 }
