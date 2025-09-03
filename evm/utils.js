@@ -62,7 +62,6 @@ const CreateDeploy = require('@axelar-network/axelar-gmp-sdk-solidity/artifacts/
 const IDeployer = require('@axelar-network/axelar-gmp-sdk-solidity/interfaces/IDeployer.json');
 const ITSPackage = require('@axelar-network/interchain-token-service/package.json');
 const { verifyContract } = require(`${__dirname}/../axelar-chains-config`);
-const { AxelarQueryAPI, Environment, EvmChain, GasToken } = require('@axelar-network/axelarjs-sdk');
 
 const deployCreate = async (wallet, contractJson, args = [], options = {}, verifyOptions = null, chain = {}) => {
     const factory = new ContractFactory(contractJson.abi, contractJson.bytecode, wallet);
@@ -1120,13 +1119,7 @@ function scaleGasValue(chain, gasValue) {
     return gasValue;
 }
 
-async function calculateCrosschainGas(sourceChain, destinationChain, gasValue, env) {
-    const sdk = new AxelarQueryAPI(
-        new AxelarQueryAPI({
-            environment: Environment.TESTNET,
-        }),
-    );
-}
+
 
 module.exports = {
     ...require('../common/utils'),

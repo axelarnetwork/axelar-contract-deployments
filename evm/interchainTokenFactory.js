@@ -20,6 +20,7 @@ const {
     isTrustedChain,
     encodeITSDestination,
     scaleGasValue,
+    calculateItsCrossChainGas
 } = require('./utils');
 const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -282,7 +283,8 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'linkToken': {
-            const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue } = options;
+            let { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, env } = options;
+
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -298,6 +300,11 @@ async function processCommand(_axelar, chain, chains, options) {
                 isValidNumber: { tokenManagerType, gasValue },
                 isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
+
+
+            if (gasValue === 0) {
+                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'LinkToken');
+            }
 
             const tx = await interchainTokenFactory.linkToken(
                 deploymentSalt,

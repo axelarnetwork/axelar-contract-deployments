@@ -34,6 +34,7 @@ const {
     validateChain,
     tokenManagerTypes,
     validateLinkType,
+    calculateItsCrossChainGas
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -319,7 +320,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            const { gasValue, metadata } = options;
+            let { gasValue, metadata, env } = options;
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
@@ -359,6 +360,9 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const itsDestinationAddress = encodeITSDestination(chains, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
 
+            if (gasValue === 0) {
+                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'InterchainTransfer');
+            }
             const tx = await interchainTokenService[INTERCHAIN_TRANSFER_WITH_METADATA](
                 tokenIdBytes32,
                 destinationChain,
@@ -374,8 +378,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'register-token-metadata': {
             const [tokenAddress] = args;
-            const { gasValue } = options;
+            let { gasValue, env } = options;
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
+
+
+            if (gasValue === 0) {
+                gasValue = await calculateItsCrossChainGas(chain.axelarId, 'axelar', env, 'TokenMetadataRegistered');
+            }
 
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
                 value: scaleGasValue(chain, gasValue),
@@ -698,6 +707,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             }
 
             const linkParams = operator;
+
+
+            if (gasValue === 0) {
+                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'LinkToken');
+            }
 
             const tx = await interchainTokenService.linkToken(
                 deploymentSalt,
