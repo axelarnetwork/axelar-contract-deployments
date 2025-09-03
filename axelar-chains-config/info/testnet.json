@@ -3665,6 +3665,10 @@
         "xrpl": {
           "maxUintBits": 256,
           "maxDecimalsWhenTruncating": 255
+        },
+        "hedera": {
+          "maxUintBits": 64,
+          "maxDecimalsWhenTruncating": 6
         }
       },
       "AxelarnetGateway": {
