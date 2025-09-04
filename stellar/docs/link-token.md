@@ -91,6 +91,8 @@ Deploy Test Tokens on both chains:
 
 **Chain A (EVM):**
 
+**Note:** On EVM, we're deploying a non-custom Interchain Token from ITS, which creates a new token contract managed by the Interchain Token Service.
+
 Update the private key in `.env` to EVM wallet
 
 ```bash
@@ -107,8 +109,11 @@ ts-node evm/interchainTokenFactory \
 
 **Chain B (Stellar):**
 
+**Note:** On Stellar, we're deploying a customized pre-deployed token contract that you control directly, in contrast to the ITS-managed token on EVM.
+
 ```bash
-stellar contract deploy stellar_custom_token_example.wasm \
+# Note: The custom token example parameters can vary based on your custom token implementation
+stellar contract deploy custom_token.wasm \
   --source wallet --network <network> -- --admin <admin> --decimal <decimal> --name <name> --symbol <symbol>
 ```
 
@@ -201,18 +206,28 @@ ts-node evm/its transfer-mintership <tokenAddress> -n <network>
 
 **On Stellar:**
 
-For MINT_BURN and MINT_BURN_FROM token managers, the user needs to grant minting permission to the token manager. Stellar Classic Assets require setting the token manager as the admin to allow minting.
+For MINT_BURN_FROM token managers, you need to add the token manager as a minter. For MINT_BURN token managers, you need to set the token manager as admin. Stellar Classic Assets require setting the token manager as the admin to allow minting.
 
 For LOCK_UNLOCK token managers, no additional setup is required due to Stellar's account abstraction, which eliminates the need for ERC20-like approvals used on EVM chains. The token manager can directly transfer tokens as needed.
 
+**Important:** Based on your custom token implementation, choose the right token manager type. If your token supports only `mint()` and `burn()` functions that require admin privileges, use MINT_BURN. If your token supports `mint_from()` and `burn()` functions that work with minter permissions, use MINT_BURN_FROM.
+
+**Technical Details:**
+
+- **MINT_BURN** requires admin role because the token manager must call the `mint(env: Env, to: Address, amount: i128)` function.
+- **MINT_BURN_FROM** requires minter role because it uses the `mint_from(env: Env, minter: Address, to: Address, amount: i128)` function. This function can be called by any authorized minter without requiring full admin privileges.
+
 ```bash
-# Get token manager address
+# Get the token manager address
 ts-node stellar/its deployed-token-manager <tokenId>
 
-# Set admin to the token manager if you're using the MINT_BURN type
+# Set admin to the token manager if you are using the MINT_BURN type
+# Note: MINT_BURN requires admin role because the token manager must call the mint() function
 ts-node stellar/token-utils set-admin <tokenAddress> <tokenManagerAddress>
 
-# Or add minter if you're using the MINT_BURN_FROM type
+# Alternatively, add minter if you are using the MINT_BURN_FROM type
+# Note: MINT_BURN_FROM requires minter role because it uses the mint_from() function
+# Adding minter permissions can vary based on your custom token implementation
 ts-node stellar/token-utils add-minter <tokenAddress> <tokenManagerAddress>
 ```
 
@@ -237,51 +252,64 @@ Link USDC tokens with different decimals (18 decimals on EVM, 7 decimals on Stel
 
 ```bash
 # If you want to change trust limit for a Stellar classic asset
-ts-node stellar/token-utils change-trust USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN 10000000
+SYMBOL=USDC
+ISSUER=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
+ts-node stellar/token-utils change-trust $SYMBOL $ISSUER 10000000
 
 # If using a classic Stellar asset, Soroban contract should be created
-ts-node stellar/token-utils create-stellar-asset-contract USDC GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
-# Result: CB64D3G...USDC (use this address below)
+ts-node stellar/token-utils create-stellar-asset-contract $SYMBOL $ISSUER
+# Result: CB64D3G...USDC (STELLAR_TOKEN_ADDRESS)
 
 # Register USDC metadata on Stellar (7 decimals)
-ts-node stellar/its register-token-metadata CB64D3G...USDC --gas-amount 10000000
+STELLAR_TOKEN_ADDRESS="STELLAR_TOKEN_ADDRESS"
+ts-node stellar/its register-token-metadata $STELLAR_TOKEN_ADDRESS --gas-amount 10000000
 
 # Register USDC metadata on EVM (18 decimals)
-ts-node evm/its register-token-metadata <tokenAddress> -n <evmChainName> --gasValue 1000000000000000000
+EVM_TOKEN_ADDRESS="EVM_TOKEN_ADDRESS"
+EVM_CHAIN_NAME="EVM_CHAIN_NAME"
+ts-node evm/its register-token-metadata $EVM_TOKEN_ADDRESS -n $EVM_CHAIN_NAME --gasValue 1000000000000000000
 
 # Register custom token - LOCK_UNLOCK type (2) on EVM
+LOCK_UNLOCK_TYPE=2
+SALT=0x1234
 ts-node evm/interchainTokenFactory.js \
   --action registerCustomToken \
-  --tokenAddress <tokenAddress> \
-  --tokenManagerType 2 \
+  --tokenAddress $EVM_TOKEN_ADDRESS \
+  --tokenManagerType $LOCK_UNLOCK_TYPE \
   --operator 0x1234... \
-  --salt 0x1234 \
-  -n <evmChainName>
+  --salt $SALT \
+  -n $EVM_CHAIN_NAME
 
 # Link token - MINT_BURN type (4) on Stellar
+MINT_BURN_TYPE=4
 ts-node evm/interchainTokenFactory.js \
   --action linkToken \
   --destinationChain stellar \
-  --destinationTokenAddress CB64D3G...USDC \
-  --tokenManagerType 4 \
+  --destinationTokenAddress $STELLAR_TOKEN_ADDRESS \
+  --tokenManagerType $MINT_BURN_TYPE \
   --linkParams "0x" \
-  --salt 0x1234 \
-  -n <evmChainName> \
+  --salt $SALT \
+  -n $EVM_CHAIN_NAME \
   --gasValue 10000000000000000000
-# Result: 0x89a0...abcd (token id)
+# Result: 0x89a0...abcd (TOKEN_ID)
 
 # Get token manager address on Stellar
-ts-node stellar/its deployed-token-manager 0x89a0...abcd
-# Result: CATE...ABCD
+TOKEN_ID="TOKEN_ID"
+ts-node stellar/its deployed-token-manager $TOKEN_ID
+# Result: CATE...ABCD (STELLAR_TOKEN_MANAGER)
 
 # Transfer admin to the token manager on Stellar
-ts-node stellar/token-utils set-admin CB64D3G...USDC CATE...ABCD
+STELLAR_TOKEN_MANAGER="STELLAR_TOKEN_MANAGER"
+ts-node stellar/token-utils set-admin $STELLAR_TOKEN_ADDRESS $STELLAR_TOKEN_MANAGER
 
-# Interchain Token Transfer EVM to Stellar
-ts-node evm/its interchain-transfer stellar 0x89a0...abcd GABC...dest 1 -n <evmChainName> --gasValue 10000000000000000000
+# Interchain Token Transfer from EVM to Stellar
+STELLAR_DESTINATION_ADDRESS="STELLAR_DESTINATION_ADDRESS"
+TRANSFER_AMOUNT=1
+ts-node evm/its interchain-transfer stellar $TOKEN_ID $STELLAR_DESTINATION_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
 
 # Interchain Token Transfer from Stellar to EVM
-ts-node stellar/its interchain-transfer 0x89a0c5...abcd <evmChainName> 0xba76...dest 1 --gas-amount 10000000
+EVM_DESTINATION_ADDRESS="EVM_DESTINATION_ADDRESS"
+ts-node stellar/its interchain-transfer $TOKEN_ID $EVM_CHAIN_NAME $EVM_DESTINATION_ADDRESS $TRANSFER_AMOUNT --gas-amount 10000000
 ```
 
 ### Example 2: Link Custom Token on Stellar (Source - MINT_BURN_FROM) with USDC on EVM (Destination - LOCK_UNLOCK)
@@ -290,30 +318,40 @@ Link tokens with different decimals (7 decimals on Stellar, 18 decimals on EVM):
 
 ```bash
 # Register USDC metadata on EVM (18 decimals)
-ts-node evm/its register-token-metadata <evmTokenAddress> -n <evmChainName> --gasValue 1000000000000000000
+EVM_TOKEN_ADDRESS="EVM_TOKEN_ADDRESS"
+EVM_CHAIN_NAME="EVM_CHAIN_NAME"
+ts-node evm/its register-token-metadata $EVM_TOKEN_ADDRESS -n $EVM_CHAIN_NAME --gasValue 1000000000000000000
 
 # Register Custom Token metadata on Stellar (7 decimals)
-ts-node stellar/its register-token-metadata <stellarTokenAddress> --gas-amount 10000000
+STELLAR_TOKEN_ADDRESS="STELLAR_TOKEN_ADDRESS"
+ts-node stellar/its register-token-metadata $STELLAR_TOKEN_ADDRESS --gas-amount 10000000
 
-# Register custom token - MINT_BURN_FROM type (1) on Stellar
-ts-node stellar/its register-custom-token 0x1234 <stellarTokenAddress> MINT_BURN_FROM
+# Register custom token - MINT_BURN_FROM type on Stellar
+SALT=0x1234
+ts-node stellar/its register-custom-token $SALT $STELLAR_TOKEN_ADDRESS MINT_BURN_FROM
 
 # Link token - LOCK_UNLOCK type (2) on EVM
-ts-node stellar/its link-token 0x1234 <evmChainName> <evmTokenAddress> LOCK_UNLOCK --gas-amount 10000000
-# Result: 0x89a0...abcd (token id)
+EVM_TOKEN_ADDRESS="EVM_TOKEN_ADDRESS"
+ts-node stellar/its link-token $SALT $EVM_CHAIN_NAME $EVM_TOKEN_ADDRESS LOCK_UNLOCK --gas-amount 10000000
+# Result: 0x89a0...abcd (TOKEN_ID)
 
 # Get token manager address on Stellar
-ts-node stellar/its deployed-token-manager <tokenId>
-# Result: CATE...ABCD
+TOKEN_ID="TOKEN_ID"
+ts-node stellar/its deployed-token-manager $TOKEN_ID
+# Result: CATE...ABCD (STELLAR_TOKEN_MANAGER)
 
 # Add the token manager as a minter on Stellar
-ts-node stellar/token-utils add-minter <stellarTokenAddress> CATE...ABCD
+STELLAR_TOKEN_MANAGER="STELLAR_TOKEN_MANAGER"
+ts-node stellar/token-utils add-minter $STELLAR_TOKEN_ADDRESS $STELLAR_TOKEN_MANAGER
 
 # Interchain Token Transfer EVM to Stellar
-ts-node evm/its interchain-transfer stellar 0x89a0...abcd GABC...dest 1 -n <evmChainName> --gasValue 10000000000000000000
+STELLAR_DESTINATION_ADDRESS="STELLAR_DESTINATION_ADDRESS"
+TRANSFER_AMOUNT=1
+ts-node evm/its interchain-transfer stellar $TOKEN_ID $STELLAR_DESTINATION_ADDRESS $TRANSFER_AMOUNT -n $EVM_CHAIN_NAME --gasValue 10000000000000000000
 
 # Interchain Token Transfer from Stellar to EVM
-ts-node stellar/its interchain-transfer 0x89a0c5...abcd <evmChainName> 0xba76...dest 1 --gas-amount 10000000
+EVM_DESTINATION_ADDRESS="EVM_DESTINATION_ADDRESS"
+ts-node stellar/its interchain-transfer $TOKEN_ID $EVM_CHAIN_NAME $EVM_DESTINATION_ADDRESS $TRANSFER_AMOUNT --gas-amount 10000000
 ```
 
 ## Troubleshooting & Error Handling
