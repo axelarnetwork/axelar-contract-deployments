@@ -817,7 +817,7 @@ async function calculateItsCrossChainGas(sourceChain, destinationChain, env, eve
 
     const gasFee = await httpPost(url, payload);
     if (!gasFee) {
-        throw new Error(`Failed to estimate ITS fee: ${JSON.stringify(response)}`);
+        throw new Error(`Failed to estimate ITS fee: ${JSON.stringify(gasFee)}`);
     }
     return gasFee;
 }
