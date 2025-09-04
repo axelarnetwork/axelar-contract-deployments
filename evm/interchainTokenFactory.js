@@ -238,6 +238,8 @@ async function processCommand(_axelar, chain, chains, options) {
                 isValidNumber: { gasValue },
             });
 
+            console.log('0000000000000000000000000000000000000000000000000000000000000000')
+
             validateChain(chains, destinationChain);
 
             if (gasValue === 0) {

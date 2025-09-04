@@ -786,12 +786,32 @@ function validateDestinationChain(chains, destinationChain) {
 }
 
 async function calculateItsCrossChainGas(sourceChain, destinationChain, env, eventType) {
+
     const baseUrl = env === 'mainnet' ? 'https://api.axelarscan.io/gmp' : 'https://testnet.api.gmp.axelarscan.io';
     const url = `${baseUrl}/estimateITSFee`;
 
+    const testnetL2sChainMap = {
+        optimism: 'optimism-sepolia',
+        arbitrum: 'arbitrum-sepolia',
+        base: 'base-sepolia',
+        blast: 'blast-sepolia',
+        mantle: 'mantle-sepolia',
+        linea: 'linea-sepolia',
+        scroll: 'scroll-sepolia',
+    };
+
+    const normalizeChainName = (chainName) => {
+        let chain = String(chainName).toLowerCase();
+
+        if (env === 'testnet' && testnetL2sChainMap[chain]) {
+            return testnetL2sChainMap[chain];
+        }
+        return chain;
+    };
+
     const payload = {
-        sourceChain: String(sourceChain).toLowerCase(),
-        destinationChain: String(destinationChain).toLowerCase(),
+        sourceChain: normalizeChainName(sourceChain),
+        destinationChain: normalizeChainName(destinationChain),
         event: eventType,
     };
 
@@ -801,6 +821,7 @@ async function calculateItsCrossChainGas(sourceChain, destinationChain, env, eve
     }
     return gasFee;
 }
+
 
 module.exports = {
     loadConfig,
@@ -870,5 +891,5 @@ module.exports = {
     itsHubContractAddress,
     asyncLocalLoggerStorage,
     printMsg,
-    calculateItsCrossChainGas,
+    calculateItsCrossChainGas
 };
