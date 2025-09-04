@@ -1,4 +1,4 @@
-# Cosmwasm Multisig v2.2.0
+# Cosmwasm Multisig v2.3.0
 
 |                | **Owner**                             |
 | -------------- | ------------------------------------- |
@@ -13,17 +13,18 @@
 
 
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/multisig-v2.2.0)
+[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/multisig-v2.3.0)
 
 ## Background
 
 Changes in this release:
 
 1. Multisig stores the coordinator address. This address is given when the multisig contract is instantiated. This allows the multisig to give the coordinator permission to execute messages (such as when authorizing callers).
+2. Added the `AuthorizedCallers` endpoint. This allows the authorized callers for any given chain to be queried.
 
 ## Deployment
 
-- This rollout upgrades the amplifier multisig contract from `v2.1.0` to `v2.2.0`
+- This rollout upgrades the amplifier multisig contract from `v2.1.0` to `v2.3.0`
 - State migration is required. The multisig must be supplied with the coordinator's address
 
 1. Upload new Multisig contract
@@ -36,7 +37,7 @@ Changes in this release:
 | mainnet          | `axelar1uk66drc8t9hwnddnejjp92t22plup0xd036uc2`<br/>`axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj`<br/>`axelar1nctnr9x0qexemeld5w7w752rmqdsqqv92dw9am` | `axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj` | `2000000000`    |
 
 ```bash
-ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.2.0" -d "Upload Multisig contract v2.2.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.2.0
+ts-node cosmwasm/submit-proposal.js store -c Multisig -t "Upload Multisig contract v2.3.0" -d "Upload Multisig contract v2.3.0" -r $RUN_AS_ACCOUNT --deposit $DEPOSIT_VALUE --instantiateAddresses $INIT_ADDRESSES --version 2.2.0
 ```
 
 2. Upgrade Multisig contract
@@ -46,8 +47,8 @@ Provide coordinator address to the multisig.
 ```bash
 ts-node cosmwasm/submit-proposal.js migrate \
   -c Multisig \
-  -t "Migrate Multisig to v2.2.0" \
-  -d "Multisig to v2.2.0" \
+  -t "Migrate Multisig to v2.3.0" \
+  -d "Multisig to v2.3.0" \
   --msg "{\"coordinator\": \"$COORDINATOR_ADDRESS\"}" \
   --fetchCodeId \
   --deposit $DEPOSIT_VALUE
@@ -63,7 +64,7 @@ ts-node cosmwasm/contract.ts info --contract Multisig -e $ENV
 Expected output
 
 ```bash
-{contract: 'multisig', version: '2.2.0'}
+{contract: 'multisig', version: '2.3.0'}
 ```
 
 Verify coordinator address stored on multisig
