@@ -20,7 +20,7 @@ const {
     isTrustedChain,
     encodeITSDestination,
     scaleGasValue,
-    calculateItsCrossChainGas
+    calculateItsCrossChainGas,
 } = require('./utils');
 const { validateChain } = require('../common/utils');
 const { addEvmOptions } = require('./cli-utils');
@@ -182,7 +182,7 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { destinationChain, gasValue } = options;
+            const { destinationChain, gasValue, env } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
@@ -194,6 +194,7 @@ async function processCommand(_axelar, chain, chains, options) {
             if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
+
 
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
@@ -229,7 +230,7 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'deployRemoteCanonicalInterchainToken': {
-            const { tokenAddress, destinationChain, gasValue } = options;
+            let { tokenAddress, destinationChain, gasValue, env } = options;
 
             validateParameters({
                 isValidAddress: { tokenAddress },
@@ -238,6 +239,10 @@ async function processCommand(_axelar, chain, chains, options) {
             });
 
             validateChain(chains, destinationChain);
+
+            if (gasValue === 0) {
+                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'InterchainTokenDeployment');
+            }
 
             const tx = await interchainTokenFactory['deployRemoteCanonicalInterchainToken(address,string,uint256)'](
                 tokenAddress,
@@ -285,7 +290,6 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             let { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, env } = options;
 
-
             const deploymentSalt = getDeploymentSalt(options);
 
             if (!(await isTrustedChain(destinationChain, interchainTokenService, itsVersion))) {
@@ -300,7 +304,6 @@ async function processCommand(_axelar, chain, chains, options) {
                 isValidNumber: { tokenManagerType, gasValue },
                 isValidBytesArray: { linkParams, itsDestinationTokenAddress },
             });
-
 
             if (gasValue === 0) {
                 gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'LinkToken');
