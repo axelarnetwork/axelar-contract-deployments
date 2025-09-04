@@ -13,7 +13,7 @@
 
 
 
-[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.0.0)
+[Release](https://github.com/axelarnetwork/axelar-amplifier/tree/coordinator-v2.1.0)
 
 ## Background
 
@@ -46,11 +46,7 @@ ts-node cosmwasm/submit-proposal.js store -c Coordinator -t "Upload Coordinator 
 ts-node cosmwasm/migrate/migrate.ts <code_id> --address $COORDINATOR_ADDRESS -m $MNEMONIC 
 ```
 
-This script generate the migration message, and submit the migration proposal. 
-
-**Other Important Notes**
-- You may use the `--dry` flag to only generate the migration message.
-- Devnet is missing some information. Certain chain/prover pairs are registered with the coordinator, but the corresponding chain lacks a gateway or verifier. You can supply placeholder gateway and verifier addresses by using the `--dummy` flag.
+This script generates the migration message, and submits the migration proposal. You may use the `--dry` flag to only generate the migration message.
 
 ## Checklist
 
