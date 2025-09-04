@@ -3124,6 +3124,8 @@
         "api": ""
       },
       "gasScalingFactor": 10,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x000000000000000000000000000000000094fd08",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
