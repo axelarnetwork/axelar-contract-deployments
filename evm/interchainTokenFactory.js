@@ -182,7 +182,7 @@ async function processCommand(_axelar, chain, chains, options) {
         }
 
         case 'deployRemoteInterchainToken': {
-            const { destinationChain, gasValue, env } = options;
+            const { destinationChain, gasValue } = options;
 
             const deploymentSalt = getDeploymentSalt(options);
 
