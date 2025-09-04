@@ -77,7 +77,6 @@ async function coordinatorToVersion2_0_1(
     config,
     sender_address: string,
     coordinator_address: string,
-    version: string,
     code_id: number,
 ) {
     const router_address = config.axelar.contracts.Router.address;
@@ -144,6 +143,8 @@ export async function migrate(
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_0_1(client, options, config, sender_address, coordinator_address, version, code_id);
+            return coordinatorToVersion2_0_1(client, options, config, sender_address, coordinator_address, code_id);
+        default:
+            console.error(`no migration script found for coordinator ${version}`);
     }
 }
