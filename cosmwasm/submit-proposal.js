@@ -284,6 +284,7 @@ const instantiateChainContracts = async (client, wallet, config, options) => {
     }
     config.axelar.contracts.Coordinator.deployments[chainName] = {
         deploymentName: message.instantiate_chain_contracts.deployment_name,
+        salt: options.salt,
         proposalId,
     };
 };

@@ -1232,6 +1232,7 @@ const getVerifierInstantiateMsg = (config, chainName) => {
     }
 
     return {
+        service_registry_address: serviceRegistryAddress,
         governance_address: governanceAddress,
         service_name: serviceName,
         source_gateway_address: sourceGatewayAddress,

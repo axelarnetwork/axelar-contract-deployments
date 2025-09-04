@@ -969,7 +969,7 @@
       "axelarId": "plume-2",
       "networkType": "testnet",
       "chainId": 98867,
-      "rpc": "https://testnet-rpc.plumenetwork.xyz",
+      "rpc": "https://testnet-rpc.plume.org",
       "tokenSymbol": "PLUME",
       "confirmations": 1,
       "finality": "finalized",
@@ -1353,6 +1353,8 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x0000000000000000000000000000000000628e00",
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
@@ -1425,8 +1427,6 @@
           "tokenManager": "0x03719A288f502C5bCB6e91137F0163c1cb2E136E",
           "tokenHandler": "0x2BB19397047b81F5c7FCeACfe233Da343dF457c5",
           "implementation": "0xD06a438Ae92c666dd297B62cAf845c40ecD6b95a",
-          "htsLibrary": "0x0000000000000000000000000000000000653c18",
-          "whbar": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x37489C4fB89a89133008244B3B30F216ccd62eA6"
         },
