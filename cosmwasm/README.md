@@ -212,6 +212,27 @@ Order of execution to satisfy dependencies:
 10. `ts-node cosmwasm/submit-proposal.js instantiate -c Gateway --instantiate2  --fetchCodeId -y -n "avalanche"`
 11. `ts-node cosmwasm/submit-proposal.js instantiate -c MultisigProver --instantiate2  --fetchCodeId -y -n "avalanche"`
 
+### Instantiating chain contracts via Coordinator
+
+Note: For new deployments, use the Coordinator contract to instantiate Gateway, VotingVerifier, and MultisigProver contracts together.
+
+Use the `instantiate-chain-contracts` command:
+
+```bash
+ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
+  -n avalanche \
+  -s "salt123" \
+  --fetchCodeId
+```
+
+This formats the execute message using the config, generates a deployment name (`<chain>-<codeId>`), and submits a single proposal to deploy all three contracts.
+
+After the proposal executes, retrieve and write the deployed contract addresses to the config:
+
+```bash
+ts-node cosmwasm/query.js save-deployed-contracts avalanche
+```
+
 ### Uploading and instantiating in one step
 
 The command `storeInstantiate` from the `submit-proposal` script, allows uploading and instantiating in one step. However, there are a couple of caveats to be aware of:
@@ -318,6 +339,16 @@ ts-node cosmwasm/submit-proposal.js migrate \
   --msg '{}' \
   --fetchCodeId \
 ```
+
+### Save chain contracts deployed via Coordinator
+
+Query and save deployed contracts via Coordinator:
+
+```bash
+ts-node cosmwasm/query.js save-deployed-contracts <chain-name>
+```
+
+This will query the Coordinator contract for a specific chain's deployed addresses and update the config with those addresses.
 
 ### Rotating verifier set
 
