@@ -71,10 +71,9 @@ const addStoreOptions = (program) => {
     );
 
     program.addOption(
-        new Option(
-            '-w, --wasm <wasm>',
-            'Path to the WASM file to upload (required if --artifact-dir and --version are not used)'
-        ).env('WASM'),
+        new Option('-w, --wasm <wasm>', 'Path to the WASM file to upload (required if --artifact-dir and --version are not used)').env(
+            'WASM',
+        ),
     );
 
     program.addOption(

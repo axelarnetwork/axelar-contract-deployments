@@ -389,17 +389,12 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
     const {
         ServiceRegistry: { address: serviceRegistryAddress },
         Rewards: { address: rewardsAddress },
-        ChainCodec: { [chainName]: { address: chainCodecAddress } },
+        ChainCodec: {
+            [chainName]: { address: chainCodecAddress },
+        },
     } = contracts;
-    const {
-        governanceAddress,
-        serviceName,
-        sourceGatewayAddress,
-        votingThreshold,
-        blockExpiry,
-        confirmationHeight,
-        msgIdFormat,
-    } = contractConfig;
+    const { governanceAddress, serviceName, sourceGatewayAddress, votingThreshold, blockExpiry, confirmationHeight, msgIdFormat } =
+        contractConfig;
 
     if (!validateAddress(serviceRegistryAddress)) {
         throw new Error('Missing or invalid ServiceRegistry.address in axelar info');
@@ -460,7 +455,7 @@ const makeVotingVerifierInstantiateMsg = (config, options, contractConfig) => {
         confirmation_height: confirmationHeight,
         source_chain: chainName,
         msg_id_format: msgIdFormat,
-        chain_codec_address: chainCodecAddress
+        chain_codec_address: chainCodecAddress,
     };
 };
 
@@ -470,9 +465,11 @@ const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
         axelar: {
             contracts: {
                 ChainCodec: { [chainName]: codecConfig },
-                MultisigProver: { [chainName]: {
-                    address: proverAddress // we expect this to be predicted and put into the config before calling
-                } },
+                MultisigProver: {
+                    [chainName]: {
+                        address: proverAddress, // we expect this to be predicted and put into the config before calling
+                    },
+                },
                 Router: { address: routerAddress },
             },
             chainId: axelarChainId,
@@ -508,7 +505,7 @@ const makeChainCodecInstantiateMsg = (config, options, contractConfig) => {
         multisig_prover: proverAddress,
         ...rest, // we also pass on additional properties here
     };
-}
+};
 
 const makeXrplGatewayInstantiateMsg = (config, options, contractConfig) => {
     const { chainName } = options;
@@ -756,7 +753,9 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
         Coordinator: { address: coordinatorAddress },
         Multisig: { address: multisigAddress },
         ServiceRegistry: { address: serviceRegistryAddress },
-        ChainCodec: { [chainName]: { address: chainCodecAddress } },
+        ChainCodec: {
+            [chainName]: { address: chainCodecAddress },
+        },
         [verifierContract]: {
             [chainName]: { address: verifierAddress },
         },
@@ -764,8 +763,7 @@ const makeMultisigProverInstantiateMsg = (config, options, contractConfig) => {
             [chainName]: { address: gatewayAddress },
         },
     } = contracts;
-    const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } =
-        contractConfig;
+    const { adminAddress, governanceAddress, signingThreshold, serviceName, verifierSetDiffThreshold, keyType } = contractConfig;
 
     if (!validateAddress(routerAddress)) {
         throw new Error('Missing or invalid Router.address in axelar info');
