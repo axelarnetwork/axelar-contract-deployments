@@ -779,18 +779,28 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
     let loggerError = '';
     let result;
 
-    const stdStream = new Writable({
-        write(chunk, _encoding, callback) {
-            loggerOutput += chunk.toString();
-            callback();
-        },
-    });
-    const errorStream = new Writable({
-        write(chunk, _encoding, callback) {
-            loggerError += chunk.toString();
-            callback();
-        },
-    });
+    let stdStream, errorStream;
+
+    if (options.parallel) {
+        // For parallel execution, capture output to prevent interleaved output
+        stdStream = new Writable({
+            write(chunk, _encoding, callback) {
+                loggerOutput += chunk.toString();
+                callback();
+            },
+        });
+        errorStream = new Writable({
+            write(chunk, _encoding, callback) {
+                loggerError += chunk.toString();
+                callback();
+            },
+        });
+    } else {
+        // For sequential execution, use actual stdout/stderr for real-time output
+        stdStream = process.stdout;
+        errorStream = process.stderr;
+    }
+
     const processCommandAsyncTask = asyncLocalLoggerStorage.run({ stdStream, errorStream }, async () => {
         try {
             printInfo('Chain', chain.name, chalk.cyan);
@@ -798,7 +808,11 @@ const asyncChainTask = (processCommand, axelar, chain, chains, options) => {
         } catch (error) {
             printError(`Error processing chain ${chain.name}: ${error.message}`);
         }
-        process.stdout.write(`${loggerOutput}\n`);
+
+        if (options.parallel) {
+            process.stdout.write(`${loggerOutput}\n`);
+        }
+
         return { result, loggerError };
     });
     return processCommandAsyncTask;
@@ -1045,6 +1059,7 @@ const verifyContractByName = (env, chain, name, contract, args, options = {}) =>
 const isConsensusChain = (chain) => chain.contracts.AxelarGateway?.connectionType !== 'amplifier';
 
 const isHyperliquidChain = (chain) => chain.axelarId.toLowerCase().includes('hyperliquid');
+const isHederaChain = (chain) => chain.axelarId.toLowerCase().includes('hedera');
 
 const INTERCHAIN_TRANSFER = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
 const INTERCHAIN_TRANSFER_WITH_METADATA = 'interchainTransfer(bytes32,string,bytes,uint256,bytes,uint256)';
@@ -1096,6 +1111,14 @@ function detectITSVersion() {
     return ITSPackage.version;
 }
 
+function scaleGasValue(chain, gasValue) {
+    if (typeof chain.gasScalingFactor === 'number') {
+        return BigNumber.from(gasValue).mul(BigNumber.from(10).pow(chain.gasScalingFactor));
+    }
+
+    return gasValue;
+}
+
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
@@ -1137,6 +1160,7 @@ module.exports = {
     verifyContractByName,
     isConsensusChain,
     isHyperliquidChain,
+    isHederaChain,
     INTERCHAIN_TRANSFER,
     INTERCHAIN_TRANSFER_WITH_METADATA,
     deriveAccounts,
@@ -1144,4 +1168,5 @@ module.exports = {
     isTrustedChain,
     detectITSVersion,
     getChains,
+    scaleGasValue,
 };
