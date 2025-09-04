@@ -12,7 +12,7 @@ const {
     printInfo,
     printWarn,
     printError,
-    getContractJSON,
+    getContractJSON: getContractJSONStandard,
     mainProcessor,
     prompt,
     sleep,
@@ -57,6 +57,8 @@ async function deployAll(axelar, wallet, chain, chains, options) {
 
     const contractConfig = contracts[contractName] || {};
     const itsFactoryContractConfig = contracts[itsFactoryContractName] || {};
+
+    let getContractJSON = getContractJSONStandard;
 
     if (isHederaChain(chain)) {
         // Hedera HTS library address
@@ -471,6 +473,8 @@ async function upgrade(_axelar, chain, _chains, options) {
         printError('No ITS contract found for chain', chain.name);
         return;
     }
+
+    let getContractJSON = getContractJSONStandard;
 
     if (isHederaChain(chain)) {
         // Hedera HTS library address
