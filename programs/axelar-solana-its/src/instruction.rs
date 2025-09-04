@@ -1206,7 +1206,6 @@ pub fn deploy_remote_interchain_token_with_minter(
 pub fn register_token_metadata(
     payer: Pubkey,
     mint: Pubkey,
-    token_program: Pubkey,
     gas_value: u64,
 ) -> Result<Instruction, ProgramError> {
     let (gateway_root_pda, _) = axelar_solana_gateway::get_gateway_root_config_pda();
@@ -1218,7 +1217,6 @@ pub fn register_token_metadata(
     let accounts = vec![
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(mint, false),
-        AccountMeta::new_readonly(token_program, false),
         AccountMeta::new_readonly(gateway_root_pda, false),
         AccountMeta::new_readonly(axelar_solana_gateway::ID, false),
         AccountMeta::new(gas_config_pda, false),

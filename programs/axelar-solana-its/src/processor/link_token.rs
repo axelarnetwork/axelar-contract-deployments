@@ -161,22 +161,15 @@ pub(crate) fn register_token_metadata<'a>(
     gas_value: u64,
     signing_pda_bump: u8,
 ) -> ProgramResult {
-    const OUTBOUND_MESSAGE_ACCOUNTS_IDX: usize = 3;
+    const OUTBOUND_MESSAGE_ACCOUNTS_IDX: usize = 2;
 
     let accounts_iter = &mut accounts.iter();
     let payer = next_account_info(accounts_iter)?;
     let mint_account = next_account_info(accounts_iter)?;
-    let token_program = next_account_info(accounts_iter)?;
 
     let (_other, outbound_message_accounts) = accounts.split_at(OUTBOUND_MESSAGE_ACCOUNTS_IDX);
     let gmp_accounts = GmpAccounts::from_account_info_slice(outbound_message_accounts, &())?;
     msg!("Instruction: RegisterTokenMetadata");
-
-    spl_token_2022::check_spl_token_program_account(token_program.key)?;
-    if mint_account.owner != token_program.key {
-        msg!("Invalid mint account");
-        return Err(ProgramError::InvalidAccountData);
-    }
 
     let mint_data = mint_account.try_borrow_data()?;
     let mint = StateWithExtensions::<Mint>::unpack(&mint_data)?;

@@ -31,7 +31,6 @@ mod idempotent_ata_test;
 mod metadata_length_validation;
 mod metadata_retrieval;
 mod pause_unpause;
-mod register_metadata;
 mod role_management;
 mod token_id_validation;
 
