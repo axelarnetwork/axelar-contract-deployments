@@ -1105,8 +1105,6 @@ function scaleGasValue(chain, gasValue) {
     return gasValue;
 }
 
-
-
 module.exports = {
     ...require('../common/utils'),
     deployCreate,
