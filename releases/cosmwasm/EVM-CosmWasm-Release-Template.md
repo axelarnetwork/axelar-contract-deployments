@@ -115,12 +115,19 @@ MultisigProver (v1.1.1) -> "storeCodeProposalCodeHash": "00428ef0483f103a6e1a585
 
 `CONTRACT_ADMIN` is the wasm contract admin address for contract upgrades.
 
+| Network              | Salt     |
+| -------------------- | -------- |
+| **Devnet-amplifier** | `v1.0.0` |
+| **Stagenet**         | `v1.0.0` |
+| **Testnet**          | `v1.0.0` |
+| **Mainnet**          | `v1.0.0` |
+
 1. Instantiate Gateway, VotingVerifier and MultisigProver contracts via Coordinator
 
 ```bash
 ts-node cosmwasm/submit-proposal.js instantiate-chain-contracts \
   -n $CHAIN \
-  -s "$CHAIN-amplifier" \
+  -s "$SALT" \
   --fetchCodeId \
   -t "Instantiate contracts for $CHAIN" \
   -d "Instantiate Gateway, VotingVerifier and MultisigProver contracts for $CHAIN via Coordinator"
