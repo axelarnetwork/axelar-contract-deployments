@@ -2365,6 +2365,8 @@
         "gasLimit": 8000000
       },
       "timeout": 50000,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x0000000000000000000000000000000000671c9c",
       "contracts": {
         "ConstAddressDeployer": {
           "address": "0x98B2920D53612483F91F12Ed7754E51b4A77919e",
@@ -2416,6 +2418,26 @@
           "implementation": "0xCD6b34FaF1FD1056C728A27426AB6807f84BAa1b",
           "deployer": "0x5b593E7b1725dc6FcbbFe80b2415B19153F94A85",
           "owner": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05"
+        },
+        "InterchainTokenService": {
+          "salt": "ITS v2.1.0",
+          "proxySalt": "ITS v1.0.0",
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "address": "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+          "version": "2.1.0",
+          "tokenManagerDeployer": "0x478b2BC902B73D06ff541b411FC6124cA50C6A3C",
+          "interchainTokenDeployer": "0x747EdBde75b1d48dBA2149C40edD51E37285B679",
+          "tokenManager": "0x62C0f0939DdFF94A4d21fAF041609b2E7498B4A8",
+          "tokenHandler": "0x88Ccd3040Eb4D73B155A3552EA49bdA3063AB13B",
+          "implementation": "0xd4B79294cd4B1f3C0781Da83B846C7558D9ee921",
+          "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf"
+        },
+        "InterchainTokenFactory": {
+          "deployer": "0x6f24A47Fc8AE5441Eb47EFfC3665e70e69Ac3F05",
+          "salt": "ITS Factory v1.0.0",
+          "address": "0x83a93500d23Fbc3e82B410aD07A6a9F7A0670D66",
+          "version": "2.1.0",
+          "implementation": "0x8B0485bf274fF8bF3cd0E7231fC807cb236E50c6"
         }
       }
     },
