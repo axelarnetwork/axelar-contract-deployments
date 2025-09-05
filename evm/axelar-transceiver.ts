@@ -301,7 +301,15 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, transceiverContractName);
+            await transferPauserCapability(
+                transceiverAddress,
+                artifactPath,
+                wallet,
+                pauserAddress,
+                chain,
+                options,
+                transceiverContractName,
+            );
             break;
         }
 
