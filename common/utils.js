@@ -631,10 +631,10 @@ const getChainConfigByAxelarId = (config, chainAxelarId) => {
     throw new Error(`Chain with axelarId ${chainAxelarId} not found in config`);
 };
 
-const getMultisigProof = async (axelar, chain, multisigSessionId) => {
+const getMultisigProof = async (axelar, chain, multisigSessionId, proverContractName = 'MultisigProver') => {
     const query = { proof: { multisig_session_id: `${multisigSessionId}` } };
     const client = await CosmWasmClient.connect(axelar.rpc);
-    const value = await client.queryContractSmart(axelar.contracts.MultisigProver[chain].address, query);
+    const value = await client.queryContractSmart(axelar.contracts[proverContractName][chain].address, query);
     return value;
 };
 
