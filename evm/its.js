@@ -383,10 +383,10 @@ async function processCommand(_axelar, chain, chains, action, options) {
             return tx.hash;
         }
 
-        case 'register-token-metadata': 
+        case 'register-token-metadata':
             const [tokenAddress] = args;
             const { gasValue, env } = options;
-            
+
             const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
@@ -398,14 +398,12 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { submittedGasValue } });
 
-            
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, submittedGasValue, {
                 value: scaleGasValue(chain, submittedGasValue),
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
-        
 
         case 'set-flow-limits': {
             const [tokenIdsArg, flowLimitsArg] = args;
