@@ -114,7 +114,7 @@ ts-node evm/interchainTokenFactory \
 ```bash
 # Create a custom token
 # Note: Custom token implementation can vary based on your requirements.
-ts-node stellar/its create-custom-token TEST TEST 7
+ts-node stellar/its create-custom-token <name> <symbol> <decimals>
 ```
 
 **Alternative - Create a Stellar classic asset by setting trustline:**
@@ -123,7 +123,7 @@ ts-node stellar/its create-custom-token TEST TEST 7
 
 ```bash
 # Optional trust limit (defaults to 1000000000 if not specified)
-ts-node stellar/token-utils change-trust [asset-code] [issuer] [limit]
+ts-node stellar/token-utils change-trust <assetCode> <issuer> <limit>
 ```
 
 If you're linking a Stellar Classic asset (format: {Symbol-Issuer}) that doesn't have a Soroban contract address yet, you can deploy a corresponding Stellar contract to make them accessible within Stellar-based contracts:
