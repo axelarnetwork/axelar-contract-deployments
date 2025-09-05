@@ -54,7 +54,7 @@ npm ci && npm run build
     "chainType": "evm",
     "explorer": {
         "name": "Tracehawk Memento Test Explorer",
-        "url": "https://test-explorer.mementoblockchain.com/",
+        "url": "https://test-explorer.mementoblockchain.com/"
     },
     "contracts": {}
   }
@@ -181,7 +181,7 @@ ts-node evm/operators.js --action addOperator --args $OPERATOR_ADDRESS
 ts-node evm/deploy-upgradable.js -c AxelarGasService -m [deployMethod] --args '{"collector": "$OPERATOR_ADDRESS"}'
 ```
 
-8. Transfer ownership for contracts on mainnet and testnet.
+9. Transfer ownership for contracts on mainnet and testnet.
 
 For Mainnet
 
