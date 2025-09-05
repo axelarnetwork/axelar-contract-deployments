@@ -230,7 +230,7 @@
       "name": "Moonbeam",
       "axelarId": "moonbeam",
       "chainId": 1287,
-      "rpc": "https://moonbeam-alpha.api.onfinality.io/public",
+      "rpc": "https://moonbeam.drpc.org",
       "tokenSymbol": "DEV",
       "decimals": 18,
       "chainType": "evm",
@@ -824,7 +824,7 @@
       "name": "Polygon-Sepolia",
       "axelarId": "polygon-sepolia",
       "chainId": 80002,
-      "rpc": "https://rpc-amoy.polygon.technology",
+      "rpc": "https://polygon-amoy.drpc.org",
       "tokenSymbol": "MATIC",
       "decimals": 18,
       "confirmations": 2,
@@ -1607,14 +1607,16 @@
       "confirmations": 1,
       "finality": "finalized",
       "approxFinalityWaitTime": 1,
+      "whbarAddress": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
+      "htsLibraryAddress": "0x0000000000000000000000000000000000653c18",
       "timeout": 50000,
-      "gasScalingFactor": 10,
       "chainType": "evm",
       "explorer": {
         "name": "HashScan",
         "url": "https://hashscan.io/testnet",
         "api": ""
       },
+      "gasScalingFactor": 10,
       "gasOptions": {
         "gasLimit": 8000000
       },
@@ -1680,8 +1682,6 @@
           "tokenManager": "0x377F8af458d247E6B92a988b015997De053a98ae",
           "tokenHandler": "0x358f38620e86fBBDA786A1a1500241b3AFf2a973",
           "implementation": "0x7566C3f4A589Cd84F995d12eFB72D8c54dEc272B",
-          "htsLibrary": "0x0000000000000000000000000000000000653c18",
-          "whbar": "0xb1F616b8134F602c3Bb465fB5b5e6565cCAd37Ed",
           "predeployCodehash": "0x08a4a556c4db879b4f24104d13a8baf86915d58b12c81b382dfea2a82d2856cf",
           "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
         },
@@ -2062,7 +2062,7 @@
       "axelarId": "plume",
       "networkType": "testnet",
       "chainId": 98867,
-      "rpc": "https://testnet-rpc.plumenetwork.xyz",
+      "rpc": "https://testnet-rpc.plume.org",
       "tokenSymbol": "PLUME",
       "confirmations": 1,
       "finality": "finalized",
@@ -2525,7 +2525,12 @@
         "name": "Celo Sepolia Explorer",
         "url": "https://celo-sepolia.blockscout.com/"
       },
-      "contracts": {}
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
+        },
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -2748,9 +2753,24 @@
           "domainSeparator": "0x5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
           "address": "axelar1960k48ezdumanv3hjf22cvp2a9zwr5skn34xgtrkhfjjhk7k4htsd4l8ze"
         },
-        "storeCodeProposalId": "225",
-        "storeCodeProposalCodeHash": "3a114cd8960d5fe529e1b0a4b47da0786419dbd1cbf4ffd33c7de7832725ba53",
-        "lastUploadedCodeId": 59
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0xb741e91bfa150b641059e6fc4b0f63086bf7714a4367712928f2f248a4489fe0",
+          "address": "axelar1x8jqrc49pqrn7arxxsyaa57egpwllu3kes4576y7djrlyygp7dqsdnalyc"
+        },
+        "storeCodeProposalId": "69",
+        "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
+        "lastUploadedCodeId": 21
       },
       "Gateway": {
         "flow": {
@@ -2773,9 +2793,9 @@
           "codeId": 22,
           "address": "axelar1mnu5s858ptnwqt9dkr2u7v3u4pa5z27arwzxlp9smf64n3xp4u3qyhvgj5"
         },
-        "storeCodeProposalId": "224",
-        "storeCodeProposalCodeHash": "769b6695060da742c2ba578cdfe728c6e4438b90bf0df02477defc0b2641798c",
-        "lastUploadedCodeId": 58,
+        "storeCodeProposalId": "70",
+        "storeCodeProposalCodeHash": "2ba600ee0d162184c9387eaf6fad655f1d75db548f93e379f0565cb2042d856f",
+        "lastUploadedCodeId": 22,
         "hyperliquid": {
           "codeId": 22,
           "address": "axelar1um4eyzmkpxhkpv3ytzaawqjzjxfddv2cjlep936glj87jg24zccqw86q2w"
@@ -2791,6 +2811,10 @@
         "stellar-2025-q3": {
           "codeId": 58,
           "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
+        },
+        "celo-sepolia": {
+          "codeId": 22,
+          "address": "axelar1v08w6ajkrjjd8t0g5kc3lr7dtsxjxrulfq5clstgg4zrqpumrxaqe7s3s3"
         }
       },
       "VotingVerifier": {
@@ -2929,9 +2953,24 @@
           "codeId": 57,
           "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh"
         },
-        "storeCodeProposalId": "223",
-        "storeCodeProposalCodeHash": "23063bd7064298e07e78fa208b521ea3d42bfa4036127e38c02ef1434ee84f91",
-        "lastUploadedCodeId": 57
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz"
+        },
+        "storeCodeProposalId": "72",
+        "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
+        "lastUploadedCodeId": 24
       },
       "InterchainTokenService": {
         "storeCodeProposalId": "239",
