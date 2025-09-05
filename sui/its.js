@@ -33,6 +33,7 @@ const chalk = require('chalk');
 const {
     utils: { arrayify, parseUnits },
 } = require('hardhat').ethers;
+const { checkIfCoinExists } = require('./utils/token-utils');
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -560,6 +561,65 @@ async function linkCoin(keypair, client, config, contracts, args, options) {
     );
 }
 
+// deploy_remote_coin
+async function deployRemoteCoin(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+    const walletAddress = keypair.toSuiAddress();
+    const txBuilder = new TxBuilder(client);
+
+    const tx = txBuilder.tx;
+
+    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain] = args;
+
+    validateParameters({
+        isNonEmptyString: { coinPackageName, coinModName, destinationChain },
+        isHexString: { coinPackageId, coinObjectId, tokenId },
+    });
+
+    validateDestinationChain(config.chains, destinationChain);
+
+    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+    await checkIfCoinExists(client, coinPackageId, coinType, coinObjectId);
+
+    const tokenIdObj = txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_u256`,
+        arguments: [tokenId],
+    });
+
+    const deployRemoteTokenTicket = txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::deploy_remote_interchain_token`,
+        arguments: [suiItsObjectId, tokenIdObj, destinationChain],
+        typeArguments: [coinType],
+    });
+
+    console.log('🚀 Deploying remote interchain coin...');
+
+    const unitAmountGas = parseUnits('1', 9).toBigInt();
+
+    const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
+
+    txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [SUI_TYPE_ARG],
+        arguments: [contracts.GasService.objects.GasService, deployRemoteTokenTicket, gas, walletAddress, '0x'],
+    });
+
+    txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::gateway::send_message`,
+        arguments: [contracts.AxelarGateway.objects.Gateway, deployRemoteTokenTicket],
+    });
+
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `✅ Remote coin deployment completed for ${tokenId}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Deploy remote coin', options);
+    }
+}
+
 // remove_treasury_cap
 async function removeTreasuryCap(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
@@ -658,17 +718,7 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
-    const structs = await getStructs(client, coinPackageId);
-    if (!Object.values(structs).includes(coinType)) {
-        throw new Error(`Coin type ${coinType} does not exist in package ${coinPackageId}`);
-    }
-
-    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
-    const objectType = coinObject?.data?.type;
-    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
-    if (objectType !== expectedObjectType) {
-        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
-    }
+    await checkIfCoinExists(client, coinPackageId, coinType, coinObjectId);
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -694,7 +744,6 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
     });
 
-    // Specify one unit of gas to be paid to gas service.
     const unitAmountGas = parseUnits('1', 9).toBigInt();
 
     const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
@@ -893,6 +942,19 @@ if (require.main === module) {
             mainProcessor(linkCoin, options, [symbol, name, decimals, destinationChain, destinationAddress], processCommand);
         });
 
+    const deployRemoteCoinProgram = new Command()
+        .name('deploy-remote-coin')
+        .command('deploy-remote-coin <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain>')
+        .description(`Deploy an interchain token on a remote chain`)
+        .action((coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, options) => {
+            mainProcessor(
+                deployRemoteCoin,
+                options,
+                [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, options],
+                processCommand,
+            );
+        });
+
     const removeTreasuryCapProgram = new Command()
         .name('remove-treasury-cap')
         .command('remove-treasury-cap <symbol>')
@@ -947,6 +1009,7 @@ if (require.main === module) {
     program.addCommand(giveUnlinkedCoinProgram);
     program.addCommand(removeUnlinkedCoinProgram);
     program.addCommand(linkCoinProgram);
+    program.addCommand(deployRemoteCoinProgram);
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
     program.addCommand(checkVersionControlProgram);
