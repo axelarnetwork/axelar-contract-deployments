@@ -19,10 +19,11 @@ const programHandler = () => {
             .argument('<code_id>', 'code id of new contract')
             .addOption(new Option('--fees <fees>', 'fees').default('auto'))
             .addOption(new Option('--address <address>', 'contract address').makeOptionMandatory(true))
+            .addOption(new Option('--deposit <deposit>', 'deposit amount').makeOptionMandatory(true))
             .option('--dry', 'only generate migration msg')
             .option('--dummy', 'supply dummy data where applicable')
             .description('Migrate contract')
-            .action(async (code_id: string, options: { env: string; mnemonic: string; address: string; fees; dry?; dummy? }) => {
+            .action(async (code_id: string, options: { env: string; mnemonic: string; address: string; deposit: string, fees; dry?; dummy? }) => {
                 const { env } = options;
                 const config = loadConfig(env);
 
@@ -41,6 +42,7 @@ const programHandler = () => {
                     case ContractMap.get(Contract.Coordinator):
                         migrateCoordinator(
                             client,
+                            wallet,
                             options,
                             config,
                             sender_address,

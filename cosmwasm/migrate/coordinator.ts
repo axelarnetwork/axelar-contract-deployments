@@ -1,9 +1,12 @@
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { ChainEndpoint, SigningCosmWasmClient, queryChainsFromRouter } from './utils';
+import { encodeMigrateContractProposal, submitProposal } from '../utils';
 
 interface Options {
     env: string;
     mnemonic: string;
     address: string;
+    deposit: string;
     fees;
     dry?;
     dummy?;
@@ -61,18 +64,9 @@ async function addMissingProvers(
     }
 }
 
-function missingChain(error_message: string): string | null {
-    const re = new RegExp('missing contracts to register for chain (?<chain>[a-z0-9]+):');
-    const result = error_message.match(re);
-    if (!result.groups.chain) {
-        return null;
-    }
-
-    return result.groups.chain;
-}
-
 async function coordinatorToVersion2_0_1(
     client: typeof SigningCosmWasmClient,
+    wallet: DirectSecp256k1HdWallet,
     options: Options,
     config,
     sender_address: string,
@@ -81,7 +75,7 @@ async function coordinatorToVersion2_0_1(
 ) {
     const router_address = config.axelar.contracts.Router.address;
     const multisig_address = config.axelar.contracts.Multisig.address;
-    coordinator_address = options.address ?? config.axelar.contracts.Coordinator.address;
+    // coordinator_address = options.address ?? config.axelar.contracts.Coordinator.address;
 
     const chain_endpoints = await queryChainsFromRouter(client, router_address);
     let chain_contracts = await constructChainContracts(client, chain_endpoints);
@@ -95,45 +89,35 @@ async function coordinatorToVersion2_0_1(
 
     console.log('Migration Msg:', migration_msg);
 
+    let migrate_options = {
+        contractName: "Coordinator",
+        msg: JSON.stringify(migration_msg),
+        title: "Migrate Coordinator v2.1.0",
+        description: "Migrate Coordinator v2.1.0",
+        runAs: sender_address,
+        codeId: code_id,
+        deposit: options.deposit,
+        fetchCodeId: false,
+        address: coordinator_address
+    }
+    config.contractName = "coordinator";
+
+    let proposal = encodeMigrateContractProposal(config, migrate_options);
+
     if (!options.dry) {
-        while (true) {
-            try {
-                console.log('Executing migration...');
-                await client.migrate(sender_address, coordinator_address, Number(code_id), migration_msg, options.fees);
-                console.log('Migration succeeded');
-                break;
-            } catch (e) {
-                // Devnet has some incomplete registrations where a chain may have a prover, but
-                // no gateway or verifier. We must supply dummy data in those cases. Those addresses
-                // must be correctly encoded, so we can use the coordinator address by default.
-                const chain_to_add = missingChain(e.message);
-                if (!options.dummy || !chain_to_add) {
-                    console.log('Migration failed:', e.message);
-
-                    if (chain_to_add) {
-                        console.log("Set the '--dummy' flag to use dummy data for missing chains");
-                    }
-                    break;
-                }
-
-                console.log(`Missing information for chain ${chain_to_add}`);
-
-                const dummy_data = {
-                    chain_name: chain_to_add,
-                    gateway_address: coordinator_address,
-                    verifier_address: coordinator_address,
-                };
-
-                console.log(`Adding dummy data for ${JSON.stringify(dummy_data)}...`);
-
-                migration_msg.chain_contracts.push(dummy_data);
-            }
+        try {
+            console.log('Executing migration...');
+            await submitProposal(client, wallet, config, migrate_options, proposal);
+            console.log('Migration succeeded');
+        } catch (e) {
+            console.log("Error:", e);
         }
     }
 }
 
 export async function migrate(
     client: typeof SigningCosmWasmClient,
+    wallet: DirectSecp256k1HdWallet,
     options: Options,
     config,
     sender_address: string,
@@ -143,7 +127,7 @@ export async function migrate(
 ) {
     switch (version) {
         case '1.1.0':
-            return coordinatorToVersion2_0_1(client, options, config, sender_address, coordinator_address, code_id);
+            return coordinatorToVersion2_0_1(client, wallet, options, config, sender_address, coordinator_address, code_id);
         default:
             console.error(`no migration script found for coordinator ${version}`);
     }
