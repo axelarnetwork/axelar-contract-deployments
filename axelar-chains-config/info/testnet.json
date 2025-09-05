@@ -2445,7 +2445,7 @@
       "name": "Sui",
       "axelarId": "sui",
       "networkType": "testnet",
-      "rpc": "https://sui-testnet.public.blastapi.io",
+      "rpc": "https://fullnode.testnet.sui.io:443",
       "tokenSymbol": "SUI",
       "decimals": 9,
       "chainType": "sui",

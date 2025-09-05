@@ -1,6 +1,15 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
+const {
+    loadConfig,
+    printInfo,
+    saveConfig,
+    getChainConfig,
+    parseTrustedChains,
+    validateParameters,
+    isValidNumber,
+    validateDestinationChain,
+} = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -9,15 +18,21 @@ const {
     deployTokenFromInfo,
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
+    getStructs,
     getWallet,
     itsFunctions,
     printWalletInfo,
     registerCustomCoinUtil,
     saveGeneratedTx,
     saveTokenDeployment,
+    suiClockAddress,
+    suiCoinId,
 } = require('./utils');
 const { bcs } = require('@mysten/sui/bcs');
 const chalk = require('chalk');
+const {
+    utils: { arrayify, parseUnits },
+} = require('hardhat').ethers;
 
 async function setFlowLimits(keypair, client, config, contracts, args, options) {
     let [tokenIds, flowLimits] = args;
@@ -622,6 +637,94 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
     contracts[symbol.toUpperCase()].objects.TreasuryCapReclaimer = treasuryCapReclaimerId;
 }
 
+// interchain transfer
+async function interchainTransfer(keypair, client, config, contracts, args, options) {
+    const { InterchainTokenService: itsConfig } = contracts;
+
+    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
+
+    const walletAddress = keypair.toSuiAddress();
+
+    const txBuilder = new TxBuilder(client);
+    const tx = txBuilder.tx;
+
+    validateParameters({
+        isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
+        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isValidNumber: { amount },
+    });
+
+    validateDestinationChain(config.chains, destinationChain);
+
+    const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+    const structs = await getStructs(client, coinPackageId);
+    if (!Object.values(structs).includes(coinType)) {
+        throw new Error(`Coin type ${coinType} does not exist in package ${coinPackageId}`);
+    }
+
+    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
+    const objectType = coinObject?.data?.type;
+    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
+    if (objectType !== expectedObjectType) {
+        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+    }
+
+    const tokenIdObj = await txBuilder.moveCall({
+        target: `${itsConfig.address}::token_id::from_u256`,
+        arguments: [tokenId],
+    });
+
+    const gatewayChannelId = await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::channel::new`,
+        arguments: [],
+    });
+
+    const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
+
+    const prepareInterchainTransferTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::prepare_interchain_transfer`,
+        typeArguments: [coinType],
+        arguments: [tokenIdObj, coinsToSend, destinationChain, destinationAddress, '0x', gatewayChannelId],
+    });
+
+    const interchainTransferTicket = await txBuilder.moveCall({
+        target: `${itsConfig.address}::interchain_token_service::send_interchain_transfer`,
+        typeArguments: [coinType],
+        arguments: [itsConfig.objects.InterchainTokenService, prepareInterchainTransferTicket, suiClockAddress],
+    });
+
+    // Specify one unit of gas to be paid to gas service.
+    const unitAmountGas = parseUnits('1', 9).toBigInt();
+
+    const [gas] = tx.splitCoins(tx.gas, [unitAmountGas]);
+
+    await txBuilder.moveCall({
+        target: `${contracts.GasService.address}::gas_service::pay_gas`,
+        typeArguments: [suiCoinId],
+        arguments: [contracts.GasService.objects.GasService, interchainTransferTicket, gas, walletAddress, '0x'],
+    });
+
+    await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::gateway::send_message`,
+        arguments: [contracts.AxelarGateway.objects.Gateway, interchainTransferTicket],
+    });
+
+    await txBuilder.moveCall({
+        target: `${contracts.AxelarGateway.address}::channel::destroy`,
+        arguments: [gatewayChannelId],
+    });
+
+    if (options.offline) {
+        const tx = txBuilder.tx;
+        const sender = options.sender || keypair.toSuiAddress();
+        tx.setSender(sender);
+        await saveGeneratedTx(tx, `Interchain transfer for ${tokenId}`, client, options);
+    } else {
+        await broadcastFromTxBuilder(txBuilder, keypair, 'Interchain Transfer', options);
+    }
+}
+
 async function checkVersionControl(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
     const version = args;
@@ -814,7 +917,23 @@ if (require.main === module) {
             mainProcessor(checkVersionControl, options, version, processCommand);
         });
 
-    // v0
+    const interchainTransferProgram = new Command()
+        .name('interchain-transfer')
+        .command(
+            'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
+        )
+        .description('Send interchain transfer from sui to a chain where token is linked')
+        .action(
+            (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
+                mainProcessor(
+                    interchainTransfer,
+                    options,
+                    [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
+                    processCommand,
+                );
+            },
+        );
+
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
     program.addCommand(removeTrustedChainsProgram);
@@ -831,6 +950,7 @@ if (require.main === module) {
     program.addCommand(removeTreasuryCapProgram);
     program.addCommand(restoreTreasuryCapProgram);
     program.addCommand(checkVersionControlProgram);
+    program.addCommand(interchainTransferProgram);
 
     // finalize program
     addOptionsToCommands(program, addBaseOptions, { offline: true });
