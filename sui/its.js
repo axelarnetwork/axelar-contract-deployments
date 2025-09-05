@@ -658,13 +658,11 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
 
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
 
-    // Verify the coin type exists in the provided package
     const structs = await getStructs(client, coinPackageId);
     if (!Object.values(structs).includes(coinType)) {
         throw new Error(`Coin type ${coinType} does not exist in package ${coinPackageId}`);
     }
 
-    // Verify the provided coin object exists and matches the expected coin type
     const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
     const objectType = coinObject?.data?.type;
     const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
@@ -682,7 +680,6 @@ async function interchainTransfer(keypair, client, config, contracts, args, opti
         arguments: [],
     });
 
-    // Split coins to set exact amount of coins to send.
     const [coinsToSend] = tx.splitCoins(coinObjectId, [amount]);
 
     const prepareInterchainTransferTicket = await txBuilder.moveCall({
