@@ -186,8 +186,7 @@ async function processCommand(_axelar, chain, chains, options) {
 
             const deploymentSalt = getDeploymentSalt(options);
 
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
@@ -241,8 +240,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'deployRemoteCanonicalInterchainToken': {
             const { tokenAddress, destinationChain, gasValue, env } = options;
 
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
@@ -305,8 +303,7 @@ async function processCommand(_axelar, chain, chains, options) {
         case 'linkToken': {
             const { destinationChain, destinationTokenAddress, tokenManagerType, linkParams, gasValue, env } = options;
 
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
