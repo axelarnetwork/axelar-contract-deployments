@@ -112,9 +112,9 @@ ts-node evm/interchainTokenFactory \
 **Note:** On Stellar, we're deploying a customized pre-deployed token contract that you control directly, in contrast to the ITS-managed token on EVM.
 
 ```bash
-# Note: The custom token example parameters can vary based on your custom token implementation
-stellar contract deploy custom_token.wasm \
-  --source wallet --network <network> -- --admin <admin> --decimal <decimal> --name <name> --symbol <symbol>
+# Create a custom token
+# Note: Custom token implementation can vary based on your requirements.
+ts-node stellar/its create-custom-token TEST TEST 7
 ```
 
 **Alternative - Create a Stellar classic asset by setting trustline:**
