@@ -45,13 +45,13 @@ CHAIN=<chain name>
 ### Devnet Amplifier
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.2.0 devnet-amplifier" -m create2 --proxySalt 'v1.0.0 devnet-amplifier'
+ts-node evm/deploy-its.js -s "v2.2.0 devnet-amplifier" -m create2 --proxySalt 'v2.2.0 devnet-amplifier'
 ```
 
 ### Stagenet / Testnet / Mainnet
 
 ```bash
-ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v1.0.0'
+ts-node evm/deploy-its.js -s "v2.2.0" -m create2 --proxySalt 'v2.2.0'
 ```
 
 ### Verify Upgraded ITS Contracts
@@ -94,7 +94,7 @@ ts-node evm/its.js checks -n memento -y
 
 ```bash
 # Create a token on chain. Substitute the `wallet` below with the deployer key
-ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wallet] --name "test" --symbol "TST" --decimals [decimals] --initialSupply 10000 --salt "salt12345"
+ts-node evm/interchainTokenFactory.js --action deployInterchainToken --minter [wallet] --name "test" --symbol "TST" --decimals [decimals] --initialSupply 10000 --salt "salt1234"
 
 # Register token metadata. Ensure GMP call is executed
 ts-node evm/its.js --action registerTokenMetadata --tokenAddress [tokenAddress]
@@ -104,10 +104,10 @@ ts-node evm/its.js --action registerTokenMetadata --tokenAddress [tokenAddress]
 
 ```bash
 # Register source token. Record tokenId from output for next steps.
-ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress [tokenAddress] --tokenManagerType 4 --operator [wallet] --salt "salt6789"
+ts-node evm/interchainTokenFactory.js --action registerCustomToken --tokenAddress [tokenAddress] --tokenManagerType 4 --operator [wallet] --salt "salt1234"
 
 # Link to remote token. Ensure GMP call is executed
-ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain chain2 --destinationTokenAddress [remote token address] --tokenManagerType 4 --linkParams "0x" --salt "salt6789"
+ts-node evm/interchainTokenFactory.js --action linkToken --destinationChain chain2 --destinationTokenAddress [remote token address] --tokenManagerType 4 --linkParams "0x" --salt "salt1234"
 ```
 
 - Fetch tokenManager address for deployed token on both chains
