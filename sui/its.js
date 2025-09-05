@@ -1,6 +1,6 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters } = require('../common/utils');
+const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters, isValidNumber, validateDestinationChain } = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -9,6 +9,7 @@ const {
     deployTokenFromInfo,
     getAllowedFunctions,
     getObjectIdsByObjectTypes,
+    getStructs,
     getWallet,
     itsFunctions,
     printWalletInfo,
@@ -631,14 +632,36 @@ async function restoreTreasuryCap(keypair, client, config, contracts, args, opti
 async function interchainTransfer(keypair, client, config, contracts, args, options) {
     const { InterchainTokenService: itsConfig } = contracts;
 
-    const { coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount } = options;
+    const [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount] = args;
 
     const walletAddress = keypair.toSuiAddress();
 
     const txBuilder = new TxBuilder(client);
     const tx = txBuilder.tx;
 
+    validateParameters({
+        isNonEmptyString: { coinPackageName, coinModName, destinationChain, destinationAddress },
+        isHexString: { coinPackageId, coinObjectId, tokenId },
+        isValidNumber: { amount },
+    });
+
+    validateDestinationChain(config.chains, destinationChain);
+
     const coinType = `${coinPackageId}::${coinPackageName}::${coinModName}`;
+
+    // Verify the coin type exists in the provided package
+    const structs = await getStructs(client, coinPackageId);
+    if (!Object.values(structs).includes(coinType)) {
+        throw new Error(`Coin type ${coinType} does not exist in package ${coinPackageId}`);
+    }
+
+    // Verify the provided coin object exists and matches the expected coin type
+    const coinObject = await client.getObject({ id: coinObjectId, options: { showType: true } });
+    const objectType = coinObject?.data?.type;
+    const expectedObjectType = `${SUI_PACKAGE_ID}::coin::Coin<${coinType}>`;
+    if (objectType !== expectedObjectType) {
+        throw new Error(`Invalid coin object type. Expected ${expectedObjectType}, got ${objectType || 'unknown'}`);
+    }
 
     const tokenIdObj = await txBuilder.moveCall({
         target: `${itsConfig.address}::token_id::from_u256`,
@@ -890,19 +913,39 @@ if (require.main === module) {
 
     const interchainTransferProgram = new Command()
         .name('interchain-transfer')
-        .command('interchain-transfer')
+        .command(
+            'interchain-transfer <coinPackageId> <coinPackageName> <coinModName> <coinObjectId> <tokenId> <destinationChain> <destinationAddress> <amount>',
+        )
         .description('Send interchain transfer from sui to a chain where token is linked')
-        .requiredOption('--coin-package-id <coinPackageId>', 'The coin package ID')
-        .requiredOption('--coin-package-name <coinPackageName>', 'The coin package name')
-        .requiredOption('--coin-mod-name <coinModName>', 'The coin module name')
-        .requiredOption('--coin-object-id <coinObjectId>', 'The coin object ID')
-        .requiredOption('--token-id <tokenId>', 'The token ID')
-        .requiredOption('--destination-chain <destinationChain>', 'The destination chain')
-        .requiredOption('--destination-address <destinationAddress>', 'The destination address')
-        .requiredOption('--amount <amount>', 'The amount to transfer')
-        .action((options) => {
-            mainProcessor(interchainTransfer, options, [], processCommand);
-        });
+        .action(
+            (
+                coinPackageId,
+                coinPackageName,
+                coinModName,
+                coinObjectId,
+                tokenId,
+                destinationChain,
+                destinationAddress,
+                amount,
+                options,
+            ) => {
+                mainProcessor(
+                    interchainTransfer,
+                    options,
+                    [
+                        coinPackageId,
+                        coinPackageName,
+                        coinModName,
+                        coinObjectId,
+                        tokenId,
+                        destinationChain,
+                        destinationAddress,
+                        amount,
+                    ],
+                    processCommand,
+                );
+            },
+        );
 
     program.addCommand(setFlowLimitsProgram);
     program.addCommand(addTrustedChainsProgram);
