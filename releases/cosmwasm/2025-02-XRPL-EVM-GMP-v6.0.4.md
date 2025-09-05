@@ -339,7 +339,7 @@ axelard tx wasm execute $REWARDS "{ \"add_rewards\": { \"pool_id\": { \"chain_na
 Check reward pool to confirm funding worked:
 
 ```bash
-ts-node cosmwasm/query.js rewards -n $CHAIN
+ts-node cosmwasm/query.js rewards $CHAIN
 ```
 
 ## Checklist
