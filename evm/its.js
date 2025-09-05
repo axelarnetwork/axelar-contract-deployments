@@ -322,8 +322,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
             const { gasValue, metadata, env } = options;
 
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
@@ -384,12 +383,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             return tx.hash;
         }
 
-        case 'register-token-metadata': {
+        case 'register-token-metadata': 
             const [tokenAddress] = args;
             const { gasValue, env } = options;
-
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain: 'axelar',
@@ -400,13 +398,14 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { submittedGasValue } });
 
+            
             const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, submittedGasValue, {
                 value: scaleGasValue(chain, submittedGasValue),
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
             break;
-        }
+        
 
         case 'set-flow-limits': {
             const [tokenIdsArg, flowLimitsArg] = args;
@@ -692,8 +691,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { gasValue, env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
-            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
-            const submittedGasValue = needsEstimate
+            const submittedGasValue = !gasValue
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
