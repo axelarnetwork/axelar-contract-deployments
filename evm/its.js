@@ -34,7 +34,7 @@ const {
     validateChain,
     tokenManagerTypes,
     validateLinkType,
-    calculateItsCrossChainGas
+    calculateItsCrossChainGas,
 } = require('../common/utils');
 const { getWallet } = require('./sign-utils');
 const IInterchainTokenService = getContractJSON('IInterchainTokenService');
@@ -381,7 +381,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             let { gasValue, env } = options;
             validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
 
-
             if (gasValue === 0) {
                 gasValue = await calculateItsCrossChainGas(chain.axelarId, 'axelar', env, 'TokenMetadataRegistered');
             }
@@ -707,7 +706,6 @@ async function processCommand(_axelar, chain, chains, action, options) {
             }
 
             const linkParams = operator;
-
 
             if (gasValue === 0) {
                 gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'LinkToken');
