@@ -1,6 +1,15 @@
 const { Option, Command } = require('commander');
 const { STD_PACKAGE_ID, SUI_PACKAGE_ID, TxBuilder } = require('@axelar-network/axelar-cgp-sui');
-const { loadConfig, printInfo, saveConfig, getChainConfig, parseTrustedChains, validateParameters, isValidNumber, validateDestinationChain } = require('../common/utils');
+const {
+    loadConfig,
+    printInfo,
+    saveConfig,
+    getChainConfig,
+    parseTrustedChains,
+    validateParameters,
+    isValidNumber,
+    validateDestinationChain,
+} = require('../common/utils');
 const {
     addBaseOptions,
     addOptionsToCommands,
@@ -918,30 +927,11 @@ if (require.main === module) {
         )
         .description('Send interchain transfer from sui to a chain where token is linked')
         .action(
-            (
-                coinPackageId,
-                coinPackageName,
-                coinModName,
-                coinObjectId,
-                tokenId,
-                destinationChain,
-                destinationAddress,
-                amount,
-                options,
-            ) => {
+            (coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount, options) => {
                 mainProcessor(
                     interchainTransfer,
                     options,
-                    [
-                        coinPackageId,
-                        coinPackageName,
-                        coinModName,
-                        coinObjectId,
-                        tokenId,
-                        destinationChain,
-                        destinationAddress,
-                        amount,
-                    ],
+                    [coinPackageId, coinPackageName, coinModName, coinObjectId, tokenId, destinationChain, destinationAddress, amount],
                     processCommand,
                 );
             },
