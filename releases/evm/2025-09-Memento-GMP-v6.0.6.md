@@ -44,7 +44,7 @@ npm ci && npm run build
 "$CHAIN": {
     "name": "Memento",
     "axelarId": "$CHAIN",
-    "chainId": <CHAIN_ID>,
+    "chainId": 12052024,
     "rpc": "<TESTNET_RPC_URL>",
     "tokenSymbol": "ETH",
     "confirmations": 1,
