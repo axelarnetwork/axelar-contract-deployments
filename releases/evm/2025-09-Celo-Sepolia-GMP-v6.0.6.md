@@ -41,7 +41,7 @@ npm ci
     "name": "Celo-Sepolia",
     "axelarId": "celo-sepolia",
     "chainId": 11142220,
-    "rpc": "https://rpc.ankr.com/celo_sepolia",
+    "rpc": "https://forno.celo-sepolia.celo-testnet.org/",
     "tokenSymbol": "CELO",
     "confirmations": 1,
     "finality": "finalized",
