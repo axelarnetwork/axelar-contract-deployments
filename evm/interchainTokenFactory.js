@@ -195,7 +195,6 @@ async function processCommand(_axelar, chain, chains, options) {
                 throw new Error(`Destination chain ${destinationChain} is not trusted by ITS`);
             }
 
-
             const tx = await interchainTokenFactory['deployRemoteInterchainToken(bytes32,string,uint256)'](
                 deploymentSalt,
                 destinationChain,
