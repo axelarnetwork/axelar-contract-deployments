@@ -27,13 +27,13 @@ export enum Contract {
 }
 
 export const ContractMap = new Map<Contract, string>([
-    [Contract.ServiceRegistry, 'ServiceRegistry'],
-    [Contract.Router, 'Router'],
-    [Contract.Multisig, 'Multisig'],
-    [Contract.Coordinator, 'Coordinator'],
-    [Contract.Rewards, 'Rewards'],
-    [Contract.AxelarnetGateway, 'AxelarnetGateway'],
-    [Contract.InterchainTokenService, 'InterchainTokenService'],
+    // [Contract.ServiceRegistry, 'ServiceRegistry'],
+    [Contract.Router, 'router'],
+    [Contract.Multisig, 'multisig'],
+    [Contract.Coordinator, 'coordinator'],
+    // [Contract.Rewards, 'Rewards'],
+    // [Contract.AxelarnetGateway, 'AxelarnetGateway'],
+    // [Contract.InterchainTokenService, 'InterchainTokenService'],
 ]);
 
 export async function getContractInfo(client: typeof CosmWasmClient, contract_address: string): Promise<ContractInfo> {

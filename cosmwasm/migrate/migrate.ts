@@ -38,7 +38,7 @@ const programHandler = () => {
 
                 const contract_info: ContractInfo = await getContractInfo(client, options.address);
                 switch (contract_info.contract) {
-                    case ContractMap[Contract.Coordinator]:
+                    case ContractMap.get(Contract.Coordinator):
                         migrateCoordinator(
                             client,
                             options,
