@@ -32,7 +32,7 @@ Create an `.env` config. Local environment variable `CHAIN` should be set to `me
 ```yaml
 PRIVATE_KEY=<deployer private key>
 ENV=<devnet-amplifier|stagenet|testnet|mainnet>
-CHAIN=<chain name>
+CHAIN=memento
 ```
 
 | Network              | `deployer address`                           |
