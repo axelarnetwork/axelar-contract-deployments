@@ -78,7 +78,7 @@ Change the `-s SALT` to derive a new address. Production deployments use the rel
 
 ## AxelarTransceiver and ERC1967 Proxy Deployment
 
-Note: You can deploy transceiver for any tokens/chains by providing the appropriate  `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script saves the config under the full name of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc) 
+Note: You can deploy transceiver for any tokens/chains by providing the appropriate  `--transceiverPrefix`. For deployment purposes, we use `AxelarTransceiver` contract from [library](https://github.com/wormhole-foundation/example-wormhole-axelar-wsteth.git). The deployment script saves the config under the full name of Transceiver contract (e.g., `LidoAxelarTransceiver`, etc)
 
 ### Prerequisites
 
@@ -98,7 +98,7 @@ Please ensure you have generated pre-linked artifacts.
 Set address of deployed `gmpManager` to the transceiver section in your chain config:
 
 ```json
-"${PREFIX}AxelarTransceiver": {
+"${TRANSCEIVER_PREFIX}AxelarTransceiver": {
   "gmpManager": "0x..."
 }
 ```
@@ -110,17 +110,19 @@ ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --transceiverPrefix $PREFIX
+  --transceiverPrefix $TRANSCEIVER_PREFIX
 ```
 
 **Important**:
+
 - **Use `create`** method to deploy, as deployer of transceiver will be used to initialize the contract, avoid using `create2` or `create3`
 - **`--artifactPath` is required** for transceiver deployment
 - **`--transceiverPrefix` is required** to differentiate multiple transceivers in config
-- The GMP Manager address is automatically read from the chain config (`${PREFIX}AxelarTransceiver.gmpManager`) or can be manually provied via `--gmpManager` flag
+- The GMP Manager address is automatically read from the chain config (`${TRANSCEIVER_PREFIX}AxelarTransceiver.gmpManager`) or can be manually provided via `--gmpManager` flag
 - **Library Linking**: Pre-linked artifacts are generated and required libraries are already linked
 
 The deployment script will:
+
 - Validate the gateway, gas service, and GMP manager addresses from the chain configuration
 - Deploy the contract with the correct constructor arguments
 - Store configuration including gateway, gas service, and GMP manager addresses
@@ -137,7 +139,7 @@ ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --transceiverPrefix $PREFIX \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
   --reuseProxy
 ```
 
@@ -147,7 +149,7 @@ ts-node evm/deploy-contract.js \
 ts-node evm/deploy-contract.js \
   -c AxelarTransceiver \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --transceiverPrefix $PREFIX \
+  --transceiverPrefix $TRANSCEIVER_PREFIX \
   --upgrade
 ```
 
@@ -160,16 +162,18 @@ ts-node evm/deploy-contract.js \
   -c ERC1967Proxy \
   -m create \
   --artifactPath path/to/example-wormhole-axelar-wsteth/out/ \
-  --forContract `${PREFIX}AxelarTransceiver`
+  --forContract `${TRANSCEIVER_PREFIX}AxelarTransceiver`
 ```
 
 **Important**:
-- **Use `create`** method to deploy for ERC1967Proxy of `${PREFIX}AxelarTransceiver`, as deployer will be used to initialize the contract
-- **`--artifactPath` is required** for ERC1967Proxy deployment 
+
+- **Use `create`** method to deploy for ERC1967Proxy of `${TRANSCEIVER_PREFIX}AxelarTransceiver`, as deployer will be used to initialize the contract
+- **`--artifactPath` is required** for ERC1967Proxy deployment
 - **Default deployment method is `create`** (standard nonce-based deployment)
 - Use `-m create2` or `-m create3` for deterministic deployments if needed
 
 The proxy deployment will:
+
 - Use the implementation address from the specified contract's config
 - Store the proxy address in the target contract's configuration
 - Support custom initialization data via `--proxyData` (defaults to "0x")
@@ -180,13 +184,13 @@ After deploying a transceiver contract, you can perform post-deployment operatio
 
 ```bash
 # Initialize the transceiver contract
-ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $PREFIX
+ts-node evm/axelar-transceiver.ts initialize --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 
 # Transfer pauser capability to a new address
-ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $PREFIX
+ts-node evm/axelar-transceiver.ts transfer-pauser 0x... --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 
 # Set Chain ID mapping
-ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress> --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $PREFIX
+ts-node evm/axelar-transceiver.ts set-axelar-chain-id <WormholeChainId> <AxelarChainName> <TransceiverAddress> --artifactPath path/to/example-wormhole-axelar-wsteth/out/ --transceiverPrefix $TRANSCEIVER_PREFIX
 ```
 
 ## Hyperliquid

@@ -274,25 +274,25 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
         throw new Error('--transceiverPrefix is required. Please provide the prefix for the transceiver contract.');
     }
 
-    const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
+    const transceiverContractName = `${transceiverPrefix}AxelarTransceiver`;
 
-    if (!chain.contracts?.[transceiverContract]?.address) {
+    if (!chain.contracts?.[transceiverContractName]?.address) {
         printError('Chain contracts:', JSON.stringify(chain.contracts, null, 2));
-        throw new Error(`${transceiverContract} address not found in configuration`);
+        throw new Error(`${transceiverContractName} address not found in configuration`);
     }
 
-    const transceiverAddress = chain.contracts[transceiverContract].address;
+    const transceiverAddress = chain.contracts[transceiverContractName].address;
     printInfo('Found transceiver address:', transceiverAddress);
 
     const provider = getDefaultProvider(chain.rpc);
     const wallet = new Wallet(privateKey, provider);
 
-    printInfo(`Processing ${transceiverContract} operation: ${action} for chain: ${chain.name}`);
+    printInfo(`Processing ${transceiverContractName} operation: ${action} for chain: ${chain.name}`);
     printInfo(`Transceiver address: ${transceiverAddress}`);
 
     switch (action) {
         case 'initialize': {
-            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, transceiverContract);
+            await initializeTransceiver(transceiverAddress, artifactPath, wallet, chain, options, transceiverContractName);
             break;
         }
 
@@ -301,7 +301,7 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
             if (!pauserAddress) {
                 throw new Error('Pauser address is required for transfer-pauser command');
             }
-            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, transceiverContract);
+            await transferPauserCapability(transceiverAddress, artifactPath, wallet, pauserAddress, chain, options, transceiverContractName);
             break;
         }
 
@@ -320,7 +320,7 @@ async function processCommand(_axelar, chain: ChainConfig, action: string, optio
                 targetTransceiverAddress,
                 chain,
                 options,
-                transceiverContract,
+                transceiverContractName,
             );
             break;
         }

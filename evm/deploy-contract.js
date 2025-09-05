@@ -27,25 +27,25 @@ const {
 } = require('./utils');
 const { addEvmOptions } = require('./cli-utils');
 
-async function upgradeTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions, contractName) {
+async function upgradeTransceiver(contractConfig, contractAbi, wallet, chain, options, gasOptions, transceiverContractName) {
     const proxyAddress = contractConfig.address;
     // using new transceiver contract's address, which is recently deployed; part of the two-step upgrade process
-    const newImplementation = contractConfig.implementation;
+    const newImplementationAddress = contractConfig.implementation;
 
     validateParameters({
-        isAddress: { proxyAddress, newImplementation },
+        isAddress: { proxyAddress, newImplementation: newImplementationAddress },
     });
 
     const proxyContract = new Contract(proxyAddress, contractAbi, wallet);
 
-    printInfo(`${contractName} Proxy`, proxyAddress);
-    printInfo(`New implementation`, newImplementation);
+    printInfo(`${transceiverContractName} Proxy`, proxyAddress);
+    printInfo(`New implementation`, newImplementationAddress);
 
-    if (prompt(`Proceed with upgrade on ${contractName} on ${chain.name}?`, options.yes)) {
+    if (prompt(`Proceed with upgrade on ${transceiverContractName} on ${chain.name}?`, options.yes)) {
         return;
     }
 
-    const upgradeTx = await proxyContract.upgrade(newImplementation, gasOptions);
+    const upgradeTx = await proxyContract.upgrade(newImplementationAddress, gasOptions);
     await upgradeTx.wait();
 
     printInfo('Upgrade completed successfully');
@@ -160,14 +160,14 @@ async function getConstructorArgs(contractName, contracts, contractConfig, walle
                 isNonEmptyString: { transceiverPrefix },
             });
 
-            const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
-            const gmpManager = options.gmpManager ? options.gmpManager : contracts[transceiverContract]?.gmpManager;
+            const transceiverContractName = `${transceiverPrefix}AxelarTransceiver`;
+            const gmpManager = options.gmpManager ? options.gmpManager : contracts[transceiverContractName]?.gmpManager;
 
             if (options.gmpManager) {
-                if (contracts[transceiverContract]?.gmpManager) {
-                    printWarn(`Expected gmpManager ${contracts[transceiverContract].gmpManager} but got ${options.gmpManager}.`);
+                if (contracts[transceiverContractName]?.gmpManager) {
+                    printWarn(`Expected gmpManager ${contracts[transceiverContractName].gmpManager} but got ${options.gmpManager}.`);
                 }
-                printWarn(`Using provided gmpManager ${options.gmpManager} for ${transceiverContract}`);
+                printWarn(`Using provided gmpManager ${options.gmpManager} for ${transceiverContractName}`);
             }
 
             validateParameters({
@@ -246,7 +246,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
             const gateway = await contract.gateway();
             const gasService = await contract.gasService();
             const gmpManager = await contract.gmpManager();
-            const transceiverContract = `${options.transceiverPrefix}AxelarTransceiver`;
+            const transceiverContractName = `${options.transceiverPrefix}AxelarTransceiver`;
 
             if (gateway !== contractConfig.gateway) {
                 printError(`Expected gateway ${contractConfig.gateway} but got ${gateway}.`);
@@ -260,7 +260,7 @@ async function checkContract(contractName, contract, contractConfig, options) {
                 printError(`Expected gmpManager ${contractConfig.gmpManager} but got ${gmpManager}.`);
             }
 
-            printInfo(`${transceiverContract} contract verification passed`);
+            printInfo(`${transceiverContractName} contract verification passed`);
             break;
         }
     }
@@ -314,24 +314,24 @@ async function processCommand(_axelar, chain, chains, options) {
                 return;
             }
 
-            const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
+            const transceiverContractName = `${transceiverPrefix}AxelarTransceiver`;
 
-            if (!contracts[transceiverContract]) {
-                contracts[transceiverContract] = {};
+            if (!contracts[transceiverContractName]) {
+                contracts[transceiverContractName] = {};
             }
-            contractConfig = contracts[transceiverContract];
+            contractConfig = contracts[transceiverContractName];
 
             // Handle reuseProxy case
             if (reuseProxy) {
                 if (!contractConfig.implementation) {
-                    printError(`${transceiverContract} is not deployed on ${chain.name}. Cannot reuse proxy.`);
+                    printError(`${transceiverContractName} is not deployed on ${chain.name}. Cannot reuse proxy.`);
                     return;
                 }
-                printInfo(`Reusing existing ${transceiverContract} proxy on ${chain.name}`);
+                printInfo(`Reusing existing ${transceiverContractName} proxy on ${chain.name}`);
             }
 
             if (contractConfig.implementation && options.skipExisting) {
-                printWarn(`Skipping ${transceiverContract} deployment on ${chain.name} because it is already deployed.`);
+                printWarn(`Skipping ${transceiverContractName} deployment on ${chain.name} because it is already deployed.`);
                 return;
             }
             break;
@@ -367,8 +367,8 @@ async function processCommand(_axelar, chain, chains, options) {
     const gasOptions = await getGasOptions(chain, options, contractName);
 
     if (upgrade && contractName === 'AxelarTransceiver') {
-        const transceiverContract = `${transceiverPrefix}AxelarTransceiver`;
-        await upgradeTransceiver(contractConfig, contractJson.abi, wallet, chain, options, gasOptions, transceiverContract);
+        const transceiverContractName = `${transceiverPrefix}AxelarTransceiver`;
+        await upgradeTransceiver(contractConfig, contractJson.abi, wallet, chain, options, gasOptions, transceiverContractName);
         return;
     }
 
