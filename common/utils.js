@@ -785,38 +785,20 @@ function validateDestinationChain(chains, destinationChain) {
     validateChain(chains, destinationChain);
 }
 
-async function calculateItsCrossChainGas(sourceChain, destinationChain, env, eventType) {
+async function calculateItsCrossChainGas(options) {
+    const { sourceChain, destinationChain, env, eventType } = options;
     const baseUrl = env === 'mainnet' ? 'https://api.axelarscan.io/gmp' : 'https://testnet.api.gmp.axelarscan.io';
     const url = `${baseUrl}/estimateITSFee`;
 
-    const testnetL2sChainMap = {
-        optimism: 'optimism-sepolia',
-        arbitrum: 'arbitrum-sepolia',
-        base: 'base-sepolia',
-        blast: 'blast-sepolia',
-        mantle: 'mantle-sepolia',
-        linea: 'linea-sepolia',
-        scroll: 'scroll-sepolia',
-    };
-
-    const normalizeChainName = (chainName) => {
-        let chain = String(chainName).toLowerCase();
-
-        if (env === 'testnet' && testnetL2sChainMap[chain]) {
-            return testnetL2sChainMap[chain];
-        }
-        return chain;
-    };
-
     const payload = {
-        sourceChain: normalizeChainName(sourceChain),
-        destinationChain: normalizeChainName(destinationChain),
+        sourceChain: sourceChain,
+        destinationChain: destinationChain,
         event: eventType,
     };
 
     const gasFee = await httpPost(url, payload);
-    if (!gasFee) {
-        throw new Error(`Failed to estimate ITS fee: ${JSON.stringify(gasFee)}`);
+    if (gasFee === 0) {
+        throw new Error(`Failed to estimate ITS fee: ${gasFee}`);
     }
     return gasFee;
 }

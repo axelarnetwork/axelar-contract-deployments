@@ -320,11 +320,21 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'interchain-transfer': {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
-            let { gasValue, metadata, env } = options;
+            const { gasValue, metadata, env } = options;
+
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain,
+                      env,
+                      eventType: 'InterchainTransfer',
+                  })
+                : gasValue;
+
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, destinationAddress },
-                isValidNumber: { amount, gasValue },
+                isValidNumber: { amount, submittedGasValue },
                 isValidCalldata: { metadata },
             });
 
@@ -360,17 +370,14 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const itsDestinationAddress = encodeITSDestination(chains, destinationChain, destinationAddress);
             printInfo('Human-readable destination address', destinationAddress);
 
-            if (gasValue === 0) {
-                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'InterchainTransfer');
-            }
             const tx = await interchainTokenService[INTERCHAIN_TRANSFER_WITH_METADATA](
                 tokenIdBytes32,
                 destinationChain,
                 itsDestinationAddress,
                 amountInUnits,
                 metadata,
-                gasValue,
-                { value: scaleGasValue(chain, gasValue), ...gasOptions },
+                submittedGasValue,
+                { value: scaleGasValue(chain, submittedGasValue), ...gasOptions },
             );
             await handleTx(tx, chain, interchainTokenService, action, 'InterchainTransfer');
             return tx.hash;
@@ -378,15 +385,21 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'register-token-metadata': {
             const [tokenAddress] = args;
-            let { gasValue, env } = options;
-            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { gasValue } });
+            const { gasValue, env } = options;
 
-            if (gasValue === 0) {
-                gasValue = await calculateItsCrossChainGas(chain.axelarId, 'axelar', env, 'TokenMetadataRegistered');
-            }
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain,
+                      env,
+                      eventType: 'TokenMetadataRegistered',
+                  })
+                : gasValue;
 
-            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, gasValue, {
-                value: scaleGasValue(chain, gasValue),
+            validateParameters({ isValidAddress: { tokenAddress }, isValidNumber: { submittedGasValue } });
+
+            const tx = await interchainTokenService.registerTokenMetadata(tokenAddress, submittedGasValue, {
+                value: scaleGasValue(chain, submittedGasValue),
                 ...gasOptions,
             });
             await handleTx(tx, chain, interchainTokenService, action);
@@ -674,14 +687,23 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'link-token': {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
-            let { gasValue, env } = options;
+            const { gasValue, env } = options;
             const deploymentSalt = getDeploymentSalt(options);
+
+            const submittedGasValue = !gasValue
+                ? await calculateItsCrossChainGas({
+                      sourceChain: chain.axelarId,
+                      destinationChain,
+                      env,
+                      eventType: 'LinkToken',
+                  })
+                : gasValue;
 
             validateParameters({
                 isValidTokenId: { tokenId },
                 isNonEmptyString: { destinationChain, type },
                 isValidAddress: { destinationTokenAddress, operator },
-                isValidNumber: { gasValue },
+                isValidNumber: { submittedGasValue },
             });
             validateChain(chains, destinationChain);
 
@@ -707,17 +729,13 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
             const linkParams = operator;
 
-            if (gasValue === 0) {
-                gasValue = await calculateItsCrossChainGas(chain.axelarId, destinationChain, env, 'LinkToken');
-            }
-
             const tx = await interchainTokenService.linkToken(
                 deploymentSalt,
                 destinationChain,
                 destinationTokenAddress,
                 tokenManagerType,
                 linkParams,
-                gasValue,
+                submittedGasValue,
                 gasOptions,
             );
             await handleTx(tx, chain, interchainTokenService, action, 'LinkTokenStarted');
@@ -950,7 +968,7 @@ if (require.main === module) {
         .addArgument(new Argument('<type>', 'Token manager type').choices(Object.keys(tokenManagerTypes)))
         .argument('<operator>', 'Operator address')
         .addOption(new Option('--rawSalt <rawSalt>', 'raw deployment salt').env('RAW_SALT'))
-        .addOption(new Option('--gasValue <gasValue>', 'gas value, will default to estimate gas fee if none provided').default(0))
+        .addOption(new Option('--gasValue <gasValue>', 'gas value'))
         .action((tokenId, destinationChain, destinationTokenAddress, type, operator, options, cmd) => {
             main(cmd.name(), [tokenId, destinationChain, destinationTokenAddress, type, operator], options);
         });
