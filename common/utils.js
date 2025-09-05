@@ -797,7 +797,7 @@ async function calculateItsCrossChainGas(options) {
     };
 
     const gasFee = await httpPost(url, payload);
-    if (gasFee === 0) {
+    if (gasFee === undefined || gasFee === null || Number(gasFee) === 0) {
         throw new Error(`Failed to estimate ITS fee: ${gasFee}`);
     }
     return gasFee;

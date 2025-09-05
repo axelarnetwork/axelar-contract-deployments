@@ -322,7 +322,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [destinationChain, tokenId, destinationAddress, amount] = args;
             const { gasValue, metadata, env } = options;
 
-            const submittedGasValue = !gasValue
+            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
+            const submittedGasValue = needsEstimate
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
@@ -387,10 +388,11 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const [tokenAddress] = args;
             const { gasValue, env } = options;
 
-            const submittedGasValue = !gasValue
+            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
+            const submittedGasValue = needsEstimate
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
-                      destinationChain,
+                      destinationChain: 'axelar',
                       env,
                       eventType: 'TokenMetadataRegistered',
                   })
@@ -690,7 +692,8 @@ async function processCommand(_axelar, chain, chains, action, options) {
             const { gasValue, env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
-            const submittedGasValue = !gasValue
+            const needsEstimate = gasValue === undefined || gasValue === null || Number(gasValue) === 0;
+            const submittedGasValue = needsEstimate
                 ? await calculateItsCrossChainGas({
                       sourceChain: chain.axelarId,
                       destinationChain,
