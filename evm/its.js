@@ -675,7 +675,7 @@ async function processCommand(_axelar, chain, chains, action, options) {
 
         case 'link-token': {
             const [tokenId, destinationChain, destinationTokenAddress, type, operator] = args;
-            const { gasValue, env } = options;
+            let { gasValue, env } = options;
             const deploymentSalt = getDeploymentSalt(options);
 
             validateParameters({
