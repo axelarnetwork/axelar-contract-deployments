@@ -33,38 +33,32 @@ async function deployHtsLib(_config, options) {
     // Create the transaction
     const contractCreate = new ContractCreateFlow().setGas(gasLimit).setBytecode(bytecode);
 
-    try {
-        // Sign the transaction with the client operator key and submit to a Hedera network
-        const txResponse = await contractCreate.execute(client);
-        printInfo(`Txid`, txResponse.transactionId);
+    // Sign the transaction with the client operator key and submit to a Hedera network
+    const txResponse = await contractCreate.execute(client);
+    printInfo(`Txid`, txResponse.transactionId);
 
-        // Get the receipt of the transaction
-        const receipt = await txResponse.getReceipt(client);
+    // Get the receipt of the transaction
+    const receipt = await txResponse.getReceipt(client);
 
-        // Get the new contract ID
-        const newContractId = receipt.contractId;
-        printInfo('The new contract ID', newContractId);
+    // Get the new contract ID
+    const newContractId = receipt.contractId;
+    printInfo('The new contract ID', newContractId);
 
-        const evmAddress = contractIdToEvmAddress(newContractId.shard, newContractId.realm, newContractId.num);
+    const evmAddress = contractIdToEvmAddress(newContractId.shard, newContractId.realm, newContractId.num);
 
-        printInfo(`EVM address of the new contract`, evmAddress);
+    printInfo(`EVM address of the new contract`, evmAddress);
 
-        if (options.output) {
-            const fs = require('fs');
-            const output = {
-                contractId: newContractId.toString(),
-                evmAddress,
-                contractName,
-                sourceName: json.sourceName,
-                deployedAt: new Date().toISOString(),
-            };
-            fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
-            printInfo(`Deployment info saved to`, options.output);
-        }
-
-        process.exit(0);
-    } catch (error) {
-        throw new Error(`Deployment failed: ${error.message}`);
+    if (options.output) {
+        const fs = require('fs');
+        const output = {
+            contractId: newContractId.toString(),
+            evmAddress,
+            contractName,
+            sourceName: json.sourceName,
+            deployedAt: new Date().toISOString(),
+        };
+        fs.writeFileSync(options.output, JSON.stringify(output, null, 2));
+        printInfo(`Deployment info saved to`, options.output);
     }
 }
 

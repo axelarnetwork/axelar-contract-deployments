@@ -273,7 +273,25 @@ async function postDeployAxelarGateway(published, keypair, client, config, chain
 
     restrictUpgradePolicy(tx, policy, upgradeCap);
 
-    const result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
+    let result = await broadcast(client, keypair, tx, 'Setup Gateway', options);
+
+    const maxRetries = 10;
+    let retry = 0;
+
+    while (result.objectChanges == undefined) {
+        retry++;
+        if (retry > maxRetries) {
+            throw new Error(`failed to fetch object changes for tx ${result.digest}`);
+        }
+
+        result = await client.getTransactionBlock({
+            digest: result.digest,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+            },
+        });
+    }
 
     const [gateway, gatewayv0] = getObjectIdsByObjectTypes(result, [
         `${packageId}::gateway::Gateway`,

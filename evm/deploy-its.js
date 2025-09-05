@@ -437,7 +437,7 @@ async function deployAll(axelar, wallet, chain, chains, options) {
 }
 
 async function deploy(axelar, chain, chains, options) {
-    const { privateKey, salt } = options;
+    const { privateKey } = options;
 
     const rpc = chain.rpc;
     const provider = getDefaultProvider(rpc);
