@@ -1,9 +1,9 @@
 # Memento ITS v2.2.0
 
-|                | **Owner**                              |
-| -------------- | -------------------------------------- |
-| **Created By** | @[github-username] <email@deutschebank.com> |
-| **Deployment** | @[github-username] <email@deutschebank.com> |
+|                | **Owner**                                 |
+| -------------- | ----------------------------------------- |
+| **Created By** | @yourGithubUsername <user@interoplabs.io> |
+| **Deployment** | @yourGithubUsername <user@interoplabs.io> |
 
 | **Network**          | **Deployment Status** | **Date**   |
 | -------------------- | --------------------- | ---------- |
@@ -20,7 +20,7 @@
 
 ## Deployment
 
-Ensure that [Memento GMP](../evm/2025-XX-Memento-GMP-v6.0.4.md) is deployed first.
+Ensure that [Memento GMP](../evm/2025-09-Memento-GMP-v6.0.6.md) is deployed first.
 
 ```bash
 # Clone latest main and update deps
@@ -30,9 +30,9 @@ npm ci
 Create an `.env` config. Local environment variable `CHAIN` should be set to `memento`.
 
 ```yaml
-PRIVATE_KEY=xyz
-ENV=xyz
-CHAINS=xyz
+PRIVATE_KEY=<deployer private key>
+ENV=<devnet-amplifier|stagenet|testnet|mainnet>
+CHAIN=<chain name>
 ```
 
 | Network              | `deployer address`                           |
