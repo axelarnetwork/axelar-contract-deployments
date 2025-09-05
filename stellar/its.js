@@ -669,7 +669,7 @@ if (require.main === module) {
 
     program
         .command('create-custom-token <name> <symbol> <decimals>')
-        .description('Deploy a custom token contract using WASM hash')
+        .description('Deploy a custom token contract using interchain token WASM hash')
         .action((name, symbol, decimals, options) => {
             mainProcessor(createCustomToken, [name, symbol, decimals], options);
         });
