@@ -12,7 +12,7 @@ const {
     printInfo,
     printWarn,
     printError,
-    getContractJSONStandard,
+    getContractJSON: getContractJSONStandard,
     mainProcessor,
     prompt,
     sleep,
