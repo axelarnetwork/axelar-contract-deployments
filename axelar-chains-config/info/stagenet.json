@@ -2509,6 +2509,28 @@
           "initializeArgs": {}
         }
       }
+    },
+    "celo-sepolia": {
+      "name": "Celo-Sepolia",
+      "axelarId": "celo-sepolia",
+      "chainId": 11142220,
+      "rpc": "https://forno.celo-sepolia.celo-testnet.org/",
+      "tokenSymbol": "CELO",
+      "confirmations": 1,
+      "finality": "finalized",
+      "decimals": 18,
+      "approxFinalityWaitTime": 1,
+      "chainType": "evm",
+      "explorer": {
+        "name": "Celo Sepolia Explorer",
+        "url": "https://celo-sepolia.blockscout.com/"
+      },
+      "contracts": {
+        "InterchainTokenService": {
+          "address": "0x0FCb262571be50815627C16Eca1f5F3D342FF5a5"
+        },
+        "AxelarGateway": {}
+      }
     }
   },
   "axelar": {
@@ -2731,6 +2753,21 @@
           "domainSeparator": "0x5603c0839130a5bac88729c4cbbf2fd66063d00f429dc8512308308bc1b5063f",
           "address": "axelar1960k48ezdumanv3hjf22cvp2a9zwr5skn34xgtrkhfjjhk7k4htsd4l8ze"
         },
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "adminAddress": "axelar1l7vz4m5g92kvga050vk9ycjynywdlk4zhs07dv",
+          "signingThreshold": [
+            "51",
+            "100"
+          ],
+          "serviceName": "amplifier",
+          "verifierSetDiffThreshold": 0,
+          "encoder": "abi",
+          "keyType": "ecdsa",
+          "codeId": 21,
+          "domainSeparator": "0xb741e91bfa150b641059e6fc4b0f63086bf7714a4367712928f2f248a4489fe0",
+          "address": "axelar1x8jqrc49pqrn7arxxsyaa57egpwllu3kes4576y7djrlyygp7dqsdnalyc"
+        },
         "storeCodeProposalId": "69",
         "storeCodeProposalCodeHash": "00428ef0483f103a6e1a5853c4b29466a83e5b180cc53a00d1ff9d022bc2f03a",
         "lastUploadedCodeId": 21
@@ -2774,6 +2811,10 @@
         "stellar-2025-q3": {
           "codeId": 58,
           "address": "axelar1gd24uar2nmqwzdda7u2refv9ff64ylwmcsm9mc7fr70asjlq0l2slzn36a"
+        },
+        "celo-sepolia": {
+          "codeId": 22,
+          "address": "axelar1v08w6ajkrjjd8t0g5kc3lr7dtsxjxrulfq5clstgg4zrqpumrxaqe7s3s3"
         }
       },
       "VotingVerifier": {
@@ -2911,6 +2952,21 @@
           "addressFormat": "stellar",
           "codeId": 57,
           "address": "axelar1jgp9mfalnwk0p9xfycyrrc69e9kw5l2qytvs0tz6znv5ke89q0psgcyarh"
+        },
+        "celo-sepolia": {
+          "governanceAddress": "axelar10d07y265gmmuvt4z0w9aw880jnsr700j7v9daj",
+          "serviceName": "amplifier",
+          "sourceGatewayAddress": "0x5A4fA5187BddD93097dE4F6062a2E96C82Ea2d61",
+          "votingThreshold": [
+            "51",
+            "100"
+          ],
+          "blockExpiry": 10,
+          "confirmationHeight": 1000000,
+          "msgIdFormat": "hex_tx_hash_and_event_index",
+          "addressFormat": "eip55",
+          "codeId": 24,
+          "address": "axelar1pexeladrveekp689w67j94ftcvxhcqwy2ly6w4ntn8caz26r3waqxy54kz"
         },
         "storeCodeProposalId": "72",
         "storeCodeProposalCodeHash": "d9412440820a51bc48bf41a77ae39cfb33101ddc6562323845627ea2042bf708",
